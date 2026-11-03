@@ -340,6 +340,8 @@ describe('github source', () => {
     expect(commentTrigger({ id: 9, body: '@Agent-Bot please fix', user: { login: 'alice', type: 'User' } }, { number: 7, isPr: true }, 'conversation', 'agent-bot')).toMatchObject({ human: true, addressed: 'mention' })
     expect(commentTrigger({ id: 10, body: 'mail@agent-bot.example', user: { login: 'alice', type: 'User' } }, { number: 7, isPr: true }, 'conversation', 'agent-bot')).not.toHaveProperty('addressed')
     expect(commentTrigger({ id: 11, body: 'pushed', user: { login: 'Agent-Bot', type: 'User' } }, { number: 7, isPr: true }, 'conversation', 'agent-bot').human).toBe(false)
+    expect(commentTrigger({ id: 12, body: '[superagent] test work', user: { login: 'Agent-Bot', type: 'User' } }, { number: 7, isPr: true }, 'conversation', 'agent-bot').human).toBe(true)
+    expect(commentTrigger({ id: 13, body: '[test] run check', user: { login: 'Agent-Bot', type: 'User' } }, { number: 7, isPr: true }, 'conversation', 'agent-bot').human).toBe(true)
   })
   it('reads the address of an Issue, a PR or a review comment of the repository, and nothing else', () => {
     expect(githubAddress('https://api.github.com/repos/acme/widgets/pulls/9', 'acme/widgets')).toEqual({ number: 9, pr: true })
@@ -712,6 +714,15 @@ describe('github source', () => {
     github(h, { notifications: [{ ...notification(9, 'pulls'), updated_at: '2026-09-11T00:00:00Z' }], 'pulls/9': pr })
     await pollRound(h)
     expect(h.receive.mock.calls.filter(([trigger]) => trigger.meta.kind === 'pull')).toEqual([])
+    // When the agent's own PR contains [superagent], it is admitted
+    h.receive.mockClear()
+    h.store.set('github-since', '2026-09-08T00:00:00.000Z')
+    const selfPr = { ...pr, title: '[superagent] test self PR', user: { login: 'agent-bot' } }
+    github(h, { notifications: [notification(10, 'pulls')], 'pulls/10': selfPr })
+    await pollRound(h)
+    const selfOpened = h.receive.mock.calls.map(([trigger]) => trigger).filter(trigger => trigger.meta.kind === 'pull')
+    expect(selfOpened.length).toBe(1)
+    expect(selfOpened[0].human).toBe(true)
     h.store.close()
   })
   it('reads a subscribed default-branch CI Thread as no Issue, and keeps no poll error on it', async () => {
