@@ -344,6 +344,8 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/app/tools/main.ts` | The main Session's tools |
 | `src/app/tools/executor.ts` | An Executor Session's tools |
 | `src/app/http.ts` | The `/orchestrator/api` routes: the same-origin check, request limits and one status per kind of failure |
+| `src/app/dot.ts` | Same-origin Dot planning, Jev recommendations and health endpoints; stable choice IDs, strict schema validation, bounded model output and exactly one corrective retry. Returns proposals only; never dispatches threads or uses heuristic recommendations. |
+| `src/app/dot-json.ts` | Bounded balanced JSON-object extraction respecting strings/escapes; skips malformed/schema-invalid candidates without repairing or fabricating model output |
 | `src/app/api.ts` | `Api`, every route with its parameters, query, body and response, and the filters of the lists; it imports only types, so the panel bundles it |
 | `src/app/views/text.ts` | The two forms of a view's text: `preview`, plain text on one line, and `markdown` without HTML; `plain` and `readable` |
 | `src/app/views/records.ts` | The rows the views share: Triggers, Tickets, Threads, Decisions and Channel links, and `ownersOf`, the owners of follow-ups as one request reads them |
@@ -376,7 +378,10 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/sources/admission-context.ts` | The bounded window an assessment starts from: the first pages of a Trigger's Thread, read through its kind, and the messages around the Trigger |
 | `src/sources/feishu-image.ts` | Reads a Feishu message's image as an attachment for the assessing Session |
 | `src/client/index.tsx` | The client plugin entry: the sidebar entry, the main panel and the page in DeepSeek Harness's Plugin Manager |
-| `src/client/app.tsx` | The panel: header, search, glossary, tabs and the page of the current route |
+| `src/client/app.tsx` | The panel: header, search, glossary, tabs and the page of the current route; visited Dot chat stays mounted across tab changes |
+| `src/client/dot-chat.tsx`, `src/client/dot-chat.css` | Goal chat with execution disabled by default: explicit selection, exact-scope review and one-shot per-plan Approve; recommendations never select or approve actions. Shows dispatch receipts without claiming worker completion. |
+| `src/client/dot-execution.ts` | Guarded dispatch called only from explicit UI approval: revalidates project/thread identity, queues exact approved prompts, preserves uncertain receipts and never retries create/prompt automatically |
+| `src/client/dot-context.ts` | Read-only project and Session summary snapshot for planning, with cwd-derived project fallback |
 | `src/client/provider.tsx` | What every page reads from its host: copy, calls, navigation, notices, the state poll, and `restart`, which reads the state quickly while dsh-superagent restarts |
 | `src/client/api.ts` | Calls and polls of the management API, typed by `src/app/api.ts`, and the Decision filters of the Eval status |
 | `src/client/route.ts` | The tabs, the settings groups, the typed routes that `parseRoute` reads, and the route memory with the settings group opened last |
@@ -433,6 +438,12 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/runtime-concurrency.spec.ts` | Work that overlaps: Triggers during a pass, Tickets that change during deliveries and launches |
 | `tests/http.spec.ts` | The same-origin and loopback checks, failure statuses, body limits, query parsing, validated chat decision creation and idempotent resolution without worker dispatch |
 | `tests/decision-evaluation.spec.ts` | No fabricated recommendations, credential isolation, result validation and honest provider labeling |
+| `tests/dot.spec.ts` | Mocked HTTP/LLM tests for stable IDs, schema validation, exactly one corrective retry, truncation and transport failures, input validation, same-origin checks and lifecycle disposal |
+| `tests/dot-json.spec.ts` | JSON extraction regressions for prose/fences, escaped/quoted braces, multiple candidates, invalid/truncated content, validation, and size/depth limits |
+| `tests/dot-chat.spec.tsx` | Goal-chat UI tests for API wiring, recommendations, explicit selection/review/approval, duplicate clicks, consumed approvals, partial failures and fresh-plan safety |
+| `tests/dot-execution.spec.ts` | Approved dispatch validation, stale targets, cancellation, one-shot create/prompt, queue mode, uncertain outcomes and navigation tests |
+| `tests/dot-context.spec.ts` | Project/session snapshot, cwd fallback and catalog readiness tests without Session mutations |
+| `tests/dot.live.mjs` | Opt-in real-model HTTP integration test: `node tests/dot.live.mjs`; checks two-feature decomposition and a safe second-option recommendation without executing any actions. `DOT_EVIDENCE_PATH` optionally saves JSON evidence. |
 | `tests/inline-alternatives.spec.ts` | Explicit alternatives are parsed; numbered task sequences and fenced content are excluded |
 | `tests/settings.spec.ts` | Settings saves that race a model or account check, a Policy sync that a save outran, and the refusals of the pause, a sync and a block |
 | `tests/views.spec.ts` | What the management views derive from the Store, such as the Thread a dropped message belongs to |

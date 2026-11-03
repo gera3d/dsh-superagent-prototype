@@ -12,6 +12,9 @@ import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { openKnownSession, SessionNavigationError } from '../navigation.ts'
 import { App } from './app.tsx'
+import { DotChat } from './dot-chat.tsx'
+import { executeApprovedDotAction } from './dot-execution.ts'
+import { dotContext, type DotWorkspaceSource } from './dot-context.ts'
 import { InlineDecision } from './inline-decision.tsx'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-chat/client'
@@ -45,7 +48,11 @@ function Mounted({ ctx, t }: { ctx: ClientContext; t: T }) {
     }
   }, [ctx, t])
   const form = usePageForm(ctx.get('configForms')?.get<Record<string, unknown>>(ENTRY))
-  return <App t={t} openSession={openSession} deploymentForm={form} />
+  const getDotContext = useCallback(() => dotContext(ctx.sessions,
+    ctx.get('workspaces' as never) as DotWorkspaceSource | undefined), [ctx])
+  return <App t={t} openSession={openSession} deploymentForm={form} dotChat={<DotChat getContext={getDotContext}
+    executeAction={(action, approvedContext, signal) => executeApprovedDotAction(ctx.sessions, action, approvedContext, getDotContext, signal, openSession)}
+    openSession={openSession} />} />
 }
 
 export const inject = ['slots', 'locale', 'sessions', 'uiWorkspace']

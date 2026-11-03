@@ -8,6 +8,7 @@ import { HEALTH_TEXT } from '../sources/host.ts'
 const TEXT = {
   // Shared
   title: ['Superagent', 'Superagent'],
+  'tab.dot': ['Dot 对话', 'Dot chat'],
   close: ['关闭', 'Close'],
   cancel: ['取消', 'Cancel'],
   confirm: ['确定', 'Confirm'],
