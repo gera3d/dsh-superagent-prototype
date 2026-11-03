@@ -722,7 +722,7 @@ describe('github source', () => {
     await pollRound(h)
     const selfOpened = h.receive.mock.calls.map(([trigger]) => trigger).filter(trigger => trigger.meta.kind === 'pull')
     expect(selfOpened.length).toBe(1)
-    expect(selfOpened[0].human).toBe(true)
+    expect(selfOpened[0]!.human).toBe(true)
     h.store.close()
   })
   it('reads a subscribed default-branch CI Thread as no Issue, and keeps no poll error on it', async () => {

@@ -134,7 +134,10 @@ async function acceptedTicket(trigger = feishu('1', '@bot 修一下回归')) {
   const ticket = runtime.store.tickets.get((result.ticket as { ticket_id: string }).ticket_id)!
   return { trigger, ticket, sessionId: `worker-${ticket.id}` }
 }
+let originalGitConfigGlobal: string | undefined
 beforeEach(async () => {
+  originalGitConfigGlobal = process.env.GIT_CONFIG_GLOBAL
+  delete process.env.GIT_CONFIG_GLOBAL
   directory = mkdtempSync(join(tmpdir(), 'orchestrator-runtime-'))
   vi.spyOn(Commands.prototype, 'gh').mockImplementation(async args => args[1] === 'user' ? { login: 'agent-bot' } : args[1]?.includes('/pulls/') ? { state: 'open', user: { login: 'agent-bot' }, html_url: 'https://github.com/acme/widgets/pull/' + args[1].split('/').at(-1), head: { ref: `agent/${String(runtime.store.tickets.list()[0]?.execution?.name)}`, sha: 'head-1', repo: { full_name: 'acme/widgets' } } } : { default_branch: 'master', permissions: { push: true } })
   vi.spyOn(Commands.prototype, 'lark').mockResolvedValue({ users: [{ member_id: MEMBER, name: 'Alice' }], has_more: false })
@@ -214,7 +217,11 @@ beforeEach(async () => {
   runtime.store.saveSettings({ ...runtime.store.settings(), policy: { ...runtime.store.settings().policy, sources: { feishu: { allowed: [{ id: MEMBER, name: 'Alice' }], syncChat: CHAT }, github: { allowed: [{ id: 'alice' }] } } }, eval: { ...runtime.store.settings().eval, mode: 'auto' }, sources: { github: { enabled: true, config: { repository: 'acme/widgets', cli: AGENT() } }, feishu: { enabled: true, config: { cli: BOT(), chats: [{ chatId: CHAT, listen: 'all' }], directMessages: true } } } })
   deliveries.mockClear()
 })
-afterEach(async () => { expect(controller.prompt).not.toHaveBeenCalled(); await runtime?.stop(); vi.restoreAllMocks(); rmSync(directory, { recursive: true, force: true }) })
+afterEach(async () => {
+  if (originalGitConfigGlobal !== undefined) process.env.GIT_CONFIG_GLOBAL = originalGitConfigGlobal
+  else delete process.env.GIT_CONFIG_GLOBAL
+  expect(controller.prompt).not.toHaveBeenCalled(); await runtime?.stop(); vi.restoreAllMocks(); rmSync(directory, { recursive: true, force: true })
+})
 
 it('relays an explicit member mention as a candidate and creates the ticket, acknowledgement, subscription and worker on accept', async () => {
   const { trigger, ticket, sessionId } = await acceptedTicket()
