@@ -313,6 +313,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/core/ids.ts` | `key`: ids derived from their inputs, equal for equal inputs |
 | `src/core/memory.ts` | `MemoryRepositories`: the Store's repositories in memory, in the Store's order and with its nested rollback, for domain tests |
 | `src/core/index.ts` | The core's exports |
+| `src/core/decision.ts` | `DecisionClient` and `evaluateDecision`: real-time System One decision engine for candidate choice selection and probability calibration |
 | `src/app/runtime.ts` | The Runtime, the composition root, with its start and stop |
 | `src/app/setup.ts` | Setup, and `setupChanged`, whether a save changes a field setup reads |
 | `src/app/passes.ts` | Passes, the pass scheduler |
@@ -381,6 +382,8 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/route.ts` | The tabs, the settings groups, the typed routes that `parseRoute` reads, and the route memory with the settings group opened last |
 | `src/client/overview.tsx` | The overview |
 | `src/client/source.tsx`, `trigger.tsx`, `eval.tsx`, `execution.tsx` | One file per stage: its status, and its settings where it has some |
+| `src/client/decisions.tsx` | The Decisions tab: actionable Human-in-the-Loop decision inbox and real-time decision playground |
+| `src/client/decision-card.tsx` | Interactive recommendation card displaying candidate options, calibrated probabilities and one-click execution |
 | `src/client/thread.tsx`, `ticket.tsx` | The record pages: a Thread with its timeline, and a Ticket with its authorization, Inputs and Assignments |
 | `src/client/settings.tsx` | The Settings tab: the group navigation and the group on screen |
 | `src/client/settings-kit.tsx` | The building blocks of settings blocks: the settings the stage groups share, `useBlockDraft`, the fields, among them a Source kind's, and the history of saves |

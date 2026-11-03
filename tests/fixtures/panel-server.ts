@@ -322,6 +322,16 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
   'POST triggers/:id/requeue': { answer: ({ params }) => { server.queued.add(params.id); return { queued: true } } },
   'GET decisions': { query: ['kind', 'window', 'offset', 'limit'], answer: ({ query }) =>
     ({ items: query.kind === 'ignore' ? [] : [acceptDecision()], next_offset: null }) },
+  'GET decisions/inbox': { answer: () => ({ items: [] }) },
+  'POST decisions/evaluate': { body: true, answer: ({ body }) => ({
+    recommendedValue: body.choices[0]?.id || '',
+    confidence: 0.9,
+    rationale: 'Mock evaluation',
+    distribution: body.choices.map((c: { id: string }, i: number) => ({ id: c.id, probability: i === 0 ? 0.9 : 0.1 })),
+    provider: 'Mock Jev Engine',
+    latencyMs: 15
+  }) },
+  'POST decisions/:id/resolve': { body: true, answer: ({ body }) => ({ resolved: true, choiceId: body.choiceId }) },
   'POST decisions/:id/dismiss': { answer: ({ params }) => params.id === 'u1' ? { dismissed: true } : refuse(404,
     'Unavailable Eval not found') },
   'GET tickets': { query: ['state', 'offset', 'limit'], answer: ({ query }) => page(server.tickets[query.state === 'ended' ? 'ended'

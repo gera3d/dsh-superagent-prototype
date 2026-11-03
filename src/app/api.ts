@@ -1,4 +1,5 @@
 /** Type-only management API contract between the web panel and host routes, imported by the panel without bundling host code. */
+import type { DecisionEvaluationRequest, DecisionEvaluationResult, PendingDecisionItem } from '../core/decision.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
 import type { PromptConfig, Prompts } from './prompts.ts'
 import type { PromptsView, StateView, TicketPageView } from './http.ts'
@@ -29,6 +30,9 @@ export interface Api {
   'POST threads/:key/unsubscribe': { response: { removed: boolean; thread: string; context_delivery: Delivery } }
   'POST triggers/:id/requeue': { response: { queued: boolean } }
   'GET decisions': { query?: Paged & { kind?: string; window?: '24h' }; response: DecisionListView }
+  'GET decisions/inbox': { response: { items: PendingDecisionItem[] } }
+  'POST decisions/evaluate': { body: DecisionEvaluationRequest; response: DecisionEvaluationResult }
+  'POST decisions/:id/resolve': { body: { choiceId: string }; response: { resolved: boolean; choiceId: string } }
   'POST decisions/:id/dismiss': { response: { dismissed: true } }
   'GET tickets': { query?: Paged & { state?: TicketFilter }; response: TicketListView }
   'GET tickets/:id': { response: TicketPageView }
