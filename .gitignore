@@ -3,3 +3,4 @@ lib/
 .artifacts/
 .env
 coverage/
+scripts/macos-input-helper
