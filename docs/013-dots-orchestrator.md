@@ -65,9 +65,15 @@ The orchestrator leverages structured JSON schema prompting to break any vision 
 - Calls GitHub API via `gh issue create` on the target repository (`gera3d/superagent-sandbox`).
 - `dsh-superagent` polls GitHub issues, converts them into Tickets in `orchestrator.sqlite`, and spawns workers.
 
-### 3.4 Live Telemetry & Decisions Gate
-- `dsh-dot --status` queries both SQLite tickets and live GitHub PRs.
-- Pending ambiguities route to the **Decisions API** and render in the DSH panel's **Decisions** tab.
+### 3.4 Omniscient Project & Thread Visibility
+- `dsh-dot --projects` reads `$DSH_HOME/storages/workspace.json` and session cache projections.
+- Surfaces active projects (`Daily Driver`, `Why57 Studio`, `SuperAgent Sandbox`, etc.) and all open conversation threads.
+- Supports starting new threads dynamically via `dsh-dot --start-thread <project> "<prompt>"`.
+
+### 3.5 Jev Decisions Engine & "Make Progress" (Jev-Pilot) Mode
+- Surfaces human-in-the-loop decisions via the Decisions API inbox (`http://127.0.0.1:3082/orchestrator/api/decisions/inbox`).
+- **Interactive Resolution**: Operator can select any choice manually in the **Decisions** tab or over voice.
+- **Make Progress (Jev-Pilot)**: Toggleable auto-resolution mode. When enabled (via UI toggle or `dsh-dot --make-progress`), incoming decisions automatically execute Jev's highest-confidence calibrated recommendation (`confidence >= 0.85`), eliminating workflow stalls.
 
 ---
 
@@ -76,6 +82,18 @@ The orchestrator leverages structured JSON schema prompting to break any vision 
 ```bash
 # Check orchestration status & worker swarm
 dsh-dot --status
+
+# Inspect all open projects and active threads across the system
+dsh-dot --projects
+
+# Start a new thread in a specific project
+dsh-dot --start-thread "Why57 Studio" "Build responsive navigation header"
+
+# Inspect pending decision blockers with Jev recommendations
+dsh-dot --decisions
+
+# Execute Make Progress mode (Jev-Pilot auto-resolution)
+dsh-dot --make-progress
 
 # Dry-run feature deconstruction
 dsh-dot "Add OAuth2 user authentication and session cookies" --dry-run
