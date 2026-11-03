@@ -1,5 +1,5 @@
 /** Decisions view: Actionable Human-in-the-Loop decision inbox and real-time System One decision runner. */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { DecisionChoice, DecisionEvaluationResult, PendingDecisionItem } from '../core/decision.ts'
 import { Button, Icon, Pill, Tag } from './controls.tsx'
 import { DecisionCard } from './decision-card.tsx'
@@ -11,6 +11,9 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
   const { t, call, navigate } = usePanel()
   const [tab, setTab] = useState<'inbox' | 'playground'>('inbox')
   const [filterMode, setFilterMode] = useState<'pending' | 'resolved' | 'all'>(filter)
+  const [autoPilot, setAutoPilot] = useState<boolean>(() => {
+    try { return localStorage.getItem('dsh_jev_autopilot') === 'true' } catch { return false }
+  })
 
   // Poll inbox items
   const { data, error, reload } = usePoll(() => call('GET decisions/inbox'), [])
@@ -26,6 +29,19 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
     await call('POST decisions/:id/resolve', { id, body: { choiceId } })
     await reload()
   })
+
+  const items = data?.items || []
+
+  // Jev Auto-Pilot: automatically resolve pending items along Jev's recommended route
+  useEffect(() => {
+    if (!autoPilot) return
+    const pendingWithRec = items.filter(i => i.status === 'pending' && i.recommendation?.recommendedValue)
+    if (pendingWithRec.length > 0) {
+      for (const item of pendingWithRec) {
+        resolveAction.run(item.id, item.recommendation.recommendedValue)
+      }
+    }
+  }, [autoPilot, items])
 
   const runPlayground = async () => {
     setEvaluating(true)
@@ -43,7 +59,6 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
     }
   }
 
-  const items = data?.items || []
   const shownItems = items.filter(item => {
     if (filterMode === 'pending') return item.status === 'pending'
     if (filterMode === 'resolved') return item.status === 'resolved'
@@ -53,7 +68,7 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
   return <>
     <StatusHead hint="Actionable Decision Inbox: unblock autonomous workers with Jev's calibrated recommendations. One click resolves the question and pushes work forward." />
 
-    <div className="dt-filters" style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+    <div className="dt-filters" style={{ display: 'flex', gap: '8px', marginBottom: '16px', alignItems: 'center' }}>
       <Pill active={tab === 'inbox' && filterMode === 'pending'} onClick={() => { setTab('inbox'); setFilterMode('pending') }}>
         Pending ({items.filter(i => i.status === 'pending').length})
       </Pill>
@@ -63,11 +78,53 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
       <Pill active={tab === 'inbox' && filterMode === 'all'} onClick={() => { setTab('inbox'); setFilterMode('all') }}>
         All Decisions
       </Pill>
-      <span className="dt-filter-gap" />
+      <span className="dt-filter-gap" style={{ flex: 1 }} />
+      <button
+        style={{
+          background: autoPilot ? '#238636' : '#21262d',
+          color: autoPilot ? '#ffffff' : '#8b949e',
+          border: autoPilot ? '1px solid #3fb950' : '1px solid #30363d',
+          borderRadius: '6px',
+          padding: '4px 10px',
+          fontSize: '12px',
+          fontWeight: 600,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px'
+        }}
+        onClick={() => {
+          const next = !autoPilot
+          setAutoPilot(next)
+          try { localStorage.setItem('dsh_jev_autopilot', String(next)) } catch {}
+        }}
+        title="When active, automatically unblocks workers by choosing Jev's recommended route"
+      >
+        <span>{autoPilot ? '⚡' : '⚪'}</span>
+        <span>Make Progress (Jev-Pilot: {autoPilot ? 'ON' : 'OFF'})</span>
+      </button>
       <Pill active={tab === 'playground'} onClick={() => setTab('playground')}>
         ⚡ Live Model Evaluator
       </Pill>
     </div>
+
+    {autoPilot && (
+      <div style={{
+        background: 'rgba(35, 134, 54, 0.15)',
+        border: '1px solid rgba(63, 185, 80, 0.4)',
+        borderRadius: '6px',
+        padding: '10px 14px',
+        marginBottom: '16px',
+        color: '#3fb950',
+        fontSize: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <span><strong>⚡ Make Progress Active:</strong> Incoming decisions automatically advance along Jev's highest-confidence route.</span>
+        <span style={{ fontSize: '11px', opacity: 0.8 }}>Calibrated Confidence &gt; 85%</span>
+      </div>
+    )}
 
     <LoadState error={error} loading={!data && tab === 'inbox'} />
 
