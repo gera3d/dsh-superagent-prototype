@@ -11,6 +11,27 @@ const os = require('node:os')
 const path = require('node:path')
 const readline = require('node:readline')
 
+// Repo-owned activity overlay. Presentation failures never block desktop tools.
+const { CursorOverlayDaemon, identityFromMeta, serializeActions } = require('./cursor-overlay/driver.cjs')
+const overlay = new CursorOverlayDaemon()
+const desktopQueue = serializeActions()
+const activityNames = {
+  computer_mouse_click: 'Clicking', computer_mouse_move: 'Moving mouse',
+  computer_mouse_drag: 'Dragging', computer_mouse_scroll: 'Scrolling',
+  computer_type_text: 'Typing', computer_key_press: 'Pressing key',
+  computer_hotkey: 'Using shortcut', computer_focus_window: 'Focusing window',
+}
+async function executeTool(name, args, meta) {
+  return desktopQueue(async () => {
+    const status = activityNames[name] || (name === 'computer' && !['screenshot', 'cursor_position'].includes(args.action) ? 'Using computer' : null)
+    if (status) {
+      try { overlay.begin(identityFromMeta(meta), status) } catch (error) { console.error('Cursor overlay:', error.message) }
+    }
+    try { return await handleToolCall(name, args) }
+    finally { if (status) { try { overlay.end() } catch {} } }
+  })
+}
+
 const HELPER_BIN = path.join(__dirname, 'macos-input-helper')
 const SWIFT_SRC = path.join(__dirname, 'macos-input-helper.swift')
 
@@ -432,9 +453,9 @@ rl.on('line', async (line) => {
       }
 
       case 'tools/call': {
-        const { name, arguments: args = {} } = params || {}
+        const { name, arguments: args = {}, _meta } = params || {}
         try {
-          const result = await handleToolCall(name, args)
+          const result = await executeTool(name, args, _meta)
           send({
             jsonrpc: '2.0',
             id,
@@ -469,5 +490,6 @@ rl.on('line', async (line) => {
   }
 })
 
-process.on('SIGTERM', () => process.exit(0))
-process.on('SIGINT', () => process.exit(0))
+process.on('SIGTERM', () => { overlay.quit(); process.exit(0) })
+process.on('SIGINT', () => { overlay.quit(); process.exit(0) })
+rl.on('close', () => overlay.quit())

@@ -4,6 +4,17 @@ This changelog tracks all custom features, architectural enhancements, and upstr
 
 ---
 
+## Cursor activity UI — 2026-11-03
+
+- Repo-owned native overlay replaces the untracked sibling prototype.
+- Only the real OS pointer is shown, with a pulsing activity halo and a thread badge.
+- Hidden on launch, 350ms fade after completion/failure, 15-second crash watchdog, exits on stdin EOF.
+- Logical-point tracking across displays; edge-clamped badge; click-through and no focus stealing.
+- Desktop requests serialized within the MCP process; decorative input delays removed.
+- Per-call host metadata supplies actual thread ID/title; unavailable identity is labeled honestly.
+- Host bridge patch is reproducible via scripts/cursor-overlay/install-host-metadata.cjs.
+- Runtime reload and live validation are separate from source installation; no automatic DSH restart.
+
 ## [0.2.0-core] — 2026-11-03
 
 ### Added
