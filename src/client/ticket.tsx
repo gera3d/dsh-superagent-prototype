@@ -1,7 +1,6 @@
 /** Ticket detail page: stage and actions, Mandate details, undelivered/delivered Inputs, subscribed Threads, and Assignments. */
 import { useState, type ReactNode } from 'react'
 import { ApiError, usePoll, type TicketPageView } from './api.ts'
-import { DecisionCard } from './decision-card.tsx'
 import { DisclosureRow, Dot, Icon, Tag, type IconName } from './controls.tsx'
 import { decisionMark, reportDot, ticketMark } from './marks.ts'
 import { usePanel } from './provider.tsx'
@@ -142,51 +141,11 @@ export function TicketPage({ id }: { id: string }) {
       <LabelValue label={t('ticketUpdatedLabel')} value={when(data.updatedAt, t('lang'))} />
     </div>
     {ended && <Hint>{ended}</Hint>}
-    {ended && <DecisionCard
-      title="Completed Ticket: Recommended Next Step"
-      quote="Jev evaluated the completed turn and tests: all checks passed."
-      recommendation={{
-        recommendedValue: 'merge_pr',
-        confidence: 0.92,
-        rationale: 'Automated test suite is green and PR is clean. Recommended next step is to merge and deploy.',
-        distribution: [{ id: 'merge_pr', probability: 0.92 }, { id: 'e2e_tests', probability: 0.07 }, { id: 'manual_qa', probability: 0.01 }],
-        provider: 'Jev System One',
-        latencyMs: 82
-      }}
-      choices={[
-        { id: 'merge_pr', label: 'Merge PR to main branch & notify team', description: 'Releases changes' },
-        { id: 'e2e_tests', label: 'Trigger staging integration smoke tests', description: 'Extended verification' },
-        { id: 'manual_qa', label: 'Keep in review branch', description: 'Hold' }
-      ]}
-      compact
-    />}
     {data.attention && <div className="dt-banner"><span className="dt-banner-label">{t('attentionPrefix')}</span><MarkdownLite
       text={data.attention.question} />
       {channel && <div className="dt-banner-actions">
         <ActionLink href={channel.url} icon="message">{t('answerIn', { source: valueLabel(t, 'source', channel.source) })}</ActionLink>
       </div>}</div>}
-    {data.attention && <DecisionCard
-      title="Unblock Ticket: Decision Recommendation"
-      quote={`Jev Recommendation for: "${data.attention.question}"`}
-      recommendation={{
-        recommendedValue: 'opt_1',
-        confidence: 0.94,
-        rationale: 'Pulls authenticated credentials or applies recommended configuration to unblock worker immediately without manual editing.',
-        distribution: [{ id: 'opt_1', probability: 0.94 }, { id: 'opt_2', probability: 0.05 }, { id: 'opt_3', probability: 0.01 }],
-        provider: 'Jev System One',
-        latencyMs: 98
-      }}
-      choices={[
-        { id: 'opt_1', label: 'Auto-sync credentials from vault & resume worker', description: 'Immediate unblock' },
-        { id: 'opt_2', label: 'Route via fallback model proxy', description: 'Alternate router' },
-        { id: 'opt_3', label: 'Hold in draft for manual review', description: 'Pause worker' }
-      ]}
-      onExecute={async () => {
-        await call('POST tickets/:id/retry', { id })
-        await after(Promise.resolve())
-      }}
-      compact
-    />}
     {/* Ordinary progress stays in the Session/Channels; only a report that halted work (blocked/failed) is shown here. */}
     {data.actions.retry && data.summary && <p className={`dt-banner${failed ? ' dt-danger' : ''}${failedText ? ' dt-mono' : ''}`}>
       <span className="dt-banner-label">{t(failed ? 'failedPrefix' : 'blockedPrefix')}</span>{data.summary}

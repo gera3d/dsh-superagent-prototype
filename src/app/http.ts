@@ -148,9 +148,21 @@ const PromptsQuery = z.object({ revision: count.optional(), offset: count.defaul
 const SourceBlock = z.templateLiteral(['source:', z.string().regex(/^[a-z][a-z0-9-]*$/)])
 const SettingsBlockSchema = z.union([z.enum(['policy', 'eval', 'executor']), SourceBlock])
 const SaveRequest = z.object({ value: z.unknown(), revision: z.number().int().nonnegative() })
-const resolvedDecisions = new Map<string, { choiceId: string; at: number }>()
+const DecisionChoiceSchema = z.object({ id: z.string().min(1).max(200), label: z.string().min(1).max(2000), description: z.string().max(4000).optional() })
+const DecisionEvaluation = z.object({ context: z.string().max(30000), question: z.string().max(4000), choices: z.array(DecisionChoiceSchema).min(2).max(12), provider: z.enum(['auto', 'deepseek', 'typesafe-jev', 'openai-luna']).optional() })
+const DecisionInboxItem = z.object({
+  id: z.string().min(1).max(300), sessionId: z.string().min(1), sourceMessageId: z.string().min(1),
+  ticketTitle: z.string().max(2000), trigger: z.string().max(4000), status: z.literal('pending'),
+  urgency: z.enum(['high', 'medium', 'low']), createdAt: z.number().finite(),
+  context: z.string().max(30000), question: z.string().max(4000), choices: z.array(DecisionChoiceSchema).min(2).max(12),
+  recommendation: z.object({ recommendedValue: z.string(), confidence: z.number().min(0).max(1), rationale: z.string().max(4000),
+    distribution: z.array(z.object({ id: z.string(), probability: z.number().min(0).max(1) })).max(12), provider: z.string().max(300), latencyMs: z.number().nonnegative() }),
+})
 
 function routes(runtime: HttpHost): Routes {
+  // Queue state belongs to this runtime, not other mounted instances.
+  const resolvedDecisions = new Map<string, { choiceId: string; at: number }>()
+  const sessionDecisions = new Map<string, PendingDecisionItem>()
   const { store } = runtime
   const ticket = (id: string) => { if (!store.tickets.get(id)) throw new RouteError(404, 'Ticket not found'); return id }
   const promptBody = (input: { body: (maxBytes?: number) => Promise<unknown> }) => input.body(4 * runtime.machine.promptMaxChars.get() + 4096)
@@ -189,98 +201,68 @@ function routes(runtime: HttpHost): Routes {
     'GET decisions/inbox': () => {
       const tickets = ticketList(views(runtime), 'person', 0, 50).items
       const items: PendingDecisionItem[] = []
+      for (const [id, sItem] of sessionDecisions) {
+        const res = resolvedDecisions.get(id)
+        items.push({
+          ...sItem,
+          status: res ? 'resolved' : sItem.status,
+          resolvedChoice: res?.choiceId ?? sItem.resolvedChoice,
+          resolvedAt: res?.at ?? sItem.resolvedAt,
+        })
+      }
       for (const t of tickets) {
         const decId = `dec-${t.id}`
         const resolved = resolvedDecisions.get(decId)
         const q = t.attention?.question || t.summary || 'Awaiting operator input to unblock ticket.'
-        const isCreds = q.toLowerCase().includes('api_key') || q.toLowerCase().includes('credential') || q.toLowerCase().includes('key')
-        const choices = isCreds
-          ? [
-              { id: 'sync_infisical', label: 'Auto-sync from Infisical vault & restart worker', description: 'Pulls production keys from connected vault.' },
-              { id: 'openrouter_proxy', label: 'Route via OpenRouter key fallback', description: 'Uses configured OpenRouter API key.' },
-              { id: 'skip_live_test', label: 'Mock provider responses and merge docs only', description: 'Skips live API validation.' }
-            ]
-          : [
-              { id: 'approve_and_resume', label: 'Approve recommendation & unblock worker', description: 'Applies recommended action.' },
-              { id: 'retry_step', label: 'Retry worker turn with extended timeout', description: 'Re-dispatches the turn.' },
-              { id: 'request_human_review', label: 'Hold in draft for manual review', description: 'Pauses worker until inspected.' }
-            ]
+        const choices = [
+          { id: 'retry_step', label: 'Retry this worker', description: 'Retry only; this does not supply credentials, merge code, or approve other actions.' },
+          { id: 'request_human_review', label: 'Keep waiting for human review', description: 'Records the choice without restarting work.' },
+        ]
         items.push({
           id: decId,
           ticketId: t.id,
           ticketTitle: t.title,
           trigger: q,
           status: resolved ? 'resolved' : 'pending',
-          urgency: isCreds ? 'high' : 'medium',
+          urgency: 'medium',
           createdAt: Date.now() - 1000 * 60 * 15,
           context: `Ticket ${t.id} (${t.title}): ${q}`,
           question: q,
           recommendation: {
-            recommendedValue: choices[0]?.id || '',
-            confidence: 0.94,
-            rationale: isCreds
-              ? 'Infisical MCP vault is connected and contains production API keys for both providers. Auto-syncing avoids manual copy-pasting and immediately unblocks the test runner.'
-              : 'Action resolves the blocker with zero side-effects and maintains full test coverage.',
-            distribution: choices.map((c, i) => ({ id: c.id, probability: i === 0 ? 0.94 : (0.06 / Math.max(1, choices.length - 1)) })),
-            provider: 'Jev System One',
-            latencyMs: 85
+            recommendedValue: '', confidence: 0, distribution: [], latencyMs: 0,
+            provider: 'Not evaluated',
+            rationale: 'This ticket needs your input. No decision model has evaluated it.',
           },
           choices,
           resolvedChoice: resolved?.choiceId,
           resolvedAt: resolved?.at
         })
       }
-      if (items.length === 0) {
-        const dec101 = 'dec-101'
-        const res101 = resolvedDecisions.get(dec101)
-        items.push({
-          id: dec101,
-          ticketId: '#11',
-          ticketTitle: 'Integrate Anthropic Claude and OpenAI model providers',
-          trigger: 'Worker 2 encountered missing credentials for Anthropic & OpenAI',
-          status: res101 ? 'resolved' : 'pending',
-          urgency: 'high',
-          createdAt: Date.now() - 1000 * 60 * 35,
-          context: 'Worker needs ANTHROPIC_API_KEY and OPENAI_API_KEY to test model router endpoints.',
-          question: 'How should the worker obtain Anthropic and OpenAI API credentials?',
-          recommendation: {
-            recommendedValue: 'sync_infisical',
-            confidence: 0.94,
-            rationale: 'Infisical vault is connected and contains production API keys for both providers. Auto-syncing avoids manual copy-pasting and immediately unblocks the test runner.',
-            distribution: [
-              { id: 'sync_infisical', probability: 0.94 },
-              { id: 'openrouter_proxy', probability: 0.05 },
-              { id: 'skip_live_test', probability: 0.01 }
-            ],
-            provider: 'Jev System One',
-            latencyMs: 92
-          },
-          choices: [
-            { id: 'sync_infisical', label: 'Auto-sync from Infisical vault & restart worker', description: 'Pulls production keys from connected vault.' },
-            { id: 'openrouter_proxy', label: 'Route via OpenRouter key fallback', description: 'Uses configured OpenRouter API key.' },
-            { id: 'skip_live_test', label: 'Mock provider responses and merge docs only', description: 'Skips live API validation.' }
-          ],
-          resolvedChoice: res101?.choiceId,
-          resolvedAt: res101?.at
-        })
-      }
       return { items }
     },
+    'POST decisions/inbox': async ({ body }) => {
+      const item = DecisionInboxItem.parse(await body())
+      const existing = sessionDecisions.get(item.id)
+      if (!existing) sessionDecisions.set(item.id, item)
+      return { ok: true, id: item.id }
+    },
     'POST decisions/evaluate': async ({ body }) => {
-      const payload = (await body()) as DecisionEvaluationRequest
+      const payload = DecisionEvaluation.parse(await body())
       return evaluateDecision(payload)
     },
     'POST decisions/:id/resolve': async ({ params, body }) => {
-      const { choiceId } = (await body()) as { choiceId: string }
-      resolvedDecisions.set(params.id, { choiceId, at: Date.now() })
-      if (params.id.startsWith('dec-')) {
-        const ticketId = params.id.slice(4)
-        try {
-          runtime.engine.retryTicket(ticketId)
-        } catch {
-          // ticket may be completed or in other state
-        }
+      const { choiceId } = z.object({ choiceId: z.string().min(1).max(200) }).parse(await body())
+      const sItem = sessionDecisions.get(params.id)
+      if (sItem) {
+        if (!sItem.choices.some(c => c.id === choiceId)) throw new RouteError(400, 'Unknown decision choice')
+      } else {
+        if (!params.id.startsWith('dec-') || !store.tickets.get(params.id.slice(4))) throw new RouteError(404, 'Decision not found')
+        if (!['retry_step', 'request_human_review'].includes(choiceId)) throw new RouteError(400, 'Unsupported ticket action')
+        if (choiceId === 'retry_step' && !resolvedDecisions.has(params.id)) runtime.engine.retryTicket(params.id.slice(4))
       }
+      const previous = resolvedDecisions.get(params.id)
+      if (previous && previous.choiceId !== choiceId) throw new RouteError(400, 'Decision already resolved')
+      resolvedDecisions.set(params.id, previous ?? { choiceId, at: Date.now() })
       return { resolved: true, choiceId }
     },
     'POST decisions/:id/dismiss': ({ params }) => { runtime.engine.dismiss(params.id); return { dismissed: true } },

@@ -25,6 +25,23 @@ function serve(runtime: Partial<Record<keyof HttpHost, unknown>>, host = '127.0.
   }
 }
 
+it('validates chat decisions and never retries a worker for a chat choice', async () => {
+  let retries = 0
+  const call = serve({ store: { tickets: { get: () => undefined } }, engine: { retryTicket: () => { retries++ } } })
+  const item = { id: 'inline:session:message', sessionId: 'session', sourceMessageId: 'message',
+    ticketTitle: 'Conversation decision', trigger: 'Explicit alternatives', status: 'pending', urgency: 'low', createdAt: Date.now(),
+    context: 'Context', question: 'Which direction?', choices: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }],
+    recommendation: { recommendedValue: '', confidence: 0, rationale: 'Unavailable', distribution: [], provider: 'Not evaluated', latencyMs: 0 } }
+  expect(await call('POST', 'decisions/inbox', {})).toMatchObject({ status: 400 })
+  expect(await call('POST', 'decisions/inbox', item)).toMatchObject({ status: 200 })
+  expect(await call('POST', 'decisions/inline:session:message/resolve', { choiceId: 'bad' })).toMatchObject({ status: 400 })
+  expect(await call('POST', 'decisions/inline:session:message/resolve', { choiceId: 'a' })).toMatchObject({ status: 200 })
+  expect(await call('POST', 'decisions/inline:session:message/resolve', { choiceId: 'a' })).toMatchObject({ status: 200 })
+  expect(await call('POST', 'decisions/inline:session:message/resolve', { choiceId: 'b' })).toMatchObject({ status: 400 })
+  expect(await call('POST', 'decisions/missing/resolve', { choiceId: 'a' })).toMatchObject({ status: 404 })
+  expect(retries).toBe(0)
+})
+
 it('answers each kind of failure with its own status', async () => {
   const saves: unknown[] = []
   const call = serve({

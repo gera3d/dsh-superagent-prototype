@@ -1,5 +1,5 @@
 /** Decisions view: Actionable Human-in-the-Loop decision inbox and real-time System One decision runner. */
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { DecisionChoice, DecisionEvaluationResult, PendingDecisionItem } from '../core/decision.ts'
 import { Button, Icon, Pill, Tag } from './controls.tsx'
 import { DecisionCard } from './decision-card.tsx'
@@ -11,10 +11,6 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
   const { t, call, navigate } = usePanel()
   const [tab, setTab] = useState<'inbox' | 'playground'>('inbox')
   const [filterMode, setFilterMode] = useState<'pending' | 'resolved' | 'all'>(filter)
-  const [autoPilot, setAutoPilot] = useState<boolean>(() => {
-    try { return localStorage.getItem('dsh_jev_autopilot') === 'true' } catch { return false }
-  })
-
   // Poll inbox items
   const { data, error, reload } = usePoll(() => call('GET decisions/inbox'), [])
 
@@ -31,17 +27,6 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
   })
 
   const items = data?.items || []
-
-  // Jev Auto-Pilot: automatically resolve pending items along Jev's recommended route
-  useEffect(() => {
-    if (!autoPilot) return
-    const pendingWithRec = items.filter(i => i.status === 'pending' && i.recommendation?.recommendedValue)
-    if (pendingWithRec.length > 0) {
-      for (const item of pendingWithRec) {
-        resolveAction.run(item.id, item.recommendation.recommendedValue)
-      }
-    }
-  }, [autoPilot, items])
 
   const runPlayground = async () => {
     setEvaluating(true)
@@ -66,7 +51,7 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
   })
 
   return <>
-    <StatusHead hint="Actionable Decision Inbox: unblock autonomous workers with Jev's calibrated recommendations. One click resolves the question and pushes work forward." />
+    <StatusHead hint="Shared decision inbox. Choose explicitly; recommendations never authorize actions automatically." />
 
     <div className="dt-filters" style={{ display: 'flex', gap: '8px', marginBottom: '16px', alignItems: 'center' }}>
       <Pill active={tab === 'inbox' && filterMode === 'pending'} onClick={() => { setTab('inbox'); setFilterMode('pending') }}>
@@ -79,52 +64,10 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
         All Decisions
       </Pill>
       <span className="dt-filter-gap" style={{ flex: 1 }} />
-      <button
-        style={{
-          background: autoPilot ? '#238636' : '#21262d',
-          color: autoPilot ? '#ffffff' : '#8b949e',
-          border: autoPilot ? '1px solid #3fb950' : '1px solid #30363d',
-          borderRadius: '6px',
-          padding: '4px 10px',
-          fontSize: '12px',
-          fontWeight: 600,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px'
-        }}
-        onClick={() => {
-          const next = !autoPilot
-          setAutoPilot(next)
-          try { localStorage.setItem('dsh_jev_autopilot', String(next)) } catch {}
-        }}
-        title="When active, automatically unblocks workers by choosing Jev's recommended route"
-      >
-        <span>{autoPilot ? '⚡' : '⚪'}</span>
-        <span>Make Progress (Jev-Pilot: {autoPilot ? 'ON' : 'OFF'})</span>
-      </button>
       <Pill active={tab === 'playground'} onClick={() => setTab('playground')}>
         ⚡ Live Model Evaluator
       </Pill>
     </div>
-
-    {autoPilot && (
-      <div style={{
-        background: 'rgba(35, 134, 54, 0.15)',
-        border: '1px solid rgba(63, 185, 80, 0.4)',
-        borderRadius: '6px',
-        padding: '10px 14px',
-        marginBottom: '16px',
-        color: '#3fb950',
-        fontSize: '12px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <span><strong>⚡ Make Progress Active:</strong> Incoming decisions automatically advance along Jev's highest-confidence route.</span>
-        <span style={{ fontSize: '11px', opacity: 0.8 }}>Calibrated Confidence &gt; 85%</span>
-      </div>
-    )}
 
     <LoadState error={error} loading={!data && tab === 'inbox'} />
 
@@ -165,7 +108,7 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
           </div>
 
           {item.status === 'resolved' ? <div style={{ background: '#161b22', border: '1px solid #238636', borderRadius: '6px', padding: '10px 14px', color: '#3fb950', fontWeight: 600, fontSize: '12px' }}>
-            ✅ Resolved: Option <strong>{item.resolvedChoice}</strong> accepted. Worker unblocked and task proceeding!
+            ✅ Resolved: Option <strong>{item.resolvedChoice}</strong> accepted. Selection recorded; this does not confirm downstream execution.
           </div> : <DecisionCard
             title={item.question}
             recommendation={item.recommendation}
@@ -177,9 +120,9 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
     </div>}
 
     {tab === 'playground' && <div style={{ background: '#1c2128', border: '1px solid #30363d', borderRadius: '8px', padding: '20px' }}>
-      <h3 style={{ color: '#f0f6fc', marginBottom: '8px' }}>Real-Time System One Evaluator</h3>
+      <h3 style={{ color: '#f0f6fc', marginBottom: '8px' }}>Decision Evaluator</h3>
       <p style={{ color: '#8b949e', fontSize: '12px', marginBottom: '16px' }}>
-        Test decision scoring live against DeepSeek or Jev models. Pass state context and candidate options to calculate probability calibration.
+        Evaluate mutually exclusive alternatives using the configured provider. Scores are model-reported, not calibrated.
       </p>
 
       <div style={{ marginBottom: '12px' }}>
@@ -211,7 +154,7 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
       </div>
 
       <Button variant="primary" disabled={evaluating} onClick={runPlayground}>
-        {evaluating ? '⏳ Evaluating via Jev System One...' : '⚡ Evaluate with Decision API'}
+        {evaluating ? 'Evaluating…' : '⚡ Evaluate with Decision API'}
       </Button>
 
       {pgResult && <div style={{ marginTop: '20px' }}>

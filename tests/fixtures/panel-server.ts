@@ -323,6 +323,7 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
   'GET decisions': { query: ['kind', 'window', 'offset', 'limit'], answer: ({ query }) =>
     ({ items: query.kind === 'ignore' ? [] : [acceptDecision()], next_offset: null }) },
   'GET decisions/inbox': { answer: () => ({ items: [] }) },
+  'POST decisions/inbox': { body: true, answer: ({ body }) => ({ ok: true, id: body.id }) },
   'POST decisions/evaluate': { body: true, answer: ({ body }) => ({
     recommendedValue: body.choices[0]?.id || '',
     confidence: 0.9,

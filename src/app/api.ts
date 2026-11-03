@@ -31,6 +31,7 @@ export interface Api {
   'POST triggers/:id/requeue': { response: { queued: boolean } }
   'GET decisions': { query?: Paged & { kind?: string; window?: '24h' }; response: DecisionListView }
   'GET decisions/inbox': { response: { items: PendingDecisionItem[] } }
+  'POST decisions/inbox': { body: PendingDecisionItem; response: { ok: boolean; id: string } }
   'POST decisions/evaluate': { body: DecisionEvaluationRequest; response: DecisionEvaluationResult }
   'POST decisions/:id/resolve': { body: { choiceId: string }; response: { resolved: boolean; choiceId: string } }
   'POST decisions/:id/dismiss': { response: { dismissed: true } }
