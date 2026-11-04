@@ -28,11 +28,9 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
   })
 
   const items = data?.items || []
-  // Only evaluate captured explicit alternatives, never rank generic response actions or ordered tasks.
+  // Evaluate any pending decision with candidate choices.
   const canEvaluate = (item: PendingDecisionItem) => {
-    const parsed = parseInlineAlternatives(item.context)
-    return item.status === 'pending' && !item.staging && !!parsed && parsed.choices.length === item.choices.length
-      && parsed.choices.every(choice => item.choices.some(saved => saved.id === choice.id && saved.label === choice.label))
+    return item.status === 'pending' && !item.staging && item.choices.length >= 2
   }
   const evaluateItem = async (item: PendingDecisionItem) => {
     const recommendation = await call('POST decisions/evaluate', { body: {
@@ -132,7 +130,8 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
             unavailableReason={item.advisor?.status === 'pending' || item.advisor?.status === 'generating'
               ? 'The next-step advisor has not finished generating guidance.'
               : item.advisor?.status === 'error' ? `Advisor unavailable: ${item.advisor.error || 'Generation failed.'}`
-              : !canEvaluate(item) && !item.recommendation.recommendedValue ? 'No ranked recommendation was saved for this item. Only recognized explicit alternatives can be evaluated here; generic response actions are not ranked. Review the context or ask for clarification in the source conversation.' : undefined}
+              : !item.choices.length ? 'No candidate choices were provided for this decision.'
+              : !item.recommendation.recommendedValue ? 'Click "Get recommendation" to evaluate these choices with the Decision API.' : undefined}
             onEvaluate={canEvaluate(item) ? () => evaluateItem(item) : undefined}
             onExecute={item.status === 'pending' && !item.staging ? choiceId => resolveAction.run(item.id, choiceId) : undefined}
           />

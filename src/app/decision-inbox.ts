@@ -225,10 +225,12 @@ export class DecisionInbox {
     const existing = this.findSource(input)
     if (existing) return existing
     const id = `chat-${createHash('sha256').update(`${input.sessionId}\0${input.sourceMessageId ?? `turn:${input.sourceTurn ?? input.key}`}`).digest('hex').slice(0, 32)}`
+    const { choices, hiddenOptions } = normalizeChoices([])
     const item: PendingDecisionItem = { id, sessionId: input.sessionId, sourceMessageId: input.sourceMessageId,
       sourceTurn: input.sourceTurn, sourceSeq: input.sourceSeq, question: input.question, context: input.context.slice(-30000),
       ticketTitle: input.title ?? 'Conversation next steps', trigger: 'Task-specific next steps', status: 'pending', urgency: 'low',
-      createdAt: input.createdAt, actionMode: 'stage_response', choices: [], recommendation, advisor: { status: 'pending', key: input.key } }
+      createdAt: input.createdAt, actionMode: 'stage_response', choices, ...(hiddenOptions.length ? { hiddenOptions } : {}),
+      recommendation, advisor: { status: 'ready', model: 'fallback', key: input.key } }
     this.save(item)
     return item
   }
