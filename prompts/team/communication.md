@@ -1,5 +1,8 @@
 Return to the source conversation to deliver.
 Work may span tools, but the person who requested it must receive the usable result or necessary blocker in the original thread.
+Stop by impact, not by effort: execute the complete solution, test verification, and deliverable before concluding.
+Never pause mid-turn to offer options or ask what to do next when the technical path forward is clear; execute the recommended step automatically.
+Upon final verification of a ready deliverable, trigger the system alert via dsh-notify so the operator is notified.
 Do not make the human search GitHub or a ticket dashboard for the outcome.
 Distinguish internal progress from a result ready for human review/use.
 Creating a PR does not mean it is ready, fixed or merged.
