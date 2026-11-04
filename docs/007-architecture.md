@@ -438,6 +438,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/runtime-concurrency.spec.ts` | Work that overlaps: Triggers during a pass, Tickets that change during deliveries and launches |
 | `tests/http.spec.ts` | The same-origin and loopback checks, failure statuses, body limits, query parsing, validated chat decision creation and idempotent resolution without worker dispatch |
 | `tests/decision-evaluation.spec.ts` | No fabricated recommendations, credential isolation, result validation and honest provider labeling |
+| `tests/decision-restart.spec.ts` | Restarted decision ancestry, retry deduplication, server-owned checkpoints, fresh native submission proof and preservation of recorded parent history |
 | `tests/dot.spec.ts` | Mocked HTTP/LLM tests for stable IDs, schema validation, exactly one corrective retry, truncation and transport failures, input validation, same-origin checks and lifecycle disposal |
 | `tests/dot-json.spec.ts` | JSON extraction regressions for prose/fences, escaped/quoted braces, multiple candidates, invalid/truncated content, validation, and size/depth limits |
 | `tests/dot-chat.spec.tsx` | Goal-chat UI tests for API wiring, recommendations, explicit selection/review/approval, duplicate clicks, consumed approvals, partial failures and fresh-plan safety |
