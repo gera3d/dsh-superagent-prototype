@@ -98,6 +98,7 @@ export function parseDecisionsResponse(payload: unknown, request: DecisionEvalua
   const root = isRecord(payload) ? payload : undefined
   // Accept the documented top-level shape and a single result/output/data wrapper some gateways use.
   const body = root && ('choice' in root || 'probabilities' in root) ? root
+    : root && Array.isArray(root.answers) && isRecord(root.answers[0]) ? root.answers[0]
     : root && isRecord(root.result) ? root.result
     : root && isRecord(root.output) ? root.output
     : root && isRecord(root.data) ? root.data : undefined

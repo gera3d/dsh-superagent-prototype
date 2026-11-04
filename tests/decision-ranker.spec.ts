@@ -63,6 +63,27 @@ it('accepts a single wrapped result and id/probability distribution aliases', ()
   expect(result.provider).toContain('TypeSafe Jev Decisions API / jev-latest')
 })
 
+it('accepts OpenAI answers array envelope', () => {
+  const result = parseDecisionsResponse({
+    model: 'gpt-6-luna',
+    answers: [{
+      name: 'next_action',
+      choice: 'deploy',
+      confidence: 0.6,
+      probabilities: [
+        { value: 'deploy', probability: 0.6 },
+        { value: 'review', probability: 0.4 },
+      ],
+    }],
+  }, request, 'openai-luna', 'gpt-6-luna', 8)
+  expect(result.recommendedValue).toBe('deploy')
+  expect(result.confidence).toBe(0.6)
+  expect(result.distribution).toEqual([
+    { id: 'deploy', probability: 0.6 },
+    { id: 'review', probability: 0.4 },
+  ])
+})
+
 it('rejects an unknown choice, an incomplete distribution, or a distribution that does not sum to one', () => {
   expect(() => parseDecisionsResponse({ ...payload, choice: 'ship' }, request, 'openai-luna', 'gpt-6-luna', 1)).toThrow('unknown choice')
   expect(() => parseDecisionsResponse({ ...payload, probabilities: [payload.probabilities[0]] }, request, 'openai-luna', 'gpt-6-luna', 1)).toThrow('incomplete')
