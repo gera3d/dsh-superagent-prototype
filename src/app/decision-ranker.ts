@@ -10,7 +10,7 @@
 import { decisionRequestProblem, evaluateDecision, type DecisionEvaluationRequest, type DecisionEvaluationResult, type DecisionModelCall } from '../core/decision.ts'
 
 export const DECISIONS_QUESTION_NAME = 'next_action'
-export const DEFAULT_DECISIONS_ENDPOINT = 'https://api.openai.com/v1/decisions'
+export const DEFAULT_DECISIONS_ENDPOINT = 'https://api.openai.com/v1/chat/completions'
 export const DEFAULT_DECISIONS_MODEL = { 'openai-luna': 'gpt-6-luna', 'typesafe-jev': 'jev-latest' } as const
 export const DECISIONS_INPUT_LIMIT = 30_000
 /** The model ranks; it never explains actions or invents evidence. Rationale text is generated from the returned ranking. */
@@ -60,7 +60,7 @@ function resolveModel(provider: 'openai-luna' | 'typesafe-jev', settings: Decisi
 }
 function resolveEndpoint(provider: 'openai-luna' | 'typesafe-jev', settings: DecisionsRankerSettings): string | undefined {
   const endpoint = settings.endpoint.trim()
-  if (endpoint) return endpoint
+  if (endpoint && endpoint !== 'https://api.openai.com/v1/decisions') return endpoint
   return provider === 'openai-luna' ? DEFAULT_DECISIONS_ENDPOINT : undefined
 }
 function resolveApiKey(settings: DecisionsRankerSettings | undefined, env: Record<string, string | undefined>): string | undefined {
@@ -92,10 +92,53 @@ export function decisionsRequest(request: DecisionEvaluationRequest, model: stri
   }
 }
 
-/** Map a Decisions API response to the existing recommendation contract; invalid rankings throw and fall back. */
+/** Request body for OpenAI /v1/chat/completions structured decision ranking. */
+export function chatCompletionsDecisionsRequest(request: DecisionEvaluationRequest, model: string) {
+  return {
+    model,
+    messages: [
+      {
+        role: 'system',
+        content: [
+          DECISIONS_INSTRUCTIONS,
+          'You MUST respond with valid JSON with the following keys:',
+          '"choice": string ID of the best candidate option.',
+          '"confidence": number between 0.0 and 1.0 representing confidence.',
+          '"probabilities": array of {"id": string, "probability": number} summing to 1.0 over all candidate choices.',
+        ].join(' '),
+      },
+      {
+        role: 'user',
+        content: [
+          'Context:',
+          request.context.slice(-24_000),
+          '',
+          `Decision Question: ${request.question.slice(0, 4_000)}`,
+          '',
+          'Candidate Choices:',
+          ...request.choices.map(c => `- ID "${c.id}": ${c.label}${c.description ? ` (${c.description})` : ''}`),
+        ].join('\n'),
+      },
+    ],
+    response_format: { type: 'json_object' },
+  }
+}
+
+/** Map a Decisions API or Chat Completions response to the existing recommendation contract; invalid rankings throw and fall back. */
 export function parseDecisionsResponse(payload: unknown, request: DecisionEvaluationRequest,
   provider: 'openai-luna' | 'typesafe-jev', model: string, latencyMs: number): DecisionEvaluationResult {
-  const root = isRecord(payload) ? payload : undefined
+  let rawJson = payload
+  if (isRecord(payload) && Array.isArray(payload.choices) && isRecord(payload.choices[0])) {
+    const firstChoice = payload.choices[0]
+    if (isRecord(firstChoice.message) && typeof firstChoice.message.content === 'string') {
+      try {
+        rawJson = JSON.parse(firstChoice.message.content)
+      } catch {
+        throw new Error('Decisions API returned invalid JSON in chat completion content')
+      }
+    }
+  }
+  const root = isRecord(rawJson) ? rawJson : undefined
   // Accept the documented top-level shape and a single result/output/data wrapper some gateways use.
   const body = root && ('choice' in root || 'probabilities' in root) ? root
     : root && Array.isArray(root.answers) && isRecord(root.answers[0]) ? root.answers[0]
@@ -110,8 +153,16 @@ export function parseDecisionsResponse(payload: unknown, request: DecisionEvalua
   const choice = chosen ? request.choices.find(item => item.id === chosen) : undefined
   if (!choice) throw new Error('Decisions API returned an unknown choice')
   const rawProbabilities = body.probabilities
-  if (!Array.isArray(rawProbabilities) || rawProbabilities.length !== request.choices.length) throw new Error('Decisions API returned an incomplete distribution')
-  const distribution = rawProbabilities.map(entry => {
+  let rawList: unknown[] = []
+  if (Array.isArray(rawProbabilities)) {
+    rawList = rawProbabilities
+  } else if (isRecord(rawProbabilities)) {
+    rawList = Object.entries(rawProbabilities).map(([id, probability]) => ({ id, probability }))
+  } else {
+    throw new Error('Decisions API returned an incomplete distribution')
+  }
+  if (rawList.length !== request.choices.length) throw new Error('Decisions API returned an incomplete distribution')
+  const distribution = rawList.map(entry => {
     if (!isRecord(entry)) throw new Error('Decisions API returned an invalid distribution')
     const id = typeof entry.value === 'string' ? entry.value
       : typeof entry.id === 'string' ? entry.id
@@ -121,19 +172,25 @@ export function parseDecisionsResponse(payload: unknown, request: DecisionEvalua
     return { id, probability }
   })
   if (new Set(distribution.map(item => item.id)).size !== request.choices.length
-    || distribution.some(item => !request.choices.some(choice => choice.id === item.id))
-    || Math.abs(distribution.reduce((sum, item) => sum + item.probability, 0) - 1) > 0.01) {
+    || distribution.some(item => !request.choices.some(choice => choice.id === item.id))) {
     throw new Error('Decisions API returned an invalid distribution')
   }
+  const sum = distribution.reduce((acc, item) => acc + item.probability, 0)
+  if (Math.abs(sum - 1) > 0.05) {
+    throw new Error('Decisions API returned an invalid distribution')
+  }
+  const normalized = sum > 0 && Math.abs(sum - 1) > 0.0001
+    ? distribution.map(d => ({ id: d.id, probability: Number((d.probability / sum).toFixed(4)) }))
+    : distribution
   // `confidence` is the documented field; the highest reported probability is the same fact when it is omitted.
   const confidence = validScore(body.confidence) ? body.confidence
-    : distribution.reduce((highest, item) => Math.max(highest, item.probability), 0)
+    : normalized.reduce((highest, item) => Math.max(highest, item.probability), 0)
   const label = provider === 'typesafe-jev' ? 'TypeSafe Jev Decisions API' : 'OpenAI Decisions API'
   return {
     recommendedValue: choice.id,
     confidence,
     rationale: `${label} ranked "${choice.label}" highest with confidence ${(confidence * 100).toFixed(0)}%. Vendor-reported probabilities; not independently calibrated.`,
-    distribution,
+    distribution: normalized,
     provider: `${label} / ${model} (vendor-reported probabilities, not calibrated)`,
     latencyMs,
   }
@@ -145,16 +202,21 @@ export async function callDecisionsApi(request: DecisionEvaluationRequest, setti
   const start = Date.now()
   const send = options.fetch ?? globalThis.fetch
   if (typeof send !== 'function') throw new Error('No fetch implementation is available for the Decisions API')
+  const model = resolveModel(settings.provider, settings)
+  const isChat = options.endpoint.includes('/chat/completions')
+  const reqBody = isChat
+    ? chatCompletionsDecisionsRequest(request, model)
+    : decisionsRequest(request, model)
   const response = await send(options.endpoint, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${options.apiKey}` },
-    body: JSON.stringify(decisionsRequest(request, resolveModel(settings.provider, settings))),
+    body: JSON.stringify(reqBody),
     signal: options.signal ?? AbortSignal.timeout(settings.timeoutMs),
   })
   if (!response.ok) throw new Error(`Decisions API returned HTTP ${response.status}`)
   const text = await response.text()
   if (text.length > 200_000) throw new Error('Decisions API response exceeded its size limit')
-  return parseDecisionsResponse(JSON.parse(text), request, settings.provider, resolveModel(settings.provider, settings), Date.now() - start)
+  return parseDecisionsResponse(JSON.parse(text), request, settings.provider, model, Date.now() - start)
 }
 
 /**

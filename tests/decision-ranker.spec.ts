@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest'
 import type { DecisionEvaluationRequest, DecisionModelCall } from '../src/core/decision.ts'
-import { decisionsRequest, evaluateDecisionWithFallback, parseDecisionsResponse } from '../src/app/decision-ranker.ts'
+import { chatCompletionsDecisionsRequest, decisionsRequest, evaluateDecisionWithFallback, parseDecisionsResponse } from '../src/app/decision-ranker.ts'
 import { SettingsSchema } from '../src/policy.ts'
 
 const request: DecisionEvaluationRequest = {
@@ -177,4 +177,59 @@ it('keeps the ranker off by default and validates its block', () => {
   expect(() => SettingsSchema.parse({ decisions: { endpoint: 'not a url' } })).toThrow()
   expect(() => SettingsSchema.parse({ decisions: { endpoint: 'javascript:alert(1)' } })).toThrow()
   expect(() => SettingsSchema.parse({ decisions: { apiKeyEnv: 'not a name!' } })).toThrow()
+})
+
+it('maps OpenAI chat completions request and parses chat completion response', () => {
+  const req = chatCompletionsDecisionsRequest(request, 'gpt-6-luna')
+  expect(req.model).toBe('gpt-6-luna')
+  expect(req.messages).toHaveLength(2)
+  expect(req.response_format).toEqual({ type: 'json_object' })
+
+  const chatResponse = {
+    choices: [{
+      message: {
+        role: 'assistant',
+        content: JSON.stringify({
+          choice: 'deploy',
+          confidence: 0.85,
+          probabilities: [
+            { id: 'deploy', probability: 0.85 },
+            { id: 'review', probability: 0.15 },
+          ],
+        }),
+      },
+    }],
+  }
+  const result = parseDecisionsResponse(chatResponse, request, 'openai-luna', 'gpt-6-luna', 25)
+  expect(result.recommendedValue).toBe('deploy')
+  expect(result.confidence).toBe(0.85)
+  expect(result.distribution).toEqual([
+    { id: 'deploy', probability: 0.85 },
+    { id: 'review', probability: 0.15 },
+  ])
+})
+
+it('accepts object map format for probabilities in chat response', () => {
+  const chatResponse = {
+    choices: [{
+      message: {
+        role: 'assistant',
+        content: JSON.stringify({
+          choice: 'review',
+          confidence: 0.7,
+          probabilities: {
+            deploy: 0.3,
+            review: 0.7,
+          },
+        }),
+      },
+    }],
+  }
+  const result = parseDecisionsResponse(chatResponse, request, 'openai-luna', 'gpt-6-luna', 30)
+  expect(result.recommendedValue).toBe('review')
+  expect(result.confidence).toBe(0.7)
+  expect(result.distribution).toEqual([
+    { id: 'deploy', probability: 0.3 },
+    { id: 'review', probability: 0.7 },
+  ])
 })

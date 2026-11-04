@@ -179,10 +179,20 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
         <p className="dsa-decisions__question">{item.question}</p>
         <p className="dsa-decisions__rationale">{creating && !item.recommendation.recommendedValue && item.sourceMessageId === sourceMessageId ? 'Evaluating explicit alternatives…' : item.recommendation.rationale}</p>
         <div className="dsa-decisions__choices">
-          {item.choices.map(choice => <button type="button" key={choice.id} className={`dsa-decisions__choice${choice.id === item.recommendation.recommendedValue ? ' dsa-decisions__choice--suggested' : ''}`} disabled={!idle || !['pending', 'resolved'].includes(item.status) || input.phase !== 'plain' || selection !== undefined || (item.status === 'pending' && (!!item.invalidation || !!item.staging))} onClick={() => choose(item, choice.id)}>
-            <span>{choice.label}{choice.id === item.recommendation.recommendedValue && <span className="dsa-decisions__badge"> · Suggested</span>}</span>
-            {choice.description && <span className="dsa-decisions__description">{choice.description}</span>}
-          </button>)}
+          {item.choices.map(choice => {
+            const dist = item.recommendation.distribution?.find(d => d.id === choice.id)
+            const probability = dist ? dist.probability : (choice.id === item.recommendation.recommendedValue && item.recommendation.confidence ? item.recommendation.confidence : undefined)
+            const percent = probability !== undefined && Number.isFinite(probability) && probability > 0 ? Math.round(probability * 100) : undefined
+
+            return <button type="button" key={choice.id} className={`dsa-decisions__choice${choice.id === item.recommendation.recommendedValue ? ' dsa-decisions__choice--suggested' : ''}`} disabled={!idle || !['pending', 'resolved'].includes(item.status) || input.phase !== 'plain' || selection !== undefined || (item.status === 'pending' && (!!item.invalidation || !!item.staging))} onClick={() => choose(item, choice.id)}>
+              <span>
+                {choice.label}
+                {percent !== undefined && <span className="dsa-decisions__badge" style={{ marginLeft: 6, fontWeight: 700 }}>{percent}%</span>}
+                {choice.id === item.recommendation.recommendedValue && <span className="dsa-decisions__badge"> · Suggested</span>}
+              </span>
+              {choice.description && <span className="dsa-decisions__description">{choice.description}</span>}
+            </button>
+          })}
         </div>
         <div className="dsa-decisions__details">
           <p>Evaluator: {creating && !item.recommendation.recommendedValue && item.sourceMessageId === sourceMessageId ? 'Evaluation in progress' : item.recommendation.provider}. Recommendations are not authorization.</p>

@@ -72,13 +72,37 @@ export function DecisionCard({ title, quote, context, unavailableReason, recomme
       <p><small>Resets this card only; does not undo the recorded choice or any action.</small></p>
     </div>}
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-      {choices.map(choice => <div key={choice.id} className="dt-decision-option" data-chosen={selected === choice.id ? 'true' : undefined} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, border: selected === choice.id ? '2px solid #3fb950' : '1px solid #526177', background: selected === choice.id ? 'rgba(63, 185, 80, 0.12)' : undefined, borderRadius: 6, padding: 10 }}>
-        <div><strong>{choice.label}</strong>{selected === choice.id && <small> · ✓ Chosen</small>}{choice.id === recommendation.recommendedValue && <small> · Suggested</small>}
-          {choice.description && <div>{choice.description}</div>}
-          {choice.prompt && <details style={{ marginTop: 6 }}><summary>Preview response</summary><p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{choice.prompt}</p></details>}
+      {choices.map(choice => {
+        const dist = recommendation.distribution?.find(d => d.id === choice.id)
+        const probability = dist ? dist.probability : (choice.id === recommendation.recommendedValue && recommendation.confidence ? recommendation.confidence : undefined)
+        const percent = probability !== undefined && Number.isFinite(probability) && probability > 0 ? Math.round(probability * 100) : undefined
+
+        return <div key={choice.id} className="dt-decision-option" data-chosen={selected === choice.id ? 'true' : undefined} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, border: selected === choice.id ? '2px solid #3fb950' : '1px solid #526177', background: selected === choice.id ? 'rgba(63, 185, 80, 0.12)' : undefined, borderRadius: 6, padding: 10 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <strong>{choice.label}</strong>
+              {percent !== undefined && (
+                <span className="dt-badge" style={{
+                  padding: '1px 6px',
+                  borderRadius: 4,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  background: choice.id === recommendation.recommendedValue ? 'rgba(63, 185, 80, 0.25)' : 'rgba(128, 128, 128, 0.2)',
+                  color: choice.id === recommendation.recommendedValue ? '#3fb950' : '#8b949e',
+                  border: choice.id === recommendation.recommendedValue ? '1px solid rgba(63, 185, 80, 0.4)' : '1px solid rgba(128, 128, 128, 0.3)'
+                }}>
+                  {percent}%
+                </span>
+              )}
+              {selected === choice.id && <small> · ✓ Chosen</small>}
+              {choice.id === recommendation.recommendedValue && <small> · Suggested</small>}
+            </div>
+            {choice.description && <div>{choice.description}</div>}
+            {choice.prompt && <details style={{ marginTop: 6 }}><summary>Preview response</summary><p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{choice.prompt}</p></details>}
+          </div>
+          {onExecute && <Button variant="outline" size="sm" disabled={locked} onClick={() => { void choose(choice.id) }}>{selected === choice.id ? 'Recorded' : 'Choose'}</Button>}
         </div>
-        {onExecute && <Button variant="outline" size="sm" disabled={locked} onClick={() => { void choose(choice.id) }}>{selected === choice.id ? 'Recorded' : 'Choose'}</Button>}
-      </div>)}
+      })}
     </div>
   </section>
 }
