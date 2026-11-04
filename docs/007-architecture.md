@@ -314,6 +314,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/core/memory.ts` | `MemoryRepositories`: the Store's repositories in memory, in the Store's order and with its nested rollback, for domain tests |
 | `src/core/index.ts` | The core's exports |
 | `src/core/decision.ts` | `evaluateDecision`: pure validation over an injected model transport; no vendor HTTP or credential access. Scores are not calibrated. |
+| `src/core/options.ts` | The Phase 0 option contract: `OPTION_MIN` and `OPTION_MAX`, generic marked fallbacks, and `normalizeChoices`, which deduplicates, backfills short sets and keeps options beyond the shown maximum as `hiddenOptions`. |
 | `src/app/decision-evaluator.ts` | Auxiliary tool-free recommendations using the source Session route or configured default, without sending work to that Session |
 | `src/app/decision-inbox.ts` | Durable SQLite decision queue, completed-turn recovery, explicit question/offer capture, source deduplication and stale detection; staging stays pending and only a bound durable native submission confirms resolution, without executing work |
 | `src/app/runtime.ts` | The Runtime, the composition root, with its start and stop |
@@ -391,7 +392,9 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/source.tsx`, `trigger.tsx`, `eval.tsx`, `execution.tsx` | One file per stage: its status, and its settings where it has some |
 | `src/client/decisions.tsx` | The Decisions tab: actionable Human-in-the-Loop decision inbox and real-time decision playground |
 | `src/client/decision-card.tsx` | Recommendation presentation with explicit callback failure handling; never claims simulated actions executed. |
+| `src/client/inline-decision.css` | Responsive, composer-scoped presentation for the inline decision dock |
 | `src/client/inline-decision.tsx` | Supported `conversation.input.dock` extension. After a completed assistant turn, explicit alternatives enter the shared runtime inbox; selections insert into the existing composer, never auto-send. |
+| `src/client/decision-submission.ts` | Shared browser staging/submission journal: preserves drafts and attachments, freezes native reference serialization, binds explicit native Send attempts to request IDs and waits for host-confirmed durable admission; never auto-sends or infers a response from matching text alone |
 | `src/client/inline-alternatives.ts` | Parses explicit lettered alternatives; ignores fenced content and ordinary numbered sequential task lists. |
 | `src/client/thread.tsx`, `ticket.tsx` | The record pages: a Thread with its timeline, and a Ticket with its authorization, Inputs and Assignments |
 | `src/client/settings.tsx` | The Settings tab: the group navigation and the group on screen |
@@ -441,6 +444,8 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/http.spec.ts` | The same-origin and loopback checks, failure statuses, body limits, query parsing, validated chat decision creation and idempotent resolution without worker dispatch |
 | `tests/decision-evaluation.spec.ts` | No fabricated recommendations, credential isolation, result validation and honest provider labeling |
 | `tests/decision-inbox.spec.ts` | Durable capture, cold recovery, false-positive exclusions, source deduplication, stale resolution guards and draft-only outcomes |
+| `tests/dock-guard.spec.tsx` | The empty-dock guard: a blank conversation renders no decision card and never touches the composer |
+| `tests/options.spec.ts` | The shared option contract: four-to-six enforcement, marked fallbacks and hidden options beyond the shown maximum |
 | `tests/decision-submission.spec.ts` | Durable resolve-on-send proof, exact native request/session/source identity, candidate races, retries, discard, invalidation, close/reopen recovery and legacy-writer guards |
 | `tests/decision-restart.spec.ts` | Restarted decision ancestry, retry deduplication, server-owned checkpoints, fresh native submission proof and preservation of recorded parent history |
 | `tests/dot.spec.ts` | Mocked HTTP/LLM tests for stable IDs, schema validation, exactly one corrective retry, truncation and transport failures, input validation, same-origin checks and lifecycle disposal |

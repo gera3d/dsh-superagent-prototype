@@ -1,9 +1,25 @@
 /** Typed recommendation evaluation. Transport is provided by the host configured-model service. */
-export interface DecisionChoice { id: string; label: string; description?: string; /** Complete advisor continuation, never merely the button label. */ prompt?: string }
+export interface DecisionChoice { id: string; label: string; description?: string; /** Complete advisor continuation, never merely the button label. */ prompt?: string; /** True when added to satisfy the minimum option count, not proposed by the source or advisor. */ added?: boolean }
+/** One append-only revision of a decision's option set. The latest revision is the shown set. */
+export interface DecisionOptionSet {
+  /** Monotonic, one-based revision within the decision. */
+  revision: number
+  /** Digest key of the turn that produced this set, when known. */
+  key?: string
+  /** Model label that produced this set; absent for capture fallbacks. */
+  model?: string
+  createdAt: number
+  choices: DecisionChoice[]
+  /** Options beyond the shown maximum, retained so no earlier option is lost. */
+  hiddenOptions?: DecisionChoice[]
+  recommendation: DecisionEvaluationResult
+  /** Revision this set was restored from, when the user restored an earlier set. */
+  restoredFrom?: number
+}
 export interface AdvisorDecision {
   sessionId: string; sourceMessageId?: string; sourceTurn?: number; sourceSeq?: number; key: string
   question: string; context: string; title?: string; createdAt: number; model: string
-  options: { id: string; label: string; prompt: string; why: string; recommended: boolean }[]
+  options: { id: string; label: string; prompt: string; why: string; recommended: boolean; added?: boolean }[]
 }
 export interface DecisionEvaluationRequest {
   context: string
@@ -73,6 +89,10 @@ export interface PendingDecisionItem {
   question: string
   recommendation: DecisionEvaluationResult
   choices: DecisionChoice[]
+  /** Options beyond the shown maximum; never pruned from the record. */
+  hiddenOptions?: DecisionChoice[]
+  /** Append-only option-set history; the latest revision is the shown set. */
+  optionSets?: DecisionOptionSet[]
   resolvedChoice?: string
   resolvedAt?: number
 }
