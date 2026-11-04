@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /** Component integration with synthetic model responses only; no live models or Session mutations. */
-import { act } from 'react'
+import { act, StrictMode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { DotChat, type DotChatProps } from '../src/client/dot-chat.tsx'
@@ -73,11 +73,14 @@ function retainedClick(button: HTMLButtonElement): () => void {
   const propsKey = Object.keys(button).find(key => key.startsWith('__reactProps$'))!
   return (button as unknown as Record<string, { onClick: () => void }>)[propsKey]!.onClick
 }
-async function mount(props: Omit<DotChatProps, 'getContext'> = {}) {
+async function mount(props: Omit<DotChatProps, 'getContext'> = {}, { strict = false } = {}) {
   const container = document.createElement('div'); document.body.append(container)
   const root = createRoot(container); roots.push(root)
   const getContext = vi.fn(async () => structuredClone(context))
-  await act(async () => { root.render(<DotChat getContext={getContext} {...props} />) })
+  await act(async () => {
+    const chat = <DotChat getContext={getContext} {...props} />
+    root.render(strict ? <StrictMode>{chat}</StrictMode> : chat)
+  })
   await flush()
   const textarea = () => container.querySelector<HTMLTextAreaElement>('textarea[aria-label="Goal for Dot"]')!
   const button = (label: string) => {
@@ -102,7 +105,12 @@ async function mount(props: Omit<DotChatProps, 'getContext'> = {}) {
     await act(async () => { selection(number, scope).click() }); await flush()
   }
   const review = () => container.querySelector<HTMLElement>('[role="region"][aria-label="Approval review"]')
-  return { container, getContext, textarea, button, type, click, submit, selection, select, review }
+  const unmount = async () => {
+    await act(async () => { root.unmount() })
+    roots = roots.filter(item => item !== root)
+    await flush()
+  }
+  return { container, getContext, textarea, button, type, click, submit, selection, select, review, unmount }
 }
 
 it('forwards the typed goal and complete current context to the planner with the request header', async () => {
@@ -362,6 +370,75 @@ it.each(['cancel', 'selection change'] as const)('synchronously revokes a review
   await view.click('Approve')
   expect(executeAction).toHaveBeenCalledExactlyOnceWith(response.actions[selectedNumber - 1], context, expect.any(AbortSignal))
   expect(view.button('Approval consumed').disabled).toBe(true)
+})
+
+it.each(['renew review', 'cancel and review again', 'cancel then change selection', 'change selection and review again'] as const)(
+  'rejects an old Approve callback after %s without consuming the fresh approval', async scenario => {
+    const executeAction = vi.fn<ExecuteAction>(async () => ({ status: 'succeeded', message: 'Fresh review accepted once' }))
+    const view = await mount({ executeAction }); await view.submit(); await view.select(1); await view.click('Review selected actions')
+    const oldApprove = retainedClick(view.button('Approve'))
+    if (scenario === 'cancel and review again' || scenario === 'cancel then change selection') await view.click('Cancel approval')
+    const changesSelection = scenario === 'cancel then change selection' || scenario === 'change selection and review again'
+    if (changesSelection) await view.select(2)
+    await view.click('Review selected actions')
+    const currentApprove = retainedClick(view.button('Approve'))
+    const selectedNumber = changesSelection ? 2 : 1
+    const expectedAction = structuredClone(response.actions[selectedNumber - 1])
+    expect(view.review()?.querySelector('pre')?.textContent).toBe(
+      selectedNumber === 1 ? 'Implement search coverage in the Workbench project.' : 'Inspect search edge cases without publishing changes.',
+    )
+    await act(async () => { oldApprove(); oldApprove() }); await flush()
+    expect(executeAction).not.toHaveBeenCalled()
+    expect(view.review()).not.toBeNull()
+    await act(async () => { currentApprove(); oldApprove(); currentApprove() }); await flush()
+    expect(executeAction).toHaveBeenCalledExactlyOnceWith(expectedAction, context, expect.any(AbortSignal))
+    await act(async () => { oldApprove(); currentApprove() }); await flush()
+    expect(executeAction).toHaveBeenCalledTimes(1)
+    expect(view.button('Approval consumed').disabled).toBe(true)
+    expect(requests.map(request => request.path)).toEqual(['/dot/api/plan'])
+  },
+)
+
+it('revokes retained Review and Approve callbacks after unmount, even when Review is invoked again', async () => {
+  const executeAction = vi.fn<ExecuteAction>(async () => ({ status: 'succeeded', message: 'Must never dispatch' }))
+  const view = await mount({ executeAction }); await view.submit(); await view.select(1); await view.click('Review selected actions')
+  const oldReview = retainedClick(view.button('Review selected actions'))
+  const oldApprove = retainedClick(view.button('Approve'))
+  await view.unmount()
+  await act(async () => { oldApprove(); oldReview(); oldApprove(); oldReview(); oldApprove() }); await flush()
+  expect(executeAction).not.toHaveBeenCalled()
+  expect(requests.map(request => request.path)).toEqual(['/dot/api/plan'])
+})
+
+it('keeps fresh approvals functional after StrictMode initial effect cleanup and remount', async () => {
+  const executeAction = vi.fn<ExecuteAction>(async () => ({ status: 'succeeded', message: 'StrictMode approval accepted' }))
+  const view = await mount({ executeAction }, { strict: true })
+  expect(view.getContext).toHaveBeenCalledTimes(2)
+  expect(view.container.textContent).toContain('1 projects · 2 threads in planning context')
+  await view.submit(); await view.select(2); await view.click('Review selected actions')
+  const approve = retainedClick(view.button('Approve'))
+  await act(async () => { approve(); approve() }); await flush()
+  expect(executeAction).toHaveBeenCalledExactlyOnceWith(response.actions[1], context, expect.any(AbortSignal))
+  expect(executeAction.mock.calls[0]![2].aborted).toBe(false)
+  expect(view.button('Approval consumed').disabled).toBe(true)
+  expect(requests.map(request => request.path)).toEqual(['/dot/api/plan'])
+})
+
+it('aborts pending multi-action dispatch on unmount and never dispatches the next action after a receipt resolves', async () => {
+  response.jevPick = -1
+  const first = deferredReceipt()
+  const executeAction = vi.fn<ExecuteAction>().mockImplementationOnce(() => first.promise)
+    .mockResolvedValue({ status: 'succeeded', message: 'Must not dispatch another action' })
+  const view = await mount({ executeAction }); await view.submit(); await view.select(1); await view.select(3)
+  await view.click('Review selected actions'); await view.click('Approve')
+  expect(executeAction).toHaveBeenCalledExactlyOnceWith(response.actions[0], context, expect.any(AbortSignal))
+  const signal = executeAction.mock.calls[0]![2]
+  expect(signal.aborted).toBe(false)
+  await view.unmount()
+  expect(signal.aborted).toBe(true)
+  await act(async () => { first.resolve({ status: 'succeeded', message: 'First dispatch accepted after unmount' }) }); await flush()
+  expect(executeAction).toHaveBeenCalledTimes(1)
+  expect(requests.map(request => request.path)).toEqual(['/dot/api/plan'])
 })
 
 it('stops sequential dispatch at a failed receipt, marks partial results and never retries or reapproves', async () => {
