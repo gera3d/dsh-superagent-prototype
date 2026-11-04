@@ -1,5 +1,6 @@
 /** Type-only management API contract between the web panel and host routes, imported by the panel without bundling host code. */
 import type { DecisionEvaluationRequest, DecisionEvaluationResult, PendingDecisionItem } from '../core/decision.ts'
+import type { DecisionResolution, DecisionStagingResult, DecisionDiscardResult, StageDecisionRequest, BindDecisionSubmission, RestartDecisionRequest, DecisionRestartResult } from './decision-inbox.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
 import type { PromptConfig, Prompts } from './prompts.ts'
 import type { PromptsView, StateView, TicketPageView } from './http.ts'
@@ -33,7 +34,11 @@ export interface Api {
   'GET decisions/inbox': { response: { items: PendingDecisionItem[] } }
   'POST decisions/inbox': { body: PendingDecisionItem; response: { ok: boolean; id: string } }
   'POST decisions/evaluate': { body: DecisionEvaluationRequest; response: DecisionEvaluationResult }
-  'POST decisions/:id/resolve': { body: { choiceId: string }; response: { resolved: boolean; choiceId: string } }
+  'POST decisions/:id/resolve': { body: { choiceId: string }; response: DecisionResolution }
+  'POST decisions/:id/restart': { body: RestartDecisionRequest; response: DecisionRestartResult }
+  'POST decisions/:id/stage': { body: StageDecisionRequest; response: DecisionStagingResult }
+  'POST decisions/:id/submission': { body: BindDecisionSubmission; response: DecisionStagingResult }
+  'POST decisions/:id/discard-staging': { body: { attemptId: string }; response: DecisionDiscardResult }
   'POST decisions/:id/dismiss': { response: { dismissed: true } }
   'GET tickets': { query?: Paged & { state?: TicketFilter }; response: TicketListView }
   'GET tickets/:id': { response: TicketPageView }

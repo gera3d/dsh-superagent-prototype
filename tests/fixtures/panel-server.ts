@@ -332,7 +332,11 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
     provider: 'Mock Jev Engine',
     latencyMs: 15
   }) },
-  'POST decisions/:id/resolve': { body: true, answer: ({ body }) => ({ resolved: true, choiceId: body.choiceId }) },
+  'POST decisions/:id/resolve': { body: true, answer: () => refuse(409, 'Linked native submission required') },
+  'POST decisions/:id/restart': { body: true, answer: () => refuse(404, 'Decision not found') },
+  'POST decisions/:id/stage': { body: true, answer: () => refuse(404, 'Decision not found') },
+  'POST decisions/:id/submission': { body: true, answer: () => refuse(404, 'Decision not found') },
+  'POST decisions/:id/discard-staging': { body: true, answer: () => refuse(404, 'Decision not found') },
   'POST decisions/:id/dismiss': { answer: ({ params }) => params.id === 'u1' ? { dismissed: true } : refuse(404,
     'Unavailable Eval not found') },
   'GET tickets': { query: ['state', 'offset', 'limit'], answer: ({ query }) => page(server.tickets[query.state === 'ended' ? 'ended'
