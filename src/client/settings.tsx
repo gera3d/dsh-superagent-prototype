@@ -4,6 +4,7 @@ import { DeploymentPage, type DeploymentForm } from './deployment.tsx'
 import { EvalSettings } from './eval.tsx'
 import { ExecutionSettings } from './execution.tsx'
 import { PromptsPage } from './prompts.tsx'
+import { BrandingSettings } from './branding-settings.tsx'
 import { usePanel } from './provider.tsx'
 import { SETTINGS_GROUPS, settingsRoute, type SettingsGroup } from './route.ts'
 import { SettingsProvider } from './settings-kit.tsx'
@@ -20,6 +21,7 @@ export function SettingsPage({ group, query, state, deploymentForm }: {
       case 'eval': return <SettingsProvider><EvalSettings version={query.version} /></SettingsProvider>
       case 'execution': return <SettingsProvider><ExecutionSettings /></SettingsProvider>
       case 'prompts': return <PromptsPage />
+      case 'branding': return <SettingsProvider><BrandingSettings /></SettingsProvider>
       case 'deployment': return <DeploymentPage setup={state.setup} form={deploymentForm} />
     }
   })()

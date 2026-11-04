@@ -153,6 +153,13 @@ export const ExecutorConfigSchema = z.object({
   blockedCommands: z.array(CommandNameSchema).default([]),
 }).strict()
 export const SourceInstanceSchema = z.object({ enabled: z.boolean().default(true), config: z.record(z.string(), z.unknown()).default({}) }).strict()
+/** Branding settings: logo file path or URL, optional dark/light variants. */
+export const BrandingConfigSchema = z.object({
+  logo: z.string().trim().default(''),
+  logoDark: z.string().trim().default(''),
+  logoLight: z.string().trim().default(''),
+}).strict()
+export type BrandingConfig = z.infer<typeof BrandingConfigSchema>
 export const SettingsSchema = z.object({
   paused: z.boolean().default(false),
   sources: z.record(z.string().regex(/^[a-z][a-z0-9-]*$/), SourceInstanceSchema).default({}),
@@ -162,9 +169,10 @@ export const SettingsSchema = z.object({
   decisions: DecisionsConfigSchema.default(() => DecisionsConfigSchema.parse({})),
   models: ModelsConfigSchema.default(() => ModelsConfigSchema.parse({})),
   characters: CharactersConfigSchema.default(() => CharactersConfigSchema.parse({})),
+  branding: BrandingConfigSchema.default(() => BrandingConfigSchema.parse({})),
 }).strict()
 export type Settings = z.infer<typeof SettingsSchema>
-export type SettingsBlock = 'policy' | 'eval' | 'executor' | 'decisions' | 'models' | 'characters' | `source:${string}`
+export type SettingsBlock = 'policy' | 'eval' | 'executor' | 'decisions' | 'models' | 'characters' | 'branding' | `source:${string}`
 export type SettingsSave = SettingsBlock | 'pause'
 export type SettingsOrigin = 'panel' | 'tool' | 'sync'
 

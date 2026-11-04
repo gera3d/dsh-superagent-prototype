@@ -1,4 +1,5 @@
 /** Type-only management API contract between the web panel and host routes, imported by the panel without bundling host code. */
+import type { BrandingConfig } from '../policy.ts'
 import type { DecisionEvaluationRequest, DecisionEvaluationResult, PendingDecisionItem } from '../core/decision.ts'
 import type { CharacterEvaluationResult } from '../core/character.ts'
 import type { DecisionResolution, DecisionStagingResult, DecisionDiscardResult, StageDecisionRequest, BindDecisionSubmission, RestartDecisionRequest, DecisionRestartResult } from './decision-inbox.ts'
@@ -51,6 +52,7 @@ export interface Api {
   'GET policy/history': { response: HistoryView }
   'POST policy-sync/:id': { response: { policy: unknown } }
   'POST setup/check': { response: { restarting: true } }
+  'GET branding': { response: { branding: BrandingConfig; revision: number } }
   'GET models': { response: ModelCatalog }
   'GET prompts': { query?: { revision?: number; offset?: number }; response: PromptsView }
   'PUT prompts': { body: { config: PromptConfig; baseRevision: number }; response: { revision: number; context_delivery: Delivery } }
