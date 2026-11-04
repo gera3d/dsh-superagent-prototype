@@ -65,12 +65,12 @@ def ps(*options, check=False):
 
 def running(pid, profile):
     """Return whether `pid` is currently running the DSH service for `profile` (`ps -p` returns nothing once exited)."""
-    return any(found == pid and name in ('node', 'dsh') and serves(args, profile) for found, name, args in ps('-p', str(pid)))
+    return any(found == pid and (name in ('node', 'dsh') or 'DSH' in name) and serves(args, profile) for found, name, args in ps('-p', str(pid)))
 
 
 def processes(profile):
     """Return PIDs of all running DSH service processes for `profile`, including instances started outside this script and the recorded `service.pid` while still running."""
-    found = [pid for pid, name, args in ps('-ax', check=True) if name in ('node', 'dsh') and serves(args, profile)]
+    found = [pid for pid, name, args in ps('-ax', check=True) if (name in ('node', 'dsh') or 'DSH' in name) and serves(args, profile)]
     try:
         pid = int((control(profile) / 'service.pid').read_text())
     except (OSError, ValueError):
@@ -206,6 +206,44 @@ def start(args):
     raise RuntimeError('Startup health check timed out; inspect the log. Any running process was left intact.')
 
 
+def called_from_service(profile):
+    """Return the service PID if this script runs inside the dsh-superagent process tree it would stop, else None."""
+    service = set(processes(profile))
+    pid = os.getppid()
+    for _ in range(30):
+        if pid in service:
+            return pid
+        row = subprocess.run(['ps', '-o', 'ppid=', '-p', str(pid)], capture_output=True, text=True).stdout.strip()
+        if not row.isdigit() or int(row) <= 1:
+            return None
+        pid = int(row)
+    return None
+
+
+def audit(args):
+    """Append who ran a start/stop/restart to `.artifacts/control/audit.log`; never raises."""
+    try:
+        chain, pid = [], os.getppid()
+        for _ in range(10):
+            row = subprocess.run(['ps', '-ww', '-o', 'pid=,ppid=,etime=,command=', '-p', str(pid)],
+                                 capture_output=True, text=True).stdout.strip()
+            if not row:
+                break
+            chain.append(row[:300])
+            parent = row.split(None, 2)[1] if len(row.split(None, 2)) > 1 else '0'
+            if not parent.isdigit() or int(parent) <= 1:
+                break
+            pid = int(parent)
+        entry = {'time': time.strftime('%Y-%m-%dT%H:%M:%S%z'), 'action': args.action, 'argv': sys.argv, 'pid': os.getpid(),
+                 'cwd': os.getcwd(), 'tmux': os.environ.get('TMUX'), 'term_program': os.environ.get('TERM_PROGRAM'),
+                 'dsh_env': sorted(key for key in os.environ if key.startswith('DSH')), 'parents': chain}
+        CONTROL.mkdir(parents=True, exist_ok=True)
+        with (CONTROL / 'audit.log').open('a') as handle:
+            handle.write(json.dumps(entry) + '\n')
+    except Exception:
+        pass
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=['start', 'stop', 'restart', 'status'])
@@ -224,6 +262,14 @@ def main():
     if not re.fullmatch(r'[A-Za-z0-9_][A-Za-z0-9_.-]*', args.profile):
         parser.error('--profile must be a DSH profile name')
     os.umask(0o077)
+    if args.action != 'status':
+        audit(args)
+    if args.action in ('stop', 'restart') and not os.environ.get('DSH_SUPERAGENT_ALLOW_SELF_RESTART'):
+        host = called_from_service(args.profile)
+        if host:
+            raise RuntimeError(f'Refusing to {args.action} dsh-superagent from inside its own process (PID {host}): '
+                               'it would kill this agent and every open session. Ask the operator to restart it '
+                               'from a terminal instead.')
     with (control(args.profile) / 'operation.lock').open('a') as lock:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)

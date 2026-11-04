@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNod
 import type { SearchView } from './api.ts'
 import { Button, Dot, Icon, Input, Modal, SegmentedTabs } from './controls.tsx'
 import type { DeploymentForm } from './deployment.tsx'
+import { DecisionsPage } from './decisions.tsx'
 import { EvalStatus } from './eval.tsx'
 import { ExecutionStatus } from './execution.tsx'
 import { ticketMark } from './marks.ts'
@@ -22,6 +23,7 @@ import { When } from './widgets.tsx'
 export interface AppProps {
   t: T; openSession: (sessionId: string) => Promise<void>
   deploymentForm: DeploymentForm
+  dotChat?: ReactNode
 }
 
 function Glossary({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -138,7 +140,9 @@ function Header({ masterId }: { masterId: string | undefined }) {
   </header>
 }
 
-function Pages({ route, openTab, deploymentForm }: { route: Route; openTab: (tab: Tab) => void; deploymentForm: DeploymentForm }) {
+function Pages({ route, openTab, deploymentForm, dotChat }: { route: Route; openTab: (tab: Tab) => void; deploymentForm: DeploymentForm; dotChat?: ReactNode }) {
+  const [dotVisited, setDotVisited] = useState(route.page === 'dot')
+  useEffect(() => { if (route.page === 'dot') setDotVisited(true) }, [route.page])
   const { t } = usePanel()
   const { state, error, reload } = usePanelData()
   // Keep the active tab scrolled into view on narrow screens when routes change via links.
@@ -146,6 +150,7 @@ function Pages({ route, openTab, deploymentForm }: { route: Route; openTab: (tab
   const waiting = error ? <p className="dt-error" role="alert">{error.message}</p> : <p className="dt-hint">{t('loading')}</p>
   const page = (() => {
     switch (route.page) {
+      case 'dot': return null
       case 'overview': return <OverviewPage />
       case 'source': return <SourceStatus />
       case 'trigger': return route.id !== undefined ? <ThreadPage key={route.id} id={route.id} target={route.query?.trigger} />
@@ -154,6 +159,7 @@ function Pages({ route, openTab, deploymentForm }: { route: Route; openTab: (tab
         paused={!!state?.paused} />
       case 'execution': return route.id !== undefined ? <TicketPage key={route.id} id={route.id} />
         : state ? <ExecutionStatus filter={route.query?.filter ?? 'open'} state={state} reload={reload} /> : waiting
+      case 'decisions': return <DecisionsPage filter={route.query?.filter} />
       case 'settings': return state ? <SettingsPage key={state.masterId} group={route.query.group} query={route.query} state={state}
         deploymentForm={deploymentForm} /> : waiting
     }
@@ -164,13 +170,16 @@ function Pages({ route, openTab, deploymentForm }: { route: Route; openTab: (tab
       {error && state && <p className="dt-error" role="status">{error.message}</p>}
       <SegmentedTabs className="dt-tabs" label={t('pagesLabel')} value={route.page} onChange={openTab}
         items={TABS.map(value => ({ value, label: t(`tab.${value}`), id: `dt-tab-${value}`, panelId: 'dt-page' }))} />
-      <main id="dt-page" role="tabpanel" aria-labelledby={`dt-tab-${route.page}`} className="dt-main">{page}</main>
+      <main id="dt-page" role="tabpanel" aria-labelledby={`dt-tab-${route.page}`} className="dt-main">
+        {(dotVisited || route.page === 'dot') && <div hidden={route.page !== 'dot'}>{dotChat ?? <p>Dot chat is unavailable in this view.</p>}</div>}
+        {page}
+      </main>
     </div>
   </div>
 }
 
 /** Root panel component managing route history and shared panel state. */
-export function App({ t, openSession, deploymentForm }: AppProps) {
+export function App({ t, openSession, deploymentForm, dotChat }: AppProps) {
   const [location, setLocation] = useState(initialLocation)
   useEffect(() => { remember(location) }, [location])
   // Preserve the last opened settings group across navigation so the Settings tab reopens at it.
@@ -183,6 +192,6 @@ export function App({ t, openSession, deploymentForm }: AppProps) {
   const openTab = useCallback((tab: Tab) => move(current => ({ stack: [], route: tab === 'settings'
     ? settingsRoute(lastSettingsGroup(current)) : { page: tab, id: undefined } })), [move])
   return <PanelProvider t={t} openSession={openSession} navigate={navigate} back={back} backLabel={routeLabel(t, location.stack.at(-1) ?? HOME)}>
-    <Pages route={location.route} openTab={openTab} deploymentForm={deploymentForm} />
+    <Pages route={location.route} openTab={openTab} deploymentForm={deploymentForm} dotChat={dotChat} />
   </PanelProvider>
 }

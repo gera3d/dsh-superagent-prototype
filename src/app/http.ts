@@ -3,7 +3,11 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { z } from 'zod'
+import type { DecisionEvaluationRequest, PendingDecisionItem } from '../core/decision.ts'
 import { THREAD_FILTERS, TICKET_FILTERS, type Api, type ApiResponse, type RouteParams } from './api.ts'
+import { configuredDecisionReply } from './decision-evaluator.ts'
+import { evaluateDecisionWithFallback } from './decision-ranker.ts'
+import { DecisionInbox, InboxError, registerDecisionCapture, ticketDecisions, submitDecision, stageDecision, restartDecision } from './decision-inbox.ts'
 import { sourceSkills } from './context.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
 import { PromptConflict, SKILL_NAME, SKILL_PREFIX, TEAM_SECTIONS, builtInBase, builtInParts, defaultPrompts, savePrompts, type Prompts }
@@ -84,7 +88,7 @@ function failure(error: unknown): [number, Record<string, unknown>] {
     return [400, { error: `Invalid settings: ${issues.map(issue => issue.path).join(', ')}`, issues }]
   }
   if (error instanceof SetupError) return [400, { error: error.message, setup: error.problem }]
-  if (error instanceof RouteError) return [error.status, { error: error.message }]
+  if (error instanceof RouteError || error instanceof InboxError) return [error.status, { error: error.message }]
   if (error instanceof UserError) return [error.missing ? 404 : 400, { error: error.message, code: error.code, values: error.values }]
   if (error instanceof SettingsConflict || error instanceof PromptConflict) return [409, { error: error.message }]
   return [500, { error: error instanceof Error ? error.message : String(error) }]
@@ -145,10 +149,31 @@ const DecisionsQuery = z.object({ kind: z.string().default(''), window: z.litera
 const count = z.coerce.number().int().nonnegative()
 const PromptsQuery = z.object({ revision: count.optional(), offset: count.default(0) })
 const SourceBlock = z.templateLiteral(['source:', z.string().regex(/^[a-z][a-z0-9-]*$/)])
-const SettingsBlockSchema = z.union([z.enum(['policy', 'eval', 'executor']), SourceBlock])
+const SettingsBlockSchema = z.union([z.enum(['policy', 'eval', 'executor', 'decisions', 'models']), SourceBlock])
 const SaveRequest = z.object({ value: z.unknown(), revision: z.number().int().nonnegative() })
+const DecisionChoiceSchema = z.object({ id: z.string().min(1).max(200), label: z.string().min(1).max(2000), description: z.string().max(4000).optional(), prompt: z.string().min(1).max(12000).optional(), added: z.boolean().optional() })
+const DecisionEvaluation = z.object({ context: z.string().max(30000), sessionId: z.string().min(1).max(300).optional(), question: z.string().max(4000), choices: z.array(DecisionChoiceSchema).min(2).max(12), provider: z.enum(['auto', 'deepseek', 'typesafe-jev', 'openai-luna']).optional() })
+export const DecisionStageRequest = z.object({ choiceId: z.string().min(1).max(200), attemptId: z.string().uuid(), draftText: z.string().min(1).max(120000) }).strict()
+export const DecisionSubmissionRequest = z.object({ attemptId: z.string().uuid(), submissionId: z.string().min(1).max(300), retryOf: z.string().min(1).max(300).optional() }).strict()
+export const DecisionDiscardRequest = z.object({ attemptId: z.string().uuid() }).strict()
+export const DecisionRestartRequest = z.object({ sessionId: z.string().min(1).max(300) }).strict()
+export const DecisionEvaluationSchema = z.object({ recommendedValue: z.string(), confidence: z.number().min(0).max(1), rationale: z.string().max(4000),
+  distribution: z.array(z.object({ id: z.string(), probability: z.number().min(0).max(1) })).max(12), provider: z.string().max(300), latencyMs: z.number().nonnegative() })
+const DecisionOptionSetSchema = z.object({ revision: z.number().int().positive(), key: z.string().max(300).optional(), model: z.string().max(300).optional(),
+  createdAt: z.number().finite(), choices: z.array(DecisionChoiceSchema).min(1).max(12), hiddenOptions: z.array(DecisionChoiceSchema).max(12).optional(),
+  recommendation: DecisionEvaluationSchema, restoredFrom: z.number().int().positive().optional() })
+export const DecisionInboxItem = z.object({
+  id: z.string().min(1).max(300), sessionId: z.string().min(1), sourceMessageId: z.string().min(1),
+  sourceSeq: z.number().int().nonnegative().optional(), sourceTurn: z.number().int().nonnegative().optional(),
+  ticketTitle: z.string().max(2000), trigger: z.string().max(4000), status: z.literal('pending'),
+  urgency: z.enum(['high', 'medium', 'low']), createdAt: z.number().finite(),
+  context: z.string().max(30000), question: z.string().max(4000), choices: z.array(DecisionChoiceSchema).min(2).max(12),
+  hiddenOptions: z.array(DecisionChoiceSchema).max(12).optional(), optionSets: z.array(DecisionOptionSetSchema).max(100).optional(),
+  recommendation: DecisionEvaluationSchema,
+})
 
-function routes(runtime: HttpHost): Routes {
+function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Routes {
+  const refreshTickets = () => inbox().syncTickets(ticketDecisions(runtime.store.tickets.open()))
   const { store } = runtime
   const ticket = (id: string) => { if (!store.tickets.get(id)) throw new RouteError(404, 'Ticket not found'); return id }
   const promptBody = (input: { body: (maxBytes?: number) => Promise<unknown> }) => input.body(4 * runtime.machine.promptMaxChars.get() + 4096)
@@ -184,6 +209,29 @@ function routes(runtime: HttpHost): Routes {
       const since = window ? new Date(Date.now() - 86_400_000).toISOString() : ''
       return decisionList(views(runtime), kind.split(',').filter(Boolean), offset, limit, since)
     },
+    'GET decisions/inbox': () => { refreshTickets(); return { items: inbox().list() } },
+    'POST decisions/inbox': async ({ body }) => {
+      const item = DecisionInboxItem.parse(await body())
+      if (new Set(item.choices.map(choice => choice.id)).size !== item.choices.length) throw new RouteError(400, 'Choice ids must be distinct')
+      const saved = inbox().put(item)
+      return { ok: true, id: saved.id }
+    },
+    'POST decisions/evaluate': async ({ body }) => {
+      const payload = DecisionEvaluation.parse(await body())
+      return evaluateDecisionWithFallback(payload, {
+        decisions: store.settings().decisions,
+        call: request => configuredDecisionReply(ctx, request),
+      })
+    },
+    'POST decisions/:id/resolve': async ({ params, body }) => {
+      const { choiceId } = z.object({ choiceId: z.string().min(1).max(200) }).strict().parse(await body())
+      if (params.id.startsWith('dec-')) refreshTickets()
+      return inbox().resolve(params.id, choiceId)
+    },
+    'POST decisions/:id/restart': async ({ params, body }) => restartDecision(ctx, inbox(), params.id, DecisionRestartRequest.parse(await body())),
+    'POST decisions/:id/stage': async ({ params, body }) => stageDecision(ctx, inbox(), params.id, DecisionStageRequest.parse(await body())),
+    'POST decisions/:id/submission': async ({ params, body }) => submitDecision(ctx, inbox(), params.id, DecisionSubmissionRequest.parse(await body())),
+    'POST decisions/:id/discard-staging': async ({ params, body }) => inbox().discardStaging(params.id, DecisionDiscardRequest.parse(await body()).attemptId),
     'POST decisions/:id/dismiss': ({ params }) => { runtime.engine.dismiss(params.id); return { dismissed: true } },
     'GET tickets': ({ query }) => {
       const { state, offset, limit } = TicketsQuery.parse(query)
@@ -229,7 +277,10 @@ function match(table: Routes, method: string, segments: string[]) {
 }
 export function registerHttp(ctx: Context, runtime: HttpHost): () => void {
   if (ctx.webServer.host !== '127.0.0.1') throw new Error('Orchestrator management requires a loopback Web server')
-  const table = routes(runtime)
+  let savedInbox: DecisionInbox | undefined
+  const inbox = () => savedInbox ??= new DecisionInbox(runtime.store.db)
+  const capture = registerDecisionCapture(ctx, inbox)
+  const table = routes(runtime, ctx, inbox)
   const disposers = [
     ctx.webServer.register({ kind: 'prefix', path: '/orchestrator', handler: async (req, res) => {
       const url = new URL(req.url ?? '/', 'http://localhost')
@@ -237,11 +288,12 @@ export function registerHttp(ctx: Context, runtime: HttpHost): () => void {
       if (!sameOrigin(req, ctx.webServer.port)) { json(res, 403, { error: 'Same-origin management request required' }); return }
       try {
         await runtime.ready
+        if (url.pathname.includes("/decisions/")) await capture.ready
         const route = match(table, req.method ?? 'GET', url.pathname.slice('/orchestrator/api/'.length).split('/'))
         if (!route) throw new RouteError(404, 'Unknown operation')
         const query = Object.fromEntries(url.searchParams)
         json(res, 200, await route.run({ params: route.params as never, query, body: maxBytes => readBody(req, maxBytes) }))
       } catch (error) { json(res, ...failure(error)) }
     } })]
-  return () => { for (const dispose of disposers) dispose() }
+  return () => { capture.dispose(); for (const dispose of disposers) dispose() }
 }

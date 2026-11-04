@@ -12,6 +12,13 @@ import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { openKnownSession, SessionNavigationError } from '../navigation.ts'
 import { App } from './app.tsx'
+import { DotChat } from './dot-chat.tsx'
+import { executeApprovedDotAction } from './dot-execution.ts'
+import { dotContext, type DotWorkspaceSource } from './dot-context.ts'
+import { InlineDecision } from './inline-decision.tsx'
+import { createDecisionSubmission } from './decision-submission.ts'
+import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type {} from '@deepseek-ai/dsh-client-ui-chat/client'
 import { PluginConfig, usePageForm } from './deployment.tsx'
 import { en, zh } from './locales.ts'
 import type { T } from './text.ts'
@@ -42,14 +49,23 @@ function Mounted({ ctx, t }: { ctx: ClientContext; t: T }) {
     }
   }, [ctx, t])
   const form = usePageForm(ctx.get('configForms')?.get<Record<string, unknown>>(ENTRY))
-  return <App t={t} openSession={openSession} deploymentForm={form} />
+  const getDotContext = useCallback(() => dotContext(ctx.sessions,
+    ctx.get('workspaces' as never) as DotWorkspaceSource | undefined), [ctx])
+  return <App t={t} openSession={openSession} deploymentForm={form} dotChat={<DotChat getContext={getDotContext}
+    executeAction={(action, approvedContext, signal) => executeApprovedDotAction(ctx.sessions, action, approvedContext, getDotContext, signal, openSession)}
+    openSession={openSession} />} />
 }
 
-export const inject = ['slots', 'locale', 'sessions', 'uiWorkspace']
+export const inject = ['slots', 'locale', 'sessions', 'uiWorkspace', 'conversation']
 /** Registers the panel, sidebar icon, and Plugin Manager config view; `configForms` is optional (without it, machine settings are read-only). */
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-superagent: dictionaries')
   const t = ctx.locale.bind(NS)
+  const submissionBridge = createDecisionSubmission(ctx)
+  ctx.effect(() => { const unprovide = ctx.provide('decisionSubmission', submissionBridge); return () => { unprovide(); submissionBridge.dispose() } })
+  ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
+    name: 'conversation.input.dock', id: 'dsh-superagent.inline-decision', order: 10,
+  }, props => <InlineDecision {...props} submissionBridge={submissionBridge} />))
   ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: PANEL_ID, locale: NS, inject: () => ({}) },
     (props: { t: T }) => <Mounted ctx={ctx} t={props.t} />))
   ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({ name: 'sidebar.panellist', id: PANEL_ID, order: 10, label: () => t('panel'), locale: NS }, HammerIcon))

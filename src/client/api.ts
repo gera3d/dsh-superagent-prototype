@@ -128,6 +128,7 @@ export type ThreadRow = ApiResponse<'GET threads'>['items'][number]
 export type ThreadPageView = ApiResponse<'GET threads/:key'>
 export type TriggerRow = ThreadPageView['timeline'][number]
 export type DecisionRow = ApiResponse<'GET decisions'>['items'][number]
+export type PendingDecisionItem = ApiResponse<'GET decisions/inbox'>['items'][number]
 export type Problem = ApiResponse<'GET overview'>['problems'][number]
 export type DroppedReply = SourceStatusRow['dropped'][number]
 export type SearchView = ApiResponse<'GET search'>

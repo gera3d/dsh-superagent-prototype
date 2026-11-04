@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { act, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, it } from 'vitest'
+import * as ts from 'typescript'
 import { Modal, SegmentedTabs } from '../src/client/controls.tsx'
 
 declare global { var IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -18,10 +19,46 @@ it('imports no DSH client runtime package, only React and type declarations', ()
   }
 })
 
-it('imports each module of the panel only from modules that do not import it back', () => {
+/** Follow emitted runtime edges, not erased TypeScript-only dependencies. */
+function runtimeDependencies(source: string): string[] {
+  const file = ts.createSourceFile('panel.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+  const dependencies: string[] = []
+  for (const statement of file.statements) {
+    if (!ts.isImportDeclaration(statement) && !ts.isExportDeclaration(statement)) continue
+    const specifier = statement.moduleSpecifier
+    if (!specifier || !ts.isStringLiteral(specifier)) continue
+    if (ts.isImportDeclaration(statement)) {
+      const clause = statement.importClause
+      if (clause?.isTypeOnly) continue
+      const bindings = clause?.namedBindings
+      if (!clause?.name && bindings && ts.isNamedImports(bindings) && bindings.elements.length && bindings.elements.every(element => element.isTypeOnly)) continue
+    } else {
+      if (statement.isTypeOnly) continue
+      const clause = statement.exportClause
+      if (clause && ts.isNamedExports(clause) && clause.elements.length && clause.elements.every(element => element.isTypeOnly)) continue
+    }
+    const local = /^\.\/([\w-]+\.tsx?)$/.exec(specifier.text)
+    if (local) dependencies.push(local[1]!)
+  }
+  return dependencies
+}
+
+it('distinguishes erased type imports from real runtime dependencies', () => {
+  expect(runtimeDependencies(`
+    import type { Context } from './types.ts'
+    import { type Action } from './actions.ts'
+    import { type Receipt, execute } from './execution.ts'
+    import './effects.ts'
+    export type { Options } from './options.ts'
+    export { type Result } from './result.ts'
+    export { run } from './runner.ts'
+    export * from './values.ts'
+  `)).toEqual(['execution.ts', 'effects.ts', 'runner.ts', 'values.ts'])
+})
+
+it('imports panel runtime modules without circular runtime dependencies', () => {
   const dir = join(process.cwd(), 'src/client')
-  const graph = new Map(readdirSync(dir).filter(name => /\.tsx?$/.test(name)).map(name => [name, [...readFileSync(join(dir, name), 'utf8')
-    .matchAll(/^import [^'"]*from '\.\/([\w-]+\.tsx?)'/gm)].map(match => match[1]!)]))
+  const graph = new Map(readdirSync(dir).filter(name => /\.tsx?$/.test(name)).map(name => [name, runtimeDependencies(readFileSync(join(dir, name), 'utf8'))]))
   const done = new Set<string>(), cycles: string[] = []
   const visit = (name: string, path: string[]): void => {
     if (path.includes(name)) { cycles.push([...path.slice(path.indexOf(name)), name].join(' → ')); return }

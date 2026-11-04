@@ -1,4 +1,7 @@
-import { expect, it } from 'vitest'
+import { expect, it, afterEach } from 'vitest'
+import { DatabaseSync } from 'node:sqlite'
+const databases: DatabaseSync[] = []
+afterEach(() => { for (const db of databases.splice(0)) db.close() })
 import { z } from 'zod'
 import { registerHttp } from '../src/app/http.ts'
 import { PromptConflict } from '../src/app/prompts.ts'
@@ -12,8 +15,11 @@ type Headers = Record<string, string | undefined>
 /** Mount management HTTP routes on a fake web server and return a request helper that includes default panel headers. */
 function serve(runtime: Partial<Record<keyof HttpHost, unknown>>, host = '127.0.0.1') {
   let handler: Handler = async () => {}
-  const ctx = { webServer: { host, port: 3082, register: (route: { handler: Handler }) => { handler = route.handler; return () => {} } } }
-  registerHttp(ctx as never, { ready: Promise.resolve(), ...runtime } as unknown as HttpHost)
+  const db = new DatabaseSync(':memory:'); databases.push(db)
+  const ctx = { on: () => () => {}, sessionPersistence: { flush: async () => {}, list: async () => [] },
+    logger: { error: () => {}, warn: () => {} },
+    webServer: { host, port: 3082, register: (route: { handler: Handler }) => { handler = route.handler; return () => {} } } }
+  registerHttp(ctx as never, { ready: Promise.resolve(), ...runtime, store: { db, ...(runtime.store as object) } } as unknown as HttpHost)
   return async (method: string, path: string, body?: unknown, headers: Headers = {}) => {
     let status = 0, text = ''
     const chunks = body === undefined ? [] : [Buffer.from(typeof body === 'string' ? body : JSON.stringify(body))]
@@ -24,6 +30,28 @@ function serve(runtime: Partial<Record<keyof HttpHost, unknown>>, host = '127.0.
     return { status, body: JSON.parse(text) as Record<string, unknown> }
   }
 }
+
+it('validates chat decisions and never retries a worker for a chat choice', async () => {
+  let retries = 0
+  const call = serve({ store: { tickets: { get: () => undefined } }, engine: { retryTicket: () => { retries++ } } })
+  const item = { id: 'inline:session:message', sessionId: 'session', sourceMessageId: 'message',
+    ticketTitle: 'Conversation decision', trigger: 'Explicit alternatives', status: 'pending', urgency: 'low', createdAt: Date.now(),
+    context: 'Context', question: 'Which direction?', choices: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }],
+    recommendation: { recommendedValue: '', confidence: 0, rationale: 'Unavailable', distribution: [], provider: 'Not evaluated', latencyMs: 0 } }
+  expect(await call('POST', 'decisions/inbox', {})).toMatchObject({ status: 400 })
+  expect(await call('POST', 'decisions/inbox', item)).toMatchObject({ status: 200 })
+  expect(await call('POST', 'decisions/inline:session:message/resolve', { choiceId: 'bad' })).toMatchObject({ status: 400 })
+  expect(await call('POST', 'decisions/inline:session:message/resolve', { choiceId: 'a' })).toMatchObject({ status: 409, body: { error: expect.stringContaining('Linked native submission required') } })
+  expect(await call('POST', 'decisions/inline:session:message/resolve', { choiceId: 'a' })).toMatchObject({ status: 409, body: { error: expect.stringContaining('Linked native submission required') } })
+  expect(await call('POST', 'decisions/inline:session:message/resolve', { choiceId: 'b' })).toMatchObject({ status: 409 })
+  expect(await call('POST', 'decisions/missing/resolve', { choiceId: 'a' })).toMatchObject({ status: 404 })
+  expect(await call('POST', 'decisions/missing/restart', { sessionId: 'session' })).toMatchObject({ status: 404 })
+  expect(await call('POST', 'decisions/inline:session:message/restart', {})).toMatchObject({ status: 400 })
+  expect(await call('POST', 'decisions/inline:session:message/restart', { sessionId: 'session', restartAfterSeq: 0 })).toMatchObject({ status: 400 })
+  expect(await call('POST', 'decisions/inline:session:message/restart', { sessionId: 'other' })).toMatchObject({ status: 409 })
+  expect(await call('POST', 'decisions/inline:session:message/restart', { sessionId: 'session' })).toMatchObject({ status: 409, body: { error: expect.stringContaining('Only a recorded') } })
+  expect(retries).toBe(0)
+})
 
 it('answers each kind of failure with its own status', async () => {
   const saves: unknown[] = []

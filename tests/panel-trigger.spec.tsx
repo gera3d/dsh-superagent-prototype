@@ -66,11 +66,15 @@ it('folds consecutive automated messages from one sender on a Thread, showing th
 })
 
 it('reads the page around a link\'s target once, also for a Trigger the Thread does not have, while it polls the newest page', async () => {
-  vi.useFakeTimers({ shouldAdvanceTime: true })
+  // Advance polling explicitly; wall-clock auto-advance makes the request count depend on host load.
+  vi.useFakeTimers()
   onTestFinished(() => { vi.useRealTimers() })
   at({ page: 'trigger', id: 'feishu:oc_1:om_root', query: { trigger: 'gone' } })
+  const started = Date.now()
   await mount()
+  expect(Date.now()).toBe(started)
   await act(async () => { await vi.advanceTimersByTimeAsync(5000) }); await settle()
+  expect(Date.now()).toBe(started + 5000)
   expect(server.requests.filter(request => request.path.startsWith('threads/')).map(request => request.path)).toEqual([
     'threads/feishu:oc_1:om_root?limit=50', 'threads/feishu:oc_1:om_root?limit=50&around=gone', 'threads/feishu:oc_1:om_root?limit=50'])
 })
@@ -114,8 +118,9 @@ function busyThread(count: number) {
 const shown = () => all('.dt-event .dt-event-text').map(item => Number(item.textContent!.replace('message m', ''))).reverse()
 const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, n) => from + n)
 
-it('reads back the Triggers between the newest page and the earlier ones it shows, once more arrive than a page holds', async () => {
-  vi.useFakeTimers({ shouldAdvanceTime: true })
+// Exercise overlapping and disjoint poll pages independently, rather than growing and rerendering both in one test.
+it.each([10, 60])('keeps earlier Triggers and fills any gap when %i new Triggers arrive', async more => {
+  vi.useFakeTimers()
   onTestFinished(() => { vi.useRealTimers() })
   const thread = busyThread(120)
   at({ page: 'trigger', id: 'feishu:oc_1:om_root' })
@@ -124,14 +129,13 @@ it('reads back the Triggers between the newest page and the earlier ones it show
   await click(zh.loadEarlier)
   expect(shown()).toEqual(range(20, 119))
   // Fewer new Triggers than a page holds still join the earlier ones; more leave a gap, which is read back.
-  thread.add(10)
+  thread.add(more)
   await act(async () => { await vi.advanceTimersByTimeAsync(5000) }); await settle()
-  expect(shown()).toEqual(range(20, 129))
-  thread.add(60)
-  await act(async () => { await vi.advanceTimersByTimeAsync(5000) }); await settle()
-  expect(shown()).toEqual(range(20, 189))
+  expect(shown()).toEqual(range(20, 119 + more))
+  expect(server.requests.filter(request => request.path.startsWith('threads/') && request.path.includes('&before=')))
+    .toHaveLength(more < 50 ? 1 : 2)
   await click(zh.loadEarlier)
-  expect(shown()).toEqual(range(0, 189))
+  expect(shown()).toEqual(range(0, 119 + more))
 })
 
 it('shows a link\'s target far back with every Trigger after it', async () => {

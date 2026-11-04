@@ -44,6 +44,7 @@ const ICON_PATHS = {
   running: 'M12 3a9 9 0 1 0 9 9',
   blocked: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM5.6 5.6l12.8 12.8',
   queue: 'M4 6h16M4 12h16M4 18h10',
+  star: 'M12 3l2.9 5.9 6.1.9-4.5 4.3 1.1 6.1L12 17.8 6.4 20.2l1.1-6.1L3 9.8l6.1-.9z',
 } as const satisfies Record<string, string>
 export type IconName = keyof typeof ICON_PATHS
 export function Icon({ name, size = 16 }: { name: IconName; size?: number }) {

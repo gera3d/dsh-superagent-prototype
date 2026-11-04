@@ -3,13 +3,14 @@ import { cloneElement, createContext, useContext, useEffect, useId, useLayoutEff
   type ReactNode } from 'react'
 import type { ApiResponse } from '../app/api.ts'
 import type { FieldSpec, Localized } from '../sources/kind.ts'
+import { LIMITS } from '../limits.ts'
 import { usePoll, type HistoryView, type Settings, type SettingsView, type SourceView } from './api.ts'
 import { Button, DisclosureRow, Icon, InfoTip, Input, SegmentedControl, Switch } from './controls.tsx'
-import { useDraft } from './draft.tsx'
+import { SaveBar, useDraft } from './draft.tsx'
 import { useAction, usePanel, usePanelData } from './provider.tsx'
 import { settingsRoute } from './route.ts'
 import { errorText, localized, valueLabel, when, type T } from './text.ts'
-import { Hint, LoadState } from './widgets.tsx'
+import { Hint, LoadState, Section } from './widgets.tsx'
 
 /** Parse a numeric input string, returning `null` when empty so the server rejects blank required numbers instead of coercing to 0. */
 export const numberOf = (text: string): number | null => text.trim() ? Number(text) : null
@@ -101,6 +102,86 @@ export function ModelField({ id, value, onChange }: { id: string; value: RoleMod
         value={effort.id}>{effort.name}</option>)}
     </datalist>
   </div>
+}
+
+type ModelEntry = SettingsView['blocks']['models']['value']['hierarchy'][number]
+/**
+ * The shared model hierarchy: the starred (most used) routes in cheapest-to-strongest order, and the cap on automatic
+ * escalations. The Eval and Execution blocks keep each job type's default route, which starts this chain.
+ */
+export function ModelsBlock() {
+  const { t, call } = usePanel()
+  const block = useSettings().settings.blocks.models
+  // Keep the raw text while typing; parse the number only on save, as the Eval timeout does.
+  const drafted = { ...block.value, maxEscalations: String(block.value.maxEscalations) }
+  const draft = useBlockDraft('models', drafted, block.revision,
+    value => ({ ...value, maxEscalations: numberOf(value.maxEscalations) }))
+  const [catalog, setCatalog] = useState<ApiResponse<'GET models'>>()
+  const [error, setError] = useState<string>()
+  useEffect(() => { call('GET models').then(setCatalog, failure => setError(errorText(failure))) }, [call])
+  const entry = draft.value.hierarchy
+  const groups = catalog?.groups ?? []
+  const edit = (next: Partial<typeof draft.value>) => draft.edit({ ...draft.value, ...next })
+  const set = (index: number, next: Partial<ModelEntry>) => edit({ hierarchy: entry.map((item, at) => at === index ? { ...item, ...next } : item) })
+  const move = (index: number, delta: number) => {
+    const to = index + delta
+    if (to < 0 || to >= entry.length) return
+    const next = entry.slice()
+    ;[next[index], next[to]] = [next[to]!, next[index]!]
+    edit({ hierarchy: next })
+  }
+  const add = () => edit({ hierarchy: [...entry, { provider: '', model: '', starred: true }] })
+  const remove = (index: number) => edit({ hierarchy: entry.filter((_item, at) => at !== index) })
+  const models = (provider: string) => groups.find(group => group.id === provider.trim())?.models ?? []
+  return <form className="dt-form" onSubmit={event => { void draft.submit(event) }}>
+    <Fields disabled={draft.busy}>
+      <div className="dt-form dt-block">
+        <h2 className="dt-block-title">{t('modelHierarchy')}<InfoTip text={t('modelHierarchyIntro')} /></h2>
+        <Hint>{t('modelHierarchyHint')}</Hint>
+        {error && <p className="dt-error">{t('modelCatalogError', { error })}</p>}
+        <Section title={t('starredModels')} hint={t('starredModelsHint')} action={<Button variant="ghost" size="sm"
+          icon={<Icon name="plus" />} onClick={add}>{t('addModel')}</Button>}>
+          {entry.length ? <ul className="dt-list dt-hierarchy">{entry.map((item, index) => <li key={index} className="dt-row">
+            <button type="button" className="dt-star" data-on={item.starred || undefined} aria-pressed={item.starred}
+              aria-label={t(item.starred ? 'modelUnstar' : 'modelStar')} title={t(item.starred ? 'modelUnstar' : 'modelStar')}
+              onClick={() => set(index, { starred: !item.starred })}>
+              <Icon name="star" />
+            </button>
+            <div className="dt-row-main"><div className="dt-grid3">
+              <Field label={t('modelProvider')}><Input list="dt-hierarchy-providers" spellCheck={false} required value={item.provider}
+                placeholder={t('modelProviderPlaceholder')} onChange={event => set(index, { provider: event.target.value })} /></Field>
+              <Field label={t('modelName')}><Input list={`dt-hierarchy-models-${index}`} spellCheck={false} required value={item.model}
+                placeholder={t('modelNamePlaceholder')} onChange={event => set(index, { model: event.target.value })} /></Field>
+              <Field label={t('modelEffort')}><Input list={`dt-hierarchy-efforts-${index}`} spellCheck={false}
+                value={item.reasoningEffort ?? ''} placeholder={t('modelEffortDefault')}
+                onChange={event => set(index, { reasoningEffort: event.target.value.trim() || undefined })} /></Field>
+            </div></div>
+            <div className="dt-row-actions">
+              <Button variant="ghost" size="sm" icon={<Icon name="chevron-up" />} aria-label={t('moveModelUp')}
+                title={t('moveModelUp')} disabled={index === 0} onClick={() => move(index, -1)} />
+              <Button variant="ghost" size="sm" icon={<Icon name="chevron-down" />} aria-label={t('moveModelDown')}
+                title={t('moveModelDown')} disabled={index === entry.length - 1} onClick={() => move(index, 1)} />
+              <Button variant="ghost" size="sm" icon={<Icon name="trash" />} aria-label={t('removeModel')}
+                title={t('removeModel')} onClick={() => remove(index)} />
+            </div>
+          </li>)}</ul> : <Hint>{t('modelHierarchyEmpty')}</Hint>}
+        </Section>
+        <Field label={t('maxEscalations')} hint={t('maxEscalationsHint')}>
+          <Input type="number" min={LIMITS.maxEscalations.min} max={LIMITS.maxEscalations.max} required
+            value={draft.value.maxEscalations} onChange={event => edit({ maxEscalations: event.target.value })} />
+        </Field>
+      </div>
+    </Fields>
+    <SaveBar {...draft} onDiscard={draft.discard} />
+    <datalist id="dt-hierarchy-providers">{groups.map(group => <option key={group.id} value={group.id}>{group.name}</option>)}</datalist>
+    {entry.map((item, index) => <div key={index}>
+      <datalist id={`dt-hierarchy-models-${index}`}>{models(item.provider).map(model => <option key={model.id} value={model.id}>{model.name}</option>)}</datalist>
+      <datalist id={`dt-hierarchy-efforts-${index}`}>
+        {(models(item.provider).find(model => model.id === item.model.trim())?.reasoning?.efforts ?? []).map(effort =>
+          <option key={effort.id} value={effort.id}>{effort.name}</option>)}
+      </datalist>
+    </div>)}
+  </form>
 }
 
 type HistoryChange = NonNullable<HistoryView['items'][number]['changes']>[number]

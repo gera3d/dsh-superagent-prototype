@@ -4,16 +4,17 @@ import type { SetupPlace } from '../setup.ts'
 import { DECISION_FILTERS, type DecisionFilter } from './api.ts'
 import type { T } from './text.ts'
 
-export const TABS = ['overview', 'source', 'trigger', 'eval', 'execution', 'settings'] as const
+export const TABS = ['dot', 'overview', 'source', 'trigger', 'eval', 'execution', 'decisions', 'settings'] as const
 export type Tab = typeof TABS[number]
 export const SETTINGS_GROUPS = ['source', 'eval', 'execution', 'prompts', 'deployment'] as const
 export type SettingsGroup = typeof SETTINGS_GROUPS[number]
-export type Route = { page: 'overview' | 'source'; id?: undefined; query?: undefined }
+export type Route = { page: 'dot' | 'overview' | 'source'; id?: undefined; query?: undefined }
   | { page: 'trigger'; id?: undefined; query?: { filter?: ThreadFilter } }
   | { page: 'trigger'; id: string; query?: { trigger?: string } }
   | { page: 'eval'; id?: undefined; query?: { filter?: DecisionFilter; window?: '24h' } }
   | { page: 'execution'; id?: undefined; query?: { filter?: TicketFilter } }
   | { page: 'execution'; id: string; query?: undefined }
+  | { page: 'decisions'; id?: undefined; query?: { filter?: 'pending' | 'resolved' | 'all' } }
   | { page: 'settings'; id?: undefined; query: { group: SettingsGroup; source?: string; version?: string } }
 export const HOME: Route = { page: 'overview' }
 export const settingsRoute = (group: SettingsGroup, query: { source?: string; version?: string } = {}): Route =>
@@ -34,12 +35,13 @@ export function parseRoute(value: unknown): Route | undefined {
   const text = (name: string) => typeof query?.[name] === 'string' ? query[name] as string : undefined
   const record = typeof id === 'string' && id ? id : undefined
   switch (page) {
-    case 'overview': case 'source': return { page }
+    case 'dot': case 'overview': case 'source': return { page }
     case 'trigger': return record ? { page, id: record, query: compact({ trigger: text('trigger') }) }
       : { page, query: compact({ filter: pick(THREAD_FILTERS, query?.filter) }) }
     case 'eval': return { page, query: compact({ filter: pick(DECISION_FILTERS, query?.filter),
       window: query?.window === '24h' ? '24h' as const : undefined }) }
     case 'execution': return record ? { page, id: record } : { page, query: compact({ filter: pick(TICKET_FILTERS, query?.filter) }) }
+    case 'decisions': return { page, query: compact({ filter: pick(['pending', 'resolved', 'all'] as const, query?.filter) }) }
     case 'settings': return { page, query: { group: pick(SETTINGS_GROUPS, query?.group) ?? 'source',
       ...compact({ source: text('source'), version: text('version') }) } }
     default: return undefined

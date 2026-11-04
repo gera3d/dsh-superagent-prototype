@@ -22,6 +22,7 @@ import { SetupError, type SetupProblem } from '../src/setup.ts'
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { setTimeout as delay } from 'node:timers/promises'
 
 const MEMBER = 'ou_alice'
 function host(overrides: Partial<SourceContextDeps> = {}) {
@@ -340,6 +341,8 @@ describe('github source', () => {
     expect(commentTrigger({ id: 9, body: '@Agent-Bot please fix', user: { login: 'alice', type: 'User' } }, { number: 7, isPr: true }, 'conversation', 'agent-bot')).toMatchObject({ human: true, addressed: 'mention' })
     expect(commentTrigger({ id: 10, body: 'mail@agent-bot.example', user: { login: 'alice', type: 'User' } }, { number: 7, isPr: true }, 'conversation', 'agent-bot')).not.toHaveProperty('addressed')
     expect(commentTrigger({ id: 11, body: 'pushed', user: { login: 'Agent-Bot', type: 'User' } }, { number: 7, isPr: true }, 'conversation', 'agent-bot').human).toBe(false)
+    expect(commentTrigger({ id: 12, body: '[superagent] test work', user: { login: 'Agent-Bot', type: 'User' } }, { number: 7, isPr: true }, 'conversation', 'agent-bot').human).toBe(true)
+    expect(commentTrigger({ id: 13, body: '[test] run check', user: { login: 'Agent-Bot', type: 'User' } }, { number: 7, isPr: true }, 'conversation', 'agent-bot').human).toBe(true)
   })
   it('reads the address of an Issue, a PR or a review comment of the repository, and nothing else', () => {
     expect(githubAddress('https://api.github.com/repos/acme/widgets/pulls/9', 'acme/widgets')).toEqual({ number: 9, pr: true })
@@ -712,6 +715,15 @@ describe('github source', () => {
     github(h, { notifications: [{ ...notification(9, 'pulls'), updated_at: '2026-09-11T00:00:00Z' }], 'pulls/9': pr })
     await pollRound(h)
     expect(h.receive.mock.calls.filter(([trigger]) => trigger.meta.kind === 'pull')).toEqual([])
+    // When the agent's own PR contains [superagent], it is admitted
+    h.receive.mockClear()
+    h.store.set('github-since', '2026-09-08T00:00:00.000Z')
+    const selfPr = { ...pr, title: '[superagent] test self PR', user: { login: 'agent-bot' } }
+    github(h, { notifications: [notification(10, 'pulls')], 'pulls/10': selfPr })
+    await pollRound(h)
+    const selfOpened = h.receive.mock.calls.map(([trigger]) => trigger).filter(trigger => trigger.meta.kind === 'pull')
+    expect(selfOpened.length).toBe(1)
+    expect(selfOpened[0]!.human).toBe(true)
     h.store.close()
   })
   it('reads a subscribed default-branch CI Thread as no Issue, and keeps no poll error on it', async () => {
@@ -1032,6 +1044,16 @@ describe('feishu event consumer', () => {
   let running: Promise<unknown> | undefined
   // The fake CLI is a real process, which starts slower while the whole suite runs.
   const until = { timeout: 10_000 }
+  // vi.waitFor advances fake timers while polling. Child startup/stdio must use
+  // real time; only the test's explicit advances should move consumer deadlines.
+  async function waitForConsumer(assertion: () => void) {
+    const began = performance.now()
+    for (;;) {
+      try { assertion(); return }
+      catch (error) { if (performance.now() - began >= until.timeout) throw error }
+      await delay(25)
+    }
+  }
   beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'feishu-consumer-')); controller = new AbortController() })
   afterEach(async () => {
     controller.abort()
@@ -1045,18 +1067,34 @@ describe('feishu event consumer', () => {
    */
   function cli(mode: 'never' | 'warn' | 'ready' | 'flaky' | 'events' | 'late'): string {
     const path = join(dir, 'lark-bot')
-    writeFileSync(path, `#!/bin/sh
-  [ "$1" = event ] || { echo '{"ok":true,"data":{}}'; exit 0; }
-  n=$(cat '${dir}/runs' 2>/dev/null || echo 0); n=$((n + 1)); echo $n > '${dir}/runs'; echo $$ > '${dir}/pid'
-  case ${mode} in
-    never) exec sleep 60 ;;
-    warn) echo '[event] ready' >&2; echo 'WARN the connection was reset' >&2; exec sleep 60 ;;
-    ready) echo '[event] ready' >&2; exec sleep 60 ;;
-    flaky) echo '[event] ready' >&2; [ "$n" -gt 1 ] && exec sleep 60; exit 1 ;;
-    events) echo '[event] ready' >&2; cat '${dir}/events'; touch '${dir}/printed'; exec sleep 60 ;;
-    late) echo '[event] ready' >&2; sleep 1; cat '${dir}/events'; touch '${dir}/printed'; exec sleep 60 ;;
-  esac
-  `, { mode: 0o755 })
+    // Keep the real child/stdio/signal integration, but do not spawn shell utilities:
+    // cat/sleep/touch startup under worker contention can outlast the Source's stop poll.
+    writeFileSync(path, `#!${process.execPath}
+const { existsSync, readFileSync, writeFileSync } = require('node:fs')
+const { join } = require('node:path')
+if (process.argv[2] !== 'event') {
+  console.log('{"ok":true,"data":{}}')
+} else {
+  const dir = ${JSON.stringify(dir)}
+  const mode = ${JSON.stringify(mode)}
+  const runs = join(dir, 'runs')
+  const n = (existsSync(runs) ? Number(readFileSync(runs, 'utf8')) : 0) + 1
+  writeFileSync(join(dir, 'pid'), String(process.pid))
+  writeFileSync(runs, String(n))
+  if (mode !== 'never') console.error('[event] ready')
+  if (mode === 'warn') console.error('WARN the connection was reset')
+  if (mode === 'flaky' && n === 1) process.exitCode = 1
+  else {
+    setInterval(() => {}, 60_000)
+    const print = () => {
+      process.stdout.write(readFileSync(join(dir, 'events')))
+      writeFileSync(join(dir, 'printed'), '')
+    }
+    if (mode === 'events') print()
+    if (mode === 'late') setTimeout(print, 1000)
+  }
+}
+`, { mode: 0o755 })
     return path
   }
   const runs = () => existsSync(join(dir, 'runs')) ? Number(readFileSync(join(dir, 'runs'), 'utf8')) : 0
@@ -1147,29 +1185,35 @@ describe('feishu event consumer', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     const { ctx, health, store } = consumerSource(cli('never'))
     running = runFeishu(ctx, controller.signal)
-    await vi.waitFor(() => expect(runs()).toBe(1), until)
+    await waitForConsumer(() => expect(runs()).toBe(1))
     const pid = Number(readFileSync(join(dir, 'pid'), 'utf8'))
-    await vi.advanceTimersByTimeAsync(45_000)
-    await vi.waitFor(() => expect(health.feishu).toMatchObject({ state: 'error',
-      detail: expect.stringContaining('did not become ready within 45 seconds') }), until)
+    await vi.advanceTimersByTimeAsync(44_999)
+    expect(alive(pid)).toBe(true)
+    expect(health.feishu?.state).toBe('starting')
+    await vi.advanceTimersByTimeAsync(1)
+    await waitForConsumer(() => expect(health.feishu).toMatchObject({ state: 'error',
+      detail: expect.stringContaining('did not become ready within 45 seconds') }))
     expect(alive(pid)).toBe(false)
     controller.abort(); await running; store.close()
   }, 20_000)
   it('reports a warning the consumer prints as an error', async () => {
     const { ctx, health, store } = consumerSource(cli('warn'))
     running = runFeishu(ctx, controller.signal)
-    await vi.waitFor(() => expect(health.feishu).toMatchObject({ state: 'error', detail: 'WARN the connection was reset' }), until)
+    await waitForConsumer(() => expect(health.feishu).toMatchObject({ state: 'error', detail: 'WARN the connection was reset' }))
     controller.abort(); await running; store.close()
   }, 20_000)
   it('stops the consumer within five seconds once the Source is off', async () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
     const { ctx, health, store, turnOff } = consumerSource(cli('ready'))
     running = runFeishu(ctx, controller.signal)
-    await vi.waitFor(() => expect(health.feishu).toMatchObject({ state: 'ready', detail: 'Listening for bot events' }), until)
+    await waitForConsumer(() => expect(health.feishu).toMatchObject({ state: 'ready', detail: 'Listening for bot events' }))
     const pid = Number(readFileSync(join(dir, 'pid'), 'utf8'))
     turnOff()
-    await vi.advanceTimersByTimeAsync(5000)
-    await vi.waitFor(() => expect(health.feishu).toMatchObject({ state: 'paused', code: 'sourceOff' }), until)
+    await vi.advanceTimersByTimeAsync(4999)
+    expect(alive(pid)).toBe(true)
+    expect(health.feishu?.state).toBe('ready')
+    await vi.advanceTimersByTimeAsync(1)
+    await waitForConsumer(() => expect(health.feishu).toMatchObject({ state: 'paused', code: 'sourceOff' }))
     expect(alive(pid)).toBe(false)
     controller.abort(); await running; store.close()
   }, 20_000)

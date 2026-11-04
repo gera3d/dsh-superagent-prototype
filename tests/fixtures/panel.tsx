@@ -1,7 +1,9 @@
 /** DOM rendering and interaction helpers for panel tests. */
+import { performance } from 'node:perf_hooks'
+import { setImmediate, setTimeout } from 'node:timers/promises'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { expect, vi } from 'vitest'
+import { expect } from 'vitest'
 import { App } from '../../src/client/app.tsx'
 import { usePageForm } from '../../src/client/deployment.tsx'
 import { zh } from '../../src/client/locales.ts'
@@ -27,13 +29,17 @@ function unmount() {
 }
 export const usePanel = () => usePanelServer(unmount)
 
-/** Flush pending fake-server responses and React state updates. */
+/** Flush responses and React updates using a real event-loop turn, even when the panel's polling clock is frozen. */
 export async function settle() {
-  await vi.waitFor(async () => {
-    await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)) })
-    expect(server.pending).toBe(0)
-  })
-  await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)) })
+  // vi.waitFor advances fake timers even on its first check. Keep the existing 1s response budget on a real clock.
+  const deadline = performance.now() + 1000
+  do {
+    await act(async () => { await setImmediate() })
+    if (server.pending === 0) break
+    await setTimeout(10)
+  } while (performance.now() < deadline)
+  expect(server.pending).toBe(0)
+  await act(async () => { await setImmediate() })
 }
 export async function mount(dictionary: Record<string, string> = zh) {
   container = document.createElement('div'); document.body.append(container)

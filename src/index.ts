@@ -2,6 +2,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-settings'
 import { Runtime } from './app/runtime.ts'
+import { registerDot } from './app/dot.ts'
 import { Config, machineOf, type DeploymentConfig } from './deployment.ts'
 
 export const name = 'dsh-superagent'
@@ -9,6 +10,7 @@ export const inject = ['agents', 'sessionController', 'sessionPersistence', 'wor
 export { Config }
 export async function apply(ctx: Context, config: DeploymentConfig): Promise<void> {
   const machine = machineOf(config)
+  ctx.effect(() => registerDot(ctx))
   // The management panel provides its own settings UI, so disable DSH's auto-generated settings page.
   ctx.inject(['settings'], child => { child.effect(() => child.settings.configure({ auto: false }, ctx.fiber)) })
   // Volatile limits update in place without a restart; account changes restart dsh-superagent. DSH's settings service stops
@@ -25,3 +27,4 @@ export async function apply(ctx: Context, config: DeploymentConfig): Promise<voi
 }
 export type { Deployment, DeploymentConfig } from './deployment.ts'
 export * from './core/index.ts'
+export * from './app/tools/composio.ts'

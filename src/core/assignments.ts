@@ -17,6 +17,11 @@ export interface WorkerReport {
   askedBy?: string
   /** The person's question this report answers, which the worker thereby takes up; authorizes the main Session to send an answer reply. */
   answers?: string
+  /**
+   * Whether a `failed` report may escalate to a stronger model; internal, never a worker's choice. The Executor's own launch
+   * failures set it false, because a workspace or setup problem does not get better on another model.
+   */
+  escalatable?: boolean
 }
 const RECOVERY_NOTE = 'The host restarted during this ticket. Inspect the current worktree, git history and GitHub state before continuing. Do not repeat an already completed external operation. Finish the original assignment and report its status.'
 
@@ -125,6 +130,11 @@ export class Assignments extends EnginePart {
     if (report.answers) this.takeUp(ticketId, report.answers)
     if (report.state === 'blocked' || report.state === 'failed') ticket.undelivered = ticket.undelivered.filter(id => !automatic(ticket.inputs.find(input => input.id === id)))
     this.repo.tickets.save(ticket)
+    // A failure a stronger model may fix escalates instead of waiting for a person; a question, an open question, a launch
+    // failure, or a cap that routing reports as exhausted keeps the failure with a person.
+    const escalate = report.state === 'failed' && !attention && report.escalatable !== false
+      ? this.options.escalation?.(ticket, report.summary) : undefined
+    if (escalate) { this.tickets.escalate(ticketId, escalate, report.summary); return this.require(ticketId) }
     // A ticket that follows Threads ends with them: a ready report ends it only once followsDone holds, with that outcome.
     const ready = !ticket.follows?.length ? 'completed' : this.tickets.followsDone(ticket)?.outcome
     // A dropped report after a close the ticket deferred ends it as the close did, which its final notice tells.
