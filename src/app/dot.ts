@@ -121,6 +121,12 @@ Return ONLY JSON:
  "jev_pick": <index of the single best action when they are alternatives, or -1 when they are independent and should all run>,
  "confidence": <0..1, how sure you are this is what the user wants>}`
 
+/** Identity uses validated execution arguments; explanation text does not change the action. */
+function actionKey(action: DotAction): string {
+  return JSON.stringify(action.type === 'start_thread' ? [action.type, action.projectId, action.prompt]
+    : action.type === 'message_thread' ? [action.type, action.sessionId, action.prompt] : [action.type, action.sessionId])
+}
+
 function validActions(raw: unknown, projects: DotProject[], threads: DotThread[]): DotAction[] {
   if (!Array.isArray(raw)) return []
   const projectIds = new Set(projects.map(p => p.id))
@@ -138,7 +144,13 @@ function validActions(raw: unknown, projects: DotProject[], threads: DotThread[]
     else if (a.type === 'open_thread' && typeof a.sessionId === 'string' && threadIds.has(a.sessionId))
       out.push({ type: 'open_thread', sessionId: a.sessionId, why })
   }
-  return out.slice(0, 6)
+  const seen = new Set<string>()
+  return out.filter(action => {
+    const key = actionKey(action)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  }).slice(0, 6)
 }
 
 async function plan(ctx: Context, body: Record<string, unknown>): Promise<DotPlan> {
@@ -156,8 +168,12 @@ async function plan(ctx: Context, body: Record<string, unknown>): Promise<DotPla
   const { text, route } = await complete(ctx, PLAN_SYSTEM, input, 2500)
   const parsed = parseObject(text)
   const actions = validActions(parsed.actions, projects, threads)
-  const pick = typeof parsed.jev_pick === 'number' && parsed.jev_pick >= -1 && parsed.jev_pick < actions.length ? Math.trunc(parsed.jev_pick) : actions.length ? 0 : -1
-  return { reply: typeof parsed.reply === 'string' ? parsed.reply : '', actions, jevPick: pick, confidence: clamp01(parsed.confidence), route }
+  // Filtering/deduplication changes positions: preserve the chosen action, not its old array index.
+  const picked = Array.isArray(parsed.actions) && typeof parsed.jev_pick === 'number' && parsed.jev_pick >= 0
+    ? validActions([parsed.actions[Math.trunc(parsed.jev_pick)]], projects, threads)[0] : undefined
+  const pickedIndex = picked ? actions.findIndex(action => actionKey(action) === actionKey(picked)) : -1
+  // An invalid or capped-out pick stays unset; never silently recommend another action.
+  return { reply: typeof parsed.reply === 'string' ? parsed.reply : '', actions, jevPick: pickedIndex, confidence: clamp01(parsed.confidence), route }
 }
 
 const JevRequest = z.object({

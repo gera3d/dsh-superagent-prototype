@@ -10,7 +10,8 @@ export interface DotChatProps {
   executeAction?: (action: DotAction, approvedContext: DotContext, signal: AbortSignal) => Promise<DotExecutionReceipt>
   openSession?: (id: string) => Promise<void>
 }
-type Turn = { goal: string; plan: DotPlan; context: DotContext; recommendation?: JevResult;
+type Review = { id: symbol; epoch: symbol; actions: { index: number; action: DotAction }[]; context: DotContext }
+type Turn = { goal: string; plan: DotPlan; context: DotContext; recommendation?: JevResult; review?: Review;
   selected: number[]; phase: 'preview' | 'review' | 'executing' | 'done'; results: Record<number, DotExecutionReceipt> }
 
 async function post<T>(endpoint: 'plan' | 'jev', body: unknown, signal: AbortSignal): Promise<T> {
@@ -39,14 +40,29 @@ export function DotChat({ getContext, executeAction, openSession }: DotChatProps
   const [recommending, setRecommending] = useState<number>()
   const [executing, setExecuting] = useState<number>()
   const [error, setError] = useState('')
+  const [epoch, setEpoch] = useState<symbol>()
+  const activeEpoch = useRef<symbol>()
   const active = useRef<AbortController>()
   const lock = useRef(false)
   // Approval is consumed synchronously before the first await. It is never persisted or inherited by another plan.
   const consumed = useRef(new Set<number>())
-  const reviews = useRef(new Map<number, { actions: { index: number; action: DotAction }[]; context: DotContext }>())
+  const reviews = useRef(new Map<number, Review>())
   const end = useRef<HTMLDivElement>(null)
   const unavailable = busy || recommending !== undefined || executing !== undefined
+  const isActive = () => epoch !== undefined && activeEpoch.current === epoch
   const update = (index: number, change: Partial<Turn>) => setTurns(previous => previous.map((turn, i) => i === index ? { ...turn, ...change } : turn))
+  useEffect(() => {
+    // A reconnected effect (including StrictMode) must not reactivate callbacks from its previous epoch.
+    const current = Symbol('Dot lifecycle')
+    activeEpoch.current = current
+    setEpoch(current)
+    setTurns(previous => previous.map(turn => turn.phase === 'review' ? { ...turn, phase: 'preview', review: undefined } : turn))
+    return () => {
+      activeEpoch.current = undefined
+      reviews.current.clear()
+      active.current?.abort()
+    }
+  }, [])
   useEffect(() => {
     let alive = true
     getContext().then(value => { if (alive) setContext(value) }, failure => { if (alive) setError(message(failure)) })
@@ -57,7 +73,7 @@ export function DotChat({ getContext, executeAction, openSession }: DotChatProps
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     const goal = draft.trim()
-    if (!goal || lock.current) return
+    if (!isActive() || !goal || lock.current) return
     lock.current = true
     const controller = new AbortController(); active.current = controller
     setBusy(true); setError('')
@@ -76,7 +92,7 @@ export function DotChat({ getContext, executeAction, openSession }: DotChatProps
   }
 
   const recommend = async (index: number) => {
-    if (lock.current) return
+    if (!isActive() || lock.current) return
     const turn = turns[index]
     if (!turn?.plan.actions.length || consumed.current.has(index)) return
     lock.current = true
@@ -99,39 +115,42 @@ export function DotChat({ getContext, executeAction, openSession }: DotChatProps
 
   const select = (index: number, actionIndex: number, checked: boolean) => {
     const turn = turns[index]
-    if (!turn || lock.current || consumed.current.has(index)) return
+    if (!isActive() || !turn || lock.current || consumed.current.has(index)) return
     const selected = turn.plan.jevPick === -1
       ? [...new Set(checked ? [...turn.selected, actionIndex] : turn.selected.filter(i => i !== actionIndex))].sort((a, b) => a - b)
       : checked ? [actionIndex] : []
     reviews.current.delete(index)
-    update(index, { selected, phase: 'preview' })
+    update(index, { selected, phase: 'preview', review: undefined })
   }
 
   const review = (index: number) => {
     const turn = turns[index]
-    if (!executeAction || !turn?.selected.length || lock.current || consumed.current.has(index)) return
-    reviews.current.set(index, {
+    if (!isActive() || !executeAction || !turn?.selected.length || lock.current || consumed.current.has(index)) return
+    const reviewed: Review = {
+      id: Symbol('Dot review'), epoch: epoch!,
       actions: turn.selected.map(i => ({ index: i, action: { ...turn.plan.actions[i]! } })),
       context: { projects: turn.context.projects.map(p => ({ ...p })), threads: turn.context.threads.map(t => ({ ...t })) },
-    })
-    update(index, { phase: 'review' })
+    }
+    reviews.current.set(index, reviewed)
+    update(index, { phase: 'review', review: reviewed })
   }
 
-  const approve = async (index: number) => {
+  const approve = async (index: number, reviewId: symbol | undefined) => {
     const turn = turns[index]
     const reviewed = reviews.current.get(index)
-    if (!executeAction || !reviewed || lock.current || consumed.current.has(index) || turn?.phase !== 'review' || !turn.selected.length) return
-    // Use the frozen review scope; cancellation/selection changes synchronously revoke even a retained stale handler.
+    if (!isActive() || !executeAction || !reviewed || reviewed.id !== reviewId || reviewed.epoch !== epoch
+      || lock.current || consumed.current.has(index) || turn?.phase !== 'review' || !turn.selected.length) return
+    // Bind the rendered Approve callback to this exact review, not whatever review later occupies the turn.
     const approved = reviewed.actions
     const approvedContext = reviewed.context
     reviews.current.delete(index)
     consumed.current.add(index); lock.current = true
     const controller = new AbortController(); active.current = controller
-    setExecuting(index); update(index, { phase: 'executing' })
+    setExecuting(index); update(index, { phase: 'executing', review: undefined })
     const results: Record<number, DotExecutionReceipt> = {}
     try {
       for (const item of approved) {
-        if (controller.signal.aborted) break
+        if (controller.signal.aborted || !isActive()) break
         let receipt: DotExecutionReceipt
         try { receipt = await executeAction(item.action, approvedContext, controller.signal) }
         catch (failure) { receipt = { status: 'failed', message: `Dispatch failed: ${message(failure)}. Check existing threads before planning a retry.` } }
@@ -186,17 +205,21 @@ export function DotChat({ getContext, executeAction, openSession }: DotChatProps
             {turn.phase !== 'done' && turn.phase !== 'executing' && <button type="button" disabled={!executeAction || unavailable || !turn.selected.length}
               onClick={() => review(index)}>Review selected actions</button>}
             <button type="button" disabled>{turn.phase === 'executing' ? 'Dispatching approved actions…' : turn.phase === 'done' ? 'Approval consumed' : 'Execution disabled'}</button></div>
-          {turn.phase === 'review' && <section className="dot-chat-approval" role="region" aria-label="Approval review">
-            <h3>Approve {turn.selected.length} selected action{turn.selected.length === 1 ? '' : 's'}?</h3>
-            <ol>{turn.selected.map(i => { const action = turn.plan.actions[i]!
-              return <li key={i}><strong>{target(action, turn.context)}</strong> — {label(action, i)}
-                <p>{action.type === 'start_thread' ? `Create thread · Project ${action.projectId} · ${turn.context.projects.find(p => p.id === action.projectId)?.path ?? 'unavailable'}`
+          {turn.phase === 'review' && turn.review && <section className="dot-chat-approval" role="region" aria-label="Approval review">
+            <h3>Approve {turn.review.actions.length} selected action{turn.review.actions.length === 1 ? '' : 's'}?</h3>
+            <ol>{turn.review.actions.map(({ index: i, action }) => {
+              const reviewedContext = turn.review!.context
+              return <li key={i}><strong>{target(action, reviewedContext)}</strong> — {label(action, i)}
+                <p>{action.type === 'start_thread' ? `Create thread · Project ${action.projectId} · ${reviewedContext.projects.find(p => p.id === action.projectId)?.path ?? 'unavailable'}`
                   : `${action.type === 'message_thread' ? 'Queue follow-up' : 'Open thread'} · Session ${action.sessionId}`}</p>
                 {'prompt' in action && <pre>{action.prompt}</pre>}</li>
             })}</ol>
             <p>Approve will create threads or queue the exact prompts above. Worker agents may use tools and change files under the normal DSH permissions. Approval is one-shot and applies only to these selected actions. Closing this panel or page stops further dispatch but does not cancel work already started. Switching tabs does not cancel an approved plan. Failed or uncertain submissions are never retried automatically.</p>
-            <div className="dot-chat-plan-controls"><button type="button" disabled={unavailable || !executeAction} onClick={() => { void approve(index) }}>Approve</button>
-              <button type="button" disabled={unavailable} onClick={() => { reviews.current.delete(index); update(index, { phase: 'preview' }) }}>Cancel approval</button></div>
+            <div className="dot-chat-plan-controls"><button type="button" disabled={unavailable || !executeAction} onClick={() => { void approve(index, turn.review?.id) }}>Approve</button>
+              <button type="button" disabled={unavailable} onClick={() => {
+                if (!isActive() || lock.current || reviews.current.get(index)?.id !== turn.review?.id) return
+                reviews.current.delete(index); update(index, { phase: 'preview', review: undefined })
+              }}>Cancel approval</button></div>
           </section>}
           {turn.phase === 'executing' && <p role="status">Dispatching only the actions you explicitly approved…</p>}
           {turn.phase === 'done' && <p role="status">This approval is consumed. Dispatch is not the same as task completion—open each thread for its results. Any new plan needs a new approval.</p>}

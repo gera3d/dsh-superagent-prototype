@@ -104,6 +104,84 @@ describe('registerDot HTTP handler (mocked LLM unit tests)', () => {
     })
   })
 
+  describe('proposal deduplication', () => {
+    it.each(['start_thread', 'message_thread'] as const)('keeps one proposal for identical independent %s rows', async type => {
+      const action = planReply.actions[type === 'start_thread' ? 0 : 1]!
+      const unit = serve(textFixture({ ...planReply, actions: [action, { ...action }], jev_pick: -1 }))
+      const result = await unit.request('POST', 'plan', planRequest)
+      expect(result.status).toBe(200)
+      expect(result.body.actions).toEqual([{ ...action, prompt: action.prompt!.trim() }])
+      expect(result.body.jevPick).toBe(-1)
+    })
+
+    it.each(['start_thread', 'message_thread'] as const)('normalizes %s prompts and preserves the first explanation', async type => {
+      const first = { ...planReply.actions[type === 'start_thread' ? 0 : 1]!, prompt: '  Same task\n', why: 'Keep first explanation' }
+      const repeated = { ...first, prompt: 'Same task', why: 'Different explanation is not a different action' }
+      const unit = serve(textFixture({ ...planReply, actions: [first, repeated], jev_pick: -1 }))
+      expect(await unit.request('POST', 'plan', planRequest)).toMatchObject({ status: 200, body: {
+        actions: [{ ...first, prompt: 'Same task' }], jevPick: -1,
+      } })
+    })
+
+    it('keeps one open_thread proposal per target regardless of explanation', async () => {
+      const first = planReply.actions[2]!
+      const unit = serve(textFixture({ ...planReply, actions: [first, { ...first, why: 'Another explanation' }] }))
+      expect((await unit.request('POST', 'plan', planRequest)).body.actions).toEqual([first])
+    })
+
+    it('preserves distinct action types, target IDs, and prompt content in order', async () => {
+      const actions = [
+        { type: 'start_thread', projectId: 'project-web', prompt: 'Same task', why: 'First' },
+        { type: 'start_thread', projectId: 'project-other', prompt: 'Same task', why: 'Second' },
+        { type: 'message_thread', sessionId: 'thread-tests', prompt: 'Same task', why: 'Third' },
+        { type: 'message_thread', sessionId: 'thread-other', prompt: 'Same task', why: 'Fourth' },
+        { type: 'message_thread', sessionId: 'thread-tests', prompt: 'Same  task', why: 'Internal whitespace is meaningful' },
+        { type: 'open_thread', sessionId: 'thread-tests', why: 'Different action type' },
+      ]
+      const unit = serve(textFixture({ ...planReply, actions }))
+      const result = await unit.request('POST', 'plan', { ...planRequest,
+        projects: [...projects, { id: 'project-other', title: 'Other', path: '/workspace/other' }],
+        threads: [...threads, { ...threads[0]!, id: 'thread-other' }],
+      })
+      expect(result.status).toBe(200)
+      expect(result.body.actions).toEqual(actions)
+    })
+
+    it('applies the six-proposal limit after removing duplicates', async () => {
+      const unique = Array.from({ length: 7 }, (_, i) => ({ type: 'start_thread', projectId: 'project-web', prompt: `Task ${i}`, why: `Reason ${i}` }))
+      const unit = serve(textFixture({ ...planReply, actions: [unique[0], unique[0], ...unique.slice(1)] }))
+      expect((await unit.request('POST', 'plan', planRequest)).body.actions).toEqual(unique.slice(0, 6))
+    })
+
+    it('does not substitute the first surviving proposal when the chosen target is invalid', async () => {
+      const survivor = { ...planReply.actions[0]!, prompt: 'Keep this valid task' }
+      const invalid = { ...survivor, projectId: 'invented-project' }
+      const unit = serve(textFixture({ ...planReply, actions: [invalid, survivor], jev_pick: 0 }))
+      expect(await unit.request('POST', 'plan', planRequest)).toMatchObject({ status: 200, body: {
+        actions: [survivor], jevPick: -1,
+      } })
+    })
+
+    it('does not substitute the first proposal when the chosen action is excluded by the six-item cap', async () => {
+      const actions = Array.from({ length: 7 }, (_, i) => ({ type: 'start_thread', projectId: 'project-web', prompt: `Task ${i}`, why: `Reason ${i}` }))
+      const unit = serve(textFixture({ ...planReply, actions, jev_pick: 6 }))
+      expect(await unit.request('POST', 'plan', planRequest)).toMatchObject({ status: 200, body: {
+        actions: actions.slice(0, 6), jevPick: -1,
+      } })
+    })
+
+    it.each([{ rawPick: 1, expectedPick: 0 }, { rawPick: 2, expectedPick: 1 }])(
+      'preserves recommendation identity when deduplicating raw index $rawPick', async ({ rawPick, expectedPick }) => {
+        const first = { ...planReply.actions[0]!, prompt: 'First task' }
+        const last = { ...planReply.actions[1]!, prompt: 'Later task' }
+        const unit = serve(textFixture({ ...planReply, actions: [first, { ...first }, last], jev_pick: rawPick }))
+        expect(await unit.request('POST', 'plan', planRequest)).toMatchObject({ status: 200, body: {
+          actions: [first, last], jevPick: expectedPick,
+        } })
+      },
+    )
+  })
+
   it('rejects invented project/thread IDs rather than exposing actionable targets', async () => {
     const unit = serve(textFixture({ ...planReply, actions: [
       { type: 'start_thread', projectId: 'invented-project', prompt: 'Do work', why: '' },

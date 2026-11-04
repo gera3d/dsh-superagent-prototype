@@ -16,6 +16,10 @@
     "./client": "./lib/client.js",
     "./github-watch": "./lib/github-watch.js",
     "./feishu-watch": "./lib/feishu-watch.js",
+    "./decision-provider": "./lib/decision-provider.js",
+    "./decision-inbox-provider": "./lib/decision-inbox-provider.js",
+    "./decision-inbox-provider-live": "./lib/decision-inbox-provider-live.js",
+    "./decision-inbox-provider-canonical": "./lib/decision-inbox-provider-canonical.js",
     "./package.json": "./package.json",
     "./locale/*.json": "./locale/*.json"
   },
@@ -48,6 +52,7 @@
   },
   "scripts": {
     "build": "tsdown",
+    "build:inbox": "tsdown --config tsdown.inbox.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "check": "pnpm typecheck && pnpm test && pnpm build"

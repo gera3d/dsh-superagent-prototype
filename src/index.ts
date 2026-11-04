@@ -27,3 +27,4 @@ export async function apply(ctx: Context, config: DeploymentConfig): Promise<voi
 }
 export type { Deployment, DeploymentConfig } from './deployment.ts'
 export * from './core/index.ts'
+export * from './app/tools/composio.ts'

@@ -24,6 +24,7 @@
     "src/**/*.tsx",
     "tests/**/*.ts",
     "tests/**/*.tsx",
-    "tsdown.config.ts"
+    "tsdown.config.ts",
+    "tsdown.inbox.config.ts"
   ]
 }

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { DecisionChoice, DecisionEvaluationResult, PendingDecisionItem } from '../core/decision.ts'
 import { Button, Icon, Pill, Tag } from './controls.tsx'
 import { DecisionCard } from './decision-card.tsx'
+import { parseInlineAlternatives } from './inline-alternatives.ts'
 import { useAction, usePanel } from './provider.tsx'
 import { usePoll } from './api.ts'
 import { Hint, LoadState, Section, StatusHead } from './widgets.tsx'
@@ -27,6 +28,20 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
   })
 
   const items = data?.items || []
+  // Only evaluate captured explicit alternatives, never rank generic response actions or ordered tasks.
+  const canEvaluate = (item: PendingDecisionItem) => {
+    const parsed = parseInlineAlternatives(item.context)
+    return item.status === 'pending' && !item.staging && !!parsed && parsed.choices.length === item.choices.length
+      && parsed.choices.every(choice => item.choices.some(saved => saved.id === choice.id && saved.label === choice.label))
+  }
+  const evaluateItem = async (item: PendingDecisionItem) => {
+    const recommendation = await call('POST decisions/evaluate', { body: {
+      context: item.context, question: item.question, choices: item.choices, sessionId: item.sessionId,
+    } })
+    if (!recommendation.recommendedValue) throw new Error(recommendation.rationale || 'Recommendation unavailable. No choice was made.')
+    await call('POST decisions/inbox', { body: { ...item, recommendation } })
+    await reload()
+  }
 
   const runPlayground = async () => {
     setEvaluating(true)
@@ -104,17 +119,23 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
           </div>
 
           <div style={{ background: '#161b22', border: '1px solid #30363d', padding: '10px 14px', borderRadius: '6px', fontSize: '12px', color: '#e6edf3', marginBottom: '12px' }}>
-            <strong>Obstacle: </strong>{item.trigger}
+            <strong>Why this is here: </strong>{item.trigger}
           </div>
 
-          {item.status === 'resolved' ? <div style={{ background: '#161b22', border: '1px solid #238636', borderRadius: '6px', padding: '10px 14px', color: '#3fb950', fontWeight: 600, fontSize: '12px' }}>
-            ✅ Resolved: Option <strong>{item.resolvedChoice}</strong> accepted. Selection recorded; this does not confirm downstream execution.
-          </div> : <DecisionCard
+          {item.status === 'resolved' && <p role="status">Recorded choice: <strong>{item.choices.find(choice => choice.id === item.resolvedChoice)?.label ?? item.resolvedChoice}</strong>. This does not confirm downstream execution.</p>}
+          {item.status === 'stale' && <p role="status">No longer actionable: {item.staleReason || 'The source has changed.'}</p>}
+          <DecisionCard
             title={item.question}
+            context={item.context}
             recommendation={item.recommendation}
             choices={item.choices}
-            onExecute={choiceId => resolveAction.run(item.id, choiceId)}
-          />}
+            unavailableReason={item.advisor?.status === 'pending' || item.advisor?.status === 'generating'
+              ? 'The next-step advisor has not finished generating guidance.'
+              : item.advisor?.status === 'error' ? `Advisor unavailable: ${item.advisor.error || 'Generation failed.'}`
+              : !canEvaluate(item) && !item.recommendation.recommendedValue ? 'No ranked recommendation was saved for this item. Only recognized explicit alternatives can be evaluated here; generic response actions are not ranked. Review the context or ask for clarification in the source conversation.' : undefined}
+            onEvaluate={canEvaluate(item) ? () => evaluateItem(item) : undefined}
+            onExecute={item.status === 'pending' && !item.staging ? choiceId => resolveAction.run(item.id, choiceId) : undefined}
+          />
         </div>)}
       </div>}
     </div>}
