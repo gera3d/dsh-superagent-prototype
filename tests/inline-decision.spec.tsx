@@ -105,7 +105,8 @@ it('creates one shared inbox record from a closed assistant turn under StrictMod
   expect(requests.find(request => request.path === 'decisions/evaluate')?.body).toMatchObject({ context: alternatives, sessionId: 'session-one', choices: item().choices })
   expect(view.container.textContent).toContain('Agent-Mini · Choose a direction')
   expect(view.container.textContent).toContain('Shared decision queue · 1 pending')
-  expect(view.container.textContent).toContain('Run the existing tests · Suggested')
+  expect(view.container.textContent).toContain('Run the existing tests')
+  expect(view.container.textContent).toContain('· Suggested')
   expect(view.inputActions.insertText).not.toHaveBeenCalled()
   expect(view.inputActions.send).not.toHaveBeenCalled()
   expect(view.inputActions.submit).not.toHaveBeenCalled()
@@ -120,7 +121,8 @@ it('evaluates a captured canonical question and keeps that single recommendation
   expect(inbox).toHaveLength(1)
   expect(inbox[0]!.id).toBe('chat-canonical')
   expect(view.container.querySelectorAll('article')).toHaveLength(1)
-  expect(view.container.textContent).toContain('Run the existing tests · Suggested')
+  expect(view.container.textContent).toContain('Run the existing tests')
+  expect(view.container.textContent).toContain('· Suggested')
   expect(view.container.textContent).not.toContain('Not evaluated')
   const before = mutations().length
   const fresh = fixture(); await fresh.render(true)
@@ -457,7 +459,8 @@ it('hydrates captured empty choices through the canonical advisor without mounti
   const view = fixture(); view.node.blocks[0]!.text = 'The work is complete.'
   await view.render(true)
   expect(requests.filter(request => request.path === '/next-steps/api/suggest')).toHaveLength(1)
-  expect(view.container.textContent).toContain('Run the existing tests · Suggested')
+  expect(view.container.textContent).toContain('Run the existing tests')
+  expect(view.container.textContent).toContain('· Suggested')
   expect(view.container.querySelectorAll('article')).toHaveLength(1)
   expect(view.inputActions.submit).not.toHaveBeenCalled()
 })
@@ -489,3 +492,69 @@ it('keeps a durable submission receipt visible when a newer pending decision rep
   expect(view.container.querySelectorAll('article')).toHaveLength(1)
   expect(view.container.textContent).not.toContain('Nothing has been sent')
 })
+
+it('treats 409 on an already-answered card by dropping quietly when choice was recorded', async () => {
+  const target = item()
+  inbox = [target]
+  const view = fixture()
+  view.submissionBridge.stage = vi.fn(async () => {
+    target.status = 'resolved'
+    target.resolvedChoice = 'option-b'
+    const err = new Error('Decision service returned 409. No action confirmed.')
+    ;(err as any).status = 409
+    throw err
+  })
+  await view.render()
+  await view.choose()
+  // Quietly dropped; choice went through so no failure banner is rendered
+  expect(view.container.querySelector('[role="alert"]')).toBeNull()
+})
+
+it('treats 409 on a retired card with a small dismissible line and no retry button', async () => {
+  const target = item()
+  inbox = [target]
+  const view = fixture()
+  view.submissionBridge.stage = vi.fn(async () => {
+    target.status = 'stale'
+    const err = new Error('Decision is stale or closed; no staging is allowed')
+    ;(err as any).status = 409
+    throw err
+  })
+  await view.render()
+  await view.choose()
+  const alert = view.container.querySelector('[role="alert"]')
+  expect(alert).not.toBeNull()
+  expect(alert?.textContent).toContain('The option could not be sent because the decision is closed.')
+  // Must NOT show a Retry button on 409
+  expect(alert?.querySelector('button')?.textContent).toBe('Dismiss')
+  // Clicking Dismiss removes the notice
+  await act(async () => { (alert?.querySelector('button') as HTMLButtonElement)?.click() })
+  await flush()
+  expect(view.container.querySelector('[role="alert"]')).toBeNull()
+})
+
+it('retries a genuine 5xx transient error automatically once before succeeding', async () => {
+  const target = item()
+  inbox = [target]
+  const view = fixture()
+  let attempts = 0
+  view.submissionBridge.stage = vi.fn(async request => {
+    attempts++
+    if (attempts === 1) {
+      const err = new Error('Decision service error (500).')
+      ;(err as any).status = 500
+      throw err
+    }
+    const guard = view.inputActions.captureInsertion()
+    view.inputActions.insertText(request.prompt, guard)
+    view.inputActions.persistDraft()
+    target.staging = { attemptId: 'auto-retry-attempt', choiceId: request.choiceId, draftFingerprint: 'sha256:test', choiceFingerprint: 'sha256:c', stagedAt: 1 } as NonNullable<PendingDecisionItem['staging']>
+    return { item: target, staging: target.staging, execution: 'not_executed' as const }
+  })
+  await view.render()
+  await view.choose()
+  expect(view.submissionBridge.stage).toHaveBeenCalledTimes(2)
+  expect(view.inputActions.persistDraft).toHaveBeenCalledOnce()
+  expect(view.container.querySelector('[role="alert"]')).toBeNull()
+})
+
