@@ -10,14 +10,26 @@ import { afterEach, beforeEach, expect, it } from 'vitest'
 
 let root: string
 let server: Server | undefined
-let sleepers: ChildProcess[] = []
+const sleepers = new Set<ChildProcess>()
+const commands = new Set<ChildProcess>()
+function track(child: ChildProcess, group: Set<ChildProcess>): ChildProcess {
+  group.add(child)
+  child.once('close', () => group.delete(child))
+  return child
+}
+/** Reap tracked children before deleting fake binaries; otherwise late commands can fall through to the host PATH. */
+async function reap(group: Set<ChildProcess>): Promise<void> {
+  await Promise.all([...group].map(child => new Promise<void>(resolve => {
+    child.once('close', () => resolve())
+    child.kill()
+  })))
+}
 const control = (profile: string) => join(root, '.artifacts', 'control', 'profiles', profile)
 const program = (name: string, body: string) => writeFileSync(join(root, 'bin', name), `#!/bin/sh\n${body}\n`, { mode: 0o755 })
 /** Spawn a dummy process whose PID can be listed by the fake ps binary; ignoreInterrupt simulates a hung graceful stop. */
 function sleeper(ignoreInterrupt = false): number {
   const [program, args] = ignoreInterrupt ? ['sh', ['-c', 'trap "" INT; exec sleep 60']] as const : ['sleep', ['60']] as const
-  const child = spawn(program, [...args], { stdio: 'ignore' })
-  sleepers.push(child)
+  const child = track(spawn(program, [...args], { stdio: 'ignore' }), sleepers)
   return child.pid!
 }
 const service = (pid: number, profile = 'superagent') => `${pid} node node /opt/my tools/dsh --profile ${profile} --no-open`
@@ -41,17 +53,27 @@ done < "$list"`)
     + `case "$1" in has-session) exit 1;; new-*) touch '${root}/launched'; cat '${root}/pane';; esac`)
   program('dsh', 'exit 0')
 })
-afterEach(() => {
-  server?.close(); server = undefined
-  for (const child of sleepers) child.kill()
-  sleepers = []
+afterEach(async () => {
+  await reap(commands)
+  await reap(sleepers)
+  if (server?.listening) await new Promise<void>((resolve, reject) => server!.close(error => error ? reject(error) : resolve()))
+  server = undefined
+  if (!root.startsWith(join(tmpdir(), 'service script '))) throw new Error('Refusing to remove a non-fixture directory')
   rmSync(root, { recursive: true, force: true })
 })
 function run(...args: string[]): Promise<{ code: number; stdout: string; stderr: string }> {
-  return new Promise(resolve => execFile('python3', [join(root, 'scripts', 'dsh-superagent'), ...args],
+  return new Promise((resolve, reject) => track(execFile('python3', [join(root, 'scripts', 'dsh-superagent'), ...args],
     { env: { ...process.env, PATH: `${join(root, 'bin')}:${process.env.PATH}`, DSH_SUPERAGENT_PROFILE: '', DSH_SUPERAGENT_URL: '' },
       timeout: 20_000 },
-    (error, stdout, stderr) => resolve({ code: typeof error?.code === 'number' ? error.code : 0, stdout, stderr })))
+    (error, stdout, stderr) => {
+      // A timeout, signal, or spawn error is not a successful service command.
+      if (error) {
+        const code = error.code
+        if (typeof code !== 'number') { reject(error); return }
+        resolve({ code, stdout, stderr }); return
+      }
+      resolve({ code: 0, stdout, stderr })
+    }), commands))
 }
 const READY = { health: { runtime: { state: 'ready', detail: '' } }, setup: { problem: null, feishuProblem: null } }
 /** Start a mock HTTP server that returns 503 until tmux launches the service (unless always is true). */
@@ -66,6 +88,19 @@ async function answering(state: unknown = READY, always = false): Promise<string
 const status = async (profile: string, url = 'http://127.0.0.1:9') =>
   JSON.parse((await run('status', '--profile', profile, '--url', url)).stdout) as { pids: number[]; manually_stopped: boolean }
 
+it('reaps unfinished control commands while the fake PATH still exists', async () => {
+  program('python3', 'exec sleep 60')
+  const pending = run('status').then(() => undefined, error => error)
+  expect(commands.size).toBe(1)
+  await reap(commands)
+  expect(await pending).toMatchObject({ signal: 'SIGTERM' })
+  expect(commands.size).toBe(0)
+  expect(existsSync(join(root, 'bin', 'ps'))).toBe(true)
+})
+it('does not report a signaled control command as a successful exit', async () => {
+  program('python3', 'kill -TERM $$')
+  await expect(run('status')).rejects.toMatchObject({ signal: 'SIGTERM' })
+})
 it('refuses to stop when two processes serve the profile, before it writes the stop marker', async () => {
   processes(service(sleeper()), `${sleeper()} node node /opt/dsh --profile=superagent`)
   expect(await run('stop')).toMatchObject({ code: 1, stderr: expect.stringContaining('Multiple dsh-superagent processes found') })
@@ -77,7 +112,8 @@ it('keeps a stop per profile', async () => {
   expect(await status('two')).toMatchObject({ manually_stopped: false })
   const skipped = await run('--respect-stop', 'start', '--profile', 'one')
   expect(skipped).toMatchObject({ code: 0, stdout: expect.stringContaining('Intentional stop is active') })
-})
+  // Four Python startups exceed 5s on a loaded host (stdlib imports alone measured 1.5s each).
+}, 20_000)
 it('takes no `dsh plugin` command of the profile for its service', async () => {
   const service = sleeper()
   processes(`${sleeper()} node node /opt/my tools/dsh plugin --profile superagent add link:/x`,
@@ -141,7 +177,8 @@ it('reports a service whose Feishu bot setup could not check as running, and rea
   expect(await run('status', '--url', await answering({ health: { runtime: { state: 'ready' } } }, true))).toMatchObject({ code: 0 })
   server!.close()
   expect(await run('status', '--url', await answering({ health: { runtime: { state: 'error' } } }, true))).toMatchObject({ code: 1 })
-})
+  // Three Python startups plus local HTTP checks need the same budget as other multi-command tests.
+}, 20_000)
 it('exits 2 while a part such as a Source reports an error, which a restart does not fix, and prints what it reports', async () => {
   processes(service(sleeper()))
   const github = { health: { runtime: { state: 'ready', detail: '' }, github: { state: 'error', detail: 'bad token' } }, setup: {} }
@@ -187,7 +224,7 @@ lock = open(${JSON.stringify(join(control('superagent'), 'operation.lock'))}, 'a
 fcntl.flock(lock, fcntl.LOCK_EX)
 pathlib.Path(${JSON.stringify(held)}).touch()
 time.sleep(30)`], { stdio: 'ignore' })
-  sleepers.push(holder)
+  track(holder, sleepers)
   while (!existsSync(held)) await new Promise(resolve => setTimeout(resolve, 50))
   expect(await run('status')).toMatchObject({ code: 1,
     stderr: expect.stringContaining('Another dsh-superagent control operation is in progress') })

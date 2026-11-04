@@ -24,12 +24,21 @@ afterEach(() => { rmSync(dir, { recursive: true, force: true }) })
 
 describe('worker shims', () => {
   it('run a wrapper that calls `gh` by name without reaching the shim again, and keep the caller\'s other PATH entries', async () => {
-    program(join(dir, 'real', 'gh'), 'echo "{\\"login\\":\\"agent-bot\\",\\"config\\":\\"$GH_CONFIG_DIR\\",\\"path\\":\\"$PATH\\"}"')
-    const wrapper = program(join(dir, 'gh-agent'), `GH_CONFIG_DIR=${dir}/agent-config exec gh "$@"`)
+    const real = program(join(dir, 'real', 'gh'), 'echo "{\\"login\\":\\"agent-bot\\",\\"config\\":\\"$GH_CONFIG_DIR\\",\\"path\\":\\"$PATH\\"}"')
+    const called = join(dir, 'wrapper-called')
+    const wrapper = program(join(dir, 'gh-agent'), `if [ -e "${called}" ]; then echo 'worker shim recursively re-entered wrapper' >&2; exit 97; fi
+printf called > "${called}"
+GH_CONFIG_DIR=${dir}/agent-config exec gh "$@"`)
+    // Prepare only the fake deployment CLIs, never the generated worker shim under test. On this host,
+    // fresh scripts launch much more slowly; charging all three cold launches to one deadline obscures recursion.
+    const localPath = [join(dir, 'real'), '/usr/bin', '/bin'].join(':')
+    for (const cli of [real, wrapper]) await exec(cli, ['api', 'user'], { env: { PATH: localPath }, timeout: 10_000 })
+    rmSync(called) // The actual worker invocation must enter the wrapper exactly once, independently of fixture preparation.
     await writeEnvironment(testDeployment({ stateDir: dir, github: { ...testDeployment().github, cli: wrapper }, feishu: undefined }), [])
     const bin = workerBin(dir)
     const path = [bin, join(dir, 'venv'), join(dir, 'real'), '/usr/bin', '/bin'].join(':')
     const { stdout } = await exec('gh', ['api', 'user'], { env: { PATH: path }, timeout: 10_000 })
+    expect(readFileSync(called, 'utf8')).toBe('called')
     expect(JSON.parse(stdout)).toEqual({ login: 'agent-bot', config: `${dir}/agent-config`, path: [join(dir, 'venv'), join(dir, 'real'), '/usr/bin', '/bin'].join(':') })
   })
   it('make `lark-cli` fail without a Feishu bot and each blocked command fail with the agent\'s login', async () => {
