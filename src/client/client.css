@@ -386,3 +386,24 @@ a.dt-btn, a.dt-btn:hover { text-decoration: none; }
 .dt-admission-slot { display: inline-flex; flex: none; width: 16px; }
 .dt-info-warn { color: var(--dsw-alias-state-warn-primary); }
 .dt-field-segmented { max-width: 240px; }
+.dt-characters-list { display: flex; flex-direction: column; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.dt-character-card { display: flex; align-items: flex-start; gap: 8px; list-style: none; }
+.dt-character-title { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dt-character-name { font-weight: 600; color: var(--dsw-alias-label-primary); }
+.dt-character-specialty { font-size: 12px; color: var(--dsw-alias-label-secondary); }
+.dt-character-badge { padding: 1px 6px; border-radius: 4px; font-size: 11px; font-weight: 500; border: 1px solid var(--dsw-alias-border-l3); }
+.dt-character-badge-active { background: rgba(56, 139, 253, 0.15); color: #58a6ff; border-color: rgba(56, 139, 253, 0.4); }
+.dt-character-badge-mode { background: rgba(110, 118, 129, 0.15); color: var(--dsw-alias-label-secondary); }
+.dt-character-preview { font-size: 12px; color: var(--dsw-alias-label-caption); }
+.dt-character-body { display: flex; flex-direction: column; gap: 12px; padding-top: 10px; }
+.dt-character-switch { flex: none; margin-top: 12px; }
+.dt-locked-list { display: flex; flex-direction: column; gap: 8px; list-style: none; margin: 8px 0 0; padding: 0; }
+.dt-locked-item { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--dsw-alias-border-l3); border-radius: 6px; padding: 10px 14px; }
+.dt-locked-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.dt-locked-icon { font-size: 14px; }
+.dt-locked-name { font-size: 13px; font-weight: 600; color: var(--dsw-alias-label-primary); }
+.dt-locked-badge { margin-left: auto; font-size: 11px; padding: 1px 6px; border-radius: 4px; background: rgba(248, 81, 73, 0.15); color: #f85149; border: 1px solid rgba(248, 81, 73, 0.3); font-weight: 600; }
+.dt-locked-desc { margin: 0 0 4px; font-size: 12px; color: var(--dsw-alias-label-secondary); }
+.dt-locked-scope { font-size: 11px; color: var(--dsw-alias-label-caption); }
+.dt-decision-character { margin-bottom: 12px; }
+.dt-character-correction { border-radius: 4px; }

@@ -10,4 +10,8 @@ export const LIMITS = {
   promptMaxChars: { min: 1000, max: 1_000_000 },
   admissionContextMaxPages: { min: 1, max: 100 },
   admissionContextTimeoutMs: { min: 1, max: 90_000 },
+  characterName: 100,
+  characterSpecialty: 200,
+  characterBrief: 2000,
+  charactersMax: 20,
 } as const

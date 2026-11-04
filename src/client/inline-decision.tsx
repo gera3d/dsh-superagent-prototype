@@ -187,8 +187,8 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
             return <button type="button" key={choice.id} className={`dsa-decisions__choice${choice.id === item.recommendation.recommendedValue ? ' dsa-decisions__choice--suggested' : ''}`} disabled={!idle || !['pending', 'resolved'].includes(item.status) || input.phase !== 'plain' || selection !== undefined || (item.status === 'pending' && (!!item.invalidation || !!item.staging))} onClick={() => choose(item, choice.id)}>
               <span>
                 {choice.label}
-                {percent !== undefined && <span className="dsa-decisions__badge" style={{ marginLeft: 6, fontWeight: 700 }}>{percent}%</span>}
                 {choice.id === item.recommendation.recommendedValue && <span className="dsa-decisions__badge"> · Suggested</span>}
+                {percent !== undefined && <span className="dsa-decisions__badge" style={{ marginLeft: 6, fontWeight: 700 }}> {percent}%</span>}
               </span>
               {choice.description && <span className="dsa-decisions__description">{choice.description}</span>}
             </button>

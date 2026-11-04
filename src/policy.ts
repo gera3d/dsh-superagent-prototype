@@ -96,6 +96,108 @@ export const ModelsConfigSchema = z.object({
   maxEscalations: z.number().int().min(LIMITS.maxEscalations.min).max(LIMITS.maxEscalations.max).default(2),
 }).strict()
 
+export const CharacterSchema = z.object({
+  id: z.string().trim().min(1).max(100),
+  name: z.string().trim().min(1).max(LIMITS.characterName),
+  specialty: z.string().trim().min(1).max(LIMITS.characterSpecialty),
+  brief: z.string().trim().min(1).max(LIMITS.characterBrief),
+  tools: z.array(z.string().trim().min(1).max(100)).default([]),
+  mode: z.enum(['suggest', 'auto']).default('suggest'),
+  enabled: z.boolean().default(true),
+}).strict()
+export type Character = z.infer<typeof CharacterSchema>
+
+export const DEFAULT_CHARACTERS: Character[] = [
+  {
+    id: 'senior-developer',
+    name: 'Senior Developer',
+    specialty: 'Code Quality, Reliability & Regression Guard',
+    brief: 'Reads the first agent proposal, pushes back on untested or sloppy solutions, and answers with clear engineering standards. Insists on test coverage and minimal diffs.',
+    tools: ['vitest', 'tsc', 'git diff', 'dsh-workspace'],
+    mode: 'suggest',
+    enabled: true,
+  },
+  {
+    id: 'architect',
+    name: 'System Architect',
+    specialty: 'Architecture, Clean Contracts & Boundaries',
+    brief: 'Guards project boundaries, interfaces, and long-term maintainability. Rejects ad-hoc shortcuts that cause technical debt.',
+    tools: ['typecheck', 'schema-audit', 'api-contracts'],
+    mode: 'suggest',
+    enabled: true,
+  },
+  {
+    id: 'security-reviewer',
+    name: 'Security Reviewer',
+    specialty: 'Safety, Secrets & Sandbox Boundaries',
+    brief: 'Enforces least-privilege principles, monitors sensitive access, and ensures locked escalation categories are strictly escalated to a human.',
+    tools: ['secret-scan', 'perm-check', 'git-log'],
+    mode: 'suggest',
+    enabled: true,
+  },
+]
+
+export const CharactersConfigSchema = z.object({
+  items: z.array(CharacterSchema).max(LIMITS.charactersMax).default(DEFAULT_CHARACTERS),
+  activeCharacterId: z.string().trim().default('senior-developer'),
+}).strict()
+export type CharactersConfig = z.infer<typeof CharactersConfigSchema>
+
+export interface LockedEscalationItem {
+  id: string
+  name: string
+  description: string
+  scope: string
+}
+
+export const LOCKED_ESCALATION_LIST: readonly LockedEscalationItem[] = [
+  {
+    id: 'financial_operations',
+    name: 'Financial actions & billing',
+    description: 'Money transfers, billing adjustments, cloud compute tier changes, and paid API quota expansion.',
+    scope: 'Mandatory human approval before any transaction or payment instrument invocation.',
+  },
+  {
+    id: 'destructive_operations',
+    name: 'Destructive modifications & deletions',
+    description: 'Deleting git repositories/branches, dropping database tables, unrecoverable workspace wipes.',
+    scope: 'Permanent data removal operations must be explicitly confirmed by an operator.',
+  },
+  {
+    id: 'secrets_credentials',
+    name: 'Secrets & credentials access',
+    description: 'Reading, exporting, or writing raw API keys, private tokens, certificates, or OAuth client secrets.',
+    scope: 'Settings reference environment variables only; raw secrets are never touched or automated.',
+  },
+  {
+    id: 'identity_impersonation',
+    name: 'Identity impersonation & external broadcast',
+    description: 'Sending external messages directly as the user, publishing public releases, external email broadcasts.',
+    scope: 'External communication to human recipients requires human review.',
+  },
+  {
+    id: 'undecided_tradeoffs',
+    name: 'Genuinely undecided tradeoffs',
+    description: 'Strategic architectural choices or policy ambiguity with multiple competing valid outcomes.',
+    scope: 'Cannot be decided by character or autopilot; requires human intent guidance.',
+  },
+] as const
+
+export function isLockedEscalation(actionOrText: string): boolean {
+  const lower = actionOrText.toLowerCase()
+  return (
+    lower.includes('money') ||
+    lower.includes('billing') ||
+    lower.includes('payment') ||
+    lower.includes('delete') ||
+    lower.includes('secret') ||
+    lower.includes('credential') ||
+    lower.includes('impersonat') ||
+    lower.includes('broadcast') ||
+    lower.includes('undecided')
+  )
+}
+
 export const AllowedSchema = z.object({ id: z.string().trim().min(1).max(200), name: z.string().trim().max(100).optional() }).strict()
 const Weak = z.enum(['inferred', 'ignore'])
 export const AdmissionRowSchema: z.ZodType<AdmissionRow> = z.object({ listedUnaddressed: Weak.optional(), unlistedAddressed: z.enum(['explicit', 'inferred', 'ignore']).optional(), unlistedUnaddressed: Weak.optional() }).strict()
@@ -130,9 +232,10 @@ export const SettingsSchema = z.object({
   executor: ExecutorConfigSchema.default(() => ExecutorConfigSchema.parse({})),
   decisions: DecisionsConfigSchema.default(() => DecisionsConfigSchema.parse({})),
   models: ModelsConfigSchema.default(() => ModelsConfigSchema.parse({})),
+  characters: CharactersConfigSchema.default(() => CharactersConfigSchema.parse({})),
 }).strict()
 export type Settings = z.infer<typeof SettingsSchema>
-export type SettingsBlock = 'policy' | 'eval' | 'executor' | 'decisions' | 'models' | `source:${string}`
+export type SettingsBlock = 'policy' | 'eval' | 'executor' | 'decisions' | 'models' | 'characters' | `source:${string}`
 export type SettingsSave = SettingsBlock | 'pause'
 export type SettingsOrigin = 'panel' | 'tool' | 'sync'
 

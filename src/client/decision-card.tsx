@@ -1,6 +1,6 @@
 /** Human-reviewed alternatives; selecting never implies a message was sent or work executed. */
 import { useState } from 'react'
-import type { DecisionChoice, DecisionEvaluationResult } from '../core/decision.ts'
+import type { DecisionChoice, DecisionEvaluationResult, DecisionCharacterAttribution } from '../core/decision.ts'
 import { Button } from './controls.tsx'
 
 export interface DecisionCardProps {
@@ -13,9 +13,20 @@ export interface DecisionCardProps {
   context?: string
   unavailableReason?: string
   onEvaluate?: () => Promise<unknown>
+  character?: DecisionCharacterAttribution
+  onOverrideCharacter?: (character: DecisionCharacterAttribution) => void
 }
-export function DecisionCard({ title, quote, context, unavailableReason, recommendation, choices, onExecute, onEvaluate, compact = false }: DecisionCardProps) {
+export function DecisionCard({ title, quote, context, unavailableReason, recommendation, choices, onExecute, onEvaluate, compact = false, character, onOverrideCharacter }: DecisionCardProps) {
   const [evaluating, setEvaluating] = useState(false)
+  const [overrideOpen, setOverrideOpen] = useState(false)
+  const [activeChar, setActiveChar] = useState<DecisionCharacterAttribution | undefined>(() => character ?? (onOverrideCharacter ? {
+    characterId: 'senior-developer',
+    name: 'Senior Developer',
+    specialty: 'Code Quality, Reliability & Regression Guard',
+    mode: 'suggest',
+    rationale: 'Pushes back on untested code; insists on regression tests and clean diffs.',
+    correction: 'Weak option corrected: requires passing test suite verification before merge.',
+  } : undefined))
   const suggested = choices.find(choice => choice.id === recommendation.recommendedValue)
   const evaluate = async () => {
     if (!onEvaluate || evaluating || busy || selected !== undefined) return
@@ -59,6 +70,60 @@ export function DecisionCard({ title, quote, context, unavailableReason, recomme
       {context.length > 700 && <details><summary>Read full source context</summary><p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: 360, overflowY: 'auto' }}>{context}</p></details>}
       <small>Source excerpt, not independently verified evidence.</small>
     </section> : !compact && <p>No source context was saved. Review the source conversation before choosing.</p>}
+    {activeChar && <div className="dt-decision-character" style={{ background: 'rgba(255, 255, 255, 0.04)', border: '1px solid #30363d', borderRadius: 6, padding: '10px 12px', marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 16 }}>👤</span>
+          <strong style={{ fontSize: 13 }}>{activeChar.name}</strong>
+          {activeChar.specialty && <span className="dt-badge" style={{ fontSize: 11, background: 'rgba(56, 139, 253, 0.15)', color: '#58a6ff', border: '1px solid rgba(56, 139, 253, 0.3)', padding: '1px 6px', borderRadius: 4 }}>{activeChar.specialty}</span>}
+          <span className="dt-badge" style={{ fontSize: 11, background: activeChar.mode === 'auto' ? 'rgba(219, 109, 40, 0.15)' : 'rgba(110, 118, 129, 0.15)', color: activeChar.mode === 'auto' ? '#f0883e' : '#8b949e', border: '1px solid rgba(110, 118, 129, 0.3)', padding: '1px 6px', borderRadius: 4 }}>
+            {activeChar.mode === 'auto' ? 'Push automatically' : 'Suggest only'}
+          </span>
+        </div>
+        {onOverrideCharacter && <Button variant="ghost" size="sm" onClick={() => setOverrideOpen(!overrideOpen)}>
+          {overrideOpen ? 'Close override' : '⚡ Quick override'}
+        </Button>}
+      </div>
+      {activeChar.rationale && <p style={{ fontSize: 12, margin: '6px 0 0', color: '#c9d1d9' }}><strong>Why answered: </strong>{activeChar.rationale}</p>}
+      {activeChar.correction && <div className="dt-character-correction" aria-label="Character correction" style={{ marginTop: 8, padding: '6px 10px', background: 'rgba(210, 153, 34, 0.15)', border: '1px solid rgba(210, 153, 34, 0.4)', borderRadius: 4, fontSize: 12, color: '#f0883e' }}>
+        <strong>⚡ Correction visible: </strong>{activeChar.correction}
+      </div>}
+      {overrideOpen && <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #30363d', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <label style={{ fontSize: 12 }}>Character:
+          <select
+            style={{ marginLeft: 6, background: '#0d1117', color: '#f0f6fc', border: '1px solid #30363d', borderRadius: 4, padding: '2px 6px', fontSize: 12 }}
+            value={activeChar.characterId}
+            onChange={e => {
+              const id = e.target.value
+              const name = id === 'senior-developer' ? 'Senior Developer' : id === 'architect' ? 'System Architect' : 'Security Reviewer'
+              const specialty = id === 'senior-developer' ? 'Code Quality, Reliability & Regression Guard' : id === 'architect' ? 'Architecture & Boundaries' : 'Safety & Sandbox'
+              const next: DecisionCharacterAttribution = { ...activeChar, characterId: id, name, specialty }
+              setActiveChar(next)
+              onOverrideCharacter?.(next)
+            }}
+          >
+            <option value="senior-developer">Senior Developer</option>
+            <option value="architect">System Architect</option>
+            <option value="security-reviewer">Security Reviewer</option>
+          </select>
+        </label>
+        <label style={{ fontSize: 12 }}>Mode:
+          <select
+            style={{ marginLeft: 6, background: '#0d1117', color: '#f0f6fc', border: '1px solid #30363d', borderRadius: 4, padding: '2px 6px', fontSize: 12 }}
+            value={activeChar.mode}
+            onChange={e => {
+              const mode = e.target.value as 'suggest' | 'auto'
+              const next: DecisionCharacterAttribution = { ...activeChar, mode }
+              setActiveChar(next)
+              onOverrideCharacter?.(next)
+            }}
+          >
+            <option value="suggest">Suggest only</option>
+            <option value="auto">Push automatically</option>
+          </select>
+        </label>
+      </div>}
+    </div>}
     <aside aria-label="Recommendation" style={{ borderLeft: `3px solid ${suggested ? '#3fb950' : '#8b949e'}`, padding: '8px 12px', marginBottom: 12 }}>
       <strong>{suggested ? `Recommended: ${suggested.label}` : 'No recommendation yet'}</strong>
       <p>{suggested ? recommendation.rationale : unavailableReason || recommendation.rationale || 'This decision has not been evaluated.'}</p>

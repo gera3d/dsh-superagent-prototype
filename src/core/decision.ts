@@ -93,8 +93,20 @@ export interface PendingDecisionItem {
   hiddenOptions?: DecisionChoice[]
   /** Append-only option-set history; the latest revision is the shown set. */
   optionSets?: DecisionOptionSet[]
+  /** Character attribution and correction details for this decision. */
+  character?: DecisionCharacterAttribution
   resolvedChoice?: string
   resolvedAt?: number
+}
+
+export interface DecisionCharacterAttribution {
+  characterId: string
+  name: string
+  specialty?: string
+  brief?: string
+  mode: 'suggest' | 'auto'
+  correction?: string
+  rationale?: string
 }
 
 export interface DecisionModelReply { text: string; provider: string }
