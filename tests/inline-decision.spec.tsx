@@ -434,11 +434,15 @@ it('surfaces initial inbox errors with a retry rather than silently hiding the d
   expect(mutations()).toEqual([])
 })
 
-it('restores Agent-Mini as the single dock owner while the companion advisor stays installed', async () => {
-  const effects = vi.fn(), inject = vi.fn()
-  applyNextSteps({ get: () => ({ dockOwner: 'agent-mini' }), effect: effects, slots: { inject } } as any)
+it('keeps Agent-Mini as the decision dock owner while the slim companion dock registers separately', async () => {
+  const effects = vi.fn()
+  const register = vi.fn(() => () => {})
+  const inject = vi.fn((_name: string, factory: () => unknown) => factory())
+  applyNextSteps({ effect: effects, slots: { inject, register } } as any)
   expect(effects).not.toHaveBeenCalled()
-  expect(inject).not.toHaveBeenCalled()
+  expect(inject).toHaveBeenCalledOnce()
+  expect(inject.mock.calls[0]?.[0]).toBe('conversation.input.dock')
+  expect(register).toHaveBeenCalledWith({ name: 'conversation.input.dock', id: 'dsh-next-steps', order: 30 }, expect.any(Function))
   expect(document.documentElement.dataset.dshDecisionDockOwner).not.toBe('next-steps')
   inbox = [item()]
   const view = fixture(); await view.render(); await view.choose()
