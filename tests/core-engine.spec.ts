@@ -11,8 +11,9 @@ function trigger(id: string, overrides: Partial<Trigger> = {}): Trigger {
 interface Hooks {
   emit?: (event: { type: string; data: Record<string, unknown> }) => void
   prepareTicket?: EngineOptions['prepareTicket']
+  escalation?: EngineOptions['escalation']
 }
-function harness(policyOverrides: Partial<Policy> = {}, { emit, prepareTicket }: Hooks = {}) {
+function harness(policyOverrides: Partial<Policy> = {}, { emit, prepareTicket, escalation }: Hooks = {}) {
   const repo = new MemoryRepositories()
   const outbox: OutboundMessage[] = []
   const withdrawn: string[] = []
@@ -41,7 +42,8 @@ function harness(policyOverrides: Partial<Policy> = {}, { emit, prepareTicket }:
     withdraw: id => { withdrawn.push(id) },
   }
   const engine = new Engine({ repo, scope, policy: () => policy, assessor, executor, outbox: queued,
-    ...emit ? { emit } : {}, ...prepareTicket ? { prepareTicket } : {}, now: () => new Date(Date.UTC(2026, 8, 23, 0, 0, clock)).toISOString() })
+    ...emit ? { emit } : {}, ...prepareTicket ? { prepareTicket } : {}, ...escalation ? { escalation } : {},
+    now: () => new Date(Date.UTC(2026, 8, 23, 0, 0, clock)).toISOString() })
   /** Simulate the executor starting queued assignments (unless `launch` is false) and delivering pending ticket inputs. */
   function settle({ launch = true } = {}) {
     for (;;) {
@@ -1129,6 +1131,36 @@ describe('ticket commands', () => {
     expect(retried.assignments).toEqual([expect.objectContaining({ state: 'ended', endedReason: 'retried' }), expect.objectContaining({ state: 'pending' })])
     expect(h.executor.stop).toHaveBeenCalledOnce()
     expect(h.executor.start).toHaveBeenLastCalledWith(expect.objectContaining({ id: ticketId }), retried.assignments[1])
+  })
+})
+describe('automatic escalation', () => {
+  const step = { from: { provider: 'antigravity', model: 'gemini-3.8-flash' }, to: { provider: 'openai-codex', model: 'gpt-6.1-sol' } }
+  it('restarts a failed Assignment on the next model, records the escalation, and leaves the next failure with a person', () => {
+    const h = harness({}, { escalation: ticket => (ticket.escalations?.length ?? 0) < 1 ? step : undefined })
+    const ticketId = accepted(h).ticketId!
+    h.engine.report(ticketId, { state: 'failed', summary: 'the model could not finish' })
+    const escalated = h.repo.tickets.get(ticketId)!
+    expect(escalated.assignments).toEqual([expect.objectContaining({ state: 'ended', endedReason: 'escalated' }),
+      expect.objectContaining({ state: 'pending' })])
+    expect(escalated.escalations).toEqual([expect.objectContaining({ from: step.from, to: step.to, reason: 'the model could not finish',
+      assignmentId: escalated.assignments[1]!.id, fromAssignmentId: escalated.assignments[0]!.id })])
+    expect(h.executor.stop).toHaveBeenLastCalledWith(expect.objectContaining({ id: ticketId }), escalated.assignments[0], 'escalated')
+    expect(h.executor.start).toHaveBeenLastCalledWith(expect.objectContaining({ id: ticketId }), escalated.assignments[1])
+    h.settle()
+    h.engine.report(ticketId, { state: 'failed', summary: 'still failing' })
+    expect(h.repo.tickets.get(ticketId)!.escalations).toHaveLength(1)
+    expect(waitsForPerson(h.repo.tickets.get(ticketId)!)).toBe(true)
+  })
+  it('keeps a failure with a person when it asks a question, when it is blocked, or when the Executor marks it non-escalatable', () => {
+    const h = harness({}, { escalation: () => step })
+    const ticketId = accepted(h).ticketId!
+    h.engine.report(ticketId, { state: 'failed', summary: 'need a decision', question: 'Which branch?' })
+    expect(h.repo.tickets.get(ticketId)).not.toHaveProperty('escalations')
+    expect(h.repo.tickets.get(ticketId)!.attention).toMatchObject({ question: 'Which branch?' })
+    h.engine.report(ticketId, { state: 'blocked', summary: 'need access' })
+    expect(h.repo.tickets.get(ticketId)).not.toHaveProperty('escalations')
+    h.engine.report(ticketId, { state: 'failed', summary: 'the prepare command failed', escalatable: false })
+    expect(h.repo.tickets.get(ticketId)).not.toHaveProperty('escalations')
   })
 })
 describe('failed deliveries', () => {

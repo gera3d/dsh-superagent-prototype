@@ -41,6 +41,29 @@ it('refuses a save of a block that another save changed during its model or acco
   expect(store.settings().sources.github!.config).toMatchObject({ cli: value.config.cli, pollSeconds: 90 })
 })
 
+it('validates every route of a saved model hierarchy through the live provider, and keeps the old one on a refused route', async () => {
+  h = await startRuntime()
+  const { settings, store } = h.runtime
+  const llm = (h.ctx as unknown as { llm: { resolveCallConfig: ReturnType<typeof vi.fn> } }).llm
+  const hierarchy = [
+    { provider: 'antigravity', model: 'gemini-3.8-flash', starred: true },
+    { provider: 'openai-codex', model: 'gpt-6.1-sol', reasoningEffort: 'high', starred: true },
+  ]
+  await settings.save('models', { hierarchy, maxEscalations: 1 }, store.blockRevision('models'), 'panel')
+  expect(store.settings().models).toEqual({ hierarchy, maxEscalations: 1 })
+  expect(settings.block('models').value).toEqual({ hierarchy, maxEscalations: 1 })
+  expect(settings.view().models.value).toEqual({ hierarchy, maxEscalations: 1 })
+  expect(llm.resolveCallConfig).toHaveBeenCalledWith(expect.objectContaining({ provider: 'openai-codex', model: 'gpt-6.1-sol' }))
+  // The panel's block route accepts the block, as it accepts the other settings blocks.
+  expect((await h.api('PUT', 'settings/models', { value: { hierarchy, maxEscalations: 1 }, revision: store.blockRevision('models') })).status)
+    .toBe(200)
+  // One route the provider cannot resolve refuses the whole save, so no escalation can later address an unknown model.
+  llm.resolveCallConfig.mockRejectedValueOnce(new Error('unknown provider nowhere'))
+  await expect(settings.save('models', { hierarchy: [...hierarchy, { provider: 'nowhere', model: 'missing', starred: false }], maxEscalations: 2 },
+    store.blockRevision('models'), 'panel')).rejects.toThrow(UserError)
+  expect(store.settings().models).toEqual({ hierarchy, maxEscalations: 1 })
+})
+
 it('refuses a Policy sync that a Policy save outran, reports it on sync:feishu, and keeps the save', async () => {
   h = await startRuntime()
   const { settings, store } = h.runtime

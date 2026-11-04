@@ -7,7 +7,7 @@ import { DisclosureRow, Icon, InfoTip, Input, Pill } from './controls.tsx'
 import { SaveBar } from './draft.tsx'
 import { usePanel } from './provider.tsx'
 import { TicketLine } from './rows.tsx'
-import { ConfigHistory, Field, Fields, ModelField, numberOf, useBlockDraft, useSettings } from './settings-kit.tsx'
+import { ConfigHistory, Field, Fields, ModelField, ModelsBlock, numberOf, useBlockDraft, useSettings } from './settings-kit.tsx'
 import { localized } from './text.ts'
 import { ConfirmButton, Hint, LabelValue, LoadMore, LoadState, Section, StatusHead } from './widgets.tsx'
 
@@ -122,6 +122,7 @@ export function ExecutionSettings() {
       </Fields>
       <SaveBar {...draft} onDiscard={draft.discard} />
     </form>
-    <ConfigHistory blocks={['executor', 'pause']} />
+    <ModelsBlock />
+    <ConfigHistory blocks={['executor', 'models', 'pause']} />
   </div>
 }

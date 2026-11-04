@@ -40,6 +40,7 @@ import { Passes } from './passes.ts'
 import { Setup } from './setup.ts'
 import { feishuSettings } from '../sources/feishu.ts'
 import { health, type Health, type SourceContext, type SourceHost } from '../sources/host.ts'
+import { escalationStep } from './role-models.ts'
 import { Sessions } from './sessions.ts'
 import { Settings } from './settings.ts'
 import { sourceContextOf, type SourceContextDeps } from './source-context.ts'
@@ -135,7 +136,11 @@ export class Runtime extends Service implements SourceHost {
       const { assessor, executor } = this
       const policy = () => settingsPolicy(store.settings(), sources)
       const engine = this.engine = new Engine({ repo: store, scope: sources, policy, assessor, executor,
-        outbox, prepareTicket: (ticket, outcome) => executor.prepare(ticket, outcome), emit: event => {
+        outbox, prepareTicket: (ticket, outcome) => executor.prepare(ticket, outcome),
+        // A failed worker report walks the shared hierarchy after the ticket's last escalated route, up to its cap.
+        escalation: ticket => escalationStep(store.settings(), 'executor', ticket.escalations?.at(-1)?.to,
+          ticket.escalations?.length ?? 0),
+        emit: event => {
           // Notify the main Session only about domain events it did not initiate itself.
           const notice = this.quiet ? undefined : eventNotice(event, id => store.tickets.get(id))
           if (notice) sessions.notify(...notice)
