@@ -3,7 +3,8 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { SessionEvent, SessionId } from '@deepseek-ai/dsh-session'
 import type { DatabaseSync } from 'node:sqlite'
 import { createHash } from 'node:crypto'
-import type { AdvisorDecision, DecisionStaging, PendingDecisionItem } from '../core/decision.ts'
+import type { AdvisorDecision, DecisionEvaluationResult, DecisionOptionSet, DecisionStaging, PendingDecisionItem } from '../core/decision.ts'
+import { normalizeChoices } from '../core/options.ts'
 import { ticketStage, latestReport, type Ticket } from '../core/index.ts'
 import { workerSessionId } from '../executor/dsh.ts'
 import { parseInlineAlternatives } from '../client/inline-alternatives.ts'
@@ -77,6 +78,21 @@ export function decisionQuestion(text: string): string | undefined {
   const offers = sentences.filter(line => /^(?:if you(?:'d| would)? (?:like|want|prefer),?\s+(?:I can|I could|we can)|I can\b|I could\b|let me know (?:if|whether|which|what)|tell me (?:if|whether|which|what)|please (?:choose|confirm|decide|select)\b)/i.test(line)
     && !/^I (?:can|could)(?:['’]t|\s+(?:not|confirm|see|tell|verify|report|understand)\b)/i.test(line))
   return [...new Set([...asks, ...offers])].join('\n').replace(/§(\d+)§/g, (_match, index) => masked[Number(index)] ?? '').slice(0, 4000) || undefined
+}
+
+function cloneOptionSet(set: DecisionOptionSet): DecisionOptionSet {
+  return { ...set, choices: set.choices.map(choice => ({ ...choice })),
+    ...(set.hiddenOptions ? { hiddenOptions: set.hiddenOptions.map(choice => ({ ...choice })) } : {}),
+    recommendation: structuredClone(set.recommendation) }
+}
+/** Seed history from a legacy row's shown set so the first regenerate never loses it. */
+function optionHistory(existing: PendingDecisionItem | undefined): DecisionOptionSet[] {
+  if (existing?.optionSets?.length) return existing.optionSets.map(set => cloneOptionSet(set))
+  if (!existing?.choices.length) return []
+  return [{ revision: 1, createdAt: existing.createdAt, ...(existing.advisor?.model ? { model: existing.advisor.model } : {}),
+    choices: existing.choices.map(choice => ({ ...choice })),
+    ...(existing.hiddenOptions?.length ? { hiddenOptions: existing.hiddenOptions.map(choice => ({ ...choice })) } : {}),
+    recommendation: structuredClone(existing.recommendation) }]
 }
 
 /** SQLite-backed shared decisions with CAS staging, durable native submission proof and preserved resolution history. */
@@ -163,6 +179,8 @@ export class DecisionInbox {
       ticketTitle: parent.ticketTitle, trigger: 'Explicitly restarted decision', status: 'pending', actionMode: 'stage_response', resolutionPolicy: 'on_send',
       urgency: parent.urgency, createdAt: Math.max(Date.now(), parent.createdAt + 1), question: parent.question, context: parent.context,
       choices: parent.choices.map(choice => ({ ...choice })), recommendation: structuredClone(parent.recommendation),
+      ...(parent.hiddenOptions?.length ? { hiddenOptions: parent.hiddenOptions.map(choice => ({ ...choice })) } : {}),
+      ...(parent.optionSets?.length ? { optionSets: parent.optionSets.map(set => cloneOptionSet(set)) } : {}),
       advisor: parent.advisor?.status === 'ready' ? { ...parent.advisor } : undefined,
     }
     // Deterministic identity also deduplicates concurrent requests from separate connections.
@@ -214,26 +232,53 @@ export class DecisionInbox {
     this.save(item)
     return item
   }
-  /** Publish the real advisor output onto the source's existing durable decision, never revive a closed item. */
+  /** Publish the real advisor output as a new option-set revision, never overwrite or revive a closed item. */
   publishAdvisor(input: AdvisorDecision): PendingDecisionItem {
     const existing = this.findSource(input)
     if (existing && (existing.status !== 'pending' || existing.parentDecisionId)) return existing
-    if (input.options.length < 2 || input.options.some(option => !option.id || !option.prompt.trim())
+    if (!input.options.length || input.options.some(option => !option.id || !option.label?.trim() || !option.prompt?.trim())
       || input.options.filter(option => option.recommended).length !== 1) throw new InboxError(400, 'Invalid advisor choices')
     const selected = input.options.find(option => option.recommended)!
+    // Keep the recommendation visible: it is always first, whatever the caller's order.
+    const ordered = [selected, ...input.options.filter(option => option !== selected)].map(option => ({ id: option.id,
+      label: option.label, description: option.why, prompt: option.prompt, ...(option.added ? { added: true } : {}) }))
+    const { choices, hiddenOptions } = normalizeChoices(ordered)
+    const recommendation: DecisionEvaluationResult = { recommendedValue: selected.id, confidence: 0, rationale: selected.why, distribution: [], provider: input.model, latencyMs: 0 }
     const id = existing?.id ?? `chat-${createHash('sha256').update(`${input.sessionId}\0${input.sourceMessageId ?? `turn:${input.sourceTurn ?? input.key}`}`).digest('hex').slice(0, 32)}`
     const item: PendingDecisionItem = { ...(existing ?? {}), id, sessionId: input.sessionId,
       sourceMessageId: input.sourceMessageId, sourceTurn: input.sourceTurn, sourceSeq: input.sourceSeq,
       ticketTitle: existing?.ticketTitle ?? input.title ?? 'Conversation next steps', trigger: 'Task-specific next steps',
       question: existing?.question ?? input.question, context: existing?.context ?? input.context.slice(-30000),
       createdAt: existing?.createdAt ?? input.createdAt, urgency: existing?.urgency ?? 'low', status: 'pending', actionMode: 'stage_response',
-      choices: input.options.map(option => ({ id: option.id, label: option.label, description: option.why, prompt: option.prompt })),
-      recommendation: { recommendedValue: selected.id, confidence: 0, rationale: selected.why, distribution: [], provider: input.model, latencyMs: 0 },
-      advisor: { status: 'ready', model: input.model, key: input.key } }
+      choices, ...(hiddenOptions.length ? { hiddenOptions } : {}),
+      recommendation, advisor: { status: 'ready', model: input.model, key: input.key } }
     if (existing?.staging && (choicesFingerprint(existing) !== choicesFingerprint(item)
       || existing.sourceMessageId !== item.sourceMessageId || existing.sourceSeq !== item.sourceSeq || existing.sourceTurn !== item.sourceTurn)) throw new InboxError(409, 'Choices or source changed while a draft is staged; discard staging before reevaluating')
+    const history = optionHistory(existing)
+    const revision = Math.max(0, ...history.map(set => set.revision)) + 1
+    item.optionSets = [...history, { revision, key: input.key, model: input.model,
+      createdAt: Math.max(Date.now(), (history.at(-1)?.createdAt ?? 0) + 1), choices: choices.map(choice => ({ ...choice })),
+      ...(hiddenOptions.length ? { hiddenOptions: hiddenOptions.map(choice => ({ ...choice })) } : {}), recommendation: { ...recommendation } }]
     this.save(item, existing)
     return item
+  }
+  /** Restore an earlier set by appending it as a new revision; no recorded set is erased. */
+  restoreOptionSet(id: string, revision: number): PendingDecisionItem {
+    const item = this.get(id)
+    if (!item) throw new InboxError(404, 'Decision not found')
+    if (item.status !== 'pending' || item.invalidation) throw new InboxError(409, 'Only a pending decision can restore an earlier option set')
+    if (item.staging) throw new InboxError(409, 'Choices cannot change while a draft is staged; discard staging first')
+    const selected = item.optionSets?.find(set => set.revision === revision)
+    if (!selected) throw new InboxError(404, 'Option set not found')
+    const history = optionHistory(item)
+    const next = { ...item, choices: selected.choices.map(choice => ({ ...choice })),
+      recommendation: structuredClone(selected.recommendation),
+      optionSets: [...history, { ...cloneOptionSet(selected), revision: Math.max(0, ...history.map(set => set.revision)) + 1,
+        createdAt: Math.max(Date.now(), (history.at(-1)?.createdAt ?? 0) + 1), restoredFrom: selected.revision }] } as PendingDecisionItem
+    if (selected.hiddenOptions?.length) next.hiddenOptions = selected.hiddenOptions.map(choice => ({ ...choice }))
+    else delete next.hiddenOptions
+    this.save(next, item)
+    return next
   }
   syncTickets(items: PendingDecisionItem[]): void {
     const active = new Set(items.map(item => item.id))
@@ -397,12 +442,12 @@ export class DecisionInbox {
           if (question && !laterHuman) {
             const sourceMessageId = message.data.message.id
             const id = `chat-${createHash('sha256').update(`${sessionId}\0${sourceMessageId}`).digest('hex').slice(0, 32)}`
-            const offer = /^(?:if you|I can|I could|let me know)/i.test(question)
+            // Explicit alternatives stay verbatim; either path is padded to the option minimum.
+            const { choices, hiddenOptions } = normalizeChoices(alternatives?.choices ?? [])
             this.put({ id, sessionId, sourceMessageId, sourceTurn: end.data.turn, sourceSeq: message.seq,
               ticketTitle: title, trigger: 'Explicit chat follow-up', status: 'pending', urgency: 'low', createdAt: end.time,
               context: text.slice(-30000), question, recommendation, advisor: { status: 'pending' },
-              choices: alternatives?.choices ?? (offer ? [{ id: 'continue', label: 'Continue with this next step', description: 'Stage a request to continue the offered next step. Review and send it yourself.' }, { id: 'discuss', label: 'Discuss or change the plan', description: 'Stage a clarification request; nothing is sent.' }]
-                : [{ id: 'respond', label: 'Draft a response', description: 'Open this question in the source session and edit your response before sending.' }, { id: 'discuss', label: 'Ask for clarification', description: 'Stage a clarification request; nothing is sent.' }]) })
+              choices, ...(hiddenOptions.length ? { hiddenOptions } : {}) })
           }
         }
       }

@@ -150,20 +150,25 @@ const PromptsQuery = z.object({ revision: count.optional(), offset: count.defaul
 const SourceBlock = z.templateLiteral(['source:', z.string().regex(/^[a-z][a-z0-9-]*$/)])
 const SettingsBlockSchema = z.union([z.enum(['policy', 'eval', 'executor']), SourceBlock])
 const SaveRequest = z.object({ value: z.unknown(), revision: z.number().int().nonnegative() })
-const DecisionChoiceSchema = z.object({ id: z.string().min(1).max(200), label: z.string().min(1).max(2000), description: z.string().max(4000).optional(), prompt: z.string().min(1).max(12000).optional() })
+const DecisionChoiceSchema = z.object({ id: z.string().min(1).max(200), label: z.string().min(1).max(2000), description: z.string().max(4000).optional(), prompt: z.string().min(1).max(12000).optional(), added: z.boolean().optional() })
 const DecisionEvaluation = z.object({ context: z.string().max(30000), sessionId: z.string().min(1).max(300).optional(), question: z.string().max(4000), choices: z.array(DecisionChoiceSchema).min(2).max(12), provider: z.enum(['auto', 'deepseek', 'typesafe-jev', 'openai-luna']).optional() })
 export const DecisionStageRequest = z.object({ choiceId: z.string().min(1).max(200), attemptId: z.string().uuid(), draftText: z.string().min(1).max(120000) }).strict()
 export const DecisionSubmissionRequest = z.object({ attemptId: z.string().uuid(), submissionId: z.string().min(1).max(300), retryOf: z.string().min(1).max(300).optional() }).strict()
 export const DecisionDiscardRequest = z.object({ attemptId: z.string().uuid() }).strict()
 export const DecisionRestartRequest = z.object({ sessionId: z.string().min(1).max(300) }).strict()
-export const DecisionInboxItem = z.object({
+export const DecisionEvaluationSchema = z.object({ recommendedValue: z.string(), confidence: z.number().min(0).max(1), rationale: z.string().max(4000),
+  distribution: z.array(z.object({ id: z.string(), probability: z.number().min(0).max(1) })).max(12), provider: z.string().max(300), latencyMs: z.number().nonnegative() })
+const DecisionOptionSetSchema = z.object({ revision: z.number().int().positive(), key: z.string().max(300).optional(), model: z.string().max(300).optional(),
+  createdAt: z.number().finite(), choices: z.array(DecisionChoiceSchema).min(1).max(12), hiddenOptions: z.array(DecisionChoiceSchema).max(12).optional(),
+  recommendation: DecisionEvaluationSchema, restoredFrom: z.number().int().positive().optional() })
+const DecisionInboxItem = z.object({
   id: z.string().min(1).max(300), sessionId: z.string().min(1), sourceMessageId: z.string().min(1),
   sourceSeq: z.number().int().nonnegative().optional(), sourceTurn: z.number().int().nonnegative().optional(),
   ticketTitle: z.string().max(2000), trigger: z.string().max(4000), status: z.literal('pending'),
   urgency: z.enum(['high', 'medium', 'low']), createdAt: z.number().finite(),
   context: z.string().max(30000), question: z.string().max(4000), choices: z.array(DecisionChoiceSchema).min(2).max(12),
-  recommendation: z.object({ recommendedValue: z.string(), confidence: z.number().min(0).max(1), rationale: z.string().max(4000),
-    distribution: z.array(z.object({ id: z.string(), probability: z.number().min(0).max(1) })).max(12), provider: z.string().max(300), latencyMs: z.number().nonnegative() }),
+  hiddenOptions: z.array(DecisionChoiceSchema).max(12).optional(), optionSets: z.array(DecisionOptionSetSchema).max(100).optional(),
+  recommendation: DecisionEvaluationSchema,
 })
 
 function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Routes {

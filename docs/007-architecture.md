@@ -316,6 +316,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/core/memory.ts` | `MemoryRepositories`: the Store's repositories in memory, in the Store's order and with its nested rollback, for domain tests |
 | `src/core/index.ts` | The core's exports |
 | `src/core/decision.ts` | `evaluateDecision`: pure validation over an injected model transport; no vendor HTTP or credential access. Scores are not calibrated. |
+| `src/core/options.ts` | The Phase 0 option contract: `OPTION_MIN` and `OPTION_MAX`, generic marked fallbacks, and `normalizeChoices`, which deduplicates, backfills short sets and keeps options beyond the shown maximum as `hiddenOptions`. |
 | `src/app/decision-evaluator.ts` | Tool-free auxiliary requests through DSH's authenticated LLM service, using the source Session's effective model or the configured default. |
 | `src/app/decision-provider.ts` | Independently reloadable exact-path evaluator route with same-origin checks and bounded request bodies; never owns agent Sessions. |
 | `src/app/runtime.ts` | The Runtime, the composition root, with its start and stop |
@@ -455,6 +456,8 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/decision-inbox.spec.ts` | Durable capture, cold recovery, false-positive exclusions, source deduplication, stale resolution guards and draft-only outcomes |
 | `tests/decision-inbox-provider.spec.ts` | Same-origin HTTP validation, plugin close/reopen persistence, idempotent staging and safe retirement of persisted false positives |
 | `tests/decision-source.spec.ts` | Capture and evaluator share one canonical recommendation; enrichment never duplicates or resurrects a resolved decision |
+| `tests/dock-guard.spec.tsx` | The empty-dock guard: a blank conversation renders no decision card and never touches the composer |
+| `tests/options.spec.ts` | The shared option contract: four-to-six enforcement, marked fallbacks and hidden options beyond the shown maximum |
 | `tests/decision-submission.spec.ts` | Durable resolve-on-send proof, exact native request/session/source identity, candidate races, retries, discard, invalidation, close/reopen recovery and legacy-writer guards |
 | `tests/decision-restart.spec.ts` | Restarted decision ancestry, retry deduplication, server-owned checkpoints, fresh native submission proof and preservation of recorded parent history |
 | `tests/decision-submission-client.spec.ts` | Shared native-Send linkage, preserved draft text/attachments/reference chips, reload journal recovery, failed-send retries, cancellation and exclusion of unrelated identical-text messages |
