@@ -161,7 +161,7 @@ export const DecisionEvaluationSchema = z.object({ recommendedValue: z.string(),
 const DecisionOptionSetSchema = z.object({ revision: z.number().int().positive(), key: z.string().max(300).optional(), model: z.string().max(300).optional(),
   createdAt: z.number().finite(), choices: z.array(DecisionChoiceSchema).min(1).max(12), hiddenOptions: z.array(DecisionChoiceSchema).max(12).optional(),
   recommendation: DecisionEvaluationSchema, restoredFrom: z.number().int().positive().optional() })
-const DecisionInboxItem = z.object({
+export const DecisionInboxItem = z.object({
   id: z.string().min(1).max(300), sessionId: z.string().min(1), sourceMessageId: z.string().min(1),
   sourceSeq: z.number().int().nonnegative().optional(), sourceTurn: z.number().int().nonnegative().optional(),
   ticketTitle: z.string().max(2000), trigger: z.string().max(4000), status: z.literal('pending'),

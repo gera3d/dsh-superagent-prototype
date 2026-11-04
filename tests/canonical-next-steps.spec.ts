@@ -162,9 +162,15 @@ it('keeps explicit assistant alternatives and stable choice ids while advising t
     yield { type: 'finish', reason: { kind: 'completed' } }
   } }))
   const result = await view.request('s0')
-  expect(result.body.options.map((option: any) => option.id)).toEqual(['option-b', 'option-a'])
+  // Phase 0 pads the shown set to four with marked fallbacks; the explicit alternatives keep their canonical ids.
+  const ids = result.body.options.map((option: any) => option.id)
+  expect(ids.slice(0, 2)).toEqual(['option-b', 'option-a'])
+  expect(ids).toHaveLength(4)
+  expect(ids.slice(2).every((id: string) => id.startsWith('step-'))).toBe(true)
+  expect(result.body.options.slice(2).every((option: any) => option.prompt && option.why)).toBe(true)
   expect(result.body.options[0].label).toBe(labelB)
   const item = view.inbox.list()[0]!
+  expect(item.choices.slice(2).every(choice => choice.added)).toBe(true)
   expect(item.recommendation.recommendedValue).toBe('option-b')
   expect(item.choices.find(choice => choice.id === 'option-b')?.prompt).toContain('report risks')
   expect(() => view.inbox.resolve(item.id, 'option-b')).toThrow('Linked native submission required')
@@ -172,9 +178,10 @@ it('keeps explicit assistant alternatives and stable choice ids while advising t
 
 it('recovers restarted legacy alternatives without model prompts or fabricated new choices', async () => {
   const view = fixture(), parent = view.inbox.list()[0]!
-  // Seed a pre-existing legacy row, rather than bypassing the live resolution guard.
+  // Seed a pre-existing legacy row whose alternatives predate prompt-bearing fallbacks.
+  const legacyChoices = parent.choices.map(choice => ({ id: choice.id, label: choice.label }))
   view.db.prepare('DELETE FROM decision_inbox WHERE id=?').run(parent.id)
-  view.inbox.put({ ...parent, status: 'resolved', resolvedChoice: parent.choices[0]!.id, resolutionBasis: 'legacy_staged' })
+  view.inbox.put({ ...parent, choices: legacyChoices, status: 'resolved', resolvedChoice: legacyChoices[0]!.id, resolutionBasis: 'legacy_staged' })
   const child = view.inbox.startNewDecision(parent.id, view.histories.get('s0')! as unknown as SessionEvent[])
   expect(child.choices.every(choice => !choice.prompt)).toBe(true)
   const response = await view.request('s0', true)
