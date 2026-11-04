@@ -105,8 +105,7 @@
 .dt-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 /* The model hierarchy: a star toggle per route, then its fields and reorder actions. */
 .dt-hierarchy > .dt-row { align-items: flex-start; }
-.dt-star { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 28px; height: 28px; margin-top: 20px; padding: 0;
-  border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-caption); cursor: pointer; }
+.dt-star { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 28px; height: 28px; margin-top: 20px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-caption); cursor: pointer; }
 .dt-star:hover { background: var(--dsw-alias-interactive-bg-hover); }
 .dt-star[data-on] { color: var(--dsw-alias-state-warn-primary); }
 .dt-star[data-on] svg { fill: currentColor; }
