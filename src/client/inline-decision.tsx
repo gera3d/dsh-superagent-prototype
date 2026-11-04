@@ -62,7 +62,10 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
     if (!flight) {
       flight = (async () => {
         const recommendation = await call('POST decisions/evaluate', { body: { context: text.slice(-24000), sessionId: session.sessionId, ...parsed } })
-        if (!recommendation.recommendedValue) throw new Error(recommendation.rationale || 'No model recommendation is available. Retry evaluation.')
+        // An unranked result is a deliberate fallback: keep the explicit alternatives in generator order rather than treating it as an evaluation failure.
+        if (!recommendation.recommendedValue && !recommendation.provider.trim().toLowerCase().startsWith('unranked')) {
+          throw new Error(recommendation.rationale || 'No model recommendation is available. Retry evaluation.')
+        }
         const item: PendingDecisionItem = {
           id, sessionId: session.sessionId, sourceMessageId, sourceSeq: assistant!.seq, sourceTurn: assistant!.turn,
           ticketTitle: 'Conversation decision', trigger: 'Explicit end-of-turn alternatives',

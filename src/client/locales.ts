@@ -429,6 +429,7 @@ const TEXT = {
   configHistory: ['配置历史', 'Configuration history'],
   'change.evalModel': ['研判模型', 'Assessor model'],
   'change.executorModel': ['执行器模型', 'Executor model'],
+  'change.decisionsRanker': ['决策排序器', 'Decision ranker'],
   'change.sourceEnabled': ['启用来源：{source}', 'Source enabled: {source}'],
   'change.sourceDisabled': ['停用来源：{source}', 'Source disabled: {source}'],
   'change.sourceAdmission': ['{source} · 准入修改', '{source} · admission changed'],

@@ -318,6 +318,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/core/decision.ts` | `evaluateDecision`: pure validation over an injected model transport; no vendor HTTP or credential access. Scores are not calibrated. |
 | `src/core/options.ts` | The Phase 0 option contract: `OPTION_MIN` and `OPTION_MAX`, generic marked fallbacks, and `normalizeChoices`, which deduplicates, backfills short sets and keeps options beyond the shown maximum as `hiddenOptions`. |
 | `src/app/decision-evaluator.ts` | Tool-free auxiliary requests through DSH's authenticated LLM service, using the source Session's effective model or the configured default. |
+| `src/app/decision-ranker.ts` | Decisions API ranker: maps one `choice` question over the candidate options, validates the returned choice/probabilities/confidence, and falls back to the configured-model evaluator and then to generator-order unranked. No call until settings name a driver and `apiKeyEnv` resolves to a key. |
 | `src/app/decision-provider.ts` | Independently reloadable exact-path evaluator route with same-origin checks and bounded request bodies; never owns agent Sessions. |
 | `src/app/runtime.ts` | The Runtime, the composition root, with its start and stop |
 | `src/app/setup.ts` | Setup, and `setupChanged`, whether a save changes a field setup reads |
@@ -399,7 +400,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/decisions.tsx` | The Decisions tab: actionable Human-in-the-Loop decision inbox and real-time decision playground |
 | `src/client/decision-card.tsx` | Recommendation presentation with explicit callback failure handling; never claims simulated actions executed. |
 | `src/client/inline-decision.css` | Responsive, composer-scoped presentation for the inline decision dock |
-| `src/client/inline-decision.tsx` | Agent-Mini `conversation.input.dock` card, restored as the preferred renderer through the shared bridge's explicit `dockOwner: 'agent-mini'`. Next steps yields only its browser card; its host advisor and the shared inbox remain installed. Captured empty decisions request canonical advisor enrichment; selections use the repaired stage/submission/discard routes, never auto-send. |
+| `src/client/inline-decision.tsx` | Agent-Mini `conversation.input.dock` card, restored as the preferred renderer through the shared bridge's explicit `dockOwner: 'agent-mini'`. Next steps yields only its browser card; its host advisor and the shared inbox remain installed. Captured empty decisions request canonical advisor enrichment; a deliberate unranked result stays in generator order; selections use the repaired stage/submission/discard routes, never auto-send. |
 | `src/client/decision-submission.ts` | Shared browser staging/submission journal: preserves drafts and attachments, freezes native reference serialization, binds explicit native Send attempts to request IDs and waits for host-confirmed durable admission; never auto-sends or infers a response from matching text alone |
 | `src/client/inline-alternatives.ts` | Parses explicit lettered alternatives; ignores fenced content and ordinary numbered sequential task lists. |
 | `src/client/thread.tsx`, `ticket.tsx` | The record pages: a Thread with its timeline, and a Ticket with its authorization, Inputs and Assignments |
@@ -453,6 +454,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/http.spec.ts` | The same-origin and loopback checks, failure statuses, body limits, query parsing, validated chat decision creation and idempotent resolution without worker dispatch |
 | `tests/decision-evaluation.spec.ts` | No fabricated recommendations, credential isolation, result validation and honest provider labeling |
 | `tests/decision-card.spec.tsx` | Visible question and source context, recommendation rationale, full-context and response disclosures, unavailable states and explicit evaluation without selection |
+| `tests/decision-ranker.spec.ts` | Decisions API request/response mapping, invalid ranking rejection, configured-model and unranked fallback order, no call without a configured key, and the opt-in settings defaults |
 | `tests/decision-inbox.spec.ts` | Durable capture, cold recovery, false-positive exclusions, source deduplication, stale resolution guards and draft-only outcomes |
 | `tests/decision-inbox-provider.spec.ts` | Same-origin HTTP validation, plugin close/reopen persistence, idempotent staging and safe retirement of persisted false positives |
 | `tests/decision-source.spec.ts` | Capture and evaluator share one canonical recommendation; enrichment never duplicates or resurrects a resolved decision |
