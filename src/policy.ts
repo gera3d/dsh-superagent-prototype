@@ -69,6 +69,19 @@ export const RuleSchema = z.object({ id: RuleIdSchema, name: z.string().trim().m
 export type Rule = z.infer<typeof RuleSchema>
 export const RoleModelSchema = z.object({ provider: z.string().trim().min(1), model: z.string().trim().min(1), reasoningEffort: z.string().trim().min(1).optional() }).strict()
 export type RoleModel = z.infer<typeof RoleModelSchema>
+/**
+ * Decisions API ranker selection. `auto` and `deepseek` use the existing configured-model evaluator, while
+ * `openai-luna` and `typesafe-jev` call the configured endpoint. An empty `apiKeyEnv` authorizes no call, so the
+ * ranker never reaches the network until someone names the environment variable that holds the key.
+ */
+export const DecisionsConfigSchema = z.object({
+  provider: z.enum(['auto', 'typesafe-jev', 'openai-luna', 'deepseek']).default('auto'),
+  model: z.string().trim().max(200).default(''),
+  endpoint: z.string().trim().max(500).refine(value => value === '' || (URL.canParse(value) && /^https?:\/\//.test(value)), 'An http(s) URL, or empty for the provider default').default(''),
+  apiKeyEnv: z.string().trim().max(200).regex(/^$|^[A-Za-z_][A-Za-z0-9_]*$/, 'An environment variable name').default(''),
+  timeoutMs: z.number().int().min(1_000).max(120_000).default(15_000),
+}).strict()
+export type DecisionsConfig = z.infer<typeof DecisionsConfigSchema>
 
 export const AllowedSchema = z.object({ id: z.string().trim().min(1).max(200), name: z.string().trim().max(100).optional() }).strict()
 const Weak = z.enum(['inferred', 'ignore'])
@@ -102,9 +115,10 @@ export const SettingsSchema = z.object({
   policy: PolicyConfigSchema.default(() => PolicyConfigSchema.parse({})),
   eval: EvalConfigSchema.default(() => EvalConfigSchema.parse({})),
   executor: ExecutorConfigSchema.default(() => ExecutorConfigSchema.parse({})),
+  decisions: DecisionsConfigSchema.default(() => DecisionsConfigSchema.parse({})),
 }).strict()
 export type Settings = z.infer<typeof SettingsSchema>
-export type SettingsBlock = 'policy' | 'eval' | 'executor' | `source:${string}`
+export type SettingsBlock = 'policy' | 'eval' | 'executor' | 'decisions' | `source:${string}`
 export type SettingsSave = SettingsBlock | 'pause'
 export type SettingsOrigin = 'panel' | 'tool' | 'sync'
 

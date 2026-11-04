@@ -36,7 +36,7 @@ it('reads the lists, a ticket, a decision, the settings, the prompts and the mod
   expect(settings).toMatchObject({ eval: { value: { mode: 'auto' } }, policy: { revision: expect.any(Number), allowed: { feishu: 1, github: 1 }, read: 'settings/policy' },
     pause: { value: { paused: false } }, sources: expect.arrayContaining([expect.objectContaining({ id: 'github', read: 'settings/source:github' })]) })
   expect(JSON.stringify(settings)).not.toContain('ou_alice')
-  for (const block of ['policy', 'eval', 'executor', 'pause', 'source:github']) {
+  for (const block of ['policy', 'eval', 'executor', 'decisions', 'pause', 'source:github']) {
     const page = await read(`settings/${block}`) as { text: string }
     expect(JSON.parse(page.text)).toEqual({ block, revision: h.runtime.store.blockRevision(block as 'policy'), value: h.runtime.settings.block(block).value })
   }
@@ -272,6 +272,9 @@ it('saves a settings block by name, a Source\'s block with the Source\'s id', as
   expect(await save({ block: 'source', source: 'github', value: off, revision: github.revision })).toMatchObject({ saved: true })
   expect(h.runtime.store.settings().sources.github?.enabled).toBe(false)
   expect(await save({ block: 'pause', value: { paused: true }, revision: 0 })).toEqual({ paused: true })
+  const decisions = { provider: 'openai-luna', model: 'gpt-6-luna', endpoint: '', apiKeyEnv: 'OPENAI_API_KEY', timeoutMs: 15_000 }
+  expect(await save({ block: 'decisions', value: decisions, revision: h.runtime.store.blockRevision('decisions') })).toMatchObject({ saved: true })
+  expect(h.runtime.store.settings().decisions).toEqual(decisions)
 })
 
 it('previews a prompt configuration without saving it, and saves one only against the revision it edits', async () => {

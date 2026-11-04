@@ -80,19 +80,27 @@ export interface PendingDecisionItem {
 export interface DecisionModelReply { text: string; provider: string }
 export type DecisionModelCall = (request: DecisionEvaluationRequest) => Promise<DecisionModelReply>
 
+/** Returns why a decision request cannot be ranked, or `undefined` when its question, context and distinct choices are usable. */
+export function decisionRequestProblem(request: DecisionEvaluationRequest): string | undefined {
+  const { choices, question, context } = request
+  if (!Array.isArray(choices) || choices.length < 2 || choices.length > 12
+    || choices.some(c => !c || typeof c.id !== 'string' || !c.id || typeof c.label !== 'string')
+    || new Set(choices.map(c => c.id)).size !== choices.length
+    || typeof context !== 'string' || typeof question !== 'string') return 'Provide a question, context, and 2–12 distinct alternatives.'
+  return undefined
+}
+
 export async function evaluateDecision(request: DecisionEvaluationRequest, call?: DecisionModelCall): Promise<DecisionEvaluationResult> {
   const start = Date.now()
   const unavailable = (rationale: string): DecisionEvaluationResult => ({
     recommendedValue: '', confidence: 0, rationale, distribution: [],
     provider: 'Recommendation unavailable', latencyMs: Date.now() - start,
   })
-  const { choices, question, context } = request
-  if (!Array.isArray(choices) || choices.length < 2 || choices.length > 12
-    || choices.some(c => !c || typeof c.id !== 'string' || !c.id || typeof c.label !== 'string')
-    || new Set(choices.map(c => c.id)).size !== choices.length
-    || typeof context !== 'string' || typeof question !== 'string') return unavailable('Provide a question, context, and 2–12 distinct alternatives.')
+  const problem = decisionRequestProblem(request)
+  if (problem) return unavailable(problem)
   if (request.provider && request.provider !== 'auto') return unavailable('Choose the existing configured model; vendor-specific decision endpoints are not implemented.')
   if (!call) return unavailable('The configured model service is unavailable. No evaluation was performed.')
+  const { choices } = request
   try {
     const result = await call(request)
     const raw = result.text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')

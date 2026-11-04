@@ -3,9 +3,10 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { z } from 'zod'
-import { evaluateDecision, type DecisionEvaluationRequest, type PendingDecisionItem } from '../core/decision.ts'
+import type { DecisionEvaluationRequest, PendingDecisionItem } from '../core/decision.ts'
 import { THREAD_FILTERS, TICKET_FILTERS, type Api, type ApiResponse, type RouteParams } from './api.ts'
 import { configuredDecisionReply } from './decision-evaluator.ts'
+import { evaluateDecisionWithFallback } from './decision-ranker.ts'
 import { DecisionInbox, InboxError, registerDecisionCapture, ticketDecisions, submitDecision, stageDecision, restartDecision } from './decision-inbox.ts'
 import { sourceSkills } from './context.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
@@ -148,7 +149,7 @@ const DecisionsQuery = z.object({ kind: z.string().default(''), window: z.litera
 const count = z.coerce.number().int().nonnegative()
 const PromptsQuery = z.object({ revision: count.optional(), offset: count.default(0) })
 const SourceBlock = z.templateLiteral(['source:', z.string().regex(/^[a-z][a-z0-9-]*$/)])
-const SettingsBlockSchema = z.union([z.enum(['policy', 'eval', 'executor']), SourceBlock])
+const SettingsBlockSchema = z.union([z.enum(['policy', 'eval', 'executor', 'decisions']), SourceBlock])
 const SaveRequest = z.object({ value: z.unknown(), revision: z.number().int().nonnegative() })
 const DecisionChoiceSchema = z.object({ id: z.string().min(1).max(200), label: z.string().min(1).max(2000), description: z.string().max(4000).optional(), prompt: z.string().min(1).max(12000).optional() })
 const DecisionEvaluation = z.object({ context: z.string().max(30000), sessionId: z.string().min(1).max(300).optional(), question: z.string().max(4000), choices: z.array(DecisionChoiceSchema).min(2).max(12), provider: z.enum(['auto', 'deepseek', 'typesafe-jev', 'openai-luna']).optional() })
@@ -212,7 +213,10 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
     },
     'POST decisions/evaluate': async ({ body }) => {
       const payload = DecisionEvaluation.parse(await body())
-      return evaluateDecision(payload, request => configuredDecisionReply(ctx, request))
+      return evaluateDecisionWithFallback(payload, {
+        decisions: store.settings().decisions,
+        call: request => configuredDecisionReply(ctx, request),
+      })
     },
     'POST decisions/:id/resolve': async ({ params, body }) => {
       const { choiceId } = z.object({ choiceId: z.string().min(1).max(200) }).strict().parse(await body())
