@@ -4,7 +4,9 @@ import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import { agentEvents, installModelSelection, type Agent, type ModelSelection, type ModelSelectionRef } from '@deepseek-ai/dsh-agent'
 import { Session, SessionId } from '@deepseek-ai/dsh-session'
 import { ReasoningEffortId } from '@deepseek-ai/dsh-llm'
-import { initializeRoleModel } from '../src/app/role-models.ts'
+import { defaultRoute, escalationChain, escalationStep, initializeRoleModel, roleDefaults, sameRoute, selectRoleModel, starredRoutes }
+  from '../src/app/role-models.ts'
+import { SettingsSchema } from '../src/policy.ts'
 const contexts: Context[] = []
 afterEach(async () => { await Promise.all(contexts.splice(0).map(ctx => ctx.fiber.dispose())); vi.restoreAllMocks() })
 async function fixture() {
@@ -62,4 +64,61 @@ it('inherits the host when unset and fails unavailable routes before recording a
   resolve.mockRejectedValueOnce(new Error('unknown provider'))
   await expect(initializeRoleModel(ctx, agent, { provider: 'unknown', model: 'x' })).rejects.toThrow('unknown provider')
   expect(agent.session.snapshotEvents().some(event => event.type === 'model/selection')).toBe(false)
+})
+
+const gemini = { provider: 'antigravity', model: 'gemini-3.8-flash' }
+const sol = { provider: 'openai-codex', model: 'gpt-6.1-sol', reasoningEffort: 'high' }
+const sonnet = { provider: 'anthropic', model: 'claude-sonnet-5-5' }
+const hierarchy = (...entries: { provider: string; model: string; reasoningEffort?: string; starred?: boolean }[]) =>
+  entries.map(entry => ({ ...entry, starred: entry.starred ?? true }))
+const configured = (overrides: Record<string, unknown> = {}) => SettingsSchema.parse({
+  models: { hierarchy: hierarchy(gemini, sol, sonnet), maxEscalations: 2 }, ...overrides })
+
+it('starts a job type on its configured model, else the first starred route, else the first hierarchy route', () => {
+  const base = configured()
+  expect(defaultRoute(base, 'eval')).toEqual(gemini)
+  expect(defaultRoute(base, 'executor')).toEqual(gemini)
+  expect(defaultRoute(configured({ eval: { model: sol }, executor: { model: sonnet } }), 'eval')).toEqual(sol)
+  expect(defaultRoute(configured({ eval: { model: sol }, executor: { model: sonnet } }), 'executor')).toEqual(sonnet)
+  // An unstarred first route is not a default while another route is starred.
+  expect(defaultRoute(configured({ models: { hierarchy: hierarchy({ ...gemini, starred: false }, sol, sonnet), maxEscalations: 2 } }),
+    'executor')).toEqual(sol)
+  expect(defaultRoute(SettingsSchema.parse({ models: { hierarchy: hierarchy({ ...gemini, starred: false }), maxEscalations: 0 } }),
+    'executor')).toEqual(gemini)
+  expect(defaultRoute(SettingsSchema.parse({}), 'executor')).toBeNull()
+})
+
+it('walks the hierarchy from the job type\'s route, one route per escalation and only up to the cap', () => {
+  const settings = configured()
+  expect(starredRoutes(settings)).toEqual([gemini, sol, sonnet])
+  expect(escalationChain(settings, 'executor')).toEqual([sol, sonnet])
+  expect(escalationStep(settings, 'executor')).toEqual({ from: gemini, to: sol })
+  // The second escalation continues from the first one's route, not from the default again.
+  expect(escalationStep(settings, 'executor', sol, 1)).toEqual({ from: sol, to: sonnet })
+  // At the cap, and at the end of the hierarchy, nothing escalates.
+  expect(escalationStep(settings, 'executor', sol, 2)).toBeUndefined()
+  expect(escalationStep(settings, 'executor', sonnet, 1)).toBeUndefined()
+  expect(escalationStep(configured({ executor: { model: sol } }), 'executor')).toEqual({ from: sol, to: sonnet })
+  expect(escalationStep(configured({ models: { hierarchy: hierarchy(gemini, sol, sonnet), maxEscalations: 0 } }), 'executor')).toBeUndefined()
+})
+
+it('treats a job route outside the hierarchy as starting before it and compares routes including effort', () => {
+  const outside = { provider: 'local', model: 'tiny' }
+  const settings = configured({ executor: { model: outside } })
+  expect(escalationStep(settings, 'executor')).toEqual({ from: outside, to: gemini })
+  expect(sameRoute(sol, { ...sol })).toBe(true)
+  expect(sameRoute(sol, { ...sol, reasoningEffort: 'low' })).toBe(false)
+  expect(escalationStep(configured({ models: { hierarchy: hierarchy(gemini, { ...gemini, reasoningEffort: 'low' }), maxEscalations: 2 } }),
+    'executor')).toEqual({ from: gemini, to: { ...gemini, reasoningEffort: 'low' } })
+  expect(roleDefaults(settings)).toEqual({ orchestrator: gemini, worker: outside })
+})
+
+it('selects a route for the next request of an existing Session without changing the global default', async () => {
+  const { ctx, agent, request, record, flush } = await fixture()
+  record({ provider: 'weak', model: 'small' })
+  await selectRoleModel(ctx, agent, { provider: 'strong', model: 'big' })
+  await ctx.systemPrompt.assemble()
+  expect(await request()).toEqual({ provider: 'strong', model: 'big' })
+  expect(agent.session.snapshotEvents().filter(event => event.type === 'model/selection')).toHaveLength(1)
+  expect(flush).toHaveBeenCalledOnce()
 })

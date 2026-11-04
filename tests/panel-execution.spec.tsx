@@ -222,3 +222,36 @@ it('sends one stop for a double click on Confirm', async () => {
   await act(async () => { confirm.click(); confirm.click() })
   expect(server.requests.filter(request => request.path === 'tickets/t1/stop')).toHaveLength(1)
 })
+
+it('edits the shared model hierarchy: adds a route, marks it starred, sets the escalation cap, and saves the block', async () => {
+  at({ page: 'settings', query: { group: 'execution' } })
+  await mount()
+  expect(text()).toContain(zh.modelHierarchy)
+  expect(text()).toContain(zh.modelHierarchyEmpty)
+  await click(zh.addModel)
+  const inputs = all('.dt-hierarchy input') as HTMLInputElement[]
+  expect(inputs).toHaveLength(3)
+  await type(inputs[0]!, 'antigravity')
+  await type(inputs[1]!, 'gemini-3.8-flash')
+  await type(inputs[2]!, 'high')
+  // The new route starts starred; the toggle turns the star off and on again.
+  const star = all('.dt-hierarchy .dt-star')[0]!
+  expect(star.getAttribute('aria-pressed')).toBe('true')
+  await click(star)
+  expect(all('.dt-hierarchy .dt-star')[0]!.getAttribute('aria-pressed')).toBe('false')
+  await click(all('.dt-hierarchy .dt-star')[0]!)
+  expect(all('.dt-hierarchy .dt-star')[0]!.getAttribute('aria-pressed')).toBe('true')
+  // A second route, moved above the first, so the hierarchy order is the escalation order.
+  await click(zh.addModel)
+  const next = all('.dt-hierarchy input') as HTMLInputElement[]
+  await type(next[3]!, 'openai-codex')
+  await type(next[4]!, 'gpt-6.1-sol')
+  await click(all('.dt-hierarchy .dt-row .dt-row-actions button')[3]!) // move the second route up
+  const max = field<HTMLInputElement>(zh.maxEscalations)
+  await type(max, '2')
+  await click(find(zh.save, '.dt-savebar button'))
+  expect(server.settings.models).toEqual({ hierarchy: [
+    { provider: 'openai-codex', model: 'gpt-6.1-sol', starred: true },
+    { provider: 'antigravity', model: 'gemini-3.8-flash', reasoningEffort: 'high', starred: true },
+  ], maxEscalations: 2 })
+})

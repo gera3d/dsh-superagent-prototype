@@ -1,7 +1,7 @@
 /** Shared base class and configuration for Engine domain parts. */
 import { UserError } from './errors.ts'
 import { followupOwners, reached, threadKey } from './model.ts'
-import type { Thread, ThreadRef, Ticket, Trigger } from './model.ts'
+import type { ModelRoute, Thread, ThreadRef, Ticket, Trigger } from './model.ts'
 import type { Assessor, AssessmentOutcome, DomainEvent, DomainEvents, Executor, Outbox, Policy, Repositories, SourceScope } from './ports.ts'
 
 export interface EngineOptions {
@@ -13,6 +13,12 @@ export interface EngineOptions {
   executor: Executor
   outbox: Outbox
   prepareTicket?: (ticket: Ticket, outcome: Extract<AssessmentOutcome, { kind: 'accept' }>) => Ticket
+  /**
+   * Decide whether a failed report escalates to a stronger model, and from which route to which; `undefined` leaves the
+   * failure with a person as before. The model hierarchy and its cap decide; the Executor applies the returned route to the
+   * worker's Session before the new Assignment starts.
+   */
+  escalation?: (ticket: Ticket, reason: string) => { from: ModelRoute; to: ModelRoute } | undefined
   now?: () => string
   emit?: (event: DomainEvent) => void
 }

@@ -209,6 +209,24 @@ export interface Decision {
 }
 
 export type AssignmentState = 'pending' | 'running' | 'ended'
+/** A model route: the provider and model a role runs on, with an optional reasoning effort. */
+export interface ModelRoute { provider: string; model: string; reasoningEffort?: string }
+/**
+ * One automatic escalation from a failed Assignment to a stronger model. The escalation is recorded before the new
+ * Assignment launches, and the Executor selects `to` on the worker's Session (`appliedAt`) before that Assignment's first turn.
+ */
+export interface Escalation {
+  at: string
+  /** The Assignment whose failed report caused the escalation. */
+  fromAssignmentId: string
+  /** The new Assignment that runs on `to`. */
+  assignmentId: string
+  from: ModelRoute
+  to: ModelRoute
+  /** The failed report's summary, or why routing chose this step. */
+  reason: string
+  appliedAt?: string
+}
 /**
  * What an Assignment reports: work is in progress (`progress`), its worker waits for a Trigger (`waiting`), a result is
  * ready (`ready`), a person must act to unblock or recover it (`blocked` or `failed`), or nothing is left to do (`dropped`).
@@ -286,6 +304,8 @@ export interface Ticket {
   /** Open question for a person; cleared by the executor or when the ticket ends. */
   attention?: Attention
   assignments: Assignment[]
+  /** Automatic escalations to stronger models, oldest first; their count is capped by the Models settings. */
+  escalations?: Escalation[]
   inputs: TicketInput[]
   /** Inputs not yet handed to a running assignment. */
   undelivered: string[]
