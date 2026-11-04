@@ -96,6 +96,37 @@ export const ModelsConfigSchema = z.object({
   maxEscalations: z.number().int().min(LIMITS.maxEscalations.min).max(LIMITS.maxEscalations.max).default(2),
 }).strict()
 
+import { DEFAULT_SENIOR_DEVELOPER_CHARACTER } from './core/character.ts'
+export { DEFAULT_SENIOR_DEVELOPER_CHARACTER }
+
+export const CharacterModeSchema = z.enum(['suggest_only', 'auto_push'])
+export type CharacterMode = z.infer<typeof CharacterModeSchema>
+
+/**
+ * Autopilot Character configuration.
+ * Hard rule: Keys and secrets are never stored in settings; settings name an environment variable.
+ */
+export const CharacterConfigSchema = z.object({
+  id: z.string().trim().min(1).max(100),
+  name: z.string().trim().min(1).max(100),
+  specialty: z.string().trim().min(1).max(500),
+  brief: z.string().trim().min(1).max(2000),
+  standards: z.array(z.string().trim().min(1).max(500)).default([]),
+  permissionToDisagree: z.boolean().default(true),
+  inclinedTools: z.array(z.string().trim().min(1).max(100)).default([]),
+  mode: CharacterModeSchema.default('suggest_only'),
+  apiKeyEnv: z.string().trim().max(200).regex(/^$|^[A-Za-z_][A-Za-z0-9_]*$/, 'An environment variable name').default(''),
+  enabled: z.boolean().default(true),
+}).strict().refine(c => !c.apiKeyEnv.startsWith('sk-') && !c.apiKeyEnv.includes('Bearer') && !c.apiKeyEnv.includes('='),
+  'Keys and secrets must never be stored in settings; name an environment variable instead')
+export type CharacterConfig = z.infer<typeof CharacterConfigSchema>
+
+export const CharactersConfigSchema = z.object({
+  defaultCharacterId: z.string().trim().min(1).default('senior_developer'),
+  characters: z.array(CharacterConfigSchema).default([DEFAULT_SENIOR_DEVELOPER_CHARACTER]),
+}).strict()
+export type CharactersConfig = z.infer<typeof CharactersConfigSchema>
+
 export const AllowedSchema = z.object({ id: z.string().trim().min(1).max(200), name: z.string().trim().max(100).optional() }).strict()
 const Weak = z.enum(['inferred', 'ignore'])
 export const AdmissionRowSchema: z.ZodType<AdmissionRow> = z.object({ listedUnaddressed: Weak.optional(), unlistedAddressed: z.enum(['explicit', 'inferred', 'ignore']).optional(), unlistedUnaddressed: Weak.optional() }).strict()
@@ -130,9 +161,10 @@ export const SettingsSchema = z.object({
   executor: ExecutorConfigSchema.default(() => ExecutorConfigSchema.parse({})),
   decisions: DecisionsConfigSchema.default(() => DecisionsConfigSchema.parse({})),
   models: ModelsConfigSchema.default(() => ModelsConfigSchema.parse({})),
+  characters: CharactersConfigSchema.default(() => CharactersConfigSchema.parse({})),
 }).strict()
 export type Settings = z.infer<typeof SettingsSchema>
-export type SettingsBlock = 'policy' | 'eval' | 'executor' | 'decisions' | 'models' | `source:${string}`
+export type SettingsBlock = 'policy' | 'eval' | 'executor' | 'decisions' | 'models' | 'characters' | `source:${string}`
 export type SettingsSave = SettingsBlock | 'pause'
 export type SettingsOrigin = 'panel' | 'tool' | 'sync'
 

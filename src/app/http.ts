@@ -7,6 +7,8 @@ import type { DecisionEvaluationRequest, PendingDecisionItem } from '../core/dec
 import { THREAD_FILTERS, TICKET_FILTERS, type Api, type ApiResponse, type RouteParams } from './api.ts'
 import { configuredDecisionReply } from './decision-evaluator.ts'
 import { evaluateDecisionWithFallback } from './decision-ranker.ts'
+import { evaluateWithCharacter } from './character-evaluator.ts'
+import { DEFAULT_SENIOR_DEVELOPER_CHARACTER } from '../core/character.ts'
 import { DecisionInbox, InboxError, registerDecisionCapture, ticketDecisions, submitDecision, stageDecision, restartDecision } from './decision-inbox.ts'
 import { sourceSkills } from './context.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
@@ -149,10 +151,11 @@ const DecisionsQuery = z.object({ kind: z.string().default(''), window: z.litera
 const count = z.coerce.number().int().nonnegative()
 const PromptsQuery = z.object({ revision: count.optional(), offset: count.default(0) })
 const SourceBlock = z.templateLiteral(['source:', z.string().regex(/^[a-z][a-z0-9-]*$/)])
-const SettingsBlockSchema = z.union([z.enum(['policy', 'eval', 'executor', 'decisions', 'models']), SourceBlock])
+const SettingsBlockSchema = z.union([z.enum(['policy', 'eval', 'executor', 'decisions', 'models', 'characters']), SourceBlock])
 const SaveRequest = z.object({ value: z.unknown(), revision: z.number().int().nonnegative() })
 const DecisionChoiceSchema = z.object({ id: z.string().min(1).max(200), label: z.string().min(1).max(2000), description: z.string().max(4000).optional(), prompt: z.string().min(1).max(12000).optional(), added: z.boolean().optional() })
 const DecisionEvaluation = z.object({ context: z.string().max(30000), sessionId: z.string().min(1).max(300).optional(), question: z.string().max(4000), choices: z.array(DecisionChoiceSchema).min(2).max(12), provider: z.enum(['auto', 'deepseek', 'typesafe-jev', 'openai-luna']).optional() })
+const CharacterEvaluationRequestSchema = DecisionEvaluation.extend({ characterId: z.string().max(100).optional() })
 export const DecisionStageRequest = z.object({ choiceId: z.string().min(1).max(200), attemptId: z.string().uuid(), draftText: z.string().min(1).max(120000) }).strict()
 export const DecisionSubmissionRequest = z.object({ attemptId: z.string().uuid(), submissionId: z.string().min(1).max(300), retryOf: z.string().min(1).max(300).optional() }).strict()
 export const DecisionDiscardRequest = z.object({ attemptId: z.string().uuid() }).strict()
@@ -222,6 +225,18 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
         decisions: store.settings().decisions,
         call: request => configuredDecisionReply(ctx, request),
       })
+    },
+    'POST decisions/character-evaluate': async ({ body }) => {
+      const payload = CharacterEvaluationRequestSchema.parse(await body())
+      const settings = store.settings()
+      const character = (payload.characterId
+        ? settings.characters.characters.find(c => c.id === payload.characterId)
+        : undefined) ?? settings.characters.characters.find(c => c.id === settings.characters.defaultCharacterId) ?? settings.characters.characters[0] ?? DEFAULT_SENIOR_DEVELOPER_CHARACTER
+      const rankerResult = await evaluateDecisionWithFallback(payload, {
+        decisions: settings.decisions,
+        call: request => configuredDecisionReply(ctx, request),
+      })
+      return evaluateWithCharacter(character, payload, { rankerResult })
     },
     'POST decisions/:id/resolve': async ({ params, body }) => {
       const { choiceId } = z.object({ choiceId: z.string().min(1).max(200) }).strict().parse(await body())
