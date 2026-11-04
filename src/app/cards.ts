@@ -61,6 +61,7 @@ export function ticketDetails(ticket: Ticket, threads: TicketThread[], batch: re
   // Drop card preview because the latest report's preview is already shown on the first assignment entry.
   const { preview: _preview, ...card } = ticketCard(ticket)
   return { ...card, trigger_id: ticket.origin.triggerId, ...batch.length ? { batch: batch.map(batchLine) } : {},
+    ...ticket.escalations?.length ? { escalations: ticket.escalations } : {},
     ...worker ? {} : { decision_id: ticket.decisionId }, threads, directory: ticket.execution?.directory,
     scope: ticket.mandate.scope, requested_by: ticket.mandate.actor.id,
     assignments: newestPage(ticket.assignments, 0, ASSIGNMENTS, item => assignmentLine(ticket, item), `ticket/${ticket.id}/assignments`),

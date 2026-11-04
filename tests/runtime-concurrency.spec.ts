@@ -941,3 +941,39 @@ describe('the Executor\'s parts', () => {
     expect(JSON.parse(ready.text)).toMatchObject({ kind: 'worker_report', ticket: { ticket_id: 't1' }, trigger_id: 'tr1', state: 'ready', answer_to: 'tr9', summary: 'Done' })
   })
 })
+
+it('escalates a failed worker to the next starred model before relaunching it, records the step, and stops at the cap', async () => {
+  const gemini = { provider: 'antigravity', model: 'gemini-3.8-flash', starred: true }
+  const sol = { provider: 'openai-codex', model: 'gpt-6.1-sol', starred: true }
+  const sonnet = { provider: 'anthropic', model: 'claude-sonnet-5-5', starred: true }
+  await h.runtime.settings.save('models', { hierarchy: [gemini, sol, sonnet], maxEscalations: 1 },
+    h.runtime.store.blockRevision('models'), 'panel')
+  const one = await h.acceptedTicket(feishu('7', '@bot 修七'))
+  // A new worker starts on the first starred route by seeding, not by a later selection.
+  expect(h.controller.selectModel).not.toHaveBeenCalled()
+  await h.runTool(one.sessionId, 'orchestrator_report', { state: 'failed', summary: 'the tool could not finish' })
+  await h.runtime.idle()
+  const escalated = h.runtime.store.tickets.get(one.ticket.id)!
+  expect(escalated.assignments).toHaveLength(2)
+  expect(escalated.assignments[0]).toMatchObject({ state: 'ended', endedReason: 'escalated' })
+  expect(escalated.escalations).toEqual([expect.objectContaining({ from: { provider: 'antigravity', model: 'gemini-3.8-flash' },
+    to: { provider: 'openai-codex', model: 'gpt-6.1-sol' }, reason: 'the tool could not finish', assignmentId: escalated.assignments[1]!.id })])
+  // The model switch lands on the worker's own Session before the new Assignment's first turn, without a Session-controller
+  // selection that would change the global default.
+  const session = (h.agents.get(one.sessionId) as unknown as { session: { append: ReturnType<typeof vi.fn> } }).session
+  const selections = () => session.append.mock.calls.filter(([event]) => event === 'model/selection').map(([, value]) => value)
+  // The fake Session reports no header, so its new-Session seeding and the escalation both select the stronger route.
+  expect(selections()[0]).toEqual({ provider: 'antigravity', model: 'gemini-3.8-flash' })
+  expect(selections().at(-1)).toEqual(expect.objectContaining({ provider: 'openai-codex', model: 'gpt-6.1-sol' }))
+  const selectedBeforeCap = selections().length
+  expect(h.controller.selectModel).not.toHaveBeenCalled()
+  expect(h.runtime.store.tickets.get(one.ticket.id)!.escalations?.[0]?.appliedAt).toBeDefined()
+  // The cap is one: a second failure of the escalated Assignment waits for a person instead of reaching Sonnet.
+  await h.runTool(one.sessionId, 'orchestrator_report', { state: 'failed', summary: 'still failing' })
+  await h.runtime.idle()
+  const capped = h.runtime.store.tickets.get(one.ticket.id)!
+  expect(capped.escalations).toHaveLength(1)
+  expect(latestAssignment(capped)?.report).toMatchObject({ state: 'failed', summary: 'still failing' })
+  expect(waitsForPerson(capped)).toBe(true)
+  expect(selections()).toHaveLength(selectedBeforeCap)
+})

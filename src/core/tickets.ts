@@ -2,8 +2,8 @@
 import { key } from './ids.ts'
 import { UserError } from './errors.ts'
 import { latestAssignment, latestReport, liveTicket, readUntil, runningAssignment, settled, threadKey, waitsForPerson } from './model.ts'
-import type { Assignment, ChannelRef, Evaluation, Follow, Mandate, PolicyEffect, ThreadRef, Ticket, TicketEndBy, TicketInput, TicketOutcome,
-  Trigger, TriggerDisposition } from './model.ts'
+import type { Assignment, ChannelRef, Evaluation, Follow, Mandate, ModelRoute, PolicyEffect, ThreadRef, Ticket, TicketEndBy, TicketInput,
+  TicketOutcome, Trigger, TriggerDisposition } from './model.ts'
 import type { AssessmentOutcome } from './ports.ts'
 import { EnginePart, type EngineOptions } from './part.ts'
 import type { Replies } from './replies.ts'
@@ -177,6 +177,29 @@ export class Tickets extends EnginePart {
     this.options.executor.stop(ticket, latest, 'retried')
     this.options.executor.start(ticket, assignment)
     return ticket
+  }
+  /**
+   * Records an automatic escalation to a stronger model and restarts the stalled Assignment on it: the failed Assignment ends
+   * (`escalated`), what its worker did not take goes to the new one, and the Executor selects `to` on the worker's Session
+   * before the new Assignment's first turn. No-op for an ended ticket or an Assignment that already ended.
+   * @throws UserError when the ticket is unknown or has no Assignment.
+   */
+  escalate(ticketId: string, step: { from: ModelRoute; to: ModelRoute }, reason: string): Ticket {
+    const ticket = this.require(ticketId)
+    const latest = latestAssignment(ticket)
+    if (!latest) throw new UserError('unknownAssignment')
+    if (!liveTicket(ticket) || latest.state === 'ended') return ticket
+    const at = this.now()
+    this.endAssignment(ticket, latest, 'escalated')
+    this.requeueUntaken(ticket, latest)
+    const assignment = this.newAssignment(ticket)
+    ticket.escalations = [...ticket.escalations ?? [], { at, fromAssignmentId: latest.id, assignmentId: assignment.id, from: step.from,
+      to: step.to, reason: reason.slice(0, 300) }]
+    ticket.updatedAt = at
+    this.repo.tickets.save(ticket)
+    this.options.executor.stop(ticket, latest, 'escalated')
+    this.options.executor.start(ticket, assignment)
+    return this.require(ticketId)
   }
   /**
    * Drops a ticket's Subscription to a Thread its worker found unrelated, and hands back, with `reason`, the person's messages there that the ticket decides.

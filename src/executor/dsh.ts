@@ -5,8 +5,8 @@ import type { Agent } from '@deepseek-ai/dsh-agent'
 import { mkdir, rmdir, stat } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { key, latestAssignment, latestReport, liveTicket, runningAssignment, threadKey, waitsForPerson } from '../core/index.ts'
-import type { AssessmentOutcome, Assignment, EngineForExecutor, Execution, Executor, Mandate, PolicyEffect, Ticket, TicketInput, Trigger }
-  from '../core/index.ts'
+import type { AssessmentOutcome, Assignment, EngineForExecutor, Escalation, Execution, Executor, Mandate, PolicyEffect, Ticket, TicketInput,
+  Trigger } from '../core/index.ts'
 import type { Machine } from '../deployment.ts'
 import { runAsWorker, verifyDirectory } from '../infra/environment.ts'
 import type { Settings } from '../policy.ts'
@@ -70,7 +70,7 @@ export interface ExecutorHost {
   readonly machine: Pick<Machine, 'stateDir'>
   readonly lifetime: AbortSignal
   /** Session manager for worker sessions and for relaying worker reports to the main Session. */
-  readonly sessions: Pick<Sessions, 'ensure' | 'prompt' | 'promptedId' | 'relay' | 'holds'>
+  readonly sessions: Pick<Sessions, 'ensure' | 'selectModel' | 'prompt' | 'promptedId' | 'relay' | 'holds'>
   closing(): boolean
   /** Whether processing is paused, which holds launches and input deliveries. */
   paused(): boolean
@@ -134,6 +134,11 @@ const RESUMED = 'This ticket ended earlier and the message that follows, on its 
   + 'for another ticket, hand it back with orchestrator_trigger_handback and report dropped; if it needs nothing, such as thanks, '
   + 'report dropped without a message. Report ready when the follow-up is done. Do not repeat completed work.'
 const RETRIED = 'A person retried this ticket. Continue the assignment from the current worktree, git history and PR state.'
+/** Tells the worker of an escalated Assignment which model now runs it and why, so it continues instead of restarting. */
+const escalationNote = (escalation: Escalation): string =>
+  `The previous attempt failed and this Assignment escalated from ${escalation.from.provider}/${escalation.from.model} to `
+  + `${escalation.to.provider}/${escalation.to.model}: ${escalation.reason}. Continue from the current worktree, git history and PR state; `
+  + 'do not repeat completed work.'
 /** Formats a policy-change input for the worker; inputs recorded before `effect` existed fall back to a general notice. */
 function policyMessage(effect?: PolicyEffect): string {
   if (!effect) return 'Policy change: the access or admission rules changed. Check that the remaining work stays within the assignment.'
@@ -310,9 +315,10 @@ export class DshExecutor implements Executor {
         }
         const input = ticket.inputs.find(item => item.id === inputId)
         try {
-          // Recreate the worker session if it was externally deleted.
+          // Recreate the worker session if it was externally deleted, on the Assignment's escalated route when it has one.
           if (!this.host.context.agents.get(sessionId as SessionId)) {
-            await this.host.sessions.ensure(sessionId, ticket.execution?.directory ?? '', ticket.title, 'worker')
+            const escalated = ticket.escalations?.find(item => item.assignmentId === assignment.id)?.to
+            await this.host.sessions.ensure(sessionId, ticket.execution?.directory ?? '', ticket.title, 'worker', escalated)
           }
           if (input) await this.deliverInput(ticket, assignment, input)
         } catch (error) {
@@ -416,11 +422,18 @@ export class DshExecutor implements Executor {
   /** Records a `failed` report on the ticket and relays the failure to the main Session in one transaction. */
   private failed(ticketId: string, summary: string): void {
     this.host.store.atomic(() => {
-      const updated = this.host.engine.report(ticketId, { state: 'failed', summary })
+      // The Executor's own failures are workspace, setup or provider facts a stronger model does not fix: never escalate them.
+      const updated = this.host.engine.report(ticketId, { state: 'failed', summary, escalatable: false })
       this.relay(resultRelay(updated, 'failed', summary))
     })
   }
   private relay({ id, text }: { id: string; text: string }): void { this.host.sessions.relay(id, text) }
+  /** Records a failed escalation whose stronger route could not be selected; the failure then waits for a person. */
+  private escalationFailed(ticketId: string, assignmentId: string, escalation: Escalation, error: unknown): void {
+    const ticket = this.host.store.tickets.get(ticketId)
+    if (!ticket || !liveTicket(ticket) || latestAssignment(ticket)?.id !== assignmentId) return
+    this.failed(ticketId, `The escalated model ${escalation.to.provider}/${escalation.to.model} could not be selected: ${String(error)}`)
+  }
   private async launch(ticket: Ticket, assignment: Assignment): Promise<void> {
     const current = () => {
       if (this.host.closing()) throw new Error('dsh-superagent is stopping')
@@ -438,11 +451,29 @@ export class DshExecutor implements Executor {
     }
     if (!current()) return
     const sessionId = workerSessionId(ticket.id)
-    const agent = await this.host.sessions.ensure(sessionId, workspace, ticket.title, 'worker')
+    // An escalated Assignment starts on its stronger route, also in a Session this Executor had to create again.
+    const escalation = ticket.escalations?.find(item => item.assignmentId === assignment.id)
+    const agent = await this.host.sessions.ensure(sessionId, workspace, ticket.title, 'worker', escalation?.to)
     if (!current()) return
     // The background work of the Assignment this one replaces stops first, so its end does not clear this one's message.
     await this.stopped(ticket.id)
     if (!current()) return
+    // Selecting the route first keeps the escalated Assignment's first turn on the stronger model; once recorded, a retry of
+    // this launch does not select it again.
+    if (escalation && !escalation.appliedAt) {
+      try { await this.host.sessions.selectModel(agent, escalation.to) }
+      catch (error) {
+        this.escalationFailed(ticket.id, assignment.id, escalation, error)
+        return
+      }
+      if (!current()) return
+      this.host.store.atomic(() => {
+        const stored = this.host.store.tickets.get(ticket.id)
+        const recorded = stored?.escalations?.find(item => item.assignmentId === assignment.id)
+        if (!stored || !recorded) return
+        recorded.appliedAt = now(); stored.updatedAt = now(); this.host.store.tickets.save(stored)
+      })
+    }
     // A message put back for this Assignment may still wait in the Session, kept by a restart's cancel or persisted across a
     // crash, where this launch's message would take it into a step beside the copy delivered next: that copy is the only one.
     for (const id of this.host.store.tickets.get(ticket.id)?.undelivered ?? []) agent.inbox.remove(this.host.sessions.promptedId(id))
@@ -452,16 +483,18 @@ export class DshExecutor implements Executor {
     const later = ticket.assignments.length > 1
     const told = later && await this.host.sessions.holds(sessionId, first)
     if (!current()) return
-    const retried = ticket.assignments.at(-2)?.endedReason === 'retried' ? { note: RETRIED } : {}
+    const replaced = ticket.assignments.at(-2)?.endedReason
+    const note = replaced === 'retried' ? RETRIED : replaced === 'escalated' && escalation ? escalationNote(escalation) : undefined
+    const preceding = note ? { note } : {}
     const assignmentText = ticket.execution?.assignment ?? ''
     const { text: brief, chars, read } = capped(assignmentText, ASSIGNMENT_CHARS, `ticket/${ticket.id}/assignment`)
     const card = told || !source ? undefined : await this.triggerCard(ticket, source.id)
     if (!current()) return
     const batch = told ? [] : batchOf(this.host, ticket).map(batchLine)
-    const text = told ? JSON.stringify({ ticket_id: ticket.id, assignment: ticket.assignments.length, ...retried })
+    const text = told ? JSON.stringify({ ticket_id: ticket.id, assignment: ticket.assignments.length, ...preceding })
       : JSON.stringify({ ticket_id: ticket.id, title: ticket.title, ...(brief ? { assignment: brief } : {}),
         ...(read ? { assignment_chars: chars, assignment_read: read } : {}), ...(card ? { trigger: card } : {}),
-        ...(batch.length ? { batch } : {}), ...retried })
+        ...(batch.length ? { batch } : {}), ...preceding })
     const requestId = later ? `assignment:${ticket.id}:${assignment.id}` : first
     await this.host.sessions.prompt(sessionId, requestId, text, 'queue',
       () => { if (!current()) throw new Error('Launch authorization changed before worker delivery') },
