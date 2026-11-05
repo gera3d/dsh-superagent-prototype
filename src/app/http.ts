@@ -81,9 +81,13 @@ async function readBody(req: IncomingMessage, maxBytes = 128 * 1024): Promise<un
 function json(res: ServerResponse, status: number, value: unknown): void {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' }); res.end(JSON.stringify(value))
 }
+export function isLoopbackHost(req: Pick<IncomingMessage, 'headers'>, port: number): boolean {
+  const host = req.headers.host
+  return host === `127.0.0.1:${port}` || host === `localhost:${port}`
+}
 export function sameOrigin(req: Pick<IncomingMessage, 'headers'>, port: number): boolean {
   const host = req.headers.host
-  if (host !== `127.0.0.1:${port}` && host !== `localhost:${port}`) return false
+  if (!isLoopbackHost(req, port)) return false
   return req.headers['x-orchestrator-request'] === '1' && (req.headers.origin === undefined || req.headers.origin === `http://${host}`)
 }
 /** Maps errors to HTTP status codes and structured payloads that the panel localizes in the interface language. */
@@ -396,8 +400,8 @@ export function registerHttp(ctx: Context, runtime: HttpHost): () => void {
     ctx.webServer.register({ kind: 'prefix', path: '/orchestrator', handler: async (req, res) => {
       const url = new URL(req.url ?? '/', 'http://localhost')
       if (!url.pathname.startsWith('/orchestrator/api/')) { res.writeHead(404); res.end(); return }
-      if (!sameOrigin(req, ctx.webServer.port)) { json(res, 403, { error: 'Same-origin management request required' }); return }
       if (url.pathname === '/orchestrator/api/branding/raw') {
+        if (!isLoopbackHost(req, ctx.webServer.port)) { json(res, 403, { error: 'Same-origin management request required' }); return }
         const variant = url.searchParams.get('variant')
         const { branding } = runtime.store.settings()
         const target = (variant === 'dark' ? branding.logoDark : variant === 'light' ? branding.logoLight : '')
@@ -415,6 +419,7 @@ export function registerHttp(ctx: Context, runtime: HttpHost): () => void {
         createReadStream(target).pipe(res)
         return
       }
+      if (!sameOrigin(req, ctx.webServer.port)) { json(res, 403, { error: 'Same-origin management request required' }); return }
       try {
         await runtime.ready
         if (url.pathname.includes("/decisions/")) await capture.ready

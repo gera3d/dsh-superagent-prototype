@@ -42,7 +42,7 @@ export function BrandLogoMark({ size = 24, branding: directBranding, logoUrl }: 
     let cancelled = false
     const load = async () => {
       try {
-        const res = await fetch('/orchestrator/api/branding')
+        const res = await fetch('/orchestrator/api/branding', { headers: { 'x-orchestrator-request': '1' } })
         if (!res.ok) return
         const data = (await res.json()) as { branding?: BrandingConfig }
         if (!cancelled && data.branding) {
