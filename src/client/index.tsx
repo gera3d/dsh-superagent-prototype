@@ -67,8 +67,10 @@ export function apply(ctx: ClientContext): void {
   ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
     name: 'conversation.input.dock', id: 'dsh-superagent.inline-decision', order: 10,
   }, props => <InlineDecision {...props} submissionBridge={submissionBridge} />))
+  // `sidebar.brand.mark` is a single slot: the official brand plugin already occupies priority 0, so claim a lower
+  // rank to shadow it instead of throwing on a duplicate registration (lowest priority renders).
   ctx.slots.inject('sidebar.brand.mark', () => ctx.slots.register({
-    name: 'sidebar.brand.mark',
+    name: 'sidebar.brand.mark', priority: -1,
   }, props => <BrandLogoMark {...props} />))
   ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: PANEL_ID, locale: NS, inject: () => ({}) },
     (props: { t: T }) => <Mounted ctx={ctx} t={props.t} />))
