@@ -50,6 +50,10 @@ This skill equips agents with a low-friction, high-clarity communication protoco
 10. **Make Progress Visible:**
     - Explicitly celebrate and mark finished tasks (`🟢`) so momentum is felt.
 
+11. **Never Restart the Harness:**
+    - Agents never run `dsh-superagent stop` or `restart`, never run `kill` or `tmux kill-session` against the harness, and never set `DSH_SUPERAGENT_ALLOW_SELF_RESTART`.
+    - If a restart is needed, report that a restart is needed so the human operator can do it from a terminal.
+
 ---
 
 ## 2. Real-Time Progress Streaming (DSH Superagent)
