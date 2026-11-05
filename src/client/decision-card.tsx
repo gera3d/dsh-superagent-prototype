@@ -27,6 +27,7 @@ export function DecisionCard({ title, quote, context, unavailableReason, recomme
     rationale: 'Pushes back on untested code; insists on regression tests and clean diffs.',
     correction: 'Weak option corrected: requires passing test suite verification before merge.',
   } : undefined))
+  const isScored = Boolean((recommendation.confidence > 0 || (recommendation.distribution && recommendation.distribution.length > 0)) && recommendation.recommendedValue)
   const suggested = choices.find(choice => choice.id === recommendation.recommendedValue)
   const evaluate = async () => {
     if (!onEvaluate || evaluating || busy || selected !== undefined) return
@@ -139,14 +140,14 @@ export function DecisionCard({ title, quote, context, unavailableReason, recomme
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
       {choices.map(choice => {
         const dist = recommendation.distribution?.find(d => d.id === choice.id)
-        const probability = dist ? dist.probability : (choice.id === recommendation.recommendedValue && recommendation.confidence ? recommendation.confidence : undefined)
-        const percent = probability !== undefined && Number.isFinite(probability) && probability > 0 ? Math.round(probability * 100) : undefined
+        const probability = dist ? dist.probability : (choice.id === recommendation.recommendedValue && recommendation.confidence ? recommendation.confidence : (isScored ? Math.max(0, (1 - (recommendation.confidence || 0)) / Math.max(1, choices.length - 1)) : undefined))
+        const percent = probability !== undefined && Number.isFinite(probability) && probability >= 0 ? Math.round(probability * 100) : undefined
 
         return <div key={choice.id} className="dt-decision-option" data-chosen={selected === choice.id ? 'true' : undefined} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, border: selected === choice.id ? '2px solid #3fb950' : '1px solid #526177', background: selected === choice.id ? 'rgba(63, 185, 80, 0.12)' : undefined, borderRadius: 6, padding: 10 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <strong>{choice.label}</strong>
-              {percent !== undefined && (
+              {percent !== undefined ? (
                 <span className="dt-badge" style={{
                   padding: '1px 6px',
                   borderRadius: 4,
@@ -157,6 +158,18 @@ export function DecisionCard({ title, quote, context, unavailableReason, recomme
                   border: choice.id === recommendation.recommendedValue ? '1px solid rgba(63, 185, 80, 0.4)' : '1px solid rgba(128, 128, 128, 0.3)'
                 }}>
                   {percent}%
+                </span>
+              ) : (
+                <span className="dt-badge dt-badge--not-scored" style={{
+                  padding: '1px 6px',
+                  borderRadius: 4,
+                  fontSize: 11,
+                  fontWeight: 500,
+                  background: 'rgba(128, 128, 128, 0.15)',
+                  color: '#8b949e',
+                  border: '1px solid rgba(128, 128, 128, 0.25)'
+                }}>
+                  Not scored
                 </span>
               )}
               {selected === choice.id && <small> · ✓ Chosen</small>}

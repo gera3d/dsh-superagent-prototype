@@ -2,7 +2,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { SessionEvent, SessionId } from '@deepseek-ai/dsh-session'
 import type { DatabaseSync } from 'node:sqlite'
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import type { AdvisorDecision, DecisionEvaluationResult, DecisionOptionSet, DecisionStaging, PendingDecisionItem } from '../core/decision.ts'
 import { normalizeChoices } from '../core/options.ts'
 import { ticketStage, latestReport, type Ticket } from '../core/index.ts'
@@ -282,14 +282,24 @@ export class DecisionInbox {
     this.save(next, item)
     return next
   }
-  syncTickets(items: PendingDecisionItem[]): void {
+  syncTickets(items: PendingDecisionItem[], openTickets?: readonly { id: string; ended?: unknown }[]): void {
     const active = new Set(items.map(item => item.id))
-    for (const item of this.list()) if (item.ticketId && item.status === 'pending' && !active.has(item.id)) {
-      this.invalidate(item, 'Ticket no longer needs this input, or its question changed.')
+    const openSet = openTickets ? new Set(openTickets.filter(t => !t.ended).map(t => t.id)) : undefined
+    for (const item of this.list()) {
+      if (item.status === 'pending') {
+        if (item.ticketId && !active.has(item.id)) {
+          this.invalidate(item, 'Ticket no longer needs this input, or its question changed.')
+        } else if (item.sessionId?.startsWith('worker-')) {
+          const workerTicketId = item.sessionId.slice(7)
+          if (openSet ? !openSet.has(workerTicketId) : (items.length > 0 && !items.some(t => t.ticketId === workerTicketId || t.sessionId === item.sessionId))) {
+            this.invalidate(item, 'The originating session has ended. This decision can no longer be answered.')
+          }
+        }
+      }
     }
     for (const item of items) this.put(item)
   }
-  private invalidate(item: PendingDecisionItem, reason: string, sourceSeq?: number, at = Date.now()): void {
+  invalidate(item: PendingDecisionItem, reason: string, sourceSeq?: number, at = Date.now()): void {
     if (item.status === 'stale' || item.invalidation) return
     this.save({ ...item, ...(item.status === 'pending' ? { status: 'stale' as const, staleReason: reason } : {}), invalidation: { at, reason, ...(sourceSeq === undefined ? {} : { sourceSeq }) } }, item)
   }
@@ -466,6 +476,45 @@ export class DecisionInbox {
     if (item.resolvedChoice && item.resolvedChoice !== choiceId) throw new InboxError(409, 'Decision already resolved with another choice')
     if (item.status !== 'resolved' || item.resolutionBasis !== 'submitted' || item.resolvedChoice !== choiceId) throw new InboxError(409, 'Linked native submission required. Stage the choice and bind its native requestId; drafting alone cannot resolve a decision.')
     return { resolved: true, choiceId, execution: 'not_executed', draft: { ...(item.sessionId ? { sessionId: item.sessionId } : {}), text: item.draftResponse ?? choice.prompt ?? choice.label }, item }
+  }
+  /** Confirm an answerable decision choice directly with submission proof when dispatched to its live session. */
+  resolveWithSubmission(id: string, choiceId: string, submission: { submissionId: string; messageId: string; seq: number; text?: string }): DecisionResolution {
+    let item = this.get(id)
+    if (!item) throw new InboxError(404, 'Decision not found')
+    if (item.status === 'stale') throw new InboxError(409, `Decision is stale: ${item.staleReason || 'Open the source conversation for current context.'}`)
+    const choice = item.choices.find(choice => choice.id === choiceId)
+    if (!choice) throw new InboxError(400, 'Unknown decision choice')
+    if (item.status === 'resolved') {
+      if (item.resolvedChoice !== choiceId) throw new InboxError(409, 'Decision already resolved with another choice')
+      return { resolved: true, choiceId, execution: 'not_executed', draft: { ...(item.sessionId ? { sessionId: item.sessionId } : {}), text: item.draftResponse ?? choice.prompt ?? choice.label }, item }
+    }
+    let stagedItem = item
+    if (!stagedItem.staging || stagedItem.staging.choiceId !== choiceId) {
+      const attemptId = randomUUID()
+      this.stage(id, { attemptId, choiceId, draftText: submission.text ?? choice.prompt ?? choice.label })
+      stagedItem = this.get(id)!
+    }
+    const staging = stagedItem.staging!
+    const ids = staging.submissionIds ?? (staging.submissionId ? [staging.submissionId] : [])
+    if (!ids.includes(submission.submissionId)) {
+      this.linkSubmission(id, { attemptId: staging.attemptId, submissionId: submission.submissionId })
+      stagedItem = this.get(id)!
+    }
+    const resolvedAt = Date.now()
+    const next: PendingDecisionItem = {
+      ...stagedItem,
+      status: 'resolved',
+      resolvedChoice: choiceId,
+      resolvedAt,
+      resolutionBasis: 'submitted',
+      submissionId: submission.submissionId,
+      submittedMessageId: submission.messageId,
+      submittedSeq: Math.max(submission.seq, (stagedItem.sourceSeq ?? 0) + 1),
+      ...(stagedItem.resolutionRevision !== undefined ? { resolutionRevision: stagedItem.resolutionRevision + 1 } : {}),
+    }
+    this.save(next, stagedItem)
+    const finalItem = this.get(id)!
+    return { resolved: true, choiceId, execution: 'not_executed', draft: { ...(item.sessionId ? { sessionId: item.sessionId } : {}), text: item.draftResponse ?? choice.prompt ?? choice.label }, item: finalItem }
   }
 }
 

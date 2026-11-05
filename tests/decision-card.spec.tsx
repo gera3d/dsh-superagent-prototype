@@ -13,6 +13,10 @@ const container = document.createElement('div')
 let root: ReturnType<typeof createRoot> | undefined
 afterEach(() => { act(() => root?.unmount()); root = undefined; container.replaceChildren(); vi.restoreAllMocks() })
 async function render(props: Partial<Parameters<typeof DecisionCard>[0]> = {}) {
+  if (root) {
+    act(() => root?.unmount())
+    container.replaceChildren()
+  }
   root = createRoot(container)
   await act(async () => { root!.render(<DecisionCard title="Should we deploy?" context="The change is ready for review, but has not been deployed." recommendation={recommendation} choices={choices} {...props} />) })
 }
@@ -97,4 +101,40 @@ it('keeps historical alternatives inspectable without action buttons', async () 
   await render()
   expect(container.textContent).toContain('Deploy now')
   expect(container.querySelector('button')).toBeNull()
+})
+
+it('shows percentages consistently on scored cards and plain Not scored labels on unscored cards', async () => {
+  // 1. Scored card
+  await render({
+    recommendation: {
+      recommendedValue: 'review',
+      confidence: 0.85,
+      rationale: 'Ranked best.',
+      distribution: [
+        { id: 'review', probability: 0.85 },
+        { id: 'deploy', probability: 0.15 },
+      ],
+      provider: 'OpenAI Decisions API',
+      latencyMs: 10,
+    },
+  })
+  expect(container.textContent).toContain('85%')
+  expect(container.textContent).toContain('15%')
+  expect(container.textContent).not.toContain('Not scored')
+
+  // 2. Unscored card
+  await render({
+    recommendation: {
+      recommendedValue: '',
+      confidence: 0,
+      rationale: 'Not evaluated.',
+      distribution: [],
+      provider: 'Not evaluated',
+      latencyMs: 0,
+    },
+  })
+  const notScoredBadges = container.querySelectorAll('.dt-badge--not-scored')
+  expect(notScoredBadges.length).toBe(2)
+  expect(container.textContent).toContain('Not scored')
+  expect(container.textContent).not.toContain('%')
 })

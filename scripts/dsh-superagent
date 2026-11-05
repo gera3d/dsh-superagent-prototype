@@ -220,6 +220,17 @@ def called_from_service(profile):
     return None
 
 
+def in_harness(profile):
+    """Return (host_pid, reason) if called from inside the service or an in-harness agent session, else None."""
+    host = called_from_service(profile)
+    if host:
+        return host, f'inside its own process (PID {host})'
+    session = os.environ.get('DSH_MCP_SESSION') or os.environ.get('ANTIGRAVITY_AGENT')
+    if session:
+        return None, f'in-harness session ({session})'
+    return None
+
+
 def audit(args):
     """Append who ran a start/stop/restart to `.artifacts/control/audit.log`; never raises."""
     try:
@@ -264,12 +275,20 @@ def main():
     os.umask(0o077)
     if args.action != 'status':
         audit(args)
-    if args.action in ('stop', 'restart') and not os.environ.get('DSH_SUPERAGENT_ALLOW_SELF_RESTART'):
-        host = called_from_service(args.profile)
-        if host:
-            raise RuntimeError(f'Refusing to {args.action} dsh-superagent from inside its own process (PID {host}): '
-                               'it would kill this agent and every open session. Ask the operator to restart it '
-                               'from a terminal instead.')
+    if args.action in ('stop', 'restart'):
+        harness = in_harness(args.profile)
+        if harness:
+            host, reason = harness
+            is_human_terminal = False
+            try:
+                is_human_terminal = os.isatty(sys.stdin.fileno()) and not (os.environ.get('DSH_MCP_SESSION') or os.environ.get('ANTIGRAVITY_AGENT'))
+            except Exception:
+                pass
+            is_watchdog = bool(os.environ.get('DSH_SUPERAGENT_WATCHDOG'))
+            if not ((is_human_terminal or is_watchdog) and os.environ.get('DSH_SUPERAGENT_ALLOW_SELF_RESTART')):
+                raise RuntimeError(f'Refusing to {args.action} dsh-superagent from {reason}: '
+                                   'it would kill this agent and every open session. Ask the operator to restart it '
+                                   'from a terminal instead.')
     with (control(args.profile) / 'operation.lock').open('a') as lock:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)

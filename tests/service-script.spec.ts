@@ -62,8 +62,11 @@ afterEach(async () => {
   rmSync(root, { recursive: true, force: true })
 })
 function run(...args: string[]): Promise<{ code: number; stdout: string; stderr: string }> {
+  return runWithEnv({}, ...args)
+}
+function runWithEnv(extraEnv: Record<string, string>, ...args: string[]): Promise<{ code: number; stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => track(execFile('python3', [join(root, 'scripts', 'dsh-superagent'), ...args],
-    { env: { ...process.env, PATH: `${join(root, 'bin')}:${process.env.PATH}`, DSH_SUPERAGENT_PROFILE: '', DSH_SUPERAGENT_URL: '' },
+    { env: { ...process.env, PATH: `${join(root, 'bin')}:${process.env.PATH}`, DSH_SUPERAGENT_PROFILE: '', DSH_SUPERAGENT_URL: '', DSH_MCP_SESSION: '', ANTIGRAVITY_AGENT: '', ...extraEnv },
       timeout: 20_000 },
     (error, stdout, stderr) => {
       // A timeout, signal, or spawn error is not a successful service command.
@@ -268,4 +271,66 @@ it('does not signal a process that took the recorded service PID, and keeps a st
   processes(service(sleeper(true)))
   expect(await run('stop', '--stop-timeout', '1')).toMatchObject({ code: 1, stderr: expect.stringContaining('Graceful stop timed out') })
   expect(existsSync(join(control('superagent'), 'manually-stopped'))).toBe(true)
+}, 20_000)
+it('refuses stop and restart from an in-harness caller, even when the self-restart override is set', async () => {
+  const restartBlocked = await runWithEnv({ DSH_MCP_SESSION: 'worker-test' }, 'restart')
+  expect(restartBlocked).toMatchObject({
+    code: 1,
+    stderr: expect.stringContaining('Refusing to restart dsh-superagent from in-harness session'),
+  })
+
+  const restartBlockedWithOverride = await runWithEnv(
+    { DSH_MCP_SESSION: 'worker-test', DSH_SUPERAGENT_ALLOW_SELF_RESTART: '1' },
+    'restart',
+  )
+  expect(restartBlockedWithOverride).toMatchObject({
+    code: 1,
+    stderr: expect.stringContaining('Refusing to restart dsh-superagent from in-harness session'),
+  })
+
+  const stopBlockedWithOverride = await runWithEnv(
+    { DSH_MCP_SESSION: 'worker-test', DSH_SUPERAGENT_ALLOW_SELF_RESTART: '1' },
+    'stop',
+  )
+  expect(stopBlockedWithOverride).toMatchObject({
+    code: 1,
+    stderr: expect.stringContaining('Refusing to stop dsh-superagent from in-harness session'),
+  })
+}, 20_000)
+it('refuses stop and restart from inside the server process tree, even when the self-restart override is set', async () => {
+  const invokeInsideService = (action: string, allowOverride = false) => new Promise<{ code: number; stdout: string; stderr: string }>(
+    (resolve, reject) => {
+      const runner = track(spawn('sh', ['-c', `
+        python3 "${join(root, 'scripts', 'dsh-superagent')}" ${action}
+      `], {
+        env: {
+          ...process.env,
+          PATH: `${join(root, 'bin')}:${process.env.PATH}`,
+          DSH_SUPERAGENT_PROFILE: '',
+          DSH_SUPERAGENT_URL: '',
+          ...(allowOverride ? { DSH_SUPERAGENT_ALLOW_SELF_RESTART: '1' } : {}),
+        },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      }), commands)
+
+      processes(service(runner.pid!))
+      let stdout = '', stderr = ''
+      runner.stdout?.on('data', d => { stdout += d })
+      runner.stderr?.on('data', d => { stderr += d })
+      runner.on('close', code => resolve({ code: code ?? 0, stdout, stderr }))
+      runner.on('error', reject)
+    },
+  )
+
+  const resRestartNoOverride = await invokeInsideService('restart', false)
+  expect(resRestartNoOverride.code).toBe(1)
+  expect(resRestartNoOverride.stderr).toContain('Refusing to restart dsh-superagent from inside its own process')
+
+  const resRestartOverride = await invokeInsideService('restart', true)
+  expect(resRestartOverride.code).toBe(1)
+  expect(resRestartOverride.stderr).toContain('Refusing to restart dsh-superagent from inside its own process')
+
+  const resStopOverride = await invokeInsideService('stop', true)
+  expect(resStopOverride.code).toBe(1)
+  expect(resStopOverride.stderr).toContain('Refusing to stop dsh-superagent from inside its own process')
 }, 20_000)

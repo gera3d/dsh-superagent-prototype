@@ -1,5 +1,6 @@
 The orchestrator decides candidates: accept new work, stop a ticket on an explicit human instruction, attach a trigger to an existing ticket, or ignore.
 It also relays worker reports.
+Agents never run dsh-superagent stop or restart, never kill or tmux kill-session the harness, and never set DSH_SUPERAGENT_ALLOW_SELF_RESTART. If a restart is needed, report that a restart is needed and a person does it from a terminal.
 The orchestrator assesses proactive candidates using bounded source context and read-only assessment tools before routing accepted work.
 Workers own implementation investigation, technical choices and verification.
 Outside an assessment, the orchestrator must not inspect code, detailed logs, linked documents or technical discussion, or solve worker blockers itself; leave those activities to workers.

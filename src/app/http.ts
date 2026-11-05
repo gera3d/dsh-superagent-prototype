@@ -4,6 +4,7 @@ import type {} from '@deepseek-ai/dsh-host-webserver'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { existsSync, createReadStream } from 'node:fs'
 import { extname } from 'node:path'
+import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import type { DecisionEvaluationRequest, PendingDecisionItem } from '../core/decision.ts'
 import { THREAD_FILTERS, TICKET_FILTERS, type Api, type ApiResponse, type RouteParams } from './api.ts'
@@ -19,9 +20,9 @@ import { PromptConflict, SKILL_NAME, SKILL_PREFIX, TEAM_SECTIONS, builtInBase, b
 import { policyVersion } from '../policy.ts'
 import { SettingsConflict, type Settings } from './settings.ts'
 import { SetupError, type SetupProblem } from '../setup.ts'
-import { UserError, type EngineForPeople, type Ticket } from '../core/index.ts'
+import { UserError, ticketStage, type EngineForPeople, type Ticket } from '../core/index.ts'
 import type { Deployment, Machine } from '../deployment.ts'
-import type { DshExecutor } from '../executor/dsh.ts'
+import { ticketOfSession, type DshExecutor } from '../executor/dsh.ts'
 import type { Health } from '../sources/host.ts'
 import type { SourceRegistry } from '../sources/registry.ts'
 import type { Sessions } from './sessions.ts'
@@ -42,7 +43,7 @@ export interface HttpHost {
   readonly sourceLinks: Pick<TextCache, 'entries'>
   readonly sources: SourceRegistry
   readonly prompts: Pick<Prompts, 'current' | 'version' | 'history' | 'preview' | 'save' | 'defaultChanged'>
-  readonly sessions: Pick<Sessions, 'status' | 'notify' | 'delivery'>
+  readonly sessions: Pick<Sessions, 'status' | 'notify' | 'delivery' | 'prompt'>
   readonly settings: Pick<Settings, 'view' | 'save' | 'pause' | 'sync' | 'refreshLabels'>
   readonly engine: EngineForPeople
   readonly executor: Pick<DshExecutor, 'activeCount'>
@@ -195,8 +196,32 @@ export const DecisionInboxItem = z.object({
   recommendation: DecisionEvaluationSchema,
 })
 
+export function isSessionEnded(runtime: HttpHost, item: PendingDecisionItem): boolean {
+  const sessionId = item.sessionId
+  if (sessionId) {
+    const ticketId = ticketOfSession(sessionId)
+    if (ticketId) {
+      const ticket = runtime.store.tickets.get(ticketId)
+      if (!ticket || ticket.ended || ticketStage(ticket).stage === 'ended') return true
+    }
+  }
+  if (item.ticketId) {
+    const ticket = runtime.store.tickets.get(item.ticketId)
+    if (!ticket || ticket.ended || ticketStage(ticket).stage === 'ended') return true
+  }
+  return false
+}
+
 function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Routes {
-  const refreshTickets = () => inbox().syncTickets(ticketDecisions(runtime.store.tickets.open()))
+  const refreshTickets = () => {
+    const open = runtime.store.tickets.open?.() ?? []
+    inbox().syncTickets(ticketDecisions(open), open)
+    for (const item of inbox().list()) {
+      if (item.status === 'pending' && isSessionEnded(runtime, item)) {
+        inbox().invalidate(item, 'The originating session has ended. This decision can no longer be answered.')
+      }
+    }
+  }
   const { store } = runtime
   const ticket = (id: string) => { if (!store.tickets.get(id)) throw new RouteError(404, 'Ticket not found'); return id }
   const promptBody = (input: { body: (maxBytes?: number) => Promise<unknown> }) => input.body(4 * runtime.machine.promptMaxChars.get() + 4096)
@@ -267,6 +292,44 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
     'POST decisions/:id/resolve': async ({ params, body }) => {
       const { choiceId } = z.object({ choiceId: z.string().min(1).max(200) }).strict().parse(await body())
       if (params.id.startsWith('dec-')) refreshTickets()
+      const item = inbox().get(params.id)
+      if (!item) throw new InboxError(404, 'Decision not found')
+      if (item.status === 'stale') throw new InboxError(409, `Decision is stale: ${item.staleReason || 'Open the source conversation for current context.'}`)
+      if (item.status === 'resolved') return inbox().resolve(params.id, choiceId)
+
+      if (isSessionEnded(runtime, item)) {
+        inbox().invalidate(item, 'The originating session has ended. This decision can no longer be answered.')
+        throw new InboxError(409, 'The originating session has ended. This decision can no longer be answered.')
+      }
+
+      if (runtime.sessions) {
+        const choice = item.choices.find(c => c.id === choiceId)
+        if (!choice) throw new InboxError(400, 'Unknown decision choice')
+
+        const promptText = choice.prompt ?? (choiceId === 'respond' ? `Regarding your question:\n${item.question}\n\nMy response: `
+          : choiceId === 'continue' ? `Please continue with the next step you offered:\n${item.question}`
+          : choiceId === 'discuss' ? `Before proceeding, please clarify:\n${item.question}` : `For the decision “${item.question}”, choose: ${choice.label}`)
+
+        const submissionId = `native-req-${randomUUID().slice(0, 16)}`
+        const messageId = `msg-${submissionId}`
+
+        if (item.sessionId) {
+          try {
+            await runtime.sessions.prompt(item.sessionId, submissionId, promptText, 'steer')
+          } catch {
+            inbox().invalidate(item, 'The originating session has ended. This decision can no longer be answered.')
+            throw new InboxError(409, 'The originating session has ended. This decision can no longer be answered.')
+          }
+        }
+
+        return inbox().resolveWithSubmission(item.id, choiceId, {
+          submissionId,
+          messageId,
+          seq: (item.sourceSeq ?? 0) + 1,
+          text: promptText,
+        })
+      }
+
       return inbox().resolve(params.id, choiceId)
     },
     'POST decisions/:id/restart': async ({ params, body }) => restartDecision(ctx, inbox(), params.id, DecisionRestartRequest.parse(await body())),

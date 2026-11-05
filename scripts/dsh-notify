@@ -1,0 +1,14 @@
+#!/bin/bash
+# dsh-notify: macOS Native Notification for DeepSeek Harness
+# Usage: dsh-notify [TITLE] [MESSAGE] [SOUND]
+# When SOUND is empty, "none", "off", or "silent", the notification is delivered silently.
+TITLE="${1:-DeepSeek Harness}"
+MESSAGE="${2:-Task 100% verified and ready for review.}"
+SOUND="${3:-none}"
+
+if [ -n "$SOUND" ] && [ "$SOUND" != "none" ] && [ "$SOUND" != "off" ] && [ "$SOUND" != "silent" ]; then
+  osascript -e "display notification \"$MESSAGE\" with title \"$TITLE\" sound name \"$SOUND\"" 2>/dev/null || true
+  afplay "/System/Library/Sounds/${SOUND}.aiff" 2>/dev/null || true
+else
+  osascript -e "display notification \"$MESSAGE\" with title \"$TITLE\"" 2>/dev/null || true
+fi

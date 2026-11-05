@@ -12,7 +12,7 @@ import { AcknowledgementSchema, readTool, tool, type Tool } from './tool.ts'
 
 export interface ExecutorToolsHost {
   readonly engine: Pick<EngineForExecutor, 'report' | 'reply' | 'markUnrelated' | 'handback' | 'followForContext'>
-  readonly store: Pick<Store, 'tickets' | 'replyStatus' | 'atomic'>
+  readonly store: Pick<Store, 'tickets' | 'replyStatus' | 'atomic' | 'settings'>
   readonly sessions: Pick<Sessions, 'relay' | 'notify'>
   readonly resources: ResourceHost
   /** GitHub Source context whose pull-request rules govern claiming a reported PR. */
@@ -89,7 +89,10 @@ export function executorTools(host: ExecutorToolsHost, ticket: Ticket): Tool[] {
         if (args.state === 'ready') {
           try {
             const { execFile } = await import('node:child_process')
-            execFile('/Users/gerayeremin/.npm-global/bin/dsh-notify', ['SuperAgent Work Ready', current.title || 'Task verified and ready for review'], () => {})
+            const soundEnabled = host.store.settings?.().executor?.sound ?? false
+            const soundName = soundEnabled ? 'Glass' : 'none'
+            const notifyCli = process.env.DSH_NOTIFY_CLI || '/Users/gerayeremin/.npm-global/bin/dsh-notify'
+            execFile(notifyCli, ['SuperAgent Work Ready', current.title || 'Task verified and ready for review', soundName], () => {})
           } catch {}
         }
         // Claim the PR, record the report, and queue the relay atomically so a rejected PR claim or invalid report leaves no partial state, and a recorded report always reaches the main Session.
