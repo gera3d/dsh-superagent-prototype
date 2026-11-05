@@ -34,7 +34,7 @@ export function BrandingSettings() {
   const activeLightLogo = value.logoLight || value.logo
 
   return (
-    <div className="dt-branding-settings" data-testid="branding-settings">
+    <form className="dt-form dt-block dt-branding-settings" data-testid="branding-settings" onSubmit={event => { void draft.submit(event) }}>
       <Section title={t('branding.title')} hint={t('branding.subtitle')}>
         <Fields disabled={draft.busy}>
           <Field label={t('branding.logo')} hint={t('branding.logoDesc')}>
@@ -148,6 +148,6 @@ export function BrandingSettings() {
       </Section>
 
       <SaveBar {...draft} onDiscard={draft.discard} />
-    </div>
+    </form>
   )
 }

@@ -21,13 +21,18 @@ function serve(runtime: Partial<Record<keyof HttpHost, unknown>>, host = '127.0.
     webServer: { host, port: 3082, register: (route: { handler: Handler }) => { handler = route.handler; return () => {} } } }
   registerHttp(ctx as never, { ready: Promise.resolve(), ...runtime, store: { db, ...(runtime.store as object) } } as unknown as HttpHost)
   return async (method: string, path: string, body?: unknown, headers: Headers = {}) => {
-    let status = 0, text = ''
+    let status = 0, text = '', location: string | undefined
     const chunks = body === undefined ? [] : [Buffer.from(typeof body === 'string' ? body : JSON.stringify(body))]
     const sent = Object.fromEntries(Object.entries({ host: '127.0.0.1:3082', 'x-orchestrator-request': '1', ...headers }).filter(([,
       value]) => value !== undefined))
     const req = { method, url: `/orchestrator/api/${path}`, headers: sent, async *[Symbol.asyncIterator]() { yield* chunks } }
-    await handler(req, { writeHead: (code: number) => { status = code }, end: (data: string) => { text = data } })
-    return { status, body: JSON.parse(text) as Record<string, unknown> }
+    await handler(req, {
+      writeHead: (code: number, h?: Record<string, string>) => { status = code; if (h?.Location) location = h.Location },
+      end: (data?: string) => { if (data) text = data }
+    })
+    let parsed: unknown
+    try { parsed = text ? JSON.parse(text) : undefined } catch { parsed = text }
+    return { status, body: parsed as Record<string, unknown>, ...(location ? { location } : {}) }
   }
 }
 
@@ -106,6 +111,36 @@ it('answers only a same-origin request from the panel on the loopback address', 
   expect(await post({ host: 'localhost:3082', origin: 'http://localhost:3082' })).toMatchObject({ status: 200 })
   // Management routes require a loopback Web server.
   expect(() => serve({}, '0.0.0.0')).toThrow('Orchestrator management requires a loopback Web server')
+})
+
+it('serves /orchestrator/api/branding/raw with only a loopback Host and refuses other hosts', async () => {
+  const call = serve({
+    store: {
+      settings: () => ({
+        ...SettingsSchema.parse({}),
+        branding: { logo: 'https://why57.com/images/57_wht_notext.png', logoDark: '', logoLight: '' },
+      }),
+    },
+  })
+  // Refuses requests from non-loopback host even with custom header
+  expect(await call('GET', 'branding/raw', undefined, { host: 'evil.example:3082' })).toEqual({
+    status: 403,
+    body: { error: 'Same-origin management request required' },
+  })
+  expect(await call('GET', 'branding/raw', undefined, { host: '127.0.0.1:9999' })).toEqual({
+    status: 403,
+    body: { error: 'Same-origin management request required' },
+  })
+
+  // Serves on 127.0.0.1 loopback host without custom headers
+  const res127 = await call('GET', 'branding/raw', undefined, { host: '127.0.0.1:3082', 'x-orchestrator-request': undefined })
+  expect(res127.status).toBe(302)
+  expect(res127.location).toBe('https://why57.com/images/57_wht_notext.png')
+
+  // Serves on localhost loopback host without custom headers
+  const resLocal = await call('GET', 'branding/raw', undefined, { host: 'localhost:3082', 'x-orchestrator-request': undefined })
+  expect(resLocal.status).toBe(302)
+  expect(resLocal.location).toBe('https://why57.com/images/57_wht_notext.png')
 })
 
 it('answers a prompt save that lost a race with 409, and a settings body over 128 KiB with 400', async () => {
