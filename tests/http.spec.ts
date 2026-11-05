@@ -1,4 +1,4 @@
-import { expect, it, afterEach } from 'vitest'
+import { expect, it, afterEach, vi } from 'vitest'
 import { DatabaseSync } from 'node:sqlite'
 const databases: DatabaseSync[] = []
 afterEach(() => { for (const db of databases.splice(0)) db.close() })
@@ -123,4 +123,159 @@ it('answers a prompt save that lost a race with 409, and a settings body over 12
   expect(await call('PUT', 'settings/executor', { value, revision: 0 })).toEqual({ status: 400,
     body: { error: `Request exceeds ${128 * 1024} bytes` } })
   expect(saves).toEqual([])
+})
+
+it('succeeds on a live card pick by dispatching choice to the session and resolving with submission proof', async () => {
+  const prompt = vi.fn().mockResolvedValue(undefined)
+  const ticketsMap = new Map([
+    ['active-t1', { id: 'active-t1', title: 'Active Ticket', stage: 'person', assignments: [] }],
+  ])
+  const call = serve({
+    sessions: { prompt },
+    store: {
+      tickets: {
+        get: (id: string) => ticketsMap.get(id),
+        open: () => [...ticketsMap.values()],
+      },
+    },
+    engine: { retryTicket: () => {} },
+  })
+
+  const item = {
+    id: 'chat-live-pick-1',
+    sessionId: 'worker-active-t1',
+    sourceMessageId: 'msg-source-1',
+    sourceSeq: 10,
+    ticketTitle: 'Active Ticket',
+    trigger: 'Next step',
+    status: 'pending',
+    urgency: 'low',
+    createdAt: Date.now(),
+    context: 'Context text',
+    question: 'Which next action?',
+    choices: [
+      { id: 'opt-a', label: 'Option A', prompt: 'Do option A.' },
+      { id: 'opt-b', label: 'Option B', prompt: 'Do option B.' },
+    ],
+    recommendation: {
+      recommendedValue: 'opt-a',
+      confidence: 0.88,
+      rationale: 'Option A is recommended.',
+      distribution: [{ id: 'opt-a', probability: 0.88 }, { id: 'opt-b', probability: 0.12 }],
+      provider: 'OpenAI Decisions API',
+      latencyMs: 15,
+    },
+  }
+
+  expect(await call('POST', 'decisions/inbox', item)).toMatchObject({ status: 200 })
+
+  const res = await call('POST', 'decisions/chat-live-pick-1/resolve', { choiceId: 'opt-a' })
+  expect(res.status).toBe(200)
+  expect(res.body).toMatchObject({
+    resolved: true,
+    choiceId: 'opt-a',
+    execution: 'not_executed',
+    item: {
+      id: 'chat-live-pick-1',
+      status: 'resolved',
+      resolvedChoice: 'opt-a',
+      resolutionBasis: 'submitted',
+    },
+  })
+  expect(prompt).toHaveBeenCalledOnce()
+  expect(prompt).toHaveBeenCalledWith(
+    'worker-active-t1',
+    expect.stringMatching(/^native-req-/),
+    'Do option A.',
+    'steer'
+  )
+})
+
+it('retires an ended-session card with plain explanation instead of offering a failing button', async () => {
+  const ticketsMap = new Map([
+    ['ended-t1', { id: 'ended-t1', title: 'Ended Ticket', ended: { at: '2026-11-04T12:00:00Z', outcome: 'completed' }, stage: 'ended', assignments: [] }],
+  ])
+  const call = serve({
+    sessions: { prompt: vi.fn() },
+    store: {
+      tickets: {
+        get: (id: string) => ticketsMap.get(id),
+        open: () => [],
+      },
+    },
+    engine: { retryTicket: () => {} },
+  })
+
+  const item = {
+    id: 'chat-ended-1',
+    sessionId: 'worker-ended-t1',
+    sourceMessageId: 'msg-source-ended',
+    sourceSeq: 5,
+    ticketTitle: 'Ended Ticket',
+    trigger: 'Next step',
+    status: 'pending',
+    urgency: 'low',
+    createdAt: Date.now() - 3600_000,
+    context: 'Old context',
+    question: 'Choose next action',
+    choices: [
+      { id: 'opt-1', label: 'Action 1' },
+      { id: 'opt-2', label: 'Action 2' },
+    ],
+    recommendation: { recommendedValue: '', confidence: 0, rationale: 'Not evaluated.', distribution: [], provider: 'Not evaluated', latencyMs: 0 },
+  }
+
+  expect(await call('POST', 'decisions/inbox', item)).toMatchObject({ status: 200 })
+
+  // GET decisions/inbox refreshes tickets and retires ended session cards
+  const inboxRes = await call('GET', 'decisions/inbox')
+  expect(inboxRes.status).toBe(200)
+  const found = (inboxRes.body as any).items.find((i: any) => i.id === 'chat-ended-1')
+  expect(found).toMatchObject({
+    status: 'stale',
+    staleReason: expect.stringContaining('originating session has ended'),
+  })
+
+  // Trying to resolve an ended card rejects with 409 and clear reason, never showing an unhandled error
+  const resolveRes = await call('POST', 'decisions/chat-ended-1/resolve', { choiceId: 'opt-1' })
+  expect(resolveRes.status).toBe(409)
+  expect(resolveRes.body.error).toContain('originating session has ended')
+})
+
+it('rejects resolving a stale decision card with 409 and plain stale reason', async () => {
+  const call = serve({
+    sessions: { prompt: vi.fn() },
+    store: { tickets: { get: () => undefined, open: () => [] } },
+    engine: { retryTicket: () => {} },
+  })
+
+  const item = {
+    id: 'chat-stale-card',
+    sessionId: 'worker-dead-session',
+    sourceMessageId: 'msg-source-stale',
+    sourceSeq: 2,
+    ticketTitle: 'Stale Ticket',
+    trigger: 'Next step',
+    status: 'pending',
+    urgency: 'low',
+    createdAt: Date.now() - 7200_000,
+    context: 'Stale context',
+    question: 'Pick an option',
+    choices: [
+      { id: 'opt-1', label: 'Action 1' },
+      { id: 'opt-2', label: 'Action 2' },
+    ],
+    recommendation: { recommendedValue: '', confidence: 0, rationale: 'Not evaluated.', distribution: [], provider: 'Not evaluated', latencyMs: 0 },
+  }
+
+  expect(await call('POST', 'decisions/inbox', item)).toMatchObject({ status: 200 })
+
+  // GET decisions/inbox marks it stale because ticket is ended/missing
+  const inboxRes = await call('GET', 'decisions/inbox')
+  expect(inboxRes.status).toBe(200)
+
+  const resolveRes = await call('POST', 'decisions/chat-stale-card/resolve', { choiceId: 'opt-1' })
+  expect(resolveRes.status).toBe(409)
+  expect(resolveRes.body.error).toContain('Decision is stale')
+  expect(resolveRes.body.error).toContain('originating session has ended')
 })
