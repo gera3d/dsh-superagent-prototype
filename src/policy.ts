@@ -213,11 +213,12 @@ export const ExecutorConfigSchema = z.object({
   sound: z.boolean().default(false),
 }).strict()
 export const SourceInstanceSchema = z.object({ enabled: z.boolean().default(true), config: z.record(z.string(), z.unknown()).default({}) }).strict()
-/** Branding settings: logo file path or URL, optional dark/light variants. */
+/** Branding settings: logo file path or URL, optional dark/light variants, and wordmark visibility. */
 export const BrandingConfigSchema = z.object({
   logo: z.string().trim().default(''),
   logoDark: z.string().trim().default(''),
   logoLight: z.string().trim().default(''),
+  hideWordmark: z.boolean().default(true),
 }).strict()
 export type BrandingConfig = z.infer<typeof BrandingConfigSchema>
 export const SettingsSchema = z.object({

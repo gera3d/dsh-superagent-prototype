@@ -263,7 +263,7 @@ describe('settings migration', () => {
         defaultCharacterId: 'senior_developer',
         items: DEFAULT_CHARACTERS,
       },
-      branding: { logo: '', logoDark: '', logoLight: '' },
+      branding: { logo: '', logoDark: '', logoLight: '', hideWordmark: true },
     })
     expect(migrateSettings(migrated)).toEqual(migrated)
   })

@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { BrandingConfigSchema, SettingsSchema } from '../src/policy.ts'
 import { isLoopbackHost } from '../src/app/http.ts'
-import { BrandLogoMark, DefaultFishLogo } from '../src/client/branding-mark.tsx'
+import { BrandLogoMark, BrandWordmark, DefaultFishLogo } from '../src/client/branding-mark.tsx'
 import { BrandingSettings } from '../src/client/branding-settings.tsx'
 import { settingsRoute } from '../src/client/route.ts'
 import { at, click, mount, type, usePanel } from './fixtures/panel.tsx'
@@ -26,24 +26,27 @@ afterEach(() => {
 })
 
 describe('BrandingConfigSchema', () => {
-  it('defaults to empty strings for all logo variants', () => {
+  it('defaults to empty strings for all logo variants and hideWordmark true', () => {
     const config = BrandingConfigSchema.parse({})
     expect(config).toEqual({
       logo: '',
       logoDark: '',
       logoLight: '',
+      hideWordmark: true,
     })
   })
 
-  it('parses valid local file paths and remote URLs', () => {
+  it('parses valid local file paths, remote URLs, and hideWordmark flag', () => {
     const config = BrandingConfigSchema.parse({
       logo: '/Users/test/logo.png',
       logoDark: '/Users/test/logo-dark.png',
       logoLight: 'https://why57.com/images/57_wht_notext.png',
+      hideWordmark: false,
     })
     expect(config.logo).toBe('/Users/test/logo.png')
     expect(config.logoDark).toBe('/Users/test/logo-dark.png')
     expect(config.logoLight).toBe('https://why57.com/images/57_wht_notext.png')
+    expect(config.hideWordmark).toBe(false)
   })
 
   it('is integrated into SettingsSchema with defaults', () => {
@@ -52,6 +55,7 @@ describe('BrandingConfigSchema', () => {
       logo: '',
       logoDark: '',
       logoLight: '',
+      hideWordmark: true,
     })
   })
 })
@@ -153,6 +157,80 @@ describe('BrandLogoMark Component', () => {
   })
 })
 
+describe('BrandWordmark Component', () => {
+  it('renders null when hideWordmark is true (default)', async () => {
+    container = document.createElement('div')
+    document.body.append(container)
+    root = createRoot(container)
+
+    await act(async () => {
+      root!.render(<BrandWordmark hideWordmark={true} />)
+    })
+
+    expect(container.innerHTML).toBe('')
+    expect(container.querySelector('svg')).toBeNull()
+  })
+
+  it('renders DefaultBrandWordmark when hideWordmark is false', async () => {
+    container = document.createElement('div')
+    document.body.append(container)
+    root = createRoot(container)
+
+    await act(async () => {
+      root!.render(<BrandWordmark hideWordmark={false} />)
+    })
+
+    const svg = container.querySelector('svg[data-testid="default-brand-wordmark"]')
+    expect(svg).not.toBeNull()
+    expect(svg?.getAttribute('width')).toBe('156')
+  })
+
+  it('respects hideWordmark in branding config prop', async () => {
+    container = document.createElement('div')
+    document.body.append(container)
+    root = createRoot(container)
+
+    await act(async () => {
+      root!.render(<BrandWordmark branding={{ logo: '', logoDark: '', logoLight: '', hideWordmark: true }} />)
+    })
+    expect(container.innerHTML).toBe('')
+
+    await act(async () => {
+      root!.render(<BrandWordmark branding={{ logo: '', logoDark: '', logoLight: '', hideWordmark: false }} />)
+    })
+    expect(container.querySelector('svg[data-testid="default-brand-wordmark"]')).not.toBeNull()
+  })
+
+  it('sends the x-orchestrator-request header when fetching branding config', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        branding: {
+          logo: '',
+          logoDark: '',
+          logoLight: '',
+          hideWordmark: false,
+        },
+      }),
+    } as Response)
+
+    container = document.createElement('div')
+    document.body.append(container)
+    root = createRoot(container)
+
+    await act(async () => {
+      root!.render(<BrandWordmark />)
+    })
+
+    expect(fetchSpy).toHaveBeenCalledWith('/orchestrator/api/branding', {
+      headers: { 'x-orchestrator-request': '1' },
+    })
+
+    const svg = container.querySelector('svg[data-testid="default-brand-wordmark"]')
+    expect(svg).not.toBeNull()
+  })
+})
+
 describe('BrandingSettings Component', () => {
   usePanel()
 
@@ -172,6 +250,23 @@ describe('BrandingSettings Component', () => {
 
     expect(server.settings.branding.logo).toBe('https://why57.com/images/57_wht_notext.png')
   })
+
+  it('toggles hideWordmark switch and persists it', async () => {
+    at(settingsRoute('branding'))
+    await mount()
+
+    const switchEl = document.querySelector('.dt-branding-hide-wordmark') as HTMLButtonElement
+    expect(switchEl).not.toBeNull()
+    expect(switchEl.getAttribute('aria-checked')).toBe('true')
+
+    await click(switchEl)
+    expect(switchEl.getAttribute('aria-checked')).toBe('false')
+
+    const saveButton = document.querySelector('.dt-savebar button[type="submit"]') as HTMLButtonElement
+    await click(saveButton)
+
+    expect(server.settings.branding.hideWordmark).toBe(false)
+  })
 })
 
 describe('Branding Settings and API integration', () => {
@@ -182,29 +277,31 @@ describe('Branding Settings and API integration', () => {
       const { settings, store } = h.runtime
 
       // Initially empty
-      expect(store.settings().branding).toEqual({ logo: '', logoDark: '', logoLight: '' })
+      expect(store.settings().branding).toEqual({ logo: '', logoDark: '', logoLight: '', hideWordmark: true })
 
       // Save branding configuration
       const rev = store.blockRevision('branding')
       await settings.save(
         'branding',
-        { logo: '/images/57_wht_notext.png', logoDark: '/images/57_wht_notext.png', logoLight: '' },
+        { logo: '/images/57_wht_notext.png', logoDark: '/images/57_wht_notext.png', logoLight: '', hideWordmark: false },
         rev,
         'panel'
       )
 
       expect(store.settings().branding.logo).toBe('/images/57_wht_notext.png')
       expect(store.settings().branding.logoDark).toBe('/images/57_wht_notext.png')
+      expect(store.settings().branding.hideWordmark).toBe(false)
 
       // API route returns updated branding
       const brandingRes = await h.api('GET', 'branding')
       expect(brandingRes.status).toBe(200)
-      expect((brandingRes.body as { branding: { logo: string } }).branding.logo).toBe('/images/57_wht_notext.png')
+      expect((brandingRes.body as { branding: { logo: string; hideWordmark: boolean } }).branding.logo).toBe('/images/57_wht_notext.png')
+      expect((brandingRes.body as { branding: { logo: string; hideWordmark: boolean } }).branding.hideWordmark).toBe(false)
 
       // Reset to default
       const nextRev = store.blockRevision('branding')
-      await settings.save('branding', { logo: '', logoDark: '', logoLight: '' }, nextRev, 'panel')
-      expect(store.settings().branding).toEqual({ logo: '', logoDark: '', logoLight: '' })
+      await settings.save('branding', { logo: '', logoDark: '', logoLight: '', hideWordmark: true }, nextRev, 'panel')
+      expect(store.settings().branding).toEqual({ logo: '', logoDark: '', logoLight: '', hideWordmark: true })
     } finally {
       await h?.stop()
     }
