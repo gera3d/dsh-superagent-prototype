@@ -6,6 +6,49 @@ import type { RoleModel, Settings } from '../policy.ts'
 
 /** The two job types whose default model an existing settings block names: assessment (Eval) and execution (Executor). */
 export type JobType = 'eval' | 'executor'
+/** DeepSeek's cheap flash model: last-resort fallback when no model in the escalation ladder is available. */
+export const DEEPSEEK_FALLBACK_ROUTE: RoleModel = {
+  provider: 'deepseek-official',
+  model: 'deepseek-flash',
+}
+
+const UNAVAILABLE_PATTERNS = [
+  'unavailable',
+  'cooldown',
+  'budget_exceeded',
+  'budget has been exceeded',
+  'over its model budget',
+  'rate limit',
+  'rate_limit',
+  'quota',
+  'resource_exhausted',
+  'overloaded',
+  'outage',
+  'econnreset',
+  'econnrefused',
+  'etimedout',
+  'eai_again',
+  'enotfound',
+  'socket hang up',
+  'fetch failed',
+  'network error',
+]
+
+/**
+ * Identifies whether an error is due to model availability (quota cooldown, account unavailable, outage,
+ * budget exceeded, rate limit). Does NOT match ordinary task failures, logic errors, or bad output.
+ */
+export function isModelUnavailable(error: unknown): boolean {
+  if (!error) return false
+  const status = (error as { status?: unknown })?.status
+  if (typeof status === 'number' && (status === 408 || status === 429 || status >= 500)) return true
+  const code = (error as { code?: unknown })?.code
+  if (typeof code === 'string' && /UNAVAILABLE|RESOURCE_EXHAUSTED|RATE_LIMIT|OVERLOADED|QUOTA|COOLDOWN|BUDGET/i.test(code)) return true
+  const text = error instanceof Error ? `${error.name} ${error.message} ${String(code ?? '')}` : String(error)
+  const lower = text.toLowerCase()
+  return UNAVAILABLE_PATTERNS.some(pat => lower.includes(pat))
+}
+
 /** The route itself, without the hierarchy's presentation flags. */
 const plainRoute = ({ provider, model, reasoningEffort }: RoleModel): RoleModel =>
   ({ provider, model, ...(reasoningEffort ? { reasoningEffort } : {}) })
@@ -50,6 +93,57 @@ export function escalationStep(settings: Pick<Settings, 'eval' | 'executor' | 'm
   const from = previous ?? defaultRoute(settings, job)
   const to = escalationChain(settings, job, previous, used)[0]
   return from && to ? { from, to } : undefined
+}
+
+/**
+ * When a model cannot serve a request due to availability reasons, determine the next fallback route:
+ * 1. Try the next available model in the escalation ladder (hierarchy);
+ * 2. When none of Gemini, GPT and Claude (the ladder) can serve it, fall back to DeepSeek's cheap flash model.
+ * DeepSeek flash is NOT a rung of the escalation ladder and hard tasks never escalate to it.
+ */
+export function unavailableFallbackStep(
+  settings: Pick<Settings, 'models'>,
+  current?: RoleModel | null,
+  triedRoutes: RoleModel[] = []
+): { from?: RoleModel; to: RoleModel; isDeepSeekFlash: boolean } | undefined {
+  const ladder = settings.models.hierarchy.map(plainRoute)
+  const hasTried = (route: RoleModel) => triedRoutes.some(item => sameRoute(item, route))
+
+  // Find next route in the ladder after current that hasn't been tried
+  if (current) {
+    const currentIndex = ladder.findIndex(item => sameRoute(item, current))
+    if (currentIndex >= 0) {
+      for (let i = currentIndex + 1; i < ladder.length; i++) {
+        if (!hasTried(ladder[i]!)) {
+          return { from: current, to: ladder[i]!, isDeepSeekFlash: false }
+        }
+      }
+    }
+  }
+
+  // If current was not in ladder or reached end of ladder, check any earlier untried ladder route
+  for (const rung of ladder) {
+    if ((!current || !sameRoute(current, rung)) && !hasTried(rung)) {
+      return { from: current ?? undefined, to: rung, isDeepSeekFlash: false }
+    }
+  }
+
+  // All ladder routes have been tried or are unavailable. Fall back to DeepSeek cheap flash!
+  if (!hasTried(DEEPSEEK_FALLBACK_ROUTE) && (!current || !sameRoute(current, DEEPSEEK_FALLBACK_ROUTE))) {
+    return { from: current ?? undefined, to: DEEPSEEK_FALLBACK_ROUTE, isDeepSeekFlash: true }
+  }
+
+  return undefined
+}
+
+/** Plain-language one-line note for when a model fallback triggers. */
+export function fallbackNote(to: RoleModel, reason: string): string {
+  const modelName = `${to.provider}/${to.model}`
+  const why = reason.replace(/\s+/g, ' ').slice(0, 150)
+  if (to.provider === DEEPSEEK_FALLBACK_ROUTE.provider && to.model === DEEPSEEK_FALLBACK_ROUTE.model) {
+    return `Fell back to DeepSeek cheap flash model (${modelName}): ${why}. Quality may be lower.`
+  }
+  return `Fell back to available ladder model (${modelName}): ${why}.`
 }
 
 /** Resolve a configured route through the live provider; catalog membership is not a restriction. */

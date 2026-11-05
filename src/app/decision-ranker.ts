@@ -8,6 +8,8 @@
  * driver and an environment variable that currently holds a key.
  */
 import { decisionRequestProblem, evaluateDecision, type DecisionEvaluationRequest, type DecisionEvaluationResult, type DecisionModelCall } from '../core/decision.ts'
+import type { Settings } from '../policy.ts'
+import { isModelUnavailable } from './role-models.ts'
 
 export const DECISIONS_QUESTION_NAME = 'next_action'
 export const DEFAULT_DECISIONS_ENDPOINT = 'https://api.openai.com/v1/chat/completions'
@@ -42,6 +44,9 @@ export interface DecisionRankerOptions {
   decisions?: DecisionsRankerSettings | undefined
   /** Existing tool-free configured-model evaluator, used only when the Decisions API is not usable. */
   call?: DecisionModelCall | undefined
+  /** Fallback model calls (e.g. for testing fallback chain). */
+  fallbackCalls?: Map<string, DecisionModelCall> | undefined
+  settings?: Settings | undefined
   /** Environment holding the key; `process.env` by default and injectable for tests. */
   env?: Record<string, string | undefined> | undefined
   fetch?: typeof fetch | undefined
@@ -242,8 +247,26 @@ export async function evaluateDecisionWithFallback(request: DecisionEvaluationRe
     }
   }
   if (options.call) {
-    const result = await evaluateDecision({ ...request, provider: 'auto' }, options.call)
-    if (result.recommendedValue) return result
+    try {
+      const result = await evaluateDecision({ ...request, provider: 'auto' }, options.call)
+      if (result.recommendedValue) return result
+    } catch (error) {
+      if (isModelUnavailable(error) && options.fallbackCalls) {
+        for (const [routeKey, fallbackCall] of options.fallbackCalls.entries()) {
+          try {
+            const fallbackResult = await evaluateDecision({ ...request, provider: 'auto' }, fallbackCall)
+            if (fallbackResult.recommendedValue) {
+              return {
+                ...fallbackResult,
+                provider: `${fallbackResult.provider} (fallback: ${routeKey})`,
+              }
+            }
+          } catch (nextError) {
+            if (!isModelUnavailable(nextError)) break
+          }
+        }
+      }
+    }
   }
   return {
     recommendedValue: '',

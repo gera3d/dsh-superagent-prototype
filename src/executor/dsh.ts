@@ -9,13 +9,14 @@ import type { AssessmentOutcome, Assignment, EngineForExecutor, Escalation, Exec
   Trigger } from '../core/index.ts'
 import type { Machine } from '../deployment.ts'
 import { runAsWorker, verifyDirectory } from '../infra/environment.ts'
-import type { Settings } from '../policy.ts'
+import type { RoleModel, Settings } from '../policy.ts'
 import type { Store } from '../app/store.ts'
 import { Later, type Effects } from '../app/effects.ts'
 import { executionRoot, type Variable } from '../app/execution-environment.ts'
 import type { Sessions } from '../app/sessions.ts'
 import { WorktreeNameSchema } from '../app/assessment.ts'
 import { resultRelay } from '../app/notices.ts'
+import { defaultRoute, fallbackNote, isModelUnavailable, sameRoute, unavailableFallbackStep, DEEPSEEK_FALLBACK_ROUTE } from '../app/role-models.ts'
 import type { HealthEntry } from '../infra/health.ts'
 import { cancelled, collectJob, killJobs, runningJobs, stopBackground, stopSubagents, until, untilQuiet } from './background.ts'
 
@@ -212,6 +213,8 @@ export class WorkerSlots {
 export class DshExecutor implements Executor {
   private readonly disposers: (() => void)[] = []
   private readonly slots: WorkerSlots
+  /** Models already tried and found unavailable for a ticket, so subsequent fallbacks advance through ladder to DeepSeek flash. */
+  private readonly unavailableRoutes = new Map<string, RoleModel[]>()
   /** Transient failure counts tried so far: keyed by `assignment.id` for worker turns and `launch:<assignment.id>` for launches. */
   private readonly transient = new Map<string, number>()
   /** Assignment IDs currently waiting on a transient-failure backoff timer before resuming their worker turn. */
@@ -428,6 +431,61 @@ export class DshExecutor implements Executor {
     })
   }
   private relay({ id, text }: { id: string; text: string }): void { this.host.sessions.relay(id, text) }
+  /** Durably records an informative note on the ticket, e.g. when model fallback is triggered. */
+  private recordTicketNote(ticketId: string, text: string): void {
+    this.host.store.atomic(() => {
+      const stored = this.host.store.tickets.get(ticketId)
+      if (!stored) return
+      stored.inputs = [...stored.inputs, {
+        id: key('input', ticketId, now()),
+        kind: 'note',
+        text,
+        at: now(),
+      }]
+      stored.updatedAt = now()
+      this.host.store.tickets.save(stored)
+    })
+  }
+  /**
+   * When a model is unavailable (quota cooldown, account unavailable, outage, budget retry),
+   * falls back to the next available ladder model, and when none in the ladder can serve it,
+   * falls back to DeepSeek's cheap flash model. Hard task failures do not use this path.
+   */
+  private async handleUnavailableModel(ticket: Ticket, assignment: Assignment, agent: Agent, error: unknown): Promise<void> {
+    const tried = this.unavailableRoutes.get(ticket.id) ?? []
+    const current = (agent.session.requestHeader()?.config as RoleModel | undefined)
+      ?? ticket.escalations?.find(item => item.assignmentId === assignment.id)?.to
+      ?? defaultRoute(this.host.store.settings(), 'executor')
+    if (current && !tried.some(item => sameRoute(item, current))) tried.push(current)
+    const step = unavailableFallbackStep(this.host.store.settings(), current, tried)
+    if (!step) {
+      this.unavailableRoutes.delete(ticket.id)
+      void this.background(Promise.resolve().then(() => { this.failed(ticket.id, `All available models exhausted: ${String(error)}`) }))
+      return
+    }
+    tried.push(step.to)
+    this.unavailableRoutes.set(ticket.id, tried)
+    const note = fallbackNote(step.to, String(error))
+    this.recordTicketNote(ticket.id, note)
+    try {
+      await this.host.sessions.selectModel(agent, step.to)
+    } catch (selectionError) {
+      if (isModelUnavailable(selectionError)) {
+        await this.handleUnavailableModel(ticket, assignment, agent, selectionError)
+        return
+      }
+      void this.background(Promise.resolve().then(() => { this.failed(ticket.id, `Fallback model selection failed: ${String(selectionError)}`) }))
+      return
+    }
+    const resumeText = `Your last turn failed because the model was unavailable (${String(error).slice(0, 150)}). ${note} Continue the assignment where it stopped.`
+    const sessionId = workerSessionId(ticket.id)
+    const requestId = `fallback:${ticket.id}:${assignment.id}:${now()}`
+    try {
+      await this.host.sessions.prompt(sessionId, requestId, resumeText, 'queue')
+    } catch {
+      this.resumeAfter(ticket.id, assignment.id, error)
+    }
+  }
   /** Records a failed escalation whose stronger route could not be selected; the failure then waits for a person. */
   private escalationFailed(ticketId: string, assignmentId: string, escalation: Escalation, error: unknown): void {
     const ticket = this.host.store.tickets.get(ticketId)
@@ -453,7 +511,30 @@ export class DshExecutor implements Executor {
     const sessionId = workerSessionId(ticket.id)
     // An escalated Assignment starts on its stronger route, also in a Session this Executor had to create again.
     const escalation = ticket.escalations?.find(item => item.assignmentId === assignment.id)
-    const agent = await this.host.sessions.ensure(sessionId, workspace, ticket.title, 'worker', escalation?.to)
+    let targetModel: RoleModel | null = escalation?.to ?? defaultRoute(this.host.store.settings(), 'executor')
+    let agent: Agent
+    try {
+      agent = await this.host.sessions.ensure(sessionId, workspace, ticket.title, 'worker', targetModel)
+    } catch (error) {
+      if (isModelUnavailable(error)) {
+        const tried = this.unavailableRoutes.get(ticket.id) ?? []
+        if (targetModel && !tried.some(item => sameRoute(item, targetModel!))) tried.push(targetModel)
+        const step = unavailableFallbackStep(this.host.store.settings(), targetModel, tried)
+        if (step) {
+          tried.push(step.to)
+          this.unavailableRoutes.set(ticket.id, tried)
+          const note = fallbackNote(step.to, String(error))
+          this.recordTicketNote(ticket.id, note)
+          targetModel = step.to
+          agent = await this.host.sessions.ensure(sessionId, workspace, ticket.title, 'worker', targetModel)
+        } else {
+          this.failed(ticket.id, `All models unavailable: ${String(error)}`)
+          return
+        }
+      } else {
+        throw error
+      }
+    }
     if (!current()) return
     // The background work of the Assignment this one replaces stops first, so its end does not clear this one's message.
     await this.stopped(ticket.id)
@@ -463,8 +544,29 @@ export class DshExecutor implements Executor {
     if (escalation && !escalation.appliedAt) {
       try { await this.host.sessions.selectModel(agent, escalation.to) }
       catch (error) {
-        this.escalationFailed(ticket.id, assignment.id, escalation, error)
-        return
+        if (isModelUnavailable(error)) {
+          const tried = this.unavailableRoutes.get(ticket.id) ?? []
+          if (!tried.some(item => sameRoute(item, escalation.to))) tried.push(escalation.to)
+          const step = unavailableFallbackStep(this.host.store.settings(), escalation.to, tried)
+          if (step) {
+            tried.push(step.to)
+            this.unavailableRoutes.set(ticket.id, tried)
+            const note = fallbackNote(step.to, String(error))
+            this.recordTicketNote(ticket.id, note)
+            try {
+              await this.host.sessions.selectModel(agent, step.to)
+            } catch (fallbackError) {
+              this.escalationFailed(ticket.id, assignment.id, escalation, fallbackError)
+              return
+            }
+          } else {
+            this.escalationFailed(ticket.id, assignment.id, escalation, error)
+            return
+          }
+        } else {
+          this.escalationFailed(ticket.id, assignment.id, escalation, error)
+          return
+        }
       }
       if (!current()) return
       this.host.store.atomic(() => {
@@ -535,10 +637,14 @@ export class DshExecutor implements Executor {
         if (read.length) this.host.engine.inputsRead(ticketId, read)
       }))
     }))
-    this.disposers.push(ctx.on('agent/error', ({ agent, error }) => {
+    this.disposers.push(ctx.on('agent/error', async ({ agent, error }) => {
       const ticket = this.ticketOf(agent)
       const assignment = ticket && runningAssignment(ticket)
       if (!ticket || !assignment || !liveTicket(ticket) || this.host.closing()) return
+      if (isModelUnavailable(error)) {
+        await this.handleUnavailableModel(ticket, assignment, agent, error)
+        return
+      }
       if (this.retries(assignment.id, error)) { this.resumeAfter(ticket.id, assignment.id, error); return }
       void this.background(Promise.resolve().then(() => { this.failed(ticket.id, String(error)) }))
     }))

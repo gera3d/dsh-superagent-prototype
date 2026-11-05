@@ -316,10 +316,10 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/core/memory.ts` | `MemoryRepositories`: the Store's repositories in memory, in the Store's order and with its nested rollback, for domain tests |
 | `src/core/index.ts` | The core's exports |
 | `src/core/decision.ts` | `evaluateDecision`: pure validation over an injected model transport; no vendor HTTP or credential access. Scores are not calibrated. |
-| `src/core/character.ts` | Autopilot character profile definitions, reviewer prompts and personas |
+| `src/core/character.ts` | Autopilot character profile definitions, reviewer prompts, personas, disagreement capabilities, and locked escalation boundaries |
 | `src/core/options.ts` | The Phase 0 option contract: `OPTION_MIN` and `OPTION_MAX`, generic marked fallbacks, and `normalizeChoices`, which deduplicates, backfills short sets and keeps options beyond the shown maximum as `hiddenOptions`. |
 | `src/app/decision-evaluator.ts` | Tool-free auxiliary requests through DSH's authenticated LLM service, using the source Session's effective model or the configured default. |
-| `src/app/character-evaluator.ts` | Evaluates autopilot character assessments and disagreements via model routes |
+| `src/app/character-evaluator.ts` | Character evaluator: evaluates candidate decisions through domain characters, assessments and disagreements, enforcing locked escalation bounds |
 | `src/app/decision-ranker.ts` | Decisions API ranker: maps one `choice` question over the candidate options, validates the returned choice/probabilities/confidence, and falls back to the configured-model evaluator and then to generator-order unranked. No call until settings name a driver and `apiKeyEnv` resolves to a key. |
 | `src/app/decision-provider.ts` | Independently reloadable exact-path evaluator route with same-origin checks and bounded request bodies; never owns agent Sessions. |
 | `src/app/runtime.ts` | The Runtime, the composition root, with its start and stop |
@@ -420,6 +420,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/text.ts` | Copy by key and the wording of domain values, reasons, senders and times |
 | `src/client/marks.ts` | The marks of the states the views classify: a Ticket's or a Thread's stage, a Source's state and a Decision's outcome, each as a dot, an icon, a tone and a label |
 | `src/client/locales.ts` | All copy in both languages, and the glossary of [001 Domain model](001-domain.md) |
+| `src/client/branding-mark.tsx`, `branding-settings.tsx` | Brand mark occupant replacing the DeepSeek logo, and branding settings |
 | `src/client/client.css`, `css.d.ts` | The panel's stylesheet, loaded as text |
 
 `src/sources/github.ts` and `src/sources/feishu.ts` are also the entries of the two Source plugins, built by `tsdown.config.ts` and exported in `package.json` as `./github-watch` and `./feishu-watch`. The bundle's `cordis.patch.yml` inserts the three plugins, with Feishu disabled.
@@ -449,7 +450,8 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/followups.spec.ts` | A person's follow-up on a Ticket's Thread: its notice to the main Session, the tools that act on it, what a burst costs; a worker's hand-back and context follow, and the main Session's note |
 | `tests/health.spec.ts` | One health entry per part, each cleared by its own next success |
 | `tests/delivery.spec.ts` | `AgentDelivery` |
-| `tests/retry-health.spec.ts`, `tests/role-models.spec.ts` | Model budget retries, the models of the two roles, and the escalation hierarchy and its cap |
+| `tests/retry-health.spec.ts`, `tests/role-models.spec.ts`, `tests/model-fallback.spec.ts` | Model budget retries, the models of the two roles, the escalation hierarchy and its cap, and DeepSeek flash fallback on model unavailability |
+| `tests/character.spec.ts` | Stage 3 Autopilot Characters tests: senior developer character, weak proposals, and locked escalation detection |
 | `tests/runtime.spec.ts` | The whole application on a simulated DeepSeek Harness host, through tools and HTTP |
 | `tests/tools.spec.ts` | The Sessions' tools: what `orchestrator_read` reads for each role, and the shapes and checks of the other main Session tools |
 | `tests/composio.spec.ts` | Nested Composio result unwrapping, single/batch failure classification, diagnostic result preservation, and non-retryable auth/connection routing |
@@ -487,6 +489,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/model-surface.spec.ts` | Everything models read: tools, prompts, skills and inputs, checked against the tool schemas, the execution environment and the glossary, within a size budget per role |
 | `tests/deployment.spec.ts`, `tests/environment.spec.ts`, `tests/index.spec.ts` | The plugin configuration and setup, the agent's process environment, the plugin entry |
 | `tests/service-script.spec.ts` | `scripts/dsh-superagent` against fake `ps`, `tmux` and `dsh` |
+| `tests/branding.spec.tsx` | Custom branding schema, HTTP endpoints, fail-safe fallback, and mark rendering |
 | `tests/client.spec.tsx`, `tests/navigation.spec.ts`, `tests/controls.spec.tsx` | The client plugin's registration and polling, Session navigation and route memory, the local controls, and the panel's imports, which have no cycle |
 | `tests/panel-overview.spec.tsx`, `panel-source.spec.tsx`, `panel-trigger.spec.tsx`, `panel-eval.spec.tsx`, `panel-execution.spec.tsx` | Each page of the panel, against a fake management API answered by route |
 | `tests/panel-settings.spec.tsx`, `panel-prompts.spec.tsx`, `panel-deployment.spec.tsx`, `panel-panel.spec.tsx` | The settings groups, drafts and history, the prompts, the Deployment page, and the panel's search, glossary and route memory |
