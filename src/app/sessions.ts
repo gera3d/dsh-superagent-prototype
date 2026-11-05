@@ -14,7 +14,7 @@ import { AgentDelivery, messageId } from './delivery.ts'
 import type { Effects } from './effects.ts'
 import type { Variable } from './execution-environment.ts'
 import { RetryHealth } from './retry-health.ts'
-import { defaultRoute, initializeRoleModel, selectRoleModel } from './role-models.ts'
+import { defaultRoute, fallbackNote, initializeRoleModel, isModelUnavailable, selectRoleModel, unavailableFallbackStep } from './role-models.ts'
 import { bundledSkills } from './skill-files.ts'
 import { SKILL_PREFIX, type PromptVersion, type Prompts } from './prompts.ts'
 import type { Store } from './store.ts'
@@ -134,6 +134,22 @@ export class Sessions {
     ctx.on('agent/status', ({ agent, status }) => {
       if (status === 'idle' && !this.host.closing()) { this.retryHealth.clear(agent.id); this.updateModelHealth() }
     })
+    ctx.on('agent/error', async ({ agent, error }) => {
+      if (agent.id !== this.host.masterId || this.host.closing()) return
+      if (isModelUnavailable(error)) {
+        const settings = this.host.store.settings()
+        const current = (agent.session.requestHeader()?.config as RoleModel | undefined)
+          ?? defaultRoute(settings, 'eval')
+        const step = unavailableFallbackStep(settings, current, current ? [current] : [])
+        if (step) {
+          try {
+            await selectRoleModel(this.ctx, agent, step.to)
+            const note = fallbackNote(step.to, String(error))
+            this.inject('eval-model-fallback', { fallback: step.to }, note)
+          } catch { /* ignore fallback selection failure */ }
+        }
+      }
+    })
   }
   /** Resolves or creates session `id` in workspace `cwd`, initializes its role model, decorates it with prompts/skills/tools, sets `danger-full-access` permissions, and renames it to `title`. */
   async ensure(id: string, cwd: string, title: string, role: 'orchestrator' | 'worker', model?: RoleModel | null): Promise<Agent> {
@@ -149,8 +165,18 @@ export class Sessions {
     if ('error' in result) throw result.error
     // A new Session starts on its job type's default route: the block's configured model, else the first starred model.
     const settings = this.host.store.settings()
-    await initializeRoleModel(ctx, result.agent, model === undefined ? defaultRoute(settings, role === 'orchestrator' ? 'eval' : 'executor')
-      : model)
+    let initialModel = model === undefined ? defaultRoute(settings, role === 'orchestrator' ? 'eval' : 'executor') : model
+    try {
+      await initializeRoleModel(ctx, result.agent, initialModel)
+    } catch (error) {
+      if (isModelUnavailable(error) && initialModel) {
+        const step = unavailableFallbackStep(settings, initialModel, [initialModel])
+        if (step) {
+          initialModel = step.to
+          await initializeRoleModel(ctx, result.agent, initialModel)
+        } else throw error
+      } else throw error
+    }
     await this.decorate(result.agent)
     ctx.permissionPresets.set(result.agent.session, 'danger-full-access')
     await ctx.sessionController.rename({ sessionId: id as SessionId, title })

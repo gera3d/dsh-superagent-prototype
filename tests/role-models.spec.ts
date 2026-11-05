@@ -4,7 +4,7 @@ import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import { agentEvents, installModelSelection, type Agent, type ModelSelection, type ModelSelectionRef } from '@deepseek-ai/dsh-agent'
 import { Session, SessionId } from '@deepseek-ai/dsh-session'
 import { ReasoningEffortId } from '@deepseek-ai/dsh-llm'
-import { defaultRoute, escalationChain, escalationStep, initializeRoleModel, roleDefaults, sameRoute, selectRoleModel, starredRoutes }
+import { defaultRoute, DEEPSEEK_FALLBACK_ROUTE, escalationChain, escalationStep, fallbackNote, initializeRoleModel, isModelUnavailable, roleDefaults, sameRoute, selectRoleModel, starredRoutes, unavailableFallbackStep }
   from '../src/app/role-models.ts'
 import { SettingsSchema } from '../src/policy.ts'
 const contexts: Context[] = []
@@ -121,4 +121,59 @@ it('selects a route for the next request of an existing Session without changing
   expect(await request()).toEqual({ provider: 'strong', model: 'big' })
   expect(agent.session.snapshotEvents().filter(event => event.type === 'model/selection')).toHaveLength(1)
   expect(flush).toHaveBeenCalledOnce()
+})
+
+it('identifies availability failures and distinguishes them from ordinary task errors', () => {
+  expect(isModelUnavailable(new Error('All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown)'))).toBe(true)
+  expect(isModelUnavailable(new Error('Quota exceeded for model gemini-3.8-flash'))).toBe(true)
+  expect(isModelUnavailable(new Error('Budget has been exceeded'))).toBe(true)
+  expect(isModelUnavailable({ status: 429, message: 'rate limit' })).toBe(true)
+  expect(isModelUnavailable({ status: 503, message: 'Service Unavailable' })).toBe(true)
+  expect(isModelUnavailable({ code: 'RESOURCE_EXHAUSTED' })).toBe(true)
+  expect(isModelUnavailable(new Error('ECONNRESET'))).toBe(true)
+  // Ordinary task failures, logic errors, or bad outputs must NOT trigger availability fallback
+  expect(isModelUnavailable(new Error('SyntaxError: Unexpected token'))).toBe(false)
+  expect(isModelUnavailable(new Error('AssertionError: expected true to be false'))).toBe(false)
+  expect(isModelUnavailable(new Error('Command failed with exit code 1'))).toBe(false)
+  expect(isModelUnavailable(null)).toBe(false)
+})
+
+it('falls back through the ladder on availability failure, and lands on DeepSeek flash when all ladder models are unavailable', () => {
+  const settings = configured()
+  // When Gemini fails for availability reasons, next in ladder is GPT-6.1 Sol
+  const step1 = unavailableFallbackStep(settings, gemini, [gemini])
+  expect(step1).toEqual({ from: gemini, to: sol, isDeepSeekFlash: false })
+
+  // When Sol also fails for availability reasons, next in ladder is Claude Sonnet
+  const step2 = unavailableFallbackStep(settings, sol, [gemini, sol])
+  expect(step2).toEqual({ from: sol, to: sonnet, isDeepSeekFlash: false })
+
+  // When all models in the ladder (Gemini, Sol, Sonnet) are unavailable, fall back to DeepSeek cheap flash!
+  const step3 = unavailableFallbackStep(settings, sonnet, [gemini, sol, sonnet])
+  expect(step3).toEqual({ from: sonnet, to: DEEPSEEK_FALLBACK_ROUTE, isDeepSeekFlash: true })
+  expect(DEEPSEEK_FALLBACK_ROUTE).toEqual({ provider: 'deepseek-official', model: 'deepseek-flash' })
+
+  // When DeepSeek flash is also tried/unavailable, no further fallback exists
+  expect(unavailableFallbackStep(settings, DEEPSEEK_FALLBACK_ROUTE, [gemini, sol, sonnet, DEEPSEEK_FALLBACK_ROUTE])).toBeUndefined()
+})
+
+it('ensures hard task escalation only climbs the ladder and NEVER escalates to DeepSeek flash', () => {
+  const settings = configured()
+  // 1st task escalation from Gemini -> Sol
+  expect(escalationStep(settings, 'executor')).toEqual({ from: gemini, to: sol })
+  // 2nd task escalation from Sol -> Sonnet
+  expect(escalationStep(settings, 'executor', sol, 1)).toEqual({ from: sol, to: sonnet })
+  // 3rd step is capped: never escalates to DeepSeek flash
+  expect(escalationStep(settings, 'executor', sonnet, 2)).toBeUndefined()
+  // Even with higher maxEscalations (e.g. 5), the hierarchy end is reached and it never lands on DeepSeek flash
+  const uncapped = configured({ models: { hierarchy: hierarchy(gemini, sol, sonnet), maxEscalations: 5 } })
+  expect(escalationStep(uncapped, 'executor', sonnet, 2)).toBeUndefined()
+})
+
+it('formats a plain-language fallback note for the ticket warning quality may be lower', () => {
+  const deepseekNote = fallbackNote(DEEPSEEK_FALLBACK_ROUTE, 'All Antigravity accounts are unavailable (1 in cooldown)')
+  expect(deepseekNote).toBe('Fell back to DeepSeek cheap flash model (deepseek-official/deepseek-flash): All Antigravity accounts are unavailable (1 in cooldown). Quality may be lower.')
+
+  const ladderNote = fallbackNote(sol, 'Antigravity quota cooldown')
+  expect(ladderNote).toBe('Fell back to available ladder model (openai-codex/gpt-6.1-sol): Antigravity quota cooldown.')
 })

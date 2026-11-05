@@ -63,6 +63,17 @@ The Assessor job type starts on `eval.model`, or the first starred route when un
 they do not move along the hierarchy: a timed-out or failed assessment is a human/main-Session condition, not a ticket that
 can be retried on another model with its worktree and history.
 
+## Model unavailability and DeepSeek flash fallback
+
+There are two completely separate situations where models change:
+
+1. **Task too hard:** the worker could not solve the problem. The existing escalation ladder moves UP to a smarter model: Gemini 3.8 Flash → GPT 6.1 Sol → Claude Sonnet 5.5 (bounded by `maxEscalations: 2`). DeepSeek's cheap flash model (`deepseek-official/deepseek-flash`) is **never** a rung on this ladder and hard tasks **never** escalate to it.
+2. **Model unavailable:** the provider returns a quota cooldown, account unavailable, outage (HTTP 408/429/500/502/503/504), budget exhaustion (`budget_exceeded`), or network drop (`ECONNRESET`). In this situation:
+   - Try the next available model in the ladder first (`gemini-3.8-flash` → `gpt-6.1-sol` → `claude-sonnet-5-5`).
+   - If none of the ladder models can serve the request (all in cooldown or unavailable), fall back to DeepSeek's cheap flash model (`deepseek-official/deepseek-flash`) so tickets and evaluations keep moving instead of stalling indefinitely.
+   - When DeepSeek flash is used, record a durable one-line note on the ticket: `Fell back to DeepSeek cheap flash model (deepseek-official/deepseek-flash): <reason>. Quality may be lower.`
+   - This fallback applies to **Eval**, **Executor**, and **Decisions ranker** fallback paths where a model call fails for availability reasons. It does **not** trigger for ordinary task failures, compilation errors, assertion failures, or bad output.
+
 ## What counts as failed or not good enough
 
 Escalation is deliberately narrower than "anything went wrong":
@@ -127,4 +138,5 @@ indefinitely. Once the cap or the end of the hierarchy is reached, a further fai
   new Assignment and stops at the cap; a question, a blocked report and a non-escalatable failure do not escalate.
 - `tests/runtime-concurrency.spec.ts` covers the Executor applying the stronger route to the worker's Session before the
   relaunch, recording it, and waiting for a person after the cap.
+- `tests/model-fallback.spec.ts` covers the model unavailability fallback vs task escalation ladder separation, verifying DeepSeek cheap flash is only reached when all ladder models fail availability checks, and never when a task is hard.
 - `tests/panel-execution.spec.tsx` covers adding, starring, reordering and saving the hierarchy.

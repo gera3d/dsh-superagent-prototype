@@ -3,14 +3,10 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { ModelSelection } from '@deepseek-ai/dsh-agent'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { DecisionEvaluationRequest, DecisionModelReply } from '../core/decision.ts'
+import type { RoleModel, Settings } from '../policy.ts'
+import { isModelUnavailable, unavailableFallbackStep } from './role-models.ts'
 
-export async function configuredDecisionReply(ctx: Context, request: DecisionEvaluationRequest): Promise<DecisionModelReply> {
-  // Use the source conversation's last effective route, otherwise the configured default.
-  // Never mutate model selection, read credentials, or send work to the source agent.
-  const source = request.sessionId ? ctx.agents.get(request.sessionId as SessionId) : undefined
-  const selected = source?.session.requestHeader()?.config
-    ?? (ctx.get('agentDefaultModel') as { currentSelection(): ModelSelection } | undefined)?.currentSelection()
-  if (!selected?.provider || !selected.model) throw new Error('No configured model selection is available')
+async function executeDecisionCall(ctx: Context, selected: ModelSelection, request: DecisionEvaluationRequest): Promise<DecisionModelReply> {
   const signal = AbortSignal.timeout(60000)
   const config = await ctx.llm.resolveCallConfig({ provider: selected.provider, model: selected.model,
     ...(selected.reasoningEffort ? { reasoningEffort: selected.reasoningEffort } : {}) }, signal)
@@ -39,4 +35,40 @@ export async function configuredDecisionReply(ctx: Context, request: DecisionEva
   }
   if (!finished || !text.trim()) throw new Error('Configured model returned no complete recommendation')
   return { text, provider: `${config.provider} / ${config.model}` }
+}
+
+export async function configuredDecisionReply(ctx: Context, request: DecisionEvaluationRequest, settings?: Settings): Promise<DecisionModelReply> {
+  // Use the source conversation's last effective route, otherwise the configured default.
+  // Never mutate model selection, read credentials, or send work to the source agent.
+  const source = request.sessionId ? ctx.agents.get(request.sessionId as SessionId) : undefined
+  const selected = source?.session.requestHeader()?.config
+    ?? (ctx.get('agentDefaultModel') as { currentSelection(): ModelSelection } | undefined)?.currentSelection()
+  if (!selected?.provider || !selected.model) throw new Error('No configured model selection is available')
+
+  try {
+    return await executeDecisionCall(ctx, selected, request)
+  } catch (error) {
+    if (!isModelUnavailable(error) || !settings) throw error
+    const tried: RoleModel[] = [selected]
+    let current: RoleModel | undefined = selected
+    while (true) {
+      const step = unavailableFallbackStep(settings, current, tried)
+      if (!step) throw error
+      tried.push(step.to)
+      current = step.to
+      try {
+        const reply = await executeDecisionCall(ctx, {
+          provider: step.to.provider,
+          model: step.to.model,
+          ...(step.to.reasoningEffort ? { reasoningEffort: step.to.reasoningEffort as never } : {}),
+        }, request)
+        return {
+          ...reply,
+          provider: `${reply.provider} (fallback: ${step.to.provider}/${step.to.model})`,
+        }
+      } catch (fallbackError) {
+        if (!isModelUnavailable(fallbackError)) throw fallbackError
+      }
+    }
+  }
 }

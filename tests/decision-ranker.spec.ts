@@ -1,6 +1,7 @@
 import { expect, it, vi } from 'vitest'
 import type { DecisionEvaluationRequest, DecisionModelCall } from '../src/core/decision.ts'
 import { chatCompletionsDecisionsRequest, decisionsRequest, evaluateDecisionWithFallback, parseDecisionsResponse } from '../src/app/decision-ranker.ts'
+import { isModelUnavailable } from '../src/app/role-models.ts'
 import { SettingsSchema } from '../src/policy.ts'
 
 const request: DecisionEvaluationRequest = {
@@ -232,4 +233,70 @@ it('accepts object map format for probabilities in chat response', () => {
     { id: 'deploy', probability: 0.3 },
     { id: 'review', probability: 0.7 },
   ])
+})
+
+it('falls back to DeepSeek flash when the model evaluator fails for availability reasons', async () => {
+  const unavailableError = new Error('All Antigravity accounts are unavailable: in cooldown')
+  let attempts = 0
+  const call: DecisionModelCall = vi.fn(async (req) => {
+    attempts++
+    if (attempts === 1) {
+      throw unavailableError
+    }
+    return {
+      text: JSON.stringify({
+        recommended_value: 'review',
+        confidence: 0.75,
+        rationale: 'DeepSeek flash recommends review first.',
+        distribution: [{ id: 'deploy', probability: 0.25 }, { id: 'review', probability: 0.75 }],
+      }),
+      provider: 'deepseek-official / deepseek-flash (fallback: deepseek-official/deepseek-flash)',
+    }
+  })
+
+  // A wrapper that simulates configuredDecisionReply's internal availability fallback
+  const callWithFallback: DecisionModelCall = async (req) => {
+    try {
+      return await call(req)
+    } catch (err) {
+      if (isModelUnavailable(err)) {
+        return await call(req)
+      }
+      throw err
+    }
+  }
+
+  const result = await evaluateDecisionWithFallback(request, {
+    decisions: settings({ provider: 'auto' }),
+    call: callWithFallback,
+  })
+
+  expect(result.recommendedValue).toBe('review')
+  expect(result.provider).toContain('deepseek-official / deepseek-flash (fallback: deepseek-official/deepseek-flash)')
+  expect(call).toHaveBeenCalledTimes(2)
+})
+
+it('does NOT fall back to DeepSeek flash when model call fails for non-availability reasons (bad output)', async () => {
+  const ordinaryError = new Error('SyntaxError: Unexpected token < in JSON at position 0')
+  const call = vi.fn(async (_req?: DecisionEvaluationRequest) => { throw ordinaryError })
+
+  const callWithFallback: DecisionModelCall = async (req) => {
+    try {
+      return await call(req)
+    } catch (err) {
+      if (isModelUnavailable(err)) {
+        return { text: '{}', provider: 'fallback' }
+      }
+      throw err
+    }
+  }
+
+  const result = await evaluateDecisionWithFallback(request, {
+    decisions: settings({ provider: 'auto' }),
+    call: callWithFallback,
+  })
+
+  expect(result.recommendedValue).toBe('')
+  expect(result.provider).toBe('unranked')
+  expect(call).toHaveBeenCalledOnce()
 })

@@ -266,9 +266,11 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
     },
     'POST decisions/evaluate': async ({ body }) => {
       const payload = DecisionEvaluation.parse(await body())
+      const settings = store.settings()
       return evaluateDecisionWithFallback(payload, {
-        decisions: store.settings().decisions,
-        call: request => configuredDecisionReply(ctx, request),
+        decisions: settings.decisions,
+        settings,
+        call: request => configuredDecisionReply(ctx, request, settings),
       })
     },
     'POST decisions/character-evaluate': async ({ body }) => {
@@ -279,7 +281,8 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
         : undefined) ?? settings.characters.characters.find(c => c.id === settings.characters.defaultCharacterId) ?? settings.characters.characters[0] ?? DEFAULT_SENIOR_DEVELOPER_CHARACTER
       const rankerResult = await evaluateDecisionWithFallback(payload, {
         decisions: settings.decisions,
-        call: request => configuredDecisionReply(ctx, request),
+        settings,
+        call: request => configuredDecisionReply(ctx, request, settings),
       })
       return evaluateWithCharacter(character, payload, {
         rankerResult,
