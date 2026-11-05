@@ -19,6 +19,10 @@ export interface EngineOptions {
    * worker's Session before the new Assignment starts.
    */
   escalation?: (ticket: Ticket, reason: string) => { from: ModelRoute; to: ModelRoute } | undefined
+  /** Idle recovery wait, read dynamically from executor settings. */
+  stallWaitSeconds?: () => number
+  /** Native session/background activity, including turns not delivered through the engine. */
+  workerBusy?: (ticket: Ticket) => boolean
   now?: () => string
   emit?: (event: DomainEvent) => void
 }

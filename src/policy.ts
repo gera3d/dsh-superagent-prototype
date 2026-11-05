@@ -211,6 +211,7 @@ export const ExecutorConfigSchema = z.object({
   prepare: z.string().max(LIMITS.prepareCommand).default(''),
   blockedCommands: z.array(CommandNameSchema).default([]),
   sound: z.boolean().default(false),
+  stallWaitSeconds: z.number().int().min(1).max(86400).default(180),
 }).strict()
 export const SourceInstanceSchema = z.object({ enabled: z.boolean().default(true), config: z.record(z.string(), z.unknown()).default({}) }).strict()
 /** Branding settings: logo file path or URL, optional dark/light variants, and wordmark visibility. */

@@ -349,6 +349,7 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
     requiresHuman: true,
     latencyMs: 15,
   }) },
+  'POST decisions/:id/lifecycle': { body: true, answer: () => refuse(404, 'Lifecycle decision not found') },
   'POST decisions/:id/resolve': { body: true, answer: () => refuse(409, 'Linked native submission required') },
   'POST decisions/:id/restart': { body: true, answer: () => refuse(404, 'Decision not found') },
   'POST decisions/:id/stage': { body: true, answer: () => refuse(404, 'Decision not found') },

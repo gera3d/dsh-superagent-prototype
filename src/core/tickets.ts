@@ -8,6 +8,7 @@ import type { AssessmentOutcome } from './ports.ts'
 import { EnginePart, type EngineOptions } from './part.ts'
 import type { Replies } from './replies.ts'
 import { canRetry } from './stage.ts'
+import { stallCandidate, stallSignal } from './stall-guard.ts'
 
 const sameChannel = (a: ChannelRef, b: ChannelRef): boolean => JSON.stringify(a) === JSON.stringify(b)
 /** Whether an Input is a message no person wrote, such as CI's, a bot's, or the main Session's note. */
@@ -153,6 +154,30 @@ export class Tickets extends EnginePart {
     this.addInput(ticket, { id: `status:${ticketId}:${ticket.updatedAt}`, kind: 'text', text: STATUS_REQUEST, at: this.now() })
     return true
   }
+  /** Periodic one-shot recovery; checkpoints and input queueing share the caller's transaction. */
+  guardIdle(ticketId: string): void {
+    const ticket = this.require(ticketId)
+    if (!stallCandidate(ticket) || this.options.workerBusy?.(ticket)) return
+    const assignment = latestAssignment(ticket)!
+    const at = this.now()
+    let guard = ticket.stallGuard
+    if (!guard || guard.assignmentId !== assignment.id) {
+      const signal = ticket.inputs.findLast(stallSignal)!
+      const inputId = key('stall-resume', ticket.id, assignment.id)
+      guard = ticket.stallGuard = { assignmentId: assignment.id, inputId, wokeAt: at }
+      this.repo.tickets.save(ticket)
+      const source = this.source(ticket)
+      this.addInput(ticket, { id: inputId, kind: 'text', at,
+        text: `The status request is over. Continue the original task from the issue${source?.url ? ` (${source.url})` : ''} under the existing mandate. Inspect current work before repeating external actions. Recovery follows input ${signal.id}.` })
+      return
+    }
+    // Progress reports update the checkpoint; waiting/status reports do not reset the interval.
+    const wait = (this.options.stallWaitSeconds?.() ?? 180) * 1000
+    if (!guard.stuckAt && Date.parse(at) - Date.parse(guard.progressAt ?? guard.wokeAt) >= wait) {
+      guard.stuckAt = at
+      this.repo.tickets.save(ticket)
+    }
+  }
   /**
    * Stops a ticket on behalf of a human, ending any active assignments.
    * @throws UserError when the ticket is unknown.
@@ -169,9 +194,18 @@ export class Tickets extends EnginePart {
     const ticket = this.require(ticketId)
     const latest = latestAssignment(ticket)
     if (!canRetry(ticket) || !latest) throw new UserError('notRetryable')
+    const stalled = stallCandidate(ticket)
+    if (stalled && this.options.workerBusy?.(ticket)) throw new UserError('notRetryable')
     this.endAssignment(ticket, latest, 'retried')
     this.requeueUntaken(ticket, latest)
     const assignment = this.newAssignment(ticket)
+    if (stalled) {
+      const source = this.source(ticket)
+      const input: TicketInput = { id: key('stall-retry', ticket.id, assignment.id), kind: 'text', at: this.now(),
+        text: `Retry the original task from the issue${source?.url ? ` (${source.url})` : ''}, not the completed status-only request. Inspect current work first.\n\n${source?.text ?? ticket.execution?.assignment ?? ticket.title}` }
+      ticket.inputs.push(input); ticket.undelivered.push(input.id)
+      delete ticket.stallGuard
+    }
     ticket.updatedAt = this.now()
     this.repo.tickets.save(ticket)
     this.options.executor.stop(ticket, latest, 'retried')

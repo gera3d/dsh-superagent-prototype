@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { DecisionChoice, DecisionEvaluationResult, PendingDecisionItem } from '../core/decision.ts'
 import { Button, Icon, Pill, Tag } from './controls.tsx'
 import { DecisionCard } from './decision-card.tsx'
+import { LifecycleCard } from './lifecycle-card.tsx'
 import { parseInlineAlternatives } from './inline-alternatives.ts'
 import { useAction, usePanel } from './provider.tsx'
 import { usePoll } from './api.ts'
@@ -86,7 +87,13 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
 
     {tab === 'inbox' && <div className="dt-inbox-view">
       {shownItems.length === 0 ? <Hint>No decisions matching the selected filter.</Hint> : <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {shownItems.map(item => <div key={item.id} style={{
+        {shownItems.map(item => item.lifecycle ? <LifecycleCard key={item.id} item={item}
+          onTicket={() => navigate({ page: 'execution', id: item.ticketId!.replace('#', '') })}
+          onAction={async action => {
+            const result = await call('POST decisions/:id/lifecycle', { id: item.id, body: { action } })
+            if (result.execution === 'retried') await reload()
+            return result
+          }} /> : <div key={item.id} style={{
           background: '#1c2128',
           border: item.status === 'pending' ? '1px solid #30363d' : '1px solid #238636',
           borderLeft: item.status === 'pending' ? '4px solid #f85149' : '4px solid #238636',

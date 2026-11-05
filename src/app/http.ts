@@ -14,6 +14,7 @@ import { evaluateWithCharacter } from './character-evaluator.ts'
 import { DEFAULT_SENIOR_DEVELOPER_CHARACTER } from '../core/character.ts'
 import { DecisionInbox, InboxError, registerDecisionCapture, ticketDecisions, submitDecision, stageDecision, restartDecision } from './decision-inbox.ts'
 import { sourceSkills } from './context.ts'
+import { LifecycleRequest, enrichLifecycle, lifecycleAction, type LifecycleCommands } from './lifecycle-decisions.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
 import { PromptConflict, SKILL_NAME, SKILL_PREFIX, TEAM_SECTIONS, builtInBase, builtInParts, defaultPrompts, savePrompts, type Prompts }
   from './prompts.ts'
@@ -39,6 +40,7 @@ import { executorLoad, ticketDetail, ticketList } from './views/tickets.ts'
 
 export interface HttpHost {
   readonly store: Store
+  readonly commands?: LifecycleCommands
   /** Feishu message links resolved since startup, used by search to match AppLink URLs. */
   readonly sourceLinks: Pick<TextCache, 'entries'>
   readonly sources: SourceRegistry
@@ -46,7 +48,7 @@ export interface HttpHost {
   readonly sessions: Pick<Sessions, 'status' | 'notify' | 'delivery' | 'prompt'>
   readonly settings: Pick<Settings, 'view' | 'save' | 'pause' | 'sync' | 'refreshLabels'>
   readonly engine: EngineForPeople
-  readonly executor: Pick<DshExecutor, 'activeCount'>
+  readonly executor: Pick<DshExecutor, 'activeCount'> & Partial<Pick<DshExecutor, 'running'>>
   readonly health: Record<string, Health>
   readonly machine: Machine
   readonly masterId: string
@@ -261,7 +263,20 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
       const since = window ? new Date(Date.now() - 86_400_000).toISOString() : ''
       return decisionList(views(runtime), kind.split(',').filter(Boolean), offset, limit, since)
     },
-    'GET decisions/inbox': () => { refreshTickets(); return { items: inbox().list() } },
+    'GET decisions/inbox': async () => {
+      refreshTickets()
+      const items = inbox().list().filter(item => {
+        const current = item.lifecycle && item.ticketId ? store.tickets.get(item.ticketId) : undefined
+        return !current || !runtime.executor.running?.(current)
+      })
+      return { items: await enrichLifecycle(items, runtime.commands, runtime.configured() ? runtime.deployment.repository : undefined) }
+    },
+    'POST decisions/:id/lifecycle': async ({ params, body }) => {
+      const { action } = LifecycleRequest.parse(await body())
+      refreshTickets()
+      return lifecycleAction({ getTicket: id => store.tickets.get(id), retryTicket: id => runtime.engine.retryTicket(id),
+        repository: runtime.deployment.repository, commands: runtime.commands, busy: current => runtime.executor.running?.(current) ?? false }, inbox().get(params.id), action)
+    },
     'POST decisions/inbox': async ({ body }) => {
       const item = DecisionInboxItem.parse(await body())
       if (new Set(item.choices.map(choice => choice.id)).size !== item.choices.length) throw new RouteError(400, 'Choice ids must be distinct')
@@ -301,6 +316,7 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
       if (params.id.startsWith('dec-')) refreshTickets()
       const item = inbox().get(params.id)
       if (!item) throw new InboxError(404, 'Decision not found')
+      if (item.lifecycle) throw new InboxError(409, 'Use the explicit lifecycle action endpoint')
       if (item.status === 'stale') throw new InboxError(409, `Decision is stale: ${item.staleReason || 'Open the source conversation for current context.'}`)
       if (item.status === 'resolved') return inbox().resolve(params.id, choiceId)
 

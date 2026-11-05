@@ -1,5 +1,6 @@
 /** Type-only management API contract between the web panel and host routes, imported by the panel without bundling host code. */
 import type { BrandingConfig } from '../policy.ts'
+import type { LifecycleAction, LifecycleResult } from './lifecycle-decisions.ts'
 import type { DecisionEvaluationRequest, DecisionEvaluationResult, PendingDecisionItem } from '../core/decision.ts'
 import type { CharacterEvaluationResult } from '../core/character.ts'
 import type { DecisionResolution, DecisionStagingResult, DecisionDiscardResult, StageDecisionRequest, BindDecisionSubmission, RestartDecisionRequest, DecisionRestartResult } from './decision-inbox.ts'
@@ -37,6 +38,7 @@ export interface Api {
   'POST decisions/inbox': { body: PendingDecisionItem; response: { ok: boolean; id: string } }
   'POST decisions/evaluate': { body: DecisionEvaluationRequest; response: DecisionEvaluationResult }
   'POST decisions/character-evaluate': { body: DecisionEvaluationRequest & { characterId?: string; diff?: string; testOutput?: string; ticketRequest?: string }; response: CharacterEvaluationResult }
+  'POST decisions/:id/lifecycle': { body: { action: LifecycleAction }; response: LifecycleResult }
   'POST decisions/:id/resolve': { body: { choiceId: string }; response: DecisionResolution }
   'POST decisions/:id/restart': { body: RestartDecisionRequest; response: DecisionRestartResult }
   'POST decisions/:id/stage': { body: StageDecisionRequest; response: DecisionStagingResult }

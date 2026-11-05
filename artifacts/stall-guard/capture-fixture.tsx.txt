@@ -1,0 +1,48 @@
+/** Isolated screenshot fixture: actual DecisionsPage, synthetic public-only API data, no live runtime. */
+import { expect, it, vi } from 'vitest'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { writeFileSync, readFileSync, mkdirSync } from 'node:fs'
+import { DecisionsPage } from '../src/client/decisions.tsx'
+import { DecisionsPage as BaselineDecisionsPage } from '../src/client/.capture-baseline.tsx'
+import type { PendingDecisionItem } from '../src/core/decision.ts'
+import type { Ticket } from '../src/core/model.ts'
+import { ticketDecisions } from '../src/app/decision-inbox.ts'
+import { ticketDecisions as baselineTicketDecisions } from '../src/app/.capture-baseline-inbox.ts'
+import { enrichLifecycle, type LifecycleCommands } from '../src/app/lifecycle-decisions.ts'
+const fixture = vi.hoisted(() => ({ items: [] as PendingDecisionItem[] }))
+vi.mock('../src/client/provider.tsx', () => ({
+  usePanel: () => ({ t: (key: string) => key === 'statusTitle' ? 'Status' : key, call: vi.fn(), navigate: vi.fn() }),
+  useAction: () => ({ run: vi.fn(), busy: false }),
+}))
+vi.mock('../src/client/api.ts', () => ({ usePoll: () => ({ data: { items: fixture.items }, reload: vi.fn() }) }))
+const recommendation = { recommendedValue: '', confidence: 0, rationale: 'Not evaluated.', distribution: [], provider: 'Not evaluated', latencyMs: 0 }
+const base = { status: 'pending' as const, urgency: 'low' as const, createdAt: 1, recommendation, question: '', trigger: '', context: '', ticketTitle: '' }
+const items: PendingDecisionItem[] = [
+  { ...base, id: 'life-stuck', ticketId: '143', ticketTitle: 'Recover the interrupted documentation task', context: 'No new progress after one recovery attempt. Retry starts a fresh assignment with the original task.', lifecycle: { kind: 'stuck', assignmentId: 'a1' }, choices: [{ id: 'retry', label: 'Retry' }, { id: 'open_issue', label: 'Open issue' }] },
+  { ...base, id: 'life-code', ticketId: '144', ticketTitle: 'Add lifecycle decision cards', context: 'Ready for review. The implementation and regression tests are included in PR #150.', lifecycle: { kind: 'done', assignmentId: 'a2', prNumber: 150, docsOnly: false }, choices: [{ id: 'try_it', label: 'Try it' }, { id: 'changes_needed', label: 'Changes needed' }] },
+  { ...base, id: 'life-docs', ticketId: '145', ticketTitle: 'Clarify the contributor guide', context: 'Ready for review. Documentation updates explain isolated verification and rollback.', lifecycle: { kind: 'done', assignmentId: 'a3', prNumber: 151, docsOnly: true }, choices: [{ id: 'merge', label: 'Merge' }, { id: 'try_it', label: 'Try it' }, { id: 'changes_needed', label: 'Changes needed' }] },
+]
+const at = '2026-11-05T10:00:00.000Z'
+const tickets: Ticket[] = items.map((item, index) => ({
+  id: item.ticketId!, title: item.ticketTitle, createdAt: at, updatedAt: at, decisionId: 'd', mandate: {} as Ticket['mandate'], channels: [{ source: 'github', thread: 'github:143', address: { number: '143' } }],
+  origin: { triggerId: 'o', triggerIds: ['o'] }, undelivered: [],
+  assignments: [{ id: `a${index + 1}`, state: 'running', createdAt: at, idleAt: at,
+    ...(index ? { report: { state: 'ready', at, summary: item.context } } : {}) }],
+  inputs: index ? [] : [{ id: 'fallback', kind: 'note', at, text: 'Fell back to a configured model' }],
+  ...(index ? { follows: [{ thread: `github:${item.lifecycle!.prNumber}`, own: true }] }
+    : { stallGuard: { assignmentId: 'a1', inputId: 'fallback', wokeAt: at, stuckAt: at } }),
+}))
+it('renders identical synthetic ticket scenario with baseline and changed app components', async () => {
+  const commands = { api: async (schema: any, path: string) => schema.parse(path.includes('/files?')
+    ? [[{ filename: path.includes('/150/') ? 'src/example.ts' : 'docs/guide.md' }]]
+    : { state: 'open', draft: false, changed_files: 1, head: { sha: 'synthetic-head' } }) } as unknown as LifecycleCommands
+  mkdirSync('artifacts/stall-guard', { recursive: true })
+  const css = readFileSync('src/client/client.css', 'utf8')
+  for (const revision of ['before', 'after']) {
+    // Same exact ticket aggregates through each revision's actual server projection.
+    fixture.items = revision === 'before' ? baselineTicketDecisions(tickets) : await enrichLifecycle(ticketDecisions(tickets), commands, 'example/project')
+    const html = renderToStaticMarkup(revision === 'before' ? <BaselineDecisionsPage /> : <DecisionsPage />)
+    writeFileSync(`artifacts/stall-guard/${revision}.html`, `<!doctype html><html><head><meta charset="utf-8"><style>${css}\n*{box-sizing:border-box}:root{--dsw-alias-label-primary:#e6edf3;--dsw-alias-label-primary-foreground:#fff;--dsw-alias-button-primary-fill:#238636;--dsw-alias-border-l3:#484f58;--dsw-alias-brand-primary:#58a6ff}html,body{margin:0;background:#0d1117;color:#e6edf3;font-family:system-ui,sans-serif;font-size:14px}main{max-width:1160px;margin:42px auto}.capture-title{font-size:24px;margin:0 0 8px}.capture-subtitle{color:#8b949e;margin:0 0 26px}</style></head><body><main class="dt-panel"><h1 class="capture-title">Decision inbox</h1><p class="capture-subtitle">Synthetic public example · 3 tickets: idle after recovery, ready code PR, ready documentation PR</p>${html}</main></body></html>`)
+    expect(html).toContain(revision === 'before' ? 'Request human review' : 'Try it first')
+  }
+})

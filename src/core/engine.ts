@@ -77,6 +77,7 @@ export class Engine {
     for (const thread of this.repo.threads.active()) if (thread.evaluating) this.repo.atomic(() => { this.evals.due(thread, policy) })
     if (policy.paused) return
     for (const ticket of this.repo.tickets.active()) {
+      if (liveTicket(ticket)) this.repo.atomic(() => { this.tickets.guardIdle(ticket.id) })
       if (!liveTicket(ticket) && ticket.undelivered.length) this.repo.atomic(() => { this.tickets.wake(ticket.id) })
     }
     for (const thread of this.repo.threads.active()) {

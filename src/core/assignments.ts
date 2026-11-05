@@ -125,6 +125,10 @@ export class Assignments extends EnginePart {
     // A replaced or cleared attention question withdraws any pending unsent reply for the previous question from the outbox.
     if (previous && previous.id !== attention?.id) this.replies.withdrawAttention(previous.id)
     assignment.report = { state: report.state, summary: report.summary, at }
+    if (report.state === 'progress' && ticket.stallGuard?.assignmentId === assignment.id) {
+      ticket.stallGuard.progressAt = at
+      delete ticket.stallGuard.stuckAt
+    }
     ticket.updatedAt = at
     if (report.answers && !ticket.answers?.includes(report.answers)) ticket.answers = [...ticket.answers ?? [], report.answers]
     if (report.answers) this.takeUp(ticketId, report.answers)

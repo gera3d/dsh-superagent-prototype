@@ -311,6 +311,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/core/assignments.ts` | `Assignments`: the Executor's facts and its workers' Reports |
 | `src/core/replies.ts` | `Replies`: the Engine's Channel writes |
 | `src/core/stage.ts` | `ticketStage` and `canRetry`: the Ticket stages of [003 Execution](003-execution.md) |
+| `src/core/stall-guard.ts` | Narrow fallback/status-only idle eligibility and stuck checkpoint projection |
 | `src/core/errors.ts` | `UserError` and `USER_ERRORS` |
 | `src/core/reasons.ts` | `Reason`, `REASONS` and `reasonText`: why the core recorded a Decision or set a Trigger aside, by code |
 | `src/core/ids.ts` | `key`: ids derived from their inputs, equal for equal inputs |
@@ -357,6 +358,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/app/dot.ts` | Same-origin Dot planning, Jev recommendations and health endpoints; stable choice IDs, strict schema validation, bounded model output and exactly one corrective retry. Returns proposals only; never dispatches threads or uses heuristic recommendations. |
 | `src/app/dot-json.ts` | Bounded balanced JSON-object extraction respecting strings/escapes; skips malformed/schema-invalid candidates without repairing or fabricating model output |
 | `src/app/decision-evaluator.ts` | Auxiliary tool-free recommendations using the source Session route or configured default, without sending work to that Session |
+| `src/app/lifecycle-decisions.ts` | Explicit lifecycle actions, documentation-only PR verification and human review links; never applies or merges |
 | `src/app/decision-inbox.ts` | Durable SQLite decision queue, completed-turn recovery, explicit question/offer capture, source deduplication and stale detection; staging stays pending and only a bound durable native submission confirms resolution, without executing work |
 | `src/app/decision-inbox-provider.ts` | Independently loaded inbox routes and capture lifecycle; shares the existing database without restarting the orchestrator |
 | `src/app/api.ts` | `Api`, every route with its parameters, query, body and response, and the filters of the lists; it imports only types, so the panel bundles it |
@@ -400,6 +402,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/route.ts` | The tabs, the settings groups, the typed routes that `parseRoute` reads, and the route memory with the settings group opened last |
 | `src/client/overview.tsx` | The overview |
 | `src/client/source.tsx`, `trigger.tsx`, `eval.tsx`, `execution.tsx` | One file per stage: its status, and its settings where it has some |
+| `src/client/lifecycle-card.tsx` | Quiet stuck/done ticket controls, explicit Retry and human review links |
 | `src/client/decisions.tsx` | The Decisions tab: actionable Human-in-the-Loop decision inbox and real-time decision playground |
 | `src/client/branding-mark.tsx`, `branding-settings.tsx` | Custom branding mark presentation and settings configuration |
 | `src/client/decision-card.tsx` | Recommendation presentation with explicit callback failure handling; never claims simulated actions executed. |
@@ -466,6 +469,9 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/decision-evaluation.spec.ts` | No fabricated recommendations, credential isolation, result validation and honest provider labeling |
 | `tests/decision-card.spec.tsx` | Visible question and source context, recommendation rationale, full-context and response disclosures, unavailable states and explicit evaluation without selection |
 | `tests/decision-ranker.spec.ts` | Decisions API request/response mapping, invalid ranking rejection, configured-model and unranked fallback order, no call without a configured key, and the opt-in settings defaults |
+| `tests/stall-guard.spec.ts` | Fallback/status detection, durable one-shot wake, configurable escalation, progress and hold exclusions, original-task retry |
+| `tests/lifecycle-decisions.spec.ts` | Stuck/done projections, stale action rejection, paginated documentation-only verification and human-only merge links |
+| `tests/lifecycle-card.spec.tsx` | Quiet lifecycle rendering and explicit action outcomes |
 | `tests/decision-inbox.spec.ts` | Durable capture, cold recovery, false-positive exclusions, source deduplication, stale resolution guards and draft-only outcomes |
 | `tests/decision-inbox-provider.spec.ts` | Same-origin HTTP validation, plugin close/reopen persistence, idempotent staging and safe retirement of persisted false positives |
 | `tests/decision-source.spec.ts` | Capture and evaluator share one canonical recommendation; enrichment never duplicates or resurrects a resolved decision |

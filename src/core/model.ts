@@ -306,6 +306,8 @@ export interface Ticket {
   assignments: Assignment[]
   /** Automatic escalations to stronger models, oldest first; their count is capped by the Models settings. */
   escalations?: Escalation[]
+  /** Durable one-shot idle recovery checkpoint for the current assignment. */
+  stallGuard?: { assignmentId: string; inputId: string; wokeAt: string; progressAt?: string; stuckAt?: string }
   inputs: TicketInput[]
   /** Inputs not yet handed to a running assignment. */
   undelivered: string[]

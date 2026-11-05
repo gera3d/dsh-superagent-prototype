@@ -8,6 +8,7 @@ import { PromptConflict } from '../src/app/prompts.ts'
 import { SettingsConflict } from '../src/app/settings.ts'
 import type { HttpHost } from '../src/app/http.ts'
 import { SettingsSchema } from '../src/policy.ts'
+import type { Ticket } from '../src/core/index.ts'
 import { SetupError } from '../src/setup.ts'
 
 type Handler = (req: unknown, res: unknown) => Promise<void>
@@ -19,7 +20,7 @@ function serve(runtime: Partial<Record<keyof HttpHost, unknown>>, host = '127.0.
   const ctx = { on: () => () => {}, sessionPersistence: { flush: async () => {}, list: async () => [] },
     logger: { error: () => {}, warn: () => {} },
     webServer: { host, port: 3082, register: (route: { handler: Handler }) => { handler = route.handler; return () => {} } } }
-  registerHttp(ctx as never, { ready: Promise.resolve(), ...runtime, store: { db, ...(runtime.store as object) } } as unknown as HttpHost)
+  registerHttp(ctx as never, { ready: Promise.resolve(), configured: () => false, ...runtime, store: { db, ...(runtime.store as object) } } as unknown as HttpHost)
   return async (method: string, path: string, body?: unknown, headers: Headers = {}) => {
     let status = 0, text = '', location: string | undefined
     const chunks = body === undefined ? [] : [Buffer.from(typeof body === 'string' ? body : JSON.stringify(body))]
@@ -224,6 +225,27 @@ it('succeeds on a live card pick by dispatching choice to the session and resolv
     'Do option A.',
     'steer'
   )
+})
+
+it('projects a stuck lifecycle card and retries it once through the explicit HTTP endpoint', async () => {
+  const at = '2026-11-05T20:00:00.000Z'
+  const ticket: Ticket = { id: 'stalled', title: 'Original issue task', decisionId: 'd',
+    mandate: { strength: 'explicit', policyVersion: 'v', basis: { via: 'listed' }, actor: { source: 'github', id: 'owner' }, scope: 'fix' },
+    channels: [{ source: 'github', thread: '143', address: { number: '143' } }], origin: { triggerId: 'issue', triggerIds: ['issue'] },
+    createdAt: at, updatedAt: at, undelivered: [], inputs: [{ id: 'fallback', kind: 'note', text: 'Fell back to available ladder model (p/m): offline.', at }],
+    assignments: [{ id: 'a', state: 'running', createdAt: at, idleAt: at, report: { state: 'waiting', summary: 'Idle', at } }],
+    stallGuard: { assignmentId: 'a', inputId: 'resume', wokeAt: at, stuckAt: at } }
+  const retryTicket = vi.fn(() => { ticket.ended = { by: 'executor', at, outcome: 'completed' } })
+  const call = serve({ configured: () => true, deployment: { repository: 'example/repo' },
+    executor: { running: () => false }, store: { tickets: { get: () => ticket, open: () => ticket.ended ? [] : [ticket] } }, engine: { retryTicket } })
+  const list = await call('GET', 'decisions/inbox')
+  expect(list.status).toBe(200)
+  const item = (list.body.items as any[])[0]!
+  expect(item).toMatchObject({ lifecycle: { kind: 'stuck', issueUrl: 'https://github.com/example/repo/issues/143' } })
+  expect(await call('POST', `decisions/${item.id}/resolve`, { choiceId: 'retry' })).toMatchObject({ status: 409 })
+  expect(await call('POST', `decisions/${item.id}/lifecycle`, { action: 'retry' })).toMatchObject({ status: 200, body: { execution: 'retried' } })
+  expect(await call('POST', `decisions/${item.id}/lifecycle`, { action: 'retry' })).toMatchObject({ status: 409 })
+  expect(retryTicket).toHaveBeenCalledExactlyOnceWith('stalled')
 })
 
 it('retires an ended-session card with plain explanation instead of offering a failing button', async () => {
