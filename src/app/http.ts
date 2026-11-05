@@ -170,7 +170,12 @@ const SettingsBlockSchema = z.union([z.enum(['policy', 'eval', 'executor', 'deci
 const SaveRequest = z.object({ value: z.unknown(), revision: z.number().int().nonnegative() })
 const DecisionChoiceSchema = z.object({ id: z.string().min(1).max(200), label: z.string().min(1).max(2000), description: z.string().max(4000).optional(), prompt: z.string().min(1).max(12000).optional(), added: z.boolean().optional() })
 const DecisionEvaluation = z.object({ context: z.string().max(30000), sessionId: z.string().min(1).max(300).optional(), question: z.string().max(4000), choices: z.array(DecisionChoiceSchema).min(2).max(12), provider: z.enum(['auto', 'deepseek', 'typesafe-jev', 'openai-luna']).optional() })
-const CharacterEvaluationRequestSchema = DecisionEvaluation.extend({ characterId: z.string().max(100).optional() })
+const CharacterEvaluationRequestSchema = DecisionEvaluation.extend({
+  characterId: z.string().max(100).optional(),
+  diff: z.string().max(120_000).optional(),
+  testOutput: z.string().max(120_000).optional(),
+  ticketRequest: z.string().max(30_000).optional(),
+})
 export const DecisionStageRequest = z.object({ choiceId: z.string().min(1).max(200), attemptId: z.string().uuid(), draftText: z.string().min(1).max(120000) }).strict()
 export const DecisionSubmissionRequest = z.object({ attemptId: z.string().uuid(), submissionId: z.string().min(1).max(300), retryOf: z.string().min(1).max(300).optional() }).strict()
 export const DecisionDiscardRequest = z.object({ attemptId: z.string().uuid() }).strict()
@@ -251,7 +256,13 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
         decisions: settings.decisions,
         call: request => configuredDecisionReply(ctx, request),
       })
-      return evaluateWithCharacter(character, payload, { rankerResult })
+      return evaluateWithCharacter(character, payload, {
+        rankerResult,
+        ctx,
+        diff: payload.diff,
+        testOutput: payload.testOutput,
+        ticketRequest: payload.ticketRequest,
+      })
     },
     'POST decisions/:id/resolve': async ({ params, body }) => {
       const { choiceId } = z.object({ choiceId: z.string().min(1).max(200) }).strict().parse(await body())

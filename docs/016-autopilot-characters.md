@@ -137,7 +137,24 @@ With **Permission to Disagree** enabled:
 
 ---
 
-## 6. Implementation & Verification Summary
+## 7. Stage 3b: Senior Developer LLM Review via Gemini 3.8 Flash
+
+In Stage 3b, the review step transitions from regex-only heuristics to calling `antigravity/gemini-3.8-flash` at high reasoning effort through the harness's authenticated model route (`ctx.llm`):
+
+1. **Model Route & Budgeting:**
+   - Provider: `antigravity`, Model: `gemini-3.8-flash`, Reasoning Effort: `high`.
+   - Input budgeting: Feeds ticket request, git diff, test output, and candidate choices up to ~30k tokens (~120,000 characters).
+2. **Review Output Actions:**
+   - `approve`: Verified changes meeting standards are approved.
+   - `disagree`: Issues architectural critique, counter-proposal, and corrective redirect.
+   - `escalate`: High-impact business ambiguity or policy forks escalate to human operator.
+3. **Deterministic Locked Boundaries Invariant:**
+   - The locked escalation list (`money`, `deletions`, `secrets`, `sending_as_person`, `undecided`) runs deterministically **before** and **after** the model.
+   - Even if the model returns `approve` on an action touching a locked boundary, the post-model guard overrides it and forces `action: 'escalate'`, setting `canAutoPush: false` and `requiresHuman: true`.
+4. **Resilient Failure Handling:**
+   - On timeout or model failure, execution falls back to heuristics and marks `[Fallback: LLM review call failed ...]` in the result.
+   - **Zero Auto-Approval on Failure:** `canAutoPush` is strictly disabled (`false`) and `requiresHuman` is forced to `true`.
+
 
 The first slice delivers:
 - **`src/core/character.ts`**: Types, locked escalation categories, detection regexes, weak proposal evaluation, and Senior Developer definition.
