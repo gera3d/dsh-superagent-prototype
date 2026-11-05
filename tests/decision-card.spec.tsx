@@ -138,3 +138,20 @@ it('shows percentages consistently on scored cards and plain Not scored labels o
   expect(container.textContent).toContain('Not scored')
   expect(container.textContent).not.toContain('%')
 })
+
+it('renders "Not scored" badge on unscored card and never displays 0%', async () => {
+  await render({
+    recommendation: {
+      recommendedValue: '',
+      confidence: 0,
+      rationale: 'Unscored alternatives.',
+      distribution: [],
+      provider: 'Not evaluated',
+      latencyMs: 0,
+    },
+  })
+  const notScoredBadges = container.querySelectorAll('.dt-badge--not-scored')
+  expect(notScoredBadges.length).toBe(2)
+  expect(container.textContent).toContain('Not scored')
+  expect(container.textContent).not.toContain('%')
+})
