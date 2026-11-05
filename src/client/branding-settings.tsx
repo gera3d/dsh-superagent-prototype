@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import type { BrandingConfig } from '../policy.ts'
 import { BrandLogoMark } from './branding-mark.tsx'
-import { Button, Input } from './controls.tsx'
+import { Button, Input, Switch } from './controls.tsx'
 import { SaveBar } from './draft.tsx'
 import { usePanel } from './provider.tsx'
 import { Field, Fields, useBlockDraft, useSettings } from './settings-kit.tsx'
@@ -12,7 +12,7 @@ export function BrandingSettings() {
   const { t } = usePanel()
   const { settings } = useSettings()
   const brandingBlock = settings.blocks.branding ?? {
-    value: { logo: '', logoDark: '', logoLight: '' } as BrandingConfig,
+    value: { logo: '', logoDark: '', logoLight: '', hideWordmark: true } as BrandingConfig,
     revision: 1,
   }
 
@@ -20,18 +20,23 @@ export function BrandingSettings() {
   const value = draft.value
   const [resetMessage, setResetMessage] = useState<string | null>(null)
 
-  const updateField = (key: keyof BrandingConfig, val: string) => {
+  const updateField = <K extends keyof BrandingConfig>(key: K, val: BrandingConfig[K]) => {
     setResetMessage(null)
     draft.edit({ ...value, [key]: val })
   }
 
   const resetToDefault = () => {
-    draft.edit({ logo: '', logoDark: '', logoLight: '' })
+    draft.edit({ logo: '', logoDark: '', logoLight: '', hideWordmark: true })
     setResetMessage(t('branding.resetNotice'))
   }
 
   const activeDarkLogo = value.logoDark || value.logo
   const activeLightLogo = value.logoLight || value.logo
+  const isDefault =
+    !value.logo &&
+    !value.logoDark &&
+    !value.logoLight &&
+    (value.hideWordmark === true || value.hideWordmark === undefined)
 
   return (
     <form className="dt-form dt-block dt-branding-settings" data-testid="branding-settings" onSubmit={event => { void draft.submit(event) }}>
@@ -64,12 +69,23 @@ export function BrandingSettings() {
             />
           </Field>
 
+          <Field label={t('branding.hideWordmark')} hint={t('branding.hideWordmarkDesc')}>
+            <div style={{ display: 'flex', alignItems: 'center', height: '32px' }}>
+              <Switch
+                checked={value.hideWordmark !== false}
+                onChange={next => updateField('hideWordmark', next)}
+                label={t('branding.hideWordmark')}
+                className="dt-branding-hide-wordmark"
+              />
+            </div>
+          </Field>
+
           <div style={{ marginTop: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
             <Button
               type="button"
               variant="outline"
               onClick={resetToDefault}
-              disabled={!value.logo && !value.logoDark && !value.logoLight}
+              disabled={isDefault}
               data-testid="button-branding-reset"
             >
               {t('branding.reset')}

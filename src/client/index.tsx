@@ -20,7 +20,7 @@ import { createDecisionSubmission } from './decision-submission.ts'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-chat/client'
 import { PluginConfig, usePageForm } from './deployment.tsx'
-import { BrandLogoMark } from './branding-mark.tsx'
+import { BrandLogoMark, BrandWordmark } from './branding-mark.tsx'
 import { en, zh } from './locales.ts'
 import type { T } from './text.ts'
 
@@ -72,6 +72,11 @@ export function apply(ctx: ClientContext): void {
   ctx.slots.inject('sidebar.brand.mark', () => ctx.slots.register({
     name: 'sidebar.brand.mark', priority: -1,
   }, props => <BrandLogoMark {...props} />))
+  // `sidebar.brand.name` holds the DeepSeek wordmark next to the mark. Shadow it at priority -1 to render
+  // our component (or null when hidden, leaving the spot empty).
+  ctx.slots.inject('sidebar.brand.name', () => ctx.slots.register({
+    name: 'sidebar.brand.name', priority: -1,
+  }, props => <BrandWordmark {...props} />))
   ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: PANEL_ID, locale: NS, inject: () => ({}) },
     (props: { t: T }) => <Mounted ctx={ctx} t={props.t} />))
   ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({ name: 'sidebar.panellist', id: PANEL_ID, order: 10, label: () => t('panel'), locale: NS }, HammerIcon))
