@@ -139,5 +139,5 @@ export type PromptsView = ApiResponse<'GET prompts'>
 export type PromptConfig = PromptsView['defaults']
 export type ThreadFacts = TicketRow['threads'][number]
 export type Actor = TriggerRow['actor']
-export type { Character, CharactersConfig, DecisionsConfig, LockedEscalationItem } from '../policy.ts'
-export { LOCKED_ESCALATION_LIST } from '../policy.ts'
+export type { Character, CharactersConfig, DecisionsConfig } from '../policy.ts'
+export { LOCKED_ESCALATION_LIST, type LockedEscalationItem } from '../locked-escalation.ts'
