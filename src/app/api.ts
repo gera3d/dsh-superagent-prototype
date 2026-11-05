@@ -36,7 +36,7 @@ export interface Api {
   'GET decisions/inbox': { response: { items: PendingDecisionItem[] } }
   'POST decisions/inbox': { body: PendingDecisionItem; response: { ok: boolean; id: string } }
   'POST decisions/evaluate': { body: DecisionEvaluationRequest; response: DecisionEvaluationResult }
-  'POST decisions/character-evaluate': { body: DecisionEvaluationRequest & { characterId?: string }; response: CharacterEvaluationResult }
+  'POST decisions/character-evaluate': { body: DecisionEvaluationRequest & { characterId?: string; diff?: string; testOutput?: string; ticketRequest?: string }; response: CharacterEvaluationResult }
   'POST decisions/:id/resolve': { body: { choiceId: string }; response: DecisionResolution }
   'POST decisions/:id/restart': { body: RestartDecisionRequest; response: DecisionRestartResult }
   'POST decisions/:id/stage': { body: StageDecisionRequest; response: DecisionStagingResult }

@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import type { Context } from '@deepseek-ai/cordis'
 import {
   DEFAULT_SENIOR_DEVELOPER_CHARACTER,
   assessWeakProposals,
@@ -334,6 +335,220 @@ describe('Stage 3: Autopilot Characters (Senior Developer)', () => {
       expect(parsed.characters.characters).toHaveLength(1)
       expect(parsed.characters.characters[0]?.id).toBe('senior_developer')
       expect(parsed.characters.characters[0]?.name).toBe('Senior Developer')
+    })
+  })
+
+  describe('Stage 3b: Senior Developer LLM Review (Gemini 3.8 Flash)', () => {
+    const reviewRequest: DecisionEvaluationRequest = {
+      context: 'Worker refactored auth module in src/auth.ts. Ready for review.',
+      question: 'Should the worker proceed to merge this change?',
+      choices: [
+        { id: 'merge_pr', label: 'Merge pull request into main', description: 'Complete merge without extra tests.' },
+        { id: 'request_review', label: 'Hold and run regression test suite', description: 'Run automated vitest suite first.' },
+      ],
+    }
+
+    const reviewDiff = `
+diff --git a/src/auth.ts b/src/auth.ts
+index 1234567..89abcdef 100644
+--- a/src/auth.ts
++++ b/src/auth.ts
+@@ -10,3 +10,5 @@ export function authenticateUser(token: string) {
++  if (!token) throw new Error('Token required')
++  return verifySignature(token)
+ }
+`.trim()
+
+    const reviewTestOutput = `
+✓ src/auth.spec.ts (12 tests) 45ms
+Test Files 1 passed (1)
+Tests 12 passed (12)
+`.trim()
+
+    it('approves well-tested changes with valid diff and test output via LLM review', async () => {
+      const reviewCall = vi.fn().mockResolvedValue({
+        action: 'approve' as const,
+        reason: 'The diff adds safe token verification and all 12 regression tests pass with 0 errors.',
+        recommendedChoiceId: 'request_review',
+      })
+
+      const result = await evaluateWithCharacter(DEFAULT_SENIOR_DEVELOPER_CHARACTER, reviewRequest, {
+        reviewCall,
+        diff: reviewDiff,
+        testOutput: reviewTestOutput,
+        ticketRequest: 'Add token presence validation to auth module',
+      })
+
+      expect(reviewCall).toHaveBeenCalledWith(expect.objectContaining({
+        diff: reviewDiff,
+        testOutput: reviewTestOutput,
+        ticketRequest: 'Add token presence validation to auth module',
+      }), undefined)
+
+      expect(result.action).toBe('approve')
+      expect(result.critique).toContain('Senior Developer approved')
+      expect(result.critique).toContain('adds safe token verification')
+      expect(result.recommendedValue).toBe('request_review')
+      expect(result.requiresHuman).toBe(true) // suggest_only mode
+    })
+
+    it('disagrees with incomplete or unverified changes, providing critique and corrective redirect', async () => {
+      const reviewCall = vi.fn().mockResolvedValue({
+        action: 'disagree' as const,
+        reason: 'Diff removes error handling without adding regression tests. Violates quality standard.',
+        redirect: 'Run vitest on auth suite and restore error handler before proceeding.',
+        counterProposal: {
+          id: 'corrective_restore_and_test',
+          label: 'Restore error handling and run auth suite',
+          description: 'Revert handler deletion and run tests.',
+          prompt: 'Restore the error check and run pnpm vitest tests/auth.spec.ts.',
+        },
+      })
+
+      const result = await evaluateWithCharacter(DEFAULT_SENIOR_DEVELOPER_CHARACTER, reviewRequest, {
+        reviewCall,
+        diff: '- if (!token) throw new Error()',
+        testOutput: 'FAIL src/auth.spec.ts: Expected error to be thrown',
+      })
+
+      expect(result.action).toBe('disagree')
+      expect(result.critique).toContain('Disagreement by Senior Developer')
+      expect(result.critique).toContain('Diff removes error handling')
+      expect(result.counterProposal?.id).toBe('corrective_restore_and_test')
+      expect(result.direction).toContain('Run vitest on auth suite')
+      expect(result.recommendedValue).toBe('corrective_restore_and_test')
+    })
+
+    it('escalates when model review identifies genuine business ambiguity or policy forks', async () => {
+      const reviewCall = vi.fn().mockResolvedValue({
+        action: 'escalate' as const,
+        reason: 'Architectural direction introduces breaking API change requiring human product owner decision.',
+      })
+
+      const result = await evaluateWithCharacter(DEFAULT_SENIOR_DEVELOPER_CHARACTER, reviewRequest, {
+        reviewCall,
+      })
+
+      expect(result.action).toBe('escalate')
+      expect(result.critique).toContain('Escalated by Senior Developer')
+      expect(result.critique).toContain('breaking API change')
+      expect(result.canAutoPush).toBe(false)
+      expect(result.requiresHuman).toBe(true)
+    })
+
+    it('enforces deterministic locked boundary override check: model CANNOT relax locked escalations', async () => {
+      // Model attempts to approve an innocuous request, but returns a locked action in its critique / redirect / choice
+      const innocuousRequest: DecisionEvaluationRequest = {
+        context: 'Clean build cache step.',
+        question: 'Which cleanup method?',
+        choices: [
+          { id: 'opt_a', label: 'Option A' },
+          { id: 'opt_b', label: 'Option B' },
+        ],
+      }
+
+      const overrideAttemptCall = vi.fn().mockResolvedValue({
+        action: 'approve' as const,
+        reason: 'I approve executing rm -rf to force wipe the database records immediately.',
+        redirect: 'rm -rf /production-data',
+      })
+
+      const postGuardResult = await evaluateWithCharacter(DEFAULT_SENIOR_DEVELOPER_CHARACTER, innocuousRequest, {
+        reviewCall: overrideAttemptCall,
+      })
+
+      // Invariant: Post-model check overrides the model's 'approve' and forces 'escalate'!
+      expect(postGuardResult.action).toBe('escalate')
+      expect(postGuardResult.escalation?.category).toBe('deletions')
+      expect(postGuardResult.canAutoPush).toBe(false)
+      expect(postGuardResult.requiresHuman).toBe(true)
+      expect(postGuardResult.critique).toContain('Locked escalation boundary triggered')
+      expect(postGuardResult.critique).toContain('the model can never relax locked boundaries')
+    })
+
+    it('falls back to heuristics on model failure or timeout and NEVER auto-approves', async () => {
+      const autoPushDev: CharacterConfig = {
+        ...DEFAULT_SENIOR_DEVELOPER_CHARACTER,
+        mode: 'auto_push',
+      }
+
+      const failingCall = vi.fn().mockRejectedValue(new Error('ETIMEDOUT: Gemini 3.8 Flash gateway did not respond within 60000ms'))
+
+      // Strong choices that would normally allow auto_push in heuristic mode
+      const strongRequest: DecisionEvaluationRequest = {
+        context: 'Changes verified in test suite.',
+        question: 'Next step?',
+        choices: [
+          { id: 'run_tests', label: 'Run vitest suite and typecheck', description: 'Run all checks.' },
+          { id: 'inspect_diff', label: 'Review git diff', description: 'Inspect diff.' },
+        ],
+      }
+
+      const result = await evaluateWithCharacter(autoPushDev, strongRequest, {
+        reviewCall: failingCall,
+      })
+
+      expect(failingCall).toHaveBeenCalled()
+      // Falls back to heuristics
+      expect(result.fallback).toBe(true)
+      expect(result.fallbackReason).toContain('ETIMEDOUT')
+      expect(result.critique).toContain('[Fallback: LLM review call failed')
+      expect(result.critique).toContain('Auto-approval is disabled due to model failure')
+      // INVARIANT: Never auto-approve on a model failure!
+      expect(result.canAutoPush).toBe(false)
+      expect(result.requiresHuman).toBe(true)
+    })
+
+    it('invokes Gemini 3.8 Flash at high reasoning effort through ctx.llm model route', async () => {
+      let resolvedRoute: unknown
+      let streamedConfig: unknown
+
+      const fakeLlm = {
+        resolveCallConfig: vi.fn(async (route: unknown) => {
+          resolvedRoute = route
+          return { provider: 'antigravity', model: 'gemini-3.8-flash' }
+        }),
+        stream: async function* (options: unknown) {
+          streamedConfig = options
+          yield {
+            type: 'text-delta',
+            text: JSON.stringify({
+              action: 'approve',
+              reason: 'Gemini 3.8 Flash high-reasoning review verified all test assertions and architectural constraints.',
+              recommendedChoiceId: 'request_review',
+            }),
+          }
+          yield { type: 'finish', reason: { kind: 'stop' } }
+        },
+      }
+
+      const mockCtx = {
+        llm: fakeLlm,
+      } as unknown as Context
+
+      const result = await evaluateWithCharacter(DEFAULT_SENIOR_DEVELOPER_CHARACTER, reviewRequest, {
+        ctx: mockCtx,
+        diff: reviewDiff,
+        testOutput: reviewTestOutput,
+        ticketRequest: 'Verify auth module',
+      })
+
+      expect(resolvedRoute).toEqual({
+        provider: 'antigravity',
+        model: 'gemini-3.8-flash',
+        reasoningEffort: 'high',
+      })
+
+      expect(streamedConfig).toMatchObject({
+        provider: 'antigravity',
+        model: 'gemini-3.8-flash',
+        maxTokens: 4096,
+        tools: [],
+      })
+
+      expect(result.action).toBe('approve')
+      expect(result.critique).toContain('Gemini 3.8 Flash high-reasoning review')
+      expect(result.modelRoute).toContain('antigravity / gemini-3.8-flash (high)')
     })
   })
 })

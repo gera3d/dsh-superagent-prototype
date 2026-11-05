@@ -258,6 +258,7 @@ describe('settings migration', () => {
       executor: { model: null, maxWorkers: 5, directory: '', prepare: '', blockedCommands: [] },
       models: { hierarchy: [], maxEscalations: 2 },
       characters: { defaultCharacterId: 'senior_developer', characters: [DEFAULT_SENIOR_DEVELOPER_CHARACTER] },
+      branding: { logo: '', logoDark: '', logoLight: '' },
     })
     expect(migrateSettings(migrated)).toEqual(migrated)
   })

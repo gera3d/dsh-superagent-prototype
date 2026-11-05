@@ -5,7 +5,30 @@
 import type { DecisionChoice, DecisionEvaluationResult } from './decision.ts'
 
 export type CharacterMode = 'suggest_only' | 'auto_push'
-export type CharacterAction = 'agree' | 'disagree' | 'escalate'
+export type CharacterAction = 'agree' | 'approve' | 'disagree' | 'escalate'
+
+export interface CharacterReviewInput {
+  diff?: string
+  testOutput?: string
+  ticketRequest?: string
+  context: string
+  question: string
+  choices: DecisionChoice[]
+}
+
+export interface CharacterReviewModelResponse {
+  action: 'approve' | 'disagree' | 'escalate'
+  reason: string
+  redirect?: string
+  recommendedChoiceId?: string
+  counterProposal?: DecisionChoice
+  modelRoute?: string
+}
+
+export type CharacterReviewModelCall = (
+  input: CharacterReviewInput,
+  signal?: AbortSignal,
+) => Promise<CharacterReviewModelResponse>
 
 /**
  * Hard rules: The character can never override the locked escalation list.
@@ -56,6 +79,9 @@ export interface CharacterEvaluationResult {
   requiresHuman: boolean
   escalation?: LockedEscalation
   latencyMs: number
+  modelRoute?: string
+  fallback?: boolean
+  fallbackReason?: string
 }
 
 /** First character: Senior Developer */
