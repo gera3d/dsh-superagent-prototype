@@ -127,6 +127,10 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
             context={item.context}
             recommendation={item.recommendation}
             choices={item.choices}
+            character={item.character}
+            onOverrideCharacter={char => {
+              void call('POST decisions/inbox', { body: { ...item, character: char } }).then(() => reload())
+            }}
             unavailableReason={item.advisor?.status === 'pending' || item.advisor?.status === 'generating'
               ? 'The next-step advisor has not finished generating guidance.'
               : item.advisor?.status === 'error' ? `Advisor unavailable: ${item.advisor.error || 'Generation failed.'}`

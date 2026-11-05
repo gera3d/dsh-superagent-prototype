@@ -13,7 +13,7 @@ import type { DroppedReply, HistoryView, Problem, PromptsView, SetupView, Source
   TicketRow, TicketStage,
   TriggerRow } from '../../src/client/api.ts'
 import { SETUP_FIELDS } from '../../src/deployment.ts'
-import { BrandingConfigSchema, DecisionsConfigSchema, EvalConfigSchema, ExecutorConfigSchema, ModelsConfigSchema, PolicyConfigSchema, SettingsSchema } from '../../src/policy.ts'
+import { BrandingConfigSchema, CharactersConfigSchema, DecisionsConfigSchema, EvalConfigSchema, ExecutorConfigSchema, ModelsConfigSchema, PolicyConfigSchema, SettingsSchema } from '../../src/policy.ts'
 import { SetupError, type SetupCode } from '../../src/setup.ts'
 import { feishuChannel } from '../../src/sources/feishu-trigger.ts'
 import { githubChannel } from '../../src/sources/github-trigger.ts'
@@ -170,6 +170,7 @@ const settingsView = (): ApiResponse<'GET settings'> => ({
     executor: { value: server.settings.executor, revision: server.revisions.executor ?? 0 },
     decisions: { value: server.settings.decisions, revision: server.revisions.decisions ?? 0 },
     models: { value: server.settings.models, revision: server.revisions.models ?? 0 },
+    characters: { value: server.settings.characters, revision: server.revisions.characters ?? 0 },
     branding: { value: server.settings.branding, revision: server.revisions.branding ?? 0 } },
   sources: sourceSettings(),
   environment: { root: '/srv/dsh-superagent/work', variables: [
@@ -376,7 +377,7 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
   } },
   'PUT settings/:block': { body: true, answer: ({ params: { block }, body }) => {
     const source = block.startsWith('source:') ? KINDS.find(kind => `source:${kind.kind}` === block) : undefined
-    if (!['policy', 'eval', 'executor', 'decisions', 'models', 'branding'].includes(block) && !source) return block.startsWith('source:') ? refuse(404, 'Source not found')
+    if (!['policy', 'eval', 'executor', 'decisions', 'models', 'characters', 'branding'].includes(block) && !source) return block.startsWith('source:') ? refuse(404, 'Source not found')
       : refuse(400, 'Invalid settings: block')
     if (body.revision !== (server.revisions[block] ?? 0)) return refuse(409, 'Settings changed. Reload before saving.')
     let restarting = false
@@ -385,6 +386,7 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
     else if (block === 'eval') server.settings = { ...server.settings, eval: EvalConfigSchema.parse(body.value) }
     else if (block === 'decisions') server.settings = { ...server.settings, decisions: DecisionsConfigSchema.parse(body.value) }
     else if (block === 'models') server.settings = { ...server.settings, models: ModelsConfigSchema.parse(body.value) }
+    else if (block === 'characters') server.settings = { ...server.settings, characters: CharactersConfigSchema.parse(body.value) }
     else if (block === 'branding') server.settings = { ...server.settings, branding: BrandingConfigSchema.parse(body.value) }
     else if (source) {
       const { enabled, config: value } = SourceSave.parse(body.value)
