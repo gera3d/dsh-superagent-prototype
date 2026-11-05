@@ -316,8 +316,10 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/core/memory.ts` | `MemoryRepositories`: the Store's repositories in memory, in the Store's order and with its nested rollback, for domain tests |
 | `src/core/index.ts` | The core's exports |
 | `src/core/decision.ts` | `evaluateDecision`: pure validation over an injected model transport; no vendor HTTP or credential access. Scores are not calibrated. |
+| `src/core/character.ts` | Autopilot character profile definitions, reviewer prompts and personas |
 | `src/core/options.ts` | The Phase 0 option contract: `OPTION_MIN` and `OPTION_MAX`, generic marked fallbacks, and `normalizeChoices`, which deduplicates, backfills short sets and keeps options beyond the shown maximum as `hiddenOptions`. |
 | `src/app/decision-evaluator.ts` | Tool-free auxiliary requests through DSH's authenticated LLM service, using the source Session's effective model or the configured default. |
+| `src/app/character-evaluator.ts` | Evaluates autopilot character assessments and disagreements via model routes |
 | `src/app/decision-ranker.ts` | Decisions API ranker: maps one `choice` question over the candidate options, validates the returned choice/probabilities/confidence, and falls back to the configured-model evaluator and then to generator-order unranked. No call until settings name a driver and `apiKeyEnv` resolves to a key. |
 | `src/app/decision-provider.ts` | Independently reloadable exact-path evaluator route with same-origin checks and bounded request bodies; never owns agent Sessions. |
 | `src/app/runtime.ts` | The Runtime, the composition root, with its start and stop |
@@ -398,6 +400,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/overview.tsx` | The overview |
 | `src/client/source.tsx`, `trigger.tsx`, `eval.tsx`, `execution.tsx` | One file per stage: its status, and its settings where it has some |
 | `src/client/decisions.tsx` | The Decisions tab: actionable Human-in-the-Loop decision inbox and real-time decision playground |
+| `src/client/branding-mark.tsx`, `branding-settings.tsx` | Custom branding mark presentation and settings configuration |
 | `src/client/decision-card.tsx` | Recommendation presentation with explicit callback failure handling; never claims simulated actions executed. |
 | `src/client/inline-decision.css` | Responsive, composer-scoped presentation for the inline decision dock |
 | `src/client/inline-decision.tsx` | Agent-Mini `conversation.input.dock` card, restored as the preferred renderer through the shared bridge's explicit `dockOwner: 'agent-mini'`. Next steps yields only its browser card; its host advisor and the shared inbox remain installed. Captured empty decisions request canonical advisor enrichment; a deliberate unranked result stays in generator order; selections use the repaired stage/submission/discard routes, never auto-send. |
@@ -426,6 +429,8 @@ Some generic modules still refer directly to GitHub or Feishu:
 | Test | Covers |
 | --- | --- |
 | `tests/core-engine.spec.ts` | Domain rules on in-memory repositories: receiving, Eval, fan-out, resume and stop, interrupted Assignments, the pause, Policy changes, reports and outcomes, attaching, replies, failed deliveries and dismissed problems |
+| `tests/character.spec.ts` | Autopilot character profile definitions and evaluator behaviour |
+| `tests/branding.spec.tsx` | Custom branding mark rendering and settings configuration |
 | `tests/stage.spec.ts` | The Ticket stages, row by row |
 | `tests/policy.spec.ts` | Source scope, the gate, the admission table, Mandate revalidation, the Policy version, settings migrations and assessment outcomes |
 | `tests/registry.spec.ts` | `SourceRegistry`: instances, validation, Policy parts, Channels and Thread context |
