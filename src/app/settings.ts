@@ -2,7 +2,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { z } from 'zod'
 import { UserError, type EngineForSettings } from '../core/index.ts'
-import { CharactersConfigSchema, DecisionsConfigSchema, EvalConfigSchema, ExecutorConfigSchema, ModelsConfigSchema, PolicyConfigSchema, SettingsSchema, policyEffects, policyVersion }
+import { BrandingConfigSchema, CharactersConfigSchema, DecisionsConfigSchema, EvalConfigSchema, ExecutorConfigSchema, ModelsConfigSchema, PolicyConfigSchema, SettingsSchema, policyEffects, policyVersion }
   from '../policy.ts'
 import type { Settings as SettingsValue, SettingsBlock, SettingsOrigin, SettingsSave } from '../policy.ts'
 import type { SourceHost } from '../sources/host.ts'
@@ -30,7 +30,7 @@ interface Block {
   merge(settings: SettingsValue, value: unknown, id: string): SettingsValue
   guard?(current: SettingsValue, candidate: SettingsValue, origin: SettingsOrigin): void
 }
-const BLOCKS: Record<'policy' | 'eval' | 'executor' | 'decisions' | 'models' | 'characters' | 'source', Block> = {
+const BLOCKS: Record<'policy' | 'eval' | 'executor' | 'decisions' | 'models' | 'characters' | 'branding' | 'source', Block> = {
   policy: {
     parse: (value, sources) => {
       const policy = PolicyConfigSchema.parse(value)
@@ -48,6 +48,7 @@ const BLOCKS: Record<'policy' | 'eval' | 'executor' | 'decisions' | 'models' | '
   decisions: { parse: value => DecisionsConfigSchema.parse(value), merge: (settings, value) => ({ ...settings, decisions: value as SettingsValue['decisions'] }) },
   models: { parse: value => ModelsConfigSchema.parse(value), merge: (settings, value) => ({ ...settings, models: value as SettingsValue['models'] }) },
   characters: { parse: value => CharactersConfigSchema.parse(value), merge: (settings, value) => ({ ...settings, characters: value as SettingsValue['characters'] }) },
+  branding: { parse: value => BrandingConfigSchema.parse(value), merge: (settings, value) => ({ ...settings, branding: value as SettingsValue['branding'] }) },
   source: {
     parse: (value, sources, id) => sources.validate(id, z.object({ enabled: z.boolean(), config: z.unknown() }).parse(value)),
     merge: (settings, value, id) => ({ ...settings, sources: { ...settings.sources, [id]: value as SettingsValue['sources'][string] } }),

@@ -142,12 +142,51 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
       const prompt = choice.prompt ?? (choiceId === 'respond' ? `Regarding your question:\n${target.question}\n\nMy response: `
         : choiceId === 'continue' ? `Please continue with the next step you offered:\n${target.question}`
         : choiceId === 'discuss' ? `Before proceeding, please clarify:\n${target.question}` : `For the decision “${target.question}”, choose: ${choice.label}`)
-      await submissionBridge.stage({ decisionId: target.id, sessionId: session.sessionId, choiceId, prompt, input, inputActions, signal })
+      let attempts = 0
+      let lastError: unknown
+      while (attempts < 2) {
+        try {
+          await submissionBridge.stage({ decisionId: target.id, sessionId: session.sessionId, choiceId, prompt, input, inputActions, signal })
+          lastError = undefined
+          break
+        } catch (err) {
+          lastError = err
+          attempts++
+          if (!active()) return
+          const msg = String(err instanceof Error ? err.message : err).toLowerCase()
+          const isConflict = (err as any)?.status === 409 || msg.includes('409') || msg.includes('no longer pending') || msg.includes('stale') || msg.includes('closed') || msg.includes('already resolved') || msg.includes('retired')
+          if (isConflict) break
+          const isTransient = ((err as any)?.status >= 500 && (err as any)?.status < 600) || msg.includes('500') || msg.includes('502') || msg.includes('503') || msg.includes('504') || msg.includes('network') || msg.includes('failed to fetch')
+          if (attempts < 2 && isTransient) {
+            await Promise.resolve()
+            continue
+          }
+          break
+        }
+      }
       if (!active()) return
+      if (lastError) throw lastError
       setNotice({ decisionId: target.id, message: `${restarted ? 'New decision started; the previous recorded choice is preserved. ' : ''}Choice staged.` })
       await reload()
-    } catch (reason) { if (active()) setFailure(reason instanceof Error ? reason.message : String(reason)) }
-    finally {
+    } catch (reason) {
+      if (active()) {
+        const msg = String(reason instanceof Error ? reason.message : reason).toLowerCase()
+        const isConflict = (reason as any)?.status === 409 || msg.includes('409') || msg.includes('no longer pending') || msg.includes('stale') || msg.includes('closed') || msg.includes('already resolved') || msg.includes('retired')
+        if (isConflict) {
+          const fresh = await call('GET decisions/inbox').catch(() => undefined)
+          void reload()
+          const currentItem = fresh?.items.find(i => i.id === item.id)
+          const recorded = currentItem?.status === 'resolved' && currentItem.resolvedChoice === choiceId
+          if (recorded) {
+            setFailure(undefined)
+          } else {
+            setFailure('The option could not be sent because the decision is closed.')
+          }
+        } else {
+          setFailure(reason instanceof Error ? reason.message : String(reason))
+        }
+      }
+    } finally {
       choosing.current = false
       if (active()) { setSelection(undefined); if (restarted) void reload() }
     }
@@ -168,7 +207,14 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
     {!idle && <p className="dsa-decisions__status" role="status">Conversation is running. Decision choices will be available when it finishes.</p>}
     {!items.length && !creating && !failure && !error && <p className="dsa-decisions__status">No saved decision in this conversation yet. Explicit alternatives will appear here with their rationale and evaluator details.</p>}
     {creating && <p className="dsa-decisions__status" role="status">Evaluating explicit alternatives…</p>}
-    {(failure || error) && <p className="dsa-decisions__status" role="alert">{failure || error?.message} <button className="dsa-decisions__retry" type="button" onClick={() => { setRetry(value => value + 1); void reload() }}>Retry</button></p>}
+    {(failure || error) && <p className="dsa-decisions__status" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+      <span>{failure || error?.message}</span>
+      {failure === 'The option could not be sent because the decision is closed.' ? (
+        <button className="dsa-decisions__retry" type="button" aria-label="Dismiss notice" onClick={() => setFailure(undefined)}>Dismiss</button>
+      ) : (
+        <button className="dsa-decisions__retry" type="button" onClick={() => { setRetry(value => value + 1); void reload() }}>Retry</button>
+      )}
+    </p>}
     <div className="dsa-decisions__list">
       {items.map(item => <article key={item.id} className="dsa-decisions__item">
         {notice?.decisionId === item.id && item.status === 'pending' && item.staging && !item.invalidation && <p className="dsa-decisions__status" role="status">

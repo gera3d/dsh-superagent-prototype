@@ -1,5 +1,7 @@
 /** Type-only management API contract between the web panel and host routes, imported by the panel without bundling host code. */
+import type { BrandingConfig } from '../policy.ts'
 import type { DecisionEvaluationRequest, DecisionEvaluationResult, PendingDecisionItem } from '../core/decision.ts'
+import type { CharacterEvaluationResult } from '../core/character.ts'
 import type { DecisionResolution, DecisionStagingResult, DecisionDiscardResult, StageDecisionRequest, BindDecisionSubmission, RestartDecisionRequest, DecisionRestartResult } from './decision-inbox.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
 import type { PromptConfig, Prompts } from './prompts.ts'
@@ -34,6 +36,7 @@ export interface Api {
   'GET decisions/inbox': { response: { items: PendingDecisionItem[] } }
   'POST decisions/inbox': { body: PendingDecisionItem; response: { ok: boolean; id: string } }
   'POST decisions/evaluate': { body: DecisionEvaluationRequest; response: DecisionEvaluationResult }
+  'POST decisions/character-evaluate': { body: DecisionEvaluationRequest & { characterId?: string; diff?: string; testOutput?: string; ticketRequest?: string }; response: CharacterEvaluationResult }
   'POST decisions/:id/resolve': { body: { choiceId: string }; response: DecisionResolution }
   'POST decisions/:id/restart': { body: RestartDecisionRequest; response: DecisionRestartResult }
   'POST decisions/:id/stage': { body: StageDecisionRequest; response: DecisionStagingResult }
@@ -49,6 +52,7 @@ export interface Api {
   'GET policy/history': { response: HistoryView }
   'POST policy-sync/:id': { response: { policy: unknown } }
   'POST setup/check': { response: { restarting: true } }
+  'GET branding': { response: { branding: BrandingConfig; revision: number } }
   'GET models': { response: ModelCatalog }
   'GET prompts': { query?: { revision?: number; offset?: number }; response: PromptsView }
   'PUT prompts': { body: { config: PromptConfig; baseRevision: number }; response: { revision: number; context_delivery: Delivery } }

@@ -137,12 +137,6 @@ export const DEFAULT_CHARACTERS: Character[] = [
   },
 ]
 
-export const CharactersConfigSchema = z.object({
-  items: z.array(CharacterSchema).max(LIMITS.charactersMax).default(DEFAULT_CHARACTERS),
-  activeCharacterId: z.string().trim().default('senior-developer'),
-}).strict()
-export type CharactersConfig = z.infer<typeof CharactersConfigSchema>
-
 export interface LockedEscalationItem {
   id: string
   name: string
@@ -198,6 +192,38 @@ export function isLockedEscalation(actionOrText: string): boolean {
   )
 }
 
+import { DEFAULT_SENIOR_DEVELOPER_CHARACTER } from './core/character.ts'
+export { DEFAULT_SENIOR_DEVELOPER_CHARACTER }
+
+export const CharacterModeSchema = z.enum(['suggest_only', 'auto_push'])
+export type CharacterMode = z.infer<typeof CharacterModeSchema>
+
+/**
+ * Autopilot Character configuration.
+ * Hard rule: Keys and secrets are never stored in settings; settings name an environment variable.
+ */
+export const CharacterConfigSchema = z.object({
+  id: z.string().trim().min(1).max(100),
+  name: z.string().trim().min(1).max(100),
+  specialty: z.string().trim().min(1).max(500),
+  brief: z.string().trim().min(1).max(2000),
+  standards: z.array(z.string().trim().min(1).max(500)).default([]),
+  permissionToDisagree: z.boolean().default(true),
+  inclinedTools: z.array(z.string().trim().min(1).max(100)).default([]),
+  mode: CharacterModeSchema.default('suggest_only'),
+  apiKeyEnv: z.string().trim().max(200).regex(/^$|^[A-Za-z_][A-Za-z0-9_]*$/, 'An environment variable name').default(''),
+  enabled: z.boolean().default(true),
+}).strict().refine(c => !c.apiKeyEnv.startsWith('sk-') && !c.apiKeyEnv.includes('Bearer') && !c.apiKeyEnv.includes('='),
+  'Keys and secrets must never be stored in settings; name an environment variable instead')
+export type CharacterConfig = z.infer<typeof CharacterConfigSchema>
+
+export const CharactersConfigSchema = z.object({
+  items: z.array(CharacterSchema).max(LIMITS.charactersMax).default(DEFAULT_CHARACTERS),
+  activeCharacterId: z.string().trim().default('senior-developer'),
+  defaultCharacterId: z.string().trim().min(1).default('senior_developer'),
+  characters: z.array(CharacterConfigSchema).default([DEFAULT_SENIOR_DEVELOPER_CHARACTER]),
+}).strict()
+export type CharactersConfig = z.infer<typeof CharactersConfigSchema>
 export const AllowedSchema = z.object({ id: z.string().trim().min(1).max(200), name: z.string().trim().max(100).optional() }).strict()
 const Weak = z.enum(['inferred', 'ignore'])
 export const AdmissionRowSchema: z.ZodType<AdmissionRow> = z.object({ listedUnaddressed: Weak.optional(), unlistedAddressed: z.enum(['explicit', 'inferred', 'ignore']).optional(), unlistedUnaddressed: Weak.optional() }).strict()
@@ -224,6 +250,13 @@ export const ExecutorConfigSchema = z.object({
   blockedCommands: z.array(CommandNameSchema).default([]),
 }).strict()
 export const SourceInstanceSchema = z.object({ enabled: z.boolean().default(true), config: z.record(z.string(), z.unknown()).default({}) }).strict()
+/** Branding settings: logo file path or URL, optional dark/light variants. */
+export const BrandingConfigSchema = z.object({
+  logo: z.string().trim().default(''),
+  logoDark: z.string().trim().default(''),
+  logoLight: z.string().trim().default(''),
+}).strict()
+export type BrandingConfig = z.infer<typeof BrandingConfigSchema>
 export const SettingsSchema = z.object({
   paused: z.boolean().default(false),
   sources: z.record(z.string().regex(/^[a-z][a-z0-9-]*$/), SourceInstanceSchema).default({}),
@@ -233,9 +266,10 @@ export const SettingsSchema = z.object({
   decisions: DecisionsConfigSchema.default(() => DecisionsConfigSchema.parse({})),
   models: ModelsConfigSchema.default(() => ModelsConfigSchema.parse({})),
   characters: CharactersConfigSchema.default(() => CharactersConfigSchema.parse({})),
+  branding: BrandingConfigSchema.default(() => BrandingConfigSchema.parse({})),
 }).strict()
 export type Settings = z.infer<typeof SettingsSchema>
-export type SettingsBlock = 'policy' | 'eval' | 'executor' | 'decisions' | 'models' | 'characters' | `source:${string}`
+export type SettingsBlock = 'policy' | 'eval' | 'executor' | 'decisions' | 'models' | 'characters' | 'branding' | `source:${string}`
 export type SettingsSave = SettingsBlock | 'pause'
 export type SettingsOrigin = 'panel' | 'tool' | 'sync'
 

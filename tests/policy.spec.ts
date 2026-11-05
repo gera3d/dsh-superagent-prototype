@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SettingsSchema, assessmentOutcome, policyEffects, settingsPolicy, policyVersion, allowedSender, anyoneAllowed, type Settings } from '../src/policy.ts'
+import { DEFAULT_CHARACTERS, DEFAULT_SENIOR_DEVELOPER_CHARACTER, SettingsSchema, assessmentOutcome, policyEffects, settingsPolicy, policyVersion, allowedSender, anyoneAllowed, type Settings } from '../src/policy.ts'
 import type { MandateBasis } from '../src/core/index.ts'
 import { migrateSettings } from '../src/app/migration.ts'
 import { SourceRegistry } from '../src/sources/registry.ts'
@@ -257,6 +257,13 @@ describe('settings migration', () => {
       eval: { mode: 'auto', timeoutSeconds: 90, model: { provider: 'p', model: 'm' } },
       executor: { model: null, maxWorkers: 5, directory: '', prepare: '', blockedCommands: [] },
       models: { hierarchy: [], maxEscalations: 2 },
+      characters: {
+        activeCharacterId: 'senior-developer',
+        characters: [DEFAULT_SENIOR_DEVELOPER_CHARACTER],
+        defaultCharacterId: 'senior_developer',
+        items: DEFAULT_CHARACTERS,
+      },
+      branding: { logo: '', logoDark: '', logoLight: '' },
     })
     expect(migrateSettings(migrated)).toEqual(migrated)
   })
