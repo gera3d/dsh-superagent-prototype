@@ -228,7 +228,7 @@ it.each(['unavailable', 'invalid'] as const)('uses only fixed Flash fallback whe
   view.helper.mockResolvedValueOnce(mode === 'unavailable' ? Response.json({ error: 'offline' }, { status: 503 }) : Response.json({ options: [helperAnswer.options[0]] }))
   const result = await view.request('s0')
   expect(result.body).toMatchObject({ status: 'ready', model: 'deepseek-official/deepseek-flash', fallback: true, isScored: false })
-  expect(result.body.options).toEqual(answer.options.map((option, index) => ({ ...option, id: `opt-${index + 1}`, recommended: index === answer.recommended })))
+  expect(result.body.options).toEqual(answer.options.map((option, index) => ({ ...option, id: `opt-${index + 1}`, recommended: index === answer.recommended, actionKind: 'unknown' })))
   expect(view.prepare).toHaveBeenCalledExactlyOnceWith({ provider: 'deepseek-official', model: 'deepseek-flash', maxTokens: 1200 }, expect.any(AbortSignal))
   expect(await view.score(result.body.key)).toEqual(result)
   expect(view.ranker).not.toHaveBeenCalled()
