@@ -10,6 +10,7 @@ export const SETUP_PROBLEMS = {
   agentCliUnset: ['github', 'The agent GitHub CLI is not set.'],
   agentCliMissing: ['github', 'The agent GitHub CLI was not found.'],
   agentCliSignedOut: ['github', 'The agent GitHub CLI cannot read its account.'],
+  githubRateLimited: ['github', 'GitHub API rate limit reached. Wait for the quota to reset, then retry the check. Signing in again is not required for this error.'],
   agentCliNoAccount: ['github', 'The agent GitHub CLI did not report a GitHub account.'],
   repositoryUnreadable: ['github', '@{account} cannot read {repository}.'],
   repositoryUnreported: ['github', 'The agent GitHub CLI did not return {repository}.'],

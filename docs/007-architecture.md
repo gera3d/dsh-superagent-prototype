@@ -292,6 +292,14 @@ Some generic modules still refer directly to GitHub or Feishu:
 
 | Path | Responsibility |
 | --- | --- |
+| `src/app/feature-delivery.ts` | Durable delivery aggregate, scoped confirmation, transactional handoffs, lease fencing, backfill and acceptance invariants |
+| `src/app/delivery-runtime.ts` | Runtime-owned automatic tracking and handoffs, canonical projection, advice currency and bounded preparation recovery |
+| `src/app/delivery-capabilities.ts` | Configured-model independent exact-diff review, real correction notes and current-action recommendations |
+| `src/app/delivery-publication.ts` | Trusted whole-release scope bridge to existing protected publication; native acceptance remains separately evidenced |
+| `src/app/delivery-intake.ts` | Strict explicit intake schema with per-repository heads, bases and requirements |
+| `src/app/delivery-evidence.ts` | Audited local-operator external evidence recording and exact-bound acceptance re-evaluation |
+| `src/client/delivery-card.tsx` | Shared current delivery recommendation, typed confirmation and inspectable evidence/history |
+| `src/client/worker-report-fallback.tsx` | Provenance-labelled recorded report rendering after an actual blank completed final reply |
 | `src/index.ts` | The main plugin entry: reads the machine settings, starts the Runtime, and gives it the restart that a save of a Source's account uses |
 | `src/deployment.ts` | The plugin `Config` and `Machine`; `resolveDeployment` and `resolveFeishuBot` read the repository and the accounts from the Source settings, each CLI run as Executor shells run it; `SETUP_FIELDS` lists the Source fields setup reads. The code names no person, account or organization |
 | `src/setup.ts` | Setup problems: `SetupError`, with a code, the place that fixes it and the English text the log, the main Session and the panel share |
@@ -449,6 +457,16 @@ Some generic modules still refer directly to GitHub or Feishu:
 
 | Test | Covers |
 | --- | --- |
+| `tests/feature-delivery.spec.ts` | Durable transitions, CAS concurrency, restart/lease cancellation, scoped approvals, finite retries, backfill and acceptance |
+| `tests/delivery-capabilities.spec.ts` | Actual review and correction adapters against bounded transport/model fixtures, exact base/diff fences and note idempotency |
+| `tests/delivery-publication.spec.ts` | Actual store confirmation provenance through the protected publication bridge and rolled-back acceptance |
+| `tests/delivery-publication-scope.spec.ts` | Trusted manifest target/all-ref scope, digest fences, stale secondary refs and safe rollback |
+| `tests/delivery-provider.spec.ts` | Independent provider projections, durable source-empty advice currency, helper/staging fences and preserved genuine questions |
+| `tests/delivery-runtime.spec.ts` | Shared ended-worker projection, nonauthoritative advisory failures, preparation recovery, cancellation and advice currency |
+| `tests/delivery-evidence.spec.ts` | Trusted operator evidence, exact request replay, wrong scope/requirements/revision rejection and acceptance audit |
+| `tests/delivery-card.spec.tsx` | Canonical delivery recommendation and one typed confirmation, stale recommendation and scope details |
+| `tests/delivery-confirm-schema.spec.ts` | Strict typed confirmation body rejects expanded authority and arbitrary commands |
+| `tests/worker-report-fallback.spec.tsx` | Real structured report/ack/blank-final event shapes and provenance rendering, preserving nonempty replies |
 | `tests/core-engine.spec.ts` | Domain rules on in-memory repositories: receiving, Eval, fan-out, resume and stop, interrupted Assignments, the pause, Policy changes, reports and outcomes, attaching, replies, failed deliveries and dismissed problems |
 | `tests/client-guard.spec.ts` | Guards the client runtime import graph against Node built-ins and server-only modules |
 | `tests/character.spec.ts`, `tests/characters.spec.ts`, `tests/characters-panel.spec.tsx` | Autopilot character profile definitions, evaluator behaviour, and Characters settings panel |

@@ -17,6 +17,9 @@ import { sourceSkills } from './context.ts'
 import { LifecycleRequest, enrichLifecycle, lifecycleAction, type LifecycleCommands } from './lifecycle-decisions.ts'
 import type { LifecyclePublication } from './lifecycle-publication.ts'
 import { PublicationError } from './publication.ts'
+import { DeliveryConflict, deliveryFingerprint } from './feature-delivery.ts'
+import { DeliveryIntakeRequest } from './delivery-intake.ts'
+import { FeatureDeliveryRuntime, deliveryDecision, reconcileInboxCurrency } from './delivery-runtime.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
 import { PromptConflict, SKILL_NAME, SKILL_PREFIX, TEAM_SECTIONS, builtInBase, builtInParts, defaultPrompts, savePrompts, type Prompts }
   from './prompts.ts'
@@ -44,6 +47,7 @@ export interface HttpHost {
   readonly store: Store
   readonly commands?: LifecycleCommands
   readonly publication?: LifecyclePublication
+  readonly deliveries?: FeatureDeliveryRuntime
   /** Feishu message links resolved since startup, used by search to match AppLink URLs. */
   readonly sourceLinks: Pick<TextCache, 'entries'>
   readonly sources: SourceRegistry
@@ -102,6 +106,7 @@ function failure(error: unknown): [number, Record<string, unknown>] {
     return [400, { error: `Invalid settings: ${issues.map(issue => issue.path).join(', ')}`, issues }]
   }
   if (error instanceof SetupError) return [400, { error: error.message, setup: error.problem }]
+  if (error instanceof DeliveryConflict) return [409, { error: error.message }]
   if (error instanceof RouteError || error instanceof InboxError || error instanceof PublicationError) return [error.status, { error: error.message }]
   if (error instanceof UserError) return [error.missing ? 404 : 400, { error: error.message, code: error.code, values: error.values }]
   if (error instanceof SettingsConflict || error instanceof PromptConflict) return [409, { error: error.message }]
@@ -189,6 +194,7 @@ const CharacterEvaluationRequestSchema = DecisionEvaluation.extend({
 export const DecisionStageRequest = z.object({ choiceId: z.string().min(1).max(200), attemptId: z.string().uuid(), draftText: z.string().min(1).max(120000) }).strict()
 export const DecisionSubmissionRequest = z.object({ attemptId: z.string().uuid(), submissionId: z.string().min(1).max(300), retryOf: z.string().min(1).max(300).optional() }).strict()
 export const DecisionDiscardRequest = z.object({ attemptId: z.string().uuid() }).strict()
+export const DeliveryConfirmRequest = z.object({ revision: z.number().int().positive(), actionId: z.string().min(1).max(300) }).strict()
 export const DecisionRestartRequest = z.object({ sessionId: z.string().min(1).max(300) }).strict()
 export const DecisionEvaluationSchema = z.object({ recommendedValue: z.string(), confidence: z.number().min(0).max(1), rationale: z.string().max(4000),
   distribution: z.array(z.object({ id: z.string(), probability: z.number().min(0).max(1) })).max(12), provider: z.string().max(300), latencyMs: z.number().nonnegative() })
@@ -219,6 +225,7 @@ export const DecisionInboxItem = z.object({
 })
 
 export function isSessionEnded(runtime: HttpHost, item: PendingDecisionItem): boolean {
+  if (item.actionMode === 'feature_delivery' || (!item.ticketId && item.id.startsWith('chat-'))) return false
   const sessionId = item.sessionId
   if (sessionId) {
     const ticketId = ticketOfSession(sessionId)
@@ -283,6 +290,46 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
     'POST decisions/canonical/publish': async ({ body }) => canonicalOperation(ctx, inbox(), 'publish', await body()),
     'POST decisions/canonical/score': async ({ body }) => canonicalOperation(ctx, inbox(), 'score', await body()),
     'POST decisions/canonical/fail': async ({ body }) => canonicalOperation(ctx, inbox(), 'fail', await body()),
+    'GET deliveries': () => ({ items: runtime.deliveries?.store.list() ?? [] }),
+    'POST deliveries': async ({ body, localApproval }) => {
+      if (!localApproval) throw new PublicationError(403, 'Explicit local operator intake required')
+      if (!runtime.deliveries) throw new PublicationError(409, 'Delivery coordinator is not configured')
+      const input = DeliveryIntakeRequest.parse(await body())
+      if (input.workers.some(id => !store.tickets.get(id) || store.tickets.get(id)?.ended?.by === 'human')) throw new PublicationError(409, 'Intake workers must exist and retain their original mandate')
+      const delivery = runtime.deliveries.store.create({ ...input, authorities: ['local-operator'] })
+      void runtime.deliveries.request().catch(error => ctx.logger.warn('Delivery intake: %s', String(error)))
+      return { delivery, item: deliveryDecision(delivery) }
+    },
+    'POST deliveries/:id/bind': async ({ params, body, localApproval }) => {
+      if (!localApproval) throw new PublicationError(403, 'Explicit local operator scope binding required')
+      if (!runtime.deliveries) throw new PublicationError(409, 'Delivery coordinator is not configured')
+      const { revision, intake } = z.object({ revision: z.number().int().positive(), intake: DeliveryIntakeRequest }).strict().parse(await body())
+      if (intake.id !== params.id || intake.workers.some(id => !store.tickets.get(id) || store.tickets.get(id)?.ended?.by === 'human')) throw new PublicationError(409, 'Scope binding must retain the original authorized workers')
+      const input = { ...intake, authorities: ['local-operator'] }
+      const delivery = runtime.deliveries.store.bindScope(params.id, revision, input, { actor: 'local-operator', source: 'local_operator',
+        reference: `orchestrator-http:bind:${params.id}:${revision}`, scope: deliveryFingerprint(input) })
+      void runtime.deliveries.request().catch(error => ctx.logger.warn('Delivery scope binding: %s', String(error)))
+      return { delivery, item: deliveryDecision(delivery) }
+    },
+    'POST deliveries/:id/recheck': async ({ params, body, localApproval }) => {
+      if (!localApproval) throw new PublicationError(403, 'Explicit local operator recheck required')
+      if (!runtime.deliveries) throw new PublicationError(409, 'Delivery coordinator is not configured')
+      const { revision } = z.object({ revision: z.number().int().positive() }).strict().parse(await body())
+      const delivery = runtime.deliveries.recheck(params.id, revision)
+      void runtime.deliveries.request().catch(error => ctx.logger.warn('Delivery preparation recheck: %s', String(error)))
+      return { delivery, item: deliveryDecision(delivery) }
+    },
+    'POST deliveries/:id/confirm': async ({ params, body, localApproval }) => {
+      if (!localApproval) throw new PublicationError(403, 'Explicit local operator confirmation required')
+      if (!runtime.deliveries) throw new PublicationError(409, 'Delivery coordinator is not configured')
+      const request = DeliveryConfirmRequest.parse(await body())
+      const current = runtime.deliveries.store.get(params.id)
+      if (!current?.nextAction) throw new PublicationError(409, 'No currently executable delivery action')
+      const delivery = runtime.deliveries.store.confirm(params.id, request, { actor: 'local-operator', source: 'local_operator',
+        reference: `orchestrator-http:${params.id}:${request.revision}:${request.actionId}`, scope: current.nextAction.fingerprint })
+      void runtime.deliveries.request().catch(error => ctx.logger.warn('Delivery handoff: %s', String(error)))
+      return { delivery, item: deliveryDecision(delivery) }
+    },
     'GET decisions/inbox': async () => {
       refreshTickets()
       await runtime.publication?.refresh?.()
@@ -290,7 +337,8 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
         const current = item.lifecycle && item.ticketId ? store.tickets.get(item.ticketId) : undefined
         return !current || !runtime.executor.running?.(current)
       })
-      return { items: await enrichLifecycle(runtime.publication?.project?.(items) ?? items, runtime.commands, runtime.configured() ? runtime.deployment.repository : undefined, runtime.publication) }
+      const projected = runtime.publication?.project?.(items) ?? items
+      return { items: await enrichLifecycle(runtime.deliveries?.project(projected) ?? projected, runtime.commands, runtime.configured() ? runtime.deployment.repository : undefined, runtime.publication) }
     },
     'POST decisions/:id/lifecycle': async ({ params, body, localApproval }) => {
       const { action, approval } = LifecycleRequest.parse(await body())
@@ -437,7 +485,10 @@ export function registerHttp(ctx: Context, runtime: HttpHost): () => void {
       if (!sameOrigin(req, ctx.webServer.port)) { json(res, 403, { error: 'Same-origin management request required' }); return }
       try {
         await runtime.ready
-        if (url.pathname.includes("/decisions/")) await capture.ready
+        if (url.pathname.includes('/decisions/')) {
+          await capture.ready
+          if (runtime.deliveries) reconcileInboxCurrency(inbox(), runtime.deliveries.store, runtime.publication)
+        }
         const route = match(table, req.method ?? 'GET', url.pathname.slice('/orchestrator/api/'.length).split('/'))
         if (!route) throw new RouteError(404, 'Unknown operation')
         const query = Object.fromEntries(url.searchParams)
@@ -445,7 +496,14 @@ export function registerHttp(ctx: Context, runtime: HttpHost): () => void {
         // This is a trusted-local-operator boundary, not authentication against hostile processes running as the same OS user.
         const localApproval = req.headers.origin === `http://${req.headers.host}` && req.headers['sec-fetch-site'] === 'same-origin'
           && ['cors', 'same-origin'].includes(String(req.headers['sec-fetch-mode'])) && req.headers['sec-fetch-dest'] === 'empty'
-        json(res, 200, await route.run({ params: route.params as never, query, localApproval, body: maxBytes => readBody(req, maxBytes) }))
+        let result = await route.run({ params: route.params as never, query, localApproval, body: maxBytes => readBody(req, maxBytes) })
+        if (url.pathname.includes('/decisions/') && runtime.deliveries) {
+          reconcileInboxCurrency(inbox(), runtime.deliveries.store, runtime.publication)
+          if (result && typeof result === 'object' && 'item' in result && result.item && typeof result.item === 'object' && 'id' in result.item && typeof result.item.id === 'string') {
+            result = { ...result, item: inbox().get(result.item.id) ?? result.item }
+          }
+        }
+        json(res, 200, result)
       } catch (error) { json(res, ...failure(error)) }
     } })]
   return () => { capture.dispose(); for (const dispose of disposers) dispose() }

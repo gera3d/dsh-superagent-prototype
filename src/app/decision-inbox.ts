@@ -254,6 +254,7 @@ export class DecisionInbox {
       }
       return existing
     }
+    if (item.actionMode === 'feature_delivery' || item.delivery || item.id.startsWith('delivery-')) throw new InboxError(400, 'Delivery decisions are server-owned projections')
     if (item.id.startsWith('life-') && item.actionMode !== 'ticket_lifecycle') throw new InboxError(400, 'Lifecycle decisions are server-owned')
     const saved = { ...item, actionMode: item.lifecycle ? 'ticket_lifecycle' as const : 'stage_response' as const }
     this.save(saved)
@@ -415,10 +416,11 @@ export class DecisionInbox {
     const active = new Set(items.map(item => item.id))
     const openSet = openTickets ? new Set(openTickets.filter(t => !t.ended).map(t => t.id)) : undefined
     for (const item of this.list()) {
+      if (item.actionMode === 'feature_delivery') continue // Durable aggregate, not worker-session lifetime.
       if (item.status === 'pending') {
         if (item.ticketId && !active.has(item.id)) {
           this.invalidate(item, 'Ticket no longer needs this input, or its question changed.')
-        } else if (item.sessionId?.startsWith('worker-')) {
+        } else if (!item.id.startsWith('chat-') && item.sessionId?.startsWith('worker-')) {
           const workerTicketId = item.sessionId.slice(7)
           if (openSet ? !openSet.has(workerTicketId) : (items.length > 0 && !items.some(t => t.ticketId === workerTicketId || t.sessionId === item.sessionId))) {
             this.invalidate(item, 'The originating session has ended. This decision can no longer be answered.')

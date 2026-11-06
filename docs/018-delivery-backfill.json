@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "scope": "Read-only sandbox issues 159 and 160; historical evidence only; no acceptance or publication authority",
+  "qualification": {
+    "recordedAt": "2026-11-06T10:10:54.359956+00:00",
+    "records": [
+      { "name": "RELEASE-STATUS.md", "sha256": "fa4d9efe4d25a8072768998fcbddbf1854756b1ac7acd529ca38fa3c411d7fbe" },
+      { "name": "run.json", "sha256": "d25766be0d473a18f498aa0dece8e63f0ed1efb68fe30e3e754f0e7fde7824f8" },
+      { "name": "live-smoke-release/independent-rollback-verification.json", "sha256": "88ce09167a051dc63e16c627ece4f6ae90477559665c9e307b2b27713722796c" },
+      { "name": "live-smoke-v2-release/independent-rollback-verification.json", "sha256": "0b2455f61d0934d06892226eebcf451c595c3943e6a22df7464fb30f370d63b7" }
+    ],
+    "backendInstalledMerge": "f388ad81988eaee2037a88b65e6554b0ebee4839",
+    "pluginsInstalledMerge": "2721b197ef44d0b682303733e575fd13a015d261",
+    "backendPassed": 1873,
+    "backendKnownFailures": 10,
+    "backendSkipped": 2,
+    "backendUnhandledErrors": 0,
+    "nextStepsNodePassed": 16,
+    "nextStepsUiPassed": 177,
+    "currentLockStatus": "Operator reports Mac now unlocked; historical lock is not a current blocker",
+    "currentGitHubQuotaStatus": "Not inferred from historical rate-limit failure",
+    "requirements": { "native-browser-one-click": "pending", "ordinary-conversation-native-pilot": "pending" }
+  },
+  "publicationAttempts": [
+    {
+      "sourceIssue": 159,
+      "reference": "https://github.com/gera3d/superagent-sandbox/pull/164",
+      "headSha": "d8c75bd148e6182d135117d15fa4c3e5f9c129c7",
+      "mergeSha": "eab2c1545ad8d865a86fbf26f033848072f0eaa4",
+      "publicationId": "ba54ef02-c8ae-4340-9b57-d78a6a926995",
+      "phases": { "merge": "passed", "apply": "passed", "build": "passed", "restart": "passed", "verification": "failed", "rollback": "passed" },
+      "result": "Not accepted; test verification failed; protected rollback restored original bundle and removed bounded documentation artifact"
+    },
+    {
+      "sourceIssue": 159,
+      "reference": "https://github.com/gera3d/superagent-sandbox/pull/166",
+      "headSha": "fccfcf3bb8a4864fd35df705bd65d9640457e0ec",
+      "mergeSha": "798922682c3cf08035fa3185c9127936677b62d6",
+      "publicationId": "abe937dc-7690-41a6-b385-8ce1640d8cb5",
+      "phases": { "merge": "passed", "apply": "passed", "build": "passed", "restart": "passed", "verification": "failed", "rollback": "passed" },
+      "result": "Not accepted; bounded verification failed during historical GitHub API rate exhaustion; protected rollback independently confirmed"
+    }
+  ],
+  "records": [
+    {
+      "sourceIssue": 159,
+      "id": "sandbox-159",
+      "title": "Approve-and-publish from the conversation",
+      "owner": "gera3d",
+      "bindings": {
+        "repository": "gera3d/superagent-sandbox",
+        "sourceIssue": 159,
+        "baseSha": "15c7dc72e0f7f2d54383e3e3bbc86d190cf49484",
+        "headSha": "f73f8228e46ecd768ac7f910ca16f7dc332fdaf5",
+        "refs": [
+          { "repository": "gera3d/dsh-superagent-prototype", "pr": 25, "headSha": "5888087bb17d59eef8959e0a82382a879dcf0b5f" },
+          { "repository": "gera3d/dsh-superagent-prototype", "pr": 26, "headSha": "4461d3ff3e473d42feff6dff8fc376438a737a79" },
+          { "repository": "gera3d/dsh-plugins", "pr": 6, "headSha": "562b0b792f634ac2d36cb9b14ca2cb4fcee3dce5" }
+        ]
+      },
+      "requirements": ["native-browser-one-click"],
+      "workers": [{ "id": "3b4864f597572937fdf1c6b7c019c1d6", "ended": true, "merged": true }],
+      "evidence": [
+        {
+          "id": "sandbox-162-implementation",
+          "kind": "implementation",
+          "bindings": {
+            "repository": "gera3d/superagent-sandbox", "sourceIssue": 159,
+            "baseSha": "15c7dc72e0f7f2d54383e3e3bbc86d190cf49484", "headSha": "f73f8228e46ecd768ac7f910ca16f7dc332fdaf5",
+            "refs": [
+              { "repository": "gera3d/dsh-superagent-prototype", "pr": 25, "headSha": "5888087bb17d59eef8959e0a82382a879dcf0b5f" },
+              { "repository": "gera3d/dsh-superagent-prototype", "pr": 26, "headSha": "4461d3ff3e473d42feff6dff8fc376438a737a79" },
+              { "repository": "gera3d/dsh-plugins", "pr": 6, "headSha": "562b0b792f634ac2d36cb9b14ca2cb4fcee3dce5" }
+            ]
+          },
+          "recordedAt": "2026-11-06T09:34:23Z",
+          "reference": "https://github.com/gera3d/superagent-sandbox/blob/f73f8228e46ecd768ac7f910ca16f7dc332fdaf5/reports/approve-publish-159/README.md",
+          "outcome": "passed"
+        },
+        {
+          "id": "sandbox-164-publication-failed",
+          "kind": "publication",
+          "bindings": {
+            "repository": "gera3d/superagent-sandbox", "sourceIssue": 159,
+            "baseSha": "15c7dc72e0f7f2d54383e3e3bbc86d190cf49484", "headSha": "f73f8228e46ecd768ac7f910ca16f7dc332fdaf5",
+            "refs": [
+              { "repository": "gera3d/dsh-superagent-prototype", "pr": 25, "headSha": "5888087bb17d59eef8959e0a82382a879dcf0b5f" },
+              { "repository": "gera3d/dsh-superagent-prototype", "pr": 26, "headSha": "4461d3ff3e473d42feff6dff8fc376438a737a79" },
+              { "repository": "gera3d/dsh-plugins", "pr": 6, "headSha": "562b0b792f634ac2d36cb9b14ca2cb4fcee3dce5" }
+            ]
+          },
+          "recordedAt": "2026-11-06T10:10:54.359956+00:00",
+          "reference": "https://github.com/gera3d/superagent-sandbox/pull/164",
+          "outcome": "failed"
+        },
+        {
+          "id": "sandbox-164-rollback",
+          "kind": "rollback",
+          "bindings": {
+            "repository": "gera3d/superagent-sandbox", "sourceIssue": 159,
+            "baseSha": "15c7dc72e0f7f2d54383e3e3bbc86d190cf49484", "headSha": "f73f8228e46ecd768ac7f910ca16f7dc332fdaf5",
+            "refs": [
+              { "repository": "gera3d/dsh-superagent-prototype", "pr": 25, "headSha": "5888087bb17d59eef8959e0a82382a879dcf0b5f" },
+              { "repository": "gera3d/dsh-superagent-prototype", "pr": 26, "headSha": "4461d3ff3e473d42feff6dff8fc376438a737a79" },
+              { "repository": "gera3d/dsh-plugins", "pr": 6, "headSha": "562b0b792f634ac2d36cb9b14ca2cb4fcee3dce5" }
+            ]
+          },
+          "recordedAt": "2026-11-06T10:10:54.359956+00:00",
+          "reference": "https://github.com/gera3d/superagent-sandbox/pull/164",
+          "outcome": "passed"
+        },
+        {
+          "id": "sandbox-166-publication-failed",
+          "kind": "publication",
+          "bindings": {
+            "repository": "gera3d/superagent-sandbox", "sourceIssue": 159,
+            "baseSha": "15c7dc72e0f7f2d54383e3e3bbc86d190cf49484", "headSha": "f73f8228e46ecd768ac7f910ca16f7dc332fdaf5",
+            "refs": [
+              { "repository": "gera3d/dsh-superagent-prototype", "pr": 25, "headSha": "5888087bb17d59eef8959e0a82382a879dcf0b5f" },
+              { "repository": "gera3d/dsh-superagent-prototype", "pr": 26, "headSha": "4461d3ff3e473d42feff6dff8fc376438a737a79" },
+              { "repository": "gera3d/dsh-plugins", "pr": 6, "headSha": "562b0b792f634ac2d36cb9b14ca2cb4fcee3dce5" }
+            ]
+          },
+          "recordedAt": "2026-11-06T10:10:54.359956+00:00",
+          "reference": "https://github.com/gera3d/superagent-sandbox/pull/166",
+          "outcome": "failed"
+        },
+        {
+          "id": "sandbox-166-rollback",
+          "kind": "rollback",
+          "bindings": {
+            "repository": "gera3d/superagent-sandbox", "sourceIssue": 159,
+            "baseSha": "15c7dc72e0f7f2d54383e3e3bbc86d190cf49484", "headSha": "f73f8228e46ecd768ac7f910ca16f7dc332fdaf5",
+            "refs": [
+              { "repository": "gera3d/dsh-superagent-prototype", "pr": 25, "headSha": "5888087bb17d59eef8959e0a82382a879dcf0b5f" },
+              { "repository": "gera3d/dsh-superagent-prototype", "pr": 26, "headSha": "4461d3ff3e473d42feff6dff8fc376438a737a79" },
+              { "repository": "gera3d/dsh-plugins", "pr": 6, "headSha": "562b0b792f634ac2d36cb9b14ca2cb4fcee3dce5" }
+            ]
+          },
+          "recordedAt": "2026-11-06T10:10:54.359956+00:00",
+          "reference": "https://github.com/gera3d/superagent-sandbox/pull/166",
+          "outcome": "passed"
+        }
+      ]
+    },
+    {
+      "sourceIssue": 160,
+      "id": "sandbox-160",
+      "title": "Bounded opt-in conversation-local pilot",
+      "owner": "gera3d",
+      "bindings": {
+        "repository": "gera3d/superagent-sandbox", "sourceIssue": 160,
+        "baseSha": "15c7dc72e0f7f2d54383e3e3bbc86d190cf49484", "headSha": "dd669e476872b89cdd146f02a3e939480a2ac565",
+        "refs": [
+          { "repository": "gera3d/dsh-superagent-prototype", "pr": 24, "headSha": "82a5828841f66686506756eecc0379b090e3b592" },
+          { "repository": "gera3d/dsh-plugins", "pr": 5, "headSha": "535f9dfe8f5d9745877caeea61a49a478b14f91b" }
+        ]
+      },
+      "requirements": ["ordinary-conversation-native-pilot"],
+      "workers": [{ "id": "a8ecebad8bea17f9dc48a704c5f5ed7e", "ended": true, "merged": true }],
+      "evidence": [
+        {
+          "id": "sandbox-161-implementation",
+          "kind": "implementation",
+          "bindings": {
+            "repository": "gera3d/superagent-sandbox", "sourceIssue": 160,
+            "baseSha": "15c7dc72e0f7f2d54383e3e3bbc86d190cf49484", "headSha": "dd669e476872b89cdd146f02a3e939480a2ac565",
+            "refs": [
+              { "repository": "gera3d/dsh-superagent-prototype", "pr": 24, "headSha": "82a5828841f66686506756eecc0379b090e3b592" },
+              { "repository": "gera3d/dsh-plugins", "pr": 5, "headSha": "535f9dfe8f5d9745877caeea61a49a478b14f91b" }
+            ]
+          },
+          "recordedAt": "2026-11-06T09:04:28Z",
+          "reference": "https://github.com/gera3d/superagent-sandbox/blob/dd669e476872b89cdd146f02a3e939480a2ac565/reports/bounded-pilot-160/README.md",
+          "outcome": "passed"
+        }
+      ]
+    }
+  ]
+}

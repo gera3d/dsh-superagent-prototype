@@ -5,6 +5,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import type { PendingDecisionItem } from '../src/core/decision.ts'
 const state = vi.hoisted(() => ({ items: [] as PendingDecisionItem[], call: vi.fn() }))
 vi.mock('../src/client/api.ts', () => ({ caller: () => state.call, usePoll: () => ({ data: { items: state.items } }) }))
+import { LifecycleCard } from '../src/client/lifecycle-card.tsx'
 import { PublicationDock } from '../src/client/publication-cards.tsx'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -36,5 +37,31 @@ it('keeps server-marked recovery visible after stale original lifecycle but not 
   await render()
   expect(container.querySelectorAll('.dt-lifecycle-card')).toHaveLength(1)
   expect(container.textContent).toContain('Publication evidence unavailable')
+})
+it('renders settled rolled-back attempts as history without irrelevant disabled approval controls, even with no choices', async () => {
+  const value = { ...item(), choices: [], status: 'stale' as const, lifecycle: { ...item().lifecycle!, recovery: true, publication: {
+    id: 'settled', status: 'rolled_back', repository: 'org/repo', prNumber: 166, headSha: 'head', patchSha256: 'digest', audit: [],
+    outcomes: [{ stage: 'verify', status: 'failed' }, { stage: 'rollback', status: 'succeeded' }],
+    coordination: { status: 'completed' },
+  } } } as unknown as PendingDecisionItem
+  root = createRoot(container)
+  await act(async () => root!.render(<LifecycleCard item={value} onAction={state.call} />))
+  expect(container.textContent).toContain('Publication history · rolled back')
+  expect(container.textContent).toContain('Rollback is not feature acceptance')
+  expect(container.textContent).not.toContain('Approve + publish')
+  expect(container.textContent).not.toContain('Recovery only:')
+  expect(container.querySelectorAll('button')).toHaveLength(0)
+  expect(state.call).not.toHaveBeenCalled()
+})
+it('renders the same canonical delivery for every bound worker, never a composer choice', async () => {
+  state.items = [{ ...item('other-worker'), id: 'delivery-shared', lifecycle: undefined, actionMode: 'feature_delivery', choices: [], delivery: {
+    id: 'shared', title: 'Shared feature', revision: 2, generation: 0, state: 'running', stage: 'review', owner: 'reviewer',
+    bindings: { repository: 'org/repo', sourceIssue: 159, baseSha: 'base', headSha: 'head' }, requirements: [],
+    attempts: { review: 0, fix: 0, maxReview: 2, maxFix: 2 }, workers: ['other-worker', 'worker-example'], evidence: [], audit: [], authorities: ['owner'],
+  } }]
+  await render()
+  expect(container.querySelectorAll('.dt-delivery-card')).toHaveLength(1)
+  expect(container.querySelector('#delivery-shared')).not.toBeNull()
+  expect(state.call).not.toHaveBeenCalled()
 })
 it('does not render a removed conversation', async () => { state.items = [item()]; await render('worker-example', true); expect(container.textContent).toBe('') })

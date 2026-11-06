@@ -34,6 +34,7 @@ export function loadLifecyclePublication(stateDir: string): LifecyclePublication
       for (const ticketId of ids) await owner.snapshot(ticketId)
     },
     pinsFor: (repository, prNumber) => runner()?.pinsFor(repository, prNumber),
+    scopeFor: (repository, prNumber) => runner()?.scopeFor(repository, prNumber),
     canContinue: (item, p) => p.ticketId === item.ticketId && p.prNumber === item.lifecycle?.prNumber
       && p.conversationId === publicationConversation(item) && !!bindingFor(p),
     project: items => {

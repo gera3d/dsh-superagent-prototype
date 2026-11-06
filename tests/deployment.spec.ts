@@ -99,3 +99,26 @@ describe('setup', () => {
     await refuses('feishuCliFailed', { output: expect.stringContaining('not configured') })
   })
 })
+
+describe('GitHub quota exhaustion', () => {
+  it.each(['gh: API rate limit exceeded for user ID 512583 (HTTP 403)',
+    'gh: You have exceeded a secondary rate limit. Please wait before retrying (HTTP 429)'])('reports quota separately from account authentication: %s', async output => {
+    const quotaProbe: Probe = async () => { throw new Error(output) }
+    await expect(resolveDeployment(machine(), { repository: 'acme/widgets', cli: 'gh' }, quotaProbe, path))
+      .rejects.toMatchObject({ code: 'githubRateLimited', place: 'github', values: { output } })
+  })
+  it('recognizes quota exhaustion during repository access after a valid identity', async () => {
+    const output = 'gh: API rate limit exceeded for user ID 7 (HTTP 403)'
+    const quotaProbe: Probe = async argv => {
+      if (argv.at(-1) === 'user') return JSON.stringify({ login: 'Agent-Bot', id: 7 })
+      throw new Error(output)
+    }
+    await expect(resolveDeployment(machine(), { repository: 'acme/widgets', cli: 'gh' }, quotaProbe, path))
+      .rejects.toMatchObject({ code: 'githubRateLimited', place: 'github', values: { output } })
+  })
+  it.each(['HTTP 401: Bad credentials', 'HTTP 403: Resource not accessible by integration'])('does not classify ordinary authentication or permission errors as quota: %s', async output => {
+    const failedProbe: Probe = async () => { throw new Error(output) }
+    await expect(resolveDeployment(machine(), { repository: 'acme/widgets', cli: 'gh' }, failedProbe, path))
+      .rejects.toMatchObject({ code: 'agentCliSignedOut', place: 'github', values: { output } })
+  })
+})

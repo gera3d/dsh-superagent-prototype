@@ -4,6 +4,7 @@ import type { PendingDecisionItem } from '../core/decision.ts'
 import type { LifecycleAction, LifecycleResult } from '../app/lifecycle-decisions.ts'
 import type { PublicationSnapshot } from '../app/publication.ts'
 import { Button } from './controls.tsx'
+import { publicationCompleted } from '../core/publication-queue.ts'
 
 type Approval = { publicationId: string; requestId: string }
 export function LifecycleCard({ item, onAction, onTicket }: {
@@ -24,13 +25,14 @@ export function LifecycleCard({ item, onAction, onTicket }: {
     || Date.parse(result.publication.updatedAt) > Date.parse(projectedPublication.updatedAt)
     || result.publication.updatedAt === projectedPublication.updatedAt && response?.item === item)
   const publication = useResultPublication ? result!.publication : projectedPublication
+  const settled = publicationCompleted({ ...item, lifecycle: item.lifecycle && { ...item.lifecycle, publication } })
   const publicationStatus = publication?.status === 'published' && !publication.outcomes.some(outcome => outcome.stage === 'verify' && outcome.status === 'succeeded')
     ? 'verification unconfirmed' : publication?.status.replaceAll('_', ' ')
   const issueUrl = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/issues\/[1-9]\d*$/.test(item.lifecycle?.issueUrl ?? '') ? item.lifecycle!.issueUrl : undefined
   const recovery = !stuck && item.lifecycle?.recovery === true
   const continuation = recovery && item.lifecycle?.continuation === true && !!publication
-  const available = (continuation || !recovery && item.status === 'pending' && !item.invalidation) && result?.execution !== 'retried'
-  const rollbackAvailable = available || recovery
+  const available = !settled && (continuation || !recovery && item.status === 'pending' && !item.invalidation) && result?.execution !== 'retried'
+  const rollbackAvailable = !settled && (available || recovery)
   const coordinating = publication?.coordination?.status === 'queued' || publication?.coordination?.status === 'running'
   const controlsBusy = busy || coordinating
   const choices = useResultPublication ? result?.choices ?? item.choices : item.choices
@@ -53,25 +55,26 @@ export function LifecycleCard({ item, onAction, onTicket }: {
     } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)) }
     finally { acting.current = false; setBusy(false) }
   }
-  return <section aria-label={`${stuck ? 'Stuck' : 'Done'} ticket: ${item.ticketTitle}`} className="dt-lifecycle-card" style={{
+  return <section aria-label={`${settled ? 'Publication history' : stuck ? 'Stuck' : 'Done'} ticket: ${item.ticketTitle}`} className="dt-lifecycle-card" style={{
     background: '#161b22', border: '1px solid #30363d', borderRadius: 8, padding: '18px 20px', color: '#e6edf3',
   }}>
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-      <div><small style={{ color: stuck ? '#a6adb7' : '#7bc99a', textTransform: 'uppercase', letterSpacing: '.08em' }}>{stuck ? 'Stuck · needs a nudge' : `Done · ${publication ? `publication ${publicationStatus}` : 'publication not reviewed'}`}</small>
+      <div><small style={{ color: stuck ? '#a6adb7' : '#7bc99a', textTransform: 'uppercase', letterSpacing: '.08em' }}>{settled ? `Publication history · ${publicationStatus}` : stuck ? 'Stuck · needs a nudge' : `Done · ${publication ? `publication ${publicationStatus}` : 'publication not reviewed'}`}</small>
         <h3 style={{ margin: '6px 0 8px', fontSize: 16 }}>{item.ticketTitle}</h3></div>
       {onTicket && <Button variant="ghost" size="sm" onClick={onTicket}>View ticket</Button>}
     </div>
     <p style={{ margin: '4px 0 12px', color: '#a6adb7', lineHeight: 1.5, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{item.context.slice(0, 500)}</p>
     {!stuck && <>
       <PublicationEvidence publication={publication} />
-      {publication && <p role="status" style={{ fontSize: 12 }}>{continuation ? 'Server-authorized continuation: inspect this pinned publication and explicitly approve only the actions offered by the server. The original decision remains closed; no chat actions.' : recovery ? 'Recovery only: the original decision is closed. Only server-authorized rollback is permitted; no new publication or chat actions.' : coordinating ? `Publication worker ${publication.coordination!.status}. Controls are locked while the explicit request is active.` : available && allowed('publish')
+      {settled && <p role="status">Publication history · {publicationStatus}. This attempt is settled; no approval or rollback is pending. Rollback is not feature acceptance.</p>}
+      {!settled && publication && <p role="status" style={{ fontSize: 12 }}>{continuation ? 'Server-authorized continuation: inspect this pinned publication and explicitly approve only the actions offered by the server. The original decision remains closed; no chat actions.' : recovery ? 'Recovery only: the original decision is closed. Only server-authorized rollback is permitted; no new publication or chat actions.' : coordinating ? `Publication worker ${publication.coordination!.status}. Controls are locked while the explicit request is active.` : available && allowed('publish')
         ? 'Server offers approval for this manifest. Publication gates will be rechecked on your click.'
         : 'Approval is unavailable in the server-projected state. Inspect publication to refresh evidence.'}</p>}
-      {!recovery && <p style={{ fontSize: 12, color: '#a6adb7' }}>Inspect the server-reviewed manifest first. Approval publishes only the pinned changes; rollback is a separate explicit action. No automatic approval or retry.</p>}
+      {!settled && !recovery && <p style={{ fontSize: 12, color: '#a6adb7' }}>Inspect the server-reviewed manifest first. Approval publishes only the pinned changes; rollback is a separate explicit action. No automatic approval or retry.</p>}
     </>}
     {!recovery && item.status !== 'pending' && <p role="status">No longer actionable. Refresh for the current ticket state.</p>}
     {item.invalidation && <p role="status">{recovery ? 'Original decision closed' : 'No longer actionable'}: {item.invalidation.reason}</p>}
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+    {!settled && <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
       {!stuck && <>
         <Button variant="outline" size="sm" disabled={controlsBusy || !available || !offered('prepare_publication')} onClick={() => { void act('prepare_publication') }}>{busy ? 'Checking…' : 'Inspect publication'}</Button>
         <Button variant="primary" size="sm" disabled={controlsBusy || !available || !publication || !allowed('publish')} onClick={() => { void act('publish') }}>Approve + publish</Button>
@@ -81,7 +84,7 @@ export function LifecycleCard({ item, onAction, onTicket }: {
         ? <a key={choice.id} className="dt-btn dt-btn-outline dt-btn-sm" href={issueUrl} target="_blank" rel="noopener noreferrer">Open issue ↗</a>
         : <Button key={choice.id} variant={choice.id === 'retry' || choice.id === 'try_it' ? 'primary' : 'outline'} size="sm" disabled={controlsBusy || !available}
           onClick={() => { void act(choice.id as LifecycleAction) }}>{busy ? 'Checking…' : choice.label}</Button>)}
-    </div>
+    </div>}
     {error && <p role="alert" style={{ marginBottom: 0 }}>{error}</p>}
     {result && <p role="status" style={{ marginBottom: 0, fontSize: 12 }}>{result.message}{result.url && <> <a href={result.url} target="_blank" rel="noopener noreferrer">{linkLabel} ↗</a></>}</p>}
   </section>

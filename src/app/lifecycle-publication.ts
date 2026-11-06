@@ -1,10 +1,12 @@
 /** Server-only bridge from canonical ticket lifecycle records to pinned publication operations. */
+import type { PublicationDeliveryScope } from '../infra/publication-runner.ts'
 import type { PendingDecisionItem, DecisionChoice } from '../core/decision.ts'
 import { PublicationError, type PublicationActInput, type PublicationAuthority, type PublicationPins, type PublicationService, type PublicationSnapshot } from './publication.ts'
 
 export interface LifecyclePublication {
   service: PublicationService
   pinsFor(repository: string, prNumber: number): PublicationPins | undefined
+  scopeFor?(repository: string, prNumber: number): PublicationDeliveryScope | undefined
   project?(items: PendingDecisionItem[]): PendingDecisionItem[]
   enqueue(input: PublicationActInput, authority: PublicationAuthority): Promise<PublicationSnapshot>
   refresh?(): Promise<void>

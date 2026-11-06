@@ -32,6 +32,7 @@ function fixture(listed: string[]) {
     }),
     sessions: { list: { getSnapshot: () => ({ phase: 'ready', byId: Object.fromEntries(listed.map(id => [id, {}])) }) }, refresh: vi.fn(async () => {}) },
     uiWorkspace: { openSession: vi.fn() },
+    uiConversation: { events: { register: vi.fn(() => () => {}) }, views: { register: vi.fn(() => () => {}) } },
     // Omit config form service so Deployment renders read-only.
     get: (name: string) => services.get(name),
   }
@@ -65,15 +66,18 @@ afterEach(() => {
 })
 
 it('registers a localized main panel, sidebar entry and Plugin Manager row page, and no settings section', () => {
-  const { entries, dictionaries, main, nav } = fixture([])
-  expect(inject).toEqual(['slots', 'locale', 'sessions', 'uiWorkspace', 'conversation'])
-  expect(entries.map(entry => entry.options.name)).toEqual(['conversation.input.dock', 'conversation.input.dock', 'conversation.input.dock', 'sidebar.brand.mark', 'sidebar.brand.name', 'main', 'sidebar.panellist', 'plugins.row.config'])
-  expect(entries[0]!.options).toMatchObject({ id: 'dsh-superagent.publications', order: 8 })
-  expect(entries[1]!.options).toMatchObject({ id: 'dsh-superagent.decision-handoff', order: 5 })
-  expect(entries[2]!.options).toMatchObject({ id: 'dsh-superagent.inline-decision', order: 10 })
-  expect(entries[3]!.options).toMatchObject({ name: 'sidebar.brand.mark', priority: -1 })
-  expect(entries[4]!.options).toMatchObject({ name: 'sidebar.brand.name', priority: -1 })
-  expect(entries[7]!.options).toMatchObject({ key: 'dsh-superagent#dsh-superagent', locale: 'dshSuperagent' })
+  const { entries, dictionaries, main, nav, ctx } = fixture([])
+  expect(ctx.uiConversation.events.register).toHaveBeenCalledWith(expect.objectContaining({ kind: 'superagent-worker-report', target: 'superagent-worker-report' }))
+  expect(ctx.uiConversation.views.register).toHaveBeenCalledWith(expect.objectContaining({ target: 'superagent-worker-report' }))
+  expect(inject).toEqual(['slots', 'locale', 'sessions', 'uiWorkspace', 'conversation', 'uiConversation'])
+  expect(entries.map(entry => entry.options.name)).toEqual(['conversation.input.dock', 'conversation.input.dock', 'conversation.input.dock', 'conversation.input.dock', 'sidebar.brand.mark', 'sidebar.brand.name', 'main', 'sidebar.panellist', 'plugins.row.config'])
+  expect(entries[0]!.options).toMatchObject({ id: 'dsh-superagent.worker-report', order: 7 })
+  expect(entries[1]!.options).toMatchObject({ id: 'dsh-superagent.publications', order: 8 })
+  expect(entries[2]!.options).toMatchObject({ id: 'dsh-superagent.decision-handoff', order: 5 })
+  expect(entries[3]!.options).toMatchObject({ id: 'dsh-superagent.inline-decision', order: 10 })
+  expect(entries[4]!.options).toMatchObject({ name: 'sidebar.brand.mark', priority: -1 })
+  expect(entries[5]!.options).toMatchObject({ name: 'sidebar.brand.name', priority: -1 })
+  expect(entries[8]!.options).toMatchObject({ key: 'dsh-superagent#dsh-superagent', locale: 'dshSuperagent' })
   expect(Object.keys(dictionaries)).toEqual(['dshSuperagent'])
   expect(main.options).toMatchObject({ key: 'dsh-superagent', locale: 'dshSuperagent' })
   expect(nav.options).toMatchObject({ id: 'dsh-superagent', order: 10, locale: 'dshSuperagent' })
