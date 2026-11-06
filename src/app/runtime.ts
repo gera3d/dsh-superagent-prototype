@@ -137,6 +137,8 @@ export class Runtime extends Service implements SourceHost {
       const policy = () => settingsPolicy(store.settings(), sources)
       const engine = this.engine = new Engine({ repo: store, scope: sources, policy, assessor, executor,
         outbox, prepareTicket: (ticket, outcome) => executor.prepare(ticket, outcome),
+        stallWaitSeconds: () => store.settings().executor.stallWaitSeconds,
+        workerBusy: ticket => executor.running(ticket),
         // A failed worker report walks the shared hierarchy after the ticket's last escalated route, up to its cap.
         escalation: ticket => escalationStep(store.settings(), 'executor', ticket.escalations?.at(-1)?.to,
           ticket.escalations?.length ?? 0),

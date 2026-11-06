@@ -94,6 +94,7 @@ export const ModelsConfigSchema = z.object({
   hierarchy: z.array(ModelEntrySchema).max(LIMITS.modelHierarchy.max)
     .refine(entries => new Set(entries.map(routeKey)).size === entries.length, 'Duplicate model routes').default([]),
   maxEscalations: z.number().int().min(LIMITS.maxEscalations.min).max(LIMITS.maxEscalations.max).default(2),
+  helper: RoleModelSchema.nullable().default(null),
 }).strict()
 
 export const CharacterSchema = z.object({
@@ -211,6 +212,7 @@ export const ExecutorConfigSchema = z.object({
   prepare: z.string().max(LIMITS.prepareCommand).default(''),
   blockedCommands: z.array(CommandNameSchema).default([]),
   sound: z.boolean().default(false),
+  stallWaitSeconds: z.number().int().min(1).max(86400).default(180),
 }).strict()
 export const SourceInstanceSchema = z.object({ enabled: z.boolean().default(true), config: z.record(z.string(), z.unknown()).default({}) }).strict()
 /** Branding settings: logo file path or URL, optional dark/light variants, and wordmark visibility. */

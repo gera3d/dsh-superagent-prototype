@@ -67,7 +67,9 @@ export interface PendingDecisionItem {
   /** Source event coordinates; choices only stage a draft, never execute work. */
   sourceTurn?: number
   sourceSeq?: number
-  actionMode?: 'stage_response'
+  actionMode?: 'stage_response' | 'ticket_lifecycle'
+  /** Server-projected lifecycle state; never accepted as action authorization. */
+  lifecycle?: { kind: 'stuck' | 'done'; assignmentId: string; prNumber?: number; docsOnly?: boolean; issueNumber?: number; issueUrl?: string }
   staleReason?: string
   draftResponse?: string
   staging?: DecisionStaging

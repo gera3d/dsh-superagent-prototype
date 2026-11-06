@@ -412,7 +412,7 @@ export class DshExecutor implements Executor {
   /** Number of open tickets whose worker holds a worker slot: its turn runs, or its shell jobs or subagents still run after its turn ended. */
   activeCount(): number { return this.host.store.tickets.open().filter(ticket => this.running(ticket)).length }
   /** Whether a ticket's worker holds a worker slot: its turn runs, or its shell jobs or subagents do after its turn ended. */
-  private running(ticket: Ticket): boolean {
+  running(ticket: Ticket): boolean {
     if (!runningAssignment(ticket)) return false
     return this.host.context.agents.get(workerSessionId(ticket.id) as SessionId)?.status === 'running' || this.settling.has(ticket.id)
   }

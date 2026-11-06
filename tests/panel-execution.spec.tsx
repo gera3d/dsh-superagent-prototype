@@ -253,5 +253,5 @@ it('edits the shared model hierarchy: adds a route, marks it starred, sets the e
   expect(server.settings.models).toEqual({ hierarchy: [
     { provider: 'openai-codex', model: 'gpt-6.1-sol', starred: true },
     { provider: 'antigravity', model: 'gemini-3.8-flash', reasoningEffort: 'high', starred: true },
-  ], maxEscalations: 2 })
+  ], maxEscalations: 2, helper: null })
 })

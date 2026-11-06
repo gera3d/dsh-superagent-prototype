@@ -160,7 +160,7 @@ export function mainTools(host: MainToolsHost, agent: Agent): Tool[] {
     routeTool(host),
     tool({
       name: 'orchestrator_ticket_retry',
-      description: 'Start a new assignment on an explicit human request to retry a ticket whose worker reported failed or blocked, or whose input was not delivered; the stalled one ends.',
+      description: 'On an explicit human retry request, replace a blocked/failed assignment, failed input delivery, or idle worker without a PR after fallback or a status-only request. Redeliver the original task for idle recovery.',
       schema: z.object({ ticket_id: z.string() }).strict(),
       execute: async args => routed(host, { reason: 'Started a new assignment', ticketId: host.engine.retryTicket(args.ticket_id).id }),
     }),

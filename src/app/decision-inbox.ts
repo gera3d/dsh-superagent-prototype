@@ -7,11 +7,35 @@ import type { AdvisorDecision, DecisionEvaluationResult, DecisionOptionSet, Deci
 import { normalizeChoices } from '../core/options.ts'
 import { ticketStage, latestReport, type Ticket } from '../core/index.ts'
 import { workerSessionId } from '../executor/dsh.ts'
+import { isStallGuardStuck } from '../core/stall-guard.ts'
 import { parseInlineAlternatives } from '../client/inline-alternatives.ts'
 
 /** Same ticket projection for the regular runtime and independently loaded inbox provider. */
 export function ticketDecisions(tickets: Ticket[]): PendingDecisionItem[] {
-  return tickets.filter(ticket => ticketStage(ticket).stage === 'person').map(ticket => {
+  return tickets.flatMap(ticket => {
+    if (ticket.ended) return []
+    const assignment = ticket.assignments.at(-1)
+    const pr = ticket.follows?.filter(follow => !follow.closed && /^github:[1-9]\d*$/.test(follow.thread))
+    const done = assignment?.report?.state === 'ready' && pr?.length === 1 && !!assignment.idleAt && assignment.idleAt >= assignment.report.at
+      && (!assignment.deliveredAt || assignment.deliveredAt <= assignment.idleAt) && !ticket.attention && !ticket.delivery && !ticket.undelivered.length
+    const stuck = isStallGuardStuck(ticket)
+    if (assignment && (stuck || done)) {
+      const kind = stuck ? 'stuck' : 'done'
+      const prNumber = done ? Number(pr![0]!.thread.slice(7)) : undefined
+      const checkpoint = stuck ? ticket.stallGuard!.stuckAt! : assignment.report!.at
+      const issue = ticket.channels.find(channel => channel.source === 'github' && /^[1-9]\d*$/.test(channel.address.number ?? ''))?.address.number
+      // A later idle episode gets a fresh identity; stale history is never resurrected in place.
+      return [{ id: `life-${ticket.id}-${createHash('sha256').update(`${assignment.id}:${kind}:${checkpoint}:${prNumber ?? ''}:${assignment.idleAt ?? ''}`).digest('hex').slice(0, 16)}`,
+        ticketId: ticket.id, sessionId: workerSessionId(ticket.id), ticketTitle: ticket.title,
+        trigger: stuck ? 'Worker stayed idle after one recovery attempt.' : 'Ready report with a bound pull request.',
+        status: 'pending' as const, urgency: 'low' as const, createdAt: Date.parse(checkpoint),
+        context: stuck ? 'No new progress after recovery. Retry starts a fresh assignment with the original task.' : (assignment.report?.summary ?? 'Work is ready for review.'),
+        question: stuck ? 'This ticket is stuck' : 'Ready to review', actionMode: 'ticket_lifecycle' as const,
+        lifecycle: { kind, assignmentId: assignment.id, ...(prNumber ? { prNumber, docsOnly: false } : {}), ...(issue ? { issueNumber: Number(issue) } : {}) },
+        choices: stuck ? [{ id: 'retry', label: 'Retry' }, { id: 'open_issue', label: 'Open issue' }]
+          : [{ id: 'try_it', label: 'Try it' }, { id: 'changes_needed', label: 'Changes needed' }], recommendation }] as PendingDecisionItem[]
+    }
+    if (ticketStage(ticket).stage !== 'person') return []
     const context = ticket.attention?.question || latestReport(ticket)?.summary || 'Awaiting operator input to unblock ticket.'
     const question = (decisionQuestion(context) || context.split(/\n\s*\n/)[0] || context).slice(0, 500)
     const fingerprint = createHash('sha256').update(context).digest('hex').slice(0, 16)
@@ -206,7 +230,8 @@ export class DecisionInbox {
       }
       return existing
     }
-    const saved = { ...item, actionMode: 'stage_response' as const }
+    if (item.id.startsWith('life-') && item.actionMode !== 'ticket_lifecycle') throw new InboxError(400, 'Lifecycle decisions are server-owned')
+    const saved = { ...item, actionMode: item.lifecycle ? 'ticket_lifecycle' as const : 'stage_response' as const }
     this.save(saved)
     return saved
   }
@@ -309,6 +334,7 @@ export class DecisionInbox {
   stage(id: string, request: StageDecisionRequest): DecisionStagingResult {
     const item = this.get(id)
     if (!item) throw new InboxError(404, 'Decision not found')
+    if (item.lifecycle) throw new InboxError(409, 'Use the explicit lifecycle action endpoint')
     if (item.status !== 'pending' || item.invalidation) throw new InboxError(409, 'Decision is stale or closed; no staging is allowed')
     if (!item.sessionId || !item.sourceMessageId || item.sourceSeq === undefined) throw new InboxError(409, 'A current native source identity and sequence are required for linked submission')
     if (!item.choices.some(choice => choice.id === request.choiceId)) throw new InboxError(400, 'Unknown decision choice')
@@ -382,7 +408,7 @@ export class DecisionInbox {
   /** Only an explicitly bound native request and exact full plaintext can confirm a selected choice. */
   reconcileSubmissions(sessionId: string, events: readonly SessionEvent[]): void {
     for (const initial of this.list()) {
-      if (initial.sessionId !== sessionId) continue
+      if (initial.sessionId !== sessionId || initial.lifecycle) continue
       if (initial.status === 'resolved') {
         const obsolete = events.find(event => event.seq > (initial.submittedSeq ?? initial.sourceSeq ?? Infinity) && (event.type === 'user/message' && event.data.source.kind === 'user' || event.type === 'turn/end' && event.data.turn !== decisionSourceTurn(initial, events)))
         if (obsolete) this.invalidate(initial, obsolete.type === 'user/message' ? 'A newer human message continued this conversation.' : 'A newer turn superseded this question.', obsolete.seq, obsolete.time)
@@ -437,13 +463,13 @@ export class DecisionInbox {
     try {
       const fresh = events.filter(event => event.seq > cursor)
       for (const event of fresh) if (event.type === 'user/message' && event.data.source.kind === 'user') {
-        for (const item of this.list()) if (item.sessionId === sessionId && event.seq > decisionBoundary(item)
+        for (const item of this.list()) if (!item.lifecycle && item.sessionId === sessionId && event.seq > decisionBoundary(item)
           && item.staging?.candidateSubmission?.seq !== event.seq && item.submittedSeq !== event.seq) this.invalidate(item, 'A newer human message continued this conversation.', event.seq, event.time)
       }
       // Only the newest completed turn can request input; tool-step commentary and interrupted prefixes are not asks.
       const end = events.findLast(event => event.type === 'turn/end')
       if (end?.type === 'turn/end' && end.seq > cursor) {
-        for (const item of this.list()) if (item.sessionId === sessionId && end.seq > decisionBoundary(item) && end.data.turn !== decisionSourceTurn(item, events)
+        for (const item of this.list()) if (!item.lifecycle && item.sessionId === sessionId && end.seq > decisionBoundary(item) && end.data.turn !== decisionSourceTurn(item, events)
           && !(item.status === 'pending' && item.staging?.candidateSubmission)) this.invalidate(item, 'A newer turn superseded this question.', end.seq, end.time)
         const message = events.findLast(event => event.type === 'assistant/message' && event.data.turn === end.data.turn)
         if (end.data.reason.kind === 'completed' && message?.type === 'assistant/message' && !message.data.interrupted) {
