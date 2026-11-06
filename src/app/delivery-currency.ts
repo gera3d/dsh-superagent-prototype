@@ -39,6 +39,17 @@ export function deriveDeliveryWork(deliveries: Delivery[], records: DeliveryWork
       ...(report ? { progress: report.summary } : {}),
       nextStep: 'The assigned worker continues the current implementation and reports its result; no new user confirmation is needed.' })
   }
+  // Automatic unbound tracking still owns the ready handoff, not a new implementation run.
+  // Restrict to that non-actionable review boundary; bound publication/review actions keep their own currency.
+  for (const delivery of deliveries) {
+    if (!delivery.scopeBinding || delivery.stage !== 'review' || ['accepted', 'cancelled', 'abandoned'].includes(delivery.state)) continue
+    for (const worker of delivery.workers) {
+      const ticket = records.tickets.find(t => t.id === workerTicket(worker)), assignment = ticket?.assignments.at(-1)
+      if (!ticket || ticket.ended || ticket.attention || assignment?.state !== 'running' || assignment.report?.state !== 'ready') continue
+      result.set(ticket.id, { state: 'owned', owner: delivery.owner, progress: assignment.report.summary,
+        nextStep: 'Implementation reported ready; the assigned delivery owner reviews evidence and prepares remaining delivery; no duplicate implementation run is requested.' })
+    }
+  }
   for (const old of records.tickets) {
     if (old.mandate.strength !== 'inferred' || old.ended?.outcome !== 'dropped' || old.ended.by !== 'executor') continue
     const identity = source(old)

@@ -9,6 +9,46 @@ import { projectDeliveries, reconcileInboxCurrency } from '../src/app/delivery-r
 import { deriveDeliveryWork, readDeliveryWorkers } from '../src/app/delivery-currency.ts'
 import type { Ticket, Trigger } from '../src/core/model.ts'
 
+it('retires the same synthetic advice after automatic unbound progress becomes a ready review handoff', () => {
+  const path = mkdtempSync(join(tmpdir(), 'delivery-ready-currency-')), store = new Store(join(path, 'test.sqlite'))
+  try {
+    const deliveries = new DeliveryStore(store.db), inbox = new DecisionInbox(store.db)
+    const ticket: Ticket = { id: 'ready-worker', title: 'Issue171', mandate: { strength: 'explicit' } as Ticket['mandate'], decisionId: 'decision',
+      createdAt: '2026-11-06T17:40:26Z', updatedAt: '2026-11-06T18:00:00Z', origin: { triggerId: 'source', triggerIds: ['source'] }, channels: [], inputs: [], undelivered: [],
+      assignments: [{ id: 'same-native-assignment', state: 'running', createdAt: '2026-11-06T17:40:26Z', idleAt: '2026-11-06T18:00:00Z', report: { state: 'progress', summary: 'Collecting the existing serial test results.', at: '2026-11-06T18:00:00Z' } }] }
+    store.tickets.save(ticket)
+    let delivery = deliveries.trackUnbound({ ticketId: ticket.id, triggerId: 'source', title: ticket.title, owner: 'release-owner', repository: 'org/repo', sourceIssue: 171 })
+    expect(deriveDeliveryWork(deliveries.list(), readDeliveryWorkers(store.db)).get(ticket.id)?.state).toBe('owned')
+    const options = [{ id: 'tests', label: 'Run regression tests', prompt: 'Run tests', why: 'Verify', recommended: true }, { id: 'diff', label: 'Inspect diff', prompt: 'Inspect', why: 'Verify', recommended: false }]
+    let turn = 0
+    const advice = (context = '') => inbox.publishAdvisor({ sessionId: `worker-${ticket.id}`, sourceMessageId: `${++turn}`, sourceTurn: turn, sourceSeq: turn, key: `${turn}`, createdAt: Date.now(), question: context || 'Choose the next step for this thread', context, title: 'Advice', model: 'advisor', options })
+    const sameRow = advice(), question = advice('Which acceptance evidence do you need?'), staged = advice()
+    inbox.stage(staged.id, { choiceId: 'tests', attemptId: '123e4567-e89b-42d3-a456-426614174000', draftText: 'Run tests' })
+    // Simulate deployment only after the same native assignment has reported ready and synchronized to review.
+    ticket.assignments[0]!.report = { state: 'ready', summary: 'Implementation reported ready with collected serial test evidence; release review remains.', at: '2026-11-06T18:10:00Z' }
+    store.tickets.save(ticket)
+    delivery = deliveries.compareAndSwap(delivery.id, delivery.revision, d => { d.stage = 'review'; d.state = 'blocked' })
+    const immutable = JSON.stringify({ ticket: store.tickets.get(ticket.id), delivery: deliveries.get(delivery.id) })
+    reconcileInboxCurrency(inbox, deliveries)
+    expect(inbox.get(sameRow.id)?.status).toBe('stale')
+    expect(inbox.findSource({ sessionId: sameRow.sessionId!, sourceMessageId: sameRow.sourceMessageId })?.status).toBe('stale')
+    expect(() => inbox.stage(sameRow.id, { choiceId: 'tests', attemptId: '123e4567-e89b-42d3-a456-426614174001', draftText: 'Run tests' })).toThrow('stale')
+    expect(inbox.get(question.id)?.status).toBe('pending'); expect(inbox.get(staged.id)?.staging).toBeDefined()
+    const work = projectDeliveries(deliveries, inbox.list()).find(item => item.ticketId === ticket.id)?.delivery?.work
+    expect(work).toMatchObject({ state: 'owned', owner: 'release-owner', progress: ticket.assignments[0]!.report!.summary })
+    expect(work?.nextStep).toContain('Implementation reported ready'); expect(work?.nextStep).toContain('no duplicate implementation run is requested')
+    expect(work?.nextStep).not.toContain('review is running')
+    expect(JSON.stringify({ ticket: store.tickets.get(ticket.id), delivery: deliveries.get(delivery.id) })).toBe(immutable)
+    const records = readDeliveryWorkers(store.db)
+    expect(deriveDeliveryWork([{ ...delivery, scopeBinding: undefined }], records).has(ticket.id)).toBe(false)
+    expect(deriveDeliveryWork([{ ...delivery, state: 'accepted' }], records).has(ticket.id)).toBe(false)
+    ticket.attention = { id: 'real-question', question: 'Need an answer' }
+    expect(deriveDeliveryWork([delivery], { tickets: [ticket], triggers: [] }).has(ticket.id)).toBe(false)
+    delete ticket.attention; ticket.ended = { by: 'executor', outcome: 'completed', at: '2026-11-06T18:20:00Z' }
+    expect(deriveDeliveryWork([delivery], { tickets: [ticket], triggers: [] }).has(ticket.id)).toBe(false)
+  } finally { store.close(); rmSync(path, { recursive: true, force: true }) }
+})
+
 it('projects unique same-source replacement and idle native ownership; persists only synthetic advice retirement', async () => {
   const path = mkdtempSync(join(tmpdir(), 'delivery-currency-')), store = new Store(join(path, 'test.sqlite'))
   try {
