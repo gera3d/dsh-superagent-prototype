@@ -32,6 +32,15 @@ it('does not retire unverified, failed, or still-running terminal claims', () =>
     (p: PublicationSnapshot) => { p.coordination = { grantId: 'g', status: 'running', createdAt: '', updatedAt: '' } },
   ]) { const item = fixture('published'); change(item.lifecycle!.publication!); expect(decisionNeedsAttention(item)).toBe(true) }
 })
+for (const status of ['failed', 'interrupted', 'expired'] as const) it(`keeps verified publication with ${status} coordinator actionable until recovery settles`, () => {
+  const item = fixture('published'), before = structuredClone(item)
+  item.lifecycle!.publication!.coordination = { grantId: 'g', status, createdAt: '', updatedAt: '' }
+  expect(publicationCompleted(item)).toBe(false)
+  expect(decisionNeedsAttention(item)).toBe(true)
+  expect(decisionInHistory(item)).toBe(false)
+  expect(item.lifecycle!.publication!.status).toBe(before.lifecycle!.publication!.status)
+  expect(item.submissionId).toBeUndefined()
+})
 it('keeps ordinary decision status semantics unchanged', () => {
   for (const status of ['pending', 'resolved', 'stale'] as const) {
     const item = { status } as PendingDecisionItem

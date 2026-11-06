@@ -2,7 +2,7 @@
 import type { PendingDecisionItem } from './decision.ts'
 export function publicationCompleted(item: PendingDecisionItem): boolean {
   const p = item.lifecycle?.publication
-  if (!p || !Array.isArray(p.outcomes) || ['queued', 'running'].includes(p.coordination?.status ?? '')
+  if (!p || !Array.isArray(p.outcomes) || p.coordination && p.coordination.status !== 'completed'
     || p.outcomes.some(outcome => outcome.status === 'running')) return false
   const stage = p.status === 'published' ? 'verify' : p.status === 'rolled_back' ? 'rollback' : undefined
   return !!stage && p.outcomes.filter(outcome => outcome.stage === stage).at(-1)?.status === 'succeeded'
