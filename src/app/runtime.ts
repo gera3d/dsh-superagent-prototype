@@ -20,6 +20,7 @@ import { Commands } from '../infra/commands.ts'
 import { loadLifecyclePublication } from './publication-context.ts'
 import type { LifecyclePublication } from './lifecycle-publication.ts'
 import { FeatureDeliveryRuntime } from './delivery-runtime.ts'
+import { FindingRuntime } from './finding-runtime.ts'
 import { DeliveryStore, type DeliveryCapabilityAdapters } from './feature-delivery.ts'
 import { createDeliveryCapabilities, recommendDeliveryAction } from './delivery-capabilities.ts'
 import { deliveryPublicationCapabilities } from './delivery-publication.ts'
@@ -72,6 +73,7 @@ export class Runtime extends Service implements SourceHost {
   readonly commands: Commands
   readonly publication?: LifecyclePublication
   readonly deliveries: FeatureDeliveryRuntime
+  readonly findings: FindingRuntime
   readonly sessions: Sessions
   readonly settings: Settings
   readonly executor: DshExecutor
@@ -155,7 +157,7 @@ export class Runtime extends Service implements SourceHost {
           if (event.type === 'ticket.created') {
             const ticket = store.tickets.get(event.data.ticketId)
             const trigger = ticket && store.triggers.get(ticket.origin.triggerId)
-            if (ticket && setup.configured()) {
+            if (ticket && setup.configured() && !trigger?.meta.findingJobId) {
               this.deliveries.store.trackUnbound({ ticketId: ticket.id, title: ticket.title, owner: `worker:${ticket.id}`,
                 repository: setup.deployment.repository, triggerId: ticket.origin.triggerId,
                 ...(trigger?.source === 'github' && typeof trigger.meta.number === 'number' ? { sourceIssue: trigger.meta.number } : {}) })
@@ -186,18 +188,21 @@ export class Runtime extends Service implements SourceHost {
         lifetime: this.lifetime, publication: this.publication,
         recommend: (delivery, action) => recommendDeliveryAction(delivery, action, deliveryDeps),
       })
+      this.findings = new FindingRuntime({ ...deliveryDeps, repository: () => setup.deployment.repository,
+        isQuiescent: ticket => this.executor.quiescent(ticket) })
       // Update the `evals` health entry on every pass if an evaluation failed as unavailable within the last hour.
       const evals = board.claim('evals', { state: 'ready', detail: 'No unavailable Eval in the last hour' })
       const evaluateDue = () => {
         engine.evaluateDue(); evals.set(evalsHealth(store))
         void this.deliveries.request().catch(report)
+        void this.findings.request().catch(report)
       }
       const passes = this.passes = new Passes({ engine: { receive: trigger => engine.receive(trigger), evaluateDue }, effects,
         health: this.runtimeHealth, lifetime: this.lifetime, configured: () => setup.configured(), closing: () => this.closing() })
       this.sourceDeps = { store, engine, outbox, commands, sources, get ready() { return runtime.ready },
         get deployment() { return setup.deployment }, configured: () => setup.configured(),
         get setupProblem() { return setup.problem }, get feishuProblem() { return setup.feishuProblem }, receive: trigger => passes.receive(trigger) }
-      this.toolHost = { context: ctx, engine, store, prompts, sessions, settings: this.settings, assessor, resources,
+      this.toolHost = { context: ctx, engine, store, prompts, sessions, settings: this.settings, assessor, resources, findings: this.findings,
         get github() { return runtime.context({ kind: 'github', health: ['github'] }) },
         requestPass: () => { passes.request() }, sendReplies: () => outbox.sent(),
         quietly: run => { this.quiet++; try { return run() } finally { this.quiet-- } } }
@@ -256,8 +261,8 @@ export class Runtime extends Service implements SourceHost {
   }
   private httpHost(): HttpHost {
     const runtime = this
-    const { store, commands, publication, deliveries, sources, prompts, sessions, settings, engine, executor, health, machine, masterId, ready, sourceLinks, setup, passes } = this
-    return { store, commands, publication, deliveries, sources, prompts, sessions, settings, engine, executor, health, machine, masterId, ready, sourceLinks,
+    const { store, commands, publication, deliveries, findings, sources, prompts, sessions, settings, engine, executor, health, machine, masterId, ready, sourceLinks, setup, passes } = this
+    return { store, commands, publication, deliveries, findings, sources, prompts, sessions, settings, engine, executor, health, machine, masterId, ready, sourceLinks,
       get deployment() { return setup.deployment },
       get setupProblem() { return setup.problem }, get feishuProblem() { return setup.feishuProblem },
       configured: () => setup.configured(), links: () => runtime.links(), ticketEnvironment: ticket => runtime.ticketEnvironment(ticket),
@@ -272,7 +277,7 @@ export class Runtime extends Service implements SourceHost {
       const ids = [this.masterId, ...this.store.tickets.list().map(ticket => workerSessionId(ticket.id))]
       const agents = ids.map(id => this.ctx.agents.get(id as SessionId)).filter((agent): agent is Agent => agent !== undefined)
       for (const agent of agents) agent.cancel({ kind: 'user' }, { keepInbox: true })
-      await Promise.allSettled([passes, this.deliveries.stop(), this.effects.drain(), ...agents.map(agent => agent.whenIdle())])
+      await Promise.allSettled([passes, this.deliveries.stop(), this.findings.stop(), this.effects.drain(), ...agents.map(agent => agent.whenIdle())])
       // The workers' jobs and subagents stop too: their ends would start worker turns without the tool limits released below.
       await this.executor.shutdown()
       this.executor.dispose()

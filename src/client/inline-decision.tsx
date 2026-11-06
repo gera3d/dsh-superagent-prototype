@@ -7,6 +7,7 @@ import type { PendingDecisionItem } from '../core/decision.ts'
 import { decisionNeedsAttention } from '../core/publication-queue.ts'
 import type { DecisionSubmissionBridge } from './decision-submission.ts'
 import { caller, usePoll } from './api.ts'
+import { activeFindingForSession } from './finding-association.ts'
 import { parseInlineAlternatives } from './inline-alternatives.ts'
 import css from './inline-decision.css?raw'
 
@@ -51,7 +52,8 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
   const closed = assistant && chat?.timeline.turns.get(assistant.turn)?.status === 'closed'
   const sourceMessageId = assistant ? String(assistant.messageId ?? assistant.seq) : undefined
   const id = sourceMessageId ? `inline:${session.sessionId}:${sourceMessageId}` : undefined
-  const idle = !session.running && !session.removed && session.openState === 'open' && !session.pendingSubmissions.length
+  const associatedFinding = data?.items.some(item => activeFindingForSession(item, session.sessionId)) ?? false
+  const idle = !associatedFinding && !session.running && !session.removed && session.openState === 'open' && !session.pendingSubmissions.length
 
   useEffect(() => {
     if (!idle || !closed || !parsed || !id || !sourceMessageId || !data || error || attempted.current === `${id}:${retry}`) return
@@ -85,7 +87,7 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
   }, [id, idle, closed, data, error, retry, reload])
 
   // Privileged lifecycle cards have a dedicated shared renderer and must never enter native chat staging.
-  const sessionItems = data?.items.filter(item => item.sessionId === session.sessionId && !item.delivery && item.actionMode !== 'feature_delivery' && !item.lifecycle && item.actionMode !== 'ticket_lifecycle') ?? []
+  const sessionItems = associatedFinding ? [] : data?.items.filter(item => item.sessionId === session.sessionId && !item.finding && item.actionMode !== 'finding_triage' && !item.delivery && item.actionMode !== 'feature_delivery' && !item.lifecycle && item.actionMode !== 'ticket_lifecycle') ?? []
   const pending = sessionItems.filter(item => item.status === 'pending')
   const emptySource = pending.find(item => item.sourceMessageId === sourceMessageId && !item.choices.length && !item.invalidation)
   const hydrated = useRef<string>()
@@ -113,13 +115,13 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
   const items = pending.length ? pending : latestResolved ? [latestResolved] : []
   const lastSubmitted = sessionItems.filter(item => item.status === 'resolved' && item.resolutionBasis === 'submitted')
     .sort((a, b) => (b.resolvedAt ?? 0) - (a.resolvedAt ?? 0))[0]
-  if (session.removed || session.openState !== 'open' || !chat) return null
+  if (associatedFinding || session.removed || session.openState !== 'open' || !chat) return null
   // Never draw an empty placeholder: a new/blank conversation or one with no decisions renders nothing,
   // so the dock cannot take over the composer's place in the layout.
   if (!items.length && !creating && !failure && !notice && !error) return null
   const choose = async (item: PendingDecisionItem, choiceId: string) => {
     const choice = item.choices.find(candidate => candidate.id === choiceId)
-    if (item.delivery || item.actionMode === 'feature_delivery' || item.lifecycle || item.actionMode === 'ticket_lifecycle' || choice?.actionKind && choice.actionKind !== 'suggestion') return
+    if (item.finding || item.actionMode === 'finding_triage' || item.delivery || item.actionMode === 'feature_delivery' || item.lifecycle || item.actionMode === 'ticket_lifecycle' || choice?.actionKind && choice.actionKind !== 'suggestion') return
     if (!idle || !choice || !['pending', 'resolved'].includes(item.status) || choosing.current || input.phase !== 'plain'
       || (item.status === 'pending' && (item.invalidation || item.staging))) return
     const signal = stageAbort.current?.signal

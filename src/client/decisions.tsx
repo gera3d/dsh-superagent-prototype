@@ -27,7 +27,7 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
 
   const resolveAction = useAction(async (item: PendingDecisionItem, choiceId: string) => {
     const choice = item.choices.find(choice => choice.id === choiceId)
-    if (!choice || !item.sessionId || item.invalidation || item.staging || item.status !== 'pending') throw new Error('This decision cannot be staged. Refresh the inbox.')
+    if (item.finding || item.actionMode === 'finding_triage' || item.delivery || item.actionMode === 'feature_delivery' || item.lifecycle || item.actionMode === 'ticket_lifecycle' || !choice || !item.sessionId || item.invalidation || item.staging || item.status !== 'pending') throw new Error('This decision cannot be staged. Refresh the inbox.')
     const prompt = choice.prompt ?? (choiceId === 'respond' ? `Regarding your question:\n${item.question}\n\nMy response: `
       : choiceId === 'continue' ? `Please continue with the next step you offered:\n${item.question}`
       : choiceId === 'discuss' ? `Before proceeding, please clarify:\n${item.question}` : `For the decision “${item.question}”, choose: ${choice.label}`)
@@ -44,7 +44,7 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
   const items = data?.items || []
   // Evaluate any pending decision with candidate choices.
   const canEvaluate = (item: PendingDecisionItem) => {
-    return !item.delivery && item.actionMode !== 'feature_delivery' && !item.lifecycle && item.actionMode !== 'ticket_lifecycle' && item.status === 'pending' && !item.staging && !item.invalidation && (!!item.sessionId && (!!item.canonical || !!item.advisor) || item.choices.length >= 2)
+    return !item.finding && item.actionMode !== 'finding_triage' && !item.delivery && item.actionMode !== 'feature_delivery' && !item.lifecycle && item.actionMode !== 'ticket_lifecycle' && item.status === 'pending' && !item.staging && !item.invalidation && (!!item.sessionId && (!!item.canonical || !!item.advisor) || item.choices.length >= 2)
   }
   const evaluateItem = async (item: PendingDecisionItem) => {
     if (item.sessionId && (item.canonical || item.advisor)) {
@@ -111,7 +111,7 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
 
     {tab === 'inbox' && <div className="dt-inbox-view">
       {shownItems.length === 0 ? <Hint>No decisions matching the selected filter.</Hint> : <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {shownItems.map(item => item.lifecycle || item.delivery || item.actionMode === 'feature_delivery' ? <SharedLifecycleCard key={item.id} item={item}
+        {shownItems.map(item => item.finding || item.actionMode === 'finding_triage' || item.lifecycle || item.delivery || item.actionMode === 'feature_delivery' ? <SharedLifecycleCard key={item.id} item={item}
           onTicket={item.ticketId ? () => navigate({ page: 'execution', id: item.ticketId!.replace('#', '') }) : undefined} /> : <div key={item.id} style={{
           background: '#1c2128',
           border: item.status === 'pending' ? '1px solid #30363d' : '1px solid #238636',

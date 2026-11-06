@@ -292,6 +292,12 @@ Some generic modules still refer directly to GitHub or Feishu:
 
 | Path | Responsibility |
 | --- | --- |
+| `src/app/finding.ts` | Durable pre-work findings, truthful observation provenance, current advice, typed triage/review and revision-bound evidence |
+| `src/app/finding-runtime.ts` | Configured Senior Developer advice, atomic native finding handoff, report reconciliation and executor-quiescent FIFO dispatch |
+| `src/app/finding-evidence.ts` | Strict operator external observation schema; evidence is not acceptance |
+| `src/app/tools/findings.ts` | Compact model-facing observation-only tool with strict canonical intake validation |
+| `src/client/finding-card.tsx` | Shared privileged triage/review card with scoped effects, actual advice and inspectable attribution/history |
+| `src/client/finding-association.ts` | Canonical origin/current/prior job conversation matching with ticket/session normalization |
 | `src/app/feature-delivery.ts` | Durable delivery aggregate, scoped confirmation, transactional handoffs, lease fencing, backfill and acceptance invariants |
 | `src/app/delivery-runtime.ts` | Runtime-owned automatic tracking and handoffs, canonical projection, advice currency and bounded preparation recovery |
 | `src/app/delivery-capabilities.ts` | Configured-model independent exact-diff review, real correction notes and current-action recommendations |
@@ -457,6 +463,12 @@ Some generic modules still refer directly to GitHub or Feishu:
 
 | Test | Covers |
 | --- | --- |
+| `tests/finding.spec.ts` | Dedup, typed choices, FIFO/restart/concurrency, deferred revisiting, current-job evidence, no-repair-needed resolution, provenance and long native reports |
+| `tests/finding-runtime.spec.ts` | Configured-model wiring, real Engine/Effects/DshExecutor atomic handoff, terminal delivery relations, reconciliation isolation and background-quiescent recovery |
+| `tests/finding-card.spec.tsx` | Canonical advice, typed triage/review, stale/duplicate controls, deferred history and explicit report truncation |
+| `tests/finding-consumers.spec.tsx` | Real dock association for no-origin dispatched findings, mounted conversation switching and generic inline suppression |
+| `tests/finding-advice.spec.ts` | Persisted finding-owned generic advisor retirement before lookup/staging; genuine questions and native staged submissions retained |
+| `tests/finding-observe-cli.spec.ts` | Observation-only CLI loopback transport and argument/origin/authority fences without spoofed approval headers |
 | `tests/feature-delivery.spec.ts` | Durable transitions, CAS concurrency, restart/lease cancellation, scoped approvals, finite retries, backfill and acceptance |
 | `tests/delivery-capabilities.spec.ts` | Actual review and correction adapters against bounded transport/model fixtures, exact base/diff fences and note idempotency |
 | `tests/delivery-publication.spec.ts` | Actual store confirmation provenance through the protected publication bridge and rolled-back acceptance |

@@ -30,6 +30,7 @@ import { IM_WORDS } from '../src/infra/text.ts'
 import { observePull, pullOf } from '../src/sources/github-pull.ts'
 import { credentialHelper, workerGitConfig } from '../src/infra/environment.ts'
 import { policyHistory } from '../src/app/settings-history.ts'
+import { findingMatchesSession } from '../src/client/finding-association.ts'
 import { overview } from '../src/app/views/overview.ts'
 import { preview, readable } from '../src/app/views/text.ts'
 import { decisionList, search, threadDetail, threadList } from '../src/app/views/threads.ts'
@@ -49,9 +50,11 @@ let guards: Map<string, Guard>
 let restricts: Map<string, unknown[]>
 type HttpHandler = (req: unknown, res: unknown) => Promise<void>
 let http: HttpHandler
-async function api(method: string, path: string): Promise<{ status: number; body: unknown }> {
+async function api(method: string, path: string, body?: unknown, local = false): Promise<{ status: number; body: unknown }> {
   let status = 0, text = ''
-  const req = { method, url: `/orchestrator/api/${path}`, headers: { host: '127.0.0.1:3082', 'x-orchestrator-request': '1' } }
+  const req = { method, url: `/orchestrator/api/${path}`, headers: { host: '127.0.0.1:3082', 'x-orchestrator-request': '1',
+    ...(local ? { origin: 'http://127.0.0.1:3082', 'sec-fetch-site': 'same-origin', 'sec-fetch-mode': 'cors', 'sec-fetch-dest': 'empty' } : {}) },
+    async *[Symbol.asyncIterator]() { if (body !== undefined) yield Buffer.from(JSON.stringify(body)) } }
   await http(req, { writeHead: (code: number) => { status = code }, end: (data: string) => { text = data } })
   return { status, body: JSON.parse(text) }
 }
@@ -2029,4 +2032,69 @@ it('delivery runtime keeps two ordinary merged ended workers independently block
     expect(item.delivery.nextAction).toBeUndefined()
   }
   expect(runtime.deliveries.store.list()).toHaveLength(2)
+})
+
+it('runs registered finding intake/typed confirmation through the real runtime, Engine, Effects and executor once', async () => {
+  const input = { dedupKey: 'history-filter', title: 'History filter regression', problem: 'Observed panel blanking',
+    scope: 'Repair only the History filter regression in isolation; no deployment', owner: 'Senior Developer', kind: 'fix',
+    requirements: ['History remains readable with archived records'], repository: 'acme/widgets',
+    occurrence: { id: 'history-observation', reference: 'issue/171', evidence: 'Panel blanks when selecting History' } }
+  expect((await api('POST', 'findings', input)).status).toBe(403)
+  expect((await api('POST', 'findings', { ...input, authority: 'forged' }, true)).status).toBe(400)
+  expect((await api('POST', 'findings/observe', { ...input, actor: 'local-operator' })).status).toBe(400)
+  const observed = await api('POST', 'findings/observe', input)
+  expect(observed.status).toBe(200)
+  expect(observed.body).toMatchObject({ execution_authorized: false })
+  const finding = (observed.body as any).finding
+  expect(finding.audit[0]).toMatchObject({ source: 'external', reference: 'orchestrator-http:observation-only' })
+  expect(finding.audit[0].actor).not.toBe('local-operator')
+  await runtime.findings.request()
+  expect(runtime.store.tickets.list()).toHaveLength(0)
+  expect(runtime.findings.store.get(finding.id)?.recommendationError).toContain('unavailable')
+  expect((await api('POST', 'findings', input, true)).body).toMatchObject({ finding: { id: finding.id } })
+  const confirm = { revision: finding.revision, choiceId: 'fix_now' }
+  expect((await api('POST', `findings/${finding.id}/confirm`, confirm)).status).toBe(403)
+  expect((await api('POST', `findings/${finding.id}/confirm`, { ...confirm, actor: 'forged' }, true)).status).toBe(400)
+  expect((await api('POST', `findings/${finding.id}/confirm`, confirm, true)).status).toBe(200)
+  await runtime.findings.request(); await runtime.idle()
+  expect((await api('POST', `findings/${finding.id}/confirm`, confirm, true)).status).toBe(200)
+  await runtime.findings.request(); await runtime.idle()
+  const dispatched = runtime.findings.store.get(finding.id)!
+  const ticket = runtime.store.tickets.get(dispatched.job!.ticketId!)!
+  expect(ticket.mandate).toMatchObject({ strength: 'explicit', scope: input.scope })
+  expect(ticket.assignments).toHaveLength(1)
+  expect(ticket.assignments[0]?.state).toBe('running')
+  expect(controller.create.mock.calls.filter(([args]) => args.sessionId === `worker-${ticket.id}`)).toHaveLength(1)
+  expect(runtime.store.triggers.get(ticket.origin.triggerId)).toMatchObject({ source: 'finding', actor: { source: 'local', id: 'local-operator' }, meta: { findingJobId: dispatched.job!.id } })
+  expect(runtime.deliveries.store.list()).toHaveLength(0)
+  expect((await api('POST', `findings/${finding.id}/confirm`, { ...confirm, choiceId: 'defer' }, true)).status).toBe(409)
+  const inbox = await api('GET', 'decisions/inbox')
+  const canonicalFinding = (inbox.body as any).items.find((item: any) => item.id === `finding-${finding.id}`)
+  expect(canonicalFinding).toMatchObject({ actionMode: 'finding_triage', finding: { job: dispatched.job } })
+  expect(findingMatchesSession(canonicalFinding, `worker-${ticket.id}`)).toBe(true)
+  expect(findingMatchesSession(canonicalFinding, ticket.id)).toBe(true)
+  expect(findingMatchesSession(canonicalFinding, 'unrelated')).toBe(false)
+  const deferred = (await api('POST', 'findings', { ...input, dedupKey: 'later', title: 'Later check', occurrence: { ...input.occurrence, id: 'later' } }, true)).body as any
+  expect((await api('POST', `findings/${deferred.finding.id}/confirm`, { revision: 1, choiceId: 'defer' }, true)).status).toBe(200)
+  expect((await api('POST', `findings/${deferred.finding.id}/revisit`, { revision: 99 }, true)).status).toBe(409)
+  expect((await api('POST', `findings/${deferred.finding.id}/revisit`, { revision: 1 }, true)).status).toBe(200)
+  expect(runtime.findings.store.get(deferred.finding.id)).toMatchObject({ state: 'awaiting_decision', revision: 2 })
+  runtime.engine.report(ticket.id, { state: 'blocked', summary: 'Verification evidence remains unavailable; no repair has been established.' })
+  await runtime.findings.request()
+  const review = runtime.findings.store.get(finding.id)!
+  expect(review.state).toBe('blocked')
+  expect((await api('POST', `tickets/${ticket.id}/retry`)).status).toBe(400)
+  expect((await api('POST', `findings/${finding.id}/review`, { revision: review.revision, decision: 'accept_evidence',
+    evidenceReference: review.reports[0]!.reference, requirements: input.requirements }, true)).status).toBe(409)
+  expect((await api('POST', `findings/${finding.id}/review`, { revision: review.revision, decision: 'defer' })).status).toBe(403)
+  const evidence = { revision: review.revision, reference: 'native-screenshot:history', evidence: 'Visible History is populated; the earlier AX-only inference was unsupported.', nextDecision: 'Review no-repair-needed verification', verified: true }
+  expect((await api('POST', `findings/${finding.id}/evidence`, evidence)).status).toBe(403)
+  expect((await api('POST', `findings/${finding.id}/evidence`, { ...evidence, revision: 999 }, true)).status).toBe(409)
+  expect((await api('POST', `findings/${finding.id}/evidence`, evidence, true)).status).toBe(200)
+  const verified = runtime.findings.store.get(finding.id)!
+  expect(verified.state).not.toBe('resolved')
+  expect((await api('POST', `findings/${finding.id}/review`, { revision: verified.revision, decision: 'accept_evidence',
+    evidenceReference: evidence.reference, requirements: input.requirements, outcome: 'no_repair_needed' }, true)).status).toBe(200)
+  expect(runtime.findings.store.get(finding.id)?.resolution?.outcome).toBe('no_repair_needed')
+  expect(ticket.assignments).toHaveLength(1)
 })

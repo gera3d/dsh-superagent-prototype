@@ -19,6 +19,9 @@ import type { LifecyclePublication } from './lifecycle-publication.ts'
 import { PublicationError } from './publication.ts'
 import { DeliveryConflict, deliveryFingerprint } from './feature-delivery.ts'
 import { DeliveryIntakeRequest } from './delivery-intake.ts'
+import { FindingIntakeSchema, FindingConfirmSchema, FindingReviewSchema, FindingError, findingDecision } from './finding.ts'
+import type { FindingRuntime } from './finding-runtime.ts'
+import { FindingEvidenceRequest } from './finding-evidence.ts'
 import { FeatureDeliveryRuntime, deliveryDecision, reconcileInboxCurrency } from './delivery-runtime.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
 import { PromptConflict, SKILL_NAME, SKILL_PREFIX, TEAM_SECTIONS, builtInBase, builtInParts, defaultPrompts, savePrompts, type Prompts }
@@ -48,6 +51,7 @@ export interface HttpHost {
   readonly commands?: LifecycleCommands
   readonly publication?: LifecyclePublication
   readonly deliveries?: FeatureDeliveryRuntime
+  readonly findings?: FindingRuntime
   /** Feishu message links resolved since startup, used by search to match AppLink URLs. */
   readonly sourceLinks: Pick<TextCache, 'entries'>
   readonly sources: SourceRegistry
@@ -106,6 +110,7 @@ function failure(error: unknown): [number, Record<string, unknown>] {
     return [400, { error: `Invalid settings: ${issues.map(issue => issue.path).join(', ')}`, issues }]
   }
   if (error instanceof SetupError) return [400, { error: error.message, setup: error.problem }]
+  if (error instanceof FindingError) return [error.status, { error: error.message }]
   if (error instanceof DeliveryConflict) return [409, { error: error.message }]
   if (error instanceof RouteError || error instanceof InboxError || error instanceof PublicationError) return [error.status, { error: error.message }]
   if (error instanceof UserError) return [error.missing ? 404 : 400, { error: error.message, code: error.code, values: error.values }]
@@ -225,7 +230,7 @@ export const DecisionInboxItem = z.object({
 })
 
 export function isSessionEnded(runtime: HttpHost, item: PendingDecisionItem): boolean {
-  if (item.actionMode === 'feature_delivery' || (!item.ticketId && item.id.startsWith('chat-')
+  if (item.actionMode === 'feature_delivery' || item.actionMode === 'finding_triage' || (!item.ticketId && item.id.startsWith('chat-')
     && (item.staging || decisionQuestion(item.context) || decisionQuestion(item.question)))) return false
   const sessionId = item.sessionId
   if (sessionId) {
@@ -291,6 +296,63 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
     'POST decisions/canonical/publish': async ({ body }) => canonicalOperation(ctx, inbox(), 'publish', await body()),
     'POST decisions/canonical/score': async ({ body }) => canonicalOperation(ctx, inbox(), 'score', await body()),
     'POST decisions/canonical/fail': async ({ body }) => canonicalOperation(ctx, inbox(), 'fail', await body()),
+    'GET findings': () => ({ items: runtime.findings?.store.list() ?? [] }),
+    'POST findings/observe': async ({ body }) => {
+      if (!runtime.findings) throw new PublicationError(409, 'Finding coordinator is not configured')
+      const input = FindingIntakeSchema.parse(await body())
+      const finding = runtime.findings.observe(input, { source: 'external', reference: 'orchestrator-http:observation-only' })
+      void runtime.findings.request().catch(error => ctx.logger.warn('External finding advice: %s', String(error)))
+      return { finding, item: findingDecision(finding), execution_authorized: false as const }
+    },
+    'POST findings': async ({ body, localApproval }) => {
+      if (!localApproval) throw new PublicationError(403, 'Explicit local operator finding intake required')
+      if (!runtime.findings) throw new PublicationError(409, 'Finding coordinator is not configured')
+      const input = FindingIntakeSchema.parse(await body())
+      if (input.repository !== runtime.deployment.repository) throw new PublicationError(409, 'Finding repository must match this deployment')
+      if (input.existingDeliveryId && !runtime.deliveries?.store.get(input.existingDeliveryId)) throw new PublicationError(409, 'Linked delivery does not exist')
+      const finding = runtime.findings.observe(input, { source: 'operator', reference: 'orchestrator-http:local-intake', actor: 'local-operator' })
+      void runtime.findings.request().catch(error => ctx.logger.warn('Finding advice: %s', String(error)))
+      return { finding, item: findingDecision(finding) }
+    },
+    'POST findings/:id/evidence': async ({ params, body, localApproval }) => {
+      if (!localApproval) throw new PublicationError(403, 'Explicit local operator evidence recording required')
+      if (!runtime.findings) throw new PublicationError(409, 'Finding coordinator is not configured')
+      const { revision, ...evidence } = FindingEvidenceRequest.parse(await body())
+      const finding = store.atomic(() => {
+        const current = runtime.findings!.store.get(params.id)
+        if (!current || current.revision !== revision || !current.job?.ticketId || !['running', 'blocked'].includes(current.state))
+          throw new FindingError(409, 'Evidence requires the current dispatched finding revision')
+        return runtime.findings!.store.reportEvidence(params.id, evidence)
+      })
+      return { finding, item: findingDecision(finding) }
+    },
+    'POST findings/:id/review': async ({ params, body, localApproval }) => {
+      if (!localApproval) throw new PublicationError(403, 'Explicit local operator evidence review required')
+      if (!runtime.findings) throw new PublicationError(409, 'Finding coordinator is not configured')
+      const request = FindingReviewSchema.parse(await body())
+      const finding = runtime.findings.store.review(params.id, request, 'local-operator')
+      void runtime.findings.request().catch(error => ctx.logger.warn('Finding review: %s', String(error)))
+      return { finding, item: findingDecision(finding) }
+    },
+    'POST findings/:id/revisit': async ({ params, body, localApproval }) => {
+      if (!localApproval) throw new PublicationError(403, 'Explicit local operator revisit required')
+      if (!runtime.findings) throw new PublicationError(409, 'Finding coordinator is not configured')
+      const { revision } = z.object({ revision: z.number().int().positive() }).strict().parse(await body())
+      const finding = store.atomic(() => {
+        if (runtime.findings!.store.get(params.id)?.revision !== revision) throw new FindingError(409, 'Stale finding revision')
+        return runtime.findings!.store.revisit(params.id)
+      })
+      void runtime.findings.request().catch(error => ctx.logger.warn('Finding revisit: %s', String(error)))
+      return { finding, item: findingDecision(finding) }
+    },
+    'POST findings/:id/confirm': async ({ params, body, localApproval }) => {
+      if (!localApproval) throw new PublicationError(403, 'Explicit local operator finding confirmation required')
+      if (!runtime.findings) throw new PublicationError(409, 'Finding coordinator is not configured')
+      const request = FindingConfirmSchema.parse(await body())
+      const finding = runtime.findings.store.confirm(params.id, request, 'local-operator')
+      void runtime.findings.request().catch(error => ctx.logger.warn('Finding dispatch: %s', String(error)))
+      return { finding, item: findingDecision(finding) }
+    },
     'GET deliveries': () => ({ items: runtime.deliveries?.store.list() ?? [] }),
     'POST deliveries': async ({ body, localApproval }) => {
       if (!localApproval) throw new PublicationError(403, 'Explicit local operator intake required')
@@ -337,6 +399,8 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
       const request = DeliveryConfirmRequest.parse(await body())
       const current = runtime.deliveries.store.get(params.id)
       if (!current?.nextAction) throw new PublicationError(409, 'No currently executable delivery action')
+      if (current.nextAction.kind === 'accept' && runtime.findings?.store.list().some(finding => finding.existingDeliveryId === params.id && finding.state !== 'resolved'))
+        throw new PublicationError(409, 'Linked findings still require evidence review; delivery acceptance remains unavailable')
       const delivery = runtime.deliveries.store.confirm(params.id, request, { actor: 'local-operator', source: 'local_operator',
         reference: `orchestrator-http:${params.id}:${request.revision}:${request.actionId}`, scope: current.nextAction.fingerprint })
       void runtime.deliveries.request().catch(error => ctx.logger.warn('Delivery handoff: %s', String(error)))
@@ -350,7 +414,8 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
         return !current || !runtime.executor.running?.(current)
       })
       const projected = runtime.publication?.project?.(items) ?? items
-      return { items: await enrichLifecycle(runtime.deliveries?.project(projected) ?? projected, runtime.commands, runtime.configured() ? runtime.deployment.repository : undefined, runtime.publication) }
+      const delivered = runtime.deliveries?.project(projected) ?? projected
+      return { items: await enrichLifecycle(runtime.findings?.project(delivered) ?? delivered, runtime.commands, runtime.configured() ? runtime.deployment.repository : undefined, runtime.publication) }
     },
     'POST decisions/:id/lifecycle': async ({ params, body, localApproval }) => {
       const { action, approval } = LifecycleRequest.parse(await body())
@@ -499,7 +564,7 @@ export function registerHttp(ctx: Context, runtime: HttpHost): () => void {
         await runtime.ready
         if (url.pathname.includes('/decisions/')) {
           await capture.ready
-          if (runtime.deliveries) reconcileInboxCurrency(inbox(), runtime.deliveries.store, runtime.publication)
+          if (runtime.deliveries) reconcileInboxCurrency(inbox(), runtime.deliveries.store, runtime.publication, runtime.findings?.store)
         }
         const route = match(table, req.method ?? 'GET', url.pathname.slice('/orchestrator/api/'.length).split('/'))
         if (!route) throw new RouteError(404, 'Unknown operation')
@@ -510,7 +575,7 @@ export function registerHttp(ctx: Context, runtime: HttpHost): () => void {
           && ['cors', 'same-origin'].includes(String(req.headers['sec-fetch-mode'])) && req.headers['sec-fetch-dest'] === 'empty'
         let result = await route.run({ params: route.params as never, query, localApproval, body: maxBytes => readBody(req, maxBytes) })
         if (url.pathname.includes('/decisions/') && runtime.deliveries) {
-          reconcileInboxCurrency(inbox(), runtime.deliveries.store, runtime.publication)
+          reconcileInboxCurrency(inbox(), runtime.deliveries.store, runtime.publication, runtime.findings?.store)
           if (result && typeof result === 'object' && 'item' in result && result.item && typeof result.item === 'object' && 'id' in result.item && typeof result.item.id === 'string') {
             result = { ...result, item: inbox().get(result.item.id) ?? result.item }
           }

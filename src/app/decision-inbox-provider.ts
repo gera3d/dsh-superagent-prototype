@@ -6,6 +6,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { isAbsolute, dirname } from 'node:path'
 import { loadLifecyclePublication } from './publication-context.ts'
 import { DeliveryStore } from './feature-delivery.ts'
+import { FindingStore, projectFindings } from './finding.ts'
 import { projectDeliveries, reconcileInboxCurrency } from './delivery-runtime.ts'
 import { existsSync } from 'node:fs'
 import { z } from 'zod'
@@ -49,8 +50,9 @@ export function apply(ctx: Context, config: { database: string }): void {
     const inbox = new DecisionInbox(db, item => registerResolution(item.id))
     const publication = loadLifecyclePublication(dirname(config.database))
     const deliveries = new DeliveryStore(db)
-    const currency = () => reconcileInboxCurrency(inbox, deliveries, publication)
-    const projectedList = () => { currency(); return projectDeliveries(deliveries, publication?.project?.(inbox.list()) ?? inbox.list()) }
+    const findings = new FindingStore(db)
+    const currency = () => reconcileInboxCurrency(inbox, deliveries, publication, findings)
+    const projectedList = () => { currency(); return projectFindings(findings, projectDeliveries(deliveries, publication?.project?.(inbox.list()) ?? inbox.list())) }
     const projectedGet = (id: string) => projectedList().find(item => item.id === id)
     revalidateCapturedDecisions(db, inbox)
     const capture = registerDecisionCapture(ctx, () => inbox)

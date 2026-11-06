@@ -7,6 +7,7 @@ import type { LifecyclePublication } from './lifecycle-publication.ts'
 import { publicationConversation } from './lifecycle-publication.ts'
 import { ticketDecisions, type DecisionInbox } from './decision-inbox.ts'
 import type { Store } from './store.ts'
+import type { FindingStore } from './finding.ts'
 
 export function deliveryDecision(delivery: Delivery): PendingDecisionItem {
   const action = delivery.nextAction
@@ -59,9 +60,21 @@ export function projectDeliveries(store: DeliveryStore, items: PendingDecisionIt
 }
 
 /** Persist currency before any canonical producer/lookup or native staging can use old advice. */
-export function reconcileInboxCurrency(inbox: DecisionInbox, deliveries: DeliveryStore, publication?: LifecyclePublication): void {
+export function reconcileInboxCurrency(inbox: DecisionInbox, deliveries: DeliveryStore, publication?: LifecyclePublication, findings?: FindingStore): void {
   const original = inbox.list()
-  const projected = reconcileDeliveryAdvice(publication?.project?.(original) ?? original, deliveries.list())
+  const findingWorkers = new Map<string, string>()
+  for (const finding of findings?.list() ?? []) {
+    for (const job of [finding.job, ...(finding.priorJobs ?? [])]) if (job?.ticketId) {
+      const ticket = job.ticketId.replace(/^worker-/, '')
+      findingWorkers.set(ticket, finding.id)
+    }
+  }
+  const projected = reconcileDeliveryAdvice(publication?.project?.(original) ?? original, deliveries.list()).map(item => {
+    const finding = item.sessionId && findingWorkers.get(item.sessionId.replace(/^worker-/, ''))
+    if (!finding || item.status !== 'pending' || !item.id.startsWith('chat-') || !item.advisor?.key || item.context.trim()
+      || item.question !== 'Choose the next step for this thread' || item.staging) return item
+    return { ...item, status: 'stale' as const, staleReason: `Generic generated advice is superseded by canonical finding ${finding}; retained as history, not execution authority.` }
+  })
   for (const item of projected) {
     if (item.status !== 'stale' || !item.staleReason) continue
     const stored = inbox.get(item.id)
