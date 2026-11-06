@@ -21,7 +21,8 @@ function fixture(draft = 'Existing user text', attachmentIds = ['image-one'], ch
   const binding = { ctx: {}, session }
   const context = { sessions: { retain: vi.fn(() => ({ ready: Promise.resolve(binding), binding, release })) }, conversation: { input: { for: () => native } } }
   const calls: { action: string; body: any }[] = []
-  let item: any = { id: 'decision', sessionId: 'session', status: 'pending', choices: [{ id: 'a', prompt: choicePrompt }] }, admitted: string | undefined, stageFailure = false, gate: Promise<void> | undefined
+  let item: any = { id: 'decision', sessionId: 'session', status: 'pending', choices: [{ id: 'a', prompt: choicePrompt }],
+    canonical: { phase: 'scored' }, recommendation: { recommendedValue: 'a', distribution: [{ id: 'a', probability: 1 }] } }, admitted: string | undefined, stageFailure = false, gate: Promise<void> | undefined
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
     if (!init?.body) return { ok: true, json: async () => ({ items: [item] }) }
     const action = url.split('/').at(-1)!, body = JSON.parse(init.body as string)
@@ -387,7 +388,8 @@ it('integrates scoped native observation with the real DecisionInbox durable pro
   ]
   const actualItem = inbox.put({ id: 'decision', sessionId: 'session', sourceMessageId: 'source-message', sourceSeq: 1, sourceTurn: 1,
     ticketTitle: 'Fixture', trigger: 'Fixture', status: 'pending', urgency: 'low', createdAt: 102, context: '', question: 'Which approach?',
-    recommendation: { recommendedValue: '', confidence: 0, rationale: '', distribution: [], provider: '', latencyMs: 0 },
+    recommendation: { recommendedValue: 'a', confidence: 0.7, rationale: '', distribution: [{ id: 'a', probability: 0.7 }, { id: 'b', probability: 0.3 }], provider: '', latencyMs: 0 },
+    canonical: { phase: 'scored', draftRevision: 'fixture', owner: 'fixture', leaseToken: 'fixture', leaseExpiresAt: Date.now() + 60_000 },
     choices: [{ id: 'a', label: 'Run tests', prompt: 'Run the test suite.' }, { id: 'b', label: 'Inspect diff', prompt: 'Inspect the diff.' }],
   })
   const ctx = { sessionPersistence: { flush: async () => {}, open: async () => ({
@@ -496,6 +498,49 @@ it('blocks ticket_lifecycle actionMode even without a lifecycle field or privile
   expect(f.item.lifecycle).toBeUndefined()
   await expect(programmatic(f, staged.staging.attemptId, undefined, submit)).rejects.toThrow('requires human action')
   expect(submit).not.toHaveBeenCalled()
+})
+
+it('rechecks fresh canonical phase, recommendation, full-precision confidence and distribution before Send', async () => {
+  const invalid: Array<(item: any) => void> = [
+    item => { item.canonical = undefined },
+    item => { item.canonical.phase = 'ready' },
+    item => { item.recommendation.recommendedValue = 'b' },
+    item => { item.recommendation.distribution = [{ id: 'a', probability: 0.3 }, { id: 'b', probability: 0.7 }] },
+    item => { item.recommendation.distribution = [{ id: 'a', probability: 0.522 }, { id: 'b', probability: 0.478 }] },
+    item => { item.recommendation.distribution = [{ id: 'a', probability: 0.5 }, { id: 'b', probability: 0.5 }] },
+    item => { item.choices.push({ id: 'c', prompt: 'Inspect the test coverage.' }); item.recommendation.distribution = [
+      { id: 'a', probability: 0.39 }, { id: 'b', probability: 0.32 }, { id: 'c', probability: 0.29 }] },
+    item => { item.recommendation.distribution.pop() },
+    item => { item.recommendation.distribution[1].id = 'a' },
+    item => { item.recommendation.distribution[1].id = 'foreign' },
+    item => { item.recommendation.distribution[0].probability = NaN },
+    item => { item.recommendation.distribution[0].probability = Infinity },
+    item => { item.recommendation.distribution[0].probability = '0.7' },
+    item => { item.recommendation.distribution[0].probability = 1.1 },
+    item => { item.recommendation.distribution[1].probability = -0.1 },
+    item => { item.recommendation.distribution[0] = null },
+    item => { item.recommendation.distribution[0].probability = 0.9 },
+    item => { item.choices[1].id = 'a' },
+    item => { item.choices[1].actionKind = 'approve' },
+  ]
+  for (const mutate of invalid) {
+    const f = fixture('', [], 'Run the test suite.'), staged = await f.stage(), submit = vi.fn()
+    f.item.choices.push({ id: 'b', prompt: 'Inspect the diff.' })
+    f.item.recommendation.distribution = [{ id: 'a', probability: 0.7 }, { id: 'b', probability: 0.3 }]
+    mutate(f.item)
+    await expect(programmatic(f, staged.staging.attemptId, undefined, submit)).rejects.toThrow(/canonical/)
+    expect(submit).not.toHaveBeenCalled()
+    f.bridge.dispose()
+  }
+})
+
+it('accepts exact 40/35 percentage-point thresholds without decimal subtraction rounding', async () => {
+  const f = fixture('', [], 'Run the test suite.'), staged = await f.stage()
+  f.item.choices.push({ id: 'b', prompt: 'Inspect the diff.' }, { id: 'c', prompt: 'Inspect the test coverage.' })
+  f.item.recommendation.distribution = [{ id: 'a', probability: 0.4 }, { id: 'b', probability: 0.35 }, { id: 'c', probability: 0.25 }]
+  const result = programmatic(f, staged.staging.attemptId)
+  await settle(); f.admit('actual-native-rpc')
+  await expect(result).resolves.toEqual({ submissionId: 'actual-native-rpc' })
 })
 
 it('never treats a suggestion classification as authority for arbitrary prompts', async () => {

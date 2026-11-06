@@ -401,6 +401,24 @@ export function createDecisionSubmission(ctx: SubmissionContext, options: { stor
           || state.occurrences.length !== 0 || state.attachmentIds.length !== 0) {
           throw new Error('Canonical choice is stale or requires human action. Nothing was sent.')
         }
+        // Re-read scores from the canonical seat; stale UI badges cannot authorize Send.
+        const choices = item.choices as any[]
+        const distribution = item.recommendation?.distribution
+        if (item.canonical?.phase !== 'scored' || !Array.isArray(distribution)
+          || distribution.length !== choices.length || new Set(choices.map(value => value.id)).size !== choices.length
+          || new Set(distribution.map(value => value?.id)).size !== choices.length
+          || distribution.some(value => !value || !choices.some(option => option.id === value.id)
+            || typeof value.probability !== 'number' || !Number.isFinite(value.probability) || value.probability < 0 || value.probability > 1)
+          || Math.abs(distribution.reduce((sum, value) => sum + value.probability, 0) - 1) > 0.01
+          || choices.some(option => option.actionKind !== undefined && option.actionKind !== 'suggestion')) {
+          throw new Error('Fresh canonical scores are unavailable or require human action. Nothing was sent.')
+        }
+        const ranked = [...distribution].sort((a, b) => b.probability - a.probability)
+        const top = ranked[0], second = ranked[1]?.probability ?? 0
+        if (!top || top.id !== journal.choiceId || item.recommendation.recommendedValue !== journal.choiceId
+          || top.probability * 100 < 40 || top.probability * 100 - second * 100 < 5) {
+          throw new Error('The fresh canonical recommendation changed or confidence is insufficient. Nothing was sent.')
+        }
         const current = native.state.getSnapshot()
         const latest = read(request.sessionId)
         if (signal.aborted || stopped || watch.disposed || watch.programmatic || watch.armed !== armed
