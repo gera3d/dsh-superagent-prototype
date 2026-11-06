@@ -117,10 +117,13 @@ export class FeatureDeliveryRuntime {
       if (['accepted', 'cancelled', 'abandoned'].includes(delivery.state)) continue
       const workers = delivery.workers.map(id => this.tickets.tickets.get(id))
       if (delivery.scopeBinding) {
-        const finished = workers.some(ticket => ticket && (ticket.ended || workerReady(ticket)))
-        const state = finished ? 'blocked' : 'running'
-        const stage = finished ? 'review' : 'implementation'
-        const blocker = finished ? delivery.scopeBinding.reason : undefined
+        const blockedWorker = workers.find(ticket => ticket && (ticket.attention || ['blocked', 'failed'].includes(ticket.assignments.at(-1)?.report?.state ?? '')))
+        const implementationReady = workers.some(ticket => ticket && (workerReady(ticket) || ticket.ended?.outcome === 'merged'))
+        const finished = implementationReady || workers.some(ticket => ticket?.ended)
+        const state = finished || blockedWorker ? 'blocked' : 'running'
+        const stage = implementationReady ? 'review' : 'implementation'
+        const blocker = blockedWorker ? blockedWorker.attention?.question ?? blockedWorker.assignments.at(-1)?.report?.summary ?? delivery.scopeBinding.reason
+          : finished ? delivery.scopeBinding.reason : undefined
         if (delivery.state !== state || delivery.stage !== stage || delivery.blocker !== blocker) this.store.compareAndSwap(delivery.id, delivery.revision, d => {
           d.state = state; d.stage = stage
           if (blocker) d.blocker = blocker; else delete d.blocker

@@ -41,6 +41,24 @@ it('keeps two ended and merged jobs visible through actual durable handoffs and 
   }
   await runtime.stop()
 })
+it('renders a truthful readable blocker and durable card identity when an unbound implementation run reports blocked', async () => {
+  const { runtime, store, worker } = fixture()
+  const ticket = worker('blocked-worker', false)
+  ticket.assignments[0]!.report = { state: 'blocked', summary: 'Required dependency unavailable; restore the configured service.', at }
+  store.tickets.save(ticket)
+  runtime.store.trackUnbound({ ticketId: ticket.id, title: ticket.title, owner: 'source-owner', repository: 'org/repo', triggerId: 'source' })
+  await runtime.request()
+  const item = runtime.project([])[0]!
+  expect(item).toMatchObject({ context: ticket.assignments[0]!.report.summary, delivery: { state: 'blocked', stage: 'implementation', blocker: ticket.assignments[0]!.report.summary } })
+  const { createElement } = await import('react')
+  const { renderToStaticMarkup } = await import('react-dom/server')
+  const { DeliveryCard } = await import('../src/client/delivery-card.tsx')
+  const rendered = renderToStaticMarkup(createElement(DeliveryCard, { item, onConfirm: async () => {} }))
+  expect(rendered).toContain('Required dependency unavailable; restore the configured service.')
+  expect(rendered).toContain(`id="delivery-${item.delivery!.id}"`)
+  expect(item.choices).toEqual([])
+  await runtime.stop()
+})
 it('leaves explicitly cancelled unbound history terminal while later deliveries continue', async () => {
   const { runtime, worker, intake } = fixture()
   const stopped = worker('cancelled')
