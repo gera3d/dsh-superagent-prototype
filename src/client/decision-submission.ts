@@ -1,4 +1,4 @@
-/** Shared choice-to-native-Send linkage. Never sends, replaces a draft, or resolves by text alone. */
+/** Shared choice-to-native-Send linkage. Only explicit submitStaged sends; never resolves by text alone. */
 import type { ISessions, SessionReference } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { InputActions, InputState } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
@@ -13,6 +13,8 @@ export interface DecisionSubmissionBridge {
   readonly dockOwner?: 'agent-mini'
   watch(sessionId: string): () => void
   stage(request: StageRequest): Promise<{ item: any; staging: ChoiceStage; execution: 'not_executed' }>
+  /** One-shot native programmatic Send; resolves only with canonical durable submission proof. */
+  submitStaged(request: { decisionId: string; attemptId: string; sessionId: string; inputActions: Pick<InputActions, 'submit'>; signal?: AbortSignal }): Promise<{ submissionId: string }>
   discard(decisionId: string, attemptId: string): Promise<{ item: any }>
 }
 export interface NativeInputSubmission { readonly timestamp: number; readonly source?: 'click' | 'enter'; readonly input: InputState }
@@ -33,16 +35,23 @@ interface Journal {
   rawFingerprint: string; draftFingerprint: string; stagedAt: number
   state: 'preparing' | 'staged' | 'awaiting_confirmation' | 'invalidated'
   submissionId?: string; retryOf?: string; submissionIds?: string[]
+  programmaticConsumed?: boolean
 }
 interface NativeEcho { requestId: string; text: string; time?: number; attachments?: readonly unknown[] }
 interface Armed {
   attemptId: string; draftRev: number; text: string; submittedText: string; attachments: readonly string[]
   before: Set<string>; at: number
 }
+interface ProgrammaticSubmission {
+  attemptId: string; invoking: boolean; observed: boolean; submissionId?: string
+  complete(item: any): void
+  fail(): void
+}
 interface Watching {
+  programmatic?: ProgrammaticSubmission
   ref: SessionReference; count: number; ready: Promise<NativeInput>; native?: NativeInput
   armed?: Armed; intent?: Armed & { before: Set<string>; at: number }
-  unsubscribers: (() => void)[]; disposed: boolean; checking?: number; matching?: boolean; linking?: Promise<void>; clearing?: Promise<void>
+  unsubscribers: (() => void)[]; disposed: boolean; checking?: number; matching?: boolean; linking?: Promise<void>; linkDirty?: boolean; clearing?: Promise<void>
 }
 const OWNER_KEY = 'dsh:decision-submission:owner:v1'
 const PREFIX = 'dsh:decision-submission:v1:'
@@ -89,9 +98,9 @@ export function createDecisionSubmission(ctx: SubmissionContext, options: { stor
     if (read(value.sessionId)?.attemptId !== value.attemptId) throw new Error('Linked-choice recovery could not be persisted. Your draft has not been sent.')
   }
   const forget = (value: Journal) => { if (read(value.sessionId)?.attemptId === value.attemptId) storage.removeItem(key(value.sessionId)) }
-  const post = async (id: string, action: string, body: unknown) => {
+  const post = async (id: string, action: string, body: unknown, signal?: AbortSignal) => {
     const response = await fetch(`/orchestrator/api/decisions/${encodeURIComponent(id)}/${action}`, {
-      method: 'POST', headers: { 'content-type': 'application/json', 'x-orchestrator-request': '1' }, body: JSON.stringify(body),
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-orchestrator-request': '1' }, body: JSON.stringify(body), ...(signal ? { signal } : {}),
     })
     const result = await response.json()
     if (!response.ok) throw new Error(result.error || `Linked choice could not be synchronized (${response.status}). The decision is not confirmed resolved.`)
@@ -100,18 +109,21 @@ export function createDecisionSubmission(ctx: SubmissionContext, options: { stor
   const warn = (watch: Watching, error: unknown) => { if (!watch.disposed) watch.native?.notify('error', error instanceof Error ? error.message : String(error)) }
   const clear = async (journal: Journal, watch?: Watching) => {
     write({ ...journal, state: 'invalidated' }) // Fail closed locally even if the network is unavailable.
-    if (watch) { watch.armed = undefined; watch.intent = undefined }
+    if (watch) { watch.armed = undefined; watch.intent = undefined; watch.programmatic?.fail() }
     const result = await post(journal.decisionId, 'discard-staging', { attemptId: journal.attemptId })
     forget(journal)
     return result
   }
   const link = (watch: Watching, journal: Journal): void => {
-    if (!journal.submissionId || watch.linking) return
+    if (!journal.submissionId) return
+    if (watch.linking) { watch.linkDirty = true; return }
+    watch.linkDirty = false
     watch.linking = (async () => {
       try {
         const ids = journal.submissionIds ?? (journal.retryOf ? [journal.retryOf, journal.submissionId!] : [journal.submissionId!])
         for (let index = 0; index < ids.length; index++) {
           const result = await post(journal.decisionId, 'submission', { attemptId: journal.attemptId, submissionId: ids[index], ...(index ? { retryOf: ids[index - 1] } : {}) })
+          if (watch.programmatic?.attemptId === journal.attemptId) watch.programmatic.complete(result.item)
           if (result.item?.status === 'resolved' || result.item?.status === 'stale') { forget(journal); break }
         }
         // Pending (including a queued echo) is NOT confirmation. The host waits for the durable matching rpcId.
@@ -119,7 +131,9 @@ export function createDecisionSubmission(ctx: SubmissionContext, options: { stor
       finally {
         watch.linking = undefined
         const latest = read(journal.sessionId)
-        if (!watch.disposed && latest?.submissionId && latest.submissionId !== journal.submissionId) link(watch, latest)
+        const recheck = watch.linkDirty
+        watch.linkDirty = false
+        if (!watch.disposed && latest?.submissionId && (recheck || latest.submissionId !== journal.submissionId)) link(watch, latest)
       }
     })()
   }
@@ -131,6 +145,10 @@ export function createDecisionSubmission(ctx: SubmissionContext, options: { stor
     const linked: Journal = { ...current, state: 'awaiting_confirmation', submissionId: echo.requestId,
       submissionIds: [...new Set([...previousIds, echo.requestId])],
       ...(current.submissionId && current.submissionId !== echo.requestId ? { retryOf: current.submissionId } : {}) }
+    if (watch.programmatic?.attemptId === journal.attemptId) {
+      if (watch.programmatic.submissionId && watch.programmatic.submissionId !== echo.requestId) { watch.programmatic.fail(); return }
+      watch.programmatic.submissionId = echo.requestId
+    }
     write(linked)
     watch.intent = undefined; watch.armed = undefined
     link(watch, linked)
@@ -158,6 +176,7 @@ export function createDecisionSubmission(ctx: SubmissionContext, options: { stor
         return
       }
       if (candidates.length > 1) {
+        watch.programmatic?.fail()
         watch.intent = undefined; watch.armed = undefined
         warn(watch, new Error('Submission linkage is ambiguous. The decision remains pending; no message was inferred as its response.'))
         return
@@ -167,11 +186,19 @@ export function createDecisionSubmission(ctx: SubmissionContext, options: { stor
     if (journal.submissionId) link(watch, journal)
   }
   const onNativeSubmit = (sessionId: string, watch: Watching, occurrence: NativeInputSubmission) => {
-    if (watch.disposed || watch.matching || !['click', 'enter'].includes(occurrence.source ?? '')) return
+    const scoped = watch.programmatic
+    const programmatic = occurrence.source === undefined && scoped?.invoking && !scoped.observed
+    if (watch.disposed || watch.matching) return
+    if (scoped && !programmatic) { scoped.fail(); return }
+    if (!programmatic && !['click', 'enter'].includes(occurrence.source ?? '')) return
     const journal = read(sessionId), armed = watch.armed, state = occurrence.input
     if (!journal || journal.state === 'invalidated' || journal.state === 'preparing' || !armed || armed.attemptId !== journal.attemptId) return
     if (state.claim || state.phase !== 'plain' || state.draftRev !== armed.draftRev || state.draft !== armed.text
       || !sameAttachments(state.attachmentIds, armed.attachments)) return
+    if (programmatic) {
+      if (scoped.attemptId !== journal.attemptId) { scoped.fail(); return }
+      scoped.observed = true
+    }
     watch.intent = { ...armed, before: new Set((watch.ref.binding.session.getSnapshot().pendingSubmissions as readonly NativeEcho[]).map(echo => echo.requestId)), at: now() }
   }
   const onInput = (sessionId: string, watch: Watching) => {
@@ -331,6 +358,120 @@ export function createDecisionSubmission(ctx: SubmissionContext, options: { stor
         throw error
       } finally { release() }
     },
+    async submitStaged(request) {
+      const release = watchSession(request.sessionId)
+      const watch = watches.get(request.sessionId)!
+      const timeout = new AbortController()
+      const totalTimer = setTimeout(() => timeout.abort(), 30_000)
+      const signal = request.signal ? AbortSignal.any([request.signal, timeout.signal]) : timeout.signal
+      let cancelReady = () => {}
+      try {
+        const cancelled = new Promise<never>((_resolve, reject) => {
+          cancelReady = () => reject(new Error('Native submission is unconfirmed. Review manually; do not resend automatically.'))
+          signal.addEventListener('abort', cancelReady, { once: true })
+          if (signal.aborted) cancelReady()
+        })
+        const native = await Promise.race([watch.ready, cancelled])
+        const journal = read(request.sessionId), armed = watch.armed
+        if (stopped || watch.disposed || signal.aborted || !native.observeSubmissions || watch.programmatic
+          || !journal || journal.decisionId !== request.decisionId || journal.attemptId !== request.attemptId
+          || journal.state !== 'staged' || journal.programmaticConsumed || journal.submissionId
+          || !armed || armed.attemptId !== request.attemptId) throw new Error('Staged native submission is unavailable or already consumed.')
+        const state = native.state.getSnapshot()
+        const fingerprint = await Promise.race([documentFingerprint(state), cancelled])
+        // Revalidate the current durable source/choices immediately before the one-shot Send.
+        const canonical = await Promise.race([post(journal.decisionId, 'stage', { attemptId: journal.attemptId,
+          choiceId: journal.choiceId, draftText: armed.submittedText }, signal), cancelled])
+        if (canonical.item?.id !== journal.decisionId || canonical.item?.sessionId !== journal.sessionId
+          || canonical.item?.status !== 'pending' || canonical.item?.invalidation
+          || canonical.staging?.attemptId !== journal.attemptId || canonical.staging?.choiceId !== journal.choiceId
+          || canonical.staging?.draftFingerprint !== journal.draftFingerprint) throw new Error('Staged source is stale or changed. Nothing was sent.')
+        const inboxResponse = await Promise.race([fetch('/orchestrator/api/decisions/inbox', { headers: { 'x-orchestrator-request': '1' }, signal }), cancelled])
+        if (!inboxResponse.ok) throw new Error('Canonical staged source is unavailable. Nothing was sent.')
+        const inbox = await Promise.race([inboxResponse.json(), cancelled])
+        const item = inbox.items?.find((value: any) => value.id === journal.decisionId)
+        const choice = item?.choices?.find((value: any) => value.id === journal.choiceId)
+        const safePrompt = ['Run the test suite', 'Run the test suite.', 'Inspect the diff', 'Inspect the diff.',
+          'Inspect the test coverage', 'Inspect the test coverage.'].includes(choice?.prompt)
+        if (!item || item.sessionId !== journal.sessionId || item.status !== 'pending' || item.invalidation || item.lifecycle || item.actionMode === 'ticket_lifecycle'
+          || item.staging?.attemptId !== journal.attemptId || item.staging?.choiceId !== journal.choiceId
+          || item.staging?.draftFingerprint !== journal.draftFingerprint || !choice
+          || !safePrompt || (choice.actionKind !== undefined && choice.actionKind !== 'suggestion')
+          || armed.submittedText !== choice.prompt.trim() || armed.text !== choice.prompt
+          || state.occurrences.length !== 0 || state.attachmentIds.length !== 0) {
+          throw new Error('Canonical choice is stale or requires human action. Nothing was sent.')
+        }
+        // Re-read scores from the canonical seat; stale UI badges cannot authorize Send.
+        const choices = item.choices as any[]
+        const distribution = item.recommendation?.distribution
+        if (item.canonical?.phase !== 'scored' || !Array.isArray(distribution)
+          || distribution.length !== choices.length || new Set(choices.map(value => value.id)).size !== choices.length
+          || new Set(distribution.map(value => value?.id)).size !== choices.length
+          || distribution.some(value => !value || !choices.some(option => option.id === value.id)
+            || typeof value.probability !== 'number' || !Number.isFinite(value.probability) || value.probability < 0 || value.probability > 1)
+          || Math.abs(distribution.reduce((sum, value) => sum + value.probability, 0) - 1) > 0.01
+          || choices.some(option => option.actionKind !== undefined && option.actionKind !== 'suggestion')) {
+          throw new Error('Fresh canonical scores are unavailable or require human action. Nothing was sent.')
+        }
+        const ranked = [...distribution].sort((a, b) => b.probability - a.probability)
+        const top = ranked[0], second = ranked[1]?.probability ?? 0
+        if (!top || top.id !== journal.choiceId || item.recommendation.recommendedValue !== journal.choiceId
+          || top.probability * 100 < 40 || top.probability * 100 - second * 100 < 5) {
+          throw new Error('The fresh canonical recommendation changed or confidence is insufficient. Nothing was sent.')
+        }
+        const current = native.state.getSnapshot()
+        const latest = read(request.sessionId)
+        if (signal.aborted || stopped || watch.disposed || watch.programmatic || watch.armed !== armed
+          || latest?.attemptId !== journal.attemptId || latest.programmaticConsumed || latest.state !== 'staged'
+          || current !== state || state.phase !== 'plain' || state.claim || state.draftRev !== armed.draftRev
+          || state.draft !== armed.text || !sameAttachments(state.attachmentIds, armed.attachments)
+          || fingerprint !== journal.rawFingerprint) throw new Error('The staged composer changed. Nothing was sent.')
+        // Persist consumption BEFORE invoking Send; failed/unknown sends are never automatically retried.
+        write({ ...journal, programmaticConsumed: true })
+        return await new Promise<{ submissionId: string }>((resolve, reject) => {
+          let settled = false
+          const finish = (submissionId?: string) => {
+            if (settled) return
+            settled = true
+            clearTimeout(timer)
+            signal.removeEventListener('abort', abort)
+            if (watch.programmatic === scoped) watch.programmatic = undefined
+            if (!submissionId) watch.intent = undefined
+            if (submissionId) resolve({ submissionId })
+            else reject(new Error('Native submission is unconfirmed. Review manually; do not resend automatically.'))
+          }
+          const abort = () => finish()
+          const timer = setTimeout(abort, 30_000)
+          const scoped: ProgrammaticSubmission = {
+            attemptId: journal.attemptId, invoking: true, observed: false,
+            fail: abort,
+            complete(item) {
+              if (item?.status === 'pending' && !item.invalidation) return
+              if (scoped.observed && scoped.submissionId && item?.status === 'resolved' && !item.invalidation
+                && item.id === journal.decisionId && item.sessionId === journal.sessionId
+                && item.staging?.attemptId === journal.attemptId && item.resolvedChoice === journal.choiceId
+                && item.resolutionBasis === 'submitted' && item.submissionId === scoped.submissionId
+                && typeof item.submittedMessageId === 'string' && item.submittedMessageId.length > 0
+                && Number.isSafeInteger(item.submittedSeq) && item.submittedSeq > (item.sourceSeq ?? -1)
+                && Number.isFinite(item.resolvedAt)) finish(scoped.submissionId)
+              else finish()
+            },
+          }
+          watch.programmatic = scoped
+          signal.addEventListener('abort', abort, { once: true })
+          try {
+            if (signal.aborted) { finish(); return }
+            request.inputActions.submit()
+          } catch { finish() }
+          finally { scoped.invoking = false }
+          if (!scoped.observed) finish()
+        })
+      } finally {
+        clearTimeout(totalTimer)
+        signal.removeEventListener('abort', cancelReady)
+        release()
+      }
+    },
     async discard(decisionId, attemptId) {
       for (const [sessionId, watch] of watches) {
         const journal = read(sessionId)
@@ -341,7 +482,7 @@ export function createDecisionSubmission(ctx: SubmissionContext, options: { stor
     },
     dispose() {
       stopped = true
-      for (const watch of watches.values()) { watch.disposed = true; watch.unsubscribers.forEach(dispose => dispose()); watch.ref.release() }
+      for (const watch of watches.values()) { watch.disposed = true; watch.programmatic?.fail(); watch.unsubscribers.forEach(dispose => dispose()); watch.ref.release() }
       watches.clear()
     },
   }
