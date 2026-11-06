@@ -2,6 +2,7 @@
 import { useMemo, useSyncExternalStore } from 'react'
 import type { Context } from '@deepseek-ai/cordis'
 import { caller, usePoll } from './api.ts'
+import { findingMatchesSession } from './finding-association.ts'
 import type { SessionEventLike } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { ConversationNodeDefinitionInput, ConversationViewDefinition, ConversationViewNode } from '@deepseek-ai/dsh-client-ui-conversation/client'
@@ -96,9 +97,14 @@ const call = caller(() => ({ offline: 'Delivery service is offline.', notRunning
   setup: () => 'Delivery setup is incomplete.', user: failure => `Delivery request rejected: ${failure.code}` }))
 function DeliveryLink({ sessionId }: { sessionId: string }) {
   const { data, error } = usePoll(() => call('GET decisions/inbox'), [sessionId])
+  const findings = data?.items.filter(item => findingMatchesSession(item, sessionId)) ?? []
   const items = data?.items.filter(item => item.delivery && (item.sessionId === sessionId
     || item.delivery.workers.some(worker => worker === sessionId || `worker-${worker}` === sessionId))) ?? []
-  return <p>{items.length ? items.map(item => <a key={item.id} href={`#delivery-${encodeURIComponent(item.delivery!.id)}`}>Delivery card: {item.ticketTitle}</a>)
+  return <p>{findings.length || items.length ? <>
+    {findings.map(item => <span key={item.id}><a href={`#finding-${encodeURIComponent(item.finding!.id)}`}>Finding card: {item.ticketTitle}</a>
+      {item.finding!.existingDeliveryId && <> · Linked existing delivery: <code>{item.finding!.existingDeliveryId}</code></>} </span>)}
+    {items.map(item => <a key={item.id} href={`#delivery-${encodeURIComponent(item.delivery!.id)}`}>Delivery card: {item.ticketTitle}</a>)}
+  </>
     : error ? 'Delivery linkage could not be loaded.' : data ? 'No linked delivery record. Worker readiness is not delivery acceptance.' : 'Loading delivery linkage…'}</p>
 }
 /** Uses the host's existing loaded event window; no history writes, model calls or guessed output. */

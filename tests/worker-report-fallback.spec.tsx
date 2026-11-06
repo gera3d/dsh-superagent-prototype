@@ -4,6 +4,9 @@ import { createRoot } from 'react-dom/client'
 import { afterEach, expect, it, vi } from 'vitest'
 import type { SessionEventLike } from '@deepseek-ai/dsh-api-session-controller/client'
 import { WorkerReportFallback, workerReportDefinition, workerReportView, WORKER_REPORT_TARGET } from '../src/client/worker-report-fallback.tsx'
+import { PublicationDock } from '../src/client/publication-cards.tsx'
+import type { PendingDecisionItem } from '../src/core/decision.ts'
+import type { Finding } from '../src/app/finding.ts'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 // Native worker-5cc280c130fa6bdea2da00563e04f5c0, seq98/99/102/105:
@@ -92,4 +95,38 @@ it('does not invent a delivery link for unlinked historical worker reports', asy
   expect(container.textContent).toContain('No linked delivery record')
   expect(container.querySelector('a')).toBeNull()
   await act(async () => { root.unmount() })
+})
+
+it.each(['current', 'prior'] as const)('links a %s verification job to its mounted canonical finding without adding delivery workers', async job => {
+  const ticketId = 'f1169468a82e551dd2804f270f3d12bf', sessionId = `worker-${ticketId}`
+  const finding: Finding = { id: 'b54e2231-2571-4f67-be82-c31ccfc18913', dedupKey: 'history-verification', title: 'Verify History',
+    problem: 'History accessibility snapshot needs visual verification', scope: 'Verify History only; no repair authorized', owner: 'local-operator', kind: 'verification',
+    repository: 'gera3d/superagent-sandbox', requirements: ['Inspect native History'], occurrences: [], revision: 3, state: 'blocked', choices: [],
+    existingDeliveryId: 'auto-5ee3dda6e61420b3b927164ed5f4b98a',
+    job: { id: 'current-job', ticketId: job === 'current' ? ticketId : 'replacement-verification-ticket', assignmentId: 'assignment' },
+    priorJobs: job === 'prior' ? [{ id: 'prior-job', ticketId, assignmentId: 'prior-assignment' }] : [],
+    reports: [], audit: [], createdAt: '2026-11-06T19:00:00.000Z', updatedAt: '2026-11-06T19:01:00.000Z' }
+  const item: PendingDecisionItem = { id: `finding-${finding.id}`, finding, actionMode: 'finding_triage', ticketId: finding.job!.ticketId,
+    ticketTitle: finding.title, trigger: 'finding', status: 'pending', urgency: 'medium', createdAt: 0, context: finding.scope, question: 'Review evidence', choices: [],
+    recommendation: { recommendedValue: '', confidence: 0, distribution: [], rationale: '', provider: '', latencyMs: 0 } }
+  // The original delivery owns only its implementation worker, not this verification assignment.
+  const original = { id: `delivery-${finding.existingDeliveryId}`, ticketTitle: 'Original issue171 delivery', sessionId: 'worker-5ee3dda6e61420b3b927164ed5f4b98a',
+    delivery: { id: finding.existingDeliveryId, workers: ['5ee3dda6e61420b3b927164ed5f4b98a'] } }
+  const items = [item, original], before = JSON.stringify(items), events = evidence(), eventsBefore = JSON.stringify(events)
+  vi.stubGlobal('fetch', vi.fn(async () => Response.json({ items })))
+  const report = replay(events), source = { subscribe: () => () => {}, getSnapshot: () => report }
+  const ctx = { uiConversation: { binding: () => ({ target: () => source }) } }
+  const container = document.createElement('div'), root = createRoot(container)
+  try {
+    await act(async () => root.render(<><PublicationDock sessionId={sessionId} /><WorkerReportFallback ctx={ctx as never} sessionId={sessionId as never} running={false} removed={false} /></>))
+    const link = [...container.querySelectorAll('a')].find(anchor => anchor.textContent === 'Finding card: Verify History')!
+    expect(link).toBeDefined()
+    expect(link.getAttribute('href')).toBe(`#finding-${finding.id}`)
+    expect(container.querySelector(`[id="${link.getAttribute('href')!.slice(1)}"]`)).not.toBeNull()
+    expect(container.textContent).toContain(`Linked existing delivery: ${finding.existingDeliveryId}`)
+    expect(container.textContent).not.toContain('No linked delivery record')
+    expect(container.querySelectorAll('.dt-finding-card')).toHaveLength(1)
+    expect(container.querySelectorAll('.dt-delivery-card')).toHaveLength(0)
+    expect(JSON.stringify(items)).toBe(before); expect(JSON.stringify(events)).toBe(eventsBefore)
+  } finally { await act(async () => root.unmount()) }
 })
