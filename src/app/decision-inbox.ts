@@ -254,6 +254,7 @@ export class DecisionInbox {
       }
       return existing
     }
+    if (item.actionMode === 'finding_triage' || item.finding || item.id.startsWith('finding-')) throw new InboxError(400, 'Finding decisions are server-owned projections')
     if (item.actionMode === 'feature_delivery' || item.delivery || item.id.startsWith('delivery-')) throw new InboxError(400, 'Delivery decisions are server-owned projections')
     if (item.id.startsWith('life-') && item.actionMode !== 'ticket_lifecycle') throw new InboxError(400, 'Lifecycle decisions are server-owned')
     const saved = { ...item, actionMode: item.lifecycle ? 'ticket_lifecycle' as const : 'stage_response' as const }

@@ -282,6 +282,7 @@ export function createDecisionSubmission(ctx: SubmissionContext, options: { stor
       try { return watchSession(sessionId) } catch { return () => {} } // Removed/unavailable views may still mount a dock; explicit staging reports the failure.
     },
     async stage(request) {
+      if (request.decisionId.startsWith('finding-')) throw new Error('Finding triage requires typed confirmation, never chat Send.')
       if (request.decisionId.startsWith('delivery-')) throw new Error('Feature delivery requires typed confirmation, never chat Send.')
       const release = watchSession(request.sessionId)
       const watch = watches.get(request.sessionId)!
@@ -394,7 +395,7 @@ export function createDecisionSubmission(ctx: SubmissionContext, options: { stor
         const choice = item?.choices?.find((value: any) => value.id === journal.choiceId)
         const safePrompt = ['Run the test suite', 'Run the test suite.', 'Inspect the diff', 'Inspect the diff.',
           'Inspect the test coverage', 'Inspect the test coverage.'].includes(choice?.prompt)
-        if (!item || item.sessionId !== journal.sessionId || item.status !== 'pending' || item.invalidation || item.delivery || item.actionMode === 'feature_delivery' || item.lifecycle || item.actionMode === 'ticket_lifecycle'
+        if (!item || item.sessionId !== journal.sessionId || item.status !== 'pending' || item.invalidation || item.finding || item.actionMode === 'finding_triage' || item.delivery || item.actionMode === 'feature_delivery' || item.lifecycle || item.actionMode === 'ticket_lifecycle'
           || item.staging?.attemptId !== journal.attemptId || item.staging?.choiceId !== journal.choiceId
           || item.staging?.draftFingerprint !== journal.draftFingerprint || !choice
           || !safePrompt || (choice.actionKind !== undefined && choice.actionKind !== 'suggestion')

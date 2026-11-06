@@ -416,6 +416,32 @@ export class DshExecutor implements Executor {
     if (!runningAssignment(ticket)) return false
     return this.host.context.agents.get(workerSessionId(ticket.id) as SessionId)?.status === 'running' || this.settling.has(ticket.id)
   }
+  /** Actual native quiescence, including ended domain assignments whose background stop is still pending. */
+  async quiescent(ticket: Ticket): Promise<boolean> {
+    if (this.stopping.has(ticket.id) || this.settling.has(ticket.id)) return false
+    const sessionId = workerSessionId(ticket.id)
+    const agent = this.host.context.agents.get(sessionId as SessionId)
+    if (agent && agent.status !== 'idle') return false
+    if (runningJobs(this.host.context, sessionId).length) return false
+    const subagents = this.host.context.get('subagents') as { listChildren(parent: string): Promise<readonly { id: string }[]> } | undefined
+    if (subagents) {
+      const pending = [sessionId], seen = new Set<string>()
+      while (pending.length) {
+        const parent = pending.pop()!
+        if (seen.has(parent)) continue
+        seen.add(parent)
+        if (seen.size > 1000) return false
+        for (const child of await subagents.listChildren(parent)) {
+          const worker = this.host.context.agents.get(child.id as SessionId)
+          if ((worker && worker.status !== 'idle') || runningJobs(this.host.context, child.id).length) return false
+          pending.push(child.id)
+        }
+      }
+    }
+    // Recheck after the asynchronous registry read; a newly queued stop must also hold the next finding.
+    return !this.stopping.has(ticket.id) && !this.settling.has(ticket.id)
+      && (!agent || agent.status === 'idle') && !runningJobs(this.host.context, sessionId).length
+  }
   /** Marks a ticket failed after its launch fails; the ticket waits until new human input or an explicit retry arrives. */
   private launchFailed(ticketId: string, assignmentId: string, error: unknown): void {
     const ticket = this.host.store.tickets.get(ticketId)

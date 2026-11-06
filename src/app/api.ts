@@ -39,6 +39,13 @@ export interface Api {
   'POST decisions/canonical/publish': { body: CanonicalPublish; response: CanonicalResult }
   'POST decisions/canonical/score': { body: CanonicalScore; response: CanonicalResult }
   'POST decisions/canonical/fail': { body: CanonicalFailure; response: CanonicalResult }
+  'GET findings': { response: { items: import('./finding.ts').Finding[] } }
+  'POST findings/observe': { body: import('./finding.ts').FindingIntake; response: { finding: import('./finding.ts').Finding; item: PendingDecisionItem; execution_authorized: false } }
+  'POST findings': { body: import('./finding.ts').FindingIntake; response: { finding: import('./finding.ts').Finding; item: PendingDecisionItem } }
+  'POST findings/:id/evidence': { body: import('./finding-evidence.ts').FindingEvidenceInput; response: { finding: import('./finding.ts').Finding; item: PendingDecisionItem } }
+  'POST findings/:id/review': { body: import('./finding.ts').FindingReview; response: { finding: import('./finding.ts').Finding; item: PendingDecisionItem } }
+  'POST findings/:id/revisit': { body: { revision: number }; response: { finding: import('./finding.ts').Finding; item: PendingDecisionItem } }
+  'POST findings/:id/confirm': { body: { revision: number; choiceId: 'fix_now' | 'queue_next' | 'defer' }; response: { finding: import('./finding.ts').Finding; item: PendingDecisionItem } }
   'GET deliveries': { response: { items: import('./feature-delivery.ts').Delivery[] } }
   'POST deliveries': { body: import('./delivery-intake.ts').DeliveryIntake; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
   'POST deliveries/:id/reconcile': { body: { revision: number; actionId: string }; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }

@@ -14,6 +14,7 @@ export const USER_ERRORS = {
   notExplicit: ['refused', 'An accept through orchestrator_route is for explicit requests from allowed senders; assess proactive candidates with orchestrator_eval and orchestrator_eval_decide'],
   ticketStopped: ['refused', 'A person stopped this ticket; new work needs an accept through orchestrator_route'],
   mandateRevoked: ['refused', 'The current policy no longer holds this ticket\'s mandate; new work needs an accept through orchestrator_route'],
+  findingConfirmationRequired: ['refused', 'This bounded finding assignment cannot be retried or reopened. Review its linked evidence and confirm a fresh bounded finding for new work.'],
   notRetryable: ['refused', 'Retry requires an open ticket with a blocked/failed report, failed input delivery, or an idle worker without a PR after fallback or a status-only request; active workers and human holds are not stall recovery cases'],
   sourceThread: ['refused', 'This is the thread the ticket started on; it stays subscribed'],
   followedThread: ['refused', 'This thread is the ticket\'s own, such as its pull request\'s; it stays subscribed'],

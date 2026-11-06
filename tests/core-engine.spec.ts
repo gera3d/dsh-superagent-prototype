@@ -73,6 +73,92 @@ function accepted(h: ReturnType<typeof harness>, id = '1', thread = 't1') {
   return decision
 }
 
+describe('confirmed bounded finding dispatch', () => {
+  const job = { jobId: 'finding-job-1', findingId: 'f1', title: 'Verify correction', repository: 'owner/repo', scope: 'Verify the single corrected behavior offline', text: 'Inspect corrected behavior and report evidence. No live operations.' }
+  it('creates one fresh explicit native assignment without upgrading or reopening a dropped proactive worker', () => {
+    const h = harness({ gate: () => ({ admissible: true, strength: 'inferred', basis: { via: 'listed', rules: ['small'] } }) })
+    h.engine.receive(trigger('1')); h.pump()
+    const original = h.decide(h.requests.at(-1)!, { kind: 'accept', title: 'Proactive small change', scope: 'small internal change', reason: 'small', rules: ['small'] })
+    h.settle()
+    h.engine.report(original.ticketId!, { state: 'dropped', summary: 'Beyond proactive scope' })
+    const before = h.repo.tickets.get(original.ticketId!)!
+    const fresh = h.engine.dispatchFinding(job)
+    expect(fresh.id).not.toBe(before.id)
+    expect(fresh.mandate).toMatchObject({ strength: 'explicit', actor: { source: 'local', id: 'local-operator' }, scope: job.scope })
+    expect(fresh.assignments).toHaveLength(1)
+    expect(fresh.inputs.some(i => i.kind === 'note')).toBe(false)
+    expect(h.repo.tickets.get(before.id)).toEqual(before)
+    expect(h.engine.dispatchFinding(job)).toEqual(fresh)
+    h.settle()
+    h.engine.report(fresh.id, { state: 'ready', summary: 'Evidence recorded; review required' })
+    expect(h.engine.dispatchFinding(job).ended).toBeDefined()
+    expect(h.repo.tickets.get(fresh.id)!.assignments).toHaveLength(1)
+    expect(() => h.engine.dispatchFinding({ ...job, scope: 'broader scope' })).toThrow('scope mismatch')
+    expect(h.assessor.request).toHaveBeenCalledTimes(1)
+  })
+  it('never automatically escalates the one bounded assignment on failure', () => {
+    const escalation = vi.fn(() => ({ from: { provider: 'p', model: 'a' }, to: { provider: 'p', model: 'b' } }))
+    const h = harness({}, { escalation })
+    const fresh = h.engine.dispatchFinding(job)
+    h.settle()
+    h.engine.report(fresh.id, { state: 'failed', summary: 'Needs review' })
+    expect(escalation).not.toHaveBeenCalled()
+    expect(h.repo.tickets.get(fresh.id)!.assignments).toHaveLength(1)
+  })
+  it('refuses generic retry or attach resurrection without a fresh finding confirmation', () => {
+    const h = harness(), fresh = h.engine.dispatchFinding(job)
+    h.settle()
+    h.engine.report(fresh.id, { state: 'blocked', summary: 'Needs explicit next decision' })
+    expect(() => h.engine.retryTicket(fresh.id)).toThrow('confirm a fresh bounded finding')
+    expect(h.repo.tickets.get(fresh.id)!.assignments).toHaveLength(1)
+    expect(h.repo.tickets.get(fresh.id)!.assignments[0]?.report?.state).toBe('blocked')
+    expect(h.executor.stop).toHaveBeenCalledTimes(1)
+    h.engine.receive(trigger('2', { threads: [{ source: 'chat', id: 'different' }] }))
+    expect(() => h.engine.attach(fresh.id, '2')).toThrow('confirm a fresh bounded finding')
+    expect(h.repo.tickets.get(fresh.id)!.ended?.outcome).toBe('dropped')
+    expect(h.repo.tickets.get(fresh.id)!.assignments).toHaveLength(1)
+  })
+  it('does not replay an uncertain finding assignment after host restart', () => {
+    const h = harness()
+    const fresh = h.engine.dispatchFinding(job)
+    h.settle()
+    h.engine.assignmentInterrupted(fresh.id, fresh.assignments[0]!.id)
+    const interrupted = h.repo.tickets.get(fresh.id)!
+    expect(interrupted.assignments).toHaveLength(1)
+    expect(interrupted.assignments[0]?.report).toMatchObject({ state: 'blocked', summary: expect.stringContaining('no automatic replay') })
+    expect(h.executor.start).toHaveBeenCalledTimes(1)
+  })
+  it('retains human review on a followed PR as linked context without reopening or poisoning intake', () => {
+    const h = harness({ revalidate: () => true }), fresh = h.engine.dispatchFinding(job)
+    h.settle()
+    const pr = { source: 'github', id: 'owner/repo/pull/171' }
+    h.engine.bindThread(fresh.id, pr, true)
+    h.engine.report(fresh.id, { state: 'blocked', summary: 'Bounded scope exhausted; review remains required' })
+    const ended = h.repo.tickets.get(fresh.id)!.ended
+    const review = trigger('2', { source: 'github', threads: [pr], text: 'Human PR review requests a bounded correction' })
+    expect(h.engine.receive(review)).toBe('stored')
+    expect(h.engine.receive(review)).toBe('duplicate')
+    h.engine.evaluateDue()
+    const retained = h.repo.tickets.get(fresh.id)!
+    expect(retained.ended).toEqual(ended)
+    expect(retained.assignments).toHaveLength(1)
+    expect(retained.undelivered).toEqual([])
+    expect(retained.inputs).toContainEqual(expect.objectContaining({ kind: 'trigger', triggerId: review.id, context: true }))
+    expect(h.repo.triggers.disposition(review.id)).toMatchObject({ fanout: [fresh.id], context: [fresh.id] })
+    expect(followupOwners(review, h.repo)).toEqual([])
+    expect(h.requests.at(-1)?.triggers.map(t => t.id)).toContain(review.id)
+    expect(h.repo.triggers.get(retained.origin.triggerId)?.meta.findingId).toBe(job.findingId)
+    expect(h.executor.start).toHaveBeenCalledTimes(1)
+    expect(() => h.engine.attach(fresh.id, review.id)).toThrow('confirm a fresh bounded finding')
+  })
+  it('does not dispatch while paused', () => {
+    const h = harness({ paused: true })
+    expect(() => h.engine.dispatchFinding(job)).toThrow('paused')
+    expect(h.executor.start).not.toHaveBeenCalled()
+    expect(h.repo.tickets.list()).toHaveLength(0)
+  })
+})
+
 describe('intake', () => {
   it('stores a trigger once and records source filtering', () => {
     const h = harness()

@@ -1,6 +1,9 @@
 /** One privileged lifecycle renderer for conversation, Decisions and optional companion surfaces. Never stages chat. */
 import type { ReactNode } from 'react'
 import type { PendingDecisionItem } from '../core/decision.ts'
+import { findingMatchesSession } from './finding-association.ts'
+import { FindingCard } from './finding-card.tsx'
+export { FindingCard, confirmFinding, revisitFinding, reviewFinding, type FindingConfirmation, type FindingReview } from './finding-card.tsx'
 import { LifecycleCard } from './lifecycle-card.tsx'
 import { DeliveryCard, type DeliveryConfirmation } from './delivery-card.tsx'
 import { caller, usePoll } from './api.ts'
@@ -33,6 +36,7 @@ export async function reconcileDelivery(id: string, request: DeliveryConfirmatio
   return response.json()
 }
 export function SharedLifecycleCard({ item, onTicket }: { item: PendingDecisionItem; onTicket?: () => void }) {
+  if (item.actionMode === 'finding_triage' || item.finding) return <FindingCard item={item} />
   if (item.actionMode === 'feature_delivery' || item.delivery) return <DeliveryCard item={item} onConfirm={request => confirmDelivery(item.delivery!.id, request)} onRecheck={request => recheckDelivery(item.delivery!.id, request)} onReconcile={request => reconcileDelivery(item.delivery!.id, request)} />
   return <LifecycleCard item={item} onTicket={onTicket} onAction={(action, approval) => call('POST decisions/:id/lifecycle',
     { id: item.id, body: { action, ...(approval ? { approval } : {}) } })} />
@@ -40,7 +44,7 @@ export function SharedLifecycleCard({ item, onTicket }: { item: PendingDecisionI
 /** Independent privileged dock remains available even when Next steps owns ordinary suggestion rendering. */
 export function PublicationDock({ sessionId, removed }: { sessionId: string; removed?: boolean }) {
   const { data } = usePoll(() => call('GET decisions/inbox'), [])
-  const items = data?.items.filter(item => (item.sessionId === sessionId || item.delivery?.workers.includes(sessionId)) && (item.delivery || item.actionMode === 'feature_delivery' || item.lifecycle
+  const items = data?.items.filter(item => (findingMatchesSession(item, sessionId) || item.sessionId === sessionId || item.delivery?.workers.includes(sessionId)) && (item.finding || item.actionMode === 'finding_triage' || item.delivery || item.actionMode === 'feature_delivery' || item.lifecycle
     && (item.status === 'pending' || item.lifecycle.recovery))) ?? []
   if (removed || !items.length) return null
   return <section aria-label="Senior Developer publications" style={{ display: 'grid', gap: 10 }}>

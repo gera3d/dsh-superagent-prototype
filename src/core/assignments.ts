@@ -92,6 +92,11 @@ export class Assignments extends EnginePart {
     const report = running.report
     const busy = !!running.deliveredAt && !!report && running.deliveredAt >= report.at
     const settled = !!report && ['waiting', 'ready', 'blocked', 'failed'].includes(report.state) && !busy
+    // A finding confirmation authorizes one assignment, not an uncertain replay after a host crash.
+    if (!settled && this.source(ticket)?.source === 'finding') {
+      this.report(ticketId, { state: 'blocked', summary: 'Finding assignment interrupted by host restart. Inspect persisted evidence before confirming any new bounded work; no automatic replay was dispatched.' })
+      return
+    }
     if (!settled) this.tickets.restart(ticket, running, 'hostRestarted', RECOVERY_NOTE)
     else if (ticket.undelivered.length) this.options.executor.deliver(ticket, running)
   }
@@ -134,9 +139,15 @@ export class Assignments extends EnginePart {
     if (report.answers) this.takeUp(ticketId, report.answers)
     if (report.state === 'blocked' || report.state === 'failed') ticket.undelivered = ticket.undelivered.filter(id => !automatic(ticket.inputs.find(input => input.id === id)))
     this.repo.tickets.save(ticket)
+    if (this.source(ticket)?.source === 'finding' && ['blocked', 'failed', 'dropped'].includes(report.state)) {
+      this.tickets.end(ticketId, 'executor', 'dropped', at,
+        `Bounded finding assignment reported ${report.state}; evidence review required, finding not resolved`)
+      return this.require(ticketId)
+    }
     // A failure a stronger model may fix escalates instead of waiting for a person; a question, an open question, a launch
     // failure, or a cap that routing reports as exhausted keeps the failure with a person.
     const escalate = report.state === 'failed' && !attention && report.escalatable !== false
+      && this.source(ticket)?.source !== 'finding'
       ? this.options.escalation?.(ticket, report.summary) : undefined
     if (escalate) { this.tickets.escalate(ticketId, escalate, report.summary); return this.require(ticketId) }
     // A ticket that follows Threads ends with them: a ready report ends it only once followsDone holds, with that outcome.

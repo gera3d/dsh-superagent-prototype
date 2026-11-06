@@ -1,6 +1,7 @@
 /** The domain Engine: the single entry point of the core, and the role interfaces its callers receive. */
 import { UserError } from './errors.ts'
-import { isoTime, liveTicket } from './model.ts'
+import { isoTime, liveTicket, threadKey } from './model.ts'
+import { key } from './ids.ts'
 import type { ChannelRef, Decision, PolicyEffect, ThreadRef, Ticket, Trigger } from './model.ts'
 import type { Candidate, Repositories } from './ports.ts'
 import type { EngineOptions } from './part.ts'
@@ -9,6 +10,11 @@ import { Evals, type Outcome } from './evals.ts'
 import { Intake, type ReceiveResult } from './intake.ts'
 import { Replies, type Reply, type ReplyRequest } from './replies.ts'
 import { Tickets } from './tickets.ts'
+
+export interface FindingAssignment {
+  jobId: string; findingId: string; title: string; scope: string; repository: string; text: string
+  sourceIssue?: number; existingDeliveryId?: string
+}
 
 export type { EngineOptions } from './part.ts'
 export type { WorkerReport } from './assignments.ts'
@@ -35,6 +41,49 @@ export class Engine {
     this.assignments = new Assignments(options, this.tickets, this.replies)
     this.evals = new Evals(options, this.tickets)
     this.intake = new Intake(options, this.tickets)
+  }
+
+  /**
+   * Trusted local finding-confirmation handoff, not general intake or a session note. The caller must
+   * atomically persist its confirmed job alongside this command. Never routes through an old worker.
+   * A stable job key always returns the original ticket, even after it ends; changed scope fails closed.
+   */
+  dispatchFinding(input: FindingAssignment): Ticket {
+    return this.repo.atomic(() => {
+      if (!input.jobId.trim() || !input.findingId.trim() || !input.scope.trim() || !input.text.trim()
+        || !/^[A-Za-z0-9][A-Za-z0-9-]*\/[A-Za-z0-9_.-]+$/.test(input.repository)) throw new Error('Invalid bounded finding assignment')
+      const id = key('finding-ticket', input.jobId)
+      const triggerId = key('finding-trigger', input.jobId)
+      const previous = this.repo.tickets.get(id)
+      if (previous) {
+        const original = this.repo.triggers.get(triggerId)
+        if (!original || JSON.stringify(original.meta.findingAssignment) !== JSON.stringify(input)) throw new Error('Finding job scope mismatch')
+        return previous
+      }
+      const policy = this.options.policy()
+      if (policy.paused) throw new Error('Finding dispatch is paused')
+      const at = this.options.now?.() ?? new Date().toISOString()
+      const ref = { source: 'finding', id: input.jobId }
+      const actor = { source: 'local', id: 'local-operator' }
+      const trigger: Trigger = { id: triggerId, source: 'finding', threads: [ref], actor, human: true, addressed: 'direct', at,
+        text: input.text, ...(input.sourceIssue ? { url: `https://github.com/${input.repository}/issues/${input.sourceIssue}` } : {}),
+        meta: { repository: input.repository, findingId: input.findingId, findingJobId: input.jobId, findingAssignment: structuredClone(input),
+          ...(input.existingDeliveryId ? { existingDeliveryId: input.existingDeliveryId } : {}) } }
+      this.repo.triggers.save(trigger)
+      this.repo.threads.save({ key: threadKey(ref), ref, createdAt: at, subscriptions: [], correlated: [], pending: [], meta: { findingJobId: input.jobId } })
+      const mandate = { strength: 'explicit' as const, policyVersion: policy.version, actor, scope: input.scope,
+        basis: { via: 'addressed' as const, addressed: 'direct' as const, source: 'finding', sender: 'local-operator',
+          scope: { repository: input.repository, findingId: input.findingId, jobId: input.jobId, bounded: true } } }
+      const decisionId = key('finding-decision', input.jobId)
+      this.repo.decisions.save({ id: decisionId, evalId: key('finding-confirmation', input.jobId), threadKey: threadKey(ref),
+        triggerIds: [triggerId], policyVersion: policy.version, at, kind: 'accept', reason: [], strength: 'explicit', ticketId: id, mandate,
+        audit: { source: 'local-operator-confirmed-finding', findingId: input.findingId, jobId: input.jobId } })
+      this.repo.triggers.saveDisposition(triggerId, { fanout: [id], decisionId, at })
+      this.tickets.create(id, decisionId, mandate, { triggerIds: [triggerId], primary: triggerId },
+        { kind: 'accept', title: input.title, name: 'finding-task', scope: input.scope, reason: 'Local operator confirmed bounded finding',
+          note: `Exactly one bounded finding assignment (${input.jobId}). Scope: ${input.scope}. No publication, merge, deployment, acceptance, or live-operation authority. Report evidence and stop at the scope boundary.` }, at)
+      return this.repo.tickets.get(id)!
+    })
   }
 
   // Sources

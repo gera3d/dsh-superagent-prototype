@@ -110,6 +110,7 @@ export class Tickets extends EnginePart {
     // A follow-up that reached a ticket goes elsewhere only once the workers that decide it hand it back.
     this.leftToWorkers(trigger)
     const current = this.require(ticketId)
+    if (this.source(current)?.source === 'finding') throw new UserError('findingConfirmationRequired')
     if (current.ended?.by === 'human') throw new UserError('ticketStopped')
     if (!liveTicket(current) && !this.policy().revalidate(current.mandate)) throw new UserError('mandateRevoked')
     return trigger
@@ -192,6 +193,7 @@ export class Tickets extends EnginePart {
    */
   retry(ticketId: string): Ticket {
     const ticket = this.require(ticketId)
+    if (this.source(ticket)?.source === 'finding') throw new UserError('findingConfirmationRequired')
     const latest = latestAssignment(ticket)
     if (!canRetry(ticket) || !latest) throw new UserError('notRetryable')
     const stalled = stallCandidate(ticket)
@@ -293,7 +295,8 @@ export class Tickets extends EnginePart {
     ticket.inputs.push(input); ticket.updatedAt = this.now()
     // Hold back automated inputs while the worker is waiting on a person.
     const held = liveTicket(ticket) && automatic(input) && waitsForPerson(ticket)
-    if (!held) ticket.undelivered.push(input.id)
+    const retiredFinding = !liveTicket(ticket) && this.source(ticket)?.source === 'finding'
+    if (!held && !retiredFinding) ticket.undelivered.push(input.id)
     this.repo.tickets.save(ticket)
     if (!liveTicket(ticket) || held) return
     const running = runningAssignment(ticket), latest = latestAssignment(ticket)
@@ -309,6 +312,8 @@ export class Tickets extends EnginePart {
   wake(ticketId: string): void {
     const ticket = this.repo.tickets.get(ticketId)
     if (!ticket || liveTicket(ticket) || ticket.ended?.by === 'human' || !ticket.undelivered.length) return
+    // Legacy pending inputs must not poison intake/evaluateDue by attempting a forbidden second finding assignment.
+    if (this.source(ticket)?.source === 'finding') { this.refuse(ticket); return }
     const policy = this.policy()
     if (policy.paused) return
     if (!policy.revalidate(ticket.mandate)) { this.refuse(ticket); return }
@@ -436,6 +441,7 @@ export class Tickets extends EnginePart {
   }
   /** Add a pending Assignment; a failed delivery to the one before it no longer concerns the ticket. */
   private newAssignment(ticket: Ticket): Assignment {
+    if (ticket.assignments.length && this.source(ticket)?.source === 'finding') throw new UserError('findingConfirmationRequired')
     const assignment: Assignment = { id: key('assignment', ticket.id, String(ticket.assignments.length)), state: 'pending', createdAt: this.now() }
     ticket.assignments.push(assignment)
     delete ticket.delivery

@@ -1,6 +1,7 @@
 /** Typed recommendation evaluation. Transport is provided by the host configured-model service. */
 import type { PublicationSnapshot } from '../app/publication.ts'
 import type { Delivery } from '../app/feature-delivery.ts'
+import type { Finding } from '../app/finding.ts'
 
 /** Structured privilege boundary: labels are never authorization. Unknown kinds fail closed in autonomous clients. */
 export type DecisionActionKind = 'suggestion' | 'approve' | 'publish' | 'restart' | 'rollback' | 'merge' | 'lifecycle'
@@ -72,7 +73,9 @@ export interface PendingDecisionItem {
   /** Source event coordinates; choices only stage a draft, never execute work. */
   sourceTurn?: number
   sourceSeq?: number
-  actionMode?: 'stage_response' | 'ticket_lifecycle' | 'feature_delivery'
+  actionMode?: 'stage_response' | 'ticket_lifecycle' | 'feature_delivery' | 'finding_triage'
+  /** Canonical pre-work triage; never staged as ordinary chat or autopilot. */
+  finding?: Finding
   /** Canonical server-owned delivery snapshot. Never staged or resolved through native chat. */
   delivery?: Delivery
   /** Server-projected lifecycle state; never accepted as action authorization. */
