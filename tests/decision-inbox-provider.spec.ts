@@ -159,3 +159,90 @@ it('retires persisted false positives without touching valid questions, recorded
     expect(inbox.get('chat-native-active')).toMatchObject({ status: 'pending', staging: { choiceId: 'discuss' } })
   } finally { db.close() }
 })
+
+it('serves the persisted inbox and validated canonical writes while historical recovery is deferred', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'inbox-recovery-'))
+  const database = join(directory, 'orchestrator.sqlite')
+  const persisted: PendingDecisionItem = { id: 'inline:persisted:decision', sessionId: 'persisted-session', sourceMessageId: 'persisted-message',
+    sourceSeq: 1, sourceTurn: 1, ticketTitle: 'Chat', trigger: 'Choose', status: 'pending', urgency: 'low', createdAt: 100,
+    context: 'Context', question: 'Which?', choices: [{ id: 'a', label: 'Do A' }, { id: 'b', label: 'Do B' }],
+    recommendation: { recommendedValue: '', confidence: 0, rationale: 'Not evaluated', distribution: [], provider: 'Not evaluated', latencyMs: 0 } }
+  const seed = new DatabaseSync(database)
+  seed.exec('CREATE TABLE ticket(id TEXT PRIMARY KEY,value TEXT NOT NULL)')
+  new DecisionInbox(seed).put(persisted)
+  seed.close()
+  let dispose: (() => Promise<void>) | undefined
+  const registrations = new Map<string, any>()
+  const services = new Map<string, any>()
+  const histories = new Map<string, any[]>()
+  const turn = (question: string) => ([
+    { type: 'assistant/message', seq: 1, time: 100, data: { turn: 1, message: { id: 'message', content: [{ type: 'text', text: question }] } } },
+    { type: 'turn/end', seq: 2, time: 101, data: { turn: 1, reason: { kind: 'completed' } } },
+  ])
+  histories.set('fresh-session', turn('Which fresh option?'))
+  histories.set('fail-session', turn('Which failing option?'))
+  histories.set('old-session', turn('Which old option?'))
+  let releaseRecovery!: () => void
+  const recoveryGate = new Promise<void>(resolve => { releaseRecovery = resolve })
+  let recoveryStarted!: () => void
+  const started = new Promise<void>(resolve => { recoveryStarted = resolve })
+  const ctx = { on: () => () => {}, logger: { error: () => {}, warn: () => {} },
+    effect: (effect: () => any) => { dispose = effect() },
+    provide: (name: string, value: any) => { services.set(name, value); return () => { services.delete(name) } },
+    sessionPersistence: { flush: async () => {}, list: async () => { recoveryStarted(); await recoveryGate; return [{ header: { id: 'old-session', origin: 'human' } }] },
+      open: async (id: string) => ({ read: async (offset: number) => ({ events: offset ? [] : histories.get(id) ?? [] }), [Symbol.asyncDispose]: async () => {} }) },
+    webServer: { host: '127.0.0.1', port: 3082, register: (route: any) => {
+      registrations.set(route.path, route.handler); return () => { registrations.delete(route.path) }
+    } } }
+  async function call(method: string, path: string, body?: unknown) {
+    let status = 0; let text = ''
+    const handler = registrations.get(`/orchestrator/api/decisions/${path}`)
+    if (!handler) return { status: 404, body: { error: 'No route' } }
+    await handler({ method, url: `/orchestrator/api/decisions/${path}`, headers: { host: '127.0.0.1:3082', 'x-orchestrator-request': '1', origin: 'http://127.0.0.1:3082' },
+      async *[Symbol.asyncIterator]() { if (body !== undefined) yield Buffer.from(JSON.stringify(body)) } },
+    { writeHead: (code: number) => { status = code }, end: (value: string) => { text = value } })
+    return { status, body: JSON.parse(text) }
+  }
+  async function within<T>(value: Promise<T>, ms: number): Promise<T | 'timeout'> {
+    return Promise.race([value, new Promise<'timeout'>(resolve => { setTimeout(() => resolve('timeout'), ms).unref?.() })])
+  }
+  try {
+    apply(ctx as any, { database })
+    await started
+    // The persisted inbox is readable immediately, and the response admits history is not fully scanned yet.
+    const first = await within(call('GET', 'inbox'), 1000)
+    expect(first).not.toBe('timeout')
+    expect(first).toMatchObject({ status: 200, body: { recovery: { pending: true } } })
+    expect((first as any).body.items.find((entry: any) => entry.id === persisted.id)).toMatchObject({ status: 'pending' })
+    // Only mutations that can close or rewrite item state wait for the scan.
+    expect(await within(call('POST', `${persisted.id}/stage`, { choiceId: 'a', attemptId: randomUUID(), draftText: 'Do A' }), 200)).toBe('timeout')
+    // Canonical writes still reject a source that is not the current durable completed turn.
+    const source = { sourceMessageId: 'wrong-message', sourceSeq: 1, sourceTurn: 1, draftRevision: 'revision-hash' }
+    expect(await call('POST', 'canonical/claim', { ...source, sessionId: 'fresh-session', owner: 'tab-a' }))
+      .toMatchObject({ status: 409, body: { error: expect.stringContaining('current durable completed turn') } })
+    // Fresh canonical claim/publish/score succeeds while the old-session scan is still deferred.
+    const claim = await within(call('POST', 'canonical/claim', { ...source, sourceMessageId: 'message', sessionId: 'fresh-session', owner: 'tab-a' }), 1000)
+    expect(claim).toMatchObject({ status: 200, body: { claimed: true, item: { canonical: { phase: 'pending' } } } })
+    const write = { sessionId: 'fresh-session', sourceMessageId: 'message', sourceSeq: 1, sourceTurn: 1, draftRevision: 'revision-hash', leaseToken: (claim as any).body.leaseToken }
+    const options = [{ id: 'first', label: 'First', prompt: 'Complete first continuation', why: 'First reason', recommended: true },
+      { id: 'second', label: 'Second', prompt: 'Complete second continuation', why: 'Second reason', recommended: false }]
+    expect(await call('POST', 'canonical/publish', { ...write, model: 'helper', options })).toMatchObject({ status: 200, body: { item: { canonical: { phase: 'ready' } } } })
+    const evaluation = { recommendedValue: 'first', confidence: 0.6, rationale: 'Scored rationale', distribution: [{ id: 'first', probability: 0.6 }, { id: 'second', probability: 0.4 }], provider: 'ranker', latencyMs: 10 }
+    expect(await call('POST', 'canonical/score', { ...write, evaluation })).toMatchObject({ status: 200, body: { item: { canonical: { phase: 'scored' } } } })
+    const failedClaim = await call('POST', 'canonical/claim', { ...source, sourceMessageId: 'message', sessionId: 'fail-session', owner: 'tab-a' })
+    expect(await call('POST', 'canonical/fail', { ...source, sourceMessageId: 'message', sessionId: 'fail-session', leaseToken: failedClaim.body.leaseToken, error: 'helper unavailable' }))
+      .toMatchObject({ status: 200, body: { item: { canonical: { error: 'helper unavailable' } } } })
+    const claimedId = (claim as any).body.item.id
+    expect(await within(call('GET', 'inbox'), 1000)).toMatchObject({ status: 200, body: { recovery: { pending: true } } })
+    // Recovery finishes, the old session's question appears, and the fresh canonical item keeps its state.
+    releaseRecovery()
+    await services.get('decisionInbox').ready
+    const completed = await call('GET', 'inbox')
+    expect(completed.body.recovery).toEqual({ pending: false })
+    expect(completed.body.items.find((entry: any) => entry.sessionId === 'old-session')).toMatchObject({ status: 'pending' })
+    expect(completed.body.items.find((entry: any) => entry.id === claimedId)).toMatchObject({ canonical: { phase: 'scored' } })
+    // Gated mutations are processed, not dropped, once recovery has finished.
+    expect(await within(call('POST', `${persisted.id}/stage`, { choiceId: 'a', attemptId: randomUUID(), draftText: 'Do A' }), 1000))
+      .toMatchObject({ status: 409 })
+  } finally { releaseRecovery(); await dispose?.(); rmSync(directory, { recursive: true }) }
+})

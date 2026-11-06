@@ -1602,7 +1602,9 @@ it('runs a launch that fails for a passing reason again on the launch backoff th
       now += 5000 * 2 ** attempt + 1000
       await later(now)
     }
-    expect(tries).toBe(4)
+    // The first launch tries the configured route and one fallback route before the three launch-backoff retries,
+    // and the retries keep that fallback route from being tried again.
+    expect(tries).toBe(5)
     expect(runtime.store.tickets.get(ticket.id)!.assignments.at(-1)!.report).toMatchObject({ state: 'failed' })
     controller.resolveAgent.mockImplementation(original)
   }
