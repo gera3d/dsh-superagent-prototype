@@ -30,6 +30,20 @@ Read the numbered documents in order; each builds only on the ones before it.
 - [007 Architecture](docs/007-architecture.md)
 - [008 Cookbook](docs/008-cookbook.md): adding a Source
 
+## Senior Developer helper API
+
+`POST /orchestrator/api/helper/suggest` requires `x-orchestrator-request: 1` and the same loopback Host/origin checks as management routes. Send only a compact digest, never raw session events:
+
+```json
+{"summary":"Earlier milestones (under 1500 characters)","latestTurn":"Latest turn text / incremental diff (1–12000 characters)"}
+```
+
+The strict body accepts no other fields and is capped at 64 KiB. It returns `{"options":[{"id":"verify","label":"Run tests","prompt":"Run automated tests and inspect diffs.","recommended":true},...]}` with 2–4 distinct options and exactly one recommendation. Draft generation is tool-free and does not wait for scoring or dispatch any action.
+
+`settings.models.helper` is a nullable role model (`provider`, `model`, optional `reasoningEffort`), defaulting to `null`. Null starts at the existing first starred/first hierarchy route, or the host default if the hierarchy is empty; existing Eval/Executor defaults are unchanged. Availability errors use the existing model ladder/DeepSeek fallback within `maxEscalations` and one shared 6-second deadline. Model failures return a sanitized error so callers can fall back locally; malformed input returns HTTP 400. The helper uses the existing enabled Senior Developer character (built-in Senior Developer if absent), its verification standards and permission to disagree. Model authentication stays in the host model service; inline credentials are not accepted.
+
+This server change is independent of the stall guard and does not change live settings or install/restart anything. Rollback: `git revert <helper-server-commit>`; clients must keep their local suggestion fallback when this route is unavailable. Real-turn latency measurement and UI verification belong to the plugin integration, not these mocked server tests.
+
 ## Development
 
 `pnpm check` runs the typecheck, the tests and the build.

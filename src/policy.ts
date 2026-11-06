@@ -94,6 +94,7 @@ export const ModelsConfigSchema = z.object({
   hierarchy: z.array(ModelEntrySchema).max(LIMITS.modelHierarchy.max)
     .refine(entries => new Set(entries.map(routeKey)).size === entries.length, 'Duplicate model routes').default([]),
   maxEscalations: z.number().int().min(LIMITS.maxEscalations.min).max(LIMITS.maxEscalations.max).default(2),
+  helper: RoleModelSchema.nullable().default(null),
 }).strict()
 
 export const CharacterSchema = z.object({

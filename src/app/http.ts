@@ -11,6 +11,7 @@ import { THREAD_FILTERS, TICKET_FILTERS, type Api, type ApiResponse, type RouteP
 import { configuredDecisionReply } from './decision-evaluator.ts'
 import { evaluateDecisionWithFallback } from './decision-ranker.ts'
 import { evaluateWithCharacter } from './character-evaluator.ts'
+import { HELPER_BODY_MAX_BYTES, HelperDigestSchema, suggestHelper } from './routes/helper.ts'
 import { DEFAULT_SENIOR_DEVELOPER_CHARACTER } from '../core/character.ts'
 import { DecisionInbox, InboxError, registerDecisionCapture, ticketDecisions, submitDecision, stageDecision, restartDecision } from './decision-inbox.ts'
 import { sourceSkills } from './context.ts'
@@ -267,6 +268,10 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
       if (new Set(item.choices.map(choice => choice.id)).size !== item.choices.length) throw new RouteError(400, 'Choice ids must be distinct')
       const saved = inbox().put(item)
       return { ok: true, id: saved.id }
+    },
+    'POST helper/suggest': async ({ body }) => {
+      const digest = HelperDigestSchema.parse(await body(HELPER_BODY_MAX_BYTES))
+      return suggestHelper(ctx, digest, store.settings())
     },
     'POST decisions/evaluate': async ({ body }) => {
       const payload = DecisionEvaluation.parse(await body())

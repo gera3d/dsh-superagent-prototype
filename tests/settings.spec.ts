@@ -50,9 +50,9 @@ it('validates every route of a saved model hierarchy through the live provider, 
     { provider: 'openai-codex', model: 'gpt-6.1-sol', reasoningEffort: 'high', starred: true },
   ]
   await settings.save('models', { hierarchy, maxEscalations: 1 }, store.blockRevision('models'), 'panel')
-  expect(store.settings().models).toEqual({ hierarchy, maxEscalations: 1 })
-  expect(settings.block('models').value).toEqual({ hierarchy, maxEscalations: 1 })
-  expect(settings.view().models.value).toEqual({ hierarchy, maxEscalations: 1 })
+  expect(store.settings().models).toEqual({ hierarchy, maxEscalations: 1, helper: null })
+  expect(settings.block('models').value).toEqual({ hierarchy, maxEscalations: 1, helper: null })
+  expect(settings.view().models.value).toEqual({ hierarchy, maxEscalations: 1, helper: null })
   expect(llm.resolveCallConfig).toHaveBeenCalledWith(expect.objectContaining({ provider: 'openai-codex', model: 'gpt-6.1-sol' }))
   // The panel's block route accepts the block, as it accepts the other settings blocks.
   expect((await h.api('PUT', 'settings/models', { value: { hierarchy, maxEscalations: 1 }, revision: store.blockRevision('models') })).status)
@@ -61,7 +61,23 @@ it('validates every route of a saved model hierarchy through the live provider, 
   llm.resolveCallConfig.mockRejectedValueOnce(new Error('unknown provider nowhere'))
   await expect(settings.save('models', { hierarchy: [...hierarchy, { provider: 'nowhere', model: 'missing', starred: false }], maxEscalations: 2 },
     store.blockRevision('models'), 'panel')).rejects.toThrow(UserError)
-  expect(store.settings().models).toEqual({ hierarchy, maxEscalations: 1 })
+  expect(store.settings().models).toEqual({ hierarchy, maxEscalations: 1, helper: null })
+})
+
+it('validates the helper override on save and preserves the old route on provider rejection', async () => {
+  h = await startRuntime()
+  const { settings, store } = h.runtime
+  const llm = (h.ctx as unknown as { llm: { resolveCallConfig: ReturnType<typeof vi.fn> } }).llm
+  const helper = { provider: 'helper-provider', model: 'helper-fast' }
+  await settings.save('models', { ...store.settings().models, helper }, store.blockRevision('models'), 'panel')
+  expect(llm.resolveCallConfig).toHaveBeenCalledWith(expect.objectContaining(helper))
+  expect(store.settings().models.helper).toEqual(helper)
+  llm.resolveCallConfig.mockRejectedValueOnce(new Error('unknown helper model'))
+  await expect(settings.save('models', { ...store.settings().models, helper: { provider: 'missing', model: 'missing' } },
+    store.blockRevision('models'), 'panel')).rejects.toThrow(UserError)
+  expect(store.settings().models.helper).toEqual(helper)
+  await settings.save('models', { ...store.settings().models, helper: null }, store.blockRevision('models'), 'panel')
+  expect(store.settings().models.helper).toBeNull()
 })
 
 it('refuses a Policy sync that a Policy save outran, reports it on sync:feishu, and keeps the save', async () => {

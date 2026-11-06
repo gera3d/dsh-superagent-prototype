@@ -328,6 +328,10 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
     ({ items: query.kind === 'ignore' ? [] : [acceptDecision()], next_offset: null }) },
   'GET decisions/inbox': { answer: () => ({ items: [] }) },
   'POST decisions/inbox': { body: true, answer: ({ body }) => ({ ok: true, id: body.id }) },
+  'POST helper/suggest': { body: true, answer: () => ({ options: [
+    { id: 'verify', label: 'Run tests', prompt: 'Run automated tests and inspect the diff.', recommended: true },
+    { id: 'review', label: 'Review edge cases', prompt: 'Inspect error handling and edge cases.', recommended: false },
+  ] }) },
   'POST decisions/evaluate': { body: true, answer: ({ body }) => ({
     recommendedValue: body.choices[0]?.id || '',
     confidence: 0.9,

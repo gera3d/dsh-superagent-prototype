@@ -165,8 +165,8 @@ export class Settings {
     const parsed = rules.parse(value, sources, id)
     const current = store.settings()
     const candidate = rules.merge(current, parsed, id)
-    const model = block === 'eval' ? candidate.eval.model : block === 'executor' ? candidate.executor.model : null
-    const previous = block === 'eval' ? current.eval.model : block === 'executor' ? current.executor.model : null
+    const model = block === 'eval' ? candidate.eval.model : block === 'executor' ? candidate.executor.model : block === 'models' ? candidate.models.helper : null
+    const previous = block === 'eval' ? current.eval.model : block === 'executor' ? current.executor.model : block === 'models' ? current.models.helper : null
     if (model && JSON.stringify(model) !== JSON.stringify(previous)) {
       try { await resolveRoleModel(this.host.context, model) }
       catch (error) { throw new UserError('modelUnavailable', { block, error: error instanceof Error ? error.message : String(error) }) }

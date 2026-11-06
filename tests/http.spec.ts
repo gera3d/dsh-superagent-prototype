@@ -13,11 +13,12 @@ import { SetupError } from '../src/setup.ts'
 type Handler = (req: unknown, res: unknown) => Promise<void>
 type Headers = Record<string, string | undefined>
 /** Mount management HTTP routes on a fake web server and return a request helper that includes default panel headers. */
-function serve(runtime: Partial<Record<keyof HttpHost, unknown>>, host = '127.0.0.1') {
+function serve(runtime: Partial<Record<keyof HttpHost, unknown>>, host = '127.0.0.1', services: Record<string, unknown> = {}) {
   let handler: Handler = async () => {}
   const db = new DatabaseSync(':memory:'); databases.push(db)
   const ctx = { on: () => () => {}, sessionPersistence: { flush: async () => {}, list: async () => [] },
     logger: { error: () => {}, warn: () => {} },
+    ...services,
     webServer: { host, port: 3082, register: (route: { handler: Handler }) => { handler = route.handler; return () => {} } } }
   registerHttp(ctx as never, { ready: Promise.resolve(), ...runtime, store: { db, ...(runtime.store as object) } } as unknown as HttpHost)
   return async (method: string, path: string, body?: unknown, headers: Headers = {}) => {
@@ -35,6 +36,32 @@ function serve(runtime: Partial<Record<keyof HttpHost, unknown>>, host = '127.0.
     return { status, body: parsed as Record<string, unknown>, ...(location ? { location } : {}) }
   }
 }
+
+it('serves compact helper drafts behind the management header and loopback Host gate', async () => {
+  const options = [{ id: 'verify', label: 'Run tests', prompt: 'Run tests and inspect the diff.', recommended: true },
+    { id: 'review', label: 'Review edge cases', prompt: 'Inspect error handling.', recommended: false }]
+  const resolveCallConfig = vi.fn(async (route: unknown) => route)
+  const call = serve({ store: { settings: () => SettingsSchema.parse({ models: { hierarchy: [{ provider: 'test', model: 'fast' }] } }) } },
+    '127.0.0.1', { llm: { resolveCallConfig, async *stream() {
+      yield { type: 'text-delta', text: JSON.stringify({ options }) }; yield { type: 'finish', reason: { kind: 'stop' } }
+    } } })
+  const digest = { summary: 'A fix is in progress.', latestTurn: 'Implemented the change without tests.' }
+  for (const headers of [{ 'x-orchestrator-request': undefined }, { 'x-orchestrator-request': '0' },
+    { host: 'evil.example:3082' }, { host: '127.0.0.1:9999' }, { origin: 'http://evil.example' }]) {
+    expect(await call('POST', 'helper/suggest', digest, headers)).toMatchObject({ status: 403 })
+  }
+  expect(resolveCallConfig).not.toHaveBeenCalled()
+  expect(await call('GET', 'helper/suggest')).toMatchObject({ status: 404 })
+  for (const invalid of [{ ...digest, summary: 'x'.repeat(1500) }, { ...digest, latestTurn: 'x'.repeat(12001) },
+    { ...digest, latestTurn: ' ' }, { ...digest, events: [{ type: 'message' }] }, { summary: '', latestTurn: [] }]) {
+    expect(await call('POST', 'helper/suggest', invalid)).toMatchObject({ status: 400 })
+  }
+  expect(await call('POST', 'helper/suggest', '{bad json')).toMatchObject({ status: 400 })
+  expect(await call('POST', 'helper/suggest', 'x'.repeat(65537))).toMatchObject({ status: 400, body: { error: 'Request exceeds 65536 bytes' } })
+  expect(resolveCallConfig).not.toHaveBeenCalled()
+  expect(await call('POST', 'helper/suggest', { ...digest, summary: 'x'.repeat(1499) })).toEqual({ status: 200, body: { options } })
+  expect(await call('POST', 'helper/suggest', digest, { host: 'localhost:3082', origin: 'http://localhost:3082' })).toMatchObject({ status: 200 })
+})
 
 it('validates chat decisions and never retries a worker for a chat choice', async () => {
   let retries = 0
