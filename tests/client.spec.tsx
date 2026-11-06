@@ -64,7 +64,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-it('registers the publication dock alongside existing localized panels without hard optional dependencies', () => {
+it('registers a localized main panel, sidebar entry and Plugin Manager row page, and no settings section', () => {
   const { entries, dictionaries, main, nav } = fixture([])
   expect(inject).toEqual(['slots', 'locale', 'sessions', 'uiWorkspace', 'conversation'])
   expect(entries.map(entry => entry.options.name)).toEqual(['conversation.input.dock', 'conversation.input.dock', 'conversation.input.dock', 'sidebar.brand.mark', 'sidebar.brand.name', 'main', 'sidebar.panellist', 'plugins.row.config'])
@@ -80,7 +80,7 @@ it('registers the publication dock alongside existing localized panels without h
   expect(nav.options.label?.()).toBe('Superagent')
 })
 
-it('provides both shared services and disposes each registration and the submission bridge exactly once', () => {
+it('provides the shared decision submission bridge and disposes it with the plugin effects', () => {
   const { ctx, dispose } = fixture([])
   const publications = ctx.get('publicationCards') as PublicationCards
   const bridge = ctx.get('decisionSubmission') as { watch: () => unknown; stage: () => unknown; discard: () => unknown; dispose: () => void }

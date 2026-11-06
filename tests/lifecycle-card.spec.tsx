@@ -35,7 +35,7 @@ async function render(props: Partial<Parameters<typeof LifecycleCard>[0]> = {}) 
   await act(async () => { root!.render(<LifecycleCard item={item} onAction={onAction} onTicket={onTicket} {...props} />) })
   return { onAction, onTicket }
 }
-it('does not assume publication readiness without server evidence or expose model/advisor controls', async () => {
+it('is quiet, requires Try it first for unverified/code changes, and has no model/advisor controls', async () => {
   const { onAction } = await render()
   expect(container.textContent).toContain('Publication evidence unavailable')
   expect(container.textContent).not.toContain('Done · ready for review')
