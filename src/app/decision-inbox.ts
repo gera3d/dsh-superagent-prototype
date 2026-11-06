@@ -420,7 +420,7 @@ export class DecisionInbox {
       if (item.status === 'pending') {
         if (item.ticketId && !active.has(item.id)) {
           this.invalidate(item, 'Ticket no longer needs this input, or its question changed.')
-        } else if (!item.id.startsWith('chat-') && item.sessionId?.startsWith('worker-')) {
+        } else if (!(item.id.startsWith('chat-') && (item.staging || decisionQuestion(item.context) || decisionQuestion(item.question))) && item.sessionId?.startsWith('worker-')) {
           const workerTicketId = item.sessionId.slice(7)
           if (openSet ? !openSet.has(workerTicketId) : (items.length > 0 && !items.some(t => t.ticketId === workerTicketId || t.sessionId === item.sessionId))) {
             this.invalidate(item, 'The originating session has ended. This decision can no longer be answered.')

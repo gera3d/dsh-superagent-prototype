@@ -8,7 +8,7 @@ const output = resolve(root, '../evidence/ui-fixtures')
 await mkdir(output, { recursive: true })
 const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true })
 try {
-  for (const mode of ['before', 'after', 'delivery', 'publish']) {
+  for (const mode of (process.env.FIXTURE_MODES?.split(',') ?? ['before', 'after', 'delivery', 'publish', 'recovery'])) {
     const bundle = await build({ root, configFile: false, logLevel: 'error', define: { 'process.env.NODE_ENV': JSON.stringify('production') }, resolve: { alias: mode === 'before' ? [{ find: '../../src/client/lifecycle-card.tsx', replacement: resolve(root, '../baseline-backend/src/client/lifecycle-card.tsx') }] : [] }, esbuild: { jsx: 'automatic' }, build: { write: false, minify: false, lib: { entry: resolve(root, 'tests/fixtures/delivery-visual.tsx'), name: 'DeliveryFixture', formats: ['iife'] } } })
     const code = (Array.isArray(bundle) ? bundle[0] : bundle).output.find(f => f.type === 'chunk').code
     const page = await browser.newPage({ viewport: { width: 1280, height: 1100 }, deviceScaleFactor: 1 })

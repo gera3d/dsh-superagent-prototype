@@ -132,13 +132,14 @@ export function createDeliveryCapabilities(deps: DeliveryCapabilityDependencies)
       return result
     } catch (error) { return blocked(`Independent review blocked: ${errorText(error)}`) }
   }
-  const fix = async (lease: DeliveryLease): Promise<DeliveryResult> => {
+  const fix = async (lease: DeliveryLease, reconcileOnly = false): Promise<DeliveryResult> => {
     try {
       if (lease.action.kind !== 'fix') throw new Error('Fix action required')
       const fingerprint = scope(lease)
       let handoff = load<Handoff>('fix', lease.id)
       if (handoff && handoff.fingerprint !== fingerprint) throw new Error('Fix idempotency scope mismatch')
       if (!handoff) {
+        if (reconcileOnly) throw new Error('No durable correction handoff for this exact lease; read-only reconciliation cannot dispatch a new note')
         await heads(lease)
         const delivery = deliveries.get(lease.deliveryId)
         if (!delivery) throw new Error('Missing delivery')
@@ -165,7 +166,7 @@ export function createDeliveryCapabilities(deps: DeliveryCapabilityDependencies)
           handoff = { fingerprint, worker: worker.id, assignment: assignment.id, input: input.id, beforeReport: assignment.report?.at, noteAt: input.at, review: failed!.reference }
           save('fix', lease.id, fingerprint, handoff)
         })
-        return { outcome: 'pending' }
+        return { outcome: 'pending', nextRetryAt: Date.now() + 60_000 }
       }
       if (handoff.result) {
         await heads({ ...lease, bindings: handoff.result.updatedBindings ?? lease.bindings })
@@ -182,10 +183,10 @@ export function createDeliveryCapabilities(deps: DeliveryCapabilityDependencies)
       const report = assignment.report
       if (!handoff.readAt || ticket.undelivered.includes(handoff.input) || !report || Date.parse(report.at) <= handoff.readAt || Date.parse(report.at) <= Date.parse(handoff.beforeReport ?? handoff.noteAt)) {
         if (ticket.ended) throw new Error('Worker ended before a fresh correction ready report after reading the handoff')
-        return { outcome: 'pending' }
+        return { outcome: 'pending', nextRetryAt: Date.now() + 60_000 }
       }
       if (report.state === 'blocked' || report.state === 'failed' || report.state === 'dropped') throw new Error(`Correction worker reported ${report.state}: ${report.summary.slice(0, 300)}`)
-      if (report.state !== 'ready') return { outcome: 'pending' }
+      if (report.state !== 'ready') return { outcome: 'pending', nextRetryAt: Date.now() + 60_000 }
       const before = await heads(lease, true)
       const after = await heads(lease, true)
       if (deliveryFingerprint(before) !== deliveryFingerprint(after)) throw new Error('Correction heads changed during reconciliation')
@@ -208,7 +209,7 @@ export function createDeliveryCapabilities(deps: DeliveryCapabilityDependencies)
       return handoff.result
     } catch (error) { return blocked(`Correction handoff blocked: ${errorText(error)}`) }
   }
-  return { review: { execute: review, reconcile: review }, fix: { execute: fix, reconcile: fix } }
+  return { review: { execute: review, reconcile: review }, fix: { execute: lease => fix(lease), reconcile: lease => fix(lease, true) } }
 }
 
 /** Advice is independently generated and cannot alter eligible actions, bindings, or permission fences. */

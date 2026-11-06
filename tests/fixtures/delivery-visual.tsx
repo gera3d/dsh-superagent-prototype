@@ -20,5 +20,11 @@ if (mode === 'publish') {
   d.recommendation = { ...d.recommendation!, actionId: 'publish-4', disposition: 'take', kind: 'publish', rationale: 'Exact-scope review evidence is recorded. Publish only these pinned component changes, then verify the delivered behavior.' }
   d.preparedPublication = { id: 'fixture-publication', ticketId: 'fixture-worker', decisionId: 'fixture-lifecycle', repository: 'example/backend', pr: 166, headSha: 'backend-head', patchSha256: 'backend-patch', environment: 'isolated-fixture', preparedAt: '2026-11-06T10:10:04Z', scopeSha256: 'full-publication-scope', components: ['orchestrator backend', 'Workstream plugin'], effects: ['Apply pinned backend and plugin changes', 'Rebuild backend and client bundles', 'Restart isolated orchestrator service'], refs: [{ repository: 'example/backend', pr: 166, headSha: 'backend-head', diffSha256: 'backend-patch' }, { repository: 'example/plugins', pr: 29, headSha: 'plugins-head', diffSha256: 'plugins-patch' }] }
 }
+if (mode === 'recovery') {
+  const d = delivery.delivery!
+  d.title = 'Observe the existing correction handoff'; d.state = 'blocked'; d.nextAction = undefined; d.recommendation = undefined
+  d.blocker = 'External handoff reconciliation budget exhausted'
+  d.reconciliation = { id: 'original-outbox-key', actionId: 'opaque-current-recovery-key', revision: d.revision, label: 'Reconcile recorded handoff' }
+}
 const Card = LifecycleCard
-createRoot(document.getElementById('root')!).render(<><header><strong>ISOLATED ACTUAL COMPONENT FIXTURE · {mode.toUpperCase()}</strong><p>Not the user's application. No live acceptance or publication is performed.</p></header>{['delivery', 'publish'].includes(mode) ? <DeliveryCard item={delivery} onConfirm={async () => ({ delivery: delivery.delivery })} /> : <Card item={item} onAction={async () => { throw new Error('Fixture: no publication authorized') }} />}</>)
+createRoot(document.getElementById('root')!).render(<><header><strong>ISOLATED ACTUAL COMPONENT FIXTURE · {mode.toUpperCase()}</strong><p>Not the user's application. No live acceptance or publication is performed.</p></header>{['delivery', 'publish', 'recovery'].includes(mode) ? <DeliveryCard item={delivery} onConfirm={async () => ({ delivery: delivery.delivery })} onReconcile={async () => ({ requested: true })} /> : <Card item={item} onAction={async () => { throw new Error('Fixture: no publication authorized') }} />}</>)

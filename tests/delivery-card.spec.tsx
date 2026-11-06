@@ -5,7 +5,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import type { Delivery } from '../src/app/feature-delivery.ts'
 import type { PendingDecisionItem } from '../src/core/decision.ts'
 import { DeliveryCard } from '../src/client/delivery-card.tsx'
-import { confirmDelivery, recheckDelivery } from '../src/client/publication-cards.tsx'
+import { confirmDelivery, recheckDelivery, reconcileDelivery } from '../src/client/publication-cards.tsx'
 import { decisionNeedsAttention, decisionInHistory } from '../src/core/publication-queue.ts'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -19,8 +19,8 @@ const item = (delivery = d): PendingDecisionItem => ({ id: 'delivery-feature-1',
 let root: ReturnType<typeof createRoot> | undefined
 const container = document.createElement('div')
 afterEach(() => { act(() => root?.unmount()); root = undefined; container.replaceChildren(); vi.unstubAllGlobals() })
-async function render(value: PendingDecisionItem, onConfirm = vi.fn(), onRecheck?: (request: { revision: number }) => Promise<unknown>) {
-  root = createRoot(container); await act(async () => root!.render(<DeliveryCard item={value} onConfirm={onConfirm} onRecheck={onRecheck} />)); return onConfirm
+async function render(value: PendingDecisionItem, onConfirm = vi.fn(), onRecheck?: (request: { revision: number }) => Promise<unknown>, onReconcile?: (request: { revision: number; actionId: string }) => Promise<unknown>) {
+  root = createRoot(container); await act(async () => root!.render(<DeliveryCard item={value} onConfirm={onConfirm} onRecheck={onRecheck} onReconcile={onReconcile} />)); return onConfirm
 }
 it('renders canonical metadata and only confirms the immutable typed action once', async () => {
   const onConfirm = await render(item(), vi.fn().mockResolvedValue({ delivery: d }))
@@ -99,6 +99,33 @@ it('rechecks only the current preparation blocker once with a typed revision', a
 it('never offers configuration recheck for an unrelated blocker', async () => {
   await render(item({ ...d, state: 'blocked', nextAction: undefined, blocker: 'Mutation uncertain', preparation: { fingerprint: 'fp', message: 'Old preparation failed', attempts: 1 } }), vi.fn(), vi.fn())
   expect(container.querySelector('button')).toBeNull()
+})
+it('requests observation of the existing handoff once using the opaque recovery action, never mutation confirmation', async () => {
+  const confirm = vi.fn(), reconcile = vi.fn().mockResolvedValue({})
+  await render(item({ ...d, state: 'blocked', nextAction: undefined, blocker: 'External handoff reconciliation budget exhausted', reconciliation: { id: 'original-outbox-key', actionId: 'opaque-recovery-key', revision: 3, label: 'Reconcile recorded handoff' } }), confirm, vi.fn(), reconcile)
+  expect(container.querySelectorAll('button')).toHaveLength(1)
+  expect(container.querySelector('button')?.textContent).toBe('Reconcile recorded handoff')
+  await act(async () => { container.querySelector('button')!.click(); container.querySelector('button')!.click() })
+  expect(reconcile).toHaveBeenCalledExactlyOnceWith({ revision: 3, actionId: 'opaque-recovery-key' })
+  expect(confirm).not.toHaveBeenCalled()
+  expect(container.textContent).toContain('reconciliation requested; no mutation replay')
+  expect(container.querySelector('button')).toBeNull()
+})
+it('fails closed for a stale recovery revision', async () => {
+  await render(item({ ...d, state: 'blocked', nextAction: undefined, reconciliation: { id: 'original', actionId: 'recovery', revision: 2, label: 'Reconcile recorded handoff' } }), vi.fn(), undefined, vi.fn())
+  expect(container.querySelector('button')).toBeNull()
+})
+it('never retries failed handoff reconciliation or falls back to confirmation', async () => {
+  const reconcile = vi.fn().mockRejectedValue(new Error('Conflict 409')), confirm = vi.fn()
+  await render(item({ ...d, state: 'blocked', nextAction: undefined, reconciliation: { id: 'original', actionId: 'recovery', revision: 3, label: 'Reconcile recorded handoff' } }), confirm, undefined, reconcile)
+  await act(async () => container.querySelector('button')!.click())
+  expect(reconcile).toHaveBeenCalledTimes(1); expect(confirm).not.toHaveBeenCalled()
+  expect(container.querySelector('[role="alert"]')?.textContent).toContain('Conflict 409')
+})
+it('posts typed reconciliation with only current revision and opaque recovery key', async () => {
+  const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) }); vi.stubGlobal('fetch', fetcher)
+  await reconcileDelivery('feature/1', { revision: 3, actionId: 'opaque-recovery-key' })
+  expect(fetcher).toHaveBeenCalledExactlyOnceWith('/orchestrator/api/deliveries/feature%2F1/reconcile', expect.objectContaining({ method: 'POST', body: '{"revision":3,"actionId":"opaque-recovery-key"}', headers: expect.objectContaining({ 'x-orchestrator-request': '1' }) }))
 })
 it('posts recheck revision with management headers and never uses chat', async () => {
   const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) }); vi.stubGlobal('fetch', fetcher)

@@ -25,8 +25,15 @@ export async function recheckDelivery(id: string, request: { revision: number })
   if (!response.ok) throw new Error(`Delivery recheck rejected (${response.status}). Refresh; no automatic replay.`)
   return response.json()
 }
+export async function reconcileDelivery(id: string, request: DeliveryConfirmation) {
+  const response = await fetch(`/orchestrator/api/deliveries/${encodeURIComponent(id)}/reconcile`, {
+    method: 'POST', headers: { 'content-type': 'application/json', 'x-orchestrator-request': '1' }, body: JSON.stringify(request),
+  })
+  if (!response.ok) throw new Error(`Delivery reconciliation rejected (${response.status}). Refresh; no mutation replay was requested automatically.`)
+  return response.json()
+}
 export function SharedLifecycleCard({ item, onTicket }: { item: PendingDecisionItem; onTicket?: () => void }) {
-  if (item.actionMode === 'feature_delivery' || item.delivery) return <DeliveryCard item={item} onConfirm={request => confirmDelivery(item.delivery!.id, request)} onRecheck={request => recheckDelivery(item.delivery!.id, request)} />
+  if (item.actionMode === 'feature_delivery' || item.delivery) return <DeliveryCard item={item} onConfirm={request => confirmDelivery(item.delivery!.id, request)} onRecheck={request => recheckDelivery(item.delivery!.id, request)} onReconcile={request => reconcileDelivery(item.delivery!.id, request)} />
   return <LifecycleCard item={item} onTicket={onTicket} onAction={(action, approval) => call('POST decisions/:id/lifecycle',
     { id: item.id, body: { action, ...(approval ? { approval } : {}) } })} />
 }

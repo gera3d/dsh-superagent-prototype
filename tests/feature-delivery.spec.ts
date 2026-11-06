@@ -177,8 +177,9 @@ it('blocks missing independent capabilities and uncertain mutation until reconci
   const blocked = s.get('feature')!
   s.resume(blocked.id, blocked.revision, 'alice')
   const execute = vi.fn(async () => ({ outcome: 'passed' as const, evidence: [evidence('review')] }))
-  await new DeliveryCoordinator(s, { review: { execute } }).runOnce('runner')
-  expect(execute).toHaveBeenCalledOnce()
+  const reconcile = vi.fn(async () => ({ outcome: 'passed' as const, evidence: [evidence('review')] }))
+  await new DeliveryCoordinator(s, { review: { execute, reconcile } }).runOnce('runner')
+  expect(execute).not.toHaveBeenCalled(); expect(reconcile).toHaveBeenCalledOnce()
   expect(s.get('feature')!.nextAction!.kind).toBe('publish')
 })
 
@@ -297,6 +298,76 @@ it('bounds external pending reconciliation attempts and then parks an explicit b
   }
   expect(s.get('feature')!.blocker).toContain('reconciliation budget exhausted')
   expect(s.claim('runner', now + 1_000_000)).toBeUndefined()
+})
+
+it('recovers eventual remote completion after exhausting polling using only the original reconciliation key', async () => {
+  vi.useFakeTimers()
+  try {
+    let s = open(); create(s); confirm(s)
+    let completed = false
+    const execute = vi.fn(async () => ({ outcome: 'pending' as const, nextRetryAt: Date.now() + 1_000 }))
+    const reconcile = vi.fn(async (_lease: DeliveryLease) => completed ? { outcome: 'passed' as const, evidence: [evidence('implementation')] } : { outcome: 'pending' as const, nextRetryAt: Date.now() + 1_000 })
+    let coordinator = new DeliveryCoordinator(s, { implement: { execute, reconcile } })
+    await coordinator.runOnce('initial')
+    for (let i = 0; i < 20; i++) { await vi.advanceTimersByTimeAsync(1_000); await coordinator.runOnce('poller') }
+    expect(execute).toHaveBeenCalledOnce(); expect(reconcile).toHaveBeenCalledTimes(20)
+    const blocked = s.get('feature')!
+    expect(blocked.blocker).toContain('budget exhausted'); expect(blocked.reconciliation).toBeDefined()
+    const recovery = blocked.reconciliation!
+    const original = String(s.db.prepare('SELECT value FROM feature_delivery_outbox WHERE id=?').get(recovery.id)!.value)
+    expect(JSON.parse(String(s.db.prepare('SELECT value FROM feature_delivery WHERE id=?').get(blocked.id)!.value)).reconciliation).toBeUndefined()
+    const beforeReads = s.db.prepare('SELECT total_changes() AS n').get()!.n
+    expect(s.list()[0]!.reconciliation).toEqual(recovery); expect(s.get(blocked.id)!.reconciliation).toEqual(recovery)
+    expect(s.db.prepare('SELECT total_changes() AS n').get()!.n).toBe(beforeReads)
+    stores.pop()!.close(); s = open(); coordinator = new DeliveryCoordinator(s, { implement: { execute, reconcile } })
+    expect(s.get(blocked.id)!.reconciliation).toEqual(recovery)
+    const proof = { actor: 'alice', source: 'local_operator' as const, reference: 'trusted-request:reconcile', scope: recovery.actionId }
+    expect(() => s.resume(blocked.id, blocked.revision, { ...proof, scope: 'stale-scope' }, recovery.actionId)).toThrow('recovery scope')
+    expect(() => s.resume(blocked.id, blocked.revision, proof, 'wrong-action')).toThrow('current exact')
+    const resumed = s.resume(blocked.id, blocked.revision, proof, recovery.actionId)
+    expect(resumed.reconciliation).toBeUndefined(); expect(resumed.state).toBe('running')
+    expect(resumed.audit.at(-1)).toMatchObject({ event: 'resume-reconciliation', actor: 'alice', actionId: recovery.id, authorization: proof })
+    expect(String(s.db.prepare('SELECT value FROM feature_delivery_outbox WHERE id=?').get(recovery.id)!.value)).toBe(original)
+    expect(() => s.resume(blocked.id, blocked.revision, proof, recovery.actionId)).toThrow('current exact')
+    expect(() => s.resume(blocked.id, resumed.revision, proof, recovery.actionId)).toThrow('current exact')
+    completed = true
+    await coordinator.runOnce('recovery')
+    expect(execute).toHaveBeenCalledOnce(); expect(reconcile).toHaveBeenCalledTimes(21)
+    expect(reconcile.mock.calls.at(-1)![0]).toMatchObject({ id: recovery.id, reconcile: true, authorization: JSON.parse(original).authorization })
+    expect(s.get(blocked.id)!.stage).toBe('review'); expect(s.get(blocked.id)!.reconciliation).toBeUndefined()
+  } finally { vi.useRealTimers() }
+})
+
+it('rejects stale recovery revisions, changed bindings and corrupted original authorization', () => {
+  const s = open(); create(s); confirm(s); const lease = s.claim('runner')!
+  const blocked = s.complete(lease, { outcome: 'uncertain' })
+  const originalRecovery = blocked.reconciliation!
+  expect(originalRecovery).toBeDefined()
+  const revised = s.compareAndSwap(blocked.id, blocked.revision, value => { value.title = 'Revised context' })
+  expect(revised.reconciliation!.actionId).not.toBe(originalRecovery.actionId)
+  expect(() => s.resume(blocked.id, blocked.revision, 'alice', originalRecovery.actionId)).toThrow('current exact')
+  expect(() => s.resume(blocked.id, revised.revision, 'alice', originalRecovery.actionId)).toThrow('current exact')
+  const changed = s.compareAndSwap(blocked.id, revised.revision, value => { value.bindings.headSha = 'another-head' })
+  expect(changed.reconciliation).toBeUndefined()
+  expect(() => s.resume(changed.id, changed.revision, 'alice')).toThrow('current exact')
+  const restored = s.compareAndSwap(changed.id, changed.revision, value => { value.bindings = structuredClone(bindings) })
+  const row = s.db.prepare('SELECT value FROM feature_delivery_outbox WHERE id=?').get(originalRecovery.id)!
+  const payload = JSON.parse(String(row.value)); payload.authorization.scope = 'corrupt-original-scope'
+  s.db.prepare('UPDATE feature_delivery_outbox SET value=? WHERE id=?').run(JSON.stringify(payload), originalRecovery.id)
+  expect(s.get(restored.id)!.reconciliation).toBeUndefined()
+  expect(() => s.resume(restored.id, restored.revision, 'alice')).toThrow('current exact')
+  expect(s.claim('runner')).toBeUndefined()
+})
+
+it('does not recover a parked publication handoff against substituted prepared target metadata', () => {
+  const s = open(); const d = create(s)
+  const prepared = s.compareAndSwap(d.id, d.revision, value => { value.preparedPublication = { id: 'original-publication', ticketId: 'ticket', decisionId: 'decision', repository: bindings.repository, pr: 1, headSha: bindings.headSha, patchSha256: 'patch', environment: 'production', preparedAt: 'now' } })
+  s.confirm(prepared.id, { revision: prepared.revision, actionId: prepared.nextAction!.id }, 'alice')
+  const lease = s.claim('runner')!; const blocked = s.complete(lease, { outcome: 'uncertain' })
+  expect(blocked.reconciliation).toBeDefined()
+  const changed = s.compareAndSwap(blocked.id, blocked.revision, value => { value.preparedPublication!.id = 'substituted-publication' })
+  expect(changed.reconciliation).toBeUndefined()
+  expect(() => s.resume(changed.id, changed.revision, 'alice')).toThrow('current exact')
 })
 
 it('heartbeats long-running real asynchronous adapters so another coordinator cannot overlap', async () => {

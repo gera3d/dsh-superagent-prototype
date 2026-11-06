@@ -12,7 +12,7 @@ import { evaluateDecisionWithFallback } from './decision-ranker.ts'
 import { evaluateWithCharacter } from './character-evaluator.ts'
 import { HELPER_BODY_MAX_BYTES, HelperDigestSchema, suggestHelper } from './routes/helper.ts'
 import { DEFAULT_SENIOR_DEVELOPER_CHARACTER } from '../core/character.ts'
-import { DecisionInbox, InboxError, durableDecisionEvents, registerDecisionCapture, ticketDecisions, submitDecision, stageDecision, restartDecision } from './decision-inbox.ts'
+import { DecisionInbox, InboxError, decisionQuestion, durableDecisionEvents, registerDecisionCapture, ticketDecisions, submitDecision, stageDecision, restartDecision } from './decision-inbox.ts'
 import { sourceSkills } from './context.ts'
 import { LifecycleRequest, enrichLifecycle, lifecycleAction, type LifecycleCommands } from './lifecycle-decisions.ts'
 import type { LifecyclePublication } from './lifecycle-publication.ts'
@@ -225,7 +225,8 @@ export const DecisionInboxItem = z.object({
 })
 
 export function isSessionEnded(runtime: HttpHost, item: PendingDecisionItem): boolean {
-  if (item.actionMode === 'feature_delivery' || (!item.ticketId && item.id.startsWith('chat-'))) return false
+  if (item.actionMode === 'feature_delivery' || (!item.ticketId && item.id.startsWith('chat-')
+    && (item.staging || decisionQuestion(item.context) || decisionQuestion(item.question)))) return false
   const sessionId = item.sessionId
   if (sessionId) {
     const ticketId = ticketOfSession(sessionId)
@@ -309,6 +310,17 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
       const delivery = runtime.deliveries.store.bindScope(params.id, revision, input, { actor: 'local-operator', source: 'local_operator',
         reference: `orchestrator-http:bind:${params.id}:${revision}`, scope: deliveryFingerprint(input) })
       void runtime.deliveries.request().catch(error => ctx.logger.warn('Delivery scope binding: %s', String(error)))
+      return { delivery, item: deliveryDecision(delivery) }
+    },
+    'POST deliveries/:id/reconcile': async ({ params, body, localApproval }) => {
+      if (!localApproval) throw new PublicationError(403, 'Explicit local operator reconciliation required')
+      if (!runtime.deliveries) throw new PublicationError(409, 'Delivery coordinator is not configured')
+      const request = DeliveryConfirmRequest.parse(await body())
+      const current = runtime.deliveries.store.get(params.id)
+      if (!current?.reconciliation) throw new PublicationError(409, 'No exact parked handoff is available for reconciliation')
+      const delivery = runtime.deliveries.store.resume(params.id, request.revision, { actor: 'local-operator', source: 'local_operator',
+        reference: `orchestrator-http:reconcile:${params.id}:${request.revision}:${request.actionId}`, scope: current.reconciliation.actionId }, request.actionId)
+      void runtime.deliveries.request().catch(error => ctx.logger.warn('Delivery reconciliation: %s', String(error)))
       return { delivery, item: deliveryDecision(delivery) }
     },
     'POST deliveries/:id/recheck': async ({ params, body, localApproval }) => {

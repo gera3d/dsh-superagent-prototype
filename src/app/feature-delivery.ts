@@ -22,10 +22,13 @@ export interface DeliveryRecommendation { kind: DeliveryActionKind; fingerprint:
 export interface DeliveryScopeBinding { reason: string; sourceTriggerId: string }
 export interface DeliveryUnboundInput { ticketId: string; title: string; owner: string; repository: string; sourceIssue?: number; triggerId: string }
 export interface DeliveryAction { id: string; kind: DeliveryActionKind; label: string; revision: number; fingerprint: string }
-export interface DeliveryAudit { at: string; event: string; actor: string; actionId?: string }
+export interface DeliveryAudit { at: string; event: string; actor: string; actionId?: string; authorization?: DeliveryConfirmationAuthority }
+export interface DeliveryReconciliation { id: string; actionId: string; revision: number; label: string }
 export interface Delivery {
   id: string; title: string; revision: number; stage: DeliveryStage; state: DeliveryState; owner: string
   nextAction?: DeliveryAction; blocker?: string; scopeBinding?: DeliveryScopeBinding; bindings: DeliveryBindings; requirements: string[]
+  /** Derived recovery control for an existing parked outbox row; never a new mutation grant. */
+  reconciliation?: DeliveryReconciliation
   recommendation?: DeliveryRecommendation
   recommendationError?: { kind: DeliveryActionKind; fingerprint: string; message: string; attempts: number; nextRetryAt?: number }
   preparation?: { fingerprint: string; message: string; attempts: number; nextRetryAt?: number }
@@ -149,11 +152,22 @@ export class DeliveryStore {
       throw error
     }
   }
+  private project(delivery: Delivery): Delivery {
+    const d = refresh(delivery); delete d.reconciliation
+    if (d.state !== 'blocked' || d.scopeBinding) return d
+    const row = this.db.prepare("SELECT id,value FROM feature_delivery_outbox WHERE delivery_id=? AND status='blocked' ORDER BY rowid DESC LIMIT 1").get(d.id)
+    if (!row) return d
+    const payload = JSON.parse(String(row.value)) as { action: DeliveryAction; bindings: DeliveryBindings; authorization: DeliveryConfirmationAuthority; preparedPublication?: Delivery['preparedPublication'] }
+    if (payload.action.id !== String(row.id) || !bindingMatches(payload.bindings, d.bindings) || payload.authorization.scope !== payload.action.fingerprint || stable(payload.preparedPublication) !== stable(d.preparedPublication)) return d
+    const scope = deliveryFingerprint({ id: d.id, revision: d.revision, fingerprint: fingerprint(d), outboxId: String(row.id), payload })
+    d.reconciliation = { id: String(row.id), actionId: `${d.id}:${d.revision}:reconcile:${scope}`, revision: d.revision, label: 'Reconcile recorded handoff' }
+    return d
+  }
   get(id: string): Delivery | undefined {
     const row = this.db.prepare('SELECT value FROM feature_delivery WHERE id=?').get(id)
-    return row ? refresh(JSON.parse(String(row.value)) as Delivery) : undefined
+    return row ? this.project(JSON.parse(String(row.value)) as Delivery) : undefined
   }
-  list(): Delivery[] { return this.db.prepare('SELECT value FROM feature_delivery ORDER BY id').all().map(row => refresh(JSON.parse(String(row.value)) as Delivery)) }
+  list(): Delivery[] { return this.db.prepare('SELECT value FROM feature_delivery ORDER BY id').all().map(row => this.project(JSON.parse(String(row.value)) as Delivery)) }
   create(input: DeliveryCreate): Delivery {
     validateIntake(input)
     return this.atomic(() => {
@@ -201,8 +215,10 @@ export class DeliveryStore {
     return this.atomic(() => {
       const d = this.get(id)
       if (!d || d.revision !== revision) throw new DeliveryConflict('Stale delivery revision')
+      delete d.reconciliation
       const before = structuredClone(d)
       mutate(d)
+      delete d.reconciliation
       if (d.bindings.refs && new Set(d.bindings.refs.map(r => `${r.repository}:${r.pr}`)).size !== d.bindings.refs.length) throw new DeliveryConflict('Duplicate delivery reference identities')
       if (d.id !== id || (!allowScopeBind && (stable(d.scopeBinding) !== stable(before.scopeBinding) || stable(d.authorities) !== stable(before.authorities) || stable(d.delegatedActions) !== stable(before.delegatedActions) || d.delegatedScope !== before.delegatedScope || d.followFixHeads !== before.followFixHeads || stable(d.requirements) !== stable(before.requirements) || d.owner !== before.owner || (before.scopeBinding && !bindingMatches(d.bindings, before.bindings))))) throw new DeliveryConflict('Immutable intake changed')
       if (before.state === 'running' && !allowFixRebind && !allowScopeBind && (!bindingMatches(d.bindings, before.bindings) || stable(d.preparedPublication) !== stable(before.preparedPublication))) throw new DeliveryConflict('In-flight scope and prepared publication are immutable')
@@ -212,7 +228,7 @@ export class DeliveryStore {
       if (d.state === 'accepted' && (!acceptanceReady(d) || !d.acceptance || d.acceptance.fingerprint !== fingerprint(d))) throw new DeliveryConflict('Acceptance lacks exact verified evidence')
       d.revision = revision + 1; refresh(d)
       if (!this.db.prepare('UPDATE feature_delivery SET revision=?,value=? WHERE id=? AND revision=?').run(d.revision, JSON.stringify(d), id, revision).changes) throw new DeliveryConflict('Concurrent delivery revision')
-      return d
+      return this.project(d)
     })
   }
   /** Advice is metadata, not execution authority: do not revise the action it evaluated. */
@@ -255,7 +271,7 @@ export class DeliveryStore {
         } else {
           if ((action.kind === 'review' && ++value.attempts.review > value.attempts.maxReview) || (action.kind === 'fix' && ++value.attempts.fix > value.attempts.maxFix)) throw new DeliveryConflict('Retry budget exhausted')
           value.state = 'running'; if (action.kind === 'publish') value.stage = 'publishing'
-          this.db.prepare('INSERT INTO feature_delivery_outbox(id,delivery_id,value,status) VALUES(?,?,?,?)').run(action.id, id, JSON.stringify({ action, bindings: value.bindings, authorization }), 'pending')
+          this.db.prepare('INSERT INTO feature_delivery_outbox(id,delivery_id,value,status) VALUES(?,?,?,?)').run(action.id, id, JSON.stringify({ action, bindings: value.bindings, authorization, preparedPublication: value.preparedPublication }), 'pending')
         }
       })
     })
@@ -268,15 +284,19 @@ export class DeliveryStore {
     if (d.delegatedScope !== scope && !(d.followFixHeads && d.nextAction.kind !== 'publish' && d.authorizedFixScopes?.includes(scope))) return undefined
     return this.confirm(id, { revision: d.revision, actionId: d.nextAction.id }, { actor: d.authorities[0]!, source: 'delegation', reference: `intake:${id}:${d.nextAction.kind}`, scope: d.nextAction.fingerprint })
   }
-  /** Requeue a parked handoff with its original idempotency key, retaining uncertainty. */
-  resume(id: string, revision: number, authority: string): Delivery {
+  /** Resume only reconciliation of the original immutable handoff; never authorize mutation replay. */
+  resume(id: string, revision: number, authority: string | DeliveryConfirmationAuthority, recoveryActionId?: string): Delivery {
     return this.atomic(() => {
-      const d = this.get(id)
-      if (!d || d.revision !== revision || d.state !== 'blocked' || !d.authorities.includes(authority)) throw new DeliveryConflict('Resume requires current blocked revision and recorded authority')
-      const row = this.db.prepare("SELECT id FROM feature_delivery_outbox WHERE delivery_id=? AND status='blocked' ORDER BY rowid DESC LIMIT 1").get(id)
-      if (!row) throw new DeliveryConflict('No parked handoff; new bound evidence or intervention required')
-      this.db.prepare("UPDATE feature_delivery_outbox SET status='pending',polls=0,expires=0 WHERE id=?").run(String(row.id))
-      return this.compareAndSwap(id, revision, value => { value.state = 'running'; delete value.blocker; value.audit.push({ at: new Date().toISOString(), event: 'resume', actor: authority, actionId: String(row.id) }) })
+      const d = this.get(id); const recovery = d?.reconciliation
+      if (!d || d.revision !== revision || d.state !== 'blocked' || !recovery || (recoveryActionId !== undefined && recoveryActionId !== recovery.actionId)) throw new DeliveryConflict('Resume requires the current exact parked reconciliation action')
+      const authorization: DeliveryConfirmationAuthority = typeof authority === 'string' ? { actor: authority, source: 'recorded_intake', reference: `intake:${id}`, scope: recovery.actionId } : structuredClone(authority)
+      if (!d.authorities.includes(authorization.actor) || !['local_operator', 'github', 'recorded_intake'].includes(authorization.source) || !authorization.reference || authorization.scope !== recovery.actionId) throw new DeliveryConflict('Reconciliation requires recorded authority bound to the recovery scope')
+      // Do not replace value/authorization: the original confirmation and idempotency key remain intact.
+      if (!this.db.prepare("UPDATE feature_delivery_outbox SET status='pending',uncertain=1,polls=0,expires=0 WHERE id=? AND delivery_id=? AND status='blocked'").run(recovery.id, id).changes) throw new DeliveryConflict('Parked reconciliation changed')
+      return this.compareAndSwap(id, revision, value => {
+        value.state = 'running'; delete value.blocker
+        value.audit.push({ at: new Date().toISOString(), event: 'resume-reconciliation', actor: authorization.actor, actionId: recovery.id, authorization })
+      })
     })
   }
   /** Park unavailable adapters without claiming a remote mutation succeeded or was attempted. */
@@ -307,10 +327,10 @@ export class DeliveryStore {
     return this.atomic(() => {
       const row = this.db.prepare("SELECT * FROM feature_delivery_outbox WHERE id=? AND status='leased' AND token=? AND worker=? AND expires>?").get(lease.id, lease.token, lease.worker, now)
       if (!row) throw new DeliveryConflict('Lease expired or fenced')
-      const payload = JSON.parse(String(row.value)) as { action: DeliveryAction; bindings: DeliveryBindings; authorization: DeliveryConfirmationAuthority }
+      const payload = JSON.parse(String(row.value)) as { action: DeliveryAction; bindings: DeliveryBindings; authorization: DeliveryConfirmationAuthority; preparedPublication?: Delivery['preparedPublication'] }
       if ((Number(row.uncertain) === 1) !== lease.reconcile || String(row.delivery_id) !== lease.deliveryId || stable(payload.action) !== stable(lease.action) || stable(payload.authorization) !== stable(lease.authorization) || !bindingMatches(payload.bindings, lease.bindings)) throw new DeliveryConflict('Lease payload changed')
       const d = this.get(lease.deliveryId)!
-      if (!bindingMatches(d.bindings, lease.bindings) || (!lease.reconcile && fingerprint(d) !== lease.action.fingerprint)) throw new DeliveryConflict('Mutation scope or evidence changed')
+      if (!bindingMatches(d.bindings, lease.bindings) || stable(payload.preparedPublication) !== stable(d.preparedPublication) || (!lease.reconcile && fingerprint(d) !== lease.action.fingerprint)) throw new DeliveryConflict('Mutation scope or evidence changed')
       const updated = this.update(d.id, d.revision, value => {
         if (result.updatedBindings) {
           const old = value.bindings; const next = result.updatedBindings
@@ -357,7 +377,7 @@ export class DeliveryStore {
       const pending = result.outcome === 'pending' && updated.state === 'running'
       const due = pending ? Math.max(now + 1_000, Math.min(now + 300_000, Number.isFinite(result.nextRetryAt) ? result.nextRetryAt! : now + 5_000)) : 0
       this.db.prepare('UPDATE feature_delivery_outbox SET status=?,uncertain=?,token=NULL,worker=NULL,expires=?,polls=polls+? WHERE id=?').run(pending ? 'pending' : result.outcome === 'uncertain' || result.outcome === 'pending' ? 'blocked' : 'done', (result.outcome === 'uncertain' && !unattempted) || result.outcome === 'pending' ? 1 : 0, due, result.outcome === 'pending' ? 1 : 0, lease.id)
-      return updated
+      return this.get(updated.id)!
     })
   }
   /** Apply only an explicitly reviewed exact preview. Never publishes or touches worker rows. */

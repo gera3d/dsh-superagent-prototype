@@ -332,6 +332,7 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
   'POST decisions/canonical/fail': { body: true, answer: () => refuse(500, 'Canonical fixture transport unavailable') },
   'GET deliveries': { answer: () => ({ items: [] }) },
   'POST deliveries': { body: true, answer: () => refuse(409, 'No fixture delivery intake is authorized') },
+  'POST deliveries/:id/reconcile': { body: true, answer: () => refuse(409, 'No fixture delivery reconciliation is authorized') },
   'POST deliveries/:id/recheck': { body: true, answer: () => refuse(409, 'No fixture delivery recheck is authorized') },
   'POST deliveries/:id/bind': { body: true, answer: () => refuse(409, 'No fixture delivery binding is authorized') },
   'POST deliveries/:id/confirm': { body: true, answer: () => refuse(409, 'No fixture delivery confirmation is authorized') },

@@ -44,6 +44,22 @@ it('never upgrades a recorded intake authority string into a human publication c
   const result = await deliveryPublicationCapabilities(store, { get: () => ticket } as never, publication).publish!.execute(store.claim('coordinator')!)
   expect(result.blocker).toContain('trusted local confirmation'); expect(enqueue).not.toHaveBeenCalled()
 })
+it('observes healthy publication at sixty-second intervals instead of exhausting the finite budget in two minutes', async () => {
+  const { store, ticket, publication, d } = fixture()
+  store.confirm(d.id, { revision: d.revision, actionId: d.nextAction!.id }, { actor: 'operator', source: 'local_operator', reference: 'confirmation', scope: d.nextAction!.fingerprint })
+  const lease = store.claim('coordinator')!
+  const snapshot = (await publication.service.snapshot(ticket.id))!
+  vi.mocked(publication.service.snapshot).mockResolvedValue({ ...snapshot, coordination: { grantId: 'existing-grant', status: 'running', createdAt: snapshot.createdAt, updatedAt: snapshot.updatedAt } })
+  const started = Date.now()
+  const result = await deliveryPublicationCapabilities(store, { get: () => ticket } as never, publication).publish!.reconcile!(lease)
+  expect(result).toMatchObject({ outcome: 'pending' })
+  expect(result.nextRetryAt).toBeGreaterThanOrEqual(started + 60_000)
+  expect(result.nextRetryAt).toBeLessThanOrEqual(Date.now() + 60_000)
+  store.complete(lease, result)
+  expect(store.get(d.id)?.state).toBe('running')
+  expect(store.claim('too-early', started + 59_000)).toBeUndefined()
+  expect(store.claim('bounded-observer', started + 61_000)).toMatchObject({ id: lease.id, reconcile: true })
+})
 it('fails closed when the trusted scope does not cover every repository or the deployment target', async () => {
   const { store, ticket, publication, enqueue, d, scope } = fixture()
   scope.environment = 'different-target'

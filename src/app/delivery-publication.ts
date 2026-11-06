@@ -39,7 +39,9 @@ export function deliveryPublicationCapabilities(store: DeliveryStore, tickets: S
     const snapshot = snapshots.find(p => p?.id === prepared.id && p.patchSha256 === prepared.patchSha256)
     if (!snapshot || snapshot.headSha !== lease.bindings.headSha || snapshot.repository !== lease.bindings.repository) return { outcome: 'uncertain', blocker: 'Publication outcome cannot be reconciled against the exact prepared manifest.' }
     const evidence = (kind: 'publication' | 'rollback', outcome: 'passed' | 'failed') => [{ id: `publication:${snapshot.id}:${snapshot.updatedAt}:${kind}`, kind, bindings: lease.bindings, recordedAt: snapshot.updatedAt, reference: `publication:${snapshot.id}`, outcome }]
-    if (snapshot.coordination && ['queued', 'running'].includes(snapshot.coordination.status)) return { outcome: 'pending' }
+    // Twenty one-minute observations allow a finite 20-minute window, longer than the runner's 15-minute per-phase maximum.
+    // Exhaustion exposes explicit read-only recovery; it never authorizes replay of a phase.
+    if (snapshot.coordination && ['queued', 'running'].includes(snapshot.coordination.status)) return { outcome: 'pending', nextRetryAt: Date.now() + 60_000 }
     if (snapshot.status === 'rolled_back') return { outcome: 'failed', blocker: 'Publication verification failed and was rolled back. Feature acceptance remains unresolved.', evidence: evidence('rollback', 'passed') }
     if (snapshot.status === 'published' && (!snapshot.coordination || snapshot.coordination.status === 'completed')) {
       if (snapshot.requests[lease.id]?.action !== 'publish' || snapshot.requests[lease.id]?.actorId !== lease.authorization.actor) return { outcome: 'uncertain', blocker: 'Published outcome is not linked to this exact durable confirmation; reconcile without replay.' }

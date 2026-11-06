@@ -339,6 +339,45 @@ it('retires an ended-session card with plain explanation instead of offering a f
   expect(resolveRes.body.error).toContain('originating session has ended')
 })
 
+it('routes typed parked-handoff recovery through the local operator boundary without replaying execute', async () => {
+  const { FeatureDeliveryRuntime } = await import('../src/app/delivery-runtime.ts')
+  const db = new DatabaseSync(':memory:'); databases.push(db)
+  const runtime = new FeatureDeliveryRuntime({ db, tickets: { get: () => undefined } } as never)
+  const created = runtime.store.create({ id: 'recover-http', title: 'Recover', owner: 'owner', workers: [], authorities: ['local-operator'], requirements: ['native'],
+    bindings: { repository: 'org/repo', sourceIssue: 167, baseSha: 'b'.repeat(40), headSha: 'a'.repeat(40) } })
+  const ready = runtime.store.compareAndSwap(created.id, created.revision, d => { d.stage = 'review' })
+  runtime.store.confirm(ready.id, { revision: ready.revision, actionId: ready.nextAction!.id }, { actor: 'local-operator', source: 'local_operator', reference: 'original-confirmation', scope: ready.nextAction!.fingerprint })
+  await runtime.coordinator.runOnce('initial')
+  const parked = runtime.store.get(created.id)!
+  expect(parked.reconciliation).toBeDefined()
+  const execute = vi.fn(async () => { throw new Error('must never execute again') })
+  const reconcile = vi.fn(async (lease: import('../src/app/feature-delivery.ts').DeliveryLease) => ({ outcome: 'passed' as const, evidence: [{ id: 'observed-review', kind: 'review' as const, bindings: lease.bindings, recordedAt: '2026-11-06T10:00:00Z', reference: 'https://example.test/actual-review', outcome: 'passed' as const }] }))
+  runtime.coordinator.capabilities.review = { execute, reconcile }
+  const call = serve({ deliveries: runtime })
+  const request = { revision: parked.revision, actionId: parked.reconciliation!.actionId }
+  const browser = { origin: 'http://127.0.0.1:3082', 'sec-fetch-site': 'same-origin', 'sec-fetch-mode': 'cors', 'sec-fetch-dest': 'empty' }
+  expect(await call('POST', `deliveries/${parked.id}/reconcile`, request)).toMatchObject({ status: 403 })
+  expect(await call('POST', `deliveries/${parked.id}/reconcile`, { ...request, command: 'anything' }, browser)).toMatchObject({ status: 400 })
+  expect(await call('POST', `deliveries/${parked.id}/reconcile`, request, browser)).toMatchObject({ status: 200 })
+  await runtime.request()
+  expect(reconcile).toHaveBeenCalledTimes(1); expect(execute).not.toHaveBeenCalled()
+  expect(await call('POST', `deliveries/${parked.id}/reconcile`, request, browser)).toMatchObject({ status: 409 })
+  expect(runtime.store.get(parked.id)?.audit.some(a => a.authorization?.source === 'local_operator' && a.authorization.reference.startsWith('orchestrator-http:reconcile:'))).toBe(true)
+  await runtime.stop()
+})
+
+it('preserves a genuine unresolved chat question after its implementation worker ends without bypassing native submission proof', async () => {
+  const call = serve({ sessions: { prompt: vi.fn() }, store: { tickets: { get: () => ({ id: 'ended-t1', ended: { at: '2026-11-04T12:00:00Z', outcome: 'completed' } }), open: () => [] } } })
+  const item = { id: 'chat-genuine-question', sessionId: 'worker-ended-t1', sourceMessageId: 'real-question', sourceSeq: 5,
+    ticketTitle: 'Ended implementation', trigger: 'Question', status: 'pending', urgency: 'low', createdAt: Date.now(),
+    context: 'Which acceptance requirement is missing?', question: 'Which acceptance requirement is missing?',
+    choices: [{ id: 'explain', label: 'Explain' }, { id: 'inspect', label: 'Inspect' }],
+    recommendation: { recommendedValue: '', confidence: 0, rationale: 'Not evaluated', distribution: [], provider: 'Not evaluated', latencyMs: 0 } }
+  expect(await call('POST', 'decisions/inbox', item)).toMatchObject({ status: 200 })
+  expect(await call('GET', 'decisions/inbox')).toMatchObject({ status: 200, body: { items: [expect.objectContaining({ id: item.id, status: 'pending' })] } })
+  expect(await call('POST', `decisions/${item.id}/resolve`, { choiceId: 'explain' })).toMatchObject({ status: 409, body: { error: expect.stringContaining('Linked native submission required') } })
+})
+
 it('rejects resolving a stale decision card with 409 and plain stale reason', async () => {
   const call = serve({
     sessions: { prompt: vi.fn() },

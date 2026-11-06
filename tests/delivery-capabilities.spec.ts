@@ -98,13 +98,28 @@ it('rejects model approval fields, malformed verdicts and findings outside the p
 })
 it('routes exact findings through real Engine.note transaction once across replay; old ready and inbox delivery are not correction completion', async () => {
   const h = fixture(); const original = h.worker(); const l = await h.fixLease()
-  expect(await h.caps.fix!.execute(l)).toEqual({ outcome: 'pending' }); expect(h.note).toHaveBeenCalledTimes(1); expect(h.deliver).toHaveBeenCalledTimes(1)
+  const observedAt = Date.now(); const pending = await h.caps.fix!.execute(l)
+  expect(pending).toEqual({ outcome: 'pending', nextRetryAt: expect.any(Number) })
+  expect(pending.nextRetryAt).toBeGreaterThanOrEqual(observedAt + 60_000)
+  expect(pending.nextRetryAt).toBeLessThanOrEqual(Date.now() + 60_000)
+  expect(h.note).toHaveBeenCalledTimes(1); expect(h.deliver).toHaveBeenCalledTimes(1)
   const t = store.tickets.get('original')!; expect(t.mandate).toEqual(original.mandate); expect(t.inputs.at(-1)).toMatchObject({ kind: 'note', text: expect.stringContaining(HEAD) }); expect(t.inputs.at(-1)).toMatchObject({ text: expect.stringContaining('sqlite:delivery_capability_review/') })
   t.undelivered = []; store.tickets.save(t)
   const restarted = createDeliveryCapabilities(h.deps)
-  expect(await restarted.fix!.reconcile!(l)).toEqual({ outcome: 'pending' }); expect(h.note).toHaveBeenCalledTimes(1)
-  h.consumeAndReady('2026-11-06T00:00:01.500Z'); expect(await restarted.fix!.reconcile!(l)).toEqual({ outcome: 'pending' })
+  expect(await restarted.fix!.reconcile!(l)).toEqual({ outcome: 'pending', nextRetryAt: expect.any(Number) }); expect(h.note).toHaveBeenCalledTimes(1)
+  h.consumeAndReady('2026-11-06T00:00:01.500Z'); expect(await restarted.fix!.reconcile!(l)).toEqual({ outcome: 'pending', nextRetryAt: expect.any(Number) })
   h.consumeAndReady(); const result = await restarted.fix!.reconcile!(l); expect(result.outcome).toBe('passed'); expect(result.evidence![0]!.reference).toContain('delivery_capability_fix/'); expect(h.note).toHaveBeenCalledTimes(1)
+})
+it('never dispatches a new correction note from reconciliation when no durable handoff exists', async () => {
+  const h = fixture(); h.worker(); const l = await h.fixLease(); h.gh.mockClear()
+  const result = await h.caps.fix!.reconcile!({ ...l, reconcile: true })
+  expect(result.outcome).toBe('uncertain'); expect(result.blocker).toContain('read-only reconciliation cannot dispatch a new note')
+  expect(h.note).not.toHaveBeenCalled(); expect(h.deliver).not.toHaveBeenCalled(); expect(h.gh).not.toHaveBeenCalled()
+  expect(store.tickets.get('original')!.inputs).toEqual([])
+  expect(store.db.prepare('SELECT * FROM delivery_capability_fix').all()).toEqual([])
+  expect(await h.caps.fix!.execute(l)).toEqual({ outcome: 'pending', nextRetryAt: expect.any(Number) }); expect(h.note).toHaveBeenCalledTimes(1)
+  const mismatched = { ...l, action: { ...l.action, fingerprint: 'different-scope' } }
+  expect((await h.caps.fix!.reconcile!(mismatched)).blocker).toContain('idempotency scope mismatch'); expect(h.note).toHaveBeenCalledTimes(1)
 })
 it('rolls Engine.note back with its fix outbox record on transaction failure', async () => {
   const h = fixture(); h.worker(); const l = await h.fixLease()
@@ -148,7 +163,7 @@ it('requires pinned secondary bases and rejects repository path traversal before
 it('serializes simultaneous fix deliveries to one real Engine.note and blocks unconfigured executor selection', async () => {
   const h = fixture(); h.worker(); const l = await h.fixLease()
   const results = await Promise.all([h.caps.fix!.execute(l), h.caps.fix!.execute(l)])
-  expect(results).toEqual([{ outcome: 'pending' }, { outcome: 'pending' }]); expect(h.note).toHaveBeenCalledTimes(1)
+  expect(results).toEqual([{ outcome: 'pending', nextRetryAt: expect.any(Number) }, { outcome: 'pending', nextRetryAt: expect.any(Number) }]); expect(h.note).toHaveBeenCalledTimes(1)
   store.saveSettings({ executor: { model: null }, models: { hierarchy: [] } })
   const reviewLease = { ...l, id: 'missing-model', action: { ...l.action, kind: 'review' as const } }
   expect((await h.caps.review!.execute(reviewLease)).blocker).toContain('configured executor model')

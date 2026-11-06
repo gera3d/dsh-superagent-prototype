@@ -1,6 +1,7 @@
 /** Runtime integration and the single projection consumed by Conversation, Decisions and Workstream. */
 import type { PendingDecisionItem } from '../core/decision.ts'
 import type { Ticket } from '../core/model.ts'
+import { publicationCompleted } from '../core/publication-queue.ts'
 import { DeliveryConflict, DeliveryCoordinator, DeliveryStore, deliveryFingerprint, sameDeliveryRefs, type Delivery, type DeliveryAction, type DeliveryCapabilityAdapters } from './feature-delivery.ts'
 import type { LifecyclePublication } from './lifecycle-publication.ts'
 import { publicationConversation } from './lifecycle-publication.ts'
@@ -37,7 +38,7 @@ export function reconcileDeliveryAdvice(items: PendingDecisionItem[], deliveries
   }
   for (const item of items) {
     const publication = item.lifecycle?.publication
-    if (!item.sessionId || !publication || !['rolled_back', 'published'].includes(publication.status)) continue
+    if (!item.sessionId || !publication || !publicationCompleted(item)) continue
     const time = Math.max(...publication.outcomes.map(o => Date.parse(o.finishedAt ?? o.startedAt ?? '') || 0), 0)
     if (time) settled.set(item.sessionId, Math.max(time, settled.get(item.sessionId) ?? 0))
   }

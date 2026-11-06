@@ -4,12 +4,13 @@ import type { PendingDecisionItem } from '../core/decision.ts'
 import { Button } from './controls.tsx'
 
 export interface DeliveryConfirmation { revision: number; actionId: string }
-export function DeliveryCard({ item, onConfirm, onRecheck }: { item: PendingDecisionItem; onConfirm: (request: DeliveryConfirmation) => Promise<unknown>; onRecheck?: (request: { revision: number }) => Promise<unknown> }) {
+export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile }: { item: PendingDecisionItem; onConfirm: (request: DeliveryConfirmation) => Promise<unknown>; onRecheck?: (request: { revision: number }) => Promise<unknown>; onReconcile?: (request: DeliveryConfirmation) => Promise<unknown> }) {
   const [busy, setBusy] = useState(false)
   const acting = useRef(false)
   const [error, setError] = useState<string>()
   const [confirmed, setConfirmed] = useState<string>()
   const [rechecked, setRechecked] = useState<string>()
+  const [reconciled, setReconciled] = useState<string>()
   const d = item.delivery
   if (!d) return <section role="status">Delivery metadata unavailable. Refresh before confirming.</section>
   const action = d.scopeBinding ? undefined : d.nextAction
@@ -21,7 +22,17 @@ export function DeliveryCard({ item, onConfirm, onRecheck }: { item: PendingDeci
     ? recordedAdvice : undefined
   const endorsed = recommendation?.disposition === 'take'
   const pinnedRefs = [...new Map([...(d.bindings.refs ?? []), ...(d.preparedPublication?.refs ?? [])].map(ref => [JSON.stringify(ref), ref])).values()]
-  const recheckAvailable = !!onRecheck && d.state === 'blocked' && !d.scopeBinding && !action && item.status === 'pending' && !item.invalidation && !!d.preparation && d.blocker === d.preparation.message && rechecked !== key
+  const recovery = d.reconciliation
+  const recoveryKey = `${d.id}:${d.revision}:${recovery?.id}:${recovery?.actionId}`
+  const reconcileAvailable = !!onReconcile && item.actionMode === 'feature_delivery' && item.status === 'pending' && !item.invalidation && !d.scopeBinding && d.state === 'blocked' && !!recovery?.id && !!recovery.actionId && recovery.revision === d.revision && reconciled !== recoveryKey
+  const reconcile = async () => {
+    if (!reconcileAvailable || !recovery || acting.current) return
+    acting.current = true; setBusy(true); setError(undefined)
+    try { await onReconcile!({ revision: d.revision, actionId: recovery.actionId }); setReconciled(recoveryKey) }
+    catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)) }
+    finally { acting.current = false; setBusy(false) }
+  }
+  const recheckAvailable = !recovery && !!onRecheck && d.state === 'blocked' && !d.scopeBinding && !action && item.status === 'pending' && !item.invalidation && !!d.preparation && d.blocker === d.preparation.message && rechecked !== key
   const recheck = async () => {
     if (!recheckAvailable || acting.current) return
     acting.current = true; setBusy(true); setError(undefined)
@@ -50,6 +61,8 @@ export function DeliveryCard({ item, onConfirm, onRecheck }: { item: PendingDeci
       : <p>Not accepted. {action?.label ?? (d.state === 'running' ? 'Work is in progress.' : 'No confirmation currently offered.')}</p>}
     {available && (endorsed ? <Button variant="primary" disabled={busy} onClick={() => { void confirm() }}>{busy ? 'Confirming…' : `Confirm: ${action!.label}`}</Button>
       : <details><summary>Inspect eligible action / proceed without recommendation</summary><p>{recommendation?.disposition === 'hold' ? 'The Senior Developer recommends waiting. ' : 'No current endorsement is recorded. '}An explicit operator override can confirm only this server-eligible action; it grants no additional authority.</p><Button variant="outline" disabled={busy} onClick={() => { void confirm() }}>{busy ? 'Confirming…' : `Proceed without recommendation: ${action!.label}`}</Button></details>)}
+    {reconcileAvailable && <div><p>Observe the existing handoff using its recorded identity. This does not approve or replay a mutation.</p><Button variant="outline" disabled={busy} onClick={() => { void reconcile() }}>{busy ? 'Requesting reconciliation…' : recovery!.label}</Button></div>}
+    {reconciled === recoveryKey && <p role="status">Existing handoff reconciliation requested; no mutation replay. Await server evidence before treating it as complete.</p>}
     {recheckAvailable && <Button variant="outline" disabled={busy} onClick={() => { void recheck() }}>{busy ? 'Rechecking…' : 'Recheck publication configuration'}</Button>}
     {rechecked === key && <p role="status">Publication configuration rechecked. Awaiting the current server snapshot; no publication action was confirmed.</p>}
     {confirmed === key && <p role="status">Confirmation recorded. Awaiting the current server snapshot; no automatic retry.</p>}
