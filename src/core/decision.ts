@@ -1,5 +1,9 @@
 /** Typed recommendation evaluation. Transport is provided by the host configured-model service. */
-export interface DecisionChoice { id: string; label: string; description?: string; /** Complete advisor continuation, never merely the button label. */ prompt?: string; /** True when added to satisfy the minimum option count, not proposed by the source or advisor. */ added?: boolean }
+import type { PublicationSnapshot } from '../app/publication.ts'
+
+/** Structured privilege boundary: labels are never authorization. Unknown kinds fail closed in autonomous clients. */
+export type DecisionActionKind = 'suggestion' | 'approve' | 'publish' | 'restart' | 'rollback' | 'merge' | 'lifecycle'
+export interface DecisionChoice { id: string; label: string; actionKind?: DecisionActionKind; description?: string; /** Complete advisor continuation, never merely the button label. */ prompt?: string; /** True when added to satisfy the minimum option count, not proposed by the source or advisor. */ added?: boolean }
 /** One append-only revision of a decision's option set. The latest revision is the shown set. */
 export interface DecisionOptionSet {
   /** Monotonic, one-based revision within the decision. */
@@ -69,7 +73,7 @@ export interface PendingDecisionItem {
   sourceSeq?: number
   actionMode?: 'stage_response' | 'ticket_lifecycle'
   /** Server-projected lifecycle state; never accepted as action authorization. */
-  lifecycle?: { kind: 'stuck' | 'done'; assignmentId: string; prNumber?: number; docsOnly?: boolean; issueNumber?: number; issueUrl?: string }
+  lifecycle?: { kind: 'stuck' | 'done'; assignmentId: string; prNumber?: number; docsOnly?: boolean; issueNumber?: number; issueUrl?: string; publication?: PublicationSnapshot; /** Recovery remains visible after the original ticket decision retires; only rollback may execute. */ recovery?: boolean; /** Exact approved own-merge fence remains current; server may offer safe refresh/resume. */ continuation?: boolean }
   staleReason?: string
   draftResponse?: string
   staging?: DecisionStaging

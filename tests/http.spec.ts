@@ -260,6 +260,34 @@ it('projects a stuck lifecycle card and retries it once through the explicit HTT
   expect(retryTicket).toHaveBeenCalledExactlyOnceWith('stalled')
 })
 
+it('requires the trusted local browser envelope for exact-card publication approval and rejects body authority', async () => {
+  const at = new Date().toISOString()
+  const ticket: Ticket = { id: 'publish-http', title: 'Harmless publication', decisionId: 'd', mandate: {} as Ticket['mandate'],
+    origin: { triggerId: 'origin', triggerIds: ['origin'] }, createdAt: at, updatedAt: at, channels: [], inputs: [], undelivered: [],
+    follows: [{ thread: 'github:159', own: true }], assignments: [{ id: 'a', state: 'running', createdAt: at, idleAt: at,
+      report: { state: 'ready', summary: 'Reviewed fixture', at } }] }
+  const { ticketDecisions } = await import('../src/app/decision-inbox.ts')
+  const { publicationConversation } = await import('../src/app/lifecycle-publication.ts')
+  const item = ticketDecisions([ticket])[0]!
+  const pins = { repository: 'example/repo', prNumber: 159, headSha: 'a'.repeat(40), patchSha256: 'b'.repeat(64) }
+  const snapshot = { ...pins, id: '00000000-0000-4000-8000-000000000001', ticketId: ticket.id, conversationId: publicationConversation(item),
+    status: 'prepared', createdAt: at, updatedAt: at, outcomes: [], audit: [], requests: {},
+    evidence: { ...pins, observedAt: at, checks: 'passed', review: 'approved', mergeable: true, state: 'open' } }
+  const enqueue = vi.fn(async () => snapshot)
+  const call = serve({ configured: () => true, deployment: { repository: pins.repository }, executor: { running: () => false },
+    store: { tickets: { get: () => ticket, open: () => [ticket] } }, engine: {},
+    publication: { service: { snapshot: async () => snapshot }, pinsFor: () => pins, enqueue } })
+  await call('GET', 'decisions/inbox')
+  const approval = { publicationId: snapshot.id, requestId: '00000000-0000-4000-8000-000000000002' }
+  expect(await call('POST', `decisions/${item.id}/lifecycle`, { action: 'publish', approval })).toMatchObject({ status: 403 })
+  expect(await call('POST', `decisions/${item.id}/lifecycle`, { action: 'publish', approval, authority: { authorized: true } })).toMatchObject({ status: 400 })
+  expect(enqueue).not.toHaveBeenCalled()
+  const browser = { origin: 'http://127.0.0.1:3082', 'sec-fetch-site': 'same-origin', 'sec-fetch-mode': 'cors', 'sec-fetch-dest': 'empty' }
+  expect(await call('POST', `decisions/${item.id}/lifecycle`, { action: 'publish', approval }, browser)).toMatchObject({ status: 200 })
+  expect(enqueue).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ publicationId: snapshot.id, requestId: approval.requestId }),
+    expect.objectContaining({ kind: 'human_click', actorId: 'local-operator', authorized: true }))
+})
+
 it('retires an ended-session card with plain explanation instead of offering a failing button', async () => {
   const ticketsMap = new Map([
     ['ended-t1', { id: 'ended-t1', title: 'Ended Ticket', ended: { at: '2026-11-04T12:00:00Z', outcome: 'completed' }, stage: 'ended', assignments: [] }],

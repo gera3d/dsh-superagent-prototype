@@ -15,6 +15,8 @@ import { DEFAULT_SENIOR_DEVELOPER_CHARACTER } from '../core/character.ts'
 import { DecisionInbox, InboxError, durableDecisionEvents, registerDecisionCapture, ticketDecisions, submitDecision, stageDecision, restartDecision } from './decision-inbox.ts'
 import { sourceSkills } from './context.ts'
 import { LifecycleRequest, enrichLifecycle, lifecycleAction, type LifecycleCommands } from './lifecycle-decisions.ts'
+import type { LifecyclePublication } from './lifecycle-publication.ts'
+import { PublicationError } from './publication.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
 import { PromptConflict, SKILL_NAME, SKILL_PREFIX, TEAM_SECTIONS, builtInBase, builtInParts, defaultPrompts, savePrompts, type Prompts }
   from './prompts.ts'
@@ -41,6 +43,7 @@ import { executorLoad, ticketDetail, ticketList } from './views/tickets.ts'
 export interface HttpHost {
   readonly store: Store
   readonly commands?: LifecycleCommands
+  readonly publication?: LifecyclePublication
   /** Feishu message links resolved since startup, used by search to match AppLink URLs. */
   readonly sourceLinks: Pick<TextCache, 'entries'>
   readonly sources: SourceRegistry
@@ -99,7 +102,7 @@ function failure(error: unknown): [number, Record<string, unknown>] {
     return [400, { error: `Invalid settings: ${issues.map(issue => issue.path).join(', ')}`, issues }]
   }
   if (error instanceof SetupError) return [400, { error: error.message, setup: error.problem }]
-  if (error instanceof RouteError || error instanceof InboxError) return [error.status, { error: error.message }]
+  if (error instanceof RouteError || error instanceof InboxError || error instanceof PublicationError) return [error.status, { error: error.message }]
   if (error instanceof UserError) return [error.missing ? 404 : 400, { error: error.message, code: error.code, values: error.values }]
   if (error instanceof SettingsConflict || error instanceof PromptConflict) return [409, { error: error.message }]
   return [500, { error: error instanceof Error ? error.message : String(error) }]
@@ -147,7 +150,7 @@ function promptsView(runtime: HttpHost, revision: number | undefined, offset: nu
 export type PromptsView = ReturnType<typeof promptsView>
 
 interface Input<K extends keyof Api> {
-  params: RouteParams<K>; query: Record<string, string>; body: (maxBytes?: number) => Promise<unknown>
+  params: RouteParams<K>; query: Record<string, string>; body: (maxBytes?: number) => Promise<unknown>; localApproval?: boolean
 }
 type Routes = { [K in keyof Api]: (input: Input<K>) => ApiResponse<K> | Promise<ApiResponse<K>> }
 const offset = z.coerce.number().int().nonnegative().catch(0)
@@ -282,17 +285,20 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
     'POST decisions/canonical/fail': async ({ body }) => canonicalOperation(ctx, inbox(), 'fail', await body()),
     'GET decisions/inbox': async () => {
       refreshTickets()
+      await runtime.publication?.refresh?.()
       const items = inbox().list().filter(item => {
         const current = item.lifecycle && item.ticketId ? store.tickets.get(item.ticketId) : undefined
         return !current || !runtime.executor.running?.(current)
       })
-      return { items: await enrichLifecycle(items, runtime.commands, runtime.configured() ? runtime.deployment.repository : undefined) }
+      return { items: await enrichLifecycle(runtime.publication?.project?.(items) ?? items, runtime.commands, runtime.configured() ? runtime.deployment.repository : undefined, runtime.publication) }
     },
-    'POST decisions/:id/lifecycle': async ({ params, body }) => {
-      const { action } = LifecycleRequest.parse(await body())
+    'POST decisions/:id/lifecycle': async ({ params, body, localApproval }) => {
+      const { action, approval } = LifecycleRequest.parse(await body())
       refreshTickets()
       return lifecycleAction({ getTicket: id => store.tickets.get(id), retryTicket: id => runtime.engine.retryTicket(id),
-        repository: runtime.deployment.repository, commands: runtime.commands, busy: current => runtime.executor.running?.(current) ?? false }, inbox().get(params.id), action)
+        repository: runtime.deployment.repository, commands: runtime.commands, publication: runtime.publication,
+        approvalActor: localApproval ? 'local-operator' : undefined,
+        busy: current => runtime.executor.running?.(current) ?? false }, inbox().get(params.id), action, approval)
     },
     'POST decisions/inbox': async ({ body }) => {
       const item = DecisionInboxItem.parse(await body())
@@ -435,7 +441,11 @@ export function registerHttp(ctx: Context, runtime: HttpHost): () => void {
         const route = match(table, req.method ?? 'GET', url.pathname.slice('/orchestrator/api/'.length).split('/'))
         if (!route) throw new RouteError(404, 'Unknown operation')
         const query = Object.fromEntries(url.searchParams)
-        json(res, 200, await route.run({ params: route.params as never, query, body: maxBytes => readBody(req, maxBytes) }))
+        // Privileged UI approval requires the browser's same-origin fetch envelope in addition to management CSRF protection.
+        // This is a trusted-local-operator boundary, not authentication against hostile processes running as the same OS user.
+        const localApproval = req.headers.origin === `http://${req.headers.host}` && req.headers['sec-fetch-site'] === 'same-origin'
+          && ['cors', 'same-origin'].includes(String(req.headers['sec-fetch-mode'])) && req.headers['sec-fetch-dest'] === 'empty'
+        json(res, 200, await route.run({ params: route.params as never, query, localApproval, body: maxBytes => readBody(req, maxBytes) }))
       } catch (error) { json(res, ...failure(error)) }
     } })]
   return () => { capture.dispose(); for (const dispose of disposers) dispose() }

@@ -3,7 +3,8 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-session-persistence'
 import type { WebRoute } from '@deepseek-ai/dsh-host-webserver'
 import { DatabaseSync } from 'node:sqlite'
-import { isAbsolute } from 'node:path'
+import { isAbsolute, dirname } from 'node:path'
+import { loadLifecyclePublication } from './publication-context.ts'
 import { existsSync } from 'node:fs'
 import { z } from 'zod'
 import { DecisionInboxItem, DecisionStageRequest, DecisionSubmissionRequest, DecisionDiscardRequest, DecisionRestartRequest, canonicalOperation, sameOrigin } from './http.ts'
@@ -44,6 +45,12 @@ export function apply(ctx: Context, config: { database: string }): void {
       }
     }
     const inbox = new DecisionInbox(db, item => registerResolution(item.id))
+    const publication = loadLifecyclePublication(dirname(config.database))
+    const projectedList = () => publication?.project?.(inbox.list()) ?? inbox.list()
+    const projectedGet = (id: string) => {
+      const item = inbox.get(id)
+      return item ? (publication?.project?.([item]) ?? [item])[0] : undefined
+    }
     revalidateCapturedDecisions(db, inbox)
     const capture = registerDecisionCapture(ctx, () => inbox)
     let closed = false
@@ -60,7 +67,8 @@ export function apply(ctx: Context, config: { database: string }): void {
         const path = new URL(req.url ?? '/', 'http://localhost').pathname
         if (path === '/orchestrator/api/decisions/inbox' && req.method === 'GET') {
           refreshTickets()
-          const items = inbox.list()
+          await publication?.refresh?.()
+          const items = projectedList()
           for (const item of items) registerResolution(item.id)
           send(200, { items }); return
         }
@@ -95,7 +103,7 @@ export function apply(ctx: Context, config: { database: string }): void {
       }
     }
     const unprovide = ctx.provide?.('decisionInbox', {
-      ready: capture.ready, list: () => inbox.list(), get: (id: string) => inbox.get(id),
+      ready: capture.ready, list: projectedList, get: projectedGet,
       findSource: (source: Parameters<DecisionInbox['findSource']>[0]) => inbox.findSource(source),
       publishAdvisor: (input: Parameters<DecisionInbox['publishAdvisor']>[0]) => inbox.publishAdvisor(input),
       ensureAdvisor: (input: Parameters<DecisionInbox['ensureAdvisor']>[0]) => inbox.ensureAdvisor(input),
