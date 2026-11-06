@@ -1,0 +1,19 @@
+{
+  "files": {
+    "server.cjs": {
+      "beforeSha256": "b7dd4524dde66ae97a4d3a466b6dd7cf7e73635423fa4c4e7804e2c9e7db5766",
+      "afterSha256": "8e2cfd65f324b6e8751a849f578ed6923a34605fa08efdcf79d8ca84182761ba"
+    },
+    "README.md": {
+      "beforeSha256": "2994051ef095c91613e2e5b04a667744dee997db734b31492be7beee46dfa0d8",
+      "afterSha256": "3458eacf0c605fe14197ad07ce944553b82ee0ba5f64ac9fcc4bc5715f62240a"
+    },
+    "test/smoke.cjs": {
+      "beforeSha256": "f6e8e9babcc47cf3146393d4c8537320de17d5c602bccbb45e0b39665a4e7679",
+      "afterSha256": "4a643008ec67dd9241a420cc71676121ef8b1f8c87f3b6aba63c209270d59dce"
+    }
+  },
+  "patchSha256": "511aa7d2c62c5847f721bf0a1e5e311a6288b594f273e73f515a46ae9cbc5394",
+  "test": "node --check server.cjs passed; node test/smoke.cjs: 122 passed, 0 failed (isolated loopback mock)",
+  "independentReview": "Central typed decision mutation guard and observation-only schema reviewed; no remaining blocker in reviewed boundary"
+}

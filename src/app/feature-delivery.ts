@@ -26,6 +26,8 @@ export interface DeliveryAudit { at: string; event: string; actor: string; actio
 export interface DeliveryReconciliation { id: string; actionId: string; revision: number; label: string }
 export interface Delivery {
   id: string; title: string; revision: number; stage: DeliveryStage; state: DeliveryState; owner: string
+  /** Read-only native ownership projection; never persisted as an execution grant. */
+  work?: import('./delivery-currency.ts').DeliveryWork
   nextAction?: DeliveryAction; blocker?: string; scopeBinding?: DeliveryScopeBinding; bindings: DeliveryBindings; requirements: string[]
   /** Derived recovery control for an existing parked outbox row; never a new mutation grant. */
   reconciliation?: DeliveryReconciliation

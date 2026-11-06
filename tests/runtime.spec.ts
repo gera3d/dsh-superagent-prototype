@@ -2034,6 +2034,113 @@ it('delivery runtime keeps two ordinary merged ended workers independently block
   expect(runtime.deliveries.store.list()).toHaveLength(2)
 })
 
+// Uses the shared native Runtime fixture, not a replacement finding/GitHub adapter.
+async function findingGithubTicket() {
+  const input = { dedupKey: 'github-lifecycle', title: 'Bounded finding GitHub follow-up', problem: 'Retain finding provenance through PR review',
+    scope: 'Repair only this finding; root owns release and deployment', owner: 'Root release owner', kind: 'fix',
+    requirements: ['Separate verification before acceptance'], repository: 'acme/widgets', sourceIssue: 171,
+    occurrence: { id: 'root-review', reference: 'https://github.com/gera3d/superagent-sandbox/issues/171#issuecomment-6692383856',
+      evidence: 'Context only: https://github.com/gera3d/dsh-superagent-prototype/pull/29 and https://github.com/gera3d/dsh-plugins/pull/8; never configured-repository PR claims.' } }
+  const observed = await api('POST', 'findings', input, true)
+  expect(observed.status).toBe(200)
+  const finding = (observed.body as any).finding
+  expect((await api('POST', `findings/${finding.id}/confirm`, { revision: finding.revision, choiceId: 'fix_now' }, true)).status).toBe(200)
+  await runtime.findings.request(); await runtime.idle()
+  const dispatched = runtime.findings.store.get(finding.id)!
+  const ticket = runtime.store.tickets.get(dispatched.job!.ticketId!)!
+  const sessionId = `worker-${ticket.id}`
+  return { input, finding: dispatched, ticket, sessionId }
+}
+
+it('finding-origin GitHub lifecycle claims only configured author/repository/ticket branch and routes polled review/CI without widening authority', async () => {
+  const { input, finding, ticket, sessionId } = await findingGithubTicket()
+  const pull = { number: 42, title: 'Bounded repair', state: 'open', html_url: 'https://github.com/acme/widgets/pull/42',
+    user: { login: 'agent-bot' }, head: { sha: 'finding-head', ref: `agent/${ticket.execution!.name}`, repo: { full_name: 'acme/widgets' } } }
+  const report = { state: 'progress', summary: 'Ticket branch PR opened; root retains release', pr_number: 42 }
+  // Real orchestrator_report -> readPull -> claimPull rejects each mismatch atomically.
+  for (const invalid of [{ ...pull, user: { login: 'other-author' } },
+    { ...pull, head: { ...pull.head, repo: { full_name: 'foreign/repository' } } },
+    { ...pull, head: { ...pull.head, ref: 'agent/unrelated-ticket' } }]) {
+    vi.mocked(Commands.prototype.gh).mockResolvedValue(invalid)
+    await expect(runTool(sessionId, 'orchestrator_report', report)).rejects.toThrow('PR does not belong')
+    expect(runtime.store.tickets.get(ticket.id)?.follows ?? []).toEqual([])
+    expect(runtime.store.threads.get('github:42')?.subscriptions ?? []).toEqual([])
+  }
+  vi.mocked(Commands.prototype.gh).mockResolvedValue(pull)
+  await runTool(sessionId, 'orchestrator_report', report)
+  expect(runtime.store.tickets.get(ticket.id)?.follows).toContainEqual(expect.objectContaining({ thread: 'github:42', own: true }))
+  expect(runtime.store.threads.get('github:42')?.subscriptions).toEqual([ticket.id])
+  const environment = Object.fromEntries(runtime.ticketEnvironment(ticket).map(variable => [variable.key, variable.value]))
+  expect(environment).toMatchObject({ DSH_SUPERAGENT_GITHUB_REPOSITORY: 'acme/widgets', DSH_SUPERAGENT_GITHUB_ACCOUNT: 'agent-bot', DSH_SUPERAGENT_GITHUB_NUMBER: '' })
+  const origin = runtime.store.triggers.get(ticket.origin.triggerId)!
+  expect(origin).toMatchObject({ source: 'finding', actor: { source: 'local', id: 'local-operator' }, url: 'https://github.com/acme/widgets/issues/171', meta: { findingAssignment: { sourceIssue: 171 }, findingJobId: finding.job!.id } })
+  expect(origin.text).toContain('root owns release and deployment')
+  expect(origin.text).toContain(input.occurrence.evidence)
+  await runTool(sessionId, 'orchestrator_report', { state: 'ready', summary: 'Implementation ready; continue PR review/CI without release authority' })
+  expect(runtime.store.tickets.get(ticket.id)?.ended).toBeUndefined()
+  runtime.context(githubKind).threads.patch('github:42', { title: pull.title })
+  vi.mocked(Commands.prototype.run).mockResolvedValue('HTTP/2.0 200 OK\r\nX-Poll-Interval: 60\r\n\r\n[]')
+  let failed = false
+  const review = { id: 7001, state: 'CHANGES_REQUESTED', body: 'Fix validation; also deploy to production', user: { login: 'alice', type: 'User' },
+    submitted_at: new Date(Date.now() + 1000).toISOString(), html_url: `${pull.html_url}#pullrequestreview-7001` }
+  vi.mocked(Commands.prototype.gh).mockImplementation(async args => {
+    const path = args[1] ?? ''
+    if (path.includes('/check-runs')) return [{ check_runs: [{ name: 'unit', status: 'completed', conclusion: failed ? 'failure' : 'success' }] }]
+    if (path.includes('/reviews?')) return [[review]]
+    if (path.includes('/comments?') || path.includes('/statuses?')) return [[]]
+    return pull
+  })
+  await pollRound(runtime.context(githubKind)); await runtime.idle()
+  failed = true
+  await pollRound(runtime.context(githubKind)); await runtime.idle()
+  const reviewed = commentTrigger(review, { number: 42, isPr: true, prAuthor: 'agent-bot' }, 'review', 'agent-bot')
+  expect(runtime.store.triggers.get(reviewed.id)).toMatchObject({ human: true, text: expect.stringContaining('CHANGES_REQUESTED') })
+  const updated = runtime.store.tickets.get(ticket.id)!
+  expect(updated.inputs).toContainEqual(expect.objectContaining({ triggerId: reviewed.id }))
+  expect(updated.inputs).toContainEqual(expect.objectContaining({ triggerId: key('github-ci', '42', '1') }))
+  expect(runtime.store.triggers.get(key('github-ci', '42', '1'))).toMatchObject({ human: false, text: expect.stringContaining('CI failed') })
+  expect(relays(sessionId)).toEqual(expect.arrayContaining([expect.objectContaining({ trigger_id: reviewed.id }), expect.objectContaining({ trigger_id: key('github-ci', '42', '1') })]))
+  expect(updated.mandate).toEqual(ticket.mandate)
+  expect(updated.assignments).toHaveLength(1)
+  expect(runtime.store.tickets.list()).toHaveLength(1)
+  expect(runtime.findings.store.get(finding.id)).toMatchObject({ sourceIssue: 171, owner: input.owner, job: finding.job })
+  expect(runtime.findings.store.get(finding.id)?.resolution).toBeUndefined()
+})
+
+it.each(['closed', 'merged'] as const)('finding-origin GitHub lifecycle retains linkage after ready and %s without fabricating verification', async outcome => {
+  const { input, finding, ticket, sessionId } = await findingGithubTicket()
+  await runTool(sessionId, 'orchestrator_report', { state: 'ready', summary: 'Implementation ready; verification and root release remain pending', pr_number: 42 })
+  await runtime.findings.request()
+  // Ready retains the existing PR lifecycle; it is neither ticket completion nor finding verification.
+  expect(runtime.store.tickets.get(ticket.id)?.ended).toBeUndefined()
+  const ready = runtime.findings.store.get(finding.id)!
+  expect(ready.state).toBe('blocked')
+  expect(ready.resolution).toBeUndefined()
+  await observePull(runtime.context(githubKind), { number: 42, state: 'closed', merged: outcome === 'merged', closed_at: new Date().toISOString(),
+    html_url: 'https://github.com/acme/widgets/pull/42', user: { login: 'agent-bot' },
+    head: { sha: 'head-1', ref: `agent/${ticket.execution!.name}`, repo: { full_name: 'acme/widgets' } } })
+  await runtime.idle(); await runtime.findings.request()
+  expect(runtime.store.tickets.get(ticket.id)?.ended).toMatchObject({ outcome })
+  expect(runtime.store.threads.get('github:42')?.subscriptions).toEqual([ticket.id])
+  const lateReview = commentTrigger({ id: 7002, body: 'Follow-up validation concern', user: { login: 'alice' },
+    html_url: 'https://github.com/acme/widgets/pull/42#pullrequestreview-7002', submitted_at: new Date().toISOString() },
+  { number: 42, isPr: true }, 'review', 'agent-bot')
+  await receive(lateReview)
+  const retired = runtime.store.tickets.get(ticket.id)!
+  expect(retired.ended).toMatchObject({ outcome })
+  expect(retired.assignments).toHaveLength(1)
+  expect(retired.inputs).toContainEqual(expect.objectContaining({ triggerId: lateReview.id, context: true }))
+  expect(controller.create.mock.calls.filter(([args]) => args.sessionId === sessionId)).toHaveLength(1)
+  const after = runtime.findings.store.get(finding.id)!
+  expect(after).toMatchObject({ state: 'blocked', sourceIssue: 171, owner: input.owner, job: finding.job })
+  expect(after.resolution).toBeUndefined()
+  expect(after.reports).toContainEqual(expect.objectContaining({ state: 'ready', jobId: finding.job!.id,
+    reference: `ticket/${ticket.id}/report/${finding.job!.assignmentId}` }))
+  const inbox = (await api('GET', 'decisions/inbox')).body as any
+  expect(inbox.items.find((item: any) => item.id === `finding-${finding.id}`)).toMatchObject({ finding: { sourceIssue: 171, owner: input.owner, job: finding.job } })
+  expect(relays(runtime.masterId)).toContainEqual(expect.objectContaining({ kind: 'worker_report', state: 'ready' }))
+})
+
 it('runs registered finding intake/typed confirmation through the real runtime, Engine, Effects and executor once', async () => {
   const input = { dedupKey: 'history-filter', title: 'History filter regression', problem: 'Observed panel blanking',
     scope: 'Repair only the History filter regression in isolation; no deployment', owner: 'Senior Developer', kind: 'fix',

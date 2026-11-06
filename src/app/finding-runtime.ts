@@ -1,18 +1,19 @@
 /** Confirmed findings run as fresh bounded native assignments, never upgraded chat/session authority. */
+import { createHash } from 'node:crypto'
 import type { Context } from '@deepseek-ai/cordis'
 import { ReasoningEffortId } from '@deepseek-ai/dsh-llm'
 import { z } from 'zod'
 import type { Engine } from '../core/engine.ts'
 import type { Ticket } from '../core/model.ts'
 import type { Commands } from '../infra/commands.ts'
-import { FindingError, FindingStore, projectFindings, type Finding, type FindingIntake, type FindingRecommendation } from './finding.ts'
+import { FindingError, FindingStore, projectFindings, type Finding, type FindingIntake, type FindingRecommendation, type FindingReview } from './finding.ts'
 import type { PendingDecisionItem } from '../core/decision.ts'
 import { DeliveryStore } from './feature-delivery.ts'
 import { defaultRoute } from './role-models.ts'
 import type { Store } from './store.ts'
 
 export interface FindingRuntimeDependencies {
-  ctx: Context; store: Store; commands: Commands; engine: Pick<Engine, 'dispatchFinding'>; lifetime: AbortSignal
+  ctx: Context; store: Store; commands: Commands; engine: Pick<Engine, 'dispatchFinding' | 'stopTicket'>; lifetime: AbortSignal
   repository?: () => string
   isQuiescent?: (ticket: Ticket) => boolean | Promise<boolean>
 }
@@ -68,6 +69,20 @@ export class FindingRuntime {
     }
     return this.store.observe(input, provenance)
   }
+  /** Protected local review retires any still-live PR worker before scope replacement, deferral or acceptance. */
+  review(id: string, request: FindingReview, actor = 'local-operator'): Finding {
+    if (actor !== 'local-operator') throw new FindingError(403, 'Only local-operator may review findings')
+    return this.deps.store.atomic(() => {
+      // A newer same-assignment review/CI report invalidates a click on older evidence.
+      this.reconcile()
+      const before = this.store.get(id)
+      const reviewed = this.store.review(id, request, actor)
+      const ticket = before?.job?.ticketId && this.deps.store.tickets.get(before.job.ticketId)
+      if (ticket && !ticket.ended) this.deps.engine.stopTicket(ticket.id,
+        `Local operator finding review ${request.decision}; current bounded assignment retired before the next decision`)
+      return reviewed
+    })
+  }
   /** Coalesced wakeups are drained after awaits, so confirmation during advice cannot be lost. */
   request(): Promise<void> {
     if (this.deps.lifetime.aborted) return Promise.resolve()
@@ -84,13 +99,23 @@ export class FindingRuntime {
   }
   private reconcile(): void {
     for (const finding of this.store.list()) {
-      if (finding.state !== 'running' || !finding.job?.ticketId || !finding.job.assignmentId) continue
+      if (!['running', 'blocked'].includes(finding.state) || !finding.job?.ticketId || !finding.job.assignmentId) continue
       try {
         const ticket = this.deps.store.tickets.get(finding.job.ticketId)
         const assignment = ticket?.assignments.find(a => a.id === finding.job!.assignmentId)
         if (!ticket || !assignment) { this.store.markBlocked(finding.id, 'Native finding assignment is missing; explicit review required.'); continue }
         const report = assignment.report
-        if (report && ['ready', 'blocked', 'failed', 'dropped'].includes(report.state)) {
+        const pending = ticket.inputs.filter(input => input.kind === 'trigger' && !input.context
+          && (ticket.undelivered.includes(input.id) || input.readAt === null || !!report && input.at > report.at))
+        const resumedWork = !ticket.ended && report && (['progress', 'waiting'].includes(report.state)
+          || report.state === 'ready' && (pending.length > 0 || !!assignment.deliveredAt && assignment.deliveredAt >= report.at))
+        if (resumedWork) {
+          const token = createHash('sha256').update(JSON.stringify({ report, deliveredAt: assignment.deliveredAt,
+            pending: pending.map(input => ({ id: input.id, at: input.at })) })).digest('hex')
+          this.store.markWorking(finding.id, { reference: `ticket/${ticket.id}/report/${assignment.id}`,
+            evidence: `Native review/correction is in progress; previous ready evidence is not current. ${report.summary}`.slice(0, 16_384),
+            at: report.at, token })
+        } else if (report && ['ready', 'blocked', 'failed', 'dropped'].includes(report.state)) {
           this.store.markReview(finding.id, { reference: `ticket/${ticket.id}/report/${assignment.id}`, summary: report.summary,
             recordedAt: report.at, state: report.state as 'ready' | 'blocked' | 'failed' | 'dropped' })
         } else if (ticket.ended || assignment.state === 'ended') {

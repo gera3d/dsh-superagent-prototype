@@ -139,8 +139,8 @@ export class Assignments extends EnginePart {
     if (report.answers) this.takeUp(ticketId, report.answers)
     if (report.state === 'blocked' || report.state === 'failed') ticket.undelivered = ticket.undelivered.filter(id => !automatic(ticket.inputs.find(input => input.id === id)))
     this.repo.tickets.save(ticket)
-    if (this.source(ticket)?.source === 'finding' && ['ready', 'blocked', 'failed', 'dropped'].includes(report.state)) {
-      this.tickets.end(ticketId, 'executor', report.state === 'ready' ? 'completed' : 'dropped', at,
+    if (this.source(ticket)?.source === 'finding' && ['blocked', 'failed', 'dropped'].includes(report.state)) {
+      this.tickets.end(ticketId, 'executor', 'dropped', at,
         `Bounded finding assignment reported ${report.state}; evidence review required, finding not resolved`)
       return this.require(ticketId)
     }

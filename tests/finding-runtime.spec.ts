@@ -82,6 +82,76 @@ it('dispatches FIFO once across concurrent requests and restart; reports require
   expect(h.store.tickets.get(ticket.id)?.assignments).toHaveLength(1)
   restart.stop()
 })
+it('preserves ready open-PR native authority, invalidates stale evidence on review input, and atomically stops before explicit retry', async () => {
+  const h = fixture()
+  let clock = '2026-11-06T00:00:00.000Z'
+  const stop = vi.fn(), deliver = vi.fn()
+  const engine = new Engine({ repo: h.store, now: () => clock, policy: () => ({ version: 'p1', paused: false }),
+    scope: { scope: () => ({ listened: true, observed: false }) }, outbox: { status: () => undefined, send: vi.fn(), withdraw: vi.fn() }, executor: { start: h.start, stop, deliver } } as unknown as EngineOptions)
+  const runtime = new FindingRuntime({ ...h.deps, engine })
+  const finding = h.observe('open-pr'); h.confirm(finding.id)
+  await runtime.request()
+  const job = runtime.store.get(finding.id)!.job!
+  engine.assignmentStarted(job.ticketId!, job.assignmentId!)
+  const pr = { source: 'github', id: 'org/repo/pull/171' }
+  engine.bindThread(job.ticketId!, pr, true)
+  clock = '2026-11-06T00:00:01.000Z'
+  engine.report(job.ticketId!, { state: 'ready', summary: 'Initial PR implementation ready' })
+  await runtime.request()
+  const initial = runtime.store.get(finding.id)!
+  expect(initial.state).toBe('blocked')
+  expect(h.store.tickets.get(job.ticketId!)?.ended).toBeUndefined()
+  expect(stop).not.toHaveBeenCalled()
+  clock = '2026-11-06T00:00:02.000Z'
+  engine.receive({ id: 'human-review', source: 'github', threads: [pr], actor: { source: 'github', id: 'reviewer' }, human: true,
+    at: clock, text: 'Review requests an in-scope correction', meta: {} })
+  expect(() => runtime.review(finding.id, { revision: initial.revision, decision: 'accept_evidence',
+    evidenceReference: initial.reports.at(-1)!.reference, requirements: finding.requirements })).toThrow()
+  expect(h.store.tickets.get(job.ticketId!)?.ended).toBeUndefined()
+  await runtime.request()
+  const working = runtime.store.get(finding.id)!
+  expect(working.state).toBe('running'); expect(working.revision).toBeGreaterThan(initial.revision)
+  const workingRevision = working.revision
+  await runtime.request()
+  expect(runtime.store.get(finding.id)!.revision).toBe(workingRevision)
+  const input = h.store.tickets.get(job.ticketId!)!.inputs.find(i => i.kind === 'trigger' && i.triggerId === 'human-review')!
+  engine.inputsDelivered(job.ticketId!, job.assignmentId!, [input.id])
+  engine.inputsRead(job.ticketId!, [input.id])
+  clock = '2026-11-06T00:00:03.000Z'
+  engine.report(job.ticketId!, { state: 'progress', summary: 'Correcting the in-scope review finding' })
+  await runtime.request()
+  clock = '2026-11-06T00:00:04.000Z'
+  engine.report(job.ticketId!, { state: 'ready', summary: 'Corrected PR implementation and review evidence' })
+  await runtime.request()
+  const corrected = runtime.store.get(finding.id)!
+  expect(corrected.state).toBe('blocked')
+  expect(corrected.reports.at(-1)?.evidence).toContain('Corrected PR')
+  expect(h.store.tickets.get(job.ticketId!)!.assignments).toHaveLength(1)
+  expect(stop).not.toHaveBeenCalled()
+  expect(() => runtime.review(finding.id, { revision: corrected.revision, decision: 'accept_evidence', requirements: [] })).toThrow()
+  expect(stop).not.toHaveBeenCalled()
+  const result = runtime.review(finding.id, { revision: corrected.revision, decision: 'retry_scope' })
+  expect(result.state).toBe('awaiting_decision')
+  expect(stop).toHaveBeenCalledTimes(1)
+  expect(h.store.tickets.get(job.ticketId!)?.ended?.by).toBe('human')
+  expect(h.store.tickets.get(job.ticketId!)!.assignments).toHaveLength(1)
+  expect(deliver).toHaveBeenCalled()
+  await runtime.stop()
+})
+it.each(['defer', 'accept_evidence'] as const)('protected %s review retires an open-PR worker under local operator authority', async decision => {
+  const h = fixture(), finding = h.observe(`explicit-${decision}`); h.confirm(finding.id)
+  await h.runtime.request()
+  const job = h.runtime.store.get(finding.id)!.job!
+  h.engine.assignmentStarted(job.ticketId!, job.assignmentId!)
+  h.engine.bindThread(job.ticketId!, { source: 'github', id: 'org/repo/pull/171' }, true)
+  h.engine.report(job.ticketId!, { state: 'ready', summary: 'Bounded requirements ready for explicit review' })
+  await h.runtime.request()
+  const before = h.runtime.store.get(finding.id)!
+  const reviewed = h.runtime.review(finding.id, { revision: before.revision, decision,
+    ...(decision === 'accept_evidence' ? { evidenceReference: before.reports.at(-1)!.reference, requirements: finding.requirements } : {}) })
+  expect(reviewed.state).toBe(decision === 'defer' ? 'deferred' : 'resolved')
+  expect(h.store.tickets.get(job.ticketId!)?.ended?.by).toBe('human')
+})
 it('keeps a 16385-character actual native report linked and starts the next queued finding', async () => {
   const h = fixture(), first = h.observe('long-report'), second = h.observe('after-long-report')
   h.confirm(first.id); h.confirm(second.id)

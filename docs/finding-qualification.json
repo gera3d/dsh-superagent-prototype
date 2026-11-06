@@ -1,0 +1,534 @@
+{
+  "baselineCommit": "8ed680f372e8def2902e2727c013cc9b247a5767",
+  "frozenCandidateCommit": "4b85c5ae486da2c438857c4e1b7d04bf0b64b085",
+  "command": "pnpm exec vitest run --maxWorkers=1 --reporter=json --outputFile=<local report>",
+  "normalization": "Remove stack-frame lines and machine-dependent paths/timing from each failureMessages string; SHA-256 normalized errors; hash sorted file/assertion/error records with canonical JSON. Raw reports stay local.",
+  "baseline": {
+    "rawSha256": "24932a7a97ed86b6e93338c5073dc34907369fa7310bc004f34e8bbba6302ec5",
+    "counts": {
+      "numTotalTests": 2043,
+      "numPassedTests": 2031,
+      "numFailedTests": 10,
+      "numPendingTests": 2
+    },
+    "normalizedFailureSetSha256": "b997de6dbc24841c8bc4708af1cffe9bb1006e79064af4cae137dced292294a9"
+  },
+  "frozenCandidate": {
+    "rawSha256": "e82a8da75403e6ff7f4afd79d1728d58fa86e1319a9f4dc3afb1a9ab34db28f6",
+    "counts": {
+      "numTotalTests": 2108,
+      "numPassedTests": 2096,
+      "numFailedTests": 10,
+      "numPendingTests": 2
+    },
+    "normalizedFailureSetSha256": "b997de6dbc24841c8bc4708af1cffe9bb1006e79064af4cae137dced292294a9"
+  },
+  "knownFailureAssertions": [
+    {
+      "file": "cards.spec.ts",
+      "assertion": "keeps each role's own instructions short",
+      "normalizedErrorSha256": "4ba8716c3e3d747ad7605af3d484c6634b01d26a722cd4c5de2e3d34e6fd78be"
+    },
+    {
+      "file": "migration.spec.ts",
+      "assertion": "writes a prompt version saved before the team sections in them, keeping its skills and auto-merge threshold, and marks it",
+      "normalizedErrorSha256": "6c425b6fc8fd5118a100788cd5c7c4799c5394019e6d8f8e4f69f01fabcfb796"
+    },
+    {
+      "file": "migration.spec.ts",
+      "assertion": "writes the removed auto-merge threshold and member identities into the prompts as one new version, unless an earlier version did",
+      "normalizedErrorSha256": "6c425b6fc8fd5118a100788cd5c7c4799c5394019e6d8f8e4f69f01fabcfb796"
+    },
+    {
+      "file": "model-surface.spec.ts",
+      "assertion": "names only registered tools, schema options, environment variables and glossary words, with the enforced word limits",
+      "normalizedErrorSha256": "77a83d1816cebffba6cd02de97d0608cb05d61583e8a0fe6f3468f0bb409ef1d"
+    },
+    {
+      "file": "panel-settings.spec.tsx",
+      "assertion": "lists the settings groups stages first, opens each stage's group from its status, and returns to the last group opened",
+      "normalizedErrorSha256": "a73c8bc21dff92d9af38042f3ef06d8fe9ad5b474296994b2569205df3e653ce"
+    },
+    {
+      "file": "runtime-concurrency.spec.ts",
+      "assertion": "a worker that goes on after a passing failure starts the count of passing failures again once its turn ends as turns do",
+      "normalizedErrorSha256": "19ecd1ec203818430a843453880baf8eed832bbaa72374b26c98a66bd86b8958"
+    },
+    {
+      "file": "runtime-concurrency.spec.ts",
+      "assertion": "a worker that goes on after a passing failure waits while processing is paused, and goes on once it resumes",
+      "normalizedErrorSha256": "c0fbb427c8bba8b4da0966d47582eb5d49aba7293981de5e7361fa77873d4577"
+    },
+    {
+      "file": "runtime-concurrency.spec.ts",
+      "assertion": "lets a worker go on after a passing provider failure, three times, before its ticket fails",
+      "normalizedErrorSha256": "4fea3711f8c6da48f206919f2de0d5d4a1329ac89dc3925e3ca9f98ddedc58b2"
+    },
+    {
+      "file": "runtime.spec.ts",
+      "assertion": "leaves auto-merge to the delivery requirements, with the agent's own gh and the line threshold",
+      "normalizedErrorSha256": "131d75ffac276aa272ac71cb4ea11f0b0cc33e057bfcd36120fa338f83acac50"
+    },
+    {
+      "file": "runtime.spec.ts",
+      "assertion": "runs a launch that fails for a passing reason again on the launch backoff three times, then fails its ticket; a failed prepare fails at once",
+      "normalizedErrorSha256": "673235d5963ed3ef75ac988788a53618d6c871ae043706b377bb96d067d7762b"
+    }
+  ],
+  "comparison": {
+    "new": [],
+    "removed": [],
+    "exactMatch": true
+  },
+  "addedByFile": {
+    "core-engine.spec.ts": 6,
+    "finding-advice.spec.ts": 1,
+    "finding-card.spec.tsx": 18,
+    "finding-consumers.spec.tsx": 3,
+    "finding-observe-cli.spec.ts": 2,
+    "finding-runtime.spec.ts": 12,
+    "finding.spec.ts": 22,
+    "runtime.spec.ts": 1
+  },
+  "addedAssertions": [
+    {
+      "file": "core-engine.spec.ts",
+      "assertion": "confirmed bounded finding dispatch creates one fresh explicit native assignment without upgrading or reopening a dropped proactive worker",
+      "status": "passed"
+    },
+    {
+      "file": "core-engine.spec.ts",
+      "assertion": "confirmed bounded finding dispatch does not dispatch while paused",
+      "status": "passed"
+    },
+    {
+      "file": "core-engine.spec.ts",
+      "assertion": "confirmed bounded finding dispatch does not replay an uncertain finding assignment after host restart",
+      "status": "passed"
+    },
+    {
+      "file": "core-engine.spec.ts",
+      "assertion": "confirmed bounded finding dispatch never automatically escalates the one bounded assignment on failure",
+      "status": "passed"
+    },
+    {
+      "file": "core-engine.spec.ts",
+      "assertion": "confirmed bounded finding dispatch refuses generic retry or attach resurrection without a fresh finding confirmation",
+      "status": "passed"
+    },
+    {
+      "file": "core-engine.spec.ts",
+      "assertion": "confirmed bounded finding dispatch retains human review on a followed PR as linked context without reopening or poisoning intake",
+      "status": "passed"
+    },
+    {
+      "file": "finding-advice.spec.ts",
+      "assertion": "persists finding-owned generic advice retirement before source lookup/staging, preserving real questions and staged submissions",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "POSTs typed revision and choice only, never a chat prompt or caller authority",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "confirms Defer with exact choice and current revision, then prevents replay",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "confirms Queue next with exact choice and current revision, then prevents replay",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "confirms Run verification with exact choice and current revision, then prevents replay",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "discloses truncated excerpts with original length, digest and full native report reference",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "does not erase prior dispatch history when deferred after review",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "does not offer old success evidence after a later failure from the same job",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "does not offer triage for queued and retains job attribution",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "does not offer triage for resolved and retains job attribution",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "does not offer triage for running and retains job attribution",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "does not present stale advice as current and exposes model failure honestly",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "preserves durable defer and revisits only the current revision without dispatch",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "renders real recorded advice, bounded scope, linked delivery and FIFO semantics",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "requires explicit recorded evidence and requirement review before accepting a blocked finding",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "sends only a scoped review for Defer review without staging",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "sends only a scoped review for Reopen bounded triage without staging",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "shows confirmation conflict without automatic replay",
+      "status": "passed"
+    },
+    {
+      "file": "finding-card.spec.tsx",
+      "assertion": "shows no-repair-needed resolution without claiming a fix or delivery acceptance",
+      "status": "passed"
+    },
+    {
+      "file": "finding-consumers.spec.tsx",
+      "assertion": "actual no-origin FindingStore handoff projects into the worker dock and follows mounted conversation switches",
+      "status": "passed"
+    },
+    {
+      "file": "finding-consumers.spec.tsx",
+      "assertion": "associated no-origin dispatched finding suppresses inline generic synthesis and older suggestion controls",
+      "status": "passed"
+    },
+    {
+      "file": "finding-consumers.spec.tsx",
+      "assertion": "preserves origin and prior-job worker attribution without leaking to unrelated sessions",
+      "status": "passed"
+    },
+    {
+      "file": "finding-observe-cli.spec.ts",
+      "assertion": "allows only loopback observation origins and rejects action-like CLI arguments",
+      "status": "passed"
+    },
+    {
+      "file": "finding-observe-cli.spec.ts",
+      "assertion": "uses real loopback HTTP read/observe only, without spoofed local-operator approval headers",
+      "status": "passed"
+    },
+    {
+      "file": "finding-runtime.spec.ts",
+      "assertion": "atomically commits native ticket, executor effect, finding job, and existing delivery audit relation",
+      "status": "passed"
+    },
+    {
+      "file": "finding-runtime.spec.ts",
+      "assertion": "awaits cancellation on stop without persisting late model advice",
+      "status": "passed"
+    },
+    {
+      "file": "finding-runtime.spec.ts",
+      "assertion": "calls the real configured model with no tools and persists attributable advice",
+      "status": "passed"
+    },
+    {
+      "file": "finding-runtime.spec.ts",
+      "assertion": "dispatches FIFO once across concurrent requests and restart; reports require review, never automatic resolution",
+      "status": "passed"
+    },
+    {
+      "file": "finding-runtime.spec.ts",
+      "assertion": "isolates malformed native report timestamps instead of aborting reconciliation or FIFO dispatch",
+      "status": "passed"
+    },
+    {
+      "file": "finding-runtime.spec.ts",
+      "assertion": "keeps a 16385-character actual native report linked and starts the next queued finding",
+      "status": "passed"
+    },
+    {
+      "file": "finding-runtime.spec.ts",
+      "assertion": "links terminal delivery history without mutation or starving the next FIFO finding",
+      "status": "passed"
+    },
+    {
+      "file": "finding-runtime.spec.ts",
+      "assertion": "persists one actual DshExecutor launch effect atomically and never runs live operations",
+      "status": "passed"
+    },
+    {
+      "file": "finding-runtime.spec.ts",
+      "assertion": "records honest configured-model failure without fabricating provider advice or preventing confirmation",
+      "status": "passed"
+    },
+    {
+      "file": "finding-runtime.spec.ts",
+      "assertion": "rejects intake and dispatch for a different configured repository",
+      "status": "passed"
+    },
+    {
+      "file": "finding-runtime.spec.ts",
+      "assertion": "rejects model advice for another finding rather than accepting substituted scope",
+      "status": "passed"
+    },
+    {
+      "file": "finding-runtime.spec.ts",
+      "assertion": "retires blocked native work and holds fresh recovery dispatch until its actual background stop completes",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "archives old work and permits a fresh FIFO job after blocked defer",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "archives old work and permits a fresh FIFO job after blocked retry_scope",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "bounds a valid 100000-character native report excerpt without stalling FIFO and deduplicates by full summary hash",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "bounds a valid 16385-character native report excerpt without stalling FIFO and deduplicates by full summary hash",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "canonical projection replaces its own identity without duplicating or staging findings",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "commits native dispatch and binding together, rolling both back on failure",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "deduplicates durable observations and refuses scope, evidence identity, and delivery identity changes",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "defers without work, only reopens explicitly, and does not revive accepted resolved repeats",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "derives a blocked delivery acceptance projection until all attached findings resolve, without changing delivery identity",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "fences stale review and cannot accept historic or failed work after retry",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "keeps blocked reports linked and reviewable without treating them as resolution",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "keeps dropped reports linked and reviewable without treating them as resolution",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "keeps failed reports linked and reviewable without treating them as resolution",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "keeps ready reports linked and reviewable without treating them as resolution",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "keeps recommendations real, revision-bound and unavailable until actually recorded",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "records no-repair-needed verification without inventing a fix or erasing the original observation",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "records trusted observer provenance separately from strict intake and never turns model advice into human approval",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "rejects unknown authority, pins, injected choices and stale/conflicting confirmation",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "requires explicit complete requirements acceptance and rejects stale or nonlocal reviews",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "serializes fix-now and queue-next FIFO and preserves one job through connection restart",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "stores and renders Run verification rather than a fabricated repair action for verification findings",
+      "status": "passed"
+    },
+    {
+      "file": "finding.spec.ts",
+      "assertion": "supports two database owners without duplicate confirmation or rebinding",
+      "status": "passed"
+    },
+    {
+      "file": "runtime.spec.ts",
+      "assertion": "runs registered finding intake/typed confirmation through the real runtime, Engine, Effects and executor once",
+      "status": "passed"
+    }
+  ],
+  "removedAssertions": [],
+  "existingStatusChanges": [],
+  "postFreeze": {
+    "fullSuiteRerun": false,
+    "reason": "Root requested bounded GitHub lifecycle, compact presentation and ownership corrections after preserving the frozen full comparison. Only justified impacted-module and registered-consumer checks were run.",
+    "checks": [
+      {
+        "scope": "Impacted core/store/runtime/consumer/currency/CLI/docs modules only",
+        "rawReportSha256": "f6abec49a2e9f5c79a9ea8e0202402d2d2e769718ff837b547da34157deb441a",
+        "counts": {
+          "numTotalTests": 227,
+          "numPassedTests": 227,
+          "numFailedTests": 0,
+          "numPendingTests": 0
+        }
+      },
+      {
+        "scope": "Registered Runtime finding/GitHub lifecycle filter only; 96 other Runtime cases intentionally skipped",
+        "rawReportSha256": "7b18609cac78f3549126ba15d8cb6ff7494b604f4209d40146e5fe07d744ac8d",
+        "counts": {
+          "numTotalTests": 100,
+          "numPassedTests": 4,
+          "numFailedTests": 0,
+          "numPendingTests": 96
+        }
+      }
+    ],
+    "addedAssertions": [
+      {
+        "file": "delivery-currency.spec.ts",
+        "assertion": "projects unique same-source replacement and idle native ownership; persists only synthetic advice retirement",
+        "status": "passed"
+      },
+      {
+        "file": "delivery-ownership-dock.spec.tsx",
+        "assertion": "keeps superseded typed delivery history in its actual old conversation while mounted switching shows the active owner",
+        "status": "passed"
+      },
+      {
+        "file": "finding-card.spec.tsx",
+        "assertion": "keeps the normal face compact with real advice, status and typed actions before closed disclosures",
+        "status": "passed"
+      },
+      {
+        "file": "finding-runtime.spec.ts",
+        "assertion": "preserves ready open-PR native authority, invalidates stale evidence on review input, and atomically stops before explicit retry",
+        "status": "passed"
+      },
+      {
+        "file": "finding-runtime.spec.ts",
+        "assertion": "protected defer review retires an open-PR worker under local operator authority",
+        "status": "passed"
+      },
+      {
+        "file": "finding-runtime.spec.ts",
+        "assertion": "protected accept_evidence review retires an open-PR worker under local operator authority",
+        "status": "passed"
+      },
+      {
+        "file": "finding.spec.ts",
+        "assertion": "invalidates stale readiness for newer native work and accepts only a fresh ready report with explicit human review",
+        "status": "passed"
+      },
+      {
+        "file": "finding.spec.ts",
+        "assertion": "deduplicates working tokens durably per native job without reopening deferred or resolved findings",
+        "status": "passed"
+      },
+      {
+        "file": "runtime.spec.ts",
+        "assertion": "finding-origin GitHub lifecycle claims only configured author/repository/ticket branch and routes polled review/CI without widening authority",
+        "status": "passed"
+      },
+      {
+        "file": "runtime.spec.ts",
+        "assertion": "finding-origin GitHub lifecycle retains linkage after ready and closed without fabricating verification",
+        "status": "passed"
+      },
+      {
+        "file": "runtime.spec.ts",
+        "assertion": "finding-origin GitHub lifecycle retains linkage after ready and merged without fabricating verification",
+        "status": "passed"
+      }
+    ],
+    "addedByFile": {
+      "delivery-currency.spec.ts": 1,
+      "delivery-ownership-dock.spec.tsx": 1,
+      "finding-card.spec.tsx": 1,
+      "finding-runtime.spec.ts": 3,
+      "finding.spec.ts": 2,
+      "runtime.spec.ts": 3
+    },
+    "noFinalTreeCompleteSuiteClaim": true,
+    "metadataFixtureRecheck": {
+      "scope": "Complete the newly added consumer fixture metadata without an unsafe cast; recheck only that existing new case",
+      "passed": 1,
+      "failed": 0,
+      "rawReportSha256": "a8adbe5a8779f119a60e1f5059bd5a89912ea75d393451fc675850c737bd3d28"
+    },
+    "finalVerification": {
+      "typecheck": {
+        "exitCode": 0,
+        "localLogSha256": "8366207267355d3e3d5bf3bf6e8c94c5f93f6078c34f08973fa2b38cdda6cc92"
+      },
+      "backendBuild": {
+        "exitCode": 0,
+        "localLogSha256": "d03336ed50284a9a1614642190c6227b7133ac7785e22b456fb256960cfca506"
+      },
+      "inboxBuild": {
+        "exitCode": 0,
+        "localLogSha256": "25229c31cdedaeda83d672e9b5562e756b566164a6d95f6ebbbc587722ec5507"
+      }
+    }
+  }
+}

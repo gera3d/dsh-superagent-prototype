@@ -133,7 +133,7 @@ describe('confirmed bounded finding dispatch', () => {
     h.settle()
     const pr = { source: 'github', id: 'owner/repo/pull/171' }
     h.engine.bindThread(fresh.id, pr, true)
-    h.engine.report(fresh.id, { state: 'ready', summary: 'Bounded implementation evidence; review remains required' })
+    h.engine.report(fresh.id, { state: 'blocked', summary: 'Bounded scope exhausted; review remains required' })
     const ended = h.repo.tickets.get(fresh.id)!.ended
     const review = trigger('2', { source: 'github', threads: [pr], text: 'Human PR review requests a bounded correction' })
     expect(h.engine.receive(review)).toBe('stored')

@@ -330,7 +330,7 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
       if (!localApproval) throw new PublicationError(403, 'Explicit local operator evidence review required')
       if (!runtime.findings) throw new PublicationError(409, 'Finding coordinator is not configured')
       const request = FindingReviewSchema.parse(await body())
-      const finding = runtime.findings.store.review(params.id, request, 'local-operator')
+      const finding = runtime.findings.review(params.id, request, 'local-operator')
       void runtime.findings.request().catch(error => ctx.logger.warn('Finding review: %s', String(error)))
       return { finding, item: findingDecision(finding) }
     },

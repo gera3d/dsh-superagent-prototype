@@ -13,7 +13,7 @@ export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile }: { item
   const [reconciled, setReconciled] = useState<string>()
   const d = item.delivery
   if (!d) return <section role="status">Delivery metadata unavailable. Refresh before confirming.</section>
-  const action = d.scopeBinding ? undefined : d.nextAction
+  const action = d.scopeBinding || d.work?.state === 'superseded' ? undefined : d.nextAction
   const key = `${d.id}:${d.revision}:${action?.id}`
   const available = item.actionMode === 'feature_delivery' && item.status === 'pending' && !item.invalidation
     && !d.scopeBinding && d.state === 'awaiting_decision' && action?.revision === d.revision && !!action.fingerprint && confirmed !== key
@@ -48,12 +48,18 @@ export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile }: { item
     finally { acting.current = false; setBusy(false) }
   }
   return <section id={`delivery-${d.id}`} className="dt-delivery-card" aria-label={`Feature delivery: ${d.title}`} style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: 8, padding: 18, color: '#e6edf3' }}>
-    <small>Feature delivery · {d.stage.replaceAll('_', ' ')} · {d.state.replaceAll('_', ' ')}</small>
+    <small>Feature delivery · {d.work?.state === 'superseded' ? 'Superseded history' : `${d.stage.replaceAll('_', ' ')} · ${d.work?.state === 'owned' ? 'owned / in progress' : d.state.replaceAll('_', ' ')}`}</small>
     <h3>{d.title}</h3>
-    <p><strong>Owner: {d.owner}</strong></p>
-    {d.blocker && <p role="status">Blocked: {d.blocker}</p>}
+    <p><strong>Owner: {d.work?.owner ?? d.owner}</strong></p>
+    {d.work && <section aria-label="Current work ownership"><p role="status">{d.work.nextStep}</p>
+      {d.work.progress && <><p><strong>Latest worker report:</strong> {d.work.progress.length > 480 ? `${d.work.progress.slice(0, 480)}…` : d.work.progress}</p>
+        {d.work.progress.length > 480 && <details><summary>Full worker progress report</summary><p style={{ whiteSpace: 'pre-wrap' }}>{d.work.progress}</p></details>}</>}
+      {d.work.supersededBy && <p>Superseded by <code>worker-{d.work.supersededBy}</code>. Original dropped-worker history and mandate are unchanged.</p>}
+      {!!d.work.replaces?.length && <p>Active replacement for {d.work.replaces.map(id => `worker-${id}`).join(', ')}.</p>}
+    </section>}
+    {d.blocker && !d.work && <p role="status">Blocked: {d.blocker}</p>}
     {recommendation ? <aside aria-label="Senior Developer recommendation"><strong>{endorsed ? `Senior Developer recommends: ${action!.label}` : 'Senior Developer recommends waiting'}</strong><p>{recommendation.rationale}</p><small>{recommendation.provider} · {recommendation.recordedAt}</small></aside>
-      : d.recommendationError ? <p role="status">Senior Developer advice unavailable: {d.recommendationError.message}. Advice failure does not veto an otherwise eligible action.</p> : action ? <p>No current Senior Developer recommendation recorded for this action.</p> : null}
+      : d.recommendationError && d.work?.state !== 'superseded' ? <p role="status">Senior Developer advice unavailable: {d.recommendationError.message}. Advice failure does not veto an otherwise eligible action.</p> : action ? <p>No current Senior Developer recommendation recorded for this action.</p> : null}
     {action?.kind === 'publish' && <section aria-label="Publication effects"><p><strong>Before publishing:</strong> this confirms the pinned publication for {d.preparedPublication?.repository ?? d.bindings.repository}{d.preparedPublication ? ` PR #${d.preparedPublication.pr}` : ''} in {d.preparedPublication?.environment ?? d.bindings.environment ?? 'the configured environment'}. Inspect all pinned references below before confirming.</p>
       <p><strong>Components:</strong> {d.preparedPublication?.components?.length ? d.preparedPublication.components.join(', ') : 'Not recorded in this publication snapshot.'}</p>
       <p><strong>Effects:</strong> {d.preparedPublication?.effects?.length ? d.preparedPublication.effects.join('; ') : 'Not recorded; no component or restart effects are inferred.'}</p></section>}

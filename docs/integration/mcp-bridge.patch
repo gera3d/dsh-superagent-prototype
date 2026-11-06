@@ -1,0 +1,223 @@
+--- a/server.cjs
++++ b/server.cjs
+@@ -24,7 +24,7 @@
+ const crypto = require('node:crypto')
+ const readline = require('node:readline')
+ 
+-const SERVER = { name: 'dsh-superagent-control', version: '0.1.0' }
++const SERVER = { name: 'dsh-superagent-control', version: '0.2.0' }
+ const PROTOCOLS = ['2025-06-18', '2025-03-26', '2024-11-05']
+ const READONLY = process.env.DSH_MCP_READONLY === '1'
+ const ALLOW_RESTART = process.env.DSH_MCP_ALLOW_RESTART === '1'
+@@ -65,6 +65,7 @@
+ const ROUTES = [
+   route('GET', 'state'), route('GET', 'overview'), route('GET', 'sources'), route('GET', 'settings'), route('GET', 'prompts'),
+   route('GET', 'models'), route('GET', 'policy/history'), route('GET', 'search'), route('GET', 'threads'), route('GET', `threads/${SEG}`),
++  route('GET', 'findings'), route('POST', 'findings/observe'),
+   route('GET', 'tickets'), route('GET', `tickets/${SEG}`), route('GET', 'decisions'), route('GET', 'decisions/inbox'),
+   route('POST', 'decisions/evaluate'), route('POST', 'decisions/inbox'),
+   route('POST', `decisions/${SEG}/(resolve|dismiss|restart|stage|submission|discard-staging)`),
+@@ -143,6 +144,9 @@
+   if (!matched) throw new Failure(`Route not permitted: ${method} ${rel}`, 400)
+   if (method !== 'GET' && READONLY) throw new Failure('This server is running read-only (DSH_MCP_READONLY=1).', 403)
+   if (matched.restarts && !ALLOW_RESTART) throw new Failure('This route restarts the dsh-superagent service. Agents restarting their own host caused the earlier stop/start churn, so it is off. Set DSH_MCP_ALLOW_RESTART=1 to allow it.', 403)
++  // Every tool, including the generic escape hatch, shares this typed-action boundary.
++  const decisionMutation = method !== 'GET' && rel.match(/^decisions\/([^/]+)\/(?:resolve|dismiss|restart|stage|submission|discard-staging)$/)
++  if (decisionMutation) ordinaryDecision(await findDecision(decodeURIComponent(decisionMutation[1])))
+   const url = new URL(`/orchestrator/api/${rel}`, BASE)
+   for (const [k, v] of Object.entries(query || {})) if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, String(v))
+   const payload = body === undefined ? undefined : JSON.stringify(body)
+@@ -207,7 +211,9 @@
+ function summarizeDecision(item, { context = false, prompts = false } = {}) {
+   const rec = item.recommendation || {}
+   return {
+-    id: item.id, status: item.status, urgency: item.urgency, ticketTitle: item.ticketTitle, trigger: item.trigger,
++    id: item.id, status: item.status, actionMode: item.actionMode,
++    ...(item.finding ? { finding: { id: item.finding.id, revision: item.finding.revision, state: item.finding.state, job: item.finding.job } } : {}),
++    urgency: item.urgency, ticketTitle: item.ticketTitle, trigger: item.trigger,
+     question: item.question, sessionId: item.sessionId, ticketId: item.ticketId, createdAt: iso(item.createdAt),
+     choices: (item.choices || []).map(c => ({ id: c.id, label: c.label, description: c.description,
+       ...(prompts && c.prompt ? { prompt: slim(c.prompt, 1, 1, 1000) } : {}) })),
+@@ -243,6 +249,21 @@
+ const RO = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false }
+ const WR = (destructive = false, idempotent = false) => ({ readOnlyHint: false, destructiveHint: destructive, idempotentHint: idempotent, openWorldHint: false })
+ const obj = (properties = {}, required = []) => ({ type: 'object', properties, required, additionalProperties: false })
++const findingText = maxLength => ({ type: 'string', minLength: 1, maxLength })
++const findingFields = {
++  dedupKey: findingText(512), title: findingText(512), problem: findingText(16384), scope: findingText(16384), owner: findingText(512),
++  kind: { type: 'string', enum: ['fix', 'verification'] }, repository: findingText(512),
++  requirements: { type: 'array', minItems: 1, maxItems: 100, items: findingText(16384) },
++  occurrence: obj({ id: findingText(512), reference: findingText(16384), evidence: findingText(16384), at: { type: 'string', format: 'date-time' } }, ['id', 'reference', 'evidence']),
++  existingDeliveryId: findingText(512), sourceIssue: { type: 'integer', minimum: 1 }, sessionId: findingText(512),
++}
++const findingSchema = obj(findingFields, ['dedupKey', 'title', 'problem', 'scope', 'owner', 'kind', 'requirements', 'repository', 'occurrence'])
++function ordinaryDecision(item) {
++  if (item.finding || item.delivery || item.lifecycle || ['finding_triage', 'feature_delivery', 'ticket_lifecycle'].includes(item.actionMode))
++    throw new Failure('This is a typed finding/delivery decision. Review and confirm its current action in the harness; generic operations grant no execution or approval.', 409)
++  return item
++}
++
+ const idProp = description => ({ type: 'string', description })
+ 
+ const TOOLS = [
+@@ -297,19 +318,41 @@
+     inputSchema: obj({ q: { type: 'string', maxLength: 200 } }, ['q']),
+     async run(args) { return slim(await api('GET', 'search', { query: { q: need(args, 'q', 'string', { max: 200 }) } }), 4, 30, 300) } },
+ 
++  { name: 'list_findings', write: false, annotations: RO, description: 'Read durable findings, actual advice and execution state. Reading grants no confirmation authority.',
++    inputSchema: obj({ state: { type: 'string', enum: ['all', 'awaiting_decision', 'queued', 'deferred', 'running', 'blocked', 'resolved'] }, limit: { type: 'integer', minimum: 1, maximum: 100 } }),
++    async run(args) {
++      const state = args.state === undefined ? 'all' : need(args, 'state', 'string', { max: 30 })
++      if (!['all', 'awaiting_decision', 'queued', 'deferred', 'running', 'blocked', 'resolved'].includes(state)) throw new Failure('Invalid finding state', 400)
++      const { items = [] } = await api('GET', 'findings'); const picked = items.filter(item => state === 'all' || item.state === state)
++      return { matched: picked.length, returned: Math.min(picked.length, limitOf(args)), items: slim(picked.slice(0, limitOf(args)), 8, 30, 2000) }
++    } },
++  { name: 'get_finding', write: false, annotations: RO, description: 'Read one finding by durable id, including bounded scope and recommendation. No work is confirmed or sent.',
++    inputSchema: obj({ id: idProp('Finding id') }, ['id']),
++    async run(args) { const id = need(args, 'id', 'id'); const { items = [] } = await api('GET', 'findings'); const item = items.find(row => row.id === id); if (!item) throw new Failure('Finding not found', 404); return slim(item, 10, 100, 16384) } },
++  { name: 'observe_finding', write: true, annotations: WR(false, true), description: 'Record an observation for a canonical finding decision, deduplicated by problem and occurrence. Never confirms, queues, dispatches, publishes or accepts work. Confirm typed choices in the native harness.',
++    inputSchema: obj({ finding: findingSchema }, ['finding']),
++    async run(args) {
++      if (Object.keys(args).some(key => key !== 'finding')) throw new Failure('Observation accepts only finding data, never actor or approval fields', 400)
++      const finding = need(args, 'finding', 'object')
++      if (Object.keys(finding).some(key => !Object.hasOwn(findingFields, key))) throw new Failure('Unknown finding field; observation cannot grant authority', 400)
++      const result = await api('POST', 'findings/observe', { body: finding })
++      if (result.execution_authorized !== false) throw new Failure('Unexpected observation response: execution authority must be false', 502)
++      return slim(result, 10, 100, 16384)
++    } },
++
+   // ---- writes
+   { name: 'resolve_decision', write: true, annotations: WR(false, true),
+     description: 'Record a choice on a pending decision (POST decisions/:id/resolve). This records the choice in the shared queue; it does not itself send a message into a conversation.',
+     inputSchema: obj({ id: idProp('Decision id'), choice_id: idProp('Id of one of the decision\'s choices') }, ['id', 'choice_id']),
+     async run(args) {
+       const id = need(args, 'id', 'id'), choiceId = need(args, 'choice_id', 'id')
+-      const item = await findDecision(id)
++      const item = ordinaryDecision(await findDecision(id))
+       if (!(item.choices || []).some(c => c.id === choiceId)) throw new Failure(`Choice ${choiceId} is not one of: ${(item.choices || []).map(c => c.id).join(', ')}`, 400)
+       return slim(await api('POST', `decisions/${seg(id)}/resolve`, { body: { choiceId } }), 4, 20, 500)
+     } },
+   { name: 'dismiss_decision', write: true, annotations: WR(true, true), description: 'Dismiss a decision without choosing (POST decisions/:id/dismiss).',
+     inputSchema: obj({ id: idProp('Decision id') }, ['id']),
+-    async run(args) { return slim(await api('POST', `decisions/${seg(need(args, 'id', 'id'))}/dismiss`, { body: {} }), 4, 20, 500) } },
++    async run(args) { const id = need(args, 'id', 'id'); ordinaryDecision(await findDecision(id)); return slim(await api('POST', `decisions/${seg(id)}/dismiss`, { body: {} }), 4, 20, 500) } },
+   { name: 'restart_decision', write: true, annotations: WR(false, false),
+     description: 'Start a fresh linked decision from a resolved one, keeping the original choice in history (POST decisions/:id/restart).',
+     inputSchema: obj({ id: idProp('Resolved decision id'), session_id: idProp('Session the new decision belongs to') }, ['id', 'session_id']),
+--- a/README.md
++++ b/README.md
+@@ -19,9 +19,9 @@
+ ## Tools
+ 
+ Reads: `harness_status` (start here), `list_tickets`, `get_ticket`, `decision_inbox`, `get_decision`,
+-`get_settings`, `get_prompts`, `list_threads`, `search`.
++`get_settings`, `get_prompts`, `list_threads`, `search`, `list_findings`, `get_finding`.
+ 
+-Writes: `resolve_decision`, `dismiss_decision`, `restart_decision`, `pause_executor`, `retry_ticket`,
++Writes: `observe_finding`, `resolve_decision`, `dismiss_decision`, `restart_decision`, `pause_executor`, `retry_ticket`,
+ `stop_ticket`, `requeue_trigger`, `sync_policy`, `save_settings`, `save_prompts`, `check_setup`, `api_request`.
+ 
+ `api_request` reaches the remaining routes (label edits, decision stage/submission/discard-staging, thread
+@@ -63,3 +63,11 @@
+ - Only the Dot/UI-bridge routes are generic (via `api_request`); there is no dedicated tool for them.
+ - This server cannot start the service if it is stopped. Start it from Terminal (`scripts/dsh-superagent`).
+ - Output is truncated at ~60 KB; use `limit` and filters.
++
++## Finding observations
++
++`observe_finding` sends data only to `POST findings/observe`. The backend records external observation provenance; the response must state `execution_authorized: false`. This cannot confirm, dispatch, defer, review, publish or accept work. Repeated observations use stable problem and occurrence identities. Finding reads work in read-only mode; observation is hidden/refused there.
++
++Typed finding/delivery decisions require their current native harness confirmation. Generic resolution/dismissal and the MCP route escape cannot substitute for it. No browser Origin or Sec-Fetch approval headers are synthesized. Existing loopback authentication, secret redaction and body-hash-only write auditing remain in force.
++
++Long-lived MCP clients must refresh/reconnect this server to discover new tools; no harness restart is needed for this bridge update. Deploy the backend observation route before using it.
+--- a/test/smoke.cjs
++++ b/test/smoke.cjs
+@@ -21,6 +21,7 @@
+ // ---------------------------------------------------------------- mock orchestrator
+ const seen = []   // every request the mock received
+ let tokenLogins = 0
++const findings = []
+ const decisions = [
+   { id: 'd1', status: 'pending', urgency: 'high', ticketTitle: 'Pick a db', question: 'Which db?', sessionId: 's1', createdAt: 1700000000000,
+     context: 'CONTEXT-EXCERPT-TEXT', choices: [{ id: 'a', label: 'Postgres', prompt: 'PROMPT-A-TEXT' }, { id: 'b', label: 'SQLite', prompt: 'PROMPT-B-TEXT' }],
+@@ -51,12 +52,18 @@
+       if (rel === 'tickets') return json(200, { items: [{ id: 't1', title: 'Fix it' }], q: Object.fromEntries(url.searchParams) })
+       if (rel === 'tickets/t1') return json(200, { id: 't1', title: 'Fix it', assignments: [] })
+       if (rel === 'decisions/inbox') return json(200, { items: decisions })
++      if (rel === 'findings') return json(200, { items: findings })
+       if (rel === 'settings') return json(200, { policy: { revision: 4, value: {} } })
+       if (rel === 'threads') return json(500, { error: `upstream failed token=${TOKEN} also ${TOKEN}` })
+       return json(404, { error: 'unknown GET' })
+     }
+     if (req.method === 'POST') {
+       if (rel === 'decisions/d1/resolve') return json(200, { ok: true, choiceId: body.choiceId })
++      if (rel === 'findings/observe') {
++        let finding = findings.find(f => f.dedupKey === body.dedupKey)
++        if (!finding) { finding = { ...body, id: 'f1', revision: 1, state: 'awaiting_decision', observations: [body.occurrence], provenance: { source: 'external' } }; findings.push(finding) }
++        return json(200, { finding, execution_authorized: false })
++      }
+       if (rel === 'executor/pause') return json(200, { paused: body.paused })
+       if (rel === 'tickets/t1/retry') return json(200, { ok: true })
+       return json(200, { ok: true })
+@@ -118,7 +125,7 @@
+   r = await s.request('tools/list')
+   const names = r.result.tools.map(t => t.name)
+   for (const n of ['harness_status', 'list_tickets', 'get_ticket', 'decision_inbox', 'get_decision', 'get_settings', 'get_prompts', 'list_threads', 'search',
+-    'resolve_decision', 'dismiss_decision', 'restart_decision', 'pause_executor', 'retry_ticket', 'stop_ticket', 'requeue_trigger', 'sync_policy', 'save_settings', 'save_prompts', 'check_setup', 'api_request'])
++    'list_findings', 'get_finding', 'observe_finding', 'resolve_decision', 'dismiss_decision', 'restart_decision', 'pause_executor', 'retry_ticket', 'stop_ticket', 'requeue_trigger', 'sync_policy', 'save_settings', 'save_prompts', 'check_setup', 'api_request'])
+     ok(names.includes(n), `tools/list has ${n}`)
+   ok(r.result.tools.every(t => t.inputSchema && t.annotations && typeof t.annotations.readOnlyHint === 'boolean'), 'every tool has a schema and annotations')
+   r = await s.request('ping'); ok(r.result && Object.keys(r.result).length === 0, 'ping')
+@@ -188,6 +195,42 @@
+   ok(!t.isError && put.path === '/orchestrator/api/settings/policy' && JSON.parse(put.body).revision === 4, 'save_settings PUTs value + revision')
+   t = await s.call('save_settings', { block: 'bogus', value: {}, revision: 1 }); ok(t.isError && /not permitted/.test(t.text), 'save_settings refuses unknown blocks')
+ 
++  console.log('\nfinding observation boundary')
++  const finding = { dedupKey: 'case-one', title: 'Inspect bounded behavior', problem: SECRET_BODY, scope: 'Read only this fixture',
++    owner: 'operator', kind: 'verification', requirements: ['native-proof'], repository: 'owner/repo',
++    occurrence: { id: 'observation-one', reference: 'https://example.test/evidence', evidence: 'Observed only; no authority' } }
++  t = await s.call('observe_finding', { finding })
++  ok(!t.isError && t.json.execution_authorized === false && t.json.finding.state === 'awaiting_decision', 'MCP records observation without dispatch or approval', t.text)
++  const observationPost = seen.filter(x => x.path === '/orchestrator/api/findings/observe').pop()
++  ok(observationPost && JSON.parse(observationPost.body).dedupKey === finding.dedupKey, 'observation uses exactly the data-only route')
++  ok(observationPost && !observationPost.headers.origin && !observationPost.headers['sec-fetch-site'] && !observationPost.headers['sec-fetch-dest'] && observationPost.headers['sec-fetch-mode'] !== 'same-origin', 'MCP never synthesizes browser approval headers')
++  t = await s.call('observe_finding', { finding }); ok(!t.isError && findings.length === 1 && t.json.finding.id === 'f1', 'repeat transport observation preserves backend identity')
++  t = await s.call('list_findings', { state: 'awaiting_decision' }); ok(!t.isError && t.json.matched === 1 && t.json.items[0].id === 'f1', 'finding read exposes current canonical identity')
++  t = await s.call('list_findings', { state: 'resolved' }); ok(!t.isError && t.json.matched === 0, 'finding list filters the returned state')
++  t = await s.call('get_finding', { id: 'f1' }); ok(!t.isError && t.json.scope === finding.scope, 'get_finding preserves bounded scope')
++  t = await s.call('get_finding', { id: 'absent' }); ok(t.isError && /not found/i.test(t.text), 'missing finding is a clean read error')
++  const observationCount = seen.length
++  t = await s.call('observe_finding', { finding, actor: 'local-operator' }); ok(t.isError, 'observation rejects caller approval identity')
++  t = await s.call('observe_finding', { finding: { ...finding, authority: 'approved' } }); ok(t.isError, 'observation rejects invented authority fields')
++  t = await s.call('list_findings', { state: 'bogus' }); ok(t.isError, 'unknown finding filter is refused')
++  for (const path of ['findings/f1/confirm', 'findings/f1/review', 'findings/f1/revisit', 'findings/f1/evidence', 'findings']) {
++    t = await s.call('api_request', { method: 'POST', path, body: { actor: 'local-operator', choiceId: 'fix_now' } })
++    ok(t.isError && /not permitted/.test(t.text), `MCP escape refuses privileged route ${path}`)
++  }
++  ok(seen.length === observationCount, 'rejected finding authority requests never reach the backend')
++  decisions.push({ id: 'fd1', status: 'pending', actionMode: 'finding_triage', finding: { id: 'f1', revision: 1, state: 'awaiting_decision' }, choices: [{ id: 'fix_now', label: 'Fix now' }] })
++  t = await s.call('get_decision', { id: 'fd1' }); ok(!t.isError && t.json.actionMode === 'finding_triage' && t.json.finding.id === 'f1', 'decision reads identify typed findings')
++  const writeCount = seen.filter(x => x.method !== 'GET').length
++  t = await s.call('resolve_decision', { id: 'fd1', choice_id: 'fix_now' }); ok(t.isError && /typed finding/.test(t.text), 'generic choice resolution cannot confirm finding work')
++  t = await s.call('dismiss_decision', { id: 'fd1' }); ok(t.isError && /typed finding/.test(t.text), 'generic dismissal cannot defer a typed finding')
++  t = await s.call('restart_decision', { id: 'fd1', session_id: 's1' }); ok(t.isError && /typed finding/.test(t.text), 'generic restart cannot reopen a typed finding')
++  for (const action of ['resolve', 'dismiss', 'restart', 'stage', 'submission', 'discard-staging']) {
++    t = await s.call('api_request', { method: 'POST', path: `decisions/fd1/${action}`, body: { choiceId: 'fix_now', sessionId: 's1' } })
++    ok(t.isError && /typed finding/.test(t.text), `generic escape cannot mutate typed finding via ${action}`)
++  }
++  ok(seen.filter(x => x.method !== 'GET').length === writeCount, 'typed decision guards send no mutation')
++  decisions.pop()
++
+   console.log('\naudit log')
+   const lines = fs.readFileSync(audit, 'utf8').trim().split('\n').map(l => JSON.parse(l))
+   ok(lines.length >= 5, 'writes are audited', `lines=${lines.length}`)
+@@ -207,6 +250,9 @@
+   ok(roNames.includes('harness_status') && !roNames.includes('resolve_decision') && !roNames.includes('api_request') && !roNames.includes('save_settings'), 'read-only hides every write tool')
+   const attempt = await ro.call('resolve_decision', { id: 'd1', choice_id: 'a' }); ok(attempt.rpcError, 'read-only refuses write tools')
+   ok(!(await ro.call('decision_inbox')).isError, 'read-only still serves reads')
++  ok(roNames.includes('list_findings') && roNames.includes('get_finding') && !roNames.includes('observe_finding'), 'read-only exposes finding reads but hides observation')
++  ok((await ro.call('observe_finding', { finding })).rpcError, 'read-only refuses observation before HTTP')
++  ok(!(await ro.call('list_findings')).isError, 'read-only finding lookup works')
+   ro.close()
+ 
+   console.log('\nrestart gate opened')

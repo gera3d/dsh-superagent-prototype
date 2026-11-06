@@ -31,6 +31,8 @@ export interface FindingEvidence {
   state?: 'ready' | 'blocked' | 'failed' | 'dropped' | 'verified' | 'evidence'
   /** The full native report remains at reference; this is only its bounded display excerpt. */
   summaryTruncated?: boolean; originalLength?: number; reportSummarySha256?: string
+  /** Idempotent newer-work signal, scoped to this evidence's native job. */
+  currencyToken?: string
 }
 export interface Finding {
   id: string; dedupKey: string; title: string; problem: string; scope: string; owner: string
@@ -248,6 +250,24 @@ export class FindingStore {
       if (record.state !== 'deferred') throw new FindingError(409, 'Only deferred findings may be revisited')
       this.reopen(record)
       this.audit(record, 'revisited')
+      return this.save(record)
+    })
+  }
+  /** New current-job human/CI input or progress invalidates old readiness without replacing the assignment. */
+  markWorking(id: string, raw: { reference: string; evidence: string; at: string; token: string }): Finding {
+    const input = z.object({ reference: Text, evidence: z.string().refine(value => value.trim().length > 0, 'Working evidence must be nonempty'),
+      at: z.iso.datetime(), token: Identity }).strict().parse(raw)
+    return this.atomic(() => {
+      const record = this.require(id)
+      if (!record.job?.ticketId || !record.job.assignmentId || (record.state !== 'running' && record.state !== 'blocked'))
+        throw new FindingError(409, 'Working evidence requires an active dispatched finding job')
+      if (record.reports.some(report => report.jobId === record.job!.id && report.currencyToken === input.token)) return record
+      record.reports.push({ reference: input.reference, evidence: input.evidence.slice(0, 16_384), at: input.at,
+        nextDecision: 'Await fresh current-job evidence after the newer human/CI input or work progress.', jobId: record.job.id,
+        state: 'evidence', currencyToken: input.token, summaryTruncated: input.evidence.length > 16_384,
+        originalLength: input.evidence.length, reportSummarySha256: createHash('sha256').update(input.evidence).digest('hex') })
+      record.state = 'running'; delete record.blocker; record.revision++
+      this.audit(record, 'working_evidence', input.reference, 'finding-runtime')
       return this.save(record)
     })
   }

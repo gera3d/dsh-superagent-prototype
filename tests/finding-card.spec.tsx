@@ -26,6 +26,18 @@ it('renders real recorded advice, bounded scope, linked delivery and FIFO semant
   expect(view.node.querySelector('a')?.getAttribute('href')).toBe('#delivery-delivery-159')
   expect([...view.node.querySelectorAll('button')].map(b => b.textContent)).toEqual(['Run verification', 'Queue next', 'Defer'])
 })
+it('keeps the normal face compact with real advice, status and typed actions before closed disclosures', async () => {
+  const view = await mount()
+  const visibleText = [...view.node.querySelectorAll('h3, p, strong, button, summary')].filter(element => !element.closest('details') || element.tagName === 'SUMMARY').map(element => element.textContent).join(' ')
+  for (const text of ['Verify History', 'Missing verification context', 'Senior Developer recommends: Queue next', 'Preserve current work ordering', 'awaiting decision', 'Owner: Senior Developer']) expect(visibleText).toContain(text)
+  for (const text of ['Only History visibility', 'Retain attribution', 'Repository:', 'FIFO', 'revision 3', 'Configured model']) expect(visibleText).not.toContain(text)
+  expect([...view.node.querySelectorAll('details')].every(details => !details.open)).toBe(true)
+  expect(view.node.querySelector('.dt-btn-primary')?.textContent).toBe('Queue next')
+  const actions = view.node.querySelector('[aria-label="Confirm finding triage"]')!
+  const scope = [...view.node.querySelectorAll('details')].find(details => details.querySelector('summary')?.textContent === 'Bounded scope, requirements & action effects')!
+  expect(actions.compareDocumentPosition(scope) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  for (const text of ['Only History visibility', 'Retain attribution', 'FIFO', 'Defer records a revisitable decision', 'no pinned implementation revision']) expect(scope.textContent).toContain(text)
+})
 it.each(['Run verification', 'Queue next', 'Defer'])('confirms %s with exact choice and current revision, then prevents replay', async label => {
   const view = await mount(); await view.click(label)
   expect(view.onConfirm).toHaveBeenCalledExactlyOnceWith({ revision: 3, choiceId: { 'Run verification': 'fix_now', 'Queue next': 'queue_next', Defer: 'defer' }[label] })
@@ -84,6 +96,13 @@ it('requires explicit recorded evidence and requirement review before accepting 
   const view = await mount(item)
   const accept = [...view.node.querySelectorAll('button')].find(b => b.textContent === 'Accept reviewed finding evidence')!
   expect(accept.disabled).toBe(true)
+  const requirements = view.node.querySelector('[aria-label="Finding review requirements"]')!
+  expect(requirements.textContent).toContain('Retain attribution')
+  expect(requirements.closest('details')).toBeNull()
+  const review = view.node.querySelector('[aria-label="Review finding evidence"]')!
+  expect(review.closest('details')).toBeNull()
+  expect(review.textContent).toContain('Tests pass for bounded scope')
+  expect(review.textContent).toContain('I reviewed the selected evidence against every bounded requirement')
   const select = view.node.querySelector('select')!
   await act(async () => { select.value = 'report-1'; select.dispatchEvent(new Event('change', { bubbles: true })) })
   expect(accept.disabled).toBe(true)

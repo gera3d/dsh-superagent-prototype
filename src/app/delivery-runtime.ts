@@ -8,20 +8,22 @@ import { publicationConversation } from './lifecycle-publication.ts'
 import { ticketDecisions, type DecisionInbox } from './decision-inbox.ts'
 import type { Store } from './store.ts'
 import type { FindingStore } from './finding.ts'
+import { deriveDeliveryWork, readDeliveryWorkers, workerTicket } from './delivery-currency.ts'
 
 export function deliveryDecision(delivery: Delivery): PendingDecisionItem {
-  const action = delivery.nextAction
+  const action = delivery.work?.state === 'superseded' ? undefined : delivery.nextAction
   const model = action && delivery.recommendation?.actionId === action.id && delivery.recommendation.kind === action.kind && delivery.recommendation.fingerprint === action.fingerprint ? delivery.recommendation : undefined
   const terminal = ['accepted', 'cancelled', 'abandoned'].includes(delivery.state)
   return {
     id: `delivery-${delivery.id}`, ticketId: delivery.workers[0],
     ...(delivery.workers[0] ? { sessionId: `worker-${delivery.workers[0]}` } : {}),
     ticketTitle: delivery.title, trigger: 'Durable feature delivery',
-    status: terminal ? 'resolved' : 'pending', actionMode: 'feature_delivery', delivery,
+    status: delivery.work?.state === 'superseded' ? 'stale' : terminal ? 'resolved' : 'pending', actionMode: 'feature_delivery', delivery,
+    ...(delivery.work?.state === 'superseded' ? { staleReason: delivery.work.nextStep } : {}),
     urgency: delivery.state === 'blocked' ? 'medium' : 'low',
     createdAt: Date.parse(delivery.audit[0]?.at ?? '') || 0,
-    context: delivery.blocker ?? `${delivery.stage}: ${delivery.state}; owner: ${delivery.owner}`,
-    question: delivery.blocker ?? action?.label ?? `${delivery.stage}: ${delivery.state}`,
+    context: delivery.work ? `${delivery.work.state}; owner: ${delivery.work.owner}; ${delivery.work.progress ?? ''} ${delivery.work.nextStep}` : delivery.blocker ?? `${delivery.stage}: ${delivery.state}; owner: ${delivery.owner}`,
+    question: delivery.work?.nextStep ?? delivery.blocker ?? action?.label ?? `${delivery.stage}: ${delivery.state}`,
     choices: action ? [{ id: action.id, label: action.label, actionKind: 'lifecycle' }] : [],
     recommendation: { recommendedValue: model?.disposition === 'take' ? model.actionId : '', confidence: 0,
       rationale: model?.rationale ?? delivery.recommendationError?.message ?? (action ? 'Eligible action; Senior Developer advice is not available.' : 'No executable action is currently available.'),
@@ -52,7 +54,9 @@ export function reconcileDeliveryAdvice(items: PendingDecisionItem[], deliveries
 }
 
 export function projectDeliveries(store: DeliveryStore, items: PendingDecisionItem[]): PendingDecisionItem[] {
-  const deliveries = store.list()
+  const stored = store.list()
+  const work = deriveDeliveryWork(stored, readDeliveryWorkers(store.db))
+  const deliveries = stored.map(delivery => ({ ...delivery, work: delivery.workers.map(worker => work.get(workerTicket(worker))).find(Boolean) }))
   const ids = new Set(deliveries.map(d => `delivery-${d.id}`))
   const workers = new Set(deliveries.flatMap(d => d.workers))
   return [...reconcileDeliveryAdvice(items, deliveries).filter(i => !ids.has(i.id)
@@ -62,6 +66,7 @@ export function projectDeliveries(store: DeliveryStore, items: PendingDecisionIt
 /** Persist currency before any canonical producer/lookup or native staging can use old advice. */
 export function reconcileInboxCurrency(inbox: DecisionInbox, deliveries: DeliveryStore, publication?: LifecyclePublication, findings?: FindingStore): void {
   const original = inbox.list()
+  const work = deriveDeliveryWork(deliveries.list(), readDeliveryWorkers(deliveries.db))
   const findingWorkers = new Map<string, string>()
   for (const finding of findings?.list() ?? []) {
     for (const job of [finding.job, ...(finding.priorJobs ?? [])]) if (job?.ticketId) {
@@ -71,9 +76,12 @@ export function reconcileInboxCurrency(inbox: DecisionInbox, deliveries: Deliver
   }
   const projected = reconcileDeliveryAdvice(publication?.project?.(original) ?? original, deliveries.list()).map(item => {
     const finding = item.sessionId && findingWorkers.get(item.sessionId.replace(/^worker-/, ''))
-    if (!finding || item.status !== 'pending' || !item.id.startsWith('chat-') || !item.advisor?.key || item.context.trim()
+    const owned = item.sessionId && work.get(workerTicket(item.sessionId))
+    if ((!finding && !owned) || item.status !== 'pending' || !item.id.startsWith('chat-') || !item.advisor?.key || item.context.trim()
       || item.question !== 'Choose the next step for this thread' || item.staging) return item
-    return { ...item, status: 'stale' as const, staleReason: `Generic generated advice is superseded by canonical finding ${finding}; retained as history, not execution authority.` }
+    return { ...item, status: 'stale' as const, staleReason: finding
+      ? `Generic generated advice is superseded by canonical finding ${finding}; retained as history, not execution authority.`
+      : `Generic generated advice is superseded by current delivery owner ${owned && owned.owner}. ${owned && owned.nextStep}` }
   })
   for (const item of projected) {
     if (item.status !== 'stale' || !item.staleReason) continue
