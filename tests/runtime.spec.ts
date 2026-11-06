@@ -1801,3 +1801,45 @@ it('keeps the Policy the main Session judges by in its prompt, after admission a
   expect(policy()).toContain('No rule is enabled: a proactive candidate can only be ignored.')
   expect(policy()).toContain('The accept mode and the rules decide proactive candidates only')
 })
+
+it('routes publication inspection and documentation review through the real runtime HTTP host', async () => {
+  const { ticketDecisions } = await import('../src/app/decision-inbox.ts')
+  const { publicationConversation } = await import('../src/app/lifecycle-publication.ts')
+  const at = new Date().toISOString()
+  const ticket: import('../src/core/index.ts').Ticket = {
+    id: 'runtime-publication', title: 'Harmless release', decisionId: 'd', mandate: {} as never,
+    origin: { triggerId: 'origin', triggerIds: ['origin'] }, createdAt: at, updatedAt: at,
+    channels: [], inputs: [], undelivered: [], follows: [{ thread: 'github:12', own: true }],
+    assignments: [{ id: 'a', state: 'running', createdAt: at, idleAt: at,
+      report: { state: 'ready', summary: 'Reviewed documentation', at } }],
+  }
+  runtime.store.tickets.save(ticket)
+  const item = ticketDecisions([ticket])[0]!
+  const pins = { repository: runtime.deployment.repository, prNumber: 12,
+    headSha: 'a'.repeat(40), patchSha256: 'b'.repeat(64) }
+  const snapshot: import('../src/app/publication.ts').PublicationSnapshot = {
+    ...pins, id: '00000000-0000-4000-8000-000000000001', ticketId: ticket.id,
+    conversationId: publicationConversation(item), status: 'prepared', createdAt: at, updatedAt: at,
+    outcomes: [], audit: [], requests: {},
+  }
+  vi.spyOn(runtime.publication!, 'pinsFor').mockReturnValue(pins)
+  const prepare = vi.spyOn(runtime.publication!.service, 'prepare').mockResolvedValue(snapshot)
+  const commands = vi.spyOn(runtime.commands, 'api').mockImplementation(async (...args: any[]) =>
+    args[0].parse(String(args[1]).includes('/files?') ? [[{ filename: 'README.md' }]]
+      : { state: 'open', draft: false, head: { sha: pins.headSha }, changed_files: 1 }))
+  // Exercise the handler registered by Runtime, rather than a manually assembled HttpHost.
+  await api('GET', 'decisions/inbox')
+  let status = 0, text = ''
+  const req = { method: 'POST', url: `/orchestrator/api/decisions/${item.id}/lifecycle`,
+    headers: { host: '127.0.0.1:3082', 'x-orchestrator-request': '1' },
+    async *[Symbol.asyncIterator]() { yield Buffer.from(JSON.stringify({ action: 'prepare_publication' })) } }
+  await http(req, { writeHead: (code: number) => { status = code }, end: (value: string) => { text = value } })
+  expect({ status, body: JSON.parse(text) }).toMatchObject({ status: 200,
+    body: { execution: 'publication', publication: { id: snapshot.id, status: 'prepared' } } })
+  expect(prepare).toHaveBeenCalledExactlyOnceWith({ ...pins, ticketId: ticket.id,
+    conversationId: publicationConversation(item) })
+  const listed = await api('GET', 'decisions/inbox')
+  expect(listed.body).toMatchObject({ items: [expect.objectContaining({ lifecycle: expect.objectContaining({ docsOnly: true }),
+    choices: expect.arrayContaining([expect.objectContaining({ id: 'merge' })]) })] })
+  expect(commands).toHaveBeenCalledWith(expect.anything(), 'pulls/12/files?per_page=100', '--paginate', '--slurp')
+})
