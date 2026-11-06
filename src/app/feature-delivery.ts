@@ -157,8 +157,12 @@ export class DeliveryStore {
     if (d.state !== 'blocked' || d.scopeBinding) return d
     const row = this.db.prepare("SELECT id,value FROM feature_delivery_outbox WHERE delivery_id=? AND status='blocked' ORDER BY rowid DESC LIMIT 1").get(d.id)
     if (!row) return d
-    const payload = JSON.parse(String(row.value)) as { action: DeliveryAction; bindings: DeliveryBindings; authorization: DeliveryConfirmationAuthority; preparedPublication?: Delivery['preparedPublication'] }
-    if (payload.action.id !== String(row.id) || !bindingMatches(payload.bindings, d.bindings) || payload.authorization.scope !== payload.action.fingerprint || stable(payload.preparedPublication) !== stable(d.preparedPublication)) return d
+    let payload: { action?: DeliveryAction; bindings?: DeliveryBindings; authorization?: DeliveryConfirmationAuthority; preparedPublication?: Delivery['preparedPublication'] } | null
+    try { payload = JSON.parse(String(row.value)) as typeof payload } catch { return d }
+    // Unknown/legacy journal payloads remain blocked history, never an executable recovery identity.
+    if (!payload?.action || !payload.bindings || !payload.authorization || typeof payload.action.fingerprint !== 'string' || !payload.action.fingerprint
+      || payload.action.id !== String(row.id) || !bindingMatches(payload.bindings, d.bindings) || payload.authorization.scope !== payload.action.fingerprint
+      || stable(payload.preparedPublication) !== stable(d.preparedPublication)) return d
     const scope = deliveryFingerprint({ id: d.id, revision: d.revision, fingerprint: fingerprint(d), outboxId: String(row.id), payload })
     d.reconciliation = { id: String(row.id), actionId: `${d.id}:${d.revision}:reconcile:${scope}`, revision: d.revision, label: 'Reconcile recorded handoff' }
     return d

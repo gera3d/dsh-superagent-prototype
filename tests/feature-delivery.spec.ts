@@ -27,6 +27,18 @@ function verifying(s: DeliveryStore) {
   create(s); finish(s, 'implement', evidence('implementation')); finish(s, 'review', evidence('review')); return finish(s, 'publish', evidence('publication'))
 }
 
+it('keeps malformed parked journals readable and blocked without inventing a recovery action', () => {
+  const s = open(); const d = create(s)
+  const blocked = s.compareAndSwap(d.id, d.revision, value => { value.state = 'blocked'; value.blocker = 'Unknown handoff; operator reconciliation required' })
+  for (const payload of ['{}', 'null', 'not-json', '{"action":{"id":"legacy"},"authorization":{}}']) {
+    s.db.prepare("INSERT INTO feature_delivery_outbox(id,delivery_id,value,status) VALUES('legacy',?,?, 'blocked') ON CONFLICT(id) DO UPDATE SET value=excluded.value").run(d.id, payload)
+    expect(s.get(d.id)).toMatchObject({ revision: blocked.revision, state: 'blocked', blocker: blocked.blocker })
+    expect(s.get(d.id)?.reconciliation).toBeUndefined()
+    expect(s.list()[0]?.reconciliation).toBeUndefined()
+    expect(() => s.resume(d.id, blocked.revision, 'alice')).toThrow(DeliveryConflict)
+    expect(s.db.prepare("SELECT value FROM feature_delivery_outbox WHERE id='legacy'").get()?.value).toBe(payload)
+  }
+})
 it('tracks a new accepted ticket durably with honest unknown scope and no invented authority', () => {
   let s = open()
   const input = { ticketId: 'new-ticket', title: 'New job', owner: 'requester', repository: 'org/repo', triggerId: 'actual-trigger' }
