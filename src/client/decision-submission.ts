@@ -249,7 +249,8 @@ export function createDecisionSubmission(ctx: SubmissionContext, options: { stor
     }
   }
   return {
-    dockOwner: 'agent-mini',
+    // Native submission tracking does not own presentation. Next steps may claim
+    // the dock through the existing DOM handshake; InlineDecision is the fallback.
     watch(sessionId) {
       try { return watchSession(sessionId) } catch { return () => {} } // Removed/unavailable views may still mount a dock; explicit staging reports the failure.
     },

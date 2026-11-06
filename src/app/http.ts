@@ -4,7 +4,6 @@ import type {} from '@deepseek-ai/dsh-host-webserver'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { existsSync, createReadStream } from 'node:fs'
 import { extname } from 'node:path'
-import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import type { DecisionEvaluationRequest, PendingDecisionItem } from '../core/decision.ts'
 import { THREAD_FILTERS, TICKET_FILTERS, type Api, type ApiResponse, type RouteParams } from './api.ts'
@@ -13,7 +12,7 @@ import { evaluateDecisionWithFallback } from './decision-ranker.ts'
 import { evaluateWithCharacter } from './character-evaluator.ts'
 import { HELPER_BODY_MAX_BYTES, HelperDigestSchema, suggestHelper } from './routes/helper.ts'
 import { DEFAULT_SENIOR_DEVELOPER_CHARACTER } from '../core/character.ts'
-import { DecisionInbox, InboxError, registerDecisionCapture, ticketDecisions, submitDecision, stageDecision, restartDecision } from './decision-inbox.ts'
+import { DecisionInbox, InboxError, durableDecisionEvents, registerDecisionCapture, ticketDecisions, submitDecision, stageDecision, restartDecision } from './decision-inbox.ts'
 import { sourceSkills } from './context.ts'
 import { LifecycleRequest, enrichLifecycle, lifecycleAction, type LifecycleCommands } from './lifecycle-decisions.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
@@ -190,6 +189,19 @@ export const DecisionDiscardRequest = z.object({ attemptId: z.string().uuid() })
 export const DecisionRestartRequest = z.object({ sessionId: z.string().min(1).max(300) }).strict()
 export const DecisionEvaluationSchema = z.object({ recommendedValue: z.string(), confidence: z.number().min(0).max(1), rationale: z.string().max(4000),
   distribution: z.array(z.object({ id: z.string(), probability: z.number().min(0).max(1) })).max(12), provider: z.string().max(300), latencyMs: z.number().nonnegative() })
+const CanonicalSourceSchema = z.object({ sessionId: z.string().min(1).max(300), sourceMessageId: z.string().min(1).max(300), sourceTurn: z.number().int().nonnegative(), sourceSeq: z.number().int().nonnegative(), draftRevision: z.string().min(1).max(300) })
+const CanonicalWriteSchema = CanonicalSourceSchema.extend({ leaseToken: z.string().uuid() })
+export const CanonicalClaimSchema = CanonicalSourceSchema.extend({ owner: z.string().min(1).max(300), purpose: z.literal('score').optional() }).strict()
+export const CanonicalPublishSchema = CanonicalWriteSchema.extend({ model: z.string().min(1).max(300), options: z.array(z.object({ id: z.string().min(1).max(200), label: z.string().min(1).max(2000), prompt: z.string().min(1).max(12000), why: z.string().max(4000), recommended: z.boolean(), added: z.boolean().optional() }).strict()).min(2).max(4) }).strict()
+export const CanonicalScoreSchema = CanonicalWriteSchema.extend({ evaluation: DecisionEvaluationSchema }).strict()
+export const CanonicalFailureSchema = CanonicalWriteSchema.extend({ error: z.string().min(1).max(4000) }).strict()
+export async function canonicalOperation(ctx: Context, inbox: DecisionInbox, operation: string, body: unknown) {
+  if (operation === 'claim') { const input = CanonicalClaimSchema.parse(body); return inbox.claimCanonical(input, await durableDecisionEvents(ctx, input.sessionId)) }
+  if (operation === 'publish') { const input = CanonicalPublishSchema.parse(body); return inbox.publishCanonical(input, await durableDecisionEvents(ctx, input.sessionId)) }
+  if (operation === 'score') { const input = CanonicalScoreSchema.parse(body); return inbox.scoreCanonical(input, await durableDecisionEvents(ctx, input.sessionId)) }
+  if (operation === 'fail') { const input = CanonicalFailureSchema.parse(body); return inbox.failCanonical(input, await durableDecisionEvents(ctx, input.sessionId)) }
+  throw new InboxError(404, 'Unknown canonical operation')
+}
 const DecisionOptionSetSchema = z.object({ revision: z.number().int().positive(), key: z.string().max(300).optional(), model: z.string().max(300).optional(),
   createdAt: z.number().finite(), choices: z.array(DecisionChoiceSchema).min(1).max(12), hiddenOptions: z.array(DecisionChoiceSchema).max(12).optional(),
   recommendation: DecisionEvaluationSchema, restoredFrom: z.number().int().positive().optional() })
@@ -264,6 +276,10 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
       const since = window ? new Date(Date.now() - 86_400_000).toISOString() : ''
       return decisionList(views(runtime), kind.split(',').filter(Boolean), offset, limit, since)
     },
+    'POST decisions/canonical/claim': async ({ body }) => canonicalOperation(ctx, inbox(), 'claim', await body()),
+    'POST decisions/canonical/publish': async ({ body }) => canonicalOperation(ctx, inbox(), 'publish', await body()),
+    'POST decisions/canonical/score': async ({ body }) => canonicalOperation(ctx, inbox(), 'score', await body()),
+    'POST decisions/canonical/fail': async ({ body }) => canonicalOperation(ctx, inbox(), 'fail', await body()),
     'GET decisions/inbox': async () => {
       refreshTickets()
       const items = inbox().list().filter(item => {
@@ -328,34 +344,6 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
       if (isSessionEnded(runtime, item)) {
         inbox().invalidate(item, 'The originating session has ended. This decision can no longer be answered.')
         throw new InboxError(409, 'The originating session has ended. This decision can no longer be answered.')
-      }
-
-      if (runtime.sessions) {
-        const choice = item.choices.find(c => c.id === choiceId)
-        if (!choice) throw new InboxError(400, 'Unknown decision choice')
-
-        const promptText = choice.prompt ?? (choiceId === 'respond' ? `Regarding your question:\n${item.question}\n\nMy response: `
-          : choiceId === 'continue' ? `Please continue with the next step you offered:\n${item.question}`
-          : choiceId === 'discuss' ? `Before proceeding, please clarify:\n${item.question}` : `For the decision “${item.question}”, choose: ${choice.label}`)
-
-        const submissionId = `native-req-${randomUUID().slice(0, 16)}`
-        const messageId = `msg-${submissionId}`
-
-        if (item.sessionId) {
-          try {
-            await runtime.sessions.prompt(item.sessionId, submissionId, promptText, 'steer')
-          } catch {
-            inbox().invalidate(item, 'The originating session has ended. This decision can no longer be answered.')
-            throw new InboxError(409, 'The originating session has ended. This decision can no longer be answered.')
-          }
-        }
-
-        return inbox().resolveWithSubmission(item.id, choiceId, {
-          submissionId,
-          messageId,
-          seq: (item.sourceSeq ?? 0) + 1,
-          text: promptText,
-        })
       }
 
       return inbox().resolve(params.id, choiceId)

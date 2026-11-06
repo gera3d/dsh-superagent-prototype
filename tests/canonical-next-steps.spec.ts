@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { createHash } from 'node:crypto'
 import { DatabaseSync } from 'node:sqlite'
-import { captureAdvisorTask, DecisionInbox } from '../src/app/decision-inbox.ts'
+import { captureAdvisorTask, DecisionInbox, InboxError } from '../src/app/decision-inbox.ts'
 import { apply } from '../../dsh-next-steps/src/index.ts'
 import type { SessionEvent } from '@deepseek-ai/dsh-session'
 
@@ -31,7 +31,7 @@ const history = (id = 'm1', text = 'If you want, I can add focused regression te
   { type: 'user/message', seq: 0, data: { source: { kind: 'user' }, content: [{ type: 'text', text: 'Implement the parser' }] } },
   { type: 'request/header', seq: 1, data: { header: { config: { provider: 'mock', model: 'advisor' } } } },
   { type: 'turn/start', seq: 2, data: { turn: 1 } },
-  { type: 'assistant/message', seq: 3, data: { turn: 1, message: { id, role: 'assistant', content: [{ type: 'text', text }] } } },
+  { type: 'assistant/message', seq: 3, time: 99, data: { turn: 1, message: { id, role: 'assistant', content: [{ type: 'text', text }] } } },
   { type: 'turn/end', seq: 4, time: 100, data: { turn: 1, reason: { kind: 'completed' } } },
 ]
 const answer = { recommended: 0, options: [
@@ -39,10 +39,14 @@ const answer = { recommended: 0, options: [
   { label: 'Review the patch', prompt: 'Review the parser patch for correctness before making any further changes.', why: 'Inspect implementation risks first.' },
 ] }
 const helperAnswer = { options: answer.options.map((option, index) => ({ id: `choice-${index + 1}`, label: option.label, prompt: option.prompt, recommended: index === 0 })) }
-const draftOptions = helperAnswer.options.map(option => ({ ...option, why: '', recommended: false }))
+const draftOptions = helperAnswer.options.map(option => ({ ...option, why: '' }))
 const ranking = { recommendedValue: 'choice-2', provider: 'Hermetic ranker', distribution: [{ id: 'choice-1', probability: 0.2 }, { id: 'choice-2', probability: 0.8 }] }
 // Independently assert the persisted turn-content identity, not the obsolete turn/end seq.
-const keyFor = (events: ReturnType<typeof history>) => `2:${createHash('sha256').update(JSON.stringify(events.slice(2).filter(event => event.type !== 'turn/end'))).digest('hex')}`
+const keyFor = (events: ReturnType<typeof history>, sessionId = 's0') => {
+  const messageId = events.findLast(event => event.type === 'assistant/message')!.data.message!.id
+  const id = `chat-${createHash('sha256').update(`${sessionId}\0${messageId}`).digest('hex').slice(0, 32)}`
+  return `${id}:${createHash('sha256').update(JSON.stringify(events.slice(2).filter(event => event.type !== 'turn/end'))).digest('hex')}`
+}
 function deferred<T>() {
   let resolve!: (value: T) => void
   const promise = new Promise<T>(done => { resolve = done })
@@ -54,11 +58,28 @@ function fixture(count = 1) {
   let handler: any
   const helper = vi.fn(async (_init?: RequestInit) => Response.json(helperAnswer))
   const ranker = vi.fn(async (_init?: RequestInit) => Response.json(ranking))
+  const db = new DatabaseSync(':memory:'); dbs.push(db)
+  const inbox = new DecisionInbox(db)
   const network = vi.mocked(fetch)
   network.mockImplementation(async (input, init) => {
     if (init?.method !== 'POST') return unexpectedFetch(input)
     if (input === `${base}${helperPath}`) return helper(init)
     if (input === `${base}${rankerPath}`) return ranker(init)
+    const operation = String(input).startsWith(`${base}/orchestrator/api/decisions/canonical/`)
+      ? String(input).slice(`${base}/orchestrator/api/decisions/canonical/`.length) : undefined
+    if (operation && ['claim', 'publish', 'score', 'fail'].includes(operation)) {
+      const body = JSON.parse(String(init.body))
+      const durable = histories.get(body.sessionId) as unknown as SessionEvent[]
+      try {
+        const result = operation === 'claim' ? inbox.claimCanonical(body, durable)
+          : operation === 'publish' ? inbox.publishCanonical(body, durable)
+          : operation === 'score' ? inbox.scoreCanonical(body, durable) : inbox.failCanonical(body, durable)
+        return Response.json(result)
+      } catch (error) {
+        if (!(error instanceof InboxError)) throw error
+        return Response.json({ error: error.message }, { status: error.status })
+      }
+    }
     return unexpectedFetch(input)
   })
   const prepare = vi.fn(async () => ({ config: {}, async *stream() {
@@ -83,7 +104,7 @@ function fixture(count = 1) {
     return { status, body }
   }
   const score = (key: string, sessionId = 's0') => request(sessionId, false, undefined, 'score', key)
-  return { histories, prepare, helper, ranker, network, request, score }
+  return { histories, inbox, prepare, helper, ranker, network, request, score }
 }
 
 it('lists all cold completed human tasks without any model calls, and skips internal follow-on turns', () => {
@@ -112,7 +133,8 @@ it('returns immediate unscored helper drafts and deduplicates concurrent generat
   gate.resolve(Response.json(helperAnswer))
   const [one, concurrent] = await Promise.all(pending)
   expect(one.status).toBe(200)
-  expect(one.body).toEqual({ status: 'ready', key: keyFor(view.histories.get('s0')!), model: 'Senior Developer', options: draftOptions, fallback: false, isScored: false })
+  expect(one.body).toMatchObject({ status: 'ready', key: keyFor(view.histories.get('s0')!), decisionId: view.inbox.list()[0]!.id, model: 'Senior Developer', options: draftOptions, recommendedValue: 'choice-1', fallback: false, isScored: false })
+  expect(view.inbox.list()[0]!.choices.map(({ id, label, prompt }) => ({ id, label, prompt }))).toEqual(draftOptions.map(({ id, label, prompt }) => ({ id, label, prompt })))
   expect(concurrent).toEqual(one)
   expect(view.ranker).not.toHaveBeenCalled()
   expect(view.prepare).not.toHaveBeenCalled()
@@ -131,7 +153,7 @@ it('rejects cross-origin suggest and score requests without any external calls',
   expect(view.prepare).not.toHaveBeenCalled()
 })
 
-it('caches a draft and regenerates helper prompts only on explicit force refresh', async () => {
+it('reuses durable canonical choices even on legacy force refresh without regeneration', async () => {
   const view = fixture()
   const first = await view.request('s0')
   expect(await view.request('s0')).toEqual(first)
@@ -139,9 +161,9 @@ it('caches a draft and regenerates helper prompts only on explicit force refresh
   const fresh = { options: helperAnswer.options.map(option => ({ ...option, prompt: `Fresh: ${option.prompt}` })) }
   view.helper.mockResolvedValueOnce(Response.json(fresh))
   const forced = await view.request('s0', true)
-  expect(forced.body).toMatchObject({ key: first.body.key, isScored: false, fallback: false })
-  expect(forced.body.options.map((option: any) => option.prompt)).toEqual(fresh.options.map(option => option.prompt))
-  expect(view.helper).toHaveBeenCalledTimes(2)
+  expect(forced).toEqual(first)
+  expect(forced.body.options.map((option: any) => option.prompt)).toEqual(helperAnswer.options.map(option => option.prompt))
+  expect(view.helper).toHaveBeenCalledOnce()
   expect(view.ranker).not.toHaveBeenCalled()
   expect(view.prepare).not.toHaveBeenCalled()
 })
@@ -169,6 +191,11 @@ it('scores separately with concurrent deduplication and updates badges without r
   expect(concurrent).toEqual(one)
   expect(await view.score(draft.key)).toEqual(one)
   expect(await view.request('s0')).toEqual(one)
+  const recorded = view.inbox.list()[0]!
+  expect(recorded.canonical?.phase).toBe('scored')
+  expect(recorded.recommendation.distribution).toEqual(one.body.distribution)
+  expect(recorded.recommendation.recommendedValue).toBe(one.body.recommendedValue)
+  expect(recorded.choices.map(({ id, label, prompt, description }) => ({ id, label, prompt, why: description }))).toEqual(one.body.options.map(({ id, label, prompt, why }: any) => ({ id, label, prompt, why })))
   expect(view.helper).toHaveBeenCalledOnce()
   expect(view.ranker).toHaveBeenCalledOnce()
   expect(view.prepare).not.toHaveBeenCalled()
@@ -182,7 +209,8 @@ it.each(['unavailable', 'invalid'] as const)('keeps draft options unscored when 
   const result = await view.score(draft.key)
   expect(result.status).toBe(200)
   expect(result.body).toMatchObject({ status: 'ready', options: draftOptions, isScored: false, fallback: false })
-  expect(result.body.options.every((option: any) => option.percent === undefined && !option.recommended)).toBe(true)
+  expect(result.body.options.every((option: any) => option.percent === undefined)).toBe(true)
+   expect(result.body.options.filter((option: any) => option.recommended).map((option: any) => option.id)).toEqual(['choice-1'])
   expect(view.prepare).not.toHaveBeenCalled()
 })
 
@@ -200,7 +228,7 @@ it.each(['unavailable', 'invalid'] as const)('uses only fixed Flash fallback whe
   view.helper.mockResolvedValueOnce(mode === 'unavailable' ? Response.json({ error: 'offline' }, { status: 503 }) : Response.json({ options: [helperAnswer.options[0]] }))
   const result = await view.request('s0')
   expect(result.body).toMatchObject({ status: 'ready', model: 'deepseek-official/deepseek-flash', fallback: true, isScored: false })
-  expect(result.body.options).toEqual(answer.options.map((option, index) => ({ ...option, id: `opt-${index + 1}`, recommended: false })))
+  expect(result.body.options).toEqual(answer.options.map((option, index) => ({ ...option, id: `opt-${index + 1}`, recommended: index === answer.recommended })))
   expect(view.prepare).toHaveBeenCalledExactlyOnceWith({ provider: 'deepseek-official', model: 'deepseek-flash', maxTokens: 1200 }, expect.any(AbortSignal))
   expect(await view.score(result.body.key)).toEqual(result)
   expect(view.ranker).not.toHaveBeenCalled()
@@ -218,15 +246,16 @@ it('returns generation-failed without caching fabricated options and retries aft
   expect(view.ranker).not.toHaveBeenCalled()
 })
 
-it('invalidates changed turn content and rejects scoring old keys without contacting the ranker', async () => {
+it('rejects rewritten source-turn identity and scoring old keys without regenerating a competing set', async () => {
   const view = fixture()
   const first = await view.request('s0')
   view.histories.set('s0', history('revised', 'The parser is revised; add targeted coverage.'))
   expect(await view.score(first.body.key)).toEqual({ status: 200, body: { status: 'not-ready', reason: 'stale' } })
   const next = await view.request('s0')
-  expect(next.body.key).toBe(keyFor(view.histories.get('s0')!))
-  expect(next.body.key).not.toBe(first.body.key)
-  expect(view.helper).toHaveBeenCalledTimes(2)
+  expect(next).toEqual({ status: 200, body: { status: 'not-ready', reason: 'stale' } })
+  expect(view.inbox.list()).toHaveLength(1)
+  expect(view.inbox.list()[0]!.choices.map(choice => choice.prompt)).toEqual(helperAnswer.options.map(option => option.prompt))
+  expect(view.helper).toHaveBeenCalledOnce()
   expect(view.ranker).not.toHaveBeenCalled()
 })
 
@@ -234,7 +263,11 @@ it('uses only mocked fetches and rejects unknown endpoints instead of reaching a
   const view = fixture()
   const draft = await view.request('s0')
   await view.score(draft.body.key)
-  expect(view.network.mock.calls.map(([url]) => url)).toEqual([`${base}${helperPath}`, `${base}${rankerPath}`])
+  expect(view.network.mock.calls.map(([url]) => url)).toEqual([
+    `${base}/orchestrator/api/decisions/canonical/claim`, `${base}${helperPath}`,
+    `${base}/orchestrator/api/decisions/canonical/publish`, `${base}/orchestrator/api/decisions/canonical/claim`,
+    `${base}${rankerPath}`, `${base}/orchestrator/api/decisions/canonical/score`,
+  ])
   expect(view.prepare).not.toHaveBeenCalled()
   await expect(fetch('http://127.0.0.1:3082/unexpected')).rejects.toThrow('Unexpected network request')
   expect(unexpectedFetches.splice(0)).toEqual(['Unexpected network request: http://127.0.0.1:3082/unexpected'])

@@ -85,6 +85,8 @@ export interface PendingDecisionItem {
   /** Obsolescence never erases a previously resolved choice or submission history. */
   invalidation?: { at: number; reason: string; sourceSeq?: number }
   advisor?: { status: 'pending' | 'generating' | 'ready' | 'error'; model?: string; error?: string; key?: string }
+  /** Canonical producer state; independent from human decision resolution. */
+  canonical?: { draftRevision: string; phase: 'pending' | 'ready' | 'scored'; owner: string; leaseToken: string; leaseExpiresAt: number; error?: string }
   urgency: 'high' | 'medium' | 'low'
   createdAt: number
   context: string

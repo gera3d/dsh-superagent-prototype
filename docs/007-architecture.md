@@ -406,9 +406,10 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/lifecycle-card.tsx` | Quiet stuck/done ticket controls, explicit Retry and human review links |
 | `src/client/decisions.tsx` | The Decisions tab: actionable Human-in-the-Loop decision inbox and real-time decision playground |
 | `src/client/branding-mark.tsx`, `branding-settings.tsx` | Custom branding mark presentation and settings configuration |
-| `src/client/decision-card.tsx` | Recommendation presentation with explicit callback failure handling; never claims simulated actions executed. |
+| `src/client/decision-card.tsx` | Recommendation presentation with explicit callback failure handling and stage-only preparation status; never invents choice scores. |
+| `src/client/decision-handoff.tsx` | Reactive Decisions-to-native-composer handoff through the shared staging bridge, independent of Workstream installation. |
 | `src/client/inline-decision.css` | Responsive, composer-scoped presentation for the inline decision dock |
-| `src/client/inline-decision.tsx` | Agent-Mini `conversation.input.dock` card, restored as the preferred renderer through the shared bridge's explicit `dockOwner: 'agent-mini'`. Next steps yields only its browser card; its host advisor and the shared inbox remain installed. Captured empty decisions request canonical advisor enrichment; a deliberate unranked result stays in generator order; selections use the repaired stage/submission/discard routes, never auto-send. |
+| `src/client/inline-decision.tsx` | Fallback conversation dock when Next steps is not installed; yields to the existing Next steps DOM ownership handshake. Captured empty decisions request advisor enrichment; selections use stage/submission/discard routes, never auto-send. |
 | `src/client/decision-submission.ts` | Shared browser staging/submission journal: preserves drafts and attachments, freezes native reference serialization, binds explicit native Send attempts to request IDs and waits for host-confirmed durable admission; never auto-sends or infers a response from matching text alone |
 | `src/client/inline-alternatives.ts` | Parses explicit lettered alternatives; ignores fenced content and ordinary numbered sequential task lists. |
 | `src/client/thread.tsx`, `ticket.tsx` | The record pages: a Thread with its timeline, and a Ticket with its authorization, Inputs and Assignments |
@@ -482,7 +483,9 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/decision-submission.spec.ts` | Durable resolve-on-send proof, exact native request/session/source identity, candidate races, retries, discard, invalidation, close/reopen recovery and legacy-writer guards |
 | `tests/decision-restart.spec.ts` | Restarted decision ancestry, retry deduplication, server-owned checkpoints, fresh native submission proof and preservation of recorded parent history |
 | `tests/decision-submission-client.spec.ts` | Shared native-Send linkage, preserved draft text/attachments/reference chips, reload journal recovery, failed-send retries, cancellation and exclusion of unrelated identical-text messages |
-| `tests/canonical-next-steps.spec.ts` | Next steps and inbox share source identity, full choice prompts, recommendations and resolution; background generation remains bounded |
+| `tests/canonical-next-steps.spec.ts` | Actual producer and SQLite inbox share source identity, full prompts, recommendation and scores with bounded on-demand generation |
+| `tests/canonical-publication.spec.ts` | Durable publication lease, source fences, legacy history, exact helper choices and scoring/staging/native proof invariants |
+| `tests/decision-handoff.spec.tsx` | Decisions preparation, reactive composer handoff and native staging without automatic Send |
 | `tests/dot.spec.ts` | Mocked HTTP/LLM tests for stable IDs, schema validation, exactly one corrective retry, truncation and transport failures, input validation, same-origin checks and lifecycle disposal |
 | `tests/dot-json.spec.ts` | JSON extraction regressions for prose/fences, escaped/quoted braces, multiple candidates, invalid/truncated content, validation, and size/depth limits |
 | `tests/dot-chat.spec.tsx` | Goal-chat UI tests for API wiring, recommendations, explicit selection/review/approval, duplicate clicks, consumed approvals, partial failures and fresh-plan safety |

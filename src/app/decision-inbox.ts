@@ -51,6 +51,13 @@ export function ticketDecisions(tickets: Ticket[]): PendingDecisionItem[] {
 export class InboxError extends Error {
   constructor(readonly status: 400 | 404 | 409, message: string) { super(message) }
 }
+export interface CanonicalSource { sessionId: string; sourceMessageId: string; sourceTurn: number; sourceSeq: number; draftRevision: string }
+export interface CanonicalClaim extends CanonicalSource { owner: string; purpose?: 'score' }
+export interface CanonicalWrite extends CanonicalSource { leaseToken: string }
+export interface CanonicalPublish extends CanonicalWrite { model: string; options: AdvisorDecision['options'] }
+export interface CanonicalScore extends CanonicalWrite { evaluation: DecisionEvaluationResult }
+export interface CanonicalFailure extends CanonicalWrite { error: string }
+export interface CanonicalResult { item: PendingDecisionItem; claimed?: boolean; leaseToken?: string; leaseExpiresAt?: number }
 export interface DecisionResolution {
   resolved: true
   choiceId: string
@@ -124,6 +131,23 @@ export class DecisionInbox {
   constructor(private readonly db: DatabaseSync, private readonly changed?: (item: PendingDecisionItem) => void) {
     db.exec(`CREATE TABLE IF NOT EXISTS decision_inbox (id TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS decision_inbox_cursor (session TEXT PRIMARY KEY, seq INTEGER NOT NULL);
+      CREATE TRIGGER IF NOT EXISTS decision_inbox_canonical_guard BEFORE UPDATE OF value ON decision_inbox
+      WHEN json_type(OLD.value, '$.canonical') = 'object'
+      BEGIN
+        SELECT CASE WHEN json_extract(NEW.value, '$.canonical.draftRevision') IS NOT json_extract(OLD.value, '$.canonical.draftRevision')
+          OR json_extract(NEW.value, '$.sessionId') IS NOT json_extract(OLD.value, '$.sessionId')
+          OR json_extract(NEW.value, '$.sourceMessageId') IS NOT json_extract(OLD.value, '$.sourceMessageId')
+          OR json_extract(NEW.value, '$.sourceTurn') IS NOT json_extract(OLD.value, '$.sourceTurn')
+          OR json_extract(NEW.value, '$.sourceSeq') IS NOT json_extract(OLD.value, '$.sourceSeq')
+          THEN RAISE(ABORT, 'Canonical source and revision are immutable') END;
+        SELECT CASE WHEN json_extract(OLD.value, '$.canonical.phase') IN ('ready', 'scored')
+          AND (json_extract(NEW.value, '$.choices') IS NOT json_extract(OLD.value, '$.choices')
+            OR json_extract(NEW.value, '$.canonical.phase') NOT IN ('ready', 'scored'))
+          THEN RAISE(ABORT, 'Published canonical choices are immutable') END;
+        SELECT CASE WHEN json_type(OLD.value, '$.staging') = 'object'
+          AND json_extract(NEW.value, '$.recommendation') IS NOT json_extract(OLD.value, '$.recommendation')
+          THEN RAISE(ABORT, 'Staged canonical recommendation is immutable') END;
+      END;
       CREATE TRIGGER IF NOT EXISTS decision_inbox_native_submission_guard BEFORE UPDATE OF value ON decision_inbox
       WHEN json_extract(OLD.value, '$.resolutionPolicy') = 'on_send'
       BEGIN
@@ -219,7 +243,7 @@ export class DecisionInbox {
     if (existing) {
       // Capture may win the race with the inline evaluator. Enrich that same
       // canonical record, never create a second card or resurrect a decision.
-      if (!existing.parentDecisionId && existing.status === 'pending' && !existing.recommendation.recommendedValue
+      if (!existing.parentDecisionId && !existing.canonical && !existing.staging && existing.status === 'pending' && !existing.recommendation.recommendedValue
         && item.recommendation.recommendedValue
         && existing.choices.some(choice => choice.id === item.recommendation.recommendedValue)
         && existing.choices.length === item.choices.length
@@ -243,26 +267,26 @@ export class DecisionInbox {
   }
   advisorState(id: string, advisor: NonNullable<PendingDecisionItem['advisor']>): void {
     const item = this.get(id)
-    if (item?.status === 'pending') this.save({ ...item, advisor }, item)
+    if (item?.status === 'pending' && !item.canonical && !item.staging) this.save({ ...item, advisor }, item)
   }
   /** Capture a user-visible completed task before advising it; empty choices explicitly mean not yet advised. */
   ensureAdvisor(input: Omit<AdvisorDecision, 'options' | 'model'>): PendingDecisionItem {
     const existing = this.findSource(input)
     if (existing) return existing
     const id = `chat-${createHash('sha256').update(`${input.sessionId}\0${input.sourceMessageId ?? `turn:${input.sourceTurn ?? input.key}`}`).digest('hex').slice(0, 32)}`
-    const { choices, hiddenOptions } = normalizeChoices([])
+    const choices: PendingDecisionItem['choices'] = [], hiddenOptions: PendingDecisionItem['choices'] = []
     const item: PendingDecisionItem = { id, sessionId: input.sessionId, sourceMessageId: input.sourceMessageId,
       sourceTurn: input.sourceTurn, sourceSeq: input.sourceSeq, question: input.question, context: input.context.slice(-30000),
       ticketTitle: input.title ?? 'Conversation next steps', trigger: 'Task-specific next steps', status: 'pending', urgency: 'low',
       createdAt: input.createdAt, actionMode: 'stage_response', choices, ...(hiddenOptions.length ? { hiddenOptions } : {}),
-      recommendation, advisor: { status: 'ready', model: 'fallback', key: input.key } }
+      recommendation, advisor: { status: 'pending', key: input.key } }
     this.save(item)
     return item
   }
   /** Publish the real advisor output as a new option-set revision, never overwrite or revive a closed item. */
   publishAdvisor(input: AdvisorDecision): PendingDecisionItem {
     const existing = this.findSource(input)
-    if (existing && (existing.status !== 'pending' || existing.parentDecisionId)) return existing
+    if (existing && (existing.status !== 'pending' || existing.parentDecisionId || existing.canonical)) return existing
     if (!input.options.length || input.options.some(option => !option.id || !option.label?.trim() || !option.prompt?.trim())
       || input.options.filter(option => option.recommended).length !== 1) throw new InboxError(400, 'Invalid advisor choices')
     const selected = input.options.find(option => option.recommended)!
@@ -289,11 +313,91 @@ export class DecisionInbox {
     this.save(item, existing)
     return item
   }
+  /** Validate complete server-owned history before every producer mutation. */
+  private canonicalSource(input: CanonicalSource, events: readonly SessionEvent[]): PendingDecisionItem | undefined {
+    const end = events.findLast(event => event.type === 'turn/end')
+    const message = events.findLast(event => event.type === 'assistant/message')
+    if (end?.type !== 'turn/end' || end.data.reason.kind !== 'completed' || end.data.turn !== input.sourceTurn
+      || message?.type !== 'assistant/message' || message.data.interrupted || message.data.turn !== input.sourceTurn
+      || message.seq !== input.sourceSeq || message.data.message.id !== input.sourceMessageId || message.seq >= end.seq
+      || events.some(event => event.seq > end.seq && (event.type === 'turn/start' || event.type === 'user/message' && event.data.source.kind === 'user')))
+      throw new InboxError(409, 'Canonical source is not the current durable completed turn')
+    const item = this.findSource(input)
+    if (item && (item.status !== 'pending' || item.invalidation || item.parentDecisionId)) throw new InboxError(409, 'Canonical decision is staged, stale or closed')
+    if (item && (item.sourceSeq !== input.sourceSeq || item.sourceTurn !== input.sourceTurn || item.sourceMessageId !== input.sourceMessageId)) throw new InboxError(409, 'Canonical source identity changed')
+    if (item?.canonical && item.canonical.draftRevision !== input.draftRevision) throw new InboxError(409, 'Canonical draft revision changed')
+    return item
+  }
+  claimCanonical(input: CanonicalClaim, events: readonly SessionEvent[], now = Date.now()): CanonicalResult {
+    let item = this.canonicalSource(input, events)
+    if (!item) {
+      const source = events.find(event => event.seq === input.sourceSeq)!
+      const text = source.type === 'assistant/message' ? source.data.message.content.filter(part => part.type === 'text').map(part => part.text).join('\n') : ''
+      item = this.ensureAdvisor({ ...input, key: input.draftRevision, question: decisionQuestion(text) ?? 'Choose the next step for this thread', context: text, createdAt: source.time })
+    }
+    if (item.staging) return { item, claimed: false }
+    const state = item.canonical
+    if (state && (state.phase === 'scored' || state.phase === 'ready' && input.purpose !== 'score')) return { item, claimed: false }
+    if (state && state.leaseExpiresAt > now) return state.owner === input.owner
+      ? { item, claimed: true, leaseToken: state.leaseToken, leaseExpiresAt: state.leaseExpiresAt } : { item, claimed: false }
+    const canonical: NonNullable<PendingDecisionItem['canonical']> = { draftRevision: input.draftRevision, phase: state?.phase ?? 'pending', owner: input.owner, leaseToken: randomUUID(), leaseExpiresAt: now + 120000 }
+    const next = { ...item, ...(!state ? { choices: [], hiddenOptions: [], optionSets: optionHistory(item), recommendation } : {}), canonical, advisor: { ...item.advisor, status: canonical.phase === 'pending' ? 'generating' as const : 'ready' as const, key: input.draftRevision } }
+    this.save(next, item)
+    return { item: next, claimed: true, leaseToken: canonical.leaseToken, leaseExpiresAt: canonical.leaseExpiresAt }
+  }
+  private canonicalWriter(input: CanonicalWrite, events: readonly SessionEvent[]): PendingDecisionItem {
+    const item = this.canonicalSource(input, events)
+    if (item?.staging) throw new InboxError(409, 'Canonical decision is staged; publication is locked')
+    if (!item?.canonical || item.canonical.leaseToken !== input.leaseToken) throw new InboxError(409, 'Canonical publication lease changed')
+    if (item.canonical.leaseExpiresAt <= Date.now()) throw new InboxError(409, 'Canonical publication lease expired')
+    return item
+  }
+  publishCanonical(input: CanonicalPublish, events: readonly SessionEvent[]): CanonicalResult {
+    const item = this.canonicalWriter(input, events)
+    if (input.options.length < 2 || input.options.length > 4 || new Set(input.options.map(option => option.id)).size !== input.options.length
+      || input.options.some(option => !option.id || !option.label.trim() || !option.prompt.trim()) || input.options.filter(option => option.recommended).length !== 1) throw new InboxError(400, 'Provide exactly 2–4 distinct helper choices and one recommendation')
+    const choices = input.options.map(option => ({ id: option.id, label: option.label, prompt: option.prompt, description: option.why }))
+    const selected = input.options.find(option => option.recommended)!
+    if (item.canonical!.phase !== 'pending') {
+      if (JSON.stringify(item.choices) !== JSON.stringify(choices)) throw new InboxError(409, 'Canonical choices were already published')
+      return { item }
+    }
+    const evaluation = { ...recommendation, recommendedValue: selected.id, rationale: selected.why, provider: input.model }
+    const history = optionHistory(item)
+    const next: PendingDecisionItem = { ...item, choices, recommendation: evaluation, canonical: { ...item.canonical!, phase: 'ready' }, advisor: { status: 'ready', model: input.model, key: input.draftRevision },
+      optionSets: [...history, { revision: Math.max(0, ...history.map(set => set.revision)) + 1, createdAt: Date.now(), key: input.draftRevision, model: input.model, choices: structuredClone(choices), recommendation: structuredClone(evaluation) }] }
+    delete next.hiddenOptions
+    this.save(next, item)
+    return { item: next }
+  }
+  scoreCanonical(input: CanonicalScore, events: readonly SessionEvent[]): CanonicalResult {
+    const item = this.canonicalWriter(input, events), evaluation = input.evaluation
+    if (item.canonical!.phase === 'pending') throw new InboxError(409, 'Publish choices before scoring')
+    if (!item.choices.some(choice => choice.id === evaluation.recommendedValue) || evaluation.distribution.length !== item.choices.length
+      || evaluation.distribution.some((score, index) => score.id !== item.choices[index]!.id || !Number.isFinite(score.probability) || score.probability < 0 || score.probability > 1)
+      || Math.abs(evaluation.distribution.reduce((sum, score) => sum + score.probability, 0) - 1) > 0.01
+      || !Number.isFinite(evaluation.confidence) || evaluation.confidence < 0 || evaluation.confidence > 1) throw new InboxError(400, 'Scores must reference published choices with exact choice IDs/order and valid probabilities')
+    if (item.canonical!.phase === 'scored') {
+      if (JSON.stringify(item.recommendation) !== JSON.stringify(evaluation)) throw new InboxError(409, 'Canonical scores were already published')
+      return { item }
+    }
+    const next = { ...item, recommendation: evaluation, canonical: { ...item.canonical!, phase: 'scored' as const }, optionSets: item.optionSets?.map((set, index, sets) => index === sets.length - 1 ? { ...set, recommendation: structuredClone(evaluation) } : set) }
+    delete next.canonical.error
+    this.save(next, item); return { item: next }
+  }
+  failCanonical(input: CanonicalFailure, events: readonly SessionEvent[]): CanonicalResult {
+    const item = this.canonicalWriter(input, events)
+    if (item.canonical!.phase === 'scored') return { item }
+    const next = { ...item, canonical: { ...item.canonical!, error: input.error, ...(item.canonical!.phase === 'pending' ? { leaseExpiresAt: 0 } : {}) },
+      advisor: { ...item.advisor, status: item.canonical!.phase === 'pending' ? 'error' as const : 'ready' as const, error: input.error } }
+    this.save(next, item); return { item: next }
+  }
   /** Restore an earlier set by appending it as a new revision; no recorded set is erased. */
   restoreOptionSet(id: string, revision: number): PendingDecisionItem {
     const item = this.get(id)
     if (!item) throw new InboxError(404, 'Decision not found')
     if (item.status !== 'pending' || item.invalidation) throw new InboxError(409, 'Only a pending decision can restore an earlier option set')
+    if (item.canonical) throw new InboxError(409, 'Canonical published choices are immutable; earlier option history remains available for inspection')
     if (item.staging) throw new InboxError(409, 'Choices cannot change while a draft is staged; discard staging first')
     const selected = item.optionSets?.find(set => set.revision === revision)
     if (!selected) throw new InboxError(404, 'Option set not found')

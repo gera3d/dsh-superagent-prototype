@@ -228,7 +228,7 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
           {item.choices.map(choice => {
             const isScored = Boolean((item.recommendation.confidence > 0 || (item.recommendation.distribution && item.recommendation.distribution.length > 0)) && item.recommendation.recommendedValue)
             const dist = item.recommendation.distribution?.find(d => d.id === choice.id)
-            const probability = dist ? dist.probability : (choice.id === item.recommendation.recommendedValue && item.recommendation.confidence ? item.recommendation.confidence : (isScored ? Math.max(0, (1 - (item.recommendation.confidence || 0)) / Math.max(1, item.choices.length - 1)) : undefined))
+            const probability = dist?.probability
             const percent = probability !== undefined && Number.isFinite(probability) && probability >= 0 ? Math.round(probability * 100) : undefined
 
             return <button type="button" key={choice.id} className={`dsa-decisions__choice${choice.id === item.recommendation.recommendedValue ? ' dsa-decisions__choice--suggested' : ''}`} disabled={!idle || !['pending', 'resolved'].includes(item.status) || input.phase !== 'plain' || selection !== undefined || (item.status === 'pending' && (!!item.invalidation || !!item.staging))} onClick={() => choose(item, choice.id)}>

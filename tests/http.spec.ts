@@ -233,25 +233,10 @@ it('succeeds on a live card pick by dispatching choice to the session and resolv
   expect(await call('POST', 'decisions/inbox', item)).toMatchObject({ status: 200 })
 
   const res = await call('POST', 'decisions/chat-live-pick-1/resolve', { choiceId: 'opt-a' })
-  expect(res.status).toBe(200)
-  expect(res.body).toMatchObject({
-    resolved: true,
-    choiceId: 'opt-a',
-    execution: 'not_executed',
-    item: {
-      id: 'chat-live-pick-1',
-      status: 'resolved',
-      resolvedChoice: 'opt-a',
-      resolutionBasis: 'submitted',
-    },
-  })
-  expect(prompt).toHaveBeenCalledOnce()
-  expect(prompt).toHaveBeenCalledWith(
-    'worker-active-t1',
-    expect.stringMatching(/^native-req-/),
-    'Do option A.',
-    'steer'
-  )
+  expect(res.status).toBe(409)
+  expect(prompt).not.toHaveBeenCalled()
+  const inbox = await call('GET', 'decisions/inbox')
+  expect((inbox.body.items as any[]).find((entry: any) => entry.id === item.id)).toMatchObject({ status: 'pending' })
 })
 
 it('projects a stuck lifecycle card and retries it once through the explicit HTTP endpoint', async () => {

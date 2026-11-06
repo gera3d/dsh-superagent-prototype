@@ -39,7 +39,22 @@ it('independent provider persists staged choices without sending or retrying and
   }
   try {
     apply(ctx as any, { database })
-    expect([...registrations.keys()]).toEqual(['/orchestrator/api/decisions/inbox'])
+    expect([...registrations.keys()]).toEqual(['/orchestrator/api/decisions/inbox', ...['claim', 'publish', 'score', 'fail'].map(operation => `/orchestrator/api/decisions/canonical/${operation}`)])
+    histories.set('canonical-session', histories.get('session')!.map(event => structuredClone(event)))
+    const source = { sessionId: 'canonical-session', sourceMessageId: 'message', sourceSeq: 1, sourceTurn: 1, draftRevision: 'revision-hash' }
+    expect(await call('POST', 'canonical/claim', { ...source, owner: 'tab-a' }, 'http://evil.example')).toMatchObject({ status: 403 })
+    const claim = await call('POST', 'canonical/claim', { ...source, owner: 'tab-a' })
+    expect(claim).toMatchObject({ status: 200, body: { claimed: true, item: { choices: [], canonical: { phase: 'pending' } } } })
+    expect(await call('POST', 'canonical/claim', { ...source, owner: 'tab-b' })).toMatchObject({ status: 200, body: { claimed: false } })
+    const write = { ...source, leaseToken: claim.body.leaseToken }
+    const options = [{ id: 'first', label: 'First', prompt: 'Complete first continuation', why: 'First reason', recommended: false }, { id: 'second', label: 'Second', prompt: 'Complete second continuation', why: 'Second reason', recommended: true }]
+    const published = await call('POST', 'canonical/publish', { ...write, model: 'helper', options })
+    expect(published).toMatchObject({ status: 200, body: { item: { choices: options.map(({ id, label, prompt, why }) => ({ id, label, prompt, description: why })), canonical: { phase: 'ready' } } } })
+    const evaluation = { recommendedValue: 'first', confidence: 0.6, rationale: 'Scored rationale', distribution: [{ id: 'first', probability: 0.6 }, { id: 'second', probability: 0.4 }], provider: 'ranker', latencyMs: 10 }
+    const scored = await call('POST', 'canonical/score', { ...write, evaluation })
+    expect(scored).toMatchObject({ status: 200, body: { item: { recommendation: evaluation, canonical: { phase: 'scored' } } } })
+    const projection = await call('GET', 'inbox')
+    expect(projection.body.items.find((item: PendingDecisionItem) => item.id === claim.body.item.id)).toEqual(scored.body.item)
     const item = { id: 'inline:source:decision', sessionId: 'session', sourceMessageId: 'message', sourceSeq: 1, sourceTurn: 1, ticketTitle: 'Chat', trigger: 'Choose',
       status: 'pending', urgency: 'low', createdAt: 100, context: 'Context', question: 'Which?',
       choices: [{ id: 'a', label: 'Do A' }, { id: 'b', label: 'Do B' }], recommendation: { recommendedValue: '', confidence: 0,
