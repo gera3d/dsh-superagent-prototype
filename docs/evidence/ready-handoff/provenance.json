@@ -1,0 +1,166 @@
+{
+  "baseline": "4972e30cd711c076ac58db43564d064d31c316cb",
+  "backendHead": "4972e30cd711c076ac58db43564d064d31c316cb",
+  "afterIdentity": "uncommitted working-tree helper, SHA-256 below; component unchanged from baseline",
+  "sources": {
+    "baseline-helper.ts": "2ce176fa4981fd0d7b4c80b6a3ccac46764c83e06f11a6d6a9b2187ff5e2d3f7",
+    "fixture.tsx": "dfd430f5707343be791bc4e01713c17a688d989b1c301ecbfbe3ce892f550609",
+    "capture.mjs": "3b1fbe5917ae8ee39d85f5dabc876cb6b069936b42e025b32d13217f56ea7cbc",
+    "../../../src/app/delivery-currency.ts": "da36b606da730f3c914352840529aacb86e771b2f5c3085d96a444f182f14a62",
+    "../../../src/client/delivery-card.tsx": "ea5d2a9c9e4687512de0fa9c518657251ffdba87e39033d32ca575866eac6664",
+    "../../../src/client/controls.tsx": "9918f71ebbf54ac360811804b64b02e13e5a7aababf4778cbc9d19e72639bbe9"
+  },
+  "viewport": {
+    "width": 1280,
+    "height": 1200
+  },
+  "colorScheme": "dark",
+  "timezone": "UTC",
+  "browser": "158.0.8127.18",
+  "network": "blocked; setContent + in-memory bundle; fresh unauthenticated context",
+  "projections": {
+    "before": {
+      "input": {
+        "delivery": {
+          "id": "auto-ready-worker",
+          "title": "Issue171 ready handoff",
+          "owner": "release-owner",
+          "revision": 2,
+          "stage": "review",
+          "state": "blocked",
+          "workers": [
+            "ready-worker"
+          ],
+          "scopeBinding": {
+            "reason": "Operator-confirmed delivery scope, target and acceptance requirements are missing",
+            "sourceTriggerId": "source"
+          },
+          "blocker": "Operator-confirmed delivery scope, target and acceptance requirements are missing",
+          "bindings": {
+            "repository": "org/repo",
+            "sourceIssue": 171,
+            "baseSha": "",
+            "headSha": "",
+            "refs": []
+          },
+          "requirements": [
+            "intake:acceptance-requirements-unconfirmed"
+          ],
+          "authorities": [],
+          "evidence": [],
+          "attempts": {
+            "review": 0,
+            "fix": 0,
+            "maxReview": 3,
+            "maxFix": 2
+          },
+          "audit": [
+            {
+              "at": "2026-11-06T17:40:26Z",
+              "event": "tracked-unbound:source",
+              "actor": "release-owner"
+            }
+          ]
+        },
+        "ticket": {
+          "id": "ready-worker",
+          "title": "Issue171 ready handoff",
+          "mandate": {
+            "strength": "explicit"
+          },
+          "origin": {
+            "triggerId": "source"
+          },
+          "assignments": [
+            {
+              "id": "same-native-assignment",
+              "state": "running",
+              "report": {
+                "state": "ready",
+                "summary": "Implementation reported ready with collected serial test evidence; release review remains.",
+                "at": "2026-11-06T18:10:00Z"
+              }
+            }
+          ]
+        }
+      },
+      "work": null
+    },
+    "after": {
+      "input": {
+        "delivery": {
+          "id": "auto-ready-worker",
+          "title": "Issue171 ready handoff",
+          "owner": "release-owner",
+          "revision": 2,
+          "stage": "review",
+          "state": "blocked",
+          "workers": [
+            "ready-worker"
+          ],
+          "scopeBinding": {
+            "reason": "Operator-confirmed delivery scope, target and acceptance requirements are missing",
+            "sourceTriggerId": "source"
+          },
+          "blocker": "Operator-confirmed delivery scope, target and acceptance requirements are missing",
+          "bindings": {
+            "repository": "org/repo",
+            "sourceIssue": 171,
+            "baseSha": "",
+            "headSha": "",
+            "refs": []
+          },
+          "requirements": [
+            "intake:acceptance-requirements-unconfirmed"
+          ],
+          "authorities": [],
+          "evidence": [],
+          "attempts": {
+            "review": 0,
+            "fix": 0,
+            "maxReview": 3,
+            "maxFix": 2
+          },
+          "audit": [
+            {
+              "at": "2026-11-06T17:40:26Z",
+              "event": "tracked-unbound:source",
+              "actor": "release-owner"
+            }
+          ]
+        },
+        "ticket": {
+          "id": "ready-worker",
+          "title": "Issue171 ready handoff",
+          "mandate": {
+            "strength": "explicit"
+          },
+          "origin": {
+            "triggerId": "source"
+          },
+          "assignments": [
+            {
+              "id": "same-native-assignment",
+              "state": "running",
+              "report": {
+                "state": "ready",
+                "summary": "Implementation reported ready with collected serial test evidence; release review remains.",
+                "at": "2026-11-06T18:10:00Z"
+              }
+            }
+          ]
+        }
+      },
+      "work": {
+        "state": "owned",
+        "owner": "release-owner",
+        "progress": "Implementation reported ready with collected serial test evidence; release review remains.",
+        "nextStep": "Implementation reported ready; the assigned delivery owner reviews evidence and prepares remaining delivery; no duplicate implementation run is requested."
+      }
+    }
+  },
+  "images": {
+    "before.png": "1346dc520b601de96aeee86465829fc8f19c9b757bcc8915a122a6cf87a30a8e",
+    "after.png": "dea69fd6de16fd2ebe6d54eb55dfc85f1857ac9b448be4409683be4219a6d856"
+  }
+}
