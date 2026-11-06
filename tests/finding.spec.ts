@@ -8,6 +8,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { FindingCard } from '../src/client/finding-card.tsx'
 import type { Delivery } from '../src/app/feature-delivery.ts'
+import type { PendingDecisionItem } from '../src/core/decision.ts'
 import { FindingStore, FindingIntakeSchema, FindingConfirmSchema, findingDecision, projectFindings, type FindingIntake } from '../src/app/finding.ts'
 
 const open: DatabaseSync[] = []
@@ -22,6 +23,34 @@ function intake(key = 'finding', occurrence = 'observation'): FindingIntake {
 function confirm(store: FindingStore, id: string, choiceId: 'fix_now' | 'queue_next' | 'defer' = 'queue_next') {
   return store.confirm(id, { revision: store.get(id)!.revision, choiceId })
 }
+
+it('replaces generic current/prior finding-job lifecycle cards while preserving publication history and real questions', () => {
+  const store = fixture()
+  const finding = store.observe({ ...intake(), kind: 'verification', existingDeliveryId: 'auto-5ee3dda6e61420b3b927164ed5f4b98a' })
+  confirm(store, finding.id)
+  store.markDispatched(finding.id, 'prior-verification-ticket', 'prior-assignment')
+  let current = store.markReview(finding.id, { reference: 'prior-report', summary: 'Further verification needed', recordedAt: new Date().toISOString(), state: 'blocked' })
+  store.review(finding.id, { revision: current.revision, decision: 'retry_scope' })
+  confirm(store, finding.id)
+  store.markDispatched(finding.id, 'f1169468a82e551dd2804f270f3d12bf', 'current-assignment')
+  current = store.markReview(finding.id, { reference: 'ticket/f1169468a82e551dd2804f270f3d12bf/report/current-assignment', summary: 'History verification ready; review evidence', recordedAt: new Date().toISOString(), state: 'ready' })
+  const generic: PendingDecisionItem = { ...findingDecision(current), finding: undefined, id: 'generic-done', actionMode: 'ticket_lifecycle',
+    lifecycle: { kind: 'done', assignmentId: 'current-assignment', prNumber: 173, docsOnly: false }, choices: [{ id: 'prepare_publication', label: 'Inspect publication' }] }
+  const prior: PendingDecisionItem = { ...generic, id: 'generic-prior-stuck', ticketId: 'worker-prior-verification-ticket', lifecycle: { kind: 'stuck', assignmentId: 'prior-assignment' } }
+  const publication: NonNullable<NonNullable<PendingDecisionItem['lifecycle']>['publication']> = {
+    id: 'real-publication', status: 'rolled_back', repository: 'org/repo', prNumber: 173, headSha: 'a'.repeat(40), patchSha256: 'b'.repeat(64),
+    ticketId: generic.ticketId!, conversationId: `worker-${generic.ticketId}`, createdAt: current.createdAt, updatedAt: current.updatedAt, outcomes: [], audit: [], requests: {},
+  }
+  const rollback: PendingDecisionItem = { ...generic, id: 'real-rollback', lifecycle: { ...generic.lifecycle!, publication, recovery: true } }
+  const prepared: PendingDecisionItem = { ...rollback, id: 'real-prepared', lifecycle: { ...rollback.lifecycle!, publication: { ...publication, status: 'prepared' } } }
+  const question: PendingDecisionItem = { ...generic, id: 'real-question', lifecycle: undefined, actionMode: 'stage_response', question: 'Which screenshot confirms History?', choices: [{ id: 'respond', label: 'Draft a response' }] }
+  const unrelated: PendingDecisionItem = { ...generic, id: 'unrelated-done', ticketId: 'original-delivery-owner' }
+  const items = [generic, prior, rollback, prepared, question, unrelated], before = JSON.stringify({ items, finding: store.get(finding.id) })
+  const projected = projectFindings(store, items)
+  expect(projected.map(item => item.id)).toEqual([rollback.id, prepared.id, question.id, unrelated.id, `finding-${finding.id}`])
+  expect(projected.at(-1)?.finding).toMatchObject({ existingDeliveryId: current.existingDeliveryId, state: 'blocked', job: current.job, priorJobs: current.priorJobs })
+  expect(JSON.stringify({ items, finding: store.get(finding.id) })).toBe(before)
+})
 
 it('deduplicates durable observations and refuses scope, evidence identity, and delivery identity changes', () => {
   const store = fixture(); const input = { ...intake(), existingDeliveryId: 'delivery-original' }

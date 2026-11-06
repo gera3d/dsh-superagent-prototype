@@ -335,8 +335,13 @@ export function findingDecision(record: Finding): PendingDecisionItem {
 export function projectFindings(store: FindingStore, items: PendingDecisionItem[]): PendingDecisionItem[] {
   const records = store.list()
   const ids = new Set(records.map(record => `finding-${record.id}`))
+  const findingWorkers = new Set(records.flatMap(record => [record.job, ...(record.priorJobs ?? [])]
+    .flatMap(job => job?.ticketId ? [job.ticketId.replace(/^worker-/, '')] : [])))
   const unresolvedDeliveries = new Set(records.filter(record => record.state !== 'resolved').map(record => record.existingDeliveryId).filter(Boolean))
-  const projected = items.filter(item => !ids.has(item.id)).map(item => {
+  // The canonical finding owns its job's evidence review, not a second generic publication prompt.
+  // Actual publication/rollback records and human questions remain independently visible.
+  const projected = items.filter(item => !ids.has(item.id)
+    && !(item.lifecycle && !item.lifecycle.publication && item.ticketId && findingWorkers.has(item.ticketId.replace(/^worker-/, '')))).map(item => {
     if (item.delivery?.nextAction?.kind !== 'accept' || !unresolvedDeliveries.has(item.delivery.id)) return item
     const delivery = structuredClone(item.delivery)
     delete delivery.nextAction; delete delivery.recommendation
