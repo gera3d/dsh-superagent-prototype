@@ -553,6 +553,10 @@ export class DshExecutor implements Executor {
           this.recordTicketNote(ticket.id, note)
           targetModel = step.to
           agent = await this.host.sessions.ensure(sessionId, workspace, ticket.title, 'worker', targetModel)
+        } else if (transient(error)) {
+          // With no fallback route left, a passing failure still waits for the launch backoff and fails the ticket only
+          // once its retries run out, instead of ending the launch at once and skipping the retry it is entitled to.
+          throw error
         } else {
           this.failed(ticket.id, `All models unavailable: ${String(error)}`)
           return

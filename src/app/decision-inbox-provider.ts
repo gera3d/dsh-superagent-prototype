@@ -56,6 +56,10 @@ export function apply(ctx: Context, config: { database: string }): void {
     const projectedGet = (id: string) => projectedList().find(item => item.id === id)
     revalidateCapturedDecisions(db, inbox)
     const capture = registerDecisionCapture(ctx, () => inbox)
+    // Recovery only decides when older sessions' questions appear. Reads of the persisted inbox and canonical
+    // writes (which validate their own server-owned durable source per request) must not queue behind it.
+    let recovered = false
+    void capture.ready.then(() => { recovered = true })
     let closed = false
     const refreshTickets = () => {
       const tickets = db.prepare('SELECT value FROM ticket').all().map(row => JSON.parse(String(row.value)) as Ticket)
@@ -65,19 +69,22 @@ export function apply(ctx: Context, config: { database: string }): void {
       const send = (status: number, value: unknown) => { res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' }); res.end(JSON.stringify(value)) }
       if (!sameOrigin(req, ctx.webServer.port)) { send(403, { error: 'Same-origin management request required' }); return }
       try {
-        await capture.ready
+        const path = new URL(req.url ?? '/', 'http://localhost').pathname
+        const canonical = /^\/orchestrator\/api\/decisions\/canonical\/(claim|publish|score|fail)$/.exec(path)
+        const inboxRead = path === '/orchestrator/api/decisions/inbox' && req.method === 'GET'
+        // Staged, restart and legacy mutations still wait for the complete scan because they can close or rewrite
+        // items the scan is about to reconcile; reads and canonical writes cannot depend on that scan.
+        if (!inboxRead && !canonical) await capture.ready
         if (closed) { send(503, { error: 'Inbox provider is reloading' }); return }
         currency()
-        const path = new URL(req.url ?? '/', 'http://localhost').pathname
-        if (path === '/orchestrator/api/decisions/inbox' && req.method === 'GET') {
+        if (inboxRead) {
           refreshTickets()
           await publication?.refresh?.()
           const items = projectedList()
           for (const item of items) registerResolution(item.id)
-          send(200, { items }); return
+          send(200, { items, recovery: { pending: !recovered } }); return
         }
         const resolve = /^\/orchestrator\/api\/decisions\/([^/]+)\/(resolve|stage|submission|discard-staging|restart)$/.exec(path)
-        const canonical = /^\/orchestrator\/api\/decisions\/canonical\/(claim|publish|score|fail)$/.exec(path)
         if (req.method !== 'POST' || (!canonical && !resolve && path !== '/orchestrator/api/decisions/inbox')) { send(404, { error: 'Unknown inbox operation' }); return }
         let size = 0; const chunks: Buffer[] = []
         for await (const chunk of req) { const bytes = Buffer.from(chunk); size += bytes.length; if (size > 128 * 1024) throw new InboxError(400, 'Request exceeds 131072 bytes'); chunks.push(bytes) }
