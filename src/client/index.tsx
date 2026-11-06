@@ -25,6 +25,7 @@ import { BrandLogoMark, BrandWordmark } from './branding-mark.tsx'
 import { en, zh } from './locales.ts'
 import type { T } from './text.ts'
 import { DecisionHandoffDock } from './decision-handoff.tsx'
+import { WorkerReportFallback, workerReportDefinition, workerReportView } from './worker-report-fallback.tsx'
 
 type ClientContext = Context & { sessions: ISessions }
 const NS = 'dshSuperagent'
@@ -59,11 +60,16 @@ function Mounted({ ctx, t }: { ctx: ClientContext; t: T }) {
     openSession={openSession} />} />
 }
 
-export const inject = ['slots', 'locale', 'sessions', 'uiWorkspace', 'conversation']
+export const inject = ['slots', 'locale', 'sessions', 'uiWorkspace', 'conversation', 'uiConversation']
 /** Registers the panel, sidebar icon, and Plugin Manager config view; `configForms` is optional (without it, machine settings are read-only). */
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-superagent: dictionaries')
   const t = ctx.locale.bind(NS)
+  ctx.effect(() => ctx.uiConversation.events.register(workerReportDefinition()))
+  ctx.effect(() => ctx.uiConversation.views.register(workerReportView()))
+  ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
+    name: 'conversation.input.dock', id: 'dsh-superagent.worker-report', order: 7,
+  }, props => <WorkerReportFallback ctx={ctx} sessionId={props.session.sessionId} running={props.session.running} removed={props.session.removed} />))
   ctx.effect(() => ctx.provide('publicationCards', { render: (item, onTicket) => <SharedLifecycleCard item={item} onTicket={onTicket} /> }))
   ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
     name: 'conversation.input.dock', id: 'dsh-superagent.publications', order: 8,

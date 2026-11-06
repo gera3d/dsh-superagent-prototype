@@ -805,6 +805,7 @@ const TEXT = {
   'setup.agentCliUnset': ['没有设置智能体的 GitHub CLI。', SETUP_PROBLEMS.agentCliUnset[1]],
   'setup.agentCliMissing': ['找不到智能体的 GitHub CLI。', SETUP_PROBLEMS.agentCliMissing[1]],
   'setup.agentCliSignedOut': ['智能体的 GitHub CLI 读不到它的账号。', SETUP_PROBLEMS.agentCliSignedOut[1]],
+  'setup.githubRateLimited': ['GitHub API 请求已达到限额。请等待配额重置后重试检查；此错误不需要重新登录。', SETUP_PROBLEMS.githubRateLimited[1]],
   'setup.agentCliNoAccount': ['智能体的 GitHub CLI 没有报告 GitHub 账号。', SETUP_PROBLEMS.agentCliNoAccount[1]],
   'setup.repositoryUnreadable': ['@{account} 读不到 {repository}。', SETUP_PROBLEMS.repositoryUnreadable[1]],
   'setup.repositoryUnreported': ['智能体的 GitHub CLI 没有返回 {repository}。', SETUP_PROBLEMS.repositoryUnreported[1]],

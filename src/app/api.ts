@@ -39,6 +39,12 @@ export interface Api {
   'POST decisions/canonical/publish': { body: CanonicalPublish; response: CanonicalResult }
   'POST decisions/canonical/score': { body: CanonicalScore; response: CanonicalResult }
   'POST decisions/canonical/fail': { body: CanonicalFailure; response: CanonicalResult }
+  'GET deliveries': { response: { items: import('./feature-delivery.ts').Delivery[] } }
+  'POST deliveries': { body: import('./delivery-intake.ts').DeliveryIntake; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
+  'POST deliveries/:id/reconcile': { body: { revision: number; actionId: string }; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
+  'POST deliveries/:id/recheck': { body: { revision: number }; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
+  'POST deliveries/:id/bind': { body: { revision: number; intake: import('./delivery-intake.ts').DeliveryIntake }; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
+  'POST deliveries/:id/confirm': { body: { revision: number; actionId: string }; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
   'GET decisions/inbox': { response: { items: PendingDecisionItem[] } }
   'POST decisions/inbox': { body: PendingDecisionItem; response: { ok: boolean; id: string } }
   'POST helper/suggest': { body: HelperDigest; response: HelperSuggestions }

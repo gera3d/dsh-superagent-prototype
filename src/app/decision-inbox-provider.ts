@@ -5,6 +5,8 @@ import type { WebRoute } from '@deepseek-ai/dsh-host-webserver'
 import { DatabaseSync } from 'node:sqlite'
 import { isAbsolute, dirname } from 'node:path'
 import { loadLifecyclePublication } from './publication-context.ts'
+import { DeliveryStore } from './feature-delivery.ts'
+import { projectDeliveries, reconcileInboxCurrency } from './delivery-runtime.ts'
 import { existsSync } from 'node:fs'
 import { z } from 'zod'
 import { DecisionInboxItem, DecisionStageRequest, DecisionSubmissionRequest, DecisionDiscardRequest, DecisionRestartRequest, canonicalOperation, sameOrigin } from './http.ts'
@@ -46,11 +48,10 @@ export function apply(ctx: Context, config: { database: string }): void {
     }
     const inbox = new DecisionInbox(db, item => registerResolution(item.id))
     const publication = loadLifecyclePublication(dirname(config.database))
-    const projectedList = () => publication?.project?.(inbox.list()) ?? inbox.list()
-    const projectedGet = (id: string) => {
-      const item = inbox.get(id)
-      return item ? (publication?.project?.([item]) ?? [item])[0] : undefined
-    }
+    const deliveries = new DeliveryStore(db)
+    const currency = () => reconcileInboxCurrency(inbox, deliveries, publication)
+    const projectedList = () => { currency(); return projectDeliveries(deliveries, publication?.project?.(inbox.list()) ?? inbox.list()) }
+    const projectedGet = (id: string) => projectedList().find(item => item.id === id)
     revalidateCapturedDecisions(db, inbox)
     const capture = registerDecisionCapture(ctx, () => inbox)
     let closed = false
@@ -64,6 +65,7 @@ export function apply(ctx: Context, config: { database: string }): void {
       try {
         await capture.ready
         if (closed) { send(503, { error: 'Inbox provider is reloading' }); return }
+        currency()
         const path = new URL(req.url ?? '/', 'http://localhost').pathname
         if (path === '/orchestrator/api/decisions/inbox' && req.method === 'GET') {
           refreshTickets()
@@ -79,7 +81,11 @@ export function apply(ctx: Context, config: { database: string }): void {
         for await (const chunk of req) { const bytes = Buffer.from(chunk); size += bytes.length; if (size > 128 * 1024) throw new InboxError(400, 'Request exceeds 131072 bytes'); chunks.push(bytes) }
         let body: unknown
         try { body = JSON.parse(Buffer.concat(chunks).toString('utf8')) } catch { throw new InboxError(400, 'The request body is not JSON') }
-        if (canonical) { send(200, await canonicalOperation(ctx, inbox, canonical[1]!, body)); return }
+        if (canonical) {
+          const result = await canonicalOperation(ctx, inbox, canonical[1]!, body)
+          currency()
+          send(200, { ...result, item: projectedGet(result.item.id) ?? result.item }); return
+        }
         if (resolve) {
           let id: string
           try { id = decodeURIComponent(resolve[1]!) } catch { throw new InboxError(400, 'Malformed decision id') }
@@ -104,9 +110,9 @@ export function apply(ctx: Context, config: { database: string }): void {
     }
     const unprovide = ctx.provide?.('decisionInbox', {
       ready: capture.ready, list: projectedList, get: projectedGet,
-      findSource: (source: Parameters<DecisionInbox['findSource']>[0]) => inbox.findSource(source),
-      publishAdvisor: (input: Parameters<DecisionInbox['publishAdvisor']>[0]) => inbox.publishAdvisor(input),
-      ensureAdvisor: (input: Parameters<DecisionInbox['ensureAdvisor']>[0]) => inbox.ensureAdvisor(input),
+      findSource: (source: Parameters<DecisionInbox['findSource']>[0]) => { currency(); return inbox.findSource(source) },
+      publishAdvisor: (input: Parameters<DecisionInbox['publishAdvisor']>[0]) => { const item = inbox.publishAdvisor(input); currency(); return projectedGet(item.id) ?? item },
+      ensureAdvisor: (input: Parameters<DecisionInbox['ensureAdvisor']>[0]) => { const item = inbox.ensureAdvisor(input); currency(); return projectedGet(item.id) ?? item },
       advisorState: (id: string, state: Parameters<DecisionInbox['advisorState']>[1]) => inbox.advisorState(id, state),
     })
     const inboxPath = '/orchestrator/api/decisions/inbox'

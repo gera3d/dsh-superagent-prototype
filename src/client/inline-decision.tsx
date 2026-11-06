@@ -85,7 +85,7 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
   }, [id, idle, closed, data, error, retry, reload])
 
   // Privileged lifecycle cards have a dedicated shared renderer and must never enter native chat staging.
-  const sessionItems = data?.items.filter(item => item.sessionId === session.sessionId && !item.lifecycle && item.actionMode !== 'ticket_lifecycle') ?? []
+  const sessionItems = data?.items.filter(item => item.sessionId === session.sessionId && !item.delivery && item.actionMode !== 'feature_delivery' && !item.lifecycle && item.actionMode !== 'ticket_lifecycle') ?? []
   const pending = sessionItems.filter(item => item.status === 'pending')
   const emptySource = pending.find(item => item.sourceMessageId === sourceMessageId && !item.choices.length && !item.invalidation)
   const hydrated = useRef<string>()
@@ -119,7 +119,7 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
   if (!items.length && !creating && !failure && !notice && !error) return null
   const choose = async (item: PendingDecisionItem, choiceId: string) => {
     const choice = item.choices.find(candidate => candidate.id === choiceId)
-    if (item.lifecycle || item.actionMode === 'ticket_lifecycle' || choice?.actionKind && choice.actionKind !== 'suggestion') return
+    if (item.delivery || item.actionMode === 'feature_delivery' || item.lifecycle || item.actionMode === 'ticket_lifecycle' || choice?.actionKind && choice.actionKind !== 'suggestion') return
     if (!idle || !choice || !['pending', 'resolved'].includes(item.status) || choosing.current || input.phase !== 'plain'
       || (item.status === 'pending' && (item.invalidation || item.staging))) return
     const signal = stageAbort.current?.signal

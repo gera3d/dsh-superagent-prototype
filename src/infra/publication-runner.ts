@@ -19,8 +19,11 @@ const localAttestationSchema = z.object({
   checks: z.array(z.object({ name: z.string().min(1).max(200), exitCode: z.literal(0), completedAt: z.iso.datetime(), report: asset }).strict()).min(1).max(100),
   limitations: z.array(z.string().max(2000)).max(30),
 }).strict()
+const scopedRef = z.object({ repository: z.string().regex(/^[\w.-]+\/[\w.-]+$/), pr: z.number().int().positive(), headSha: z.string().regex(/^[a-f0-9]{40}$/), baseSha: z.string().regex(/^[a-f0-9]{40}$/).optional() }).strict()
+const deliveryScopeSchema = z.object({ environment: z.string().min(1).max(200), refs: z.array(scopedRef).min(1).max(10), components: z.array(z.string().min(1).max(200)).min(1).max(50), effects: z.array(z.string().min(1).max(1000)).min(1).max(50) }).strict()
+export type PublicationDeliveryScope = z.infer<typeof deliveryScopeSchema> & { manifestSha256: string }
 const configSchema = z.object({
-  version: z.literal(1), pins: pinsSchema, ghPath: absolute, cwd: absolute,
+  version: z.literal(1), pins: pinsSchema, ghPath: absolute, cwd: absolute, deliveryScope: deliveryScopeSchema.optional(),
   patch: asset, timeoutMs: z.number().int().min(1000).max(900000).default(90000),
   localEvidence: asset.optional(), localEvidenceMaxAgeMs: z.number().int().min(1000).max(86400000).default(3600000),
   scripts: z.object({ apply: script, build: script, restart: script, verify: script, rollback: script }).strict(),
@@ -94,11 +97,18 @@ function samePins(a: PublicationPins, b: PublicationPins): boolean {
 }
 export interface ConfiguredPublicationAdapter extends PublicationAdapter {
   pinsFor(repository: string, prNumber: number): PublicationPins | undefined
+  scopeFor(repository: string, prNumber: number): PublicationDeliveryScope | undefined
 }
 
 export function createPublicationRunner(input: PublicationRunnerConfig, execute: PublicationExecutor = executePublicationCommand): ConfiguredPublicationAdapter {
   const config = configSchema.parse(input)
   if (config.patch.sha256 !== config.pins.patchSha256) throw new Error('Patch digest must match release pins')
+  if (config.deliveryScope) {
+    const refs = config.deliveryScope.refs
+    if (new Set(refs.map(r => `${r.repository}:${r.pr}`)).size !== refs.length) throw new Error('Duplicate delivery publication references')
+    if (!refs.some(r => r.repository === config.pins.repository && r.pr === config.pins.prNumber && r.headSha === config.pins.headSha)) throw new Error('Delivery publication scope must contain exact primary release pins')
+  }
+  const manifestSha256 = createHash('sha256').update(JSON.stringify(config)).digest('hex')
   if (realpathSync(config.cwd) !== config.cwd || !statSync(config.cwd).isDirectory()) throw new Error('Runner cwd must be a canonical directory')
   const phases = Object.values(config.scripts)
   if (new Set(phases.map(value => value.path)).size !== phases.length) throw new Error('Each publication phase requires a distinct script')
@@ -109,10 +119,19 @@ export function createPublicationRunner(input: PublicationRunnerConfig, execute:
     for (const phase of rollback ? [config.scripts.rollback] : phases) { checkedFile(phase); phase.dependencies.forEach(checkedFile) }
   }
   const gh = (args: string[], signal?: AbortSignal, onSpawn?: (pid: number) => void) => execute({ executable: config.ghPath, args, cwd: config.cwd, timeoutMs: config.timeoutMs, signal, onSpawn })
+  const validateDeliveryScope = async (signal?: AbortSignal, onSpawn?: (pid: number) => void) => {
+    for (const ref of config.deliveryScope?.refs ?? []) {
+      signal?.throwIfAborted()
+      const data = JSON.parse(await gh(['pr', 'view', String(ref.pr), '--repo', ref.repository, '--json', 'headRefOid,baseRefOid'], signal, onSpawn)) as Record<string, unknown>
+      if (data.headRefOid !== ref.headSha || (ref.baseSha !== undefined && data.baseRefOid !== ref.baseSha)) throw new Error(`Delivery publication scope changed: ${ref.repository}#${ref.pr}`)
+    }
+  }
   return {
     pinsFor(repository, prNumber) { return repository === config.pins.repository && prNumber === config.pins.prNumber ? { ...config.pins } : undefined },
+    scopeFor(repository, prNumber) { return config.deliveryScope && repository === config.pins.repository && prNumber === config.pins.prNumber ? { ...structuredClone(config.deliveryScope), manifestSha256 } : undefined },
     async evidence(pins: PublicationPins, signal?: AbortSignal, onSpawn?: (pid: number) => void): Promise<PublicationEvidence> {
       validate(pins)
+      await validateDeliveryScope(signal, onSpawn)
       const data = JSON.parse(await gh(['pr', 'view', String(pins.prNumber), '--repo', pins.repository, '--json', 'headRefOid,state,reviewDecision,mergeable,mergeStateStatus,statusCheckRollup'], signal, onSpawn)) as Record<string, unknown>
       if (data.headRefOid !== pins.headSha) throw new Error('GitHub head changed from configured release')
       const checks = Array.isArray(data.statusCheckRollup) ? data.statusCheckRollup as Record<string, unknown>[] : []
@@ -139,6 +158,8 @@ export function createPublicationRunner(input: PublicationRunnerConfig, execute:
     async perform(stage: PublicationStage, pins: PublicationPins, operationId: string, signal?: AbortSignal, onSpawn?: (pid: number) => void) {
       validate(pins, stage === 'rollback')
       if (!/^[\w:.-]{1,200}$/.test(operationId)) throw new Error('Invalid publication operation identity')
+      // Rollback is restoration and must not be prevented by a subsequently moved PR.
+      if (stage !== 'rollback') await validateDeliveryScope(signal, onSpawn)
       if (stage === 'merge') {
         await gh(['pr', 'merge', String(pins.prNumber), '--repo', pins.repository, '--squash', '--match-head-commit', pins.headSha], signal, onSpawn)
       } else {
@@ -147,6 +168,7 @@ export function createPublicationRunner(input: PublicationRunnerConfig, execute:
         const bytes = checkedFile(phase)
         await execute({ executable: '/bin/bash', args: ['-s', '--'], input: bytes.toString('utf8'), cwd: config.cwd, timeoutMs: config.timeoutMs, signal, onSpawn,
           env: { PUBLICATION_ASSET_SHA256: JSON.stringify(Object.fromEntries(phase.dependencies.map(item => [item.path, item.sha256]))), PUBLICATION_OPERATION_ID: operationId, PUBLICATION_STAGE: stage, PUBLICATION_REPOSITORY: pins.repository,
+              ...(config.deliveryScope ? { PUBLICATION_DELIVERY_SCOPE: JSON.stringify(config.deliveryScope), PUBLICATION_MANIFEST_SHA256: manifestSha256 } : {}),
             PUBLICATION_PR_NUMBER: String(pins.prNumber), PUBLICATION_HEAD_SHA: pins.headSha, PUBLICATION_PATCH_SHA256: pins.patchSha256, PUBLICATION_PATCH_PATH: config.patch.path } })
       }
       const scope = stage === 'verify' ? '; configured HTTP release verification only, browser acceptance not performed' : stage === 'rollback' ? '; source/artifact restoration script completed, restored live service not independently verified' : ''

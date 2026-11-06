@@ -8,9 +8,11 @@ export function publicationCompleted(item: PendingDecisionItem): boolean {
   return !!stage && p.outcomes.filter(outcome => outcome.stage === stage).at(-1)?.status === 'succeeded'
 }
 export function decisionNeedsAttention(item: PendingDecisionItem): boolean {
+  if (item.delivery) return item.status === 'pending' && !['accepted', 'cancelled', 'abandoned'].includes(item.delivery.state) && !item.invalidation
   if (publicationCompleted(item)) return false
   return item.status === 'pending' || !!item.lifecycle?.recovery
 }
 export function decisionInHistory(item: PendingDecisionItem): boolean {
+  if (item.delivery) return !decisionNeedsAttention(item)
   return publicationCompleted(item) || item.status === 'resolved' && !item.lifecycle?.recovery
 }

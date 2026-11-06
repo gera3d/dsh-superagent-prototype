@@ -1843,3 +1843,190 @@ it('routes publication inspection and documentation review through the real runt
     choices: expect.arrayContaining([expect.objectContaining({ id: 'merge' })]) })] })
   expect(commands).toHaveBeenCalledWith(expect.anything(), 'pulls/12/files?per_page=100', '--paginate', '--slurp')
 })
+
+/** Actual registered Runtime HTTP handler; the envelope models a local request, not a human-click claim. */
+async function deliveryHttp(method: string, path: string, body: unknown, local = true) {
+  let status = 0, text = ''
+  const req = { method, url: `/orchestrator/api/${path}`, headers: {
+    host: '127.0.0.1:3082', 'x-orchestrator-request': '1', 'content-type': 'application/json',
+    ...(local ? { origin: 'http://127.0.0.1:3082', 'sec-fetch-site': 'same-origin', 'sec-fetch-mode': 'cors', 'sec-fetch-dest': 'empty' } : {}),
+  }, async *[Symbol.asyncIterator]() { yield Buffer.from(JSON.stringify(body)) } }
+  await http(req, { writeHead: (code: number) => { status = code }, end: (value: string) => { text = value } })
+  return { status, body: JSON.parse(text) as any }
+}
+const runtimeDeliveryHead = 'a'.repeat(40), runtimeDeliveryBase = 'b'.repeat(40)
+function runtimeDeliveryIntake(id: string, worker: string, delegatedActions: ('review' | 'fix')[] = []) {
+  return { id, title: 'Runtime delivery qualification', owner: 'local-operator',
+    bindings: { repository: 'acme/widgets', sourceIssue: 167, baseSha: runtimeDeliveryBase, headSha: runtimeDeliveryHead,
+      environment: 'isolated-runtime-test', refs: [{ repository: 'acme/widgets', pr: 12, headSha: runtimeDeliveryHead, baseSha: runtimeDeliveryBase }] },
+    requirements: ['required-native-browser-acceptance'], workers: [worker], delegatedActions, followFixHeads: true }
+}
+/** Only external GitHub/model transport is mocked; Runtime constructs every delivery adapter itself. */
+function runtimeDeliveryTransports(ticket: import('../src/core/index.ts').Ticket, verdict: 'failed' | 'passed') {
+  const settings = runtime.store.settings()
+  runtime.store.saveSettings({ ...settings, executor: { ...settings.executor, model: { provider: 'configured-review', model: 'review-model' } } })
+  vi.mocked(Commands.prototype.gh).mockImplementation(async args => {
+    if (args[1]?.includes('/pulls/12/files')) return [{ filename: 'src/feature.ts', status: 'modified', additions: 1, deletions: 1, patch: '@@ -1 +1 @@\n-old\n+new' }]
+    if (args[1]?.includes('/pulls/12')) return { number: 12, state: 'open', user: { login: 'agent-bot' }, changed_files: 1,
+      html_url: 'https://github.com/acme/widgets/pull/12', base: { sha: runtimeDeliveryBase },
+      head: { sha: runtimeDeliveryHead, ref: `agent/${ticket.execution!.name}`, repo: { full_name: 'acme/widgets' } } }
+    if (args[1] === 'user') return { login: 'agent-bot' }
+    return { default_branch: 'master', permissions: { push: true } }
+  })
+  const stream = vi.fn(async function* (request: any) {
+    expect(request.tools).toEqual([])
+    expect(request.provider).toBe('configured-review')
+    expect(request.model).toBe('review-model')
+    const input = JSON.parse(request.messages[0].content[0].text)
+    const value = input.action ? { disposition: 'take', actionId: input.action.id, fingerprint: input.action.fingerprint,
+      rationale: 'The exact server-bound review is eligible; publication and acceptance remain separately fenced.' }
+      : { verdict, findings: verdict === 'failed' ? [{ repository: 'acme/widgets', pr: 12, headSha: runtimeDeliveryHead,
+        path: 'src/feature.ts', line: 1, severity: 'high', message: 'Preserve the missing validation before accepting this change.' }] : [],
+        rationale: verdict === 'failed' ? 'A concrete changed-line validation defect requires correction.' : 'The supplied diff satisfies the review requirements; this is not live acceptance.' }
+    yield { type: 'text-delta', text: JSON.stringify(value) }
+    yield { type: 'finish', reason: { kind: 'stop' } }
+  })
+  ;(services.llm as any).stream = stream
+  return stream
+}
+
+it('delivery runtime automatically tracks ordinary accepted work through ready merged end and restart without fabricated scope', async () => {
+  expect(runtime.deliveries.store.list()).toEqual([])
+  const { ticket, sessionId } = await acceptedTicket()
+  await runtime.deliveries.request()
+  const id = `auto-${ticket.id}`
+  const tracked = runtime.deliveries.store.get(id)!
+  expect(tracked).toMatchObject({ id, workers: [ticket.id], scopeBinding: { sourceTriggerId: ticket.origin.triggerId },
+    bindings: { repository: 'acme/widgets', baseSha: '', headSha: '', refs: [] }, authorities: [], delegatedActions: [] })
+  expect(tracked.requirements).toEqual(['intake:acceptance-requirements-unconfirmed'])
+  expect(tracked.nextAction).toBeUndefined()
+  await runTool(sessionId, 'orchestrator_report', { state: 'progress', summary: 'PR opened for independent review', pr_number: 12 })
+  await runTool(sessionId, 'orchestrator_report', { state: 'ready', summary: 'Implementation ready; native acceptance is not established' })
+  await observePull(runtime.context(githubKind), { number: 12, state: 'closed', merged: true, merged_at: new Date().toISOString(),
+    html_url: 'https://github.com/acme/widgets/pull/12', user: { login: 'agent-bot' },
+    head: { sha: runtimeDeliveryHead, ref: `agent/${ticket.execution!.name}`, repo: { full_name: 'acme/widgets' } } })
+  await runtime.idle(); await runtime.deliveries.request()
+  expect(runtime.store.tickets.get(ticket.id)?.ended).toMatchObject({ outcome: 'merged' })
+  const blocked = runtime.deliveries.store.get(id)!
+  expect(blocked).toMatchObject({ state: 'blocked', stage: 'review', scopeBinding: expect.any(Object), blocker: expect.stringContaining('scope') })
+  expect(blocked.bindings.headSha).toBe(''); expect(blocked.authorities).toEqual([])
+  const inbox = (await api('GET', 'decisions/inbox')).body as any
+  expect(inbox.items).toEqual(expect.arrayContaining([expect.objectContaining({ id: `delivery-${id}`, actionMode: 'feature_delivery',
+    delivery: expect.objectContaining({ id, state: 'blocked', scopeBinding: expect.any(Object), revision: blocked.revision }) })]))
+  expect((await api('GET', 'deliveries')).body).toMatchObject({ items: [expect.objectContaining({ id, state: 'blocked' })] })
+  await restart(); await runtime.ready; await runtime.deliveries.request()
+  expect(runtime.store.tickets.get(ticket.id)?.ended).toMatchObject({ outcome: 'merged' })
+  expect(runtime.deliveries.store.get(id)).toMatchObject({ id, stage: 'review', state: 'blocked', authorities: [],
+    bindings: { headSha: '', baseSha: '' }, scopeBinding: expect.any(Object) })
+  expect(((await api('GET', 'decisions/inbox')).body as any).items).toEqual(expect.arrayContaining([
+    expect.objectContaining({ id: `delivery-${id}`, delivery: expect.objectContaining({ state: 'blocked' }) })]))
+})
+
+it('delivery runtime default adapters persist real configured review and Engine correction handoff once under the original mandate', async () => {
+  const { ticket, sessionId } = await acceptedTicket()
+  const stream = runtimeDeliveryTransports(ticket, 'failed')
+  await runTool(sessionId, 'orchestrator_report', { state: 'progress', summary: 'PR12 ready for review', pr_number: 12 })
+  await runTool(sessionId, 'orchestrator_report', { state: 'ready', summary: 'Implementation ready, independent review pending' })
+  expect(runtime.store.tickets.get(ticket.id)?.ended).toBeUndefined()
+  const id = `auto-${ticket.id}`, unbound = runtime.deliveries.store.get(id)!
+  const { deliveryFingerprint } = await import('../src/app/feature-delivery.ts')
+  const input = { ...runtimeDeliveryIntake(id, ticket.id, ['review', 'fix']), authorities: ['local-operator'] }
+  runtime.deliveries.store.bindScope(id, unbound.revision, input, { actor: 'local-operator', source: 'local_operator',
+    reference: 'runtime-integration:exact-intake', scope: deliveryFingerprint(input) })
+  await runtime.deliveries.request(); await runtime.idle()
+  const reviewed = runtime.deliveries.store.get(id)!
+  expect(reviewed.evidence).toEqual(expect.arrayContaining([expect.objectContaining({ kind: 'review', outcome: 'failed',
+    bindings: input.bindings, reference: expect.stringContaining('sqlite:delivery_capability_review/') })]))
+  const rows = runtime.store.db.prepare('SELECT value FROM delivery_capability_review').all()
+  expect(rows).toHaveLength(1)
+  expect(JSON.parse(String(rows[0]!.value))).toMatchObject({ provider: 'configured-review / review-model', verdict: { verdict: 'failed', findings: [expect.objectContaining({ path: 'src/feature.ts' })] } })
+  expect(stream.mock.calls.filter(([request]) => !JSON.parse(request.messages[0].content[0].text).action)).toHaveLength(1)
+  const current = runtime.store.tickets.get(ticket.id)!
+  const notes = current.inputs.filter(i => i.kind === 'note' && i.text.includes('Correction handoff'))
+  expect(notes).toHaveLength(1)
+  expect(notes[0]).toMatchObject({ text: expect.stringContaining('EXISTING mandate only') })
+  expect(current.mandate).toEqual(ticket.mandate)
+  expect(current.assignments.at(-1)?.id).toBe(ticket.assignments.at(-1)?.id)
+  expect(current.ended).toBeUndefined()
+  expect(runtime.store.db.prepare('SELECT value FROM delivery_capability_fix').all()).toHaveLength(1)
+  await runtime.deliveries.request(); await runtime.deliveries.request(); await runtime.idle()
+  expect(runtime.store.tickets.get(ticket.id)!.inputs.filter(i => i.kind === 'note' && i.text.includes('Correction handoff'))).toHaveLength(1)
+  expect(runtime.store.db.prepare('SELECT value FROM delivery_capability_review').all()).toHaveLength(1)
+  expect(runtime.deliveries.store.get(id)?.state).not.toBe('accepted')
+  await restart(); await runtime.ready; await runtime.deliveries.request(); await runtime.idle()
+  expect(runtime.store.db.prepare('SELECT value FROM delivery_capability_review').all()).toEqual(rows)
+  expect(runtime.store.db.prepare('SELECT value FROM delivery_capability_fix').all()).toHaveLength(1)
+  expect(runtime.store.tickets.get(ticket.id)!.inputs.filter(i => i.kind === 'note' && i.text.includes('Correction handoff'))).toHaveLength(1)
+  expect(runtime.store.tickets.get(ticket.id)!.mandate).toEqual(ticket.mandate)
+  expect(runtime.deliveries.store.get(id)!.evidence).toEqual(expect.arrayContaining([
+    expect.objectContaining({ kind: 'review', outcome: 'failed' })]))
+  expect(stream.mock.calls.filter(([request]) => !JSON.parse(request.messages[0].content[0].text).action)).toHaveLength(1)
+  expect(runtime.deliveries.store.get(id)?.state).not.toBe('accepted')
+})
+
+it('delivery runtime registered HTTP binds exact scope and confirms the current typed recommendation once with the strict local envelope', async () => {
+  const { ticket, sessionId } = await acceptedTicket()
+  const stream = runtimeDeliveryTransports(ticket, 'passed')
+  await runTool(sessionId, 'orchestrator_report', { state: 'progress', summary: 'PR12 opened', pr_number: 12 })
+  await runTool(sessionId, 'orchestrator_report', { state: 'ready', summary: 'Ready for separately authorized review' })
+  const id = `auto-${ticket.id}`, unbound = runtime.deliveries.store.get(id)!
+  const body = { revision: unbound.revision, intake: runtimeDeliveryIntake(id, ticket.id) }
+  expect((await deliveryHttp('POST', `deliveries/${id}/bind`, body, false)).status).toBe(403)
+  expect((await deliveryHttp('POST', `deliveries/${id}/bind`, body)).status).toBe(200)
+  await runtime.deliveries.request()
+  const current = runtime.deliveries.store.get(id)!
+  expect(current.nextAction?.kind).toBe('review')
+  expect(current.recommendation).toMatchObject({ disposition: 'take', actionId: current.nextAction!.id, fingerprint: current.nextAction!.fingerprint })
+  const listed = (await api('GET', 'decisions/inbox')).body as any
+  const item = listed.items.find((item: any) => item.id === `delivery-${id}`)
+  expect(item).toMatchObject({ actionMode: 'feature_delivery', delivery: { id, revision: current.revision,
+    bindings: current.bindings, nextAction: current.nextAction, recommendation: current.recommendation } })
+  const confirm = { revision: current.revision, actionId: current.nextAction!.id }
+  expect((await deliveryHttp('POST', `deliveries/${id}/confirm`, confirm, false)).status).toBe(403)
+  expect((await deliveryHttp('POST', `deliveries/${id}/confirm`, { ...confirm, command: 'invented-command' })).status).toBe(400)
+  expect((await deliveryHttp('POST', `deliveries/${id}/confirm`, { ...confirm, revision: current.revision + 1 })).status).toBe(409)
+  expect((await deliveryHttp('POST', `deliveries/${id}/confirm`, confirm)).status).toBe(200)
+  await runtime.deliveries.request(); await runtime.idle()
+  expect((await deliveryHttp('POST', `deliveries/${id}/confirm`, confirm)).status).toBe(409)
+  await runtime.deliveries.request()
+  expect(runtime.store.db.prepare('SELECT value FROM delivery_capability_review').all()).toHaveLength(1)
+  expect(stream.mock.calls.filter(([request]) => !JSON.parse(request.messages[0].content[0].text).action)).toHaveLength(1)
+  const result = runtime.deliveries.store.get(id)!
+  expect(result.evidence).toEqual(expect.arrayContaining([expect.objectContaining({ kind: 'review', outcome: 'passed' })]))
+  expect(result.state).not.toBe('accepted')
+  expect(result.authorities).toEqual(['local-operator'])
+})
+
+it('delivery runtime keeps two ordinary merged ended workers independently blocked in the registered inbox without preseeding aggregates', async () => {
+  expect(runtime.deliveries.store.list()).toHaveLength(0)
+  const workers = [await acceptedTicket(feishu('501', '@bot First independent delivery')),
+    await acceptedTicket(feishu('502', '@bot Second independent delivery'))]
+  vi.mocked(Commands.prototype.gh).mockImplementation(async args => {
+    const pr = Number(args[1]?.match(/\/pulls\/(\d+)/)?.[1])
+    const worker = workers[pr - 12]
+    if (worker) return { state: 'open', user: { login: 'agent-bot' }, html_url: `https://github.com/acme/widgets/pull/${pr}`,
+      head: { sha: runtimeDeliveryHead, ref: `agent/${worker.ticket.execution!.name}`, repo: { full_name: 'acme/widgets' } } }
+    return args[1] === 'user' ? { login: 'agent-bot' } : { default_branch: 'master', permissions: { push: true } }
+  })
+  for (const [index, worker] of workers.entries()) {
+    const pr = 12 + index
+    await runTool(worker.sessionId, 'orchestrator_report', { state: 'ready', pr_number: pr, summary: `Worker ${index + 1} ready; delivery acceptance remains unverified` })
+    await observePull(runtime.context(githubKind), { number: pr, state: 'closed', merged: true, merged_at: new Date().toISOString(),
+      html_url: `https://github.com/acme/widgets/pull/${pr}`, user: { login: 'agent-bot' },
+      head: { sha: runtimeDeliveryHead, ref: `agent/${worker.ticket.execution!.name}`, repo: { full_name: 'acme/widgets' } } })
+  }
+  await runtime.idle(); await runtime.deliveries.request()
+  const response = await api('GET', 'decisions/inbox')
+  expect(response.status).toBe(200)
+  const items = (response.body as any).items.filter((item: any) => item.actionMode === 'feature_delivery')
+  expect(items).toHaveLength(2)
+  for (const worker of workers) {
+    expect(runtime.store.tickets.get(worker.ticket.id)?.ended).toMatchObject({ outcome: 'merged' })
+    const item = items.find((item: any) => item.id === `delivery-auto-${worker.ticket.id}`)
+    expect(item.delivery).toMatchObject({ state: 'blocked', stage: 'review', workers: [worker.ticket.id], authorities: [],
+      bindings: { baseSha: '', headSha: '' }, scopeBinding: expect.any(Object) })
+    expect(item.delivery.blocker).toContain('acceptance requirements')
+    expect(item.delivery.nextAction).toBeUndefined()
+  }
+  expect(runtime.deliveries.store.list()).toHaveLength(2)
+})
