@@ -87,3 +87,19 @@ it('prepares from Decisions with exact canonical identities and prompts, without
   expect(view.container.textContent).not.toContain('Choice recorded:')
   expect(view.container.textContent).toContain('Only confirmed native Send records')
 })
+
+
+it('rereads a queued selection when the mounted composer switches source sessions', async () => {
+  const bridge = { stage: vi.fn(async (_request: any) => ({})), watch: vi.fn(() => () => {}) }
+  const props: any = { session: { sessionId: 'other', running: false }, input, inputActions: {}, bridge }
+  const view = mount(<DecisionHandoffDock {...props} />)
+  await view.render()
+  await act(async () => {
+    sessionStorage.setItem(DECISION_HANDOFF_KEY, JSON.stringify(handoff))
+    window.dispatchEvent(new Event(DECISION_HANDOFF_EVENT))
+  })
+  expect(bridge.stage).not.toHaveBeenCalled()
+  await view.render(<DecisionHandoffDock {...props} session={session} />)
+  expect(bridge.stage).toHaveBeenCalledTimes(1)
+  expect(bridge.stage.mock.calls[0]![0]).toMatchObject(handoff)
+})

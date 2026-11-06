@@ -20,12 +20,13 @@ export function DecisionHandoffDock({ session, input, inputActions, bridge }: Pr
   const [done, setDone] = useState(false)
   useEffect(() => {
     const sync = () => { setHandoff(readHandoff()); setDone(false); setNotice('') }
+    sync()
     window.addEventListener(DECISION_HANDOFF_EVENT, sync)
     return () => window.removeEventListener(DECISION_HANDOFF_EVENT, sync)
   }, [session.sessionId])
   useEffect(() => bridge?.watch(session.sessionId), [bridge, session.sessionId])
   useEffect(() => {
-    if (!handoff || done || input.phase !== 'plain' || session.running) return
+    if (!handoff || handoff.sessionId !== session.sessionId || done || input.phase !== 'plain' || session.running) return
     const controller = new AbortController()
     void Promise.resolve().then(async () => {
       if (controller.signal.aborted) return
