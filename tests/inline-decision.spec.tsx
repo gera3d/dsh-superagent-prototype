@@ -440,7 +440,7 @@ it('keeps Agent-Mini as the decision dock owner while the slim companion dock re
   const effects = vi.fn()
   const register = vi.fn(() => () => {})
   const inject = vi.fn((_name: string, factory: () => unknown) => factory())
-  applyNextSteps({ effect: effects, slots: { inject, register } } as any)
+  applyNextSteps({ effect: effects, get: (name: string) => name === 'slots' ? { inject, register } : undefined } as any)
   expect(effects).not.toHaveBeenCalled()
   expect(inject).toHaveBeenCalledOnce()
   expect(inject.mock.calls[0]?.[0]).toBe('conversation.input.dock')
