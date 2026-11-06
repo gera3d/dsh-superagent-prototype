@@ -8,18 +8,20 @@ import { PromptConflict } from '../src/app/prompts.ts'
 import { SettingsConflict } from '../src/app/settings.ts'
 import type { HttpHost } from '../src/app/http.ts'
 import { SettingsSchema } from '../src/policy.ts'
+import type { Ticket } from '../src/core/index.ts'
 import { SetupError } from '../src/setup.ts'
 
 type Handler = (req: unknown, res: unknown) => Promise<void>
 type Headers = Record<string, string | undefined>
 /** Mount management HTTP routes on a fake web server and return a request helper that includes default panel headers. */
-function serve(runtime: Partial<Record<keyof HttpHost, unknown>>, host = '127.0.0.1') {
+function serve(runtime: Partial<Record<keyof HttpHost, unknown>>, host = '127.0.0.1', services: Record<string, unknown> = {}) {
   let handler: Handler = async () => {}
   const db = new DatabaseSync(':memory:'); databases.push(db)
   const ctx = { on: () => () => {}, sessionPersistence: { flush: async () => {}, list: async () => [] },
     logger: { error: () => {}, warn: () => {} },
+    ...services,
     webServer: { host, port: 3082, register: (route: { handler: Handler }) => { handler = route.handler; return () => {} } } }
-  registerHttp(ctx as never, { ready: Promise.resolve(), ...runtime, store: { db, ...(runtime.store as object) } } as unknown as HttpHost)
+  registerHttp(ctx as never, { ready: Promise.resolve(), configured: () => false, ...runtime, store: { db, ...(runtime.store as object) } } as unknown as HttpHost)
   return async (method: string, path: string, body?: unknown, headers: Headers = {}) => {
     let status = 0, text = '', location: string | undefined
     const chunks = body === undefined ? [] : [Buffer.from(typeof body === 'string' ? body : JSON.stringify(body))]
@@ -35,6 +37,32 @@ function serve(runtime: Partial<Record<keyof HttpHost, unknown>>, host = '127.0.
     return { status, body: parsed as Record<string, unknown>, ...(location ? { location } : {}) }
   }
 }
+
+it('serves compact helper drafts behind the management header and loopback Host gate', async () => {
+  const options = [{ id: 'verify', label: 'Run tests', prompt: 'Run tests and inspect the diff.', recommended: true },
+    { id: 'review', label: 'Review edge cases', prompt: 'Inspect error handling.', recommended: false }]
+  const resolveCallConfig = vi.fn(async (route: unknown) => route)
+  const call = serve({ store: { settings: () => SettingsSchema.parse({ models: { hierarchy: [{ provider: 'test', model: 'fast' }] } }) } },
+    '127.0.0.1', { llm: { resolveCallConfig, async *stream() {
+      yield { type: 'text-delta', text: JSON.stringify({ options }) }; yield { type: 'finish', reason: { kind: 'stop' } }
+    } } })
+  const digest = { summary: 'A fix is in progress.', latestTurn: 'Implemented the change without tests.' }
+  for (const headers of [{ 'x-orchestrator-request': undefined }, { 'x-orchestrator-request': '0' },
+    { host: 'evil.example:3082' }, { host: '127.0.0.1:9999' }, { origin: 'http://evil.example' }]) {
+    expect(await call('POST', 'helper/suggest', digest, headers)).toMatchObject({ status: 403 })
+  }
+  expect(resolveCallConfig).not.toHaveBeenCalled()
+  expect(await call('GET', 'helper/suggest')).toMatchObject({ status: 404 })
+  for (const invalid of [{ ...digest, summary: 'x'.repeat(1500) }, { ...digest, latestTurn: 'x'.repeat(12001) },
+    { ...digest, latestTurn: ' ' }, { ...digest, events: [{ type: 'message' }] }, { summary: '', latestTurn: [] }]) {
+    expect(await call('POST', 'helper/suggest', invalid)).toMatchObject({ status: 400 })
+  }
+  expect(await call('POST', 'helper/suggest', '{bad json')).toMatchObject({ status: 400 })
+  expect(await call('POST', 'helper/suggest', 'x'.repeat(65537))).toMatchObject({ status: 400, body: { error: 'Request exceeds 65536 bytes' } })
+  expect(resolveCallConfig).not.toHaveBeenCalled()
+  expect(await call('POST', 'helper/suggest', { ...digest, summary: 'x'.repeat(1499) })).toEqual({ status: 200, body: { options } })
+  expect(await call('POST', 'helper/suggest', digest, { host: 'localhost:3082', origin: 'http://localhost:3082' })).toMatchObject({ status: 200 })
+})
 
 it('validates chat decisions and never retries a worker for a chat choice', async () => {
   let retries = 0
@@ -205,25 +233,31 @@ it('succeeds on a live card pick by dispatching choice to the session and resolv
   expect(await call('POST', 'decisions/inbox', item)).toMatchObject({ status: 200 })
 
   const res = await call('POST', 'decisions/chat-live-pick-1/resolve', { choiceId: 'opt-a' })
-  expect(res.status).toBe(200)
-  expect(res.body).toMatchObject({
-    resolved: true,
-    choiceId: 'opt-a',
-    execution: 'not_executed',
-    item: {
-      id: 'chat-live-pick-1',
-      status: 'resolved',
-      resolvedChoice: 'opt-a',
-      resolutionBasis: 'submitted',
-    },
-  })
-  expect(prompt).toHaveBeenCalledOnce()
-  expect(prompt).toHaveBeenCalledWith(
-    'worker-active-t1',
-    expect.stringMatching(/^native-req-/),
-    'Do option A.',
-    'steer'
-  )
+  expect(res.status).toBe(409)
+  expect(prompt).not.toHaveBeenCalled()
+  const inbox = await call('GET', 'decisions/inbox')
+  expect((inbox.body.items as any[]).find((entry: any) => entry.id === item.id)).toMatchObject({ status: 'pending' })
+})
+
+it('projects a stuck lifecycle card and retries it once through the explicit HTTP endpoint', async () => {
+  const at = '2026-11-05T20:00:00.000Z'
+  const ticket: Ticket = { id: 'stalled', title: 'Original issue task', decisionId: 'd',
+    mandate: { strength: 'explicit', policyVersion: 'v', basis: { via: 'listed' }, actor: { source: 'github', id: 'owner' }, scope: 'fix' },
+    channels: [{ source: 'github', thread: '143', address: { number: '143' } }], origin: { triggerId: 'issue', triggerIds: ['issue'] },
+    createdAt: at, updatedAt: at, undelivered: [], inputs: [{ id: 'fallback', kind: 'note', text: 'Fell back to available ladder model (p/m): offline.', at }],
+    assignments: [{ id: 'a', state: 'running', createdAt: at, idleAt: at, report: { state: 'waiting', summary: 'Idle', at } }],
+    stallGuard: { assignmentId: 'a', inputId: 'resume', wokeAt: at, stuckAt: at } }
+  const retryTicket = vi.fn(() => { ticket.ended = { by: 'executor', at, outcome: 'completed' } })
+  const call = serve({ configured: () => true, deployment: { repository: 'example/repo' },
+    executor: { running: () => false }, store: { tickets: { get: () => ticket, open: () => ticket.ended ? [] : [ticket] } }, engine: { retryTicket } })
+  const list = await call('GET', 'decisions/inbox')
+  expect(list.status).toBe(200)
+  const item = (list.body.items as any[])[0]!
+  expect(item).toMatchObject({ lifecycle: { kind: 'stuck', issueUrl: 'https://github.com/example/repo/issues/143' } })
+  expect(await call('POST', `decisions/${item.id}/resolve`, { choiceId: 'retry' })).toMatchObject({ status: 409 })
+  expect(await call('POST', `decisions/${item.id}/lifecycle`, { action: 'retry' })).toMatchObject({ status: 200, body: { execution: 'retried' } })
+  expect(await call('POST', `decisions/${item.id}/lifecycle`, { action: 'retry' })).toMatchObject({ status: 409 })
+  expect(retryTicket).toHaveBeenCalledExactlyOnceWith('stalled')
 })
 
 it('retires an ended-session card with plain explanation instead of offering a failing button', async () => {

@@ -6,7 +6,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { isAbsolute } from 'node:path'
 import { existsSync } from 'node:fs'
 import { z } from 'zod'
-import { DecisionInboxItem, DecisionStageRequest, DecisionSubmissionRequest, DecisionDiscardRequest, DecisionRestartRequest, sameOrigin } from './http.ts'
+import { DecisionInboxItem, DecisionStageRequest, DecisionSubmissionRequest, DecisionDiscardRequest, DecisionRestartRequest, canonicalOperation, sameOrigin } from './http.ts'
 import { DecisionInbox, InboxError, decisionQuestion, registerDecisionCapture, ticketDecisions, submitDecision, stageDecision, restartDecision } from './decision-inbox.ts'
 import { parseInlineAlternatives } from '../client/inline-alternatives.ts'
 import type { Ticket } from '../core/index.ts'
@@ -65,11 +65,13 @@ export function apply(ctx: Context, config: { database: string }): void {
           send(200, { items }); return
         }
         const resolve = /^\/orchestrator\/api\/decisions\/([^/]+)\/(resolve|stage|submission|discard-staging|restart)$/.exec(path)
-        if (req.method !== 'POST' || (!resolve && path !== '/orchestrator/api/decisions/inbox')) { send(404, { error: 'Unknown inbox operation' }); return }
+        const canonical = /^\/orchestrator\/api\/decisions\/canonical\/(claim|publish|score|fail)$/.exec(path)
+        if (req.method !== 'POST' || (!canonical && !resolve && path !== '/orchestrator/api/decisions/inbox')) { send(404, { error: 'Unknown inbox operation' }); return }
         let size = 0; const chunks: Buffer[] = []
         for await (const chunk of req) { const bytes = Buffer.from(chunk); size += bytes.length; if (size > 128 * 1024) throw new InboxError(400, 'Request exceeds 131072 bytes'); chunks.push(bytes) }
         let body: unknown
         try { body = JSON.parse(Buffer.concat(chunks).toString('utf8')) } catch { throw new InboxError(400, 'The request body is not JSON') }
+        if (canonical) { send(200, await canonicalOperation(ctx, inbox, canonical[1]!, body)); return }
         if (resolve) {
           let id: string
           try { id = decodeURIComponent(resolve[1]!) } catch { throw new InboxError(400, 'Malformed decision id') }
@@ -101,6 +103,10 @@ export function apply(ctx: Context, config: { database: string }): void {
     })
     const inboxPath = '/orchestrator/api/decisions/inbox'
     registrations.set(inboxPath, ctx.webServer.register({ kind: 'exact', path: inboxPath, handler }))
+    for (const operation of ['claim', 'publish', 'score', 'fail']) {
+      const path = `/orchestrator/api/decisions/canonical/${operation}`
+      registrations.set(path, ctx.webServer.register({ kind: 'exact', path, handler }))
+    }
     for (const item of inbox.list()) registerResolution(item.id)
     return async () => { closed = true; unprovide?.(); for (const dispose of registrations.values()) dispose(); registrations.clear(); capture.dispose(); await capture.ready; db.close() }
   })

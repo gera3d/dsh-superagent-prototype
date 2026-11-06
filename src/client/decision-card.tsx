@@ -10,13 +10,15 @@ export interface DecisionCardProps {
   choices: DecisionChoice[]
   onExecute?: (choiceId: string) => Promise<unknown> | unknown
   compact?: boolean
+  /** Selection prepares a native draft; it is not a recorded decision. */
+  stageOnly?: boolean
   context?: string
   unavailableReason?: string
   onEvaluate?: () => Promise<unknown>
   character?: DecisionCharacterAttribution
   onOverrideCharacter?: (character: DecisionCharacterAttribution) => void
 }
-export function DecisionCard({ title, quote, context, unavailableReason, recommendation, choices, onExecute, onEvaluate, compact = false, character, onOverrideCharacter }: DecisionCardProps) {
+export function DecisionCard({ title, quote, context, unavailableReason, recommendation, choices, onExecute, onEvaluate, compact = false, stageOnly = false, character, onOverrideCharacter }: DecisionCardProps) {
   const [evaluating, setEvaluating] = useState(false)
   const [overrideOpen, setOverrideOpen] = useState(false)
   const [activeChar, setActiveChar] = useState<DecisionCharacterAttribution | undefined>(() => character ?? (onOverrideCharacter ? {
@@ -63,7 +65,7 @@ export function DecisionCard({ title, quote, context, unavailableReason, recomme
       }
       .dt-decision-card[data-state="completed"] .dt-decision-option:not([data-chosen="true"]) { opacity: 0.55; }
     `}</style>
-    <div><small>{completed ? 'Decision completed · choice recorded' : 'Decision question'}</small><h3 style={{ margin: '4px 0 12px' }}>{title || 'Choose an alternative'}</h3></div>
+    <div><small>{completed ? stageOnly ? 'Review the choice in the source composer' : 'Decision completed · choice recorded' : 'Decision question'}</small><h3 style={{ margin: '4px 0 12px' }}>{title || 'Choose an alternative'}</h3></div>
     {quote && <p>{quote}</p>}
     {context?.trim() ? <section aria-label="Source context" style={{ marginBottom: 16 }}>
       <strong>What led to this question</strong>
@@ -132,15 +134,15 @@ export function DecisionCard({ title, quote, context, unavailableReason, recomme
       {onEvaluate && <Button variant="outline" size="sm" disabled={locked} onClick={() => { void evaluate() }}>{evaluating ? 'Evaluating…' : suggested ? 'Refresh' : 'Get recommendation'}</Button>}
     </aside>
     {error && <p role="alert">{error}</p>}
-    {completed && <div>
+    {completed && (stageOnly ? <p role="status">Review this choice in the source composer. Only confirmed native Send records the decision.</p> : <div>
       <p role="status">Choice recorded: {choices.find(choice => choice.id === selected)?.label || selected}. This does not confirm execution. Options and refresh are disabled.</p>
       <Button variant="outline" size="sm" disabled={busy || evaluating} onClick={startNewDecision}>Start new decision</Button>
       <p><small>Resets this card only; does not undo the recorded choice or any action.</small></p>
-    </div>}
+    </div>)}
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
       {choices.map(choice => {
         const dist = recommendation.distribution?.find(d => d.id === choice.id)
-        const probability = dist ? dist.probability : (choice.id === recommendation.recommendedValue && recommendation.confidence ? recommendation.confidence : (isScored ? Math.max(0, (1 - (recommendation.confidence || 0)) / Math.max(1, choices.length - 1)) : undefined))
+        const probability = dist?.probability
         const percent = probability !== undefined && Number.isFinite(probability) && probability >= 0 ? Math.round(probability * 100) : undefined
 
         return <div key={choice.id} className="dt-decision-option" data-chosen={selected === choice.id ? 'true' : undefined} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, border: selected === choice.id ? '2px solid #3fb950' : '1px solid #526177', background: selected === choice.id ? 'rgba(63, 185, 80, 0.12)' : undefined, borderRadius: 6, padding: 10 }}>
@@ -178,7 +180,7 @@ export function DecisionCard({ title, quote, context, unavailableReason, recomme
             {choice.description && <div>{choice.description}</div>}
             {choice.prompt && <details style={{ marginTop: 6 }}><summary>Preview response</summary><p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{choice.prompt}</p></details>}
           </div>
-          {onExecute && <Button variant="outline" size="sm" disabled={locked} onClick={() => { void choose(choice.id) }}>{selected === choice.id ? 'Recorded' : 'Choose'}</Button>}
+          {onExecute && <Button variant="outline" size="sm" disabled={locked} onClick={() => { void choose(choice.id) }}>{selected === choice.id ? stageOnly ? 'Review in source' : 'Recorded' : stageOnly ? 'Prepare reply' : 'Choose'}</Button>}
         </div>
       })}
     </div>

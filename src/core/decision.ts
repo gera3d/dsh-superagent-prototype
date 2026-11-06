@@ -67,7 +67,9 @@ export interface PendingDecisionItem {
   /** Source event coordinates; choices only stage a draft, never execute work. */
   sourceTurn?: number
   sourceSeq?: number
-  actionMode?: 'stage_response'
+  actionMode?: 'stage_response' | 'ticket_lifecycle'
+  /** Server-projected lifecycle state; never accepted as action authorization. */
+  lifecycle?: { kind: 'stuck' | 'done'; assignmentId: string; prNumber?: number; docsOnly?: boolean; issueNumber?: number; issueUrl?: string }
   staleReason?: string
   draftResponse?: string
   staging?: DecisionStaging
@@ -83,6 +85,8 @@ export interface PendingDecisionItem {
   /** Obsolescence never erases a previously resolved choice or submission history. */
   invalidation?: { at: number; reason: string; sourceSeq?: number }
   advisor?: { status: 'pending' | 'generating' | 'ready' | 'error'; model?: string; error?: string; key?: string }
+  /** Canonical producer state; independent from human decision resolution. */
+  canonical?: { draftRevision: string; phase: 'pending' | 'ready' | 'scored'; owner: string; leaseToken: string; leaseExpiresAt: number; error?: string }
   urgency: 'high' | 'medium' | 'low'
   createdAt: number
   context: string

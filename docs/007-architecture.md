@@ -311,6 +311,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/core/assignments.ts` | `Assignments`: the Executor's facts and its workers' Reports |
 | `src/core/replies.ts` | `Replies`: the Engine's Channel writes |
 | `src/core/stage.ts` | `ticketStage` and `canRetry`: the Ticket stages of [003 Execution](003-execution.md) |
+| `src/core/stall-guard.ts` | Narrow fallback/status-only idle eligibility and stuck checkpoint projection |
 | `src/core/errors.ts` | `UserError` and `USER_ERRORS` |
 | `src/core/reasons.ts` | `Reason`, `REASONS` and `reasonText`: why the core recorded a Decision or set a Trigger aside, by code |
 | `src/core/ids.ts` | `key`: ids derived from their inputs, equal for equal inputs |
@@ -354,9 +355,11 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/app/tools/executor.ts` | An Executor Session's tools |
 | `src/app/tools/composio.ts` | Nested Composio result unwrapping, batch result preservation, failure classification, and non-retryable connection error routing |
 | `src/app/http.ts` | The `/orchestrator/api` routes: the same-origin check, request limits and one status per kind of failure |
+| `src/app/routes/helper.ts` | Compact Senior Developer suggestion schemas, tool-free drafting and bounded availability fallback through the shared model ladder |
 | `src/app/dot.ts` | Same-origin Dot planning, Jev recommendations and health endpoints; stable choice IDs, strict schema validation, bounded model output and exactly one corrective retry. Returns proposals only; never dispatches threads or uses heuristic recommendations. |
 | `src/app/dot-json.ts` | Bounded balanced JSON-object extraction respecting strings/escapes; skips malformed/schema-invalid candidates without repairing or fabricating model output |
 | `src/app/decision-evaluator.ts` | Auxiliary tool-free recommendations using the source Session route or configured default, without sending work to that Session |
+| `src/app/lifecycle-decisions.ts` | Explicit lifecycle actions, documentation-only PR verification and human review links; never applies or merges |
 | `src/app/decision-inbox.ts` | Durable SQLite decision queue, completed-turn recovery, explicit question/offer capture, source deduplication and stale detection; staging stays pending and only a bound durable native submission confirms resolution, without executing work |
 | `src/app/decision-inbox-provider.ts` | Independently loaded inbox routes and capture lifecycle; shares the existing database without restarting the orchestrator |
 | `src/app/api.ts` | `Api`, every route with its parameters, query, body and response, and the filters of the lists; it imports only types, so the panel bundles it |
@@ -400,11 +403,13 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/route.ts` | The tabs, the settings groups, the typed routes that `parseRoute` reads, and the route memory with the settings group opened last |
 | `src/client/overview.tsx` | The overview |
 | `src/client/source.tsx`, `trigger.tsx`, `eval.tsx`, `execution.tsx` | One file per stage: its status, and its settings where it has some |
+| `src/client/lifecycle-card.tsx` | Quiet stuck/done ticket controls, explicit Retry and human review links |
 | `src/client/decisions.tsx` | The Decisions tab: actionable Human-in-the-Loop decision inbox and real-time decision playground |
 | `src/client/branding-mark.tsx`, `branding-settings.tsx` | Custom branding mark presentation and settings configuration |
-| `src/client/decision-card.tsx` | Recommendation presentation with explicit callback failure handling; never claims simulated actions executed. |
+| `src/client/decision-card.tsx` | Recommendation presentation with explicit callback failure handling and stage-only preparation status; never invents choice scores. |
+| `src/client/decision-handoff.tsx` | Reactive Decisions-to-native-composer handoff through the shared staging bridge, independent of Workstream installation. |
 | `src/client/inline-decision.css` | Responsive, composer-scoped presentation for the inline decision dock |
-| `src/client/inline-decision.tsx` | Agent-Mini `conversation.input.dock` card, restored as the preferred renderer through the shared bridge's explicit `dockOwner: 'agent-mini'`. Next steps yields only its browser card; its host advisor and the shared inbox remain installed. Captured empty decisions request canonical advisor enrichment; a deliberate unranked result stays in generator order; selections use the repaired stage/submission/discard routes, never auto-send. |
+| `src/client/inline-decision.tsx` | Fallback conversation dock when Next steps is not installed; yields to the existing Next steps DOM ownership handshake. Captured empty decisions request advisor enrichment; selections use stage/submission/discard routes, never auto-send. |
 | `src/client/decision-submission.ts` | Shared browser staging/submission journal: preserves drafts and attachments, freezes native reference serialization, binds explicit native Send attempts to request IDs and waits for host-confirmed durable admission; never auto-sends or infers a response from matching text alone |
 | `src/client/inline-alternatives.ts` | Parses explicit lettered alternatives; ignores fenced content and ordinary numbered sequential task lists. |
 | `src/client/thread.tsx`, `ticket.tsx` | The record pages: a Thread with its timeline, and a Ticket with its authorization, Inputs and Assignments |
@@ -463,9 +468,13 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/native-composer-send-observer.spec.ts` | Native composer send observer event verification |
 | `tests/runtime-concurrency.spec.ts` | Work that overlaps: Triggers during a pass, Tickets that change during deliveries and launches |
 | `tests/http.spec.ts` | The same-origin and loopback checks, failure statuses, body limits, query parsing, validated chat decision creation and idempotent resolution without worker dispatch |
+| `tests/helper.spec.ts` | Compact digest/output bounds, Senior Developer grounding, helper model defaults and bounded thrown/in-band availability fallback |
 | `tests/decision-evaluation.spec.ts` | No fabricated recommendations, credential isolation, result validation and honest provider labeling |
 | `tests/decision-card.spec.tsx` | Visible question and source context, recommendation rationale, full-context and response disclosures, unavailable states and explicit evaluation without selection |
 | `tests/decision-ranker.spec.ts` | Decisions API request/response mapping, invalid ranking rejection, configured-model and unranked fallback order, no call without a configured key, and the opt-in settings defaults |
+| `tests/stall-guard.spec.ts` | Fallback/status detection, durable one-shot wake, configurable escalation, progress and hold exclusions, original-task retry |
+| `tests/lifecycle-decisions.spec.ts` | Stuck/done projections, stale action rejection, paginated documentation-only verification and human-only merge links |
+| `tests/lifecycle-card.spec.tsx` | Quiet lifecycle rendering and explicit action outcomes |
 | `tests/decision-inbox.spec.ts` | Durable capture, cold recovery, false-positive exclusions, source deduplication, stale resolution guards and draft-only outcomes |
 | `tests/decision-inbox-provider.spec.ts` | Same-origin HTTP validation, plugin close/reopen persistence, idempotent staging and safe retirement of persisted false positives |
 | `tests/decision-source.spec.ts` | Capture and evaluator share one canonical recommendation; enrichment never duplicates or resurrects a resolved decision |
@@ -474,7 +483,9 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/decision-submission.spec.ts` | Durable resolve-on-send proof, exact native request/session/source identity, candidate races, retries, discard, invalidation, close/reopen recovery and legacy-writer guards |
 | `tests/decision-restart.spec.ts` | Restarted decision ancestry, retry deduplication, server-owned checkpoints, fresh native submission proof and preservation of recorded parent history |
 | `tests/decision-submission-client.spec.ts` | Shared native-Send linkage, preserved draft text/attachments/reference chips, reload journal recovery, failed-send retries, cancellation and exclusion of unrelated identical-text messages |
-| `tests/canonical-next-steps.spec.ts` | Next steps and inbox share source identity, full choice prompts, recommendations and resolution; background generation remains bounded |
+| `tests/canonical-next-steps.spec.ts` | Actual producer and SQLite inbox share source identity, full prompts, recommendation and scores with bounded on-demand generation |
+| `tests/canonical-publication.spec.ts` | Durable publication lease, source fences, legacy history, exact helper choices and scoring/staging/native proof invariants |
+| `tests/decision-handoff.spec.tsx` | Decisions preparation, reactive composer handoff and native staging without automatic Send |
 | `tests/dot.spec.ts` | Mocked HTTP/LLM tests for stable IDs, schema validation, exactly one corrective retry, truncation and transport failures, input validation, same-origin checks and lifecycle disposal |
 | `tests/dot-json.spec.ts` | JSON extraction regressions for prose/fences, escaped/quoted braces, multiple candidates, invalid/truncated content, validation, and size/depth limits |
 | `tests/dot-chat.spec.tsx` | Goal-chat UI tests for API wiring, recommendations, explicit selection/review/approval, duplicate clicks, consumed approvals, partial failures and fresh-plan safety |

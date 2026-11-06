@@ -64,11 +64,12 @@ afterEach(() => {
 
 it('registers a localized main panel, sidebar entry and Plugin Manager row page, and no settings section', () => {
   const { entries, dictionaries, main, nav } = fixture([])
-  expect(entries.map(entry => entry.options.name)).toEqual(['conversation.input.dock', 'sidebar.brand.mark', 'sidebar.brand.name', 'main', 'sidebar.panellist', 'plugins.row.config'])
-  expect(entries[0]!.options).toMatchObject({ id: 'dsh-superagent.inline-decision', order: 10 })
-  expect(entries[1]!.options).toMatchObject({ name: 'sidebar.brand.mark', priority: -1 })
-  expect(entries[2]!.options).toMatchObject({ name: 'sidebar.brand.name', priority: -1 })
-  expect(entries[5]!.options).toMatchObject({ key: 'dsh-superagent#dsh-superagent', locale: 'dshSuperagent' })
+  expect(entries.map(entry => entry.options.name)).toEqual(['conversation.input.dock', 'conversation.input.dock', 'sidebar.brand.mark', 'sidebar.brand.name', 'main', 'sidebar.panellist', 'plugins.row.config'])
+  expect(entries[0]!.options).toMatchObject({ id: 'dsh-superagent.decision-handoff', order: 5 })
+  expect(entries[1]!.options).toMatchObject({ id: 'dsh-superagent.inline-decision', order: 10 })
+  expect(entries[2]!.options).toMatchObject({ name: 'sidebar.brand.mark', priority: -1 })
+  expect(entries[3]!.options).toMatchObject({ name: 'sidebar.brand.name', priority: -1 })
+  expect(entries[6]!.options).toMatchObject({ key: 'dsh-superagent#dsh-superagent', locale: 'dshSuperagent' })
   expect(Object.keys(dictionaries)).toEqual(['dshSuperagent'])
   expect(main.options).toMatchObject({ key: 'dsh-superagent', locale: 'dshSuperagent' })
   expect(nav.options).toMatchObject({ id: 'dsh-superagent', order: 10, locale: 'dshSuperagent' })

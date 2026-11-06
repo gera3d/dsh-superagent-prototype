@@ -1,8 +1,10 @@
 /** Type-only management API contract between the web panel and host routes, imported by the panel without bundling host code. */
 import type { BrandingConfig } from '../policy.ts'
+import type { LifecycleAction, LifecycleResult } from './lifecycle-decisions.ts'
 import type { DecisionEvaluationRequest, DecisionEvaluationResult, PendingDecisionItem } from '../core/decision.ts'
 import type { CharacterEvaluationResult } from '../core/character.ts'
-import type { DecisionResolution, DecisionStagingResult, DecisionDiscardResult, StageDecisionRequest, BindDecisionSubmission, RestartDecisionRequest, DecisionRestartResult } from './decision-inbox.ts'
+import type { HelperDigest, HelperSuggestions } from './routes/helper.ts'
+import type { CanonicalClaim, CanonicalPublish, CanonicalScore, CanonicalFailure, CanonicalResult, DecisionResolution, DecisionStagingResult, DecisionDiscardResult, StageDecisionRequest, BindDecisionSubmission, RestartDecisionRequest, DecisionRestartResult } from './decision-inbox.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
 import type { PromptConfig, Prompts } from './prompts.ts'
 import type { PromptsView, StateView, TicketPageView } from './http.ts'
@@ -33,10 +35,16 @@ export interface Api {
   'POST threads/:key/unsubscribe': { response: { removed: boolean; thread: string; context_delivery: Delivery } }
   'POST triggers/:id/requeue': { response: { queued: boolean } }
   'GET decisions': { query?: Paged & { kind?: string; window?: '24h' }; response: DecisionListView }
+  'POST decisions/canonical/claim': { body: CanonicalClaim; response: CanonicalResult }
+  'POST decisions/canonical/publish': { body: CanonicalPublish; response: CanonicalResult }
+  'POST decisions/canonical/score': { body: CanonicalScore; response: CanonicalResult }
+  'POST decisions/canonical/fail': { body: CanonicalFailure; response: CanonicalResult }
   'GET decisions/inbox': { response: { items: PendingDecisionItem[] } }
   'POST decisions/inbox': { body: PendingDecisionItem; response: { ok: boolean; id: string } }
+  'POST helper/suggest': { body: HelperDigest; response: HelperSuggestions }
   'POST decisions/evaluate': { body: DecisionEvaluationRequest; response: DecisionEvaluationResult }
   'POST decisions/character-evaluate': { body: DecisionEvaluationRequest & { characterId?: string; diff?: string; testOutput?: string; ticketRequest?: string }; response: CharacterEvaluationResult }
+  'POST decisions/:id/lifecycle': { body: { action: LifecycleAction }; response: LifecycleResult }
   'POST decisions/:id/resolve': { body: { choiceId: string }; response: DecisionResolution }
   'POST decisions/:id/restart': { body: RestartDecisionRequest; response: DecisionRestartResult }
   'POST decisions/:id/stage': { body: StageDecisionRequest; response: DecisionStagingResult }

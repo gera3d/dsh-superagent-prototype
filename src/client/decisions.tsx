@@ -3,13 +3,15 @@ import { useState } from 'react'
 import type { DecisionChoice, DecisionEvaluationResult, PendingDecisionItem } from '../core/decision.ts'
 import { Button, Icon, Pill, Tag } from './controls.tsx'
 import { DecisionCard } from './decision-card.tsx'
+import { LifecycleCard } from './lifecycle-card.tsx'
 import { parseInlineAlternatives } from './inline-alternatives.ts'
 import { useAction, usePanel } from './provider.tsx'
 import { usePoll } from './api.ts'
 import { Hint, LoadState, Section, StatusHead } from './widgets.tsx'
+import { DECISION_HANDOFF_KEY, DECISION_HANDOFF_EVENT } from './decision-handoff.tsx'
 
 export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 'resolved' | 'all' }) {
-  const { t, call, navigate } = usePanel()
+  const { t, call, navigate, openSession } = usePanel()
   const [tab, setTab] = useState<'inbox' | 'playground'>('inbox')
   const [filterMode, setFilterMode] = useState<'pending' | 'resolved' | 'all'>(filter)
   // Poll inbox items
@@ -22,17 +24,39 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
   const [pgResult, setPgResult] = useState<DecisionEvaluationResult | null>(null)
   const [evaluating, setEvaluating] = useState(false)
 
-  const resolveAction = useAction(async (id: string, choiceId: string) => {
-    await call('POST decisions/:id/resolve', { id, body: { choiceId } })
-    await reload()
+  const resolveAction = useAction(async (item: PendingDecisionItem, choiceId: string) => {
+    const choice = item.choices.find(choice => choice.id === choiceId)
+    if (!choice || !item.sessionId || item.invalidation || item.staging || item.status !== 'pending') throw new Error('This decision cannot be staged. Refresh the inbox.')
+    const prompt = choice.prompt ?? (choiceId === 'respond' ? `Regarding your question:\n${item.question}\n\nMy response: `
+      : choiceId === 'continue' ? `Please continue with the next step you offered:\n${item.question}`
+      : choiceId === 'discuss' ? `Before proceeding, please clarify:\n${item.question}` : `For the decision “${item.question}”, choose: ${choice.label}`)
+    const handoff = JSON.stringify({ decisionId: item.id, sessionId: item.sessionId, choiceId, prompt })
+    sessionStorage.setItem(DECISION_HANDOFF_KEY, handoff)
+    window.dispatchEvent(new Event(DECISION_HANDOFF_EVENT))
+    try { await openSession(item.sessionId) }
+    catch (error) {
+      if (sessionStorage.getItem(DECISION_HANDOFF_KEY) === handoff) sessionStorage.removeItem(DECISION_HANDOFF_KEY)
+      throw error
+    }
   })
 
   const items = data?.items || []
   // Evaluate any pending decision with candidate choices.
   const canEvaluate = (item: PendingDecisionItem) => {
-    return item.status === 'pending' && !item.staging && item.choices.length >= 2
+    return item.status === 'pending' && !item.staging && !item.invalidation && (!!item.sessionId && (!!item.canonical || !!item.advisor) || item.choices.length >= 2)
   }
   const evaluateItem = async (item: PendingDecisionItem) => {
+    if (item.sessionId && (item.canonical || item.advisor)) {
+      const ready = await fetch('/next-steps/api/suggest', { method: 'POST', headers: { 'content-type': 'application/json', 'x-next-steps-request': '1' }, body: JSON.stringify({ sessionId: item.sessionId, force: true }) })
+      const draft = await ready.json()
+      if (!ready.ok) throw new Error(draft.error || 'Shared next steps unavailable. Nothing was changed.')
+      if (draft.status === 'ready' && !draft.isScored) {
+        await reload() // Show published cards before the optional evaluator finishes.
+        await fetch('/next-steps/api/score', { method: 'POST', headers: { 'content-type': 'application/json', 'x-next-steps-request': '1' }, body: JSON.stringify({ sessionId: item.sessionId, key: draft.key }) })
+      } else if (draft.status !== 'ready' && draft.reason !== 'drafting') throw new Error('Shared next steps unavailable. Nothing was changed.')
+      await reload()
+      return
+    }
     const recommendation = await call('POST decisions/evaluate', { body: {
       context: item.context, question: item.question, choices: item.choices, sessionId: item.sessionId,
     } })
@@ -86,7 +110,13 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
 
     {tab === 'inbox' && <div className="dt-inbox-view">
       {shownItems.length === 0 ? <Hint>No decisions matching the selected filter.</Hint> : <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {shownItems.map(item => <div key={item.id} style={{
+        {shownItems.map(item => item.lifecycle ? <LifecycleCard key={item.id} item={item}
+          onTicket={() => navigate({ page: 'execution', id: item.ticketId!.replace('#', '') })}
+          onAction={async action => {
+            const result = await call('POST decisions/:id/lifecycle', { id: item.id, body: { action } })
+            if (result.execution === 'retried') await reload()
+            return result
+          }} /> : <div key={item.id} style={{
           background: '#1c2128',
           border: item.status === 'pending' ? '1px solid #30363d' : '1px solid #238636',
           borderLeft: item.status === 'pending' ? '4px solid #f85149' : '4px solid #238636',
@@ -124,11 +154,12 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
           {item.status === 'stale' && <p role="status">No longer actionable: {item.staleReason || 'The source has changed.'}</p>}
           <DecisionCard
             title={item.question}
+            stageOnly
             context={item.context}
             recommendation={item.recommendation}
             choices={item.choices}
             character={item.character}
-            onOverrideCharacter={char => {
+            onOverrideCharacter={item.canonical ? undefined : char => {
               void call('POST decisions/inbox', { body: { ...item, character: char } }).then(() => reload())
             }}
             unavailableReason={item.advisor?.status === 'pending' || item.advisor?.status === 'generating'
@@ -137,7 +168,7 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
               : !item.choices.length ? 'No candidate choices were provided for this decision.'
               : !item.recommendation.recommendedValue ? 'Click "Get recommendation" to evaluate these choices with the Decision API.' : undefined}
             onEvaluate={canEvaluate(item) ? () => evaluateItem(item) : undefined}
-            onExecute={item.status === 'pending' && !item.staging ? choiceId => resolveAction.run(item.id, choiceId) : undefined}
+            onExecute={item.status === 'pending' && !item.staging && !item.invalidation && item.sessionId ? choiceId => resolveAction.run(item, choiceId) : undefined}
           />
         </div>)}
       </div>}

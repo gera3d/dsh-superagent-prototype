@@ -326,8 +326,16 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
   'POST triggers/:id/requeue': { answer: ({ params }) => { server.queued.add(params.id); return { queued: true } } },
   'GET decisions': { query: ['kind', 'window', 'offset', 'limit'], answer: ({ query }) =>
     ({ items: query.kind === 'ignore' ? [] : [acceptDecision()], next_offset: null }) },
+  'POST decisions/canonical/claim': { body: true, answer: () => refuse(500, 'Canonical fixture transport unavailable') },
+  'POST decisions/canonical/publish': { body: true, answer: () => refuse(500, 'Canonical fixture transport unavailable') },
+  'POST decisions/canonical/score': { body: true, answer: () => refuse(500, 'Canonical fixture transport unavailable') },
+  'POST decisions/canonical/fail': { body: true, answer: () => refuse(500, 'Canonical fixture transport unavailable') },
   'GET decisions/inbox': { answer: () => ({ items: [] }) },
   'POST decisions/inbox': { body: true, answer: ({ body }) => ({ ok: true, id: body.id }) },
+  'POST helper/suggest': { body: true, answer: () => ({ options: [
+    { id: 'verify', label: 'Run tests', prompt: 'Run automated tests and inspect the diff.', recommended: true },
+    { id: 'review', label: 'Review edge cases', prompt: 'Inspect error handling and edge cases.', recommended: false },
+  ] }) },
   'POST decisions/evaluate': { body: true, answer: ({ body }) => ({
     recommendedValue: body.choices[0]?.id || '',
     confidence: 0.9,
@@ -349,6 +357,7 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
     requiresHuman: true,
     latencyMs: 15,
   }) },
+  'POST decisions/:id/lifecycle': { body: true, answer: () => refuse(404, 'Lifecycle decision not found') },
   'POST decisions/:id/resolve': { body: true, answer: () => refuse(409, 'Linked native submission required') },
   'POST decisions/:id/restart': { body: true, answer: () => refuse(404, 'Decision not found') },
   'POST decisions/:id/stage': { body: true, answer: () => refuse(404, 'Decision not found') },

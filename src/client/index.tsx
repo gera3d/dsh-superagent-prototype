@@ -23,6 +23,7 @@ import { PluginConfig, usePageForm } from './deployment.tsx'
 import { BrandLogoMark, BrandWordmark } from './branding-mark.tsx'
 import { en, zh } from './locales.ts'
 import type { T } from './text.ts'
+import { DecisionHandoffDock } from './decision-handoff.tsx'
 
 type ClientContext = Context & { sessions: ISessions }
 const NS = 'dshSuperagent'
@@ -64,6 +65,9 @@ export function apply(ctx: ClientContext): void {
   const t = ctx.locale.bind(NS)
   const submissionBridge = createDecisionSubmission(ctx)
   ctx.effect(() => { const unprovide = ctx.provide('decisionSubmission', submissionBridge); return () => { unprovide(); submissionBridge.dispose() } })
+  ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
+    name: 'conversation.input.dock', id: 'dsh-superagent.decision-handoff', order: 5,
+  }, props => <DecisionHandoffDock key={props.session.sessionId} {...props} bridge={submissionBridge} />))
   ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
     name: 'conversation.input.dock', id: 'dsh-superagent.inline-decision', order: 10,
   }, props => <InlineDecision {...props} submissionBridge={submissionBridge} />))
