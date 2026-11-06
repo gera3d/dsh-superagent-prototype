@@ -312,6 +312,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/core/replies.ts` | `Replies`: the Engine's Channel writes |
 | `src/core/stage.ts` | `ticketStage` and `canRetry`: the Ticket stages of [003 Execution](003-execution.md) |
 | `src/core/stall-guard.ts` | Narrow fallback/status-only idle eligibility and stuck checkpoint projection |
+| `src/core/publication-queue.ts` | Terminal operational history versus actionable recovery without fabricated chat proof |
 | `src/core/errors.ts` | `UserError` and `USER_ERRORS` |
 | `src/core/reasons.ts` | `Reason`, `REASONS` and `reasonText`: why the core recorded a Decision or set a Trigger aside, by code |
 | `src/core/ids.ts` | `key`: ids derived from their inputs, equal for equal inputs |
@@ -359,7 +360,18 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/app/dot.ts` | Same-origin Dot planning, Jev recommendations and health endpoints; stable choice IDs, strict schema validation, bounded model output and exactly one corrective retry. Returns proposals only; never dispatches threads or uses heuristic recommendations. |
 | `src/app/dot-json.ts` | Bounded balanced JSON-object extraction respecting strings/escapes; skips malformed/schema-invalid candidates without repairing or fabricating model output |
 | `src/app/decision-evaluator.ts` | Auxiliary tool-free recommendations using the source Session route or configured default, without sending work to that Session |
-| `src/app/lifecycle-decisions.ts` | Explicit lifecycle actions, documentation-only PR verification and human review links; never applies or merges |
+| `src/app/lifecycle-decisions.ts` | Canonical lifecycle actions, documentation-only review links and bound publication/recovery routing |
+| `src/app/lifecycle-publication.ts` | Pinned publication choices and explicit approval bridge, never chat staging |
+| `src/app/publication.ts` | Fresh exact-head review/check gates, durable distinct phase outcomes and idempotency |
+| `src/app/publication-persistence.ts` | Atomic fsync publication journal and cross-process serialization |
+| `src/app/publication-process.ts` | Observed process birth identity for safe coordinator ownership and PID reuse handling |
+| `src/app/publication-context.ts` | Trusted release manifest loading and shared canonical progress/recovery projection |
+| `src/app/publication-ticket.ts` | Serializable canonical ticket fence with narrow expected-own-merge continuation |
+| `src/app/publication-worker.ts` | Detached single-use approval coordinator, process ownership, reconciliation and restart handoff |
+| `src/app/publication-worker-entry.ts` | Fixed standalone coordinator entry, exact manifest and canonical binding validation |
+| `src/app/publication-operator.ts` | Protected local operator instruction proof and exact-pin approval validation |
+| `src/app/publication-operator-entry.ts` | Explicit trusted-local Codex/operator CLI; never an autonomous tool |
+| `src/infra/publication-runner.ts` | Hash-pinned phase scripts, GitHub/local evidence and settled subprocess execution |
 | `src/app/decision-inbox.ts` | Durable SQLite decision queue, completed-turn recovery, explicit question/offer capture, source deduplication and stale detection; staging stays pending and only a bound durable native submission confirms resolution, without executing work |
 | `src/app/decision-inbox-provider.ts` | Independently loaded inbox routes and capture lifecycle; shares the existing database without restarting the orchestrator |
 | `src/app/api.ts` | `Api`, every route with its parameters, query, body and response, and the filters of the lists; it imports only types, so the panel bundles it |
@@ -403,7 +415,8 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/route.ts` | The tabs, the settings groups, the typed routes that `parseRoute` reads, and the route memory with the settings group opened last |
 | `src/client/overview.tsx` | The overview |
 | `src/client/source.tsx`, `trigger.tsx`, `eval.tsx`, `execution.tsx` | One file per stage: its status, and its settings where it has some |
-| `src/client/lifecycle-card.tsx` | Quiet stuck/done ticket controls, explicit Retry and human review links |
+| `src/client/lifecycle-card.tsx` | Actual review/check evidence, phase/coordinator outcomes, bound approval and recovery controls |
+| `src/client/publication-cards.tsx` | Shared privileged renderer service and conversation dock; never stages a chat response |
 | `src/client/decisions.tsx` | The Decisions tab: actionable Human-in-the-Loop decision inbox and real-time decision playground |
 | `src/client/branding-mark.tsx`, `branding-settings.tsx` | Custom branding mark presentation and settings configuration |
 | `src/client/decision-card.tsx` | Recommendation presentation with explicit callback failure handling and stage-only preparation status; never invents choice scores. |
@@ -474,7 +487,16 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/decision-ranker.spec.ts` | Decisions API request/response mapping, invalid ranking rejection, configured-model and unranked fallback order, no call without a configured key, and the opt-in settings defaults |
 | `tests/stall-guard.spec.ts` | Fallback/status detection, durable one-shot wake, configurable escalation, progress and hold exclusions, original-task retry |
 | `tests/lifecycle-decisions.spec.ts` | Stuck/done projections, stale action rejection, paginated documentation-only verification and human-only merge links |
-| `tests/lifecycle-card.spec.tsx` | Quiet lifecycle rendering and explicit action outcomes |
+| `tests/lifecycle-card.spec.tsx` | Review evidence, bound approval, progress polling and recovery/continuation controls |
+| `tests/lifecycle-publication.spec.ts` | Canonical card bindings, explicit authority and queued publication handoff |
+| `tests/publication.spec.ts` | Exact pins, gates, idempotency, persistence, interruption and concurrent publication |
+| `tests/publication-worker.spec.ts` | Durable detached grants, restart survival, process ownership and compromise handling |
+| `tests/publication-ticket.spec.ts` | Canonical ticket fences and narrowly authorized own-merge continuation |
+| `tests/publication-operator.spec.ts` | Protected exact-pin local operator instruction proof and effect-free reconciliation |
+| `tests/publication-process.spec.ts` | OS process birth identity and safe PID reuse interpretation |
+| `tests/publication-queue.spec.ts` | Terminal publish/rollback history, active failure recovery and accurate queue semantics |
+| `tests/publication-cards.spec.tsx` | Shared privileged conversation rendering, explicit lifecycle routing and recovery visibility |
+| `tests/publication-runner.spec.ts` | Pinned runner/preparation, local evidence, real harmless phase scripts and subprocess settlement |
 | `tests/decision-inbox.spec.ts` | Durable capture, cold recovery, false-positive exclusions, source deduplication, stale resolution guards and draft-only outcomes |
 | `tests/decision-inbox-provider.spec.ts` | Same-origin HTTP validation, plugin close/reopen persistence, idempotent staging and safe retirement of persisted false positives |
 | `tests/decision-source.spec.ts` | Capture and evaluator share one canonical recommendation; enrichment never duplicates or resurrects a resolved decision |

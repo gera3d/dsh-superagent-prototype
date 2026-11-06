@@ -17,6 +17,8 @@ import { Engine, key, reasonText, type EngineForSettings, type ReceiveResult, ty
 import { allowedSender, settingsPolicy } from '../policy.ts'
 import { SourceRegistry } from '../sources/registry.ts'
 import { Commands } from '../infra/commands.ts'
+import { loadLifecyclePublication } from './publication-context.ts'
+import type { LifecyclePublication } from './lifecycle-publication.ts'
 import type { Deployment, Machine } from '../deployment.ts'
 import { environmentOf, ticketEnvironment, type Variable } from './execution-environment.ts'
 import type { SetupProblem } from '../setup.ts'
@@ -64,6 +66,7 @@ export class Runtime extends Service implements SourceHost {
   readonly effects: Effects
   readonly sources: SourceRegistry
   readonly commands: Commands
+  readonly publication?: LifecyclePublication
   readonly sessions: Sessions
   readonly settings: Settings
   readonly executor: DshExecutor
@@ -97,6 +100,7 @@ export class Runtime extends Service implements SourceHost {
     try {
       const report = (error: unknown) => { ctx.logger.warn('dsh-superagent: %s', String(error)) }
       const store = opened = this.store = new Store(join(machine.stateDir, 'orchestrator.sqlite'), report)
+      this.publication = loadLifecyclePublication(machine.stateDir)
       const setup = this.setup = new Setup({ context: ctx, machine, lifetime: this.lifetime, restart })
       const deployed = () => setup.configured()
         ? environmentOf({ deployment: setup.deployment, sources: this.sources, settings: store.settings() }) : undefined

@@ -4,6 +4,7 @@ import type { DecisionChoice, DecisionEvaluationResult, PendingDecisionItem } fr
 import { Button, Icon, Pill, Tag } from './controls.tsx'
 import { DecisionCard } from './decision-card.tsx'
 import { LifecycleCard } from './lifecycle-card.tsx'
+import { decisionNeedsAttention, decisionInHistory } from '../core/publication-queue.ts'
 import { parseInlineAlternatives } from './inline-alternatives.ts'
 import { useAction, usePanel } from './provider.tsx'
 import { usePoll } from './api.ts'
@@ -43,7 +44,7 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
   const items = data?.items || []
   // Evaluate any pending decision with candidate choices.
   const canEvaluate = (item: PendingDecisionItem) => {
-    return item.status === 'pending' && !item.staging && !item.invalidation && (!!item.sessionId && (!!item.canonical || !!item.advisor) || item.choices.length >= 2)
+    return !item.lifecycle && item.actionMode !== 'ticket_lifecycle' && item.status === 'pending' && !item.staging && !item.invalidation && (!!item.sessionId && (!!item.canonical || !!item.advisor) || item.choices.length >= 2)
   }
   const evaluateItem = async (item: PendingDecisionItem) => {
     if (item.sessionId && (item.canonical || item.advisor)) {
@@ -82,8 +83,8 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
   }
 
   const shownItems = items.filter(item => {
-    if (filterMode === 'pending') return item.status === 'pending'
-    if (filterMode === 'resolved') return item.status === 'resolved'
+    if (filterMode === 'pending') return decisionNeedsAttention(item)
+    if (filterMode === 'resolved') return decisionInHistory(item)
     return true
   })
 
@@ -92,10 +93,10 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
 
     <div className="dt-filters" style={{ display: 'flex', gap: '8px', marginBottom: '16px', alignItems: 'center' }}>
       <Pill active={tab === 'inbox' && filterMode === 'pending'} onClick={() => { setTab('inbox'); setFilterMode('pending') }}>
-        Pending ({items.filter(i => i.status === 'pending').length})
+        Pending ({items.filter(decisionNeedsAttention).length})
       </Pill>
       <Pill active={tab === 'inbox' && filterMode === 'resolved'} onClick={() => { setTab('inbox'); setFilterMode('resolved') }}>
-        Resolved ({items.filter(i => i.status === 'resolved').length})
+        History ({items.filter(decisionInHistory).length})
       </Pill>
       <Pill active={tab === 'inbox' && filterMode === 'all'} onClick={() => { setTab('inbox'); setFilterMode('all') }}>
         All Decisions
@@ -112,8 +113,8 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
       {shownItems.length === 0 ? <Hint>No decisions matching the selected filter.</Hint> : <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {shownItems.map(item => item.lifecycle ? <LifecycleCard key={item.id} item={item}
           onTicket={() => navigate({ page: 'execution', id: item.ticketId!.replace('#', '') })}
-          onAction={async action => {
-            const result = await call('POST decisions/:id/lifecycle', { id: item.id, body: { action } })
+          onAction={async (action, approval) => {
+            const result = await call('POST decisions/:id/lifecycle', { id: item.id, body: { action, ...(approval ? { approval } : {}) } })
             if (result.execution === 'retried') await reload()
             return result
           }} /> : <div key={item.id} style={{

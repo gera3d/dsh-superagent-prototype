@@ -4,6 +4,7 @@ import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { AssistantBlock, ConversationNode, ConversationSnapshot } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { ChatSnapshot } from '@deepseek-ai/dsh-client-ui-chat/client'
 import type { PendingDecisionItem } from '../core/decision.ts'
+import { decisionNeedsAttention } from '../core/publication-queue.ts'
 import type { DecisionSubmissionBridge } from './decision-submission.ts'
 import { caller, usePoll } from './api.ts'
 import { parseInlineAlternatives } from './inline-alternatives.ts'
@@ -83,7 +84,8 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
     // Depend on stable source identity, not fresh parsing objects or streaming content.
   }, [id, idle, closed, data, error, retry, reload])
 
-  const sessionItems = data?.items.filter(item => item.sessionId === session.sessionId) ?? []
+  // Privileged lifecycle cards have a dedicated shared renderer and must never enter native chat staging.
+  const sessionItems = data?.items.filter(item => item.sessionId === session.sessionId && !item.lifecycle && item.actionMode !== 'ticket_lifecycle') ?? []
   const pending = sessionItems.filter(item => item.status === 'pending')
   const emptySource = pending.find(item => item.sourceMessageId === sourceMessageId && !item.choices.length && !item.invalidation)
   const hydrated = useRef<string>()
@@ -117,6 +119,7 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
   if (!items.length && !creating && !failure && !notice && !error) return null
   const choose = async (item: PendingDecisionItem, choiceId: string) => {
     const choice = item.choices.find(candidate => candidate.id === choiceId)
+    if (item.lifecycle || item.actionMode === 'ticket_lifecycle' || choice?.actionKind && choice.actionKind !== 'suggestion') return
     if (!idle || !choice || !['pending', 'resolved'].includes(item.status) || choosing.current || input.phase !== 'plain'
       || (item.status === 'pending' && (item.invalidation || item.staging))) return
     const signal = stageAbort.current?.signal
@@ -199,7 +202,7 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
     <style>{css}</style>
     <header className="dsa-decisions__header">
       <strong>Agent-Mini · Choose a direction</strong>
-      <span className="dsa-decisions__meta">Shared decision queue · {data?.items.filter(item => item.status === 'pending').length ?? 0} pending</span>
+      <span className="dsa-decisions__meta">Shared decision queue · {data?.items.filter(decisionNeedsAttention).length ?? 0} pending</span>
     </header>
     {lastSubmitted && !items.some(item => item.id === lastSubmitted.id) && <p className="dsa-decisions__status" role="status" data-decision-receipt={lastSubmitted.id}>
       Previous choice confirmed submitted: {lastSubmitted.choices.find(choice => choice.id === lastSubmitted.resolvedChoice)?.label ?? lastSubmitted.resolvedChoice}. This does not confirm downstream execution.

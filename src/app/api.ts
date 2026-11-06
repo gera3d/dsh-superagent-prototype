@@ -44,7 +44,7 @@ export interface Api {
   'POST helper/suggest': { body: HelperDigest; response: HelperSuggestions }
   'POST decisions/evaluate': { body: DecisionEvaluationRequest; response: DecisionEvaluationResult }
   'POST decisions/character-evaluate': { body: DecisionEvaluationRequest & { characterId?: string; diff?: string; testOutput?: string; ticketRequest?: string }; response: CharacterEvaluationResult }
-  'POST decisions/:id/lifecycle': { body: { action: LifecycleAction }; response: LifecycleResult }
+  'POST decisions/:id/lifecycle': { body: { action: LifecycleAction; approval?: { publicationId: string; requestId: string } }; response: LifecycleResult }
   'POST decisions/:id/resolve': { body: { choiceId: string }; response: DecisionResolution }
   'POST decisions/:id/restart': { body: RestartDecisionRequest; response: DecisionRestartResult }
   'POST decisions/:id/stage': { body: StageDecisionRequest; response: DecisionStagingResult }

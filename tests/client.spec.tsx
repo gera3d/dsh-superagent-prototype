@@ -3,7 +3,9 @@ import { act, useState, type ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, it, vi } from 'vitest'
 import { ApiError, caller, usePoll } from '../src/client/api.ts'
-import { apply } from '../src/client/index.tsx'
+import { apply, inject } from '../src/client/index.tsx'
+import type { PendingDecisionItem } from '../src/core/decision.ts'
+import type { PublicationCards } from '../src/client/publication-cards.tsx'
 import { zh } from '../src/client/locales.ts'
 import { SettingsSchema } from '../src/policy.ts'
 
@@ -64,12 +66,14 @@ afterEach(() => {
 
 it('registers a localized main panel, sidebar entry and Plugin Manager row page, and no settings section', () => {
   const { entries, dictionaries, main, nav } = fixture([])
-  expect(entries.map(entry => entry.options.name)).toEqual(['conversation.input.dock', 'conversation.input.dock', 'sidebar.brand.mark', 'sidebar.brand.name', 'main', 'sidebar.panellist', 'plugins.row.config'])
-  expect(entries[0]!.options).toMatchObject({ id: 'dsh-superagent.decision-handoff', order: 5 })
-  expect(entries[1]!.options).toMatchObject({ id: 'dsh-superagent.inline-decision', order: 10 })
-  expect(entries[2]!.options).toMatchObject({ name: 'sidebar.brand.mark', priority: -1 })
-  expect(entries[3]!.options).toMatchObject({ name: 'sidebar.brand.name', priority: -1 })
-  expect(entries[6]!.options).toMatchObject({ key: 'dsh-superagent#dsh-superagent', locale: 'dshSuperagent' })
+  expect(inject).toEqual(['slots', 'locale', 'sessions', 'uiWorkspace', 'conversation'])
+  expect(entries.map(entry => entry.options.name)).toEqual(['conversation.input.dock', 'conversation.input.dock', 'conversation.input.dock', 'sidebar.brand.mark', 'sidebar.brand.name', 'main', 'sidebar.panellist', 'plugins.row.config'])
+  expect(entries[0]!.options).toMatchObject({ id: 'dsh-superagent.publications', order: 8 })
+  expect(entries[1]!.options).toMatchObject({ id: 'dsh-superagent.decision-handoff', order: 5 })
+  expect(entries[2]!.options).toMatchObject({ id: 'dsh-superagent.inline-decision', order: 10 })
+  expect(entries[3]!.options).toMatchObject({ name: 'sidebar.brand.mark', priority: -1 })
+  expect(entries[4]!.options).toMatchObject({ name: 'sidebar.brand.name', priority: -1 })
+  expect(entries[7]!.options).toMatchObject({ key: 'dsh-superagent#dsh-superagent', locale: 'dshSuperagent' })
   expect(Object.keys(dictionaries)).toEqual(['dshSuperagent'])
   expect(main.options).toMatchObject({ key: 'dsh-superagent', locale: 'dshSuperagent' })
   expect(nav.options).toMatchObject({ id: 'dsh-superagent', order: 10, locale: 'dshSuperagent' })
@@ -78,20 +82,90 @@ it('registers a localized main panel, sidebar entry and Plugin Manager row page,
 
 it('provides the shared decision submission bridge and disposes it with the plugin effects', () => {
   const { ctx, dispose } = fixture([])
+  const publications = ctx.get('publicationCards') as PublicationCards
   const bridge = ctx.get('decisionSubmission') as { watch: () => unknown; stage: () => unknown; discard: () => unknown; dispose: () => void }
-  expect(ctx.provide).toHaveBeenCalledExactlyOnceWith('decisionSubmission', bridge)
+  expect(ctx.provide).toHaveBeenCalledTimes(2)
+  expect(ctx.provide).toHaveBeenNthCalledWith(1, 'publicationCards', publications)
+  expect(ctx.provide).toHaveBeenNthCalledWith(2, 'decisionSubmission', bridge)
+  expect(publications).toMatchObject({ render: expect.any(Function) })
   expect(bridge).toMatchObject({ watch: expect.any(Function), stage: expect.any(Function), discard: expect.any(Function), dispose: expect.any(Function) })
   expect(ctx.get('configForms')).toBeUndefined()
   const stop = vi.spyOn(bridge, 'dispose')
-  const unprovide = ctx.provide.mock.results[0]!.value
+  const unprovidePublications = ctx.provide.mock.results[0]!.value
+  const unprovideSubmission = ctx.provide.mock.results[1]!.value
   dispose()
-  expect(unprovide).toHaveBeenCalledOnce()
+  expect(unprovidePublications).toHaveBeenCalledOnce()
+  expect(unprovideSubmission).toHaveBeenCalledOnce()
   expect(stop).toHaveBeenCalledOnce()
+  expect(ctx.get('publicationCards')).toBeUndefined()
   expect(ctx.get('decisionSubmission')).toBeUndefined()
   dispose()
+  expect(unprovidePublications).toHaveBeenCalledOnce()
+  expect(unprovideSubmission).toHaveBeenCalledOnce()
   expect(stop).toHaveBeenCalledOnce()
 })
 
+const publicationItem: PendingDecisionItem = {
+  id: 'publication-decision', sessionId: 'publication-session', ticketId: 'publication-ticket', ticketTitle: 'Exact-head publication',
+  trigger: 'Ready', question: 'Review publication', context: 'Server-reviewed publication manifest', status: 'pending', urgency: 'low', createdAt: 1,
+  actionMode: 'ticket_lifecycle', choices: [{ id: 'publish', label: 'Approve and publish', actionKind: 'publish' }],
+  recommendation: { recommendedValue: '', confidence: 0, rationale: '', distribution: [], provider: '', latencyMs: 0 },
+  lifecycle: { kind: 'done', assignmentId: 'assignment-1', prNumber: 150, publication: {
+    id: '6ed29d9a-8bae-4715-97da-9f3995ad0cb3', ticketId: 'publication-ticket', conversationId: 'publication-session', repository: 'example/project', prNumber: 150,
+    headSha: 'a'.repeat(40), patchSha256: 'b'.repeat(64), status: 'prepared', createdAt: '2026-11-06T00:00:00Z', updatedAt: '2026-11-06T00:00:00Z',
+    evidence: { repository: 'example/project', prNumber: 150, headSha: 'a'.repeat(40), patchSha256: 'b'.repeat(64),
+      observedAt: '2026-11-06T00:00:00Z', checks: 'passed', review: 'approved', mergeable: true, state: 'open' },
+    outcomes: [], audit: [], requests: {},
+  } },
+}
+it('renders real privileged publication evidence through the registered service and never stages chat', async () => {
+  const fetch = vi.fn(async () => Response.json({ execution: 'not_executed', ticketId: publicationItem.ticketId, message: 'Publication request checked.' }))
+  vi.stubGlobal('fetch', fetch)
+  const { ctx } = fixture([])
+  const publications = ctx.get('publicationCards') as PublicationCards
+  const stage = vi.spyOn(ctx.get('decisionSubmission') as { stage: () => unknown }, 'stage')
+  const onTicket = vi.fn()
+  const view = await render({ options: { name: 'publication-service-test' }, component: () => <>{publications.render(publicationItem, onTicket)}</> }, {})
+  try {
+    expect(view.container.querySelector('[aria-label="Publication evidence"]')).not.toBeNull()
+    expect(view.container.textContent).toContain('example/project #150')
+    expect(view.container.textContent).toContain(publicationItem.lifecycle!.publication!.headSha)
+    expect(view.container.textContent).toContain(publicationItem.lifecycle!.publication!.patchSha256)
+    expect(view.container.textContent).not.toContain('Stage response')
+    expect(fetch).not.toHaveBeenCalled()
+    const buttons = [...view.container.querySelectorAll('button')]
+    await act(async () => { buttons.find(button => button.textContent === 'View ticket')!.click() })
+    expect(onTicket).toHaveBeenCalledOnce()
+    await act(async () => { buttons.find(button => button.textContent === 'Approve + publish')!.click() })
+    expect(fetch).toHaveBeenCalledOnce()
+    const [url, request] = vi.mocked(globalThis.fetch).mock.calls[0]!
+    expect(url).toBe('/orchestrator/api/decisions/publication-decision/lifecycle')
+    expect(request).toMatchObject({ method: 'POST', headers: { 'x-orchestrator-request': '1', 'content-type': 'application/json' } })
+    expect(JSON.parse(String(request!.body))).toEqual({ action: 'publish', approval: { publicationId: publicationItem.lifecycle!.publication!.id,
+      requestId: expect.stringMatching(/^[\da-f-]{36}$/i) } })
+    expect(stage).not.toHaveBeenCalled()
+  } finally { view.dispose() }
+})
+it('renders actual lifecycle cards in the publication dock only for its current conversation', async () => {
+  const elsewhere = { ...publicationItem, id: 'elsewhere', sessionId: 'different-session', ticketTitle: 'Other conversation publication' }
+  const ordinary = { ...publicationItem, id: 'ordinary', lifecycle: undefined, actionMode: 'stage_response', ticketTitle: 'Ordinary staged response' }
+  const fetch = vi.fn(async () => Response.json({ items: [publicationItem, elsewhere, ordinary] }))
+  vi.stubGlobal('fetch', fetch)
+  const { entries } = fixture([])
+  const dock = entries.find(entry => entry.options.id === 'dsh-superagent.publications')!
+  const view = await render(dock, { session: { sessionId: publicationItem.sessionId } })
+  try {
+    expect(view.container.querySelector('[aria-label="Senior Developer publications"]')).not.toBeNull()
+    expect(view.container.querySelector('[aria-label="Publication evidence"]')).not.toBeNull()
+    expect(view.container.textContent).toContain('Exact-head publication')
+    expect(view.container.textContent).toContain('example/project #150')
+    expect(view.container.textContent).not.toContain('Other conversation publication')
+    expect(view.container.textContent).not.toContain('Ordinary staged response')
+    expect(view.container.textContent).not.toContain('Stage response')
+    expect([...view.container.querySelectorAll('button')].map(button => button.textContent)).toContain('Approve + publish')
+    expect(fetch).toHaveBeenCalledExactlyOnceWith('/orchestrator/api/decisions/inbox', { method: 'GET', headers: { 'x-orchestrator-request': '1' } })
+  } finally { view.dispose() }
+})
 it('opens a listed Session through the workspace from the main panel', async () => {
   serve()
   const { ctx, main } = fixture(['master'])

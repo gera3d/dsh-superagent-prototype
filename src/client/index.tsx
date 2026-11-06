@@ -16,6 +16,7 @@ import { DotChat } from './dot-chat.tsx'
 import { executeApprovedDotAction } from './dot-execution.ts'
 import { dotContext, type DotWorkspaceSource } from './dot-context.ts'
 import { InlineDecision } from './inline-decision.tsx'
+import { PublicationDock, SharedLifecycleCard } from './publication-cards.tsx'
 import { createDecisionSubmission } from './decision-submission.ts'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-chat/client'
@@ -63,6 +64,10 @@ export const inject = ['slots', 'locale', 'sessions', 'uiWorkspace', 'conversati
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-superagent: dictionaries')
   const t = ctx.locale.bind(NS)
+  ctx.effect(() => ctx.provide('publicationCards', { render: (item, onTicket) => <SharedLifecycleCard item={item} onTicket={onTicket} /> }))
+  ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
+    name: 'conversation.input.dock', id: 'dsh-superagent.publications', order: 8,
+  }, props => <PublicationDock sessionId={props.session.sessionId} removed={props.session.removed} />))
   const submissionBridge = createDecisionSubmission(ctx)
   ctx.effect(() => { const unprovide = ctx.provide('decisionSubmission', submissionBridge); return () => { unprovide(); submissionBridge.dispose() } })
   ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
