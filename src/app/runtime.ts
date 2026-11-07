@@ -48,7 +48,7 @@ import { Passes } from './passes.ts'
 import { Setup } from './setup.ts'
 import { feishuSettings } from '../sources/feishu.ts'
 import { health, type Health, type SourceContext, type SourceHost } from '../sources/host.ts'
-import { escalationStep } from './role-models.ts'
+import { qualityEscalation } from './role-models.ts'
 import { Sessions } from './sessions.ts'
 import { Settings } from './settings.ts'
 import { sourceContextOf, type SourceContextDeps } from './source-context.ts'
@@ -152,9 +152,9 @@ export class Runtime extends Service implements SourceHost {
         outbox, prepareTicket: (ticket, outcome) => executor.prepare(ticket, outcome),
         stallWaitSeconds: () => store.settings().executor.stallWaitSeconds,
         workerBusy: ticket => executor.running(ticket),
-        // A failed worker report walks the shared hierarchy after the ticket's last escalated route, up to its cap.
-        escalation: ticket => escalationStep(store.settings(), 'executor', ticket.escalations?.at(-1)?.to,
-          ticket.escalations?.length ?? 0),
+        // A failed worker report gets at most one quality escalation, from the route the worker actually runs on; availability
+        // fallback is a separate path and never counts as, or resets, that attempt.
+        escalation: (ticket, reason) => qualityEscalation(store.settings(), ticket, reason, executor.currentRoute(ticket)),
         emit: event => {
           if (event.type === 'ticket.created') {
             const ticket = store.tickets.get(event.data.ticketId)

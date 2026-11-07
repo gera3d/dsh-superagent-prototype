@@ -466,7 +466,7 @@ const TEXT = {
   modelProviderPlaceholder: ['如 antigravity', 'e.g. antigravity'],
   modelNamePlaceholder: ['如 gemini-3.8-flash', 'e.g. gemini-3.8-flash'],
   maxEscalations: ['最多升级次数', 'Maximum escalations'],
-  maxEscalationsHint: ['一个工单最多自动换到更强模型几次；到上限后失败会等人处理。0 关闭自动升级。', 'How many times one Ticket may move to a stronger model automatically; after the cap a failure waits for a person. 0 disables escalation.'],
+  maxEscalationsHint: ['一个工单最多自动换到更强模型一次（大于 1 的值也只算一次）；用完后失败会等人处理。0 关闭自动升级。', 'Whether one Ticket may move to a stronger model automatically. A Ticket gets at most one such attempt (values above 1 still mean one); after it a failure waits for a person. 0 disables escalation.'],
   'change.modelHierarchy': ['模型层级：{from} 个 → {to} 个', 'Model hierarchy: {from} → {to} models'],
   conservation: ['配额节省模式', 'Subscription conservation'],
   roleOrchestrator: ['编排 / 研判', 'Orchestrator / Assessor'],

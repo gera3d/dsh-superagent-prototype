@@ -4,7 +4,7 @@ import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import { agentEvents, installModelSelection, type Agent, type ModelSelection, type ModelSelectionRef } from '@deepseek-ai/dsh-agent'
 import { Session, SessionId } from '@deepseek-ai/dsh-session'
 import { ReasoningEffortId } from '@deepseek-ai/dsh-llm'
-import { installRoutingGuard, defaultRoute, DEEPSEEK_FALLBACK_ROUTE, escalationChain, escalationStep, fallbackNote, initializeRoleModel, isModelUnavailable, roleDefaults, sameRoute, selectRoleModel, starredRoutes, unavailableFallbackStep }
+import { installRoutingGuard, defaultRoute, DEEPSEEK_FALLBACK_ROUTE, escalationChain, escalationStep, fallbackNote, isFallbackOnlyRoute, qualityEscalation, initializeRoleModel, isModelUnavailable, roleDefaults, sameRoute, selectRoleModel, starredRoutes, unavailableFallbackStep }
   from '../src/app/role-models.ts'
 import { SettingsSchema } from '../src/policy.ts'
 const contexts: Context[] = []
@@ -88,15 +88,16 @@ it('starts a job type on its configured model, else the first starred route, els
   expect(defaultRoute(SettingsSchema.parse({}), 'executor')).toBeNull()
 })
 
-it('walks the hierarchy from the job type\'s route, one route per escalation and only up to the cap', () => {
+it('walks the hierarchy from the job type\'s route for exactly one quality escalation', () => {
   const settings = configured()
   expect(starredRoutes(settings)).toEqual([gemini, sol, sonnet])
   expect(escalationChain(settings, 'executor')).toEqual([sol, sonnet])
   expect(escalationStep(settings, 'executor')).toEqual({ from: gemini, to: sol })
-  // The second escalation continues from the first one's route, not from the default again.
-  expect(escalationStep(settings, 'executor', sol, 1)).toEqual({ from: sol, to: sonnet })
-  // At the cap, and at the end of the hierarchy, nothing escalates.
+  // One attempt per job: a recorded escalation ends quality escalation even though maxEscalations allows two.
+  expect(escalationStep(settings, 'executor', sol, 1)).toBeUndefined()
   expect(escalationStep(settings, 'executor', sol, 2)).toBeUndefined()
+  // At the end of the hierarchy nothing escalates either.
+  expect(escalationStep(settings, 'executor', sonnet, 0)).toBeUndefined()
   expect(escalationStep(settings, 'executor', sonnet, 1)).toBeUndefined()
   expect(escalationStep(configured({ executor: { model: sol } }), 'executor')).toEqual({ from: sol, to: sonnet })
   expect(escalationStep(configured({ models: { hierarchy: hierarchy(gemini, sol, sonnet), maxEscalations: 0 } }), 'executor')).toBeUndefined()
@@ -157,17 +158,15 @@ it('falls back through the ladder on availability failure, and lands on DeepSeek
   expect(unavailableFallbackStep(settings, DEEPSEEK_FALLBACK_ROUTE, [gemini, sol, sonnet, DEEPSEEK_FALLBACK_ROUTE])).toBeUndefined()
 })
 
-it('ensures hard task escalation only climbs the ladder and NEVER escalates to DeepSeek flash', () => {
+it('ensures hard task escalation only climbs the ladder once and NEVER escalates to DeepSeek flash', () => {
   const settings = configured()
-  // 1st task escalation from Gemini -> Sol
   expect(escalationStep(settings, 'executor')).toEqual({ from: gemini, to: sol })
-  // 2nd task escalation from Sol -> Sonnet
-  expect(escalationStep(settings, 'executor', sol, 1)).toEqual({ from: sol, to: sonnet })
-  // 3rd step is capped: never escalates to DeepSeek flash
-  expect(escalationStep(settings, 'executor', sonnet, 2)).toBeUndefined()
-  // Even with higher maxEscalations (e.g. 5), the hierarchy end is reached and it never lands on DeepSeek flash
+  // The one attempt is spent: no second rung, and never DeepSeek flash.
+  expect(escalationStep(settings, 'executor', sol, 1)).toBeUndefined()
+  // Even with a higher maxEscalations (e.g. 5), one attempt is the most a job gets.
   const uncapped = configured({ models: { hierarchy: hierarchy(gemini, sol, sonnet), maxEscalations: 5 } })
-  expect(escalationStep(uncapped, 'executor', sonnet, 2)).toBeUndefined()
+  expect(escalationStep(uncapped, 'executor', sonnet, 1)).toBeUndefined()
+  expect(escalationStep(uncapped, 'executor', sol, 1)).toBeUndefined()
 })
 
 it('formats a plain-language fallback note for the ticket warning quality may be lower', () => {
@@ -200,4 +199,49 @@ it('overrides an already selected premium session on the next managed request an
   await ctx.systemPrompt.assemble()
   expect(await request()).toEqual(cheap)
   dispose()
+})
+
+const particle = { provider: 'openrouter', model: 'deepseek/deepseek-v4.1-flash' }
+const subscription = () => SettingsSchema.parse({
+  models: { hierarchy: hierarchy(gemini, sol, sonnet, { ...particle, starred: false }), maxEscalations: 1, economyRoute: particle,
+    subscriptions: [{ provider: sol.provider, status: 'conserved' }] } })
+it('picks Sonnet as the one quality escalation, skipping conserved OpenAI and never a DeepSeek route', () => {
+  const settings = subscription()
+  expect(qualityEscalation(settings, {}, 'tests fail: 3 failing')).toEqual({ from: gemini, to: sonnet })
+  expect(escalationChain(settings, 'executor')).toEqual([sonnet])
+  expect(isFallbackOnlyRoute(settings, particle)).toBe(true)
+  expect(isFallbackOnlyRoute(settings, DEEPSEEK_FALLBACK_ROUTE)).toBe(true)
+  expect(isFallbackOnlyRoute(settings, sonnet)).toBe(false)
+})
+it('spends the quality attempt once across restarts and replays, whatever the settings cap says', () => {
+  const settings = SettingsSchema.parse({ ...subscription(), models: { ...subscription().models, maxEscalations: 9 } })
+  expect(qualityEscalation(settings, {}, 'failed')).toEqual({ from: gemini, to: sonnet })
+  // The persisted escalation record alone decides, so a replayed or restarted evaluation finds the attempt spent.
+  expect(qualityEscalation(settings, { escalations: [{ to: sonnet }] }, 'failed')).toBeUndefined()
+  expect(qualityEscalation(settings, { escalations: [{ to: sonnet }] }, 'failed', particle)).toBeUndefined()
+})
+it('gives no quality escalation without evidence, when off, when already on Sonnet or a DeepSeek route, or when nothing is eligible', () => {
+  const settings = subscription()
+  expect(qualityEscalation(settings, {}, '   ')).toBeUndefined()
+  expect(qualityEscalation(SettingsSchema.parse({ ...settings, models: { ...settings.models, maxEscalations: 0 } }), {}, 'failed')).toBeUndefined()
+  expect(qualityEscalation(settings, {}, 'failed', sonnet)).toBeUndefined()
+  // A route that differs only by reasoning effort is still Sonnet.
+  expect(qualityEscalation(settings, {}, 'failed', { ...sonnet, reasoningEffort: 'high' })).toBeUndefined()
+  expect(qualityEscalation(settings, {}, 'failed', particle)).toBeUndefined()
+  const anthropicParked = SettingsSchema.parse({ ...settings, models: { ...settings.models,
+    subscriptions: [...settings.models.subscriptions, { provider: sonnet.provider, status: 'exhausted' }] } })
+  expect(qualityEscalation(anthropicParked, {}, 'failed')).toBeUndefined()
+  // Conserve mode pins the economy route and never escalates.
+  expect(qualityEscalation(SettingsSchema.parse({ ...settings, models: { ...settings.models, conserve: true } }), {}, 'failed')).toBeUndefined()
+})
+it('keeps availability fallback separate: eligible providers first, then the pinned economy DeepSeek route, with OpenAI excluded', () => {
+  const settings = subscription()
+  expect(unavailableFallbackStep(settings, gemini, [gemini])).toEqual({ from: gemini, to: sonnet, isDeepSeekFlash: false })
+  expect(unavailableFallbackStep(settings, sonnet, [gemini, sonnet])).toEqual({ from: sonnet, to: particle, isDeepSeekFlash: false })
+  // The pinned route is a ladder rung here; with the ladder spent there is no unqualified direct-DeepSeek substitution.
+  expect(unavailableFallbackStep(settings, particle, [gemini, sonnet, particle])).toBeUndefined()
+  const hierarchyOnly = SettingsSchema.parse({ models: { hierarchy: hierarchy(gemini, sonnet), economyRoute: particle,
+    subscriptions: [{ provider: sol.provider, status: 'conserved' }] } })
+  expect(unavailableFallbackStep(hierarchyOnly, sonnet, [gemini, sonnet])).toEqual({ from: sonnet, to: particle, isDeepSeekFlash: true })
+  expect(fallbackNote(particle, 'quota')).toContain('Quality may be lower')
 })

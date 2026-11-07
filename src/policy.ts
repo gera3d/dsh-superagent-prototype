@@ -100,7 +100,8 @@ export const SubscriptionAvailabilitySchema = z.object({
 export type SubscriptionAvailability = z.infer<typeof SubscriptionAvailabilitySchema>
 /**
  * The shared model hierarchy and its escalation bound. `hierarchy` runs cheapest and weakest to strongest; escalation
- * walks it in order after the job type's default model (see `defaultRoute` and `escalationStep` in `role-models.ts`).
+ * walks it after the job type's default model, skipping parked providers and DeepSeek routes, and a ticket gets at most one
+ * quality escalation however high `maxEscalations` is (see `defaultRoute` and `escalationStep` in `role-models.ts`).
  * `conserve` is off by default, so old saved settings keep their exact behavior. When on, managed roles use
  * `economyRoute` (or the portable direct DeepSeek Flash default) without mutating the saved priority order.
  */
