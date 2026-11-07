@@ -1,6 +1,6 @@
 {
   "verifiedAt": "2026-11-07T15:20:38.494927+00:00",
-  "state": "deployed-api-verified-ui-pending",
+  "state": "deployed-api-and-native-ui-verified",
   "sourcePrs": {
     "backend": [
       40,
@@ -67,10 +67,25 @@
     }
   },
   "limits": [
-    "Mac is locked. Browser card visibility/reload/screenshot remains pending; unlock request open.",
     "No cost-summary reply sent, source PR created, cost-summary merge, deployment or acceptance performed.",
     "Publishing still requires exact current candidate, tests and protected action/scope confirmation.",
     "Primary helper succeeded once on the actual source turn; no long-term failure-free guarantee.",
     "Startup history gate unchanged."
-  ]
+  ],
+  "nativeUi": {
+    "verifiedAt": "2026-11-07T15:34:48.468776+00:00",
+    "session": "worker-85f05a35653102da234bed56549c26dd",
+    "recommended": "Hand off complete release package",
+    "scorePercent": 82,
+    "alternativeScoresPercent": [
+      14,
+      4
+    ],
+    "autopilot": "off",
+    "composer": "empty",
+    "send": "disabled",
+    "selectedOrSent": false,
+    "delivery": "compact collapsed",
+    "screenshot": "live-recommendation.png"
+  }
 }
