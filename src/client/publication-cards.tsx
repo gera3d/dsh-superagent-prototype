@@ -35,8 +35,8 @@ export async function reconcileDelivery(id: string, request: DeliveryConfirmatio
   if (!response.ok) throw new Error(`Delivery reconciliation rejected (${response.status}). Refresh; no mutation replay was requested automatically.`)
   return response.json()
 }
-export function SharedLifecycleCard({ item, onTicket }: { item: PendingDecisionItem; onTicket?: () => void }) {
-  if (item.actionMode === 'finding_triage' || item.finding) return <FindingCard item={item} />
+export function SharedLifecycleCard({ item, onTicket, compactFindings = false }: { item: PendingDecisionItem; onTicket?: () => void; compactFindings?: boolean }) {
+  if (item.actionMode === 'finding_triage' || item.finding) return <FindingCard item={item} compact={compactFindings} />
   if (item.actionMode === 'feature_delivery' || item.delivery) return <DeliveryCard item={item} onConfirm={request => confirmDelivery(item.delivery!.id, request)} onRecheck={request => recheckDelivery(item.delivery!.id, request)} onReconcile={request => reconcileDelivery(item.delivery!.id, request)} />
   return <LifecycleCard item={item} onTicket={onTicket} onAction={(action, approval) => call('POST decisions/:id/lifecycle',
     { id: item.id, body: { action, ...(approval ? { approval } : {}) } })} />
@@ -48,6 +48,6 @@ export function PublicationDock({ sessionId, removed }: { sessionId: string; rem
     && (item.status === 'pending' || item.lifecycle.recovery))) ?? []
   if (removed || !items.length) return null
   return <section aria-label="Senior Developer publications" style={{ boxSizing: 'border-box', width: 'calc(100% - var(--dsh-composer-side-clearance, 24px) * 2)', maxWidth: 'var(--dsh-composer-card-max-width, 840px)', minWidth: 0, margin: '0 auto 4px', display: 'grid', gap: 6 }}>
-    {items.map(item => <SharedLifecycleCard key={item.id} item={item} />)}
+    {items.map(item => <SharedLifecycleCard key={item.id} item={item} compactFindings />)}
   </section>
 }

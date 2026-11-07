@@ -1,7 +1,8 @@
 /** Canonical pre-work triage. Typed confirmation only; never stages or sends chat. */
 import { useRef, useState } from 'react'
 import type { PendingDecisionItem } from '../core/decision.ts'
-import { Button } from './controls.tsx'
+import { Button, Icon } from './controls.tsx'
+import STYLES from './delivery-card.css?raw'
 import type { FindingEvidence } from '../app/finding.ts'
 
 function ReportEvidence({ report }: { report: FindingEvidence }) {
@@ -49,8 +50,8 @@ export async function revisitFinding(id: string, request: { revision: number }) 
   if (!response.ok) throw new Error(`Finding revisit rejected (${response.status}). Refresh before trying again; no automatic replay.`)
   return response.json()
 }
-export function FindingCard({ item, onConfirm = request => confirmFinding(item.finding!.id, request), onRevisit = request => revisitFinding(item.finding!.id, request), onReview = request => reviewFinding(item.finding!.id, request), onRecordEvidence = request => recordFindingEvidence(item.finding!.id, request) }: {
-  item: PendingDecisionItem; onConfirm?: (request: FindingConfirmation) => Promise<unknown>; onRevisit?: (request: { revision: number }) => Promise<unknown>; onReview?: (request: FindingReview) => Promise<unknown>; onRecordEvidence?: (request: FindingEvidenceRecord & { revision: number }) => Promise<unknown>
+export function FindingCard({ item, compact = false, onConfirm = request => confirmFinding(item.finding!.id, request), onRevisit = request => revisitFinding(item.finding!.id, request), onReview = request => reviewFinding(item.finding!.id, request), onRecordEvidence = request => recordFindingEvidence(item.finding!.id, request) }: {
+  item: PendingDecisionItem; compact?: boolean; onConfirm?: (request: FindingConfirmation) => Promise<unknown>; onRevisit?: (request: { revision: number }) => Promise<unknown>; onReview?: (request: FindingReview) => Promise<unknown>; onRecordEvidence?: (request: FindingEvidenceRecord & { revision: number }) => Promise<unknown>
 }) {
   const [busy, setBusy] = useState(false)
   const acting = useRef(false)
@@ -110,7 +111,7 @@ export function FindingCard({ item, onConfirm = request => confirmFinding(item.f
     }
     finally { acting.current = false; setBusy(false) }
   }
-  return <section id={`finding-${f.id}`} className="dt-finding-card" aria-label={`Finding: ${f.title}`} style={{ background: 'var(--dsw-alias-background-l1, #161b22)', border: '1px solid var(--dsw-alias-border-l2, #30363d)', borderRadius: 8, padding: 18, color: 'var(--dsw-alias-label-primary, #e6edf3)' }}>
+  const body = <>
     <h3 style={{ margin: '0 0 8px' }}>{f.title}</h3><p>{f.problem}</p>
     <p role="status"><strong>{f.state.replaceAll('_', ' ')}</strong> · Owner: {f.owner}</p>
     {advice ? <aside aria-label="Senior Developer recommendation"><strong>Senior Developer recommends: {choices.find(choice => choice.id === advice.choiceId)?.label}</strong><p>{advice.rationale}</p></aside>
@@ -146,5 +147,23 @@ export function FindingCard({ item, onConfirm = request => confirmFinding(item.f
     {!!f.reports?.length && <details><summary>Linked execution evidence ({f.reports.length})</summary><ul>{f.reports.map((report, i) => <li key={i}><ReportEvidence report={report} /></li>)}</ul></details>}
     <details><summary>Finding history ({f.audit.length})</summary><ol>{f.audit.map((entry, i) => <li key={i}>{entry.at} · {entry.event} · {entry.actor}</li>)}</ol></details>
     <details><summary>Recorded occurrences ({f.occurrences.length})</summary><ul>{f.occurrences.map(occurrence => <li key={occurrence.id}>{occurrence.reference} · {occurrence.evidence} · {occurrence.at}</li>)}</ul></details>
+  </>
+  const status = f.state === 'running' ? 'In progress' : f.state === 'resolved' ? 'Resolved'
+    : f.state === 'awaiting_decision' ? 'Decision needed' : f.state === 'blocked' ? 'Review needed'
+    : f.state === 'queued' ? 'Queued' : 'Deferred'
+  return <section id={`finding-${f.id}`} className={compact ? 'dt-finding-card dt-delivery-card' : 'dt-finding-card'} aria-label={`Finding: ${f.title}`} style={compact ? undefined : { background: 'var(--dsw-alias-background-l1, #161b22)', border: '1px solid var(--dsw-alias-border-l2, #30363d)', borderRadius: 8, padding: 18, color: 'var(--dsw-alias-label-primary, #e6edf3)' }}>
+    {compact ? <>
+      <style>{STYLES}</style>
+      <details className="dt-delivery-disclosure">
+        <summary className="dt-delivery-summary" title={f.title}>
+          <Icon name="review" size={14} />
+          <span className="dt-delivery-label">Finding</span>
+          <span className="dt-delivery-state" role="status">{status}</span>
+          <span className="dt-delivery-hint">{available || reviewAvailable ? 'Review action' : 'View details'}</span>
+          <span className="dt-delivery-chevron"><Icon name="chevron-down" size={14} /></span>
+        </summary>
+        <div className="dt-delivery-body">{body}</div>
+      </details>
+    </> : body}
   </section>
 }
