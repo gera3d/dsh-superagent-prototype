@@ -1,0 +1,108 @@
+{
+  "state": "live-verified",
+  "verifiedAt": "2026-11-07T02:25:56.330637+00:00",
+  "sourceHead": "343073b34cab6ef64dd225bf848dc2e8b8de7b21",
+  "mergedSource": "fb591843c3f9ff19965a49e45a4157ed195fc890",
+  "pr": "https://github.com/gera3d/dsh-superagent-prototype/pull/33",
+  "patchSha256": "b3576b75e62d7acd6e5633c9c35e7e0f1e67224b8a7a32df3241f04cafac8f79",
+  "checks": {
+    "passed": 2154,
+    "skipped": 2,
+    "failed": 0,
+    "typecheck": "passed",
+    "build": "passed"
+  },
+  "pid": 61929,
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "findings": [
+    {
+      "id": "9f590cd1-1382-4546-aa64-3dc489f6e35a",
+      "title": "Resolve the three provider-recovery regression failures",
+      "state": "resolved",
+      "resolution": {
+        "outcome": "verified",
+        "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/pull/33",
+        "requirements": [
+          "Reproduce the three recorded failures against the exact qualified baseline",
+          "Preserve meaningful retry/reset/pause behavior; focused file passes after minimal justified changes",
+          "Native ticket-linked GitHub PR carries an exact-base patch and candid test evidence for root review"
+        ],
+        "at": "2026-11-07T02:19:51.432Z",
+        "actor": "local-operator",
+        "jobId": "finding:9f590cd1-1382-4546-aa64-3dc489f6e35a:r1"
+      }
+    },
+    {
+      "id": "bac26317-0ecf-4531-bbff-d24d6c2ced5c",
+      "title": "Resolve instruction and migration baseline failures",
+      "state": "resolved",
+      "resolution": {
+        "outcome": "verified",
+        "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/pull/33",
+        "requirements": [
+          "Reproduce the recorded failures against the exact qualified base",
+          "Make minimal corrections preserving intended behavior and meaningful assertions; focused checks pass",
+          "Return a native ticket-linked PR with exact-base patch and candid verification evidence"
+        ],
+        "at": "2026-11-07T02:23:52.849Z",
+        "actor": "local-operator",
+        "jobId": "finding:bac26317-0ecf-4531-bbff-d24d6c2ced5c:r1"
+      }
+    },
+    {
+      "id": "c312f16f-cf4a-466b-8037-5529be9e4125",
+      "title": "Verify and resolve settings navigation regression",
+      "state": "resolved",
+      "resolution": {
+        "outcome": "verified",
+        "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/pull/33",
+        "requirements": [
+          "Reproduce the recorded failures against the exact qualified base",
+          "Make minimal corrections preserving intended behavior and meaningful assertions; focused checks pass",
+          "Return a native ticket-linked PR with exact-base patch and candid verification evidence"
+        ],
+        "at": "2026-11-07T02:25:04.707Z",
+        "actor": "local-operator",
+        "jobId": "finding:c312f16f-cf4a-466b-8037-5529be9e4125:r1"
+      }
+    }
+  ],
+  "executor": {
+    "paused": false,
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "pendingWorkerReviews": 0,
+  "httpProof": [
+    {
+      "name": "inbox",
+      "seconds": 0.695,
+      "recovery": {
+        "pending": false
+      }
+    },
+    {
+      "name": "evidence-write-without-local-approval",
+      "status": 403
+    }
+  ],
+  "nativeEvidence": "Recovery finding resolved via native protected form, explicit verified attestation, selected recorded evidence and separate requirements acceptance.",
+  "nativeSettings": "All seven groups matched their headings; leaving and returning restored Deployment. Conservation shows all four managed roles on qualified Particle route, preserved normal hierarchy and exhausted/conserved marks.",
+  "limitations": [
+    "Two existing optional tests remain skipped.",
+    "Three-slot scheduler admission, FIFO, pause and ordinary-work accounting passed regression tests; no additional three-job production stress run was created.",
+    "Quota reset dates are manual reminders, not an automated reset detector."
+  ]
+}

@@ -1,33 +1,39 @@
 # DeepSeek Harness project status
 
-Updated November 06, 2026 at 6:06 PM PST. Owner: Codex. This file is the current release checkpoint; completion requires live evidence, not merely a worker's finished chat.
+Updated November 06, 2026 at 6:27 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
 
-## Goal
+## Goal and result
 
-Finish the authorized cleanup and economical routing rollout without losing the installed GitHub intake, PR review, publication, or finding acceptance controls.
+The authorized routine cleanup and economical routing rollout are **deployed and verified**. [Backend release PR #33](https://github.com/gera3d/dsh-superagent-prototype/pull/33) merged to `superagent-core` at `fb591843c3f9ff19965a49e45a4157ed195fc890`. The deployed source/assets were compared against the qualified candidate; rollback copies preserve the preceding source, assets and SQLite snapshots.
 
-## Routing and spend
+## Current routing and capacity
 
-The live managed roles remain on the qualified DeepSeek Flash 1017 Particle AI flex route through the existing OpenRouter connection. Subscription connections are preserved. No top-ups or new credentials. The earlier $0.1977 key-wide usage measurement is historical, not a current spend total.
+**Conserve mode ON.** Worker, orchestrator/evaluator, helper and automatic recommendation ranker resolve to the qualified Flash 1017 Particle AI flex OpenRouter preset. Existing saved credentials and provider connections are unchanged. Google/Antigravity and Anthropic are marked exhausted; OpenAI is temporarily conserved. The normal hierarchy and role choices are preserved beneath the override. When subscriptions return, explicitly mark those providers available and disable conservation to use the saved priorities again. Reset dates are manual reminders, not automatic quota detection. No top-ups or new keys.
 
-## Work and ownership
+Capacity: **three workers**, executor unpaused. Final native snapshot: **zero running, zero queued, zero worker reviews awaiting action**; all ten health components, including GitHub, ready. Conversation autopilot remains opt-in and was not required for this rollout.
 
-| Item | State | Next action and owner |
-|---|---|---|
-| Earlier launch-retry and startup inbox repair | Previously deployed and verified | Retain during integration |
-| Recovery cleanup, artifact #181 | Reviewed and integrated in isolation | Codex release checks and deployment |
-| Instruction/migration cleanup, artifact #183 | Corrected in integration: retain named merge CLI; preserve legacy limits in migration | Codex integration tests |
-| Economy settings, artifact #185 | Corrected in integration: fail closed on parked routes; guard existing sessions; portable default; truthful preview; manual reset reminders | Codex integration tests and live settings verification |
-| Concurrent finding dispatch, artifact #186 | Reviewed and integrated; pause rechecked at admission | Codex integration tests and live verification |
-| Settings navigation, artifact #187 | Reviewed and integrated | Codex native navigation verification |
-| Operator evidence card, artifact #189 | Reviewed and integrated; protected endpoint and separate acceptance retained | Codex native record-and-review verification |
+## Completed work
 
-## Release gates
+| Item | Evidence and result |
+|---|---|
+| Launch/startup fixes | Earlier live behavior retained; post-restart inbox responded during pending history recovery in 2.818 seconds, later 0.695 seconds with recovery complete |
+| Provider recovery cleanup | Generic transient backoff and immediate quota/cooldown/429 availability handling covered; native finding resolved against release evidence |
+| Instruction/migration cleanup | Installed named merge CLI and exact-head publication behavior retained; short worker instructions and legacy limits/member identities verified; native finding resolved |
+| Subscription conservation | Saved priorities preserved, portable default and explicit qualified preset, parked routes fail closed, existing managed requests guarded; native UI showed all four effective routes on Particle |
+| Concurrent finding dispatch | FIFO/capacity, ordinary worker accounting, same-finding quiescence, pause and duplicate-admission regressions pass; configured capacity three |
+| Settings navigation | All seven groups opened with matching headings; returning from Execution restored Deployment; native finding resolved |
+| Operator evidence card | Native record, explicit verified attestation, recorded-evidence selection, requirement acknowledgment and separate acceptance tested end to end; request without local approval rejected with 403 |
 
-Final stable-candidate qualification passed: **2154 tests passed, two skipped, zero failures** across 120 passing files; type check and build pass. The initial six failures were corrected/rechecked before this final full run. Release: [backend PR #33](https://github.com/gera3d/dsh-superagent-prototype/pull/33). Deployment is starting; native verification remains pending. No user approval is missing.
+Artifact PRs 183, 185, 186, 187 and 189 are closed as superseded by the corrected combined source release; PR 181 remains merged as historical evidence. Tracking issues 182, 184 and 188 are closed completed. Original artifact drafts must not be applied independently.
 
-## Risks and evidence
+## Validation and limits
 
-The original voice recap claiming a completed combined deployment and 88/89 passing tests was unsupported and is superseded by this record. Artifact PR merges do not prove backend deployment. Reset dates are reminders requiring manual provider reactivation; there is no inferred subscription reset schedule. Already in-flight requests are not cancelled by conservation changes; subsequent managed requests enforce the current routing policy.
+Final full suite: **2154 passed, two skipped, zero failures** (120 passing files). Type check and build pass. The initial full-run failures were corrected and rechecked before this final run. Live service PID at verification: 61929.
 
-Current implementation branch: `codex/routine-cleanup-integration`; release target: `superagent-core`. Review findings and validation will be captured with the combined backend PR. Native UI access is available again. The harness currently reports healthy, unpaused, zero running and zero queued, capacity three.
+The scheduler concurrency behavior is regression-tested; no additional three-job production stress run was created. Two optional tests remain skipped. Conservation changes apply at subsequent managed requests, not by cancelling a request already in flight. Custom external ranker endpoints remain independently configured; the live ranker uses the managed automatic route. The earlier unsupported voice claim of completed deployment and 88/89 tests is superseded by this verified record.
+
+## Next action
+
+No implementation or approval remains for this release. Maintain this checkpoint at new dispatch, review, deployment, verification or blocker milestones. New feature work requires its own tracked scope; do not silently reopen completed cleanup.
+
+Durable evidence: [release verification](docs/evidence/routine-cleanup-live-2026-11-06.json), [review and release notes](reports/ROUTINE_CLEANUP_RELEASE.md). Native screenshots and detailed rollback/runtime records are retained locally in the cockpit project's `token-optimization` directory.
