@@ -4,9 +4,9 @@ Updated November 06, 2026 at 09:31 PM PST. Owner: Codex. This is the current han
 
 ## Active UI repair — compact native delivery status
 
-[Issue #35](https://github.com/gera3d/dsh-superagent-prototype/issues/35), owner Codex. Match the Senior Developer character/suggestion interface: shared composer alignment, small theme-token typography, native expandable status row, and bounded report/details. Preserve all typed action guards and existing prepare-then-Send behavior. Implementation and 33 focused tests pass; types/build and native visual acceptance are pending. No live restart while the cost-summary review worker is running.
+[Issue #35](https://github.com/gera3d/dsh-superagent-prototype/issues/35), owner Codex. Match the Senior Developer character/suggestion interface: shared composer alignment, small theme-token typography, native expandable status row, and bounded report/details. Preserve all typed action guards and existing prepare-then-Send behavior. Implementation, 33 focused tests, type check and build pass. PR #36 is merged; source/client assets are applied and the service is restarting for native visual acceptance. The cost-summary review worker completed before deployment; its next recommendation was already scored and preserved before restart.
 
-Gera submitted the 78% review recommendation successfully: decision `chat-fa5cbd2de5d26ca29e192a9a3903f1d6` is `resolved / submitted`, choice `review-patch-and-tests`, native message `fc3720f0-ac45-4e01-919c-c07a2b84536c`. One worker is active on the review. The prior UNSENT checkpoint below is historical; the next step is to observe this review and its new recommendation without manual nudges.
+Gera submitted the 78% review recommendation successfully: decision `chat-fa5cbd2de5d26ca29e192a9a3903f1d6` is `resolved / submitted`, choice `review-patch-and-tests`, native message `fc3720f0-ac45-4e01-919c-c07a2b84536c`. The review turn finished without a manual nudge and produced current decision `chat-39050640ad10732f63c75371e299f500`: “Prepare the release candidate” at 65%, with two alternatives at 12% and 23%. This next choice remains unselected. The prior UNSENT checkpoint below is historical; the cost-summary feature is still not deployed.
 
 ## Resolved repair — recommendation selection and delivery handoff
 
