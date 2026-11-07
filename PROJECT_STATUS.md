@@ -1,6 +1,14 @@
 # DeepSeek Harness project status
 
-Updated November 06, 2026 at 8:35 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 06, 2026 at 8:49 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+
+## Active bug repair — missing Senior Developer scores
+
+[Plugin issue #9](https://github.com/gera3d/dsh-plugins/issues/9) is authorized by Gera's screenshot/report. Owner: Codex; no duplicate harness worker. Reproduced in the actual PR #191 worker thread and in regression tests. Cause: host and UI permanently excluded fallback-generated suggestions from scoring, suppressed explicit retry and hid valid persisted distributions.
+
+State: isolated repair implemented; qualification and deployment pending. Permit independent real scoring while retaining fallback provenance and the existing unattended-execution restrictions. No fabricated probabilities, automatic sends or recommendation selections. Regression cases cover fallback generation, retry after scorer failure, renewed leases/host reload, stale/staged/resolved sources, persisted scores and autopilot remaining blocked for fallback provenance. Existing cost-summary PR #191 stays unmerged and undeployed; its user-owned next choice remains unselected.
+
+Other handoff-context and delivery-binding defects below remain separate unresolved items; scoring alone will not make an inappropriate recommendation safe.
 
 ## Active feature experiment — job cost summary
 
