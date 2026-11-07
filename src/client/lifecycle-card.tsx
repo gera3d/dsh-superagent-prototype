@@ -7,8 +7,9 @@ import { Button } from './controls.tsx'
 import { publicationCompleted } from '../core/publication-queue.ts'
 
 type Approval = { publicationId: string; requestId: string }
-export function LifecycleCard({ item, onAction, onTicket }: {
+export function LifecycleCard({ item, onAction, onTicket, embedded = false }: {
   item: PendingDecisionItem
+  embedded?: boolean
   onAction: (action: LifecycleAction, approval?: Approval) => Promise<LifecycleResult>
   onTicket?: () => void
 }) {
@@ -55,7 +56,7 @@ export function LifecycleCard({ item, onAction, onTicket }: {
     } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)) }
     finally { acting.current = false; setBusy(false) }
   }
-  return <section aria-label={`${settled ? 'Publication history' : stuck ? 'Stuck' : 'Done'} ticket: ${item.ticketTitle}`} className="dt-lifecycle-card" style={{
+  return <section aria-label={`${settled ? 'Publication history' : stuck ? 'Stuck' : 'Done'} ticket: ${item.ticketTitle}`} className="dt-lifecycle-card" style={embedded ? undefined : {
     background: '#161b22', border: '1px solid #30363d', borderRadius: 8, padding: '18px 20px', color: '#e6edf3',
   }}>
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>

@@ -2,6 +2,10 @@
 
 Updated November 07, 2026 at 11:06 AM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
 
+## Active UI repair — chat metadata crowding
+
+User screenshot November07 shows the full finding evidence form occupying most of chat. PR52 merged (sourcea09a219) and UI postimages/client asset installed with rollback;55 focused tests/types/build pass. Native Chrome confirms finding default-collapsed, aligned with delivery, expanded body height-bounded and composer visible. Full Decisions view remains intact. Browser acceptance additionally exposed oversized legacy publication history above it. A narrow follow-up applies the same conversation-only disclosure there; current tests/build/types and native verification pending. No backend/action/approval/routing/Send/autopilot changes or daemon restart.
+
 ## Completed repair — #46 and #47 deployed, native verified and accepted
 
 Exact source `004578b2065ff12c94e098028f4aac7484c611f4` (PR51; preceding qualified PR48–50) is live through merged artifact195 at `a012ff6f5588e9a62ce70b2cf7d200b0405cdef4`. Protected publication `9c093dc0-6d36-4483-a8b9-49eec1c979df` completed all five phases; all ten health components ready. Full exact-head suite **2,210 pass / two optional skips / zero failures, actual exit0**; 54 focused tests, types and build pass. Exact installed source/assets inventories and rollback retained.
