@@ -330,6 +330,26 @@ export class DecisionInbox {
     if (item?.canonical && item.canonical.draftRevision !== input.draftRevision) throw new InboxError(409, 'Canonical draft revision changed')
     return item
   }
+  /** Explicit CAS correction only: preserve published choices in their original immutable row. */
+  reviseCanonical(input: CanonicalSource & { expectedDecisionId: string; reason: string }, events: readonly SessionEvent[]): CanonicalResult {
+    const previous = this.canonicalSource(input, events)
+    if (!previous || previous.id !== input.expectedDecisionId || !previous.canonical || previous.staging
+      || !['ready', 'scored'].includes(previous.canonical.phase) || previous.actionMode !== 'stage_response')
+      throw new InboxError(409, 'Only the current unstaged published chat recommendation can be corrected')
+    const id = `chat-${createHash('sha256').update(`${previous.id}:correction`).digest('hex').slice(0, 32)}`
+    const item: PendingDecisionItem = { id, supersedesDecisionId: previous.id, sessionId: previous.sessionId,
+      sourceMessageId: previous.sourceMessageId, sourceSeq: previous.sourceSeq, sourceTurn: previous.sourceTurn,
+      ticketTitle: previous.ticketTitle, trigger: 'Corrected next steps', status: 'pending', urgency: previous.urgency,
+      createdAt: Math.max(Date.now(), previous.createdAt + 1), actionMode: 'stage_response', question: previous.question,
+      context: previous.context, choices: [], recommendation, advisor: { status: 'pending', key: input.draftRevision } }
+    this.db.exec('SAVEPOINT revise_recommendation')
+    try {
+      this.invalidate(previous, `Recommendation superseded by ${id}: ${input.reason}`)
+      this.save(item)
+      this.db.exec('RELEASE revise_recommendation')
+    } catch (error) { this.db.exec('ROLLBACK TO revise_recommendation; RELEASE revise_recommendation'); throw error }
+    return { item }
+  }
   claimCanonical(input: CanonicalClaim, events: readonly SessionEvent[], now = Date.now()): CanonicalResult {
     let item = this.canonicalSource(input, events)
     if (!item) {

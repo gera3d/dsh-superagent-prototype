@@ -60,6 +60,8 @@ export interface PendingDecisionItem {
   id: string
   /** Resolved record explicitly restarted by the user; history remains intact. */
   parentDecisionId?: string
+  /** Explicit correction replaces an unstaged recommendation; original choices remain history. */
+  supersedesDecisionId?: string
   /** Durable history through this sequence predates this new decision. */
   restartAfterSeq?: number
   /** Server-owned snapshot: historical request IDs must never arm a new Send binding. */

@@ -35,7 +35,7 @@ it('retires the same synthetic advice after automatic unbound progress becomes a
     expect(() => inbox.stage(sameRow.id, { choiceId: 'tests', attemptId: '123e4567-e89b-42d3-a456-426614174001', draftText: 'Run tests' })).toThrow('stale')
     expect(inbox.get(question.id)?.status).toBe('pending'); expect(inbox.get(staged.id)?.staging).toBeDefined()
     const work = projectDeliveries(deliveries, inbox.list()).find(item => item.ticketId === ticket.id)?.delivery?.work
-    expect(work).toMatchObject({ state: 'owned', owner: 'release-owner', progress: ticket.assignments[0]!.report!.summary })
+    expect(work).toMatchObject({ state: 'awaiting_direction', owner: 'user', progress: ticket.assignments[0]!.report!.summary })
     expect(work?.nextStep).toContain('Implementation reported ready'); expect(work?.nextStep).toContain('no duplicate implementation run is requested')
     expect(work?.nextStep).not.toContain('review is running')
     expect(JSON.stringify({ ticket: store.tickets.get(ticket.id), delivery: deliveries.get(delivery.id) })).toBe(immutable)

@@ -223,15 +223,18 @@ it('reports not-ready without helper, ranker, or fallback while the latest turn 
   expect(view.prepare).not.toHaveBeenCalled()
 })
 
-it.each(['unavailable', 'invalid'] as const)('uses only fixed Flash fallback when helper is %s and never ranks fallback output', async mode => {
+it.each(['unavailable', 'invalid'] as const)('uses only fixed Flash fallback when helper is %s and ranks existing fallback choices without regenerating them', async mode => {
   const view = fixture()
   view.helper.mockResolvedValueOnce(mode === 'unavailable' ? Response.json({ error: 'offline' }, { status: 503 }) : Response.json({ options: [helperAnswer.options[0]] }))
   const result = await view.request('s0')
   expect(result.body).toMatchObject({ status: 'ready', model: 'deepseek-official/deepseek-flash', fallback: true, isScored: false })
-  expect(result.body.options).toEqual(answer.options.map((option, index) => ({ ...option, id: `opt-${index + 1}`, recommended: index === answer.recommended, actionKind: 'unknown' })))
+  expect(result.body.options).toEqual(answer.options.map((option, index) => ({ ...option, id: `opt-${index + 1}`, recommended: index === answer.recommended, actionKind: 'suggestion', automationActionKind: 'unknown' })))
   expect(view.prepare).toHaveBeenCalledExactlyOnceWith({ provider: 'deepseek-official', model: 'deepseek-flash', maxTokens: 1200 }, expect.any(AbortSignal))
-  expect(await view.score(result.body.key)).toEqual(result)
-  expect(view.ranker).not.toHaveBeenCalled()
+  view.ranker.mockResolvedValueOnce(Response.json({ recommendedValue: 'opt-1', provider: 'Hermetic ranker', distribution: [{ id: 'opt-1', probability: .8 }, { id: 'opt-2', probability: .2 }] }))
+  const scored = await view.score(result.body.key)
+  expect(scored.body).toMatchObject({ fallback: true, isScored: true })
+  expect(scored.body.options.map((o: any) => o.prompt)).toEqual(result.body.options.map((o: any) => o.prompt))
+  expect(view.ranker).toHaveBeenCalledOnce()
 })
 
 it('returns generation-failed without caching fabricated options and retries after helper and fallback failure', async () => {

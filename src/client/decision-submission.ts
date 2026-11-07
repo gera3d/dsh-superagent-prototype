@@ -287,10 +287,17 @@ export function createDecisionSubmission(ctx: SubmissionContext, options: { stor
       const release = watchSession(request.sessionId)
       const watch = watches.get(request.sessionId)!
       let journal: Journal | undefined
-      const checkCurrent = () => { if (request.signal?.aborted || stopped || watch.disposed) throw new Error('The source conversation changed before staging completed. No message was sent.') }
+      const signal = request.signal ?? AbortSignal.timeout(30_000)
+      let cancelReady: (() => void) | undefined
+      const cancelled = new Promise<never>((_, reject) => {
+        cancelReady = () => reject(new Error('Reply preparation timed out or was cancelled. No message was sent.'))
+        signal.addEventListener('abort', cancelReady, { once: true })
+        if (signal.aborted) cancelReady()
+      })
+      const checkCurrent = () => { if (signal.aborted || stopped || watch.disposed) throw new Error('The source conversation changed before staging completed. No message was sent.') }
       try {
-        checkCurrent()
-        const native = await watch.ready
+        const native = await Promise.race([watch.ready, cancelled])
+        if (cancelReady) signal.removeEventListener('abort', cancelReady)
         checkCurrent()
         if (!native.observeSubmissions) throw new Error('The native composer Send observer is unavailable. Refresh the app after applying the composer update; your draft was not changed or sent.')
         const state = native.state.getSnapshot()
@@ -358,7 +365,7 @@ export function createDecisionSubmission(ctx: SubmissionContext, options: { stor
           try { await clear(journal, watch) } catch { /* Fail closed; native notification/error leaves pending recovery visible. */ }
         }
         throw error
-      } finally { release() }
+      } finally { if (cancelReady) signal.removeEventListener('abort', cancelReady); release() }
     },
     async submitStaged(request) {
       const release = watchSession(request.sessionId)

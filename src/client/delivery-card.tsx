@@ -48,7 +48,7 @@ export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile }: { item
     finally { acting.current = false; setBusy(false) }
   }
   return <section id={`delivery-${d.id}`} className="dt-delivery-card" aria-label={`Feature delivery: ${d.title}`} style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: 8, padding: 18, color: '#e6edf3' }}>
-    <small>Feature delivery · {d.work?.state === 'superseded' ? 'Superseded history' : `${d.stage.replaceAll('_', ' ')} · ${d.work?.state === 'owned' ? 'owned / in progress' : d.state.replaceAll('_', ' ')}`}</small>
+    <small>Feature delivery · {d.work?.state === 'superseded' ? 'Superseded history' : `${d.stage.replaceAll('_', ' ')} · ${d.work?.state === 'owned' ? 'owned / in progress' : d.work?.state === 'awaiting_direction' ? 'ready for your next step' : d.state.replaceAll('_', ' ')}`}</small>
     <h3>{d.title}</h3>
     <p><strong>Owner: {d.work?.owner ?? d.owner}</strong></p>
     {d.work && <section aria-label="Current work ownership"><p role="status">{d.work.nextStep}</p>
@@ -57,6 +57,7 @@ export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile }: { item
       {d.work.supersededBy && <p>Superseded by <code>worker-{d.work.supersededBy}</code>. Original dropped-worker history and mandate are unchanged.</p>}
       {!!d.work.replaces?.length && <p>Active replacement for {d.work.replaces.map(id => `worker-${id}`).join(', ')}.</p>}
     </section>}
+    {d.scopeBinding && d.work?.state === 'awaiting_direction' && <p role="status">Release handoff needs preparation: the artifact is ready for review, but its deployable source revision, target and acceptance checks are not bound. Preparing a reply does not merge or publish it.</p>}
     {d.blocker && !d.work && <p role="status">Blocked: {d.blocker}</p>}
     {recommendation ? <aside aria-label="Senior Developer recommendation"><strong>{endorsed ? `Senior Developer recommends: ${action!.label}` : 'Senior Developer recommends waiting'}</strong><p>{recommendation.rationale}</p><small>{recommendation.provider} · {recommendation.recordedAt}</small></aside>
       : d.recommendationError && d.work?.state !== 'superseded' ? <p role="status">Senior Developer advice unavailable: {d.recommendationError.message}. Advice failure does not veto an otherwise eligible action.</p> : action ? <p>No current Senior Developer recommendation recorded for this action.</p> : null}
@@ -64,7 +65,7 @@ export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile }: { item
       <p><strong>Components:</strong> {d.preparedPublication?.components?.length ? d.preparedPublication.components.join(', ') : 'Not recorded in this publication snapshot.'}</p>
       <p><strong>Effects:</strong> {d.preparedPublication?.effects?.length ? d.preparedPublication.effects.join('; ') : 'Not recorded; no component or restart effects are inferred.'}</p></section>}
     {d.acceptance ? <p role="status">Acceptance recorded by {d.acceptance.actor} at {d.acceptance.at}.</p>
-      : <p>Not accepted. {action?.label ?? (d.state === 'running' ? 'Work is in progress.' : 'No confirmation currently offered.')}</p>}
+      : <p>Not accepted. {d.work?.state === 'awaiting_direction' ? 'Choose a next step in the Senior Developer suggestions. Release confirmation follows preparation.' : action?.label ?? (d.state === 'running' ? 'Work is in progress.' : 'No confirmation currently offered.')}</p>}
     {available && (endorsed ? <Button variant="primary" disabled={busy} onClick={() => { void confirm() }}>{busy ? 'Confirming…' : `Confirm: ${action!.label}`}</Button>
       : <details><summary>Inspect eligible action / proceed without recommendation</summary><p>{recommendation?.disposition === 'hold' ? 'The Senior Developer recommends waiting. ' : 'No current endorsement is recorded. '}An explicit operator override can confirm only this server-eligible action; it grants no additional authority.</p><Button variant="outline" disabled={busy} onClick={() => { void confirm() }}>{busy ? 'Confirming…' : `Proceed without recommendation: ${action!.label}`}</Button></details>)}
     {reconcileAvailable && <div><p>Observe the existing handoff using its recorded identity. This does not approve or replay a mutation.</p><Button variant="outline" disabled={busy} onClick={() => { void reconcile() }}>{busy ? 'Requesting reconciliation…' : recovery!.label}</Button></div>}

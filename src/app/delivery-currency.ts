@@ -4,7 +4,7 @@ import type { Ticket, Trigger } from '../core/model.ts'
 import type { Delivery } from './feature-delivery.ts'
 
 export interface DeliveryWork {
-  state: 'owned' | 'superseded'
+  state: 'owned' | 'awaiting_direction' | 'superseded'
   owner: string
   nextStep: string
   progress?: string
@@ -46,8 +46,8 @@ export function deriveDeliveryWork(deliveries: Delivery[], records: DeliveryWork
     for (const worker of delivery.workers) {
       const ticket = records.tickets.find(t => t.id === workerTicket(worker)), assignment = ticket?.assignments.at(-1)
       if (!ticket || ticket.ended || ticket.attention || assignment?.state !== 'running' || assignment.report?.state !== 'ready') continue
-      result.set(ticket.id, { state: 'owned', owner: delivery.owner, progress: assignment.report.summary,
-        nextStep: 'Implementation reported ready; the assigned delivery owner reviews evidence and prepares remaining delivery; no duplicate implementation run is requested.' })
+      result.set(ticket.id, { state: 'awaiting_direction', owner: 'user', progress: assignment.report.summary,
+        nextStep: 'Implementation reported ready. Choose a Senior Developer next step in the worker conversation to review the artifact and prepare a release candidate, target and acceptance checks. No deployment is prepared yet; no duplicate implementation run is requested.' })
     }
   }
   for (const old of records.tickets) {

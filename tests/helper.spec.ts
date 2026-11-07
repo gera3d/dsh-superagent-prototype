@@ -207,3 +207,12 @@ it('does not call the inherited host provider when every managed provider is par
   expect(h.calls).toHaveLength(0)
   expect(h.resolveCallConfig).not.toHaveBeenCalled()
 })
+
+it('server-owned unbound delivery state constrains the next reply to release preparation', async () => {
+  const h = harness()
+  await suggestHelper(h.ctx, digest, SettingsSchema.parse({ models: { hierarchy: ladder } }), 'Artifact ready; scope unbound.')
+  const system = String(h.calls[0]!.system)
+  expect(system).toContain('Server-owned delivery state: Artifact ready; scope unbound.')
+  expect(system).toContain('Do not request live captures before deployment')
+  expect(system).toContain('Do not start duplicate implementation')
+})

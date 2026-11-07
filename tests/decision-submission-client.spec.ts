@@ -601,3 +601,15 @@ it('fails closed on ambiguous native request echoes', async () => {
   })).rejects.toThrow('unconfirmed')
   expect(f.calls.filter(c => c.action === 'submission')).toHaveLength(0)
 })
+
+it('manual preparation can cancel while the native session never becomes ready', async () => {
+  const f = fixture(), controller = new AbortController()
+  f.context.sessions.retain.mockReturnValue({ ready: new Promise(() => {}), binding: {} as any, release: f.release } as never)
+  const bridge = createDecisionSubmission(f.context as never)
+  cleanup.push(() => bridge.dispose())
+  const result = bridge.stage({ decisionId: 'decision', choiceId: 'a', sessionId: 'never-ready', prompt: 'Choose A.', input: f.input.getSnapshot(), inputActions: f.actions as any, signal: controller.signal })
+  const rejected = expect(result).rejects.toThrow('timed out or was cancelled')
+  controller.abort(); await rejected
+  expect(f.actions.insertText).not.toHaveBeenCalled()
+  expect(f.calls).toHaveLength(0)
+})
