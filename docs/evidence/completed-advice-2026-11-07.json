@@ -1,6 +1,6 @@
 {
   "state": "deployed-and-native-verified",
-  "verifiedAt": "2026-11-07T22:22:13.786686+00:00",
+  "verifiedAt": "2026-11-07T22:24:34.252435+00:00",
   "pr": 54,
   "sourceHead": "749e2ec1e37a629386b3baf7dda660bf43b9dbb3",
   "merge": "22e6b3aa9140883d157dfe8243238f3d1c673fc5",
@@ -88,8 +88,9 @@
       "credentialsChanged": false,
       "checksBypassed": false
     },
-    "setupRecovery": "Existing deployment check passed after GitHub quota reset at22:20:06Z; same credentials, no guard bypass.",
-    "sourceMergeRecovery": "Connector merge timed out; normal non-forced Git merge/push succeeded. Source PR54 merged as22e6b3a."
+    "setupRecovery": "Existing deployment check passed after GitHub quota reset at22:20:06Z; same credentials, no guard bypass. First ordinary post-setup GitHub poll completed; all ten components ready.",
+    "sourceMergeRecovery": "Connector merge timed out; normal non-forced Git merge/push succeeded. Source PR54 merged as22e6b3a.",
+    "sourceAndAssetPostimagesRecheckedAfterRestart": true
   },
   "finalStatus": {
     "health": {
@@ -102,7 +103,7 @@
       "reply": "ready",
       "evals": "ready",
       "models": "ready",
-      "github": "starting"
+      "github": "ready"
     },
     "paused": false,
     "load": {
@@ -115,7 +116,6 @@
     "Historical worker text remains historical; current delivery acceptance is authoritative.",
     "Pre-acceptance canonical advice retires only for accepted recorded deliveries with no newer active scope; later user questions remain usable.",
     "No model/key/routing/native Send/autopilot/approval changes; original cost-summary job remains accepted and unmessaged.",
-    "Native acceptance at current Chrome desktop size/dark theme.",
-    "GitHub source first post-setup poll is still starting at this checkpoint; runtime and nine other components are ready."
+    "Native acceptance at current Chrome desktop size/dark theme."
   ]
 }

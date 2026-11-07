@@ -1,6 +1,6 @@
 # DeepSeek Harness project status
 
-Updated November 07, 2026 at 2:23 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 07, 2026 at 2:24 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
 
 ## Completed repair — Senior Developer retires completed steps
 
@@ -10,9 +10,9 @@ Updated November 07, 2026 at 2:23 PM PST. Owner: Codex. This is the current hand
 
 Authoritative recorded acceptance now overrides older worker reports for drafting/fallback/ranking context. Pre-acceptance canonical advice retires for the accepted scope, while genuinely later user questions, unrelated sessions and newer active scopes remain usable. A worker finishing or PR merging alone does not trigger completion. Send/autopilot/model/key/routing and all approval/submission guards unchanged.
 
-**Qualification:** final exact-head full suite **2,219 passed / two optional skips / zero failures, actual exit0**;57 focused tests, types and build pass. Initial full run caught the required new-test index entry and two older compact-UI class assertions; all corrected and the complete suite rerun cleanly. [Immutable live verification](https://github.com/gera3d/dsh-superagent-prototype/blob/804747ffbaec04e48c7777ef4a1d3dff627119a3/docs/evidence/completed-advice-2026-11-07.json).
+**Qualification:** final exact-head full suite **2,219 passed / two optional skips / zero failures, actual exit0**;57 focused tests, types and build pass. Initial full run caught the required new-test index entry and two older compact-UI class assertions; all corrected and the complete suite rerun cleanly. [Live verification](docs/evidence/completed-advice-2026-11-07.json).
 
-Restart started the new daemon but its deployment check paused on exhausted GitHub quota. At the reported2:20 PM Pacific reset, the ordinary setup check succeeded with the same credentials and no guard bypass. Runtime is ready; executor restored unpaused, capacity3, zero running/queued. At2:22 PM, the nine runtime components are ready and GitHub's first normal post-setup polling round is still starting; this checkpoint does not claim that round completed. Native evidence covers current Chrome desktop/dark theme. No other feature or new job was queued.
+Restart started the new daemon but its deployment check paused on exhausted GitHub quota. At the reported2:20 PM Pacific reset, the ordinary setup check succeeded with the same credentials and no guard bypass. Runtime is ready; executor restored unpaused, capacity3, zero running/queued. Final verification: the first ordinary post-setup GitHub polling round completed and all ten components report ready. Installed source/assets rechecked against reviewed postimages after startup. Native evidence covers current Chrome desktop/dark theme. No other feature or new job was queued.
 
 ## GitHub access — connector verified; native polling recovered
 
