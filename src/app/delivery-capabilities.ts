@@ -19,6 +19,23 @@ const Ref = z.object({ repository: z.string().max(200).regex(/^[A-Za-z0-9][A-Za-
 const Pull = z.object({ head: z.object({ sha: z.string().regex(/^[a-f0-9]{40}$/i) }), base: z.object({ sha: z.string().regex(/^[a-f0-9]{40}$/i) }), changed_files: z.number().int().nonnegative() })
 const File = z.object({ filename: z.string().min(1), status: z.string(), additions: z.number().int().nonnegative(), deletions: z.number().int().nonnegative(), patch: z.string().optional() })
 const Verdict = z.object({ verdict: z.enum(['passed', 'failed']), findings: z.array(z.object({ repository: z.string(), pr: z.number().int().positive(), headSha: z.string(), path: z.string().min(1).max(500), line: z.number().int().positive(), severity: z.enum(['critical', 'high', 'medium', 'low']), message: z.string().min(1).max(2000) }).strict()).max(50), rationale: z.string().min(1).max(4000) }).strict()
+const REVIEW_KEYS = new Set(['verdict', 'findings', 'rationale'])
+const FINDING_KEYS = new Set(['repository', 'pr', 'headSha', 'path', 'line', 'severity', 'message'])
+// Unknown null-only review metadata asserts nothing, so drop it losslessly before strict parsing. Core keys are kept
+// even when null (the schema still rejects them), and unknown non-null keys stay so strict parsing still rejects them.
+function canonicalReview(value: unknown): unknown {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value
+  const canonical: Record<string, unknown> = {}
+  for (const [name, entry] of Object.entries(value)) {
+    if (!REVIEW_KEYS.has(name) && entry === null) continue
+    canonical[name] = name === 'findings' && Array.isArray(entry) ? entry.map(canonicalFinding) : entry
+  }
+  return canonical
+}
+function canonicalFinding(value: unknown): unknown {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value
+  return Object.fromEntries(Object.entries(value).filter(([name, entry]) => FINDING_KEYS.has(name) || entry !== null))
+}
 type Review = { lease: DeliveryLease; fingerprint: string; bindingFingerprint: string; provider: string; verdict: z.infer<typeof Verdict>; result: DeliveryResult; diffs: unknown[];
   /** Per-batch verdicts of the one bounded model call made for each pinned PR; absent on legacy records. */
   batches?: { repository: string; pr: number; headSha: string; diffSha256: string; verdict: 'passed' | 'failed'; rationale: string; provider: string }[] }
@@ -145,7 +162,7 @@ export function createDeliveryCapabilities(deps: DeliveryCapabilityDependencies)
           'Return ONLY one complete strict-JSON object with no Markdown fences or prose outside it, using exactly this shape: {"verdict":"passed"|"failed","findings":[{"repository":"owner/repo","pr":1,"headSha":"exact reviewTarget SHA","path":"exact reviewTarget allowedPaths filename","line":1,"severity":"critical"|"high"|"medium"|"low","message":"concrete actionable issue"}],"rationale":"reason"}. Emit exactly verdict, findings and rationale, with no path_note or any other additional key and exactly the listed finding keys. Keep the rationale concise and under 2000 characters and each finding message under 1000 characters; never emit a partial object.',
           'Every finding must identify reviewTarget.repository, reviewTarget.pr, reviewTarget.headSha and one exact reviewTarget.allowedPaths path. passed requires zero findings; failed requires at least one. Do not claim tests executed or grant merge, deployment, publication or acceptance authority.',
         ].join(' '), { requirements: delivery.requirements, reviewTarget, batch: { index: index + 1, total: diffs.length, diff } }, REVIEW_BUDGET, lease.signal)
-        const verdict = Verdict.parse(reply.value)
+        const verdict = Verdict.parse(canonicalReview(reply.value))
         if ((verdict.verdict === 'passed') !== (verdict.findings.length === 0)) throw new Error('Contradictory review verdict')
         for (const finding of verdict.findings) {
           if (finding.repository !== diff.repository || finding.pr !== diff.pr || finding.headSha !== diff.headSha || !diff.files.some(f => f.filename === finding.path)) throw new Error('Review finding is not bound to supplied diff')
