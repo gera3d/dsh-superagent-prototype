@@ -189,7 +189,7 @@ export class Runtime extends Service implements SourceHost {
         recommend: (delivery, action) => recommendDeliveryAction(delivery, action, deliveryDeps),
       })
       this.findings = new FindingRuntime({ ...deliveryDeps, repository: () => setup.deployment.repository,
-        isQuiescent: ticket => this.executor.quiescent(ticket) })
+        isQuiescent: ticket => this.executor.quiescent(ticket), workerBusy: ticket => this.executor.running(ticket) })
       // Update the `evals` health entry on every pass if an evaluation failed as unavailable within the last hour.
       const evals = board.claim('evals', { state: 'ready', detail: 'No unavailable Eval in the last hour' })
       const evaluateDue = () => {

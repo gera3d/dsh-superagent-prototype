@@ -179,6 +179,18 @@ export class Settings {
         catch (error) { throw new UserError('modelUnavailable', { block, error: error instanceof Error ? error.message : String(error) }) }
       }
     }
+    // A custom economy route must resolve through the live provider too, so economy mode fails at save instead of in a
+    // worker. Enabling conservation validates even an unchanged default route.
+    if (block === 'models' && candidate.models.conserve && candidate.models.economyRoute
+        && (!current.models.conserve || JSON.stringify(candidate.models.economyRoute) !== JSON.stringify(current.models.economyRoute)
+          || JSON.stringify(candidate.models.subscriptions) !== JSON.stringify(current.models.subscriptions))) {
+      try {
+        const mark = candidate.models.subscriptions.find(entry => entry.provider === candidate.models.economyRoute.provider)
+        if (mark && mark.status !== 'available') throw new Error('Economy provider is parked; mark it available before enabling conservation')
+        await resolveRoleModel(this.host.context, candidate.models.economyRoute)
+      }
+      catch (error) { throw new UserError('modelUnavailable', { block, error: error instanceof Error ? error.message : String(error) }) }
+    }
     rules.guard?.(current, candidate, origin)
     if (setupChanged(current, candidate)) await this.host.setup.checkAccounts(block, candidate)
     if (stale()) throw new SettingsConflict('Settings changed during the checks. Reload before saving.')

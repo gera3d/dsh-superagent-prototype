@@ -42,7 +42,7 @@ Earlier plugin verification remains valid for unchanged plugin production source
 
 ### Root-supplied bridge artifact
 
-[Root-owned MCP integration record](integration/README.md) pins only the reviewed source patch and inventory. Patch SHA-256: `511aa7d2c62c5847f721bf0a1e5e311a6288b594f273e73f515a46ae9cbc5394`; inventory SHA-256: `4d5ea1eb27810c84d7bfd9955148f8956b870598446f9be051e3942e5008669e`. The inventory's122 passing isolated mock checks are root-provided evidence, not a worker rerun or live acceptance claim. Root alone applies the installed bridge after combined review.
+Root-owned MCP integration record (`docs/integration/README.md`) pins only the reviewed source patch and inventory. Patch SHA-256: `511aa7d2c62c5847f721bf0a1e5e311a6288b594f273e73f515a46ae9cbc5394`; inventory SHA-256: `4d5ea1eb27810c84d7bfd9955148f8956b870598446f9be051e3942e5008669e`. The inventory's122 passing isolated mock checks are root-provided evidence, not a worker rerun or live acceptance claim. Root alone applies the installed bridge after combined review.
 
 ## Visual evidence
 

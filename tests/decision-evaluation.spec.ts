@@ -1,3 +1,4 @@
+import { SettingsSchema } from '../src/policy.ts'
 import { expect, it, vi } from 'vitest'
 import type { Context } from '@deepseek-ai/cordis'
 import { evaluateDecision } from '../src/core/decision.ts'
@@ -56,4 +57,19 @@ it('uses the configured default for inbox-only evaluation and refuses incomplete
   const ctx = { agents: { get: () => undefined }, get: () => ({ currentSelection: () => ({ provider: 'default-route', model: 'default-model' }) }),
     llm: { resolveCallConfig: async (value: unknown) => value, stream: async function* () { yield { type: 'text-delta', text }; yield { type: 'finish', reason: { kind: 'max-tokens' } } } } }
   await expect(configuredDecisionReply(ctx as unknown as Context, request)).rejects.toThrow('did not finish normally')
+})
+
+it('never calls a parked source/default ranker provider, and fails closed without an eligible route', async () => {
+  const resolveCallConfig = vi.fn(async (value: unknown) => value)
+  const stream = vi.fn(async function* () { yield { type: 'text-delta', text }; yield { type: 'finish', reason: { kind: 'stop' } } })
+  const ctx = { agents: { get: () => ({ session: { requestHeader: () => ({ config: { provider: 'parked', model: 'premium' } }) } }) },
+    get: () => ({ currentSelection: () => ({ provider: 'parked', model: 'premium' }) }), llm: { resolveCallConfig, stream } }
+  const settings = SettingsSchema.parse({ models: { hierarchy: [{ provider: 'available', model: 'cheap' }],
+    subscriptions: [{ provider: 'parked', status: 'exhausted' }] } })
+  await configuredDecisionReply(ctx as unknown as Context, { ...request, sessionId: 'source' }, settings)
+  expect(resolveCallConfig).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ provider: 'available', model: 'cheap' }), expect.any(AbortSignal))
+  resolveCallConfig.mockClear(); stream.mockClear()
+  settings.models.hierarchy = []
+  await expect(configuredDecisionReply(ctx as unknown as Context, { ...request, sessionId: 'source' }, settings)).rejects.toThrow('No eligible')
+  expect(resolveCallConfig).not.toHaveBeenCalled(); expect(stream).not.toHaveBeenCalled()
 })

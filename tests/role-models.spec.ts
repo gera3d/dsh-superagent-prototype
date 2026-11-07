@@ -4,7 +4,7 @@ import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import { agentEvents, installModelSelection, type Agent, type ModelSelection, type ModelSelectionRef } from '@deepseek-ai/dsh-agent'
 import { Session, SessionId } from '@deepseek-ai/dsh-session'
 import { ReasoningEffortId } from '@deepseek-ai/dsh-llm'
-import { defaultRoute, DEEPSEEK_FALLBACK_ROUTE, escalationChain, escalationStep, fallbackNote, initializeRoleModel, isModelUnavailable, roleDefaults, sameRoute, selectRoleModel, starredRoutes, unavailableFallbackStep }
+import { installRoutingGuard, defaultRoute, DEEPSEEK_FALLBACK_ROUTE, escalationChain, escalationStep, fallbackNote, initializeRoleModel, isModelUnavailable, roleDefaults, sameRoute, selectRoleModel, starredRoutes, unavailableFallbackStep }
   from '../src/app/role-models.ts'
 import { SettingsSchema } from '../src/policy.ts'
 const contexts: Context[] = []
@@ -176,4 +176,28 @@ it('formats a plain-language fallback note for the ticket warning quality may be
 
   const ladderNote = fallbackNote(sol, 'Antigravity quota cooldown')
   expect(ladderNote).toBe('Fell back to available ladder model (openai-codex/gpt-6.1-sol): Antigravity quota cooldown.')
+})
+
+it('overrides an already selected premium session on the next managed request and restores it when conservation ends', async () => {
+  const { ctx, agent, request } = await fixture()
+  const premium = { provider: 'premium', model: 'strong' }
+  const cheap = { provider: 'economy', model: 'cheap' }
+  await initializeRoleModel(ctx, agent, premium)
+  await ctx.systemPrompt.assemble()
+  let settings = SettingsSchema.parse({ models: { conserve: true, economyRoute: cheap } })
+  let dispose = installRoutingGuard(ctx, agent, () => settings)
+  expect(await request()).toEqual(cheap)
+  settings = SettingsSchema.parse({ models: { subscriptions: [{ provider: 'premium', status: 'exhausted' }], hierarchy: [cheap] } })
+  expect(await request()).toEqual(cheap)
+  settings.models.hierarchy = []
+  await expect(request()).rejects.toThrow('No eligible')
+  settings = SettingsSchema.parse({})
+  expect(await request()).toEqual(premium)
+  dispose()
+  await selectRoleModel(ctx, agent, premium)
+  settings = SettingsSchema.parse({ models: { conserve: true, economyRoute: cheap } })
+  dispose = installRoutingGuard(ctx, agent, () => settings)
+  await ctx.systemPrompt.assemble()
+  expect(await request()).toEqual(cheap)
+  dispose()
 })

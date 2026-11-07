@@ -163,6 +163,29 @@ it('serializes fix-now and queue-next FIFO and preserves one job through connect
   expect(store.nextQueued()?.id).toBe(second.id)
 })
 
+it('admits queued findings up to configured capacity in FIFO order with one binding each', () => {
+  const store = fixture()
+  const [a, b, c, d] = ['a', 'b', 'c', 'd'].map(key => confirm(store, store.observe(intake(key)).id))
+  expect(store.nextQueued(3)?.id).toBe(a!.id)
+  store.markDispatched(a!.id, 'ticket-a', 'assignment-a', 3)
+  // The configured limit one stays strictly serial; a larger limit admits the next independent finding.
+  expect(store.nextQueued(1)).toBeUndefined()
+  expect(store.nextQueued(3)?.id).toBe(b!.id)
+  store.markDispatched(b!.id, 'ticket-b', 'assignment-b', 3)
+  // Capacity, not queue depth, refuses the third admission; repeated idempotent binding still succeeds.
+  expect(() => store.markDispatched(c!.id, 'ticket-c', 'assignment-c', 2)).toThrow('next dispatchable')
+  expect(store.markDispatched(b!.id, 'ticket-b', 'assignment-b', 2).job?.ticketId).toBe('ticket-b')
+  store.markDispatched(c!.id, 'ticket-c', 'assignment-c', 3)
+  expect(store.runningCount()).toBe(3)
+  expect(store.nextQueued(3)).toBeUndefined()
+  expect(store.nextQueued(4)?.id).toBe(d!.id)
+  // A blocked/reviewed job releases its slot instead of holding independent work indefinitely.
+  store.markBlocked(a!.id, 'Ready evidence awaits explicit review')
+  expect(store.runningCount()).toBe(2)
+  expect(store.nextQueued(3)?.id).toBe(d!.id)
+})
+
+
 it('commits native dispatch and binding together, rolling both back on failure', () => {
   const store = fixture(); const first = confirm(store, store.observe(intake()).id)
   store.db.exec('CREATE TABLE native_ticket (id TEXT PRIMARY KEY); SAVEPOINT owner_atomic')

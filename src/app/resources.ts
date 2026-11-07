@@ -8,7 +8,7 @@ import { feishuRef } from '../sources/feishu.ts'
 import { feishuTriggerId } from '../sources/feishu-trigger.ts'
 import { ASSIGNMENTS, INPUTS, assignmentLine, decisionCard, decisionDetails, inputLine, newestPage, preview, textPage, threadCard, ticketCard,
   ticketDetails, triggerCard, type TicketThread } from './cards.ts'
-import { roleDefaults } from './role-models.ts'
+import { routingView } from './role-models.ts'
 import { threadTitle } from './views/records.ts'
 import { transcriptEntry } from './context.ts'
 import { builtInParts, defaultPrompts } from './prompts.ts'
@@ -191,8 +191,8 @@ const ROUTES: readonly Route[] = [
   }],
   ['models', async read => {
     const host = main(read), catalog = await host.context.sessionController.modelCatalog(), settings = host.store.settings()
-    return { default: catalog.default, roles: roleDefaults(settings), starred: settings.models.hierarchy.filter(entry => entry.starred),
-      max_escalations: settings.models.maxEscalations, failures: catalog.failures,
+    return { default: catalog.default, roles: { orchestrator: routingView(settings).effective.orchestrator, worker: routingView(settings).effective.worker }, starred: settings.models.hierarchy.filter(entry => entry.starred),
+      max_escalations: settings.models.maxEscalations, routing: routingView(settings), failures: catalog.failures,
       providers: catalog.groups.map(group => ({ id: group.id, name: group.name, count: group.models.length, read: `models/${group.id}` })) }
   }],
   ['models/', async read => {

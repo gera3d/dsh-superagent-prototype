@@ -4,7 +4,7 @@ import { ReasoningEffortId } from '@deepseek-ai/dsh-llm'
 import { z } from 'zod'
 import { DEFAULT_SENIOR_DEVELOPER_CHARACTER, type CharacterConfig } from '../../core/character.ts'
 import type { RoleModel, Settings } from '../../policy.ts'
-import { isModelUnavailable, starredRoutes, unavailableFallbackStep } from '../role-models.ts'
+import { constrainedRoute, helperRoute, isModelUnavailable, unavailableFallbackStep } from '../role-models.ts'
 
 export const HELPER_BODY_MAX_BYTES = 64 * 1024
 // Shared across the ladder, including configuration and response validation.
@@ -97,8 +97,8 @@ export async function suggestHelper(ctx: Context, input: HelperDigest, settings:
   const character = settings.characters.characters.find(item => item.id === DEFAULT_SENIOR_DEVELOPER_CHARACTER.id && item.enabled)
     ?? DEFAULT_SENIOR_DEVELOPER_CHARACTER
   const system = helperSystemPrompt(character)
-  const selected = settings.models.helper ?? starredRoutes(settings)[0] ?? settings.models.hierarchy[0]
-    ?? (ctx.get('agentDefaultModel') as { currentSelection(): RoleModel } | undefined)?.currentSelection()
+  const selected = constrainedRoute(settings, helperRoute(settings)
+    ?? (ctx.get('agentDefaultModel') as { currentSelection(): RoleModel } | undefined)?.currentSelection())
   if (!selected?.provider || !selected.model) {
     ctx.logger?.warn('helper/suggest failure: %s', JSON.stringify({ category: 'no-model', stage: 'configuration' }))
     throw new Error('Helper suggestion unavailable')

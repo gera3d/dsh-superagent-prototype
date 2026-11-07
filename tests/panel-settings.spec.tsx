@@ -128,20 +128,26 @@ it('lists the settings groups stages first, opens each stage\'s group from its s
   async () => {
   await mount()
   await click(tab(zh['tab.settings']))
-  expect(all('.dt-settings-link').map(link => link.textContent)).toEqual(['来源', '评估', '执行', '提示词', '部署'])
+  expect(all('.dt-settings-link').map(link => link.textContent)).toEqual(['来源', '评估', '执行', '角色', '提示词', '品牌', '部署'])
   expect(document.querySelector('.dt-settings-link[aria-current="page"]')?.textContent).toBe(zh['term.source'])
   for (const [tab, group] of [['来源', '来源'], ['评估', '评估'], ['执行', '执行']] as const) {
     await click(find(tab, '[role="tab"]'))
     await click(find(zh['tab.settings'], '.dt-status-head button'))
     expect(document.querySelector('.dt-settings-link[aria-current="page"]')?.textContent).toBe(group)
   }
+  // Every group link opens its own page, in the order the navigation lists them.
+  for (const group of ['来源', '评估', '执行', '角色', '提示词', '品牌', '部署'] as const) {
+    await click(find(group, '.dt-settings-link'))
+    expect(document.querySelector('.dt-settings-link[aria-current="page"]')?.textContent).toBe(group)
+    expect(document.querySelector('.dt-settings-title')?.textContent).toBe(group)
+  }
   // The Trigger stage has no settings, so its status offers none.
   await click(tab(zh['tab.trigger']))
   expect(all('.dt-status-head button').map(button => button.textContent)).not.toContain(zh['tab.settings'])
   await click(tab(zh['tab.settings']))
-  expect(document.querySelector('.dt-settings-link[aria-current="page"]')?.textContent).toBe(zh['promptPart.runtime/work'])
+  expect(document.querySelector('.dt-settings-link[aria-current="page"]')?.textContent).toBe(zh['settingsGroup.deployment'])
   await click(tab(zh['tab.trigger']))
   await remount()
   await click(tab(zh['tab.settings']))
-  expect(document.querySelector('.dt-settings-link[aria-current="page"]')?.textContent).toBe(zh['promptPart.runtime/work'])
+  expect(document.querySelector('.dt-settings-link[aria-current="page"]')?.textContent).toBe(zh['settingsGroup.deployment'])
 })

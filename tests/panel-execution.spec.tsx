@@ -253,5 +253,33 @@ it('edits the shared model hierarchy: adds a route, marks it starred, sets the e
   expect(server.settings.models).toEqual({ hierarchy: [
     { provider: 'openai-codex', model: 'gpt-6.1-sol', starred: true },
     { provider: 'antigravity', model: 'gemini-3.8-flash', reasoningEffort: 'high', starred: true },
-  ], maxEscalations: 2, helper: null })
+  ], maxEscalations: 2, helper: null, conserve: false, economyRoute: { provider: 'deepseek-official', model: 'deepseek-flash' }, subscriptions: [] })
+})
+
+it('saves conservation without rewriting priorities, previews parked providers and restores normal choices', async () => {
+  const normal = { provider: 'premium', model: 'strong' }
+  server.settings.models.hierarchy = [{ ...normal, starred: true }]
+  server.settings.models.helper = normal
+  server.settings.eval.model = normal
+  server.settings.executor.model = normal
+  server.settings.models.subscriptions = [{ provider: 'premium', status: 'exhausted', resetAt: '2026-11-20T00:00:00Z' }]
+  at({ page: 'settings', query: { group: 'execution' } })
+  await mount()
+  expect(text()).toContain('No eligible managed model route')
+  const mode = document.querySelector<HTMLElement>('[role="switch"][aria-label="' + zh.conserveMode + '"]')!
+  await click(mode)
+  expect(text()).toContain('deepseek-official / deepseek-flash')
+  expect((field<HTMLInputElement>(zh.subscriptionResetAt)).value).toBe('2026-11-20T00:00:00Z')
+  await click(find(zh.save, '.dt-savebar button'))
+  expect(server.settings.models.conserve).toBe(true)
+  expect(server.settings.models.hierarchy).toEqual([{ ...normal, starred: true }])
+  expect(server.settings.models.helper).toEqual(normal)
+  expect(server.settings.executor.model).toEqual(normal)
+  await click(document.querySelector<HTMLElement>('[role="switch"][aria-label="' + zh.conserveMode + '"]')!)
+  const status = field<HTMLSelectElement>(zh.subscriptionStatus)
+  await act(async () => { status.value = 'available'; status.dispatchEvent(new Event('change', { bubbles: true })) })
+  expect(text()).toContain('premium / strong')
+  await click(find(zh.save, '.dt-savebar button'))
+  expect(server.settings.models).toMatchObject({ conserve: false, hierarchy: [{ ...normal, starred: true }], helper: normal,
+    subscriptions: [{ provider: 'premium', status: 'available', resetAt: '2026-11-20T00:00:00Z' }] })
 })

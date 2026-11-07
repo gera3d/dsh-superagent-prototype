@@ -3,6 +3,7 @@ import { cloneElement, createContext, useContext, useEffect, useId, useLayoutEff
   type ReactNode } from 'react'
 import type { ApiResponse } from '../app/api.ts'
 import type { FieldSpec, Localized } from '../sources/kind.ts'
+import { routingView } from '../model-routing.ts'
 import { LIMITS } from '../limits.ts'
 import { usePoll, type HistoryView, type Settings, type SettingsView, type SourceView } from './api.ts'
 import { Button, DisclosureRow, Icon, InfoTip, Input, SegmentedControl, Switch } from './controls.tsx'
@@ -105,6 +106,10 @@ export function ModelField({ id, value, onChange }: { id: string; value: RoleMod
 }
 
 type ModelEntry = SettingsView['blocks']['models']['value']['hierarchy'][number]
+type SubscriptionMark = SettingsView['blocks']['models']['value']['subscriptions'][number]
+/** One-line provider/model label for the effective-route summary. */
+const routeLabel = (route: { provider: string; model: string } | null | undefined) =>
+  route?.provider && route.model ? `${route.provider} / ${route.model}` : '—'
 /**
  * The shared model hierarchy: the starred (most used) routes in cheapest-to-strongest order, and the cap on automatic
  * escalations. The Eval and Execution blocks keep each job type's default route, which starts this chain.
@@ -119,9 +124,14 @@ export function ModelsBlock() {
   const [catalog, setCatalog] = useState<ApiResponse<'GET models'>>()
   const [error, setError] = useState<string>()
   useEffect(() => { call('GET models').then(setCatalog, failure => setError(errorText(failure))) }, [call])
+  const settings = useSettings().settings
+  const preview = routingView({ models: { ...draft.value, maxEscalations: Number(draft.value.maxEscalations) },
+    eval: settings.blocks.eval.value, executor: settings.blocks.executor.value })
   const entry = draft.value.hierarchy
   const groups = catalog?.groups ?? []
   const edit = (next: Partial<typeof draft.value>) => draft.edit({ ...draft.value, ...next })
+  const setMark = (index: number, next: Partial<SubscriptionMark>) => edit({ subscriptions:
+    draft.value.subscriptions.map((item, at) => at === index ? { ...item, ...next } : item) })
   const set = (index: number, next: Partial<ModelEntry>) => edit({ hierarchy: entry.map((item, at) => at === index ? { ...item, ...next } : item) })
   const move = (index: number, delta: number) => {
     const to = index + delta
@@ -171,8 +181,65 @@ export function ModelsBlock() {
             value={draft.value.maxEscalations} onChange={event => edit({ maxEscalations: event.target.value })} />
         </Field>
       </div>
+      <div className="dt-form dt-block">
+        <h2 className="dt-block-title">{t('conservation')}<InfoTip text={t('conservationIntro')} /></h2>
+        <Hint>{t('conservationHint')}</Hint>
+        <Field label={t('conserveMode')}>
+          <Switch checked={draft.value.conserve} onChange={conserve => edit({ conserve })} label={t('conserveMode')} />
+        </Field>
+        <Section title={t('economyRoute')}>
+          <div className="dt-grid3">
+            <Field label={t('subscriptionProvider')}><Input list="dt-hierarchy-providers" spellCheck={false}
+              value={draft.value.economyRoute.provider}
+              onChange={event => edit({ economyRoute: { ...draft.value.economyRoute, provider: event.target.value } })} /></Field>
+            <Field label={t('modelName')}><Input list="dt-hierarchy-models-0" spellCheck={false}
+              value={draft.value.economyRoute.model}
+              onChange={event => edit({ economyRoute: { ...draft.value.economyRoute, model: event.target.value } })} /></Field>
+            <Field label={t('modelEffort')}><Input list="dt-economy-efforts" spellCheck={false}
+              value={draft.value.economyRoute.reasoningEffort ?? ''} placeholder={t('modelEffortDefault')}
+              onChange={event => edit({ economyRoute: { ...draft.value.economyRoute,
+                ...(event.target.value.trim() ? { reasoningEffort: event.target.value.trim() } : { reasoningEffort: undefined }) } })} /></Field>
+          </div>
+        </Section>
+        <Hint>Reset dates are reminders only. Mark each provider available manually when its subscription resets.</Hint>
+        <Section title={t('subscriptions')} hint={t('subscriptionsHint')} action={<Button variant="ghost" size="sm"
+          icon={<Icon name="plus" />} onClick={() => edit({ subscriptions: [...draft.value.subscriptions,
+            { provider: '', status: 'available', resetAt: '' }] })}>{t('addSubscription')}</Button>}>
+          {draft.value.subscriptions.length ? <ul className="dt-list">{draft.value.subscriptions.map((item, index) =>
+            <li key={index} className="dt-row"><div className="dt-row-main"><div className="dt-grid3">
+              <Field label={t('subscriptionProvider')}><Input list="dt-hierarchy-providers" spellCheck={false} required
+                value={item.provider} onChange={event => setMark(index, { provider: event.target.value })} /></Field>
+              <Field label={t('subscriptionStatus')}><select className="dt-input" value={item.status}
+                onChange={event => setMark(index, { status: event.target.value as SubscriptionMark['status'] })}>
+                <option value="available">{t('statusAvailable')}</option>
+                <option value="exhausted">{t('statusExhausted')}</option>
+                <option value="conserved">{t('statusConserved')}</option>
+              </select></Field>
+              <Field label={t('subscriptionResetAt')}><Input type="text" placeholder="ISO timestamp; reminder only" value={item.resetAt}
+                onChange={event => setMark(index, { resetAt: event.target.value })} /></Field>
+            </div></div><div className="dt-row-actions"><Button variant="ghost" size="sm" icon={<Icon name="trash" />}
+              aria-label={t('removeModel')} title={t('removeModel')}
+              onClick={() => edit({ subscriptions: draft.value.subscriptions.filter((_item, at) => at !== index) })} /></div>
+            </li>)}</ul> : <Hint>{t('subscriptionsHint')}</Hint>}
+        </Section>
+        <Section title={t('effectiveRoutes')}>
+          {preview.errors.map(message => <p role="alert" key={message}>{message}</p>)}
+          {!draft.value.conserve && <Hint>Automatic ranker follows the source model only while its provider is available; otherwise it uses the available hierarchy. Changes apply at the next managed model request.</Hint>}
+          <ul className="dt-list">
+            <li className="dt-row"><div className="dt-row-main">{t('roleOrchestrator')}: {routeLabel(preview.effective.orchestrator)}</div></li>
+            <li className="dt-row"><div className="dt-row-main">{t('roleWorker')}: {routeLabel(preview.effective.worker)}</div></li>
+            <li className="dt-row"><div className="dt-row-main">{t('roleHelper')}: {routeLabel(preview.effective.helper)}</div></li>
+            <li className="dt-row"><div className="dt-row-main">{t('roleRanker')}: {routeLabel(preview.effective.ranker)}</div></li>
+          </ul>
+          {draft.value.subscriptions.filter(item => item.status !== 'available').map(item =>
+            <Hint key={item.provider}>{t('skippedProvider', { provider: item.provider,
+              reason: t(item.status === 'exhausted' ? 'statusExhausted' : 'statusConserved') })}</Hint>)}
+          {draft.value.subscriptions.every(item => item.status === 'available') && <Hint>{t('skippedNone')}</Hint>}
+        </Section>
+      </div>
     </Fields>
     <SaveBar {...draft} onDiscard={draft.discard} />
+    <datalist id="dt-economy-efforts">{(models(draft.value.economyRoute.provider).find(model => model.id === draft.value.economyRoute.model.trim())?.reasoning?.efforts ?? []).map(effort => <option key={effort.id} value={effort.id}>{effort.name}</option>)}</datalist>
     <datalist id="dt-hierarchy-providers">{groups.map(group => <option key={group.id} value={group.id}>{group.name}</option>)}</datalist>
     {entry.map((item, index) => <div key={index}>
       <datalist id={`dt-hierarchy-models-${index}`}>{models(item.provider).map(model => <option key={model.id} value={model.id}>{model.name}</option>)}</datalist>

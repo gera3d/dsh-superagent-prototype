@@ -177,14 +177,26 @@ export class FindingStore {
       return this.save(record)
     })
   }
-  /** Read-only candidate; owner must select, native-dispatch and markDispatched in the same outer Store.atomic. */
-  nextQueued(): Finding | undefined {
-    if (this.db.prepare("SELECT 1 FROM finding WHERE json_extract(value,'$.state')='running' LIMIT 1").get()) return undefined
+  /**
+   * Number of confirmed jobs already dispatched: each one is atomically bound to its native ticket/assignment and holds
+   * a worker slot. Blocked findings awaiting review are deliberately not counted, so review never starves independent work.
+   */
+  runningCount(): number {
+    const row = this.db.prepare("SELECT COUNT(*) AS count FROM finding WHERE json_extract(value,'$.state')='running'").get()
+    return Number(row?.count ?? 0)
+  }
+  /**
+   * Read-only candidate; owner must select, native-dispatch and markDispatched in the same outer Store.atomic.
+   * `capacity` is the configured number of worker slots available to confirmed findings: admission stays strict FIFO and
+   * stops at the head while occupied slots are exhausted, rather than serializing on the first running finding.
+   */
+  nextQueued(capacity = 1): Finding | undefined {
+    if (capacity < 1 || this.runningCount() >= capacity) return undefined
     const row = this.db.prepare(`SELECT f.value FROM finding_queue q JOIN finding f ON f.id=q.finding_id
       WHERE json_extract(f.value,'$.state')='queued' ORDER BY q.seq LIMIT 1`).get()
     return row ? JSON.parse(String(row.value)) as Finding : undefined
   }
-  markDispatched(id: string, ticketId: string, assignmentId: string): Finding {
+  markDispatched(id: string, ticketId: string, assignmentId: string, capacity = 1): Finding {
     Identity.parse(ticketId); Identity.parse(assignmentId)
     return this.atomic(() => {
       const record = this.require(id)
@@ -192,7 +204,7 @@ export class FindingStore {
         if (record.job.ticketId === ticketId && record.job.assignmentId === assignmentId) return record
         throw new FindingError(409, 'Finding job is already bound to another dispatch')
       }
-      if (record.state !== 'queued' || !record.job || this.nextQueued()?.id !== id)
+      if (record.state !== 'queued' || !record.job || this.nextQueued(capacity)?.id !== id)
         throw new FindingError(409, 'Finding is not the next dispatchable queued job')
       record.job.ticketId = ticketId; record.job.assignmentId = assignmentId
       record.state = 'running'

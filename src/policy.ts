@@ -2,6 +2,7 @@
  * Runtime settings schemas, assessment validation, and policy gate evaluation.
  * Who may originate work is configured per Source in that Source's own identities; the Policy never maps a person across Sources.
  */
+import { ECONOMY_ROUTE } from './economy.ts'
 import { LIMITS } from './limits.ts'
 import { z } from 'zod'
 import { ADMISSION_DEFAULTS, type Admission, type AdmissionCell, type AdmissionRow } from './admission.ts'
@@ -87,15 +88,33 @@ export const ModelEntrySchema = RoleModelSchema.extend({ starred: z.boolean().de
 export type ModelEntry = z.infer<typeof ModelEntrySchema>
 const routeKey = (entry: RoleModel): string => `${entry.provider}\u0000${entry.model}\u0000${entry.reasoningEffort ?? ''}`
 /**
+ * Operator marks one subscription provider available, exhausted or temporarily conserved. The mark never changes the
+ * saved hierarchy or role routes; route resolution skips a parked provider and the operator restores it by setting
+ * `available` again. `resetAt` is only the operator's explicit time, never derived from provider dashboards.
+ */
+export const SubscriptionAvailabilitySchema = z.object({
+  provider: z.string().trim().min(1).max(200),
+  status: z.enum(['available', 'exhausted', 'conserved']).default('available'),
+  resetAt: z.string().trim().max(100).refine(value => value === '' || !Number.isNaN(Date.parse(value)), 'An ISO date-time or empty').default(''),
+}).strict()
+export type SubscriptionAvailability = z.infer<typeof SubscriptionAvailabilitySchema>
+/**
  * The shared model hierarchy and its escalation bound. `hierarchy` runs cheapest and weakest to strongest; escalation
  * walks it in order after the job type's default model (see `defaultRoute` and `escalationStep` in `role-models.ts`).
+ * `conserve` is off by default, so old saved settings keep their exact behavior. When on, managed roles use
+ * `economyRoute` (or the portable direct DeepSeek Flash default) without mutating the saved priority order.
  */
 export const ModelsConfigSchema = z.object({
   hierarchy: z.array(ModelEntrySchema).max(LIMITS.modelHierarchy.max)
     .refine(entries => new Set(entries.map(routeKey)).size === entries.length, 'Duplicate model routes').default([]),
   maxEscalations: z.number().int().min(LIMITS.maxEscalations.min).max(LIMITS.maxEscalations.max).default(2),
   helper: RoleModelSchema.nullable().default(null),
+  conserve: z.boolean().default(false),
+  economyRoute: RoleModelSchema.default(() => ({ ...ECONOMY_ROUTE })),
+  subscriptions: z.array(SubscriptionAvailabilitySchema).max(LIMITS.subscriptions.max)
+    .refine(entries => new Set(entries.map(entry => entry.provider)).size === entries.length, 'Duplicate provider marks').default([]),
 }).strict()
+export type ModelsConfig = z.infer<typeof ModelsConfigSchema>
 
 export const CharacterSchema = z.object({
   id: z.string().trim().min(1).max(100),

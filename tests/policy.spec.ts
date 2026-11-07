@@ -256,7 +256,7 @@ describe('settings migration', () => {
       policy: { rules: [], sources: { feishu: { allowed: [{ id: MEMBER, name: 'A' }], admission: {} }, github: { allowed: [{ id: 'a' }], admission: {} } } },
       eval: { mode: 'auto', timeoutSeconds: 90, model: { provider: 'p', model: 'm' } },
       executor: { model: null, maxWorkers: 5, directory: '', prepare: '', blockedCommands: [], sound: false, stallWaitSeconds: 180 },
-      models: { hierarchy: [], maxEscalations: 2, helper: null },
+      models: { hierarchy: [], maxEscalations: 2, helper: null, conserve: false, economyRoute: { provider: 'deepseek-official', model: 'deepseek-flash' }, subscriptions: [] },
       characters: {
         activeCharacterId: 'senior-developer',
         characters: [DEFAULT_SENIOR_DEVELOPER_CHARACTER],
