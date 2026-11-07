@@ -346,6 +346,7 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
   'POST deliveries/:id/confirm': { body: true, answer: () => refuse(409, 'No fixture delivery confirmation is authorized') },
   'GET decisions/inbox': { answer: () => ({ items: [] }) },
   'POST decisions/inbox': { body: true, answer: ({ body }) => ({ ok: true, id: body.id }) },
+  'POST helper/context': { body: true, answer: () => ({ context: 'Recorded workflow context' }) },
   'POST helper/suggest': { body: true, answer: () => ({ options: [
     { id: 'verify', label: 'Run tests', prompt: 'Run automated tests and inspect the diff.', recommended: true },
     { id: 'review', label: 'Review edge cases', prompt: 'Inspect error handling and edge cases.', recommended: false },

@@ -1,4 +1,5 @@
 /** Loopback-only management HTTP routes with same-origin enforcement for the web panel. */
+import { adviceContext } from './advice-context.ts'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import type { IncomingMessage, ServerResponse } from 'node:http'
@@ -261,6 +262,12 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
   const { store } = runtime
   const ticket = (id: string) => { if (!store.tickets.get(id)) throw new RouteError(404, 'Ticket not found'); return id }
   const promptBody = (input: { body: (maxBytes?: number) => Promise<unknown> }) => input.body(4 * runtime.machine.promptMaxChars.get() + 4096)
+  const contextFor = (sessionId?: string) => {
+    const ticketId = sessionId ? ticketOfSession(sessionId) : undefined
+    const ticket = ticketId ? store.tickets.get(ticketId) : undefined
+    const delivery = ticket && runtime.deliveries?.store.list().find(d => d.workers.includes(`worker-${ticket.id}`) || d.workers.includes(ticket.id))
+    return adviceContext(ticket, delivery)
+  }
   return {
     'GET state': () => stateView(runtime),
     'GET overview': () => overview(views(runtime), runtime.health, policyVersion(store.settings()),
@@ -433,21 +440,19 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
       const saved = inbox().put(item)
       return { ok: true, id: saved.id }
     },
+    'POST helper/context': async ({ body }) => {
+      const request = z.object({ sessionId: z.string().min(1).max(300) }).strict().parse(await body(1024))
+      return { context: contextFor(request.sessionId) }
+    },
     'POST helper/suggest': async ({ body }) => {
       const request = HelperDigestSchema.extend({ sessionId: z.string().min(1).max(300).optional() }).parse(await body(HELPER_BODY_MAX_BYTES))
       const { sessionId, ...digest } = request
-      const ticketId = sessionId ? ticketOfSession(sessionId) : undefined
-      const ticket = ticketId ? store.tickets.get(ticketId) : undefined
-      const delivery = ticket && runtime.deliveries?.store.list().find(d => d.workers.includes(`worker-${ticket.id}`) || d.workers.includes(ticket.id))
-      const handoff = delivery?.scopeBinding && delivery.stage === 'review' && !['accepted', 'cancelled', 'abandoned'].includes(delivery.state)
-        && !ticket?.ended && ticket?.assignments.at(-1)?.report?.state === 'ready'
-        ? 'Worker reports an artifact ready for review. Delivery scope is unbound; no release revision, target or acceptance requirements are confirmed. No publish action or live deployment evidence is available.' : undefined
-      return suggestHelper(ctx, digest, store.settings(), handoff)
+      return suggestHelper(ctx, digest, store.settings(), contextFor(sessionId))
     },
     'POST decisions/evaluate': async ({ body }) => {
       const payload = DecisionEvaluation.parse(await body())
       const settings = store.settings()
-      return evaluateDecisionWithFallback(payload, {
+      return evaluateDecisionWithFallback({ ...payload, context: `${payload.context.slice(-16000)}\nSHARED WORKFLOW CONTEXT:\n${contextFor(payload.sessionId)}` }, {
         decisions: settings.decisions,
         settings,
         call: request => configuredDecisionReply(ctx, request, settings),

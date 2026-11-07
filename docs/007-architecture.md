@@ -374,6 +374,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/app/tools/composio.ts` | Nested Composio result unwrapping, batch result preservation, failure classification, and non-retryable connection error routing |
 | `src/app/http.ts` | The `/orchestrator/api` routes: the same-origin check, request limits and one status per kind of failure |
 | `src/app/routes/helper.ts` | Compact Senior Developer suggestion schemas, tool-free drafting and bounded availability fallback through the shared model ladder |
+| `src/app/advice-context.ts` | Bounded recorded release goal, ownership, evidence and permission context shared by drafting, fallback and ranking. |
 | `src/app/dot.ts` | Same-origin Dot planning, Jev recommendations and health endpoints; stable choice IDs, strict schema validation, bounded model output and exactly one corrective retry. Returns proposals only; never dispatches threads or uses heuristic recommendations. |
 | `src/app/dot-json.ts` | Bounded balanced JSON-object extraction respecting strings/escapes; skips malformed/schema-invalid candidates without repairing or fabricating model output |
 | `src/app/decision-evaluator.ts` | Auxiliary tool-free recommendations using the source Session route or configured default, without sending work to that Session |
@@ -518,6 +519,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/runtime-concurrency.spec.ts` | Work that overlaps: Triggers during a pass, Tickets that change during deliveries and launches |
 | `tests/http.spec.ts` | The same-origin and loopback checks, failure statuses, body limits, query parsing, validated chat decision creation and idempotent resolution without worker dispatch |
 | `tests/helper.spec.ts` | Compact digest/output bounds, Senior Developer grounding, helper model defaults and bounded thrown/in-band availability fallback |
+| `tests/advice-context.spec.ts` | Release objective, stale assignment-report provenance, scope/action fencing, ordinary-conversation isolation and bounded field projection. |
 | `tests/decision-evaluation.spec.ts` | No fabricated recommendations, credential isolation, result validation and honest provider labeling |
 | `tests/decision-card.spec.tsx` | Visible question and source context, recommendation rationale, full-context and response disclosures, unavailable states and explicit evaluation without selection |
 | `tests/decision-ranker.spec.ts` | Decisions API request/response mapping, invalid ranking rejection, configured-model and unranked fallback order, no call without a configured key, and the opt-in settings defaults |

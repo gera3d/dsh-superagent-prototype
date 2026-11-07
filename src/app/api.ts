@@ -55,6 +55,7 @@ export interface Api {
   'POST deliveries/:id/confirm': { body: { revision: number; actionId: string }; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
   'GET decisions/inbox': { response: { items: PendingDecisionItem[] } }
   'POST decisions/inbox': { body: PendingDecisionItem; response: { ok: boolean; id: string } }
+  'POST helper/context': { body: { sessionId: string }; response: { context: string } }
   'POST helper/suggest': { body: HelperDigest & { sessionId?: string }; response: HelperSuggestions }
   'POST decisions/evaluate': { body: DecisionEvaluationRequest; response: DecisionEvaluationResult }
   'POST decisions/character-evaluate': { body: DecisionEvaluationRequest & { characterId?: string; diff?: string; testOutput?: string; ticketRequest?: string }; response: CharacterEvaluationResult }
