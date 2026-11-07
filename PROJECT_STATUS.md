@@ -1,6 +1,6 @@
 # DeepSeek Harness project status
 
-Updated November 06, 2026 at 8:32 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 06, 2026 at 8:35 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
 
 ## Active feature experiment — job cost summary
 
@@ -13,9 +13,9 @@ Updated November 06, 2026 at 8:32 PM PST. Owner: Codex. This is the current hand
 - Recommended “Request live cockpit capture” asks for the new feature in the live app before deployment, outside the worker's authorized scope.
 - “Review and merge PR #191” pre-fills an unsupported claim that the user reviewed it and treats the sandbox artifact merge as shipping the real backend change.
 - The real delivery is `review / blocked` with no executable action: confirmed delivery target and acceptance requirements have not been bound. The intake requested an artifact handoff, so a deployable backend candidate still needs preparation. Keep the approval boundary; expose the missing preparation as the correct next step.
-- The observed canonical phase is `ready`, with confidence zero and no score distribution. Scoring has not been demonstrated.
+- The observed canonical phase is `ready`, with confidence zero and no score distribution. Native UI confirms every prompt is Not scored and labels the group unscored/fallback. Scoring has not passed.
 
-No recommendation was clicked, no follow-up was sent to the worker, and no merge/deployment occurred. Native thread-card visual verification is pending because the Mac locked; an unlock request is outstanding. The observer only opened/refreshed the UI and read status/inbox data; these actions did not advance the job.
+No recommendation was clicked, no follow-up was sent to the worker, and no merge/deployment occurred. Native thread-card verification is now complete after the Mac was unlocked: the same four prompts appear in the actual worker thread, all marked Not scored, with an unscored/fallback label. The delivery card says implementation reported ready but no confirmation is currently offered. Autopilot is OFF. No choice was selected. Screenshot retained locally as `token-optimization/job-cost-summary-native-handoff.png`. The observer only opened/refreshed the UI and read status/inbox data; these actions did not advance the job.
 
 Intake initially waited for GitHub REST quota reset, then started normally at 8:14:54 PM Pacific. No duplicate job, alternate intake, manual retry or restart was used.
 

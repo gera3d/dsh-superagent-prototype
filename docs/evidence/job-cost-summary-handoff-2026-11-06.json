@@ -104,12 +104,13 @@
       "evidence": "Observed canonical decision phase ready, confidence 0, empty score distribution; scoring not demonstrated."
     }
   ],
-  "nativeThreadVerification": "Pending: Mac locked; unlock requested. Shared inbox decision is attributed to the correct worker session.",
+  "nativeThreadVerification": "Verified in the actual worker thread after unlock: all four choices match shared inbox; all Not scored; unscored/fallback label; no delivery confirmation offered; autopilot OFF; no choice selected.",
   "manualAdvancementInterventions": [],
   "nextDecisionOwner": "Gera",
   "selectedChoice": null,
   "limitations": [
     "Unknown monetary cost remains explicitly unavailable in the feature because no price metadata is configured.",
     "Cards existing does not prove useful recommendations or successful action execution."
-  ]
+  ],
+  "nativeScreenshot": "token-optimization/job-cost-summary-native-handoff.png"
 }
