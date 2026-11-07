@@ -71,7 +71,7 @@
       "reply": "ready",
       "evals": "ready",
       "models": "ready",
-      "github": "ready"
+      "github": "error"
     },
     "load": {
       "running": 0,
@@ -79,7 +79,20 @@
       "maxWorkers": 3
     },
     "sourceAndAssetsMatchPinnedInventories": true,
-    "paused": false
+    "paused": false,
+    "healthAtPublicationVerification": {
+      "runtime": "ready",
+      "relay": "ready",
+      "notice": "ready",
+      "launch": "ready",
+      "delivery": "ready",
+      "assessment": "ready",
+      "reply": "ready",
+      "evals": "ready",
+      "models": "ready",
+      "github": "ready"
+    },
+    "githubPolling": "Final post-acceptance check reports three failed polls: GitHub API rate limit (HTTP403). CLI rate-limit status shows available quota but is not proof of the long-running poll environment. No reset time for that environment verified; no credentials/routing changed."
   },
   "native": {
     "path": "Superagent \u2192 Search \u201cShow a trustworthy cost summary\u201d \u2192 actual ended job",
@@ -136,7 +149,8 @@
     "Worker-session coverage excludes helpers, rankers and other sessions; cache buckets may be partially reported.",
     "Two optional tests skipped; actual native receipt observed separately.",
     "Manual operator continuation, review reconciliation and publication were required; autonomous handoff not proven (issue #46).",
-    "Ended-jobs list has an unchanged legacy timestamp sorting defect; native Search opens the verified receipt. Tracked separately."
+    "Ended-jobs list has an unchanged legacy timestamp sorting defect; native Search opens the verified receipt. Tracked separately.",
+    "After acceptance, GitHub polling reports API rate limiting; previous all-ready snapshot is historical. Release remains published and accepted, other nine services ready, no jobs running/queued."
   ],
   "delivery": {
     "id": "auto-85f05a35653102da234bed56549c26dd",
