@@ -1,6 +1,10 @@
 # DeepSeek Harness project status
 
-Updated November 07, 2026 at 3:41 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 07, 2026 at 3:48 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+
+## Research — specialist agents and animated identity
+
+Read-only GitHub research completed; [comparison and proposed reuse](docs/research/specialist-agents-2026-11-07.md). Closest product match: Pixel Office. Reusable animation boundary: Pixel Agents. Specialist briefs: Agency Agents. Cloudflare expertise/tools: official Cloudflare Skills/MCP. Selected source and root licenses inspected; no installation/runtime qualification or DSH compatibility claimed. Recommendation is component reuse inside existing Harness authority/state rather than a second competing runtime. Administrator/profile/animation implementation is proposed, not started. Existing approved parallel work continues separately.
 
 ## Active parallel work — approved November07 afternoon
 
