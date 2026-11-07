@@ -10,6 +10,9 @@ const delivery = { id: 'd', revision: 3, stage: 'review', state: 'blocked', scop
 it('keeps the verified-release objective and transfers ownership without granting publication', () => {
   const context = adviceContext(ticket, delivery)
   expect(context).toContain('publication and live verification')
+  expect(context).toContain('Every release-package instruction must keep PR-body text outside')
+  expect(context).toContain('check the current target head')
+  expect(context).toContain('A requested handoff does not clear a scope/approval blocker')
   expect(context).toContain('Worker must not publish')
   expect(context).toContain('finish its whole permitted release package')
   expect(context).toContain('"offeredAction":null')
