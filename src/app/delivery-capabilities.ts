@@ -61,7 +61,7 @@ const MAX_DIFF = 100_000
 type ModelBudget = { label: string; maxTokens: number; timeoutMs: number; maxResponseChars: number }
 // A complete real review spends output on reasoning plus the strict-JSON verdict, so it gets bounded token/time headroom;
 // advice retains its tighter token/time budget. The 32,000-character response bound applies to both and input limits are unchanged.
-const REVIEW_BUDGET: ModelBudget = { label: 'review', maxTokens: 32_768, timeoutMs: 180_000, maxResponseChars: 32_000 }
+const REVIEW_BUDGET: ModelBudget = { label: 'review', maxTokens: 65_536, timeoutMs: 300_000, maxResponseChars: 32_000 }
 const ADVICE_BUDGET: ModelBudget = { label: 'advice', maxTokens: 8_192, timeoutMs: 60_000, maxResponseChars: 32_000 }
 
 async function modelJSON(deps: DeliveryCapabilityDependencies, system: string, data: unknown, budget: ModelBudget, signal?: AbortSignal): Promise<{ value: unknown; provider: string }> {

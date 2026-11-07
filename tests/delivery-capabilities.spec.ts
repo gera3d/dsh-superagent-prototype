@@ -67,8 +67,9 @@ it('invokes the configured executor independently with no tools and persists exa
 it('gives independent review bounded token and time headroom while advice keeps its tighter budget', async () => {
   const h = fixture(); const timeout = vi.spyOn(AbortSignal, 'timeout')
   const review = h.lease(); deliveries.complete(review, await h.caps.review!.execute(review))
-  expect(h.stream).toHaveBeenCalledWith(expect.objectContaining({ tools: [], maxTokens: 32_768 }))
-  expect(timeout).toHaveBeenCalledWith(180_000)
+  // Exact finite review ceiling: 65,536 output tokens and 300,000 ms; advice stays at 8,192 tokens / 60,000 ms.
+  expect(h.stream).toHaveBeenCalledWith(expect.objectContaining({ tools: [], maxTokens: 65_536 }))
+  expect(timeout).toHaveBeenCalledWith(300_000)
   const d = deliveries.get('feature')!, action = d.nextAction!
   h.setVerdict({ disposition: 'hold', actionId: action.id, fingerprint: action.fingerprint, rationale: 'Hold until separately authorized deployment review completes.' })
   await recommendDeliveryAction(d, action, h.deps)
