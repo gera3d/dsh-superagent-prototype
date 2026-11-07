@@ -23,18 +23,32 @@ const REVIEW_KEYS = new Set(['verdict', 'findings', 'rationale'])
 const FINDING_KEYS = new Set(['repository', 'pr', 'headSha', 'path', 'line', 'severity', 'message'])
 // Unknown null-only review metadata asserts nothing, so drop it losslessly before strict parsing. Core keys are kept
 // even when null (the schema still rejects them), and unknown non-null keys stay so strict parsing still rejects them.
+// Own data properties are filtered before construction: assigning "__proto__" would invoke the prototype setter,
+// silently dropping the unknown key and potentially exposing inherited core fields to the strict parser.
 function canonicalReview(value: unknown): unknown {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value
-  const canonical: Record<string, unknown> = {}
+  const entries: [string, unknown][] = []
   for (const [name, entry] of Object.entries(value)) {
     if (!REVIEW_KEYS.has(name) && entry === null) continue
-    canonical[name] = name === 'findings' && Array.isArray(entry) ? entry.map(canonicalFinding) : entry
+    entries.push([name, name === 'findings' && Array.isArray(entry) ? entry.map(canonicalFinding) : entry])
   }
-  return canonical
+  return Object.fromEntries(entries)
 }
 function canonicalFinding(value: unknown): unknown {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value
   return Object.fromEntries(Object.entries(value).filter(([name, entry]) => FINDING_KEYS.has(name) || entry !== null))
+}
+// Strict Zod parsing does not enumerate an own "__proto__" key, so explicitly reject any unknown key that survived
+// canonicalization (every unknown non-null key). This keeps the strict contract without normalizing non-null fields.
+function assertReviewKeys(value: unknown): void {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return
+  for (const name of Object.keys(value)) if (!REVIEW_KEYS.has(name)) throw new Error(`Unrecognized review key: ${name}`)
+  const findings = (value as Record<string, unknown>).findings
+  if (!Array.isArray(findings)) return
+  for (const finding of findings) {
+    if (!finding || typeof finding !== 'object' || Array.isArray(finding)) continue
+    for (const name of Object.keys(finding)) if (!FINDING_KEYS.has(name)) throw new Error(`Unrecognized finding key: ${name}`)
+  }
 }
 type Review = { lease: DeliveryLease; fingerprint: string; bindingFingerprint: string; provider: string; verdict: z.infer<typeof Verdict>; result: DeliveryResult; diffs: unknown[];
   /** Per-batch verdicts of the one bounded model call made for each pinned PR; absent on legacy records. */
@@ -162,7 +176,9 @@ export function createDeliveryCapabilities(deps: DeliveryCapabilityDependencies)
           'Return ONLY one complete strict-JSON object with no Markdown fences or prose outside it, using exactly this shape: {"verdict":"passed"|"failed","findings":[{"repository":"owner/repo","pr":1,"headSha":"exact reviewTarget SHA","path":"exact reviewTarget allowedPaths filename","line":1,"severity":"critical"|"high"|"medium"|"low","message":"concrete actionable issue"}],"rationale":"reason"}. Emit exactly verdict, findings and rationale, with no path_note or any other additional key and exactly the listed finding keys. Keep the rationale concise and under 2000 characters and each finding message under 1000 characters; never emit a partial object.',
           'Every finding must identify reviewTarget.repository, reviewTarget.pr, reviewTarget.headSha and one exact reviewTarget.allowedPaths path. passed requires zero findings; failed requires at least one. Do not claim tests executed or grant merge, deployment, publication or acceptance authority.',
         ].join(' '), { requirements: delivery.requirements, reviewTarget, batch: { index: index + 1, total: diffs.length, diff } }, REVIEW_BUDGET, lease.signal)
-        const verdict = Verdict.parse(canonicalReview(reply.value))
+        const canonical = canonicalReview(reply.value)
+        assertReviewKeys(canonical)
+        const verdict = Verdict.parse(canonical)
         if ((verdict.verdict === 'passed') !== (verdict.findings.length === 0)) throw new Error('Contradictory review verdict')
         for (const finding of verdict.findings) {
           if (finding.repository !== diff.repository || finding.pr !== diff.pr || finding.headSha !== diff.headSha || !diff.files.some(f => f.filename === finding.path)) throw new Error('Review finding is not bound to supplied diff')

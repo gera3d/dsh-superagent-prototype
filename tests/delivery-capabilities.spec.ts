@@ -444,6 +444,36 @@ it('never applies null-metadata canonicalization to advice responses', async () 
   await expect(recommendDeliveryAction(d, action, h.deps)).rejects.toThrow()
 })
 
+it('rejects a parsed root __proto__ object instead of inheriting injected verdict fields', async () => {
+  const h = fixture(), l = h.lease()
+  const raw = '{"__proto__":{"verdict":"passed","findings":[],"rationale":"injected prototype verdict"}}'
+  h.stream.mockImplementationOnce(async function* () { yield { type: 'text-delta', text: raw }; yield { type: 'finish', reason: { kind: 'stop' } } })
+  const blocked = await h.caps.review!.execute(l)
+  expect(blocked.outcome).toBe('uncertain')
+  expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
+  expect(({} as Record<string, unknown>).verdict).toBeUndefined()
+  expect(({} as Record<string, unknown>).findings).toBeUndefined()
+  expect(({} as Record<string, unknown>).rationale).toBeUndefined()
+  expect(Object.prototype).not.toHaveProperty('verdict')
+  const withCore = '{"verdict":"passed","findings":[],"rationale":"own core","__proto__":{"verdict":"failed","findings":[],"rationale":"injected"}}'
+  h.stream.mockImplementationOnce(async function* () { yield { type: 'text-delta', text: withCore }; yield { type: 'finish', reason: { kind: 'stop' } } })
+  const rejected = await h.caps.review!.execute(l)
+  expect(rejected.outcome).toBe('uncertain')
+  expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
+})
+
+it('rejects a parsed finding __proto__ carrying identity fields instead of letting it pollute the finding', async () => {
+  const h = fixture(), l = h.lease()
+  const finding = '{"__proto__":{"repository":"org/repo","pr":17,"headSha":"' + HEAD + '","path":"src/code.ts","line":1,"severity":"high","message":"injected"},"message":"real message"}'
+  const raw = '{"verdict":"failed","findings":[' + finding + '],"rationale":"adversarial finding metadata"}'
+  h.stream.mockImplementationOnce(async function* () { yield { type: 'text-delta', text: raw }; yield { type: 'finish', reason: { kind: 'stop' } } })
+  expect((await h.caps.review!.execute(l)).outcome).toBe('uncertain')
+  expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
+  expect(({} as Record<string, unknown>).repository).toBeUndefined()
+  expect(({} as Record<string, unknown>).severity).toBeUndefined()
+  expect(Object.prototype).not.toHaveProperty('repository')
+})
+
 it('gives advice bounded server-derived prepared-publication proof and separates source, artifact and target', async () => {
   const h = fixture(); const review = h.lease(); deliveries.complete(review, await h.caps.review!.execute(review))
   const prepared = { id: 'manifest', ticketId: 'original', decisionId: 'decision', repository: 'org/repo', pr: 17, headSha: HEAD,
