@@ -50,9 +50,9 @@ it('validates every route of a saved model hierarchy through the live provider, 
     { provider: 'openai-codex', model: 'gpt-6.1-sol', reasoningEffort: 'high', starred: true },
   ]
   await settings.save('models', { hierarchy, maxEscalations: 1 }, store.blockRevision('models'), 'panel')
-  expect(store.settings().models).toEqual({ hierarchy, maxEscalations: 1, helper: null })
-  expect(settings.block('models').value).toEqual({ hierarchy, maxEscalations: 1, helper: null })
-  expect(settings.view().models.value).toEqual({ hierarchy, maxEscalations: 1, helper: null })
+  expect(store.settings().models).toEqual({ conserve: false, economyRoute: { provider: 'deepseek-official', model: 'deepseek-flash' }, subscriptions: [], hierarchy, maxEscalations: 1, helper: null })
+  expect(settings.block('models').value).toEqual({ conserve: false, economyRoute: { provider: 'deepseek-official', model: 'deepseek-flash' }, subscriptions: [], hierarchy, maxEscalations: 1, helper: null })
+  expect(settings.view().models.value).toEqual({ conserve: false, economyRoute: { provider: 'deepseek-official', model: 'deepseek-flash' }, subscriptions: [], hierarchy, maxEscalations: 1, helper: null })
   expect(llm.resolveCallConfig).toHaveBeenCalledWith(expect.objectContaining({ provider: 'openai-codex', model: 'gpt-6.1-sol' }))
   // The panel's block route accepts the block, as it accepts the other settings blocks.
   expect((await h.api('PUT', 'settings/models', { value: { hierarchy, maxEscalations: 1 }, revision: store.blockRevision('models') })).status)
@@ -61,7 +61,7 @@ it('validates every route of a saved model hierarchy through the live provider, 
   llm.resolveCallConfig.mockRejectedValueOnce(new Error('unknown provider nowhere'))
   await expect(settings.save('models', { hierarchy: [...hierarchy, { provider: 'nowhere', model: 'missing', starred: false }], maxEscalations: 2 },
     store.blockRevision('models'), 'panel')).rejects.toThrow(UserError)
-  expect(store.settings().models).toEqual({ hierarchy, maxEscalations: 1, helper: null })
+  expect(store.settings().models).toEqual({ conserve: false, economyRoute: { provider: 'deepseek-official', model: 'deepseek-flash' }, subscriptions: [], hierarchy, maxEscalations: 1, helper: null })
 })
 
 it('validates the helper override on save and preserves the old route on provider rejection', async () => {
@@ -137,4 +137,17 @@ it('records nothing for a pause that changes nothing, refuses a sync while setup
   await expect(settings.sync('feishu')).rejects.toThrow(new UserError('nothingToSync', { source: 'feishu' }))
   vi.mocked(Setup.prototype.configured).mockRestore()
   expect(() => settings.block('source:x')).toThrow(new UserError('unknownBlock', { block: 'source:x' }))
+})
+
+it('validates an unchanged economy route when conservation is first enabled and rejects a parked economy provider', async () => {
+  h = await startRuntime()
+  const { settings, store } = h.runtime
+  const llm = (h.ctx as unknown as { llm: { resolveCallConfig: ReturnType<typeof vi.fn> } }).llm
+  llm.resolveCallConfig.mockRejectedValueOnce(new Error('economy provider unavailable'))
+  await expect(settings.save('models', { ...store.settings().models, conserve: true }, store.blockRevision('models'), 'panel')).rejects.toThrow(UserError)
+  expect(store.settings().models.conserve).toBe(false)
+  await expect(settings.save('models', { ...store.settings().models, conserve: true,
+    subscriptions: [{ provider: store.settings().models.economyRoute.provider, status: 'exhausted' }] },
+    store.blockRevision('models'), 'panel')).rejects.toThrow(UserError)
+  expect(store.settings().models.conserve).toBe(false)
 })

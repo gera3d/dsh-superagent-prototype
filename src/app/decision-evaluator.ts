@@ -4,7 +4,7 @@ import type { ModelSelection } from '@deepseek-ai/dsh-agent'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { DecisionEvaluationRequest, DecisionModelReply } from '../core/decision.ts'
 import type { RoleModel, Settings } from '../policy.ts'
-import { isModelUnavailable, unavailableFallbackStep } from './role-models.ts'
+import { evaluatorRoute, isModelUnavailable, unavailableFallbackStep } from './role-models.ts'
 
 async function executeDecisionCall(ctx: Context, selected: ModelSelection, request: DecisionEvaluationRequest): Promise<DecisionModelReply> {
   const signal = AbortSignal.timeout(60000)
@@ -41,8 +41,10 @@ export async function configuredDecisionReply(ctx: Context, request: DecisionEva
   // Use the source conversation's last effective route, otherwise the configured default.
   // Never mutate model selection, read credentials, or send work to the source agent.
   const source = request.sessionId ? ctx.agents.get(request.sessionId as SessionId) : undefined
-  const selected = source?.session.requestHeader()?.config
+  const sourceSelection = source?.session.requestHeader()?.config
     ?? (ctx.get('agentDefaultModel') as { currentSelection(): ModelSelection } | undefined)?.currentSelection()
+  const route = settings ? evaluatorRoute(settings, sourceSelection) : sourceSelection
+  const selected = route as ModelSelection | undefined
   if (!selected?.provider || !selected.model) throw new Error('No configured model selection is available')
 
   try {

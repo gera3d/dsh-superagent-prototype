@@ -108,4 +108,52 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
     const allSelections = selections()
     expect(allSelections.some(s => s.provider === 'deepseek-official' && s.model === 'deepseek-flash')).toBe(false)
   })
+
+  /** A ticket on the configured hierarchy, with the route selections its worker Session recorded. */
+  const routable = async () => {
+    await h.runtime.settings.save('models', { hierarchy: [gemini, sol, sonnet], maxEscalations: 2 },
+      h.runtime.store.blockRevision('models'), 'panel')
+    const one = await h.acceptedTicket(feishu('route-1', '@bot Fix provider routing'))
+    const agent = h.agents.get(one.sessionId)!
+    const session = (agent as unknown as { session: { append: ReturnType<typeof vi.fn> } }).session
+    return {
+      one,
+      agent,
+      selections: () => session.append.mock.calls.filter(([event]) => event === 'model/selection').map(([, value]) => value),
+      retried: () => h.deliveries.mock.calls.some(([call]) => call.sessionId === one.sessionId && call.text.includes('passing reason')),
+    }
+  }
+
+  it('switches route at once for an HTTP 429 instead of retrying the same route', async () => {
+    const { agent, selections, retried } = await routable()
+    h.ctx.emit('agent/error', { agent, turn: 1, step: 1, error: Object.assign(new Error('Too many requests'), { status: 429 }) } as never)
+    await h.runtime.idle()
+    expect(selections().at(-1)).toMatchObject({ provider: 'openai-codex', model: 'gpt-6.1-sol' })
+    expect(retried()).toBe(false)
+  })
+
+  it.each([
+    ['a quota message', Object.assign(new Error('Quota exceeded for gemini-3.8-flash'), { status: 503 })],
+    ['a cooldown message', Object.assign(new Error('The account is in cooldown'), { status: 503 })],
+    ['a budget code', Object.assign(new Error('Provider refused the request'), { status: 500, code: 'BUDGET_EXCEEDED' })],
+    ['an account message', Object.assign(new Error('No account can serve this route'), { status: 502 })],
+  ])('switches route at once for a numeric status with %s', async (_case, error) => {
+    const { agent, selections, retried } = await routable()
+    h.ctx.emit('agent/error', { agent, turn: 1, step: 1, error } as never)
+    await h.runtime.idle()
+    expect(selections().at(-1)).toMatchObject({ provider: 'openai-codex', model: 'gpt-6.1-sol' })
+    expect(retried()).toBe(false)
+  })
+
+  it('retries a generic 503 on the same route before any route switch', async () => {
+    const { agent, selections, retried } = await routable()
+    const before = selections().length
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    try {
+      h.ctx.emit('agent/error', { agent, turn: 1, step: 1, error: Object.assign(new Error('Service Unavailable'), { status: 503 }) } as never)
+      await vi.advanceTimersByTimeAsync(15_000)
+    } finally { vi.useRealTimers() }
+    expect(selections()).toHaveLength(before)
+    expect(retried()).toBe(true)
+  })
 })

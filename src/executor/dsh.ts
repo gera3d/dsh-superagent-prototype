@@ -16,7 +16,7 @@ import { executionRoot, type Variable } from '../app/execution-environment.ts'
 import type { Sessions } from '../app/sessions.ts'
 import { WorktreeNameSchema } from '../app/assessment.ts'
 import { resultRelay } from '../app/notices.ts'
-import { defaultRoute, fallbackNote, isModelUnavailable, sameRoute, unavailableFallbackStep, DEEPSEEK_FALLBACK_ROUTE } from '../app/role-models.ts'
+import { constrainedRoute, defaultRoute, fallbackNote, isModelUnavailable, sameRoute, unavailableFallbackStep, DEEPSEEK_FALLBACK_ROUTE } from '../app/role-models.ts'
 import type { HealthEntry } from '../infra/health.ts'
 import { cancelled, collectJob, killJobs, runningJobs, stopBackground, stopSubagents, until, untilQuiet } from './background.ts'
 
@@ -53,6 +53,22 @@ export function transient(error: unknown): boolean {
   if (typeof status === 'number') return status === 408 || status === 429 || status >= 500
   const text = error instanceof Error ? `${error.name} ${error.message} ${String((error as { code?: unknown }).code ?? '')}` : String(error)
   return PASSING.test(text)
+}
+/** Provider text or code that names an availability condition that retrying the same route cannot fix. */
+const AVAILABILITY = /quota|cooldown|budget|account|rate.?limit|resource.?exhausted|overloaded/i
+/**
+ * True when an unavailable model should switch route at once instead of retrying the same route. An HTTP 429, or a
+ * text or code that names quota, cooldown, budget, account or rate limiting, is a condition of that route and its
+ * account; a generic HTTP 408/5xx or a transport failure is retried on the same route first, for it may pass.
+ */
+function switchesRoute(error: unknown): boolean {
+  if (!isModelUnavailable(error)) return false
+  const status = (error as { status?: unknown } | undefined)?.status
+  if (status === 429) return true
+  const code = (error as { code?: unknown } | undefined)?.code
+  const text = error instanceof Error ? `${error.name} ${error.message} ${String(code ?? '')}` : `${String(error)} ${String(code ?? '')}`
+  if (AVAILABILITY.test(text)) return true
+  return !transient(error)
 }
 /** Appends a stable 12-character ticket ID suffix to a validated English worktree name. */
 const ticketWorktreeName = (name: string, id: string): string => `${WorktreeNameSchema.parse(name)}-${id.slice(0, 12)}`
@@ -321,7 +337,7 @@ export class DshExecutor implements Executor {
           // Recreate the worker session if it was externally deleted, on the Assignment's escalated route when it has one.
           if (!this.host.context.agents.get(sessionId as SessionId)) {
             const escalated = ticket.escalations?.find(item => item.assignmentId === assignment.id)?.to
-            await this.host.sessions.ensure(sessionId, ticket.execution?.directory ?? '', ticket.title, 'worker', escalated)
+            await this.host.sessions.ensure(sessionId, ticket.execution?.directory ?? '', ticket.title, 'worker', constrainedRoute(this.host.store.settings(), escalated ?? defaultRoute(this.host.store.settings(), 'executor')))
           }
           if (input) await this.deliverInput(ticket, assignment, input)
         } catch (error) {
@@ -537,7 +553,8 @@ export class DshExecutor implements Executor {
     const sessionId = workerSessionId(ticket.id)
     // An escalated Assignment starts on its stronger route, also in a Session this Executor had to create again.
     const escalation = ticket.escalations?.find(item => item.assignmentId === assignment.id)
-    let targetModel: RoleModel | null = escalation?.to ?? defaultRoute(this.host.store.settings(), 'executor')
+    let targetModel: RoleModel | null = constrainedRoute(this.host.store.settings(), escalation?.to
+      ?? defaultRoute(this.host.store.settings(), 'executor'))
     let agent: Agent
     try {
       agent = await this.host.sessions.ensure(sessionId, workspace, ticket.title, 'worker', targetModel)
@@ -572,7 +589,7 @@ export class DshExecutor implements Executor {
     // Selecting the route first keeps the escalated Assignment's first turn on the stronger model; once recorded, a retry of
     // this launch does not select it again.
     if (escalation && !escalation.appliedAt) {
-      try { await this.host.sessions.selectModel(agent, escalation.to) }
+      try { await this.host.sessions.selectModel(agent, constrainedRoute(this.host.store.settings(), escalation.to)!) }
       catch (error) {
         if (isModelUnavailable(error)) {
           const tried = this.unavailableRoutes.get(ticket.id) ?? []
@@ -671,7 +688,9 @@ export class DshExecutor implements Executor {
       const ticket = this.ticketOf(agent)
       const assignment = ticket && runningAssignment(ticket)
       if (!ticket || !assignment || !liveTicket(ticket) || this.host.closing()) return
-      if (isModelUnavailable(error)) {
+      // An explicit availability condition (quota, cooldown, budget, account, 429) switches route at once; a generic
+      // HTTP 408/5xx or transport failure takes the same-route retry budget first, for it may pass.
+      if (switchesRoute(error)) {
         await this.handleUnavailableModel(ticket, assignment, agent, error)
         return
       }

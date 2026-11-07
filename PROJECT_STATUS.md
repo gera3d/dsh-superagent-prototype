@@ -24,7 +24,7 @@ The live managed roles remain on the qualified DeepSeek Flash 1017 Particle AI f
 
 ## Release gates
 
-141 focused tests pass, including new parked-source/default/session regressions. Type checking passes. Combined full suite and build are running. New combined changes are **not deployed yet**. No user approval is missing.
+141 focused tests pass, including new parked-source/default/session regressions. Type checking passes. The first full suite returned 2147 passes, two skips and six failures. All six failures now pass in a 74-test recheck; a final full run of the stable candidate is running. Build passes. New combined changes are **not deployed yet**. No user approval is missing.
 
 ## Risks and evidence
 

@@ -199,3 +199,11 @@ it('does not retry after the shared twenty-second deadline', async () => {
   expect(deadline).toHaveBeenCalledWith(20000)
   expect(JSON.parse(h.logger.warn.mock.calls[0]![1])).toMatchObject({ category: 'deadline', stage: 'configuration', attempt: 1 })
 })
+
+it('does not call the inherited host provider when every managed provider is parked', async () => {
+  const h = harness()
+  const settings = SettingsSchema.parse({ models: { subscriptions: [{ provider: 'default', status: 'exhausted' }] } })
+  await expect(suggestHelper(h.ctx, digest, settings)).rejects.toThrow('No eligible')
+  expect(h.calls).toHaveLength(0)
+  expect(h.resolveCallConfig).not.toHaveBeenCalled()
+})

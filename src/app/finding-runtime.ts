@@ -16,6 +16,8 @@ export interface FindingRuntimeDependencies {
   ctx: Context; store: Store; commands: Commands; engine: Pick<Engine, 'dispatchFinding' | 'stopTicket'>; lifetime: AbortSignal
   repository?: () => string
   isQuiescent?: (ticket: Ticket) => boolean | Promise<boolean>
+  /** Whether a ticket currently holds a native worker slot outside confirmed finding admission. */
+  workerBusy?: (ticket: Ticket) => boolean
 }
 const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error)).replace(/\s+/g, ' ').slice(0, 1000)
 
@@ -48,7 +50,7 @@ export async function recommendFindingAction(finding: Finding, deps: FindingRunt
   return { choiceId: value.choiceId, rationale: value.rationale, provider: `${config.provider} / ${config.model}`, recordedAt: new Date().toISOString() }
 }
 
-/** Owns configured advice, reconciled evidence and serialized confirmed native finding dispatch. */
+/** Owns configured advice, reconciled evidence and capacity-limited confirmed native finding dispatch. */
 export class FindingRuntime {
   readonly store: FindingStore
   private readonly deliveries: DeliveryStore
@@ -130,20 +132,66 @@ export class FindingRuntime {
       }
     }
   }
-  private dispatch(): void {
+  /**
+   * Worker slots already occupied outside the findings this store has running, which the store counts itself. Ordinary
+   * tickets count only while genuinely busy: a blocked/reviewed finding waiting for a person holds no slot and never
+   * starves independent work, while an in-flight review correction keeps its slot.
+   */
+  private externalOccupied(): number {
+    const running = new Set(this.store.list().flatMap(finding => finding.state === 'running' && finding.job?.ticketId ? [finding.job.ticketId] : []))
+    let occupied = 0
+    for (const ticket of this.deps.store.tickets.open()) {
+      if (running.has(ticket.id)) continue
+      try { if (this.deps.workerBusy?.(ticket)) occupied++ }
+      catch { return Number.POSITIVE_INFINITY } // Unknown native activity never authorizes admission past capacity.
+    }
+    return occupied
+  }
+  /**
+   * A reviewed finding's fresh job must not overlap its own prior native workers, which remain in ticket history while
+   * they stop. This gate is per finding: independent confirmed findings admit independently.
+   */
+  private async priorWorkQuiescent(finding: Finding): Promise<boolean> {
+    if (!this.deps.isQuiescent) return true
+    for (const job of finding.priorJobs ?? []) {
+      if (!job.ticketId) continue
+      const ticket = this.deps.store.tickets.get(job.ticketId)
+      if (!ticket) continue
+      try { if (!await this.deps.isQuiescent(ticket)) return false }
+      catch { return false }
+    }
+    return true
+  }
+  /** Admits durable FIFO queued findings up to the configured worker capacity. Independent of model availability. */
+  private async dispatch(): Promise<void> {
     if (this.deps.store.settings().paused) return
-    this.deps.store.atomic(() => {
+    const limit = this.deps.store.settings().executor.maxWorkers
+    while (!this.deps.lifetime.aborted) {
+      const capacity = limit - this.externalOccupied()
+      if (capacity < 1) return
+      const candidate = this.store.nextQueued(capacity)
+      if (!candidate?.job) return
+      if (!await this.priorWorkQuiescent(candidate)) return
+      if (!this.dispatchOne(candidate.id)) return
+    }
+  }
+  private dispatchOne(id: string): boolean {
+    return this.deps.store.atomic(() => {
       this.deps.lifetime.throwIfAborted()
-      const finding = this.store.nextQueued()
-      if (!finding?.job) return
+      // Re-read limit and candidate inside the transaction: a concurrent pause, capacity change or admission must win.
+      if (this.deps.store.settings().paused) return false
+      const capacity = this.deps.store.settings().executor.maxWorkers - this.externalOccupied()
+      if (capacity < 1) return false
+      const finding = this.store.nextQueued(capacity)
+      if (!finding?.job || finding.id !== id) return false
       if (this.deps.repository && finding.repository !== this.deps.repository()) {
         this.store.markBlocked(finding.id, 'Finding repository does not match the configured deployment repository; no worker was dispatched.')
-        return
+        return true
       }
       const delivery = finding.existingDeliveryId ? this.deliveries.get(finding.existingDeliveryId) : undefined
       if (finding.existingDeliveryId && (!delivery || delivery.bindings.repository !== finding.repository)) {
         this.store.markBlocked(finding.id, 'Existing delivery is missing or belongs to a different repository; no worker was dispatched.')
-        return
+        return true
       }
       const ticket = this.deps.engine.dispatchFinding({ jobId: finding.job.id, findingId: finding.id, title: finding.title,
         scope: finding.scope, repository: finding.repository, sourceIssue: finding.sourceIssue, existingDeliveryId: finding.existingDeliveryId,
@@ -157,13 +205,14 @@ export class FindingRuntime {
         ].join('\n') })
       const assignment = ticket.assignments[0]
       if (!assignment || ticket.assignments.length !== 1) throw new Error('Finding native job must have exactly one assignment')
-      this.store.markDispatched(finding.id, ticket.id, assignment.id)
+      this.store.markDispatched(finding.id, ticket.id, assignment.id, capacity)
       // Verification/correction is a relation, not an original implementation worker. Never let its
       // ready report satisfy old implementation/acceptance gates. Settled delivery history stays immutable;
       // Finding.existingDeliveryId + job remains the durable relation for those terminal aggregates.
       if (delivery && !['accepted', 'cancelled', 'abandoned'].includes(delivery.state)) this.deliveries.compareAndSwap(delivery.id, delivery.revision, current => {
         current.audit.push({ event: `finding-assignment:${finding.id}:${finding.job!.id}:ticket/${ticket.id}/assignment/${assignment.id}`, actor: 'local-operator', at: new Date().toISOString() })
       })
+      return true
     })
   }
   private async advice(finding: Finding): Promise<Omit<FindingRecommendation, 'revision'>> {
@@ -179,18 +228,10 @@ export class FindingRuntime {
   }
   private async pass(): Promise<void> {
     this.reconcile()
-    // Dispatch is durable FIFO, independent of model availability; at most one job starts in a pass.
-    let quiet = true
-    if (this.deps.isQuiescent) {
-      // Review may replace Finding.job; prior native workers remain in ticket history and must all stop.
-      for (const ticket of this.deps.store.tickets.list()) {
-        if (this.deps.store.triggers.get(ticket.origin.triggerId)?.source !== 'finding') continue
-        try { if (!await this.deps.isQuiescent(ticket)) { quiet = false; break } }
-        catch { quiet = false; break } // Unknown native activity never authorizes overlapping work.
-      }
-    }
+    // Dispatch is durable FIFO, independent of model availability, up to the configured worker capacity. Each queued job
+    // waits only for its own prior native workers to stop, never for unrelated confirmed findings.
     if (this.deps.lifetime.aborted) return
-    if (quiet) this.dispatch()
+    await this.dispatch()
     for (const finding of this.store.list()) {
       if (this.deps.lifetime.aborted) return
       if (finding.state !== 'awaiting_decision' || finding.recommendation || finding.recommendationError) continue

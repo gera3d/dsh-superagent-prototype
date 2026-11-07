@@ -14,7 +14,7 @@ import { AgentDelivery, messageId } from './delivery.ts'
 import type { Effects } from './effects.ts'
 import type { Variable } from './execution-environment.ts'
 import { RetryHealth } from './retry-health.ts'
-import { defaultRoute, fallbackNote, initializeRoleModel, isModelUnavailable, selectRoleModel, unavailableFallbackStep } from './role-models.ts'
+import { defaultRoute, fallbackNote, initializeRoleModel, isModelUnavailable, installRoutingGuard, selectRoleModel, unavailableFallbackStep } from './role-models.ts'
 import { bundledSkills } from './skill-files.ts'
 import { SKILL_PREFIX, type PromptVersion, type Prompts } from './prompts.ts'
 import type { Store } from './store.ts'
@@ -43,7 +43,7 @@ export interface SessionsHost {
  * What Sessions registered for an agent it decorated: the releases of its prompt section, tools and skill scope, the scope
  * its skills are registered in, and the skills of one prompt revision; for a worker's subagent, only its tool limits.
  */
-interface SessionBinding { disposers: (() => void)[]; scope?: Context; skills?: { revision: number; dispose: () => void }; subagent?: true }
+interface SessionBinding { routing?: () => void; disposers: (() => void)[]; scope?: Context; skills?: { revision: number; dispose: () => void }; subagent?: true }
 
 /** The agent presets Executor Sessions and the main Session are created with, which the bundle's patch defines. */
 export const WORKER_PRESET = 'dsh-superagent-worker', ROUTER_PRESET = 'dsh-superagent-router'
@@ -178,12 +178,22 @@ export class Sessions {
       } else throw error
     }
     await this.decorate(result.agent)
+    this.protectRouting(result.agent)
     ctx.permissionPresets.set(result.agent.session, 'danger-full-access')
     await ctx.sessionController.rename({ sessionId: id as SessionId, title })
     return result.agent
   }
   /** Select a route on an existing Session, which the Executor does before an escalated Assignment's first turn. */
-  async selectModel(agent: Agent, model: RoleModel): Promise<void> { await selectRoleModel(this.ctx, agent, model) }
+  async selectModel(agent: Agent, model: RoleModel): Promise<void> {
+    await selectRoleModel(this.ctx, agent, model)
+    this.protectRouting(agent)
+  }
+  private protectRouting(agent: Agent): void {
+    const binding = this.bindings.get(agent)
+    if (!binding || binding.subagent) return
+    binding.routing?.()
+    binding.routing = installRoutingGuard(this.ctx, agent, () => this.host.store.settings())
+  }
   /** Returns whether `sessionId` already holds the message delivered under `requestId`, or `false` if the session does not exist. */
   async holds(sessionId: string, requestId: string): Promise<boolean> {
     const result = await this.ctx.sessionController.resolveAgent(sessionId as SessionId)
@@ -268,6 +278,8 @@ export class Sessions {
     if (!master && !ticket) { this.limitSubagent(agent); return }
     const binding: SessionBinding = { disposers: [] }
     this.bindings.set(agent, binding)
+    this.protectRouting(agent)
+    binding.disposers.push(() => binding.routing?.())
     this.retryHealth.restore(agent.id, agent.session.snapshotEvents())
     if (agent.status === 'idle') this.retryHealth.clear(agent.id)
     this.updateModelHealth()

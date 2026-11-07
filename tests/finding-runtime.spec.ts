@@ -15,11 +15,16 @@ import { DshExecutor, type ExecutorHost } from '../src/executor/dsh.ts'
 
 const cleanup: (() => void)[] = []
 afterEach(() => { vi.restoreAllMocks(); for (const done of cleanup.splice(0).reverse()) done() })
+/** Existing concurrency expectations assume the one-worker limit; capacity tests raise it explicitly. */
+function capacity(h: { store: Store }, maxWorkers: number) {
+  const settings = h.store.settings()
+  h.store.saveSettings({ ...settings, executor: { ...settings.executor, maxWorkers } })
+}
 function fixture() {
   const directory = mkdtempSync(join(tmpdir(), 'finding-runtime-'))
   const store = new Store(join(directory, 'db.sqlite'))
   cleanup.push(() => { store.close(); rmSync(directory, { recursive: true, force: true }) })
-  store.saveSettings({ executor: { model: { provider: 'configured', model: 'executor' } } })
+  store.saveSettings({ executor: { model: { provider: 'configured', model: 'executor' }, maxWorkers: 1 } })
   store.db.exec('CREATE TABLE test_native_launch (ticket TEXT PRIMARY KEY, assignment TEXT)')
   const start = vi.fn((ticket: { id: string }, assignment: { id: string }) => {
     store.db.prepare('INSERT INTO test_native_launch VALUES (?,?)').run(ticket.id, assignment.id)
@@ -81,6 +86,92 @@ it('dispatches FIFO once across concurrent requests and restart; reports require
   expect(h.note).not.toHaveBeenCalled()
   expect(h.store.tickets.get(ticket.id)?.assignments).toHaveLength(1)
   restart.stop()
+})
+it('admits three independent confirmed findings at capacity three and holds the next in FIFO order', async () => {
+  const h = fixture(); capacity(h, 3)
+  const findings = ['a', 'b', 'c', 'd'].map(key => h.confirm(h.observe(key).id))
+  await Promise.all([h.runtime.request(), h.runtime.request()])
+  expect(findings.slice(0, 3).map(finding => h.runtime.store.get(finding.id)?.state)).toEqual(['running', 'running', 'running'])
+  expect(h.runtime.store.get(findings[3]!.id)?.state).toBe('queued')
+  expect(h.start).toHaveBeenCalledTimes(3)
+  // Repeated wakes are idempotent: a fresh pass never binds a second native job to an admitted finding.
+  await h.runtime.request(); await h.runtime.request()
+  expect(h.start).toHaveBeenCalledTimes(3)
+  const first = h.runtime.store.get(findings[0]!.id)!
+  h.engine.assignmentStarted(first.job!.ticketId!, first.job!.assignmentId!)
+  h.engine.report(first.job!.ticketId!, { state: 'ready', summary: 'Bounded evidence ready for review' })
+  await h.runtime.request()
+  // Only the finished slot is reused; the other two running findings keep their own jobs.
+  expect(h.runtime.store.get(findings[0]!.id)?.state).toBe('blocked')
+  expect(findings.slice(1, 3).map(finding => h.runtime.store.get(finding.id)?.state)).toEqual(['running', 'running'])
+  expect(h.runtime.store.get(findings[3]!.id)?.state).toBe('running')
+  expect(h.start).toHaveBeenCalledTimes(4)
+  await h.runtime.stop()
+})
+it('honors pause and capacity reduction without killing in-flight findings', async () => {
+  const h = fixture(); capacity(h, 3)
+  const findings = ['a', 'b', 'c', 'd'].map(key => h.confirm(h.observe(key).id))
+  await h.runtime.request()
+  expect(h.start).toHaveBeenCalledTimes(3)
+  // Lowering the limit admits nothing new and leaves every in-flight job running.
+  capacity(h, 1)
+  await h.runtime.request()
+  expect(findings.map(finding => h.runtime.store.get(finding.id)?.state)).toEqual(['running', 'running', 'running', 'queued'])
+  expect(h.start).toHaveBeenCalledTimes(3)
+  // Pause also stops admission at once, and resuming does not duplicate a binding.
+  h.store.saveSettings({ ...h.store.settings(), paused: true })
+  await h.runtime.request()
+  expect(h.runtime.store.get(findings[3]!.id)?.state).toBe('queued')
+  expect(h.start).toHaveBeenCalledTimes(3)
+  h.store.saveSettings({ ...h.store.settings(), paused: false })
+  await h.runtime.request()
+  expect(h.runtime.store.get(findings[3]!.id)?.state).toBe('queued')
+  // Under the reduced limit one, the waiting finding admits only after every in-flight slot is released.
+  for (const finding of findings.slice(0, 2)) {
+    const job = h.runtime.store.get(finding!.id)!.job!
+    h.engine.report(job.ticketId!, { state: 'ready', summary: 'Bounded evidence ready for review' })
+    await h.runtime.request()
+    expect(h.runtime.store.get(findings[3]!.id)?.state).toBe('queued')
+  }
+  const last = h.runtime.store.get(findings[2]!.id)!.job!
+  h.engine.report(last.ticketId!, { state: 'ready', summary: 'Bounded evidence ready for review' })
+  await h.runtime.request()
+  expect(h.runtime.store.get(findings[3]!.id)?.state).toBe('running')
+  expect(h.start).toHaveBeenCalledTimes(4)
+  await h.runtime.stop()
+})
+it('keeps independent findings isolated from a blocked peer awaiting review', async () => {
+  const h = fixture(); capacity(h, 2)
+  const first = h.confirm(h.observe('a').id), second = h.confirm(h.observe('b').id)
+  await h.runtime.request()
+  expect(h.start).toHaveBeenCalledTimes(2)
+  const job = h.runtime.store.get(first.id)!.job!
+  h.engine.report(job.ticketId!, { state: 'blocked', summary: 'Needs a human decision before more work' })
+  await h.runtime.request()
+  expect(h.runtime.store.get(first.id)?.state).toBe('blocked')
+  // The blocked finding holds no slot: an independent confirmed finding uses the freed capacity.
+  const third = h.confirm(h.observe('c').id)
+  await h.runtime.request()
+  expect(h.runtime.store.get(second.id)?.state).toBe('running')
+  expect(h.runtime.store.get(third.id)?.state).toBe('running')
+  expect(h.start).toHaveBeenCalledTimes(3)
+  await h.runtime.stop()
+})
+it('leaves worker slots held by ordinary tickets to them', async () => {
+  const h = fixture(); capacity(h, 2)
+  const open = vi.spyOn(h.store.tickets, 'open').mockReturnValue([{ id: 'ordinary-ticket', origin: { triggerId: 'ordinary-trigger' } } as never])
+  const runtime = new FindingRuntime({ ...h.deps, workerBusy: ticket => ticket.id === 'ordinary-ticket' })
+  cleanup.push(() => runtime.stop())
+  const first = h.confirm(h.observe('a').id), second = h.confirm(h.observe('b').id)
+  await runtime.request()
+  expect(runtime.store.get(first.id)?.state).toBe('running')
+  expect(runtime.store.get(second.id)?.state).toBe('queued')
+  expect(h.start).toHaveBeenCalledTimes(1)
+  open.mockReturnValue([])
+  await runtime.request()
+  expect(runtime.store.get(second.id)?.state).toBe('running')
+  expect(h.start).toHaveBeenCalledTimes(2)
+  await runtime.stop()
 })
 it('preserves ready open-PR native authority, invalidates stale evidence on review input, and atomically stops before explicit retry', async () => {
   const h = fixture()
@@ -326,5 +417,22 @@ it('rejects model advice for another finding rather than accepting substituted s
     yield { type: 'finish', reason: { kind: 'stop' } }
   })
   await expect(recommendFindingAction(finding, h.deps)).rejects.toThrow()
+  expect(h.start).not.toHaveBeenCalled()
+})
+
+it('rechecks pause after awaiting prior native work before admitting another finding', async () => {
+  const h = fixture(); capacity(h, 3)
+  const first = h.confirm(h.observe('pause-in-flight').id)
+  const runtime = new FindingRuntime({ ...h.deps, isQuiescent: async () => true })
+  cleanup.push(() => runtime.stop())
+  // Interleave a pause after queue selection but before the admission transaction.
+  const select = vi.spyOn(runtime.store, 'nextQueued')
+  select.mockImplementationOnce(() => {
+    const value = h.runtime.store.nextQueued(3)
+    h.store.saveSettings({ ...h.store.settings(), paused: true })
+    return value
+  })
+  await runtime.request()
+  expect(runtime.store.get(first.id)?.state).toBe('queued')
   expect(h.start).not.toHaveBeenCalled()
 })

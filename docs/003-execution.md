@@ -121,7 +121,7 @@ Sources poll subscribed Threads while a live Ticket subscribes, and for two week
 
 When an Executor Session reports `blocked` or `failed`, or fails to start or errors, which records `failed`, the Ticket takes no automatic Input.
 
-A passing failure of the model provider or the network, an HTTP 408, 429 or 5xx or a refused, reset or timed-out connection, is tried again first, three times with a growing backoff: a launch runs again, and a worker whose turn failed is told to go on; a failed prepare command is not tried again.
+A passing failure of the model provider or the network, an HTTP 408 or generic 5xx or a refused, reset or timed-out connection, is tried again first, three times with a growing backoff: a launch runs again, and a worker whose turn failed is told to go on; a failed prepare command is not tried again.
 
 Once failed, CI and bot messages are recorded on it, but they are not delivered and do not wake the Session.
 
@@ -201,3 +201,5 @@ An Eval in progress does not expire during a pause; its deadline moves later by 
 ### Invalid configuration
 
 A stored Source configuration that its kind rejects disables that Source instance.
+
+Explicit quota, cooldown, exhausted-budget/account and HTTP 429 failures select an eligible availability fallback immediately. They do not consume the generic transient retry backoff. Conservation mode permits only its selected economy route and never falls back to parked subscriptions.

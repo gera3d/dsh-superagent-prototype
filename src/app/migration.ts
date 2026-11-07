@@ -280,6 +280,12 @@ function legacyText(value: string): string {
     .replaceAll('related_tasks', 'related_tickets').replace(/(?<![\w/-])event\//g, 'trigger/').replace(/(?<![\w/-])task\//g, 'ticket/').replaceAll('<event-id>', '<trigger-id>')
     .replace(/\bguide\/([a-z][a-z0-9-]*)\b/g, (_match, name: string) => LEGACY_FIXED.has(name) ? `the ${name} section` : `skill dsh-superagent-${name}`))
 }
+/** Preserve legacy limits without reverting a deployment's named merge CLI or approval requirements. */
+function thresholdDelivery(delivery: string, limit: number): string {
+  if (delivery.includes(autoMergeThreshold(200))) return delivery.replace(autoMergeThreshold(200), autoMergeThreshold(limit))
+  if (limit === 200) return delivery
+  return `${delivery}\nAdditional legacy merge limit: ${autoMergeThreshold(limit)} all existing review and publication requirements still apply.`
+}
 /**
  * Upgrade a stored prompt configuration to current sections, tool names, and skill references; legacy configurations take
  * built-in team sections, keep custom guides as skills, and carry any auto-merge line threshold into `delivery`.
@@ -287,7 +293,7 @@ function legacyText(value: string): string {
 function normalize(config: unknown): PromptConfig {
   const legacy = LegacyPromptConfigSchema.safeParse(config)
   const limit = legacy.success ? /fewer than (\d+) lines \(additions plus deletions\)/.exec(legacy.data.guides.work ?? '')?.[1] : undefined
-  const current = legacy.success ? { ...teamDefaults, delivery: limit ? teamDefaults.delivery.replace(autoMergeThreshold(200), autoMergeThreshold(Number(limit))) : teamDefaults.delivery,
+  const current = legacy.success ? { ...teamDefaults, delivery: limit ? thresholdDelivery(teamDefaults.delivery, Number(limit)) : teamDefaults.delivery,
     skills: Object.fromEntries(Object.entries(legacy.data.guides).filter(([name]) => !LEGACY_FIXED.has(name)).map(([name, body]) => [name, legacyText(body)])) }
     : PromptConfigSchema.parse(config)
   return { communication: currentNames(current.communication), scope: currentNames(current.scope), delivery: currentNames(current.delivery),
@@ -318,7 +324,8 @@ function migratePrompts(store: Store): void {
   const revision = store.get<number>('prompt-revision')
   const current = revision === undefined ? undefined : store.get<PromptVersion>(`prompt-version:${revision}`)
   const config = current?.config ?? { ...teamDefaults, skills: {} }
-  const delivery = config.delivery.includes(autoMergeThreshold(200)) ? config.delivery.replace(autoMergeThreshold(200), autoMergeThreshold(limit))
+  const delivery = config.delivery === teamDefaults.delivery ? thresholdDelivery(config.delivery, limit)
+    : config.delivery.includes(autoMergeThreshold(200)) ? config.delivery.replace(autoMergeThreshold(200), autoMergeThreshold(limit))
     : limit === 200 ? config.delivery : `${config.delivery}\nEnable auto-merge only on a PR that changes fewer than ${limit} lines (additions plus deletions).`
   const identities = mapped.length && !config.skills.identities ? { identities: ['The same colleague may use a different account on each Source. When you mention, assign or request a review from someone you met on another Source, use their account on this one:',
     ...mapped.map(person => `- ${person.name ?? person.feishuId} (Feishu ${person.feishuId}) is @${person.github} on GitHub`)].join('\n') } : {}

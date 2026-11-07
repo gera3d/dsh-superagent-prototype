@@ -9,7 +9,7 @@ type SourceSettings = SettingsVersion['settings']['sources'][string]
 export type SettingsChangeCode = 'ruleAdded' | 'ruleRenamed' | 'ruleInstruction' | 'ruleEnabled' | 'ruleDisabled' | 'ruleRemoved'
   | 'sourceEnabled' | 'sourceDisabled' | 'sourceField' | 'sourceRowsAdded' | 'sourceRowsRemoved' | 'sourceRowsChanged' | 'sourceAdmission'
   | 'mode' | 'timeout' | 'evalModel' | 'executorModel' | 'decisionsRanker' | 'maxWorkers' | 'paused' | 'resumed' | 'executionDirectory' | 'prepareCommand'
-  | 'blockedCommands' | 'modelHierarchy' | 'maxEscalations' | 'executorSoundEnabled' | 'executorSoundDisabled'
+  | 'blockedCommands' | 'modelHierarchy' | 'maxEscalations' | 'conserveMode' | 'economyRoute' | 'subscriptionAvailability' | 'executorSoundEnabled' | 'executorSoundDisabled'
 /** A single settings diff entry rendered by the panel using `change.<code>` and field labels from the Source listing. */
 export interface SettingsChange {
   code: SettingsChangeCode; items?: string[]; from?: string | number | boolean; to?: string | number | boolean; name?: string; source?: string
@@ -77,6 +77,10 @@ function settingsChanges(before: SettingsVersion['settings'], after: SettingsVer
     to: after.models.hierarchy.length })
   if (before.models.maxEscalations !== after.models.maxEscalations) changes.push({ code: 'maxEscalations',
     from: before.models.maxEscalations, to: after.models.maxEscalations })
+  if (before.models.conserve !== after.models.conserve) changes.push({ code: 'conserveMode', from: before.models.conserve, to: after.models.conserve })
+  if (!same(before.models.economyRoute, after.models.economyRoute)) changes.push({ code: 'economyRoute' })
+  if (!same(before.models.subscriptions, after.models.subscriptions)) changes.push({ code: 'subscriptionAvailability',
+    from: before.models.subscriptions.length, to: after.models.subscriptions.length })
   for (const id of new Set([...Object.keys(before.sources), ...Object.keys(after.sources)])) changes.push(...sourceChanges(id, before.sources[id], after.sources[id], sources))
   return changes
 }
