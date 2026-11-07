@@ -44,7 +44,7 @@ it('generates drafts using the existing Senior Developer standards with no ranki
   const h = harness()
   expect(await suggestHelper(h.ctx, digest, SettingsSchema.parse({ models: { hierarchy: ladder } }))).toEqual({ options })
   expect(h.calls).toHaveLength(1)
-  expect(h.calls[0]).toMatchObject({ provider: 'first', model: 'flash', tools: [], maxTokens: 1200,
+  expect(h.calls[0]).toMatchObject({ provider: 'first', model: 'flash', tools: [], maxTokens: 4096,
     messages: [{ role: 'user', content: [{ type: 'text', text: JSON.stringify(digest) }] }] })
   const system = String(h.calls[0]!.system)
   for (const standard of DEFAULT_SENIOR_DEVELOPER_CHARACTER.standards) expect(system).toContain(standard)
@@ -215,4 +215,13 @@ it('server-owned unbound delivery state constrains the next reply to release pre
   expect(system).toContain('Shared workflow context:\nArtifact ready; scope unbound.')
   expect(system).toContain('Request live evidence only after a recorded deployment')
   expect(system).toContain('Optimize progress toward the overall goal')
+})
+
+it('failure diagnostics expose only stable categories and finish kinds, never provider details or digest text', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const h = harness([new Error('private-provider-detail')])
+  await expect(suggestHelper(h.ctx, { summary: 'private-user-goal', latestTurn: 'private-user-text' }, SettingsSchema.parse({ models: { hierarchy: ladder } }))).rejects.toThrow('Helper suggestion unavailable')
+  const logged = JSON.stringify(warn.mock.calls)
+  expect(logged).toContain('provider-error')
+  expect(logged).not.toMatch(/private-provider-detail|private-user-goal|private-user-text/)
 })
