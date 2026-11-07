@@ -32,7 +32,8 @@ import { SettingsConflict, type Settings } from './settings.ts'
 import { SetupError, type SetupProblem } from '../setup.ts'
 import { UserError, ticketStage, type EngineForPeople, type Ticket } from '../core/index.ts'
 import type { Deployment, Machine } from '../deployment.ts'
-import { ticketOfSession, type DshExecutor } from '../executor/dsh.ts'
+import { ticketOfSession, workerSessionId, type DshExecutor } from '../executor/dsh.ts'
+import type { JobUsage, JobUsageReader } from './job-usage.ts'
 import type { Health } from '../sources/host.ts'
 import type { SourceRegistry } from '../sources/registry.ts'
 import type { Sessions } from './sessions.ts'
@@ -61,6 +62,8 @@ export interface HttpHost {
   readonly settings: Pick<Settings, 'view' | 'save' | 'pause' | 'sync' | 'refreshLabels'>
   readonly engine: EngineForPeople
   readonly executor: Pick<DshExecutor, 'activeCount'> & Partial<Pick<DshExecutor, 'running'>>
+  /** Reads a completed job's recorded usage from its worker Session log. */
+  readonly usage: Pick<JobUsageReader, 'of'>
   readonly health: Record<string, Health>
   readonly machine: Machine
   readonly masterId: string
@@ -142,12 +145,15 @@ const setupState = (runtime: HttpHost): SetupState => ({ deployment: runtime.con
   problem: runtime.setupProblem, feishuProblem: runtime.feishuProblem })
 export type StateView = ReturnType<typeof stateView>
 /** Builds a ticket's detail view; `environment` is empty while waiting for setup because it requires the resolved deployment. */
-function ticketPage(runtime: HttpHost, id: string) {
+async function ticketPage(runtime: HttpHost, id: string) {
   const detail = ticketDetail(views(runtime), id), ticket = runtime.store.tickets.get(id)
   if (!detail || !ticket) throw new RouteError(404, 'Ticket not found')
-  return { ...detail, environment: runtime.configured() ? runtime.ticketEnvironment(ticket) : [] }
+  // A job's recorded usage is read from its one worker Session, only once an Assignment actually started in it.
+  const usage: JobUsage | undefined = detail.assignments.some(assignment => assignment.startedAt)
+    ? await runtime.usage.of(workerSessionId(id)) : undefined
+  return { ...detail, environment: runtime.configured() ? runtime.ticketEnvironment(ticket) : [], ...usage ? { usage } : {} }
 }
-export type TicketPageView = ReturnType<typeof ticketPage>
+export type TicketPageView = Awaited<ReturnType<typeof ticketPage>>
 function promptsView(runtime: HttpHost, revision: number | undefined, offset: number) {
   const current = runtime.prompts.current()
   const shown = revision === undefined || revision === current.revision ? current : runtime.prompts.version(revision)
