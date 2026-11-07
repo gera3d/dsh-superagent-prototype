@@ -60,6 +60,7 @@ export function helperSystemPrompt(character: CharacterConfig): string {
     'Stay within the user-authorized scope. These are human-selected suggestions, never authorization to act.',
     'Financial spending, destructive deletion, secrets, sending as the person and genuinely undecided choices require explicit human confirmation. Never suggest bypassing it.',
     'Never suggest harness restarts, process termination, live plugin updates or persistent environment/settings changes. Reference credentials by environment variable name only, never expose key values.',
+    'Prefer two or three useful alternatives. Keep each prompt concise (roughly 300–700 characters); do not paste the handoff report into it.',
     'Return ONLY JSON: {"options":[{"id":"unique-id","label":"Short action","prompt":"Concrete prompt for the worker","recommended":true}]}. No scores or markdown.',
   ].join('\n')
 }
@@ -71,7 +72,7 @@ async function callHelper(ctx: Context, route: RoleModel, digest: HelperDigest, 
       ...(route.reasoningEffort ? { reasoningEffort: ReasoningEffortId(route.reasoningEffort) } : {}) }, signal)
     stage = 'stream'
     let text = '', finished = false
-    for await (const chunk of ctx.llm.stream({ ...config, signal, maxTokens: 1200, tools: [], system,
+    for await (const chunk of ctx.llm.stream({ ...config, signal, maxTokens: 4096, tools: [], system,
       messages: [{ role: 'user', content: [{ type: 'text', text: JSON.stringify(digest) }] }],
     })) {
       if (chunk.type === 'text-delta') {
@@ -82,7 +83,7 @@ async function callHelper(ctx: Context, route: RoleModel, digest: HelperDigest, 
         // Providers can report availability failures in-band instead of throwing.
         // Preserve their routing facts internally; the public boundary sanitizes them.
         if (chunk.reason.kind === 'error') throw Object.assign(new Error(chunk.reason.failure.message), chunk.reason.failure)
-        if (chunk.reason.kind !== 'stop') throw new Error('Helper response did not finish normally')
+        if (chunk.reason.kind !== 'stop') throw Object.assign(new Error('Helper response did not finish normally'), { helperFinishKind: chunk.reason.kind })
         finished = true
       }
     }
@@ -114,11 +115,15 @@ export async function suggestHelper(ctx: Context, input: HelperDigest, settings:
       tried.push(current)
       try { return await callHelper(ctx, current, digest, system, signal) }
       catch (error) {
-        ctx.logger?.warn('helper/suggest failure: %s', JSON.stringify({
+        const finish = error instanceof HelperFailure && error.original && typeof error.original === 'object' && 'helperFinishKind' in error.original ? error.original.helperFinishKind : undefined
+        const diagnostic = {
+          finish: ['length', 'max-tokens', 'context-overflow', 'error', 'aborted', 'tool-calls'].includes(String(finish)) ? finish : undefined,
           category: failureCategory(error, signal.aborted),
           stage: error instanceof HelperFailure ? error.stage : 'stream',
           attempt: attempt + 1, elapsedMs: Date.now() - started, deadlineMs: HELPER_TIMEOUT_MS,
-        }))
+        }
+        ctx.logger?.warn('helper/suggest failure: %s', JSON.stringify(diagnostic))
+        console.warn('dsh-helper-diagnostic %s', JSON.stringify(diagnostic))
         const original = error instanceof HelperFailure ? error.original : error
         if (signal.aborted || (error instanceof HelperFailure && error.stage === 'parse')
           || !isModelUnavailable(original) || attempt >= settings.models.maxEscalations) throw error
