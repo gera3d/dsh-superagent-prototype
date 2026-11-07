@@ -80,6 +80,7 @@ it('also keeps legacy publication history out of the chat viewport without remov
   expect(disclosure.open).toBe(false)
   expect(disclosure.querySelector(':scope > summary')?.textContent).toContain('Publication')
   expect(disclosure.querySelector('.dt-lifecycle-card')?.getAttribute('style')).toBeNull()
-  expect(disclosure.textContent).toContain('Original decision closed')
+  expect(disclosure.textContent).toContain('Publication history · published')
+  expect(disclosure.textContent).toContain('verify: succeeded')
   expect(fixture.call).not.toHaveBeenCalled()
 })
