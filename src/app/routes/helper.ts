@@ -46,6 +46,19 @@ export const HelperSuggestionsSchema = z.object({ options: z.array(z.object({
 'Options must have distinct IDs and exactly one recommendation')
 export type HelperSuggestions = z.infer<typeof HelperSuggestionsSchema>
 
+/** Normalize the two existing advisor envelopes, without accepting scores or privileged metadata. */
+export function parseHelperReply(text: string): HelperSuggestions {
+  const option = z.object({ id: z.string().trim().min(1).max(100).optional(), label: z.string().trim().min(1).max(160),
+    prompt: z.string().trim().min(1).max(2000), recommended: z.boolean().optional(), why: z.string().max(4000).optional() }).strict()
+  const draft = z.object({ options: z.array(option).min(2).max(4), recommended: z.number().int().min(0).optional() }).strict()
+    .parse(JSON.parse(text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')))
+  if (draft.recommended !== undefined && draft.recommended >= draft.options.length) throw new Error('Invalid recommendation index')
+  if (draft.recommended !== undefined && draft.options.some((o, index) => o.recommended !== undefined && o.recommended !== (index === draft.recommended)))
+    throw new Error('Conflicting recommendation identities')
+  return HelperSuggestionsSchema.parse({ options: draft.options.map((o, index) => ({ id: o.id ?? `opt-${index + 1}`,
+    label: o.label, prompt: o.prompt, recommended: draft.recommended === undefined ? o.recommended : index === draft.recommended })) })
+}
+
 export function helperSystemPrompt(character: CharacterConfig): string {
   return [
     `You are ${character.name}, specialized in ${character.specialty}.`,
@@ -89,7 +102,7 @@ async function callHelper(ctx: Context, route: RoleModel, digest: HelperDigest, 
     }
     if (!finished || !text.trim()) throw new Error('Helper returned no complete response')
     stage = 'parse'
-    return HelperSuggestionsSchema.parse(JSON.parse(text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')))
+    return parseHelperReply(text)
   } catch (error) { throw new HelperFailure(stage, error) }
 }
 
@@ -117,6 +130,8 @@ export async function suggestHelper(ctx: Context, input: HelperDigest, settings:
       catch (error) {
         const finish = error instanceof HelperFailure && error.original && typeof error.original === 'object' && 'helperFinishKind' in error.original ? error.original.helperFinishKind : undefined
         const diagnostic = {
+          parse: error instanceof HelperFailure && error.stage === 'parse' ? error.original instanceof SyntaxError ? 'json' : error.original instanceof z.ZodError ? 'schema' : 'recommendation' : undefined,
+          issues: error instanceof HelperFailure && error.original instanceof z.ZodError ? error.original.issues.map(issue => ({ code: issue.code, path: issue.path.map(part => typeof part === 'number' ? part : ['options', 'id', 'label', 'prompt', 'recommended', 'why'].includes(String(part)) ? part : 'other') })) : undefined,
           finish: ['length', 'max-tokens', 'context-overflow', 'error', 'aborted', 'tool-calls'].includes(String(finish)) ? finish : undefined,
           category: failureCategory(error, signal.aborted),
           stage: error instanceof HelperFailure ? error.stage : 'stream',

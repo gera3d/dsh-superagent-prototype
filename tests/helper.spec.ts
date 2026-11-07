@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { SettingsSchema } from '../src/policy.ts'
 import { DEFAULT_SENIOR_DEVELOPER_CHARACTER } from '../src/core/character.ts'
-import { HelperDigestSchema, HelperSuggestionsSchema, helperSystemPrompt, suggestHelper } from '../src/app/routes/helper.ts'
+import { HelperDigestSchema, HelperSuggestionsSchema, helperSystemPrompt, suggestHelper, parseHelperReply } from '../src/app/routes/helper.ts'
 
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 const digest = { summary: 'Patched a regression.', latestTurn: 'Implemented a fix but tests have not run.' }
@@ -224,4 +224,17 @@ it('failure diagnostics expose only stable categories and finish kinds, never pr
   const logged = JSON.stringify(warn.mock.calls)
   expect(logged).toContain('provider-error')
   expect(logged).not.toMatch(/private-provider-detail|private-user-goal|private-user-text/)
+})
+
+it('normalizes the known per-choice and indexed advisor formats without importing model scores or authority', () => {
+  expect(parseHelperReply(JSON.stringify({ options: options.map(o => ({ ...o, why: 'Useful rationale' })) }))).toEqual({ options })
+  const indexed = { recommended: 1, options: options.map(({ label, prompt }) => ({ label, prompt, why: 'Useful' })) }
+  expect(parseHelperReply(JSON.stringify(indexed)).options).toEqual(options.map((o, index) => ({ id: `opt-${index + 1}`, label: o.label, prompt: o.prompt, recommended: index === 1 })))
+  for (const extra of [{ actionKind: 'publish' }, { percent: 99 }, { probability: .99 }]) {
+    expect(() => parseHelperReply(JSON.stringify({ options: options.map(o => ({ ...o, ...extra })) }))).toThrow()
+  }
+})
+it('rejects ambiguous, missing, out-of-range or duplicate recommendation identities', () => {
+  for (const value of [{ recommended: 1, options }, { recommended: 4, options: options.map(({ label, prompt }) => ({ label, prompt })) },
+    { options: options.map(({ label, prompt }) => ({ label, prompt })) }, { options: [options[0], options[0]] }]) expect(() => parseHelperReply(JSON.stringify(value))).toThrow()
 })
