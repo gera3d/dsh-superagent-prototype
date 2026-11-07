@@ -47,7 +47,7 @@ export function PublicationDock({ sessionId, removed }: { sessionId: string; rem
   const items = data?.items.filter(item => (findingMatchesSession(item, sessionId) || item.sessionId === sessionId || item.delivery?.workers.includes(sessionId)) && (item.finding || item.actionMode === 'finding_triage' || item.delivery || item.actionMode === 'feature_delivery' || item.lifecycle
     && (item.status === 'pending' || item.lifecycle.recovery))) ?? []
   if (removed || !items.length) return null
-  return <section aria-label="Senior Developer publications" style={{ display: 'grid', gap: 10 }}>
+  return <section aria-label="Senior Developer publications" style={{ boxSizing: 'border-box', width: 'calc(100% - var(--dsh-composer-side-clearance, 24px) * 2)', maxWidth: 'var(--dsh-composer-card-max-width, 840px)', minWidth: 0, margin: '0 auto 4px', display: 'grid', gap: 6 }}>
     {items.map(item => <SharedLifecycleCard key={item.id} item={item} />)}
   </section>
 }

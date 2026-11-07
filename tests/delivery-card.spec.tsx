@@ -152,3 +152,19 @@ it('does not replay a failed confirmation or imply acceptance', async () => {
   expect(container.querySelector('[role="alert"]')?.textContent).toContain('409')
   expect(container.textContent).toContain('Not accepted')
 })
+
+it('defaults to a compact native disclosure and expands without confirming an action', async () => {
+  const confirm = await render(item())
+  const disclosure = container.querySelector<HTMLDetailsElement>('.dt-delivery-disclosure')!
+  expect(disclosure.open).toBe(false)
+  const summary = disclosure.querySelector('summary')!
+  expect(summary.textContent).toContain('Delivery')
+  expect(summary.textContent).toContain('review ready')
+  expect(summary.textContent).toContain('Review action')
+  expect(summary.textContent).not.toContain(d.title)
+  expect(summary.textContent).not.toContain('immutable-evidence')
+  expect(disclosure.querySelector('.dt-delivery-body')?.textContent).toContain(d.title)
+  await act(async () => { summary.click() })
+  expect(disclosure.open).toBe(true)
+  expect(confirm).not.toHaveBeenCalled()
+})
