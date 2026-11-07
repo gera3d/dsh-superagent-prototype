@@ -1,0 +1,34 @@
+{
+  "candidate": "52af0dfd320b57226669c363af0ba38a1823a4ad",
+  "base": "cdbc302a411a60bfda744a8ed3a9678c69287e2f",
+  "remoteBranch": "codex/bounded-sonnet-quality",
+  "status": "candidate not deployed",
+  "initialFull": {
+    "exit": 1,
+    "passed": 2182,
+    "skipped": 2,
+    "failedSuites": 1,
+    "cause": "missing companion import"
+  },
+  "affectedSuitesRerun": {
+    "exit": 0,
+    "passed": 62,
+    "overlapWithInitialPassed": 15
+  },
+  "distinctCombinedPassing": 2229,
+  "finalFocused": {
+    "exit": 0,
+    "passed": 32
+  },
+  "finalTypesExit": 0,
+  "finalBuildExit": 0,
+  "reviewLimit": "Automatic quality path excludes bounded finding assignments in core Assignments.report; no universal finding auto-continuation, independent reviewer scheduling or Google no-first-response timeout repair claimed.",
+  "liveSettingsChangedByTask": false,
+  "qualityEnabled": false,
+  "manualInterventions": [
+    "Google native integration stop and same-worker Sonnet continuation",
+    "resolve missing companion qualification setup gap"
+  ],
+  "nextSharedDecision": "Push branch and open exact-base PR; branch now preserved, PR remains",
+  "decisionScore": 0.47
+}
