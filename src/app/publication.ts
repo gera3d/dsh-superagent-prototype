@@ -117,6 +117,24 @@ export class PublicationService {
       throw error
     }
   }
+  /**
+   * Pure, lock-free advice read of the last atomically committed publication. Unlike snapshot() it never recovers running
+   * outcomes, saves, appends audit or waits for the publication lock; unavailable or malformed state reads as unknown.
+   */
+  peek(ticketId: string): PublicationSnapshot | undefined {
+    if (!validKey(ticketId)) throw new PublicationError(400, 'Invalid ticket id')
+    try {
+      const document = this.options.store.peek?.()
+      const id = document?.tickets?.[ticketId]
+      const candidate = id ? document!.publications[id] : undefined
+      if (!candidate || typeof candidate !== 'object') return undefined
+      if (!validKey(String(candidate.id ?? '')) || !validKey(String(candidate.repository ?? '')) || !Number.isSafeInteger(candidate.prNumber)
+        || typeof candidate.headSha !== 'string' || !/^[a-f0-9]{40}$/i.test(candidate.headSha)
+        || typeof candidate.patchSha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(candidate.patchSha256)
+        || typeof candidate.ticketId !== 'string' || candidate.ticketId !== ticketId) return undefined
+      return clone(candidate)
+    } catch { return undefined }
+  }
   async prepare(input: PublicationPrepareInput): Promise<PublicationSnapshot> {
     if (!validKey(input.ticketId) || !validKey(input.conversationId) || !/^[\w.-]+\/[\w.-]+$/.test(input.repository)
       || !Number.isSafeInteger(input.prNumber) || input.prNumber < 1 || !/^[a-f0-9]{40}$/i.test(input.headSha) || !/^[a-f0-9]{64}$/i.test(input.patchSha256)) throw new PublicationError(400, 'Invalid publication binding or pins')

@@ -302,6 +302,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/app/delivery-currency.ts` | Read-only current ownership and superseded-work projection from immutable primary source and native dropped-attempt history; never scope equivalence or execution authority |
 | `src/app/delivery-runtime.ts` | Runtime-owned automatic tracking and handoffs, canonical projection, advice currency and bounded preparation recovery |
 | `src/app/delivery-capabilities.ts` | Configured-model independent exact-diff review, real correction notes and current-action recommendations |
+| `src/app/publication-proof.ts` | Bounded exact-pin descriptors of the protected publication’s recorded review/check evidence, and the pure lock-free peek that advises pre-upgrade prepared cards without recovery |
 | `src/app/delivery-publication.ts` | Trusted whole-release scope bridge to existing protected publication; native acceptance remains separately evidenced |
 | `src/app/delivery-intake.ts` | Strict explicit intake schema with per-repository heads, bases and requirements |
 | `src/app/delivery-evidence.ts` | Audited local-operator external evidence recording and exact-bound acceptance re-evaluation |

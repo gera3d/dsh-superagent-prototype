@@ -460,3 +460,30 @@ it('shares the same release facts between helper, fallback-context endpoint and 
   expect(ranked.context.length).toBeLessThanOrEqual(24000)
   expect(ranked.choices[0].prompt).toBe(options[0]!.prompt)
 })
+
+
+it('derives exact-pin prepared proof for helper context on a pre-upgrade card without rewriting it', async () => {
+  const evidence = { repository: 'org/repo', prNumber: 12, headSha: 'a'.repeat(40), patchSha256: 'd'.repeat(64), observedAt: '2026-11-06T10:00:00.000Z',
+    checks: 'passed' as const, review: 'approved' as const, mergeable: true, state: 'open' as const,
+    local: { reviewer: 'Codex', reportSha256: '1'.repeat(64), reviewExcerpt: 'Recorded review excerpt.',
+      checks: [{ name: 'pnpm test', reportSha256: '2'.repeat(64), completedAt: '2026-11-06T10:00:00.000Z', outputExcerpt: 'Suite passed.' }],
+      limitations: ['Native acceptance remains separate.'] } }
+  const preparedPublication = { id: 'manifest', ticketId: 'ready', decisionId: 'decision', repository: 'org/repo', pr: 12, headSha: 'a'.repeat(40),
+    patchSha256: 'd'.repeat(64), environment: 'isolated', preparedAt: '2026-11-06T10:00:00.000Z',
+    refs: [{ repository: 'org/repo', pr: 12, headSha: 'a'.repeat(40), baseSha: 'b'.repeat(40) }] }
+  const delivery = { id: 'd', revision: 1, workers: ['ready'], owner: 'release-operator', authorities: ['local-operator'], stage: 'ready_to_publish',
+    state: 'awaiting_decision', requirements: [], evidence: [], bindings: { repository: 'org/repo', sourceIssue: 1, baseSha: 'b'.repeat(40),
+      headSha: 'a'.repeat(40), refs: preparedPublication.refs }, preparedPublication }
+  const peek = vi.fn(() => ({ ...preparedPublication, prNumber: 12, conversationId: 'c', status: 'prepared',
+    createdAt: '2026-11-06T10:00:00.000Z', updatedAt: '2026-11-06T10:00:00.000Z', outcomes: [], audit: [], requests: {}, evidence }))
+  const call = serve({ store: { tickets: { get: () => ({ id: 'ready', title: 'Cost summary', mandate: { strength: 'explicit', scope: 'Prepare.' }, assignments: [] }) },
+    settings: () => SettingsSchema.parse({ models: { hierarchy: [{ provider: 'test', model: 'fast' }] } }) },
+    deliveries: { store: { list: () => [delivery] } }, publication: { service: { peek }, pinsFor: () => undefined } }, '127.0.0.1')
+  const context = await call('POST', 'helper/context', { sessionId: 'worker-ready' })
+  expect(context.status).toBe(200)
+  expect(context.body.context).toContain('"verified":true')
+  expect(context.body.context).toContain('Recorded review excerpt.')
+  expect(peek).toHaveBeenCalledWith('ready')
+  // The advice copy carries the observation; the recorded card is not rewritten.
+  expect(delivery.preparedPublication).not.toHaveProperty('proof')
+})

@@ -8,7 +8,7 @@ import { SourceRegistry } from '../src/sources/registry.ts'
 import { feishuKind } from '../src/sources/feishu.ts'
 import { githubKind } from '../src/sources/github.ts'
 import { snapshot, threadSummary, ticketSummary, triggerView } from '../src/app/views/records.ts'
-import { basisFacts, ticketDetail } from '../src/app/views/tickets.ts'
+import { basisFacts, ticketDetail, ticketList } from '../src/app/views/tickets.ts'
 import { threadDetail } from '../src/app/views/threads.ts'
 import { droppedReplies, sourcesStatus } from '../src/app/views/sources.ts'
 import { overview } from '../src/app/views/overview.ts'
@@ -318,4 +318,27 @@ it('reads each ticket a page\'s follow-ups reached once, and nothing for a messa
   const records = { tickets: { get: vi.fn() }, threads: { get: vi.fn() }, triggers: store.triggers }
   expect(followupOwners(store.triggers.get('f3')!, records)).toEqual([])
   expect([records.tickets.get, records.threads.get].map(read => read.mock.calls.length)).toEqual([0, 0])
+})
+
+it('lists the real mixed legacy/current ended history newest first without editing numeric timestamps', () => {
+  const host = views()
+  const ended = (id: string, updatedAt: string) => ({ id, title: id, decisionId: 'd', channels: [], undelivered: [], createdAt: at,
+    updatedAt, mandate: { strength: 'explicit' as const, policyVersion: 'v', basis: { via: 'listed' as const },
+      actor: { source: 'feishu', id: 'ou_alice' }, scope: '' }, origin: { triggerId: 'e0', triggerIds: ['e0'] },
+    assignments: [], inputs: [], ended: { at, by: 'executor' as const, reason: 'done', outcome: 'completed' as const } })
+  // Four historical rows persisted numeric epoch milliseconds; current rows store ISO dates. Unknown values stay stable at the end.
+  const legacy = ['839b41ca4534bb0748214bd59bda0119', '9560325c5144615141fff2373d6ef749',
+    '31a2cc45435bfbf9ca059369efda8ef6', '012fd8b284a2e57c6cdbe110c1ea2d20']
+  for (const id of legacy) store.tickets.save(ended(id, 1793822843308 as unknown as string))
+  store.tickets.save(ended('older', '2026-09-22T00:00:00.000Z'))
+  store.tickets.save(ended('current', '2026-11-07T00:00:00.000Z'))
+  store.tickets.save(ended('unknown', 'not-a-date'))
+  const ids = ticketList(host, 'ended', 0, 10).items.map(row => row.id)
+  // The recorded numeric epoch milliseconds sort against ISO dates; an unparseable timestamp stays after every known one.
+  expect(ids[0]).toBe('current')
+  expect(ids.slice(1, 5).sort()).toEqual([...legacy].sort())
+  expect(ids.slice(5)).toEqual(['older', 'unknown'])
+  // Read-only normalization: the persisted legacy value is never rewritten or migrated.
+  expect(store.tickets.get(legacy[0]!)!.updatedAt).toBe(1793822843308)
+  expect(ticketList(host, 'ended', 0, 10).total).toBe(7)
 })

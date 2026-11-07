@@ -9,6 +9,7 @@ import { ticketDecisions, type DecisionInbox } from './decision-inbox.ts'
 import type { Store } from './store.ts'
 import type { FindingStore } from './finding.ts'
 import { deriveDeliveryWork, readDeliveryWorkers, workerTicket } from './delivery-currency.ts'
+import { publicationProof, snapshotProof } from './publication-proof.ts'
 
 export function deliveryDecision(delivery: Delivery): PendingDecisionItem {
   const action = delivery.work?.state === 'superseded' ? undefined : delivery.nextAction
@@ -181,15 +182,26 @@ export class FeatureDeliveryRuntime {
       const snapshot = await publication.service.prepare({ ...pins, ticketId: worker, conversationId: publicationConversation(item) })
       if (!['prepared', 'merged'].includes(snapshot.status)) throw new Error(`Configured publication is ${snapshot.status}; preserve its history and prepare a separately authorized finite scenario.`)
       this.signal.throwIfAborted()
+      // Compact server-derived proof for advice: only evidence pinned to the same repository/PR/head/patch is recorded.
+      const proof = publicationProof(snapshot.evidence, { repository: ref.repository, pr: ref.pr, headSha: pins.headSha, patchSha256: pins.patchSha256 })
       this.store.compareAndSwap(delivery.id, delivery.revision, d => {
         d.preparedPublication = { id: snapshot.id, ticketId: worker, decisionId: item.id, repository: ref.repository, pr: ref.pr,
           headSha: pins.headSha, patchSha256: pins.patchSha256, environment: scope.environment, preparedAt: snapshot.updatedAt,
-          scopeSha256: scope.manifestSha256, components: scope.components, effects: scope.effects, refs: scope.refs }
+          scopeSha256: scope.manifestSha256, components: scope.components, effects: scope.effects, refs: scope.refs, ...(proof ? { proof } : {}) }
         d.audit.push({ at: snapshot.updatedAt, event: 'prepared-existing-pinned-manifest', actor: 'delivery-runtime' })
       })
       return
     }
     throw new Error('No current active release owner and reviewed pinned manifest for these exact heads. No new release candidate was created.')
+  }
+  /**
+   * Advice-only enrichment for cards prepared before proof was recorded: read the actual prepared publication snapshot and
+   * accept only evidence for the exact recorded pins of that publication. The stored delivery, audit and action fingerprint stay untouched.
+   */
+  private async advise(delivery: Delivery): Promise<Delivery> {
+    const prepared = delivery.preparedPublication
+    const proof = await snapshotProof(prepared, this.options.publication)
+    return proof && prepared ? { ...delivery, preparedPublication: { ...prepared, proof } } : delivery
   }
   private async abortable<T>(work: Promise<T>): Promise<T> {
     this.signal.throwIfAborted()
@@ -239,7 +251,10 @@ export class FeatureDeliveryRuntime {
       if (!action || current.recommendation || !this.options.recommend
         || (previous?.fingerprint === action.fingerprint && previous.kind === action.kind && (previous.attempts >= 3 || (previous.nextRetryAt ?? 0) > Date.now()))) continue
       try {
-        const recommendation = await this.abortable(this.options.recommend(current, action))
+        // Pre-upgrade prepared cards have no recorded proof; enrich only the advice copy from the live exact-pin snapshot.
+        const advice = await this.advise(current).catch(() => current)
+        this.signal.throwIfAborted()
+        const recommendation = await this.abortable(this.options.recommend(advice, action))
         this.signal.throwIfAborted()
         this.store.setRecommendation(current.id, current.revision, recommendation)
       } catch (error) {

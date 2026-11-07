@@ -14,7 +14,21 @@ export interface ViewHost { store: Store; sources: SourceRegistry; links: LinkTa
 export const page = <T>(items: T[], offset: number, limit: number) => ({ items: items.slice(offset, offset + limit), total: items.length, next_offset: offset + limit < items.length ? offset + limit : null })
 const DAY = 86_400_000
 export const dayAgo = () => new Date(Date.now() - DAY).toISOString()
-export const newestFirst = (a: Ticket, b: Ticket) => b.updatedAt.localeCompare(a.updatedAt)
+/** Legacy tickets persisted numeric epoch milliseconds while current rows store ISO dates; normalize both for read-only ordering. */
+const timestamp = (value: unknown): number => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : Number.NaN
+  if (typeof value === 'string') return Date.parse(value)
+  return Number.NaN
+}
+/** Newest known timestamp first; rows with an invalid or unknown timestamp keep a stable position after every known one. */
+export const newestFirst = (a: Ticket, b: Ticket) => {
+  const left = timestamp(a.updatedAt), right = timestamp(b.updatedAt)
+  if (Number.isNaN(left) || Number.isNaN(right)) {
+    if (Number.isNaN(left) && Number.isNaN(right)) return 0
+    return Number.isNaN(left) ? 1 : -1
+  }
+  return right - left
+}
 
 /** Sender projection for the UI; automated notices have an empty `id` and no `name`. */
 export interface ActorView { source: string; id: string; name?: Localized }
