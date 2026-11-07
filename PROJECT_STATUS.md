@@ -2,6 +2,14 @@
 
 Updated November 07, 2026 at 07:21 AM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
 
+## Active release — completed-job cost summary
+
+Gera explicitly authorized review, testing, deployment and live verification on November 07 after sending the recommended handoff. Owner: Codex release operator; existing Harness worker owns candidate preparation and qualification. Current state: **current-head candidate qualification running; not yet deployed.** Worker checkout `rc-f8eda46` is based on `f8eda465ff61f850c07cee83e7fb535350b3f44c`; old `0f9d17a` / `b26007d` results remain historical.
+
+The recommendation experiment required intervention: after Gera's one continuation, the worker detected target movement but returned an old-head package and another operator-confirmation recommendation. Codex supplied one concrete native continuation for the already authorized release. This is a recorded workflow gap, not autonomous success. GitHub branch protection is not required by the configured publication adapter when exact independent local review/test evidence is supplied; no protection settings will be changed.
+
+Finish line: review the current tested candidate; publish the narrow source PR against `superagent-core`; apply through a pinned operator release with source/assets/database rollback; verify actual completed-job model/provider, token/cache coverage and honest cost availability in the running UI; record evidence and settle the original delivery. No routing, keys, autopilot or auto-send changes. Gera does not need to keep advancing the work. Local checkpoint: `token-optimization/cost-summary-release/progress.json`.
+
 ## Active acceptance — release-aware Senior Developer context
 
 [Issue #39](https://github.com/gera3d/dsh-superagent-prototype/issues/39), owner Codex, explicitly authorized November 07. **Reviewed, merged, deployed, live generation/ranking API verified and native browser acceptance complete.**
@@ -10,7 +18,7 @@ Backend PRs #40/#41 and plugin PRs #14/#15 give drafting, fallback and ranking t
 
 Live qualification exposed primary response-parse failures and one fallback generation failure. PR #43 / plugin PR #16 add 4,096-token structured reply headroom with concise prompts and privacy-safe diagnostics; PR #44 normalizes the two known reply envelopes while rejecting ambiguous recommendations, model scores and privileged metadata. The original exact parsing mismatch was not recorded; do not claim a more specific cause than response parsing. After the repairs the actual primary helper completed in **9.11 seconds without fallback**, and the managed ranker scored the shared current record.
 
-**Current cost-summary decision:** `chat-a9801a7b206add4096309faaa7ff03d8`, **“Hand off complete release package” — 82%**; alternatives fresh worktree checks 14%, PR-body-only 4%. The recommended prompt rechecks the current target, preserves old results as historical if the target moved, keeps PR-body content outside the pinned tree, bundles the release package and names operator scope/target/acceptance confirmation. Pending, unstaged and unsent. Earlier cards are retained as superseded history with unchanged choices. No cost-summary source PR, merge, deployment or live acceptance was performed by this context repair.
+**Historical recommendation repair checkpoint:** `chat-a9801a7b206add4096309faaa7ff03d8`, **“Hand off complete release package” — 82%**; alternatives fresh worktree checks 14%, PR-body-only 4%. The recommended prompt rechecks the current target, preserves old results as historical if the target moved, keeps PR-body content outside the pinned tree, bundles the release package and names operator scope/target/acceptance confirmation. Pending, unstaged and unsent. Earlier cards are retained as superseded history with unchanged choices. No cost-summary source PR, merge, deployment or live acceptance was performed by this context repair.
 
 **Qualification:** final full backend suite **2,170 passed / two skipped / zero failures**; 22 Node host/parser and 184 UI/behavior tests pass; types and both builds pass. All ten service components including GitHub ready, executor unpaused, zero running/queued. Original source/assets/SQLite rollback retained. Evidence: [live API qualification](docs/evidence/release-aware-advice-2026-11-07.json); local context and generation records under `token-optimization/release-aware-advice`. Native browser acceptance after unlock and reload confirmed the actual worker thread shows the same 82% recommended card, alternatives 14%/4%, compact collapsed delivery strip, Autopilot OFF, empty composer and disabled Send. Screenshot retained locally at `token-optimization/release-aware-advice/live-recommendation.png`. No recommendation was selected or sent. Existing startup decision-write history gate remains unchanged.
 
@@ -92,6 +100,6 @@ The scheduler concurrency behavior is regression-tested; no additional three-job
 
 ## Next action
 
-Native browser acceptance is complete. The **Hand off complete release package (82%)** recommendation is ready for the user to choose; it has not been selected or sent. After that choice is sent and the worker completes its permitted package, this coordinating thread can review the actual current-head source candidate and proceed through the existing authorized publication and live-verification path. Do not reuse the historical `0f9d17a` / `b26007d` exact-tree claims after this source release; revalidate/reconcile before publishing. Cost-summary artifact PR #191 remains unmerged and undeployed.
+Gera sent the recommendation and authorized full release follow-through. Codex owns the next steps: finish candidate review, publish and verify the cost-summary release without requesting another routine continuation. Do not reuse the historical `0f9d17a` / `b26007d` exact-tree claims after this source release; revalidate/reconcile before publishing. Cost-summary artifact PR #191 remains unmerged and undeployed.
 
 Durable evidence: [release verification](docs/evidence/routine-cleanup-live-2026-11-06.json), [review and release notes](reports/ROUTINE_CLEANUP_RELEASE.md). Native screenshots and detailed rollback/runtime records are retained locally in the cockpit project's `token-optimization` directory.
