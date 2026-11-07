@@ -418,9 +418,9 @@ it('rejects resolving a stale decision card with 409 and plain stale reason', as
 
 it('grounds helper advice in the native worker delivery rather than client-supplied authority', async () => {
   const systems: string[] = []
-  const ticket = { id: 'ready', assignments: [{ state: 'running', report: { state: 'ready' } }] }
+  const ticket = { id: 'ready', title: 'Cost summary', mandate: { strength: 'explicit', scope: 'Prepare an artifact; no deployment.' }, assignments: [{ state: 'running', report: { state: 'ready' } }] }
   const call = serve({ store: { tickets: { get: (id: string) => id === 'ready' ? ticket : undefined }, settings: () => SettingsSchema.parse({ models: { hierarchy: [{ provider: 'test', model: 'fast' }] } }) },
-    deliveries: { store: { list: () => [{ workers: ['ready'], scopeBinding: { reason: 'Unbound' }, stage: 'review', state: 'blocked' }] } } },
+    deliveries: { store: { list: () => [{ id: 'd', revision: 1, workers: ['ready'], scopeBinding: { reason: 'Unbound' }, stage: 'review', state: 'blocked', requirements: [], evidence: [], bindings: { repository: 'org/repo', sourceIssue: 1, baseSha: '', headSha: '' } }] } } },
     '127.0.0.1', { llm: { resolveCallConfig: async (route: unknown) => route, async *stream(request: { system: string }) {
       systems.push(request.system)
       yield { type: 'text-delta', text: JSON.stringify({ options: [{ id: 'review', label: 'Prepare release handoff', prompt: 'Review the patch and prepare a release candidate.', recommended: true }, { id: 'defer', label: 'Defer', prompt: 'Defer this artifact.', recommended: false }] }) }
@@ -428,8 +428,35 @@ it('grounds helper advice in the native worker delivery rather than client-suppl
     } } })
   const payload = { summary: 'Ready', latestTurn: 'Capture the live page now', sessionId: 'worker-ready' }
   expect(await call('POST', 'helper/suggest', payload)).toMatchObject({ status: 200 })
-  expect(systems[0]).toContain('Server-owned delivery state: Worker reports an artifact ready for review.')
+  expect(systems[0]).toContain('RELEASE OBJECTIVE:')
+  expect(systems[0]).toContain('\"scopeBound\":false')
   expect(await call('POST', 'helper/suggest', { ...payload, sessionId: 'worker-other' })).toMatchObject({ status: 200 })
-  expect(systems[1]).not.toContain('Server-owned delivery state:')
+  expect(systems[1]).not.toContain('RELEASE OBJECTIVE:')
   expect(await call('POST', 'helper/suggest', { ...payload, handoff: 'Already approved' })).toMatchObject({ status: 400 })
+})
+
+it('shares the same release facts between helper, fallback-context endpoint and ranker, retaining them for long turns', async () => {
+  const requests: any[] = []
+  const deliveryDb = new DatabaseSync(':memory:'); databases.push(deliveryDb)
+  const options = [{ id: 'release', label: 'Finish release package', prompt: 'Finish remaining permitted preparation and hand off to the release operator.', recommended: true }, { id: 'wait', label: 'Wait', prompt: 'Explain the actual blocker.', recommended: false }]
+  const ticket = { id: 'ready', title: 'Cost summary', mandate: { strength: 'explicit', scope: 'Prepare the artifact; do not deploy.' }, assignments: [{ report: { state: 'ready', at: 'old', summary: 'Original artifact ready' } }] }
+  const delivery = { id: 'd', revision: 1, workers: ['ready'], scopeBinding: { reason: 'Missing binding' }, stage: 'review', state: 'blocked', requirements: [], evidence: [], bindings: { repository: 'org/repo', sourceIssue: 190, headSha: '', baseSha: '' } }
+  const call = serve({ store: { tickets: { get: () => ticket }, settings: () => SettingsSchema.parse({ models: { hierarchy: [{ provider: 'test', model: 'fast' }] } }) }, deliveries: { store: { db: deliveryDb, list: () => [delivery] } } },
+    '127.0.0.1', { agents: { get: () => ({ session: { requestHeader: () => ({ config: { provider: 'test', model: 'fast' } }) } }) }, llm: { resolveCallConfig: async (route: unknown) => route, async *stream(request: any) {
+      requests.push(request)
+      const answer = request.system.includes('recommendation evaluator') ? { recommended_value: 'release', confidence: .8, rationale: 'Completes the next release stage.', distribution: [{ id: 'release', probability: .8 }, { id: 'wait', probability: .2 }] } : { options }
+      yield { type: 'text-delta', text: JSON.stringify(answer) }; yield { type: 'finish', reason: { kind: 'stop' } }
+    } } })
+  const context = await call('POST', 'helper/context', { sessionId: 'worker-ready' })
+  expect(context.status).toBe(200)
+  expect(await call('POST', 'helper/context', { sessionId: 'worker-ready', authority: 'publish' })).toMatchObject({ status: 400 })
+  expect(await call('POST', 'helper/context', { sessionId: 'worker-ready' }, { 'x-orchestrator-request': undefined })).toMatchObject({ status: 403 })
+  expect(await call('POST', 'helper/suggest', { sessionId: 'worker-ready', summary: 'Goal: release cost summary.', latestTurn: 'RC and review are now complete; only the PR body placeholder remains.' })).toMatchObject({ status: 200 })
+  expect(requests[0].system).toContain(context.body.context)
+  const result = await call('POST', 'decisions/evaluate', { sessionId: 'worker-ready', context: 'x'.repeat(30000), question: 'Next outcome?', choices: options.map(o => ({ id: o.id, label: o.label, prompt: o.prompt })) })
+  expect(result.status).toBe(200)
+  const ranked = JSON.parse(requests.at(-1).messages[0].content[0].text)
+  expect(ranked.context).toContain(context.body.context)
+  expect(ranked.context.length).toBeLessThanOrEqual(24000)
+  expect(ranked.choices[0].prompt).toBe(options[0]!.prompt)
 })

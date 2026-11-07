@@ -63,6 +63,7 @@ function fixture(count = 1) {
   const network = vi.mocked(fetch)
   network.mockImplementation(async (input, init) => {
     if (init?.method !== 'POST') return unexpectedFetch(input)
+    if (input === `${base}/orchestrator/api/helper/context`) return Response.json({ context: 'Shared recorded release context; no execution permission.' })
     if (input === `${base}${helperPath}`) return helper(init)
     if (input === `${base}${rankerPath}`) return ranker(init)
     const operation = String(input).startsWith(`${base}/orchestrator/api/decisions/canonical/`)
@@ -274,4 +275,20 @@ it('uses only mocked fetches and rejects unknown endpoints instead of reaching a
   expect(view.prepare).not.toHaveBeenCalled()
   await expect(fetch('http://127.0.0.1:3082/unexpected')).rejects.toThrow('Unexpected network request')
   expect(unexpectedFetches.splice(0)).toEqual(['Unexpected network request: http://127.0.0.1:3082/unexpected'])
+})
+
+it('fallback receives the shared server context and ranking sees complete proposed instructions', async () => {
+  const view = fixture()
+  view.helper.mockResolvedValueOnce(Response.json({}, { status: 503 }))
+  let system = ''
+  view.prepare.mockImplementationOnce(async () => ({ config: {}, async *stream(request: any) {
+    system = request.system
+    yield { type: 'text-delta', text: JSON.stringify(answer) }; yield { type: 'finish', reason: { kind: 'completed' } }
+  } }) as any)
+  const result = await view.request('s0')
+  expect(system).toContain('Shared recorded release context; no execution permission.')
+  await view.score(result.body.key)
+  const payload = JSON.parse(String(view.ranker.mock.calls[0]![0]!.body))
+  expect(payload.choices[0].prompt).toBe(answer.options[0]!.prompt)
+  expect(payload.question).toContain('overall goal')
 })

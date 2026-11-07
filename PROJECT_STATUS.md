@@ -1,6 +1,14 @@
 # DeepSeek Harness project status
 
-Updated November 06, 2026 at 09:45 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 07, 2026 at 06:50 AM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+
+## Active repair — release-aware Senior Developer context
+
+[Issue #39](https://github.com/gera3d/dsh-superagent-prototype/issues/39), owner Codex, explicitly authorized by Gera on November 07. End goal: a tested, reviewed, published and live-verified feature. The user chooses; the harness performs permitted work; this coordinating thread handles authorized publishing through the existing protected path. Worker restrictions remain intact and must produce a complete publisher-ready handoff rather than repeated human-terminal paperwork.
+
+Implemented in isolation: a bounded shared server context for drafting/fallback/ranking; current mandate and release bindings/evidence/owner; explicit stale assignment-report provenance; full proposed prompts in ranking; release context retained under evaluator input limits. Ordinary conversations keep their own goal. No route, quota, key, autopilot or confirmation changes. 68 focused backend tests and 22 Node / 184 UI tests pass; full suite, final types/build, review and deployment are in progress. **Not deployed or live verified yet.**
+
+Current cost-summary recommendation is `chat-b5b481ef607226f02c2dcb7d9099e2fd`: “Write the PR body file” at 72%, pending and unstaged. It references candidate tree `b26007d` built on target `0f9d17a`. This context repair will advance the source target; publishing the cost-summary feature must revalidate/reconcile its candidate against that resulting current head, not reuse stale exact-tree claims. No cost-summary choice or publication is being performed as part of the context repair.
 
 ## Resolved UI repair — compact native delivery status
 
