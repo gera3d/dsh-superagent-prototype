@@ -71,3 +71,15 @@ it('keeps dispatched evidence forms collapsed in chat across polling and bounds 
   expect(fixture.call).not.toHaveBeenCalled()
   expect(disclosure.querySelector('.dt-delivery-body')).not.toBeNull()
 })
+
+it('also keeps legacy publication history out of the chat viewport without removing its evidence', async () => {
+  const item = dispatched(); delete item.finding; item.actionMode = 'ticket_lifecycle'; item.sessionId = 'publication-worker'; item.status = 'stale'
+  item.lifecycle = { kind: 'done', assignmentId: 'original-assignment', docsOnly: false, recovery: true, publication: { id: 'pub-closed', ticketId: 'ticket-current', conversationId: 'publication-worker', repository: 'example/repo', prNumber: 1, headSha: 'a'.repeat(40), patchSha256: 'b'.repeat(64), status: 'published', createdAt: '2026-11-07T00:00:00Z', updatedAt: '2026-11-07T01:00:00Z', outcomes: [{ stage: 'verify', operationId: 'verify', status: 'succeeded', startedAt: '2026-11-07T01:00:00Z' }], audit: [], requests: {} } }
+  fixture.items = [item]; const view = await mounted(); await view.render('publication-worker')
+  const disclosure = view.node.querySelector('.dt-delivery-disclosure') as HTMLDetailsElement
+  expect(disclosure.open).toBe(false)
+  expect(disclosure.querySelector(':scope > summary')?.textContent).toContain('Publication')
+  expect(disclosure.querySelector('.dt-lifecycle-card')?.getAttribute('style')).toBeNull()
+  expect(disclosure.textContent).toContain('Original decision closed')
+  expect(fixture.call).not.toHaveBeenCalled()
+})

@@ -1,5 +1,7 @@
 /** One privileged lifecycle renderer for conversation, Decisions and optional companion surfaces. Never stages chat. */
 import type { ReactNode } from 'react'
+import { Icon } from './controls.tsx'
+import STYLES from './delivery-card.css?raw'
 import type { PendingDecisionItem } from '../core/decision.ts'
 import { findingMatchesSession } from './finding-association.ts'
 import { FindingCard } from './finding-card.tsx'
@@ -38,8 +40,25 @@ export async function reconcileDelivery(id: string, request: DeliveryConfirmatio
 export function SharedLifecycleCard({ item, onTicket, compactFindings = false }: { item: PendingDecisionItem; onTicket?: () => void; compactFindings?: boolean }) {
   if (item.actionMode === 'finding_triage' || item.finding) return <FindingCard item={item} compact={compactFindings} />
   if (item.actionMode === 'feature_delivery' || item.delivery) return <DeliveryCard item={item} onConfirm={request => confirmDelivery(item.delivery!.id, request)} onRecheck={request => recheckDelivery(item.delivery!.id, request)} onReconcile={request => reconcileDelivery(item.delivery!.id, request)} />
-  return <LifecycleCard item={item} onTicket={onTicket} onAction={(action, approval) => call('POST decisions/:id/lifecycle',
+  const card = <LifecycleCard item={item} embedded={compactFindings} onTicket={onTicket} onAction={(action, approval) => call('POST decisions/:id/lifecycle',
     { id: item.id, body: { action, ...(approval ? { approval } : {}) } })} />
+  if (!compactFindings) return card
+  const publication = item.lifecycle?.publication
+  const state = publication?.status === 'published' && !publication.outcomes.some(outcome => outcome.stage === 'verify' && outcome.status === 'succeeded')
+    ? 'Verification unconfirmed' : publication?.status.replaceAll('_', ' ') ?? (item.lifecycle?.kind === 'stuck' ? 'Needs attention' : 'Review needed')
+  return <section className="dt-delivery-card" aria-label={`Publication: ${item.ticketTitle}`}>
+    <style>{STYLES}</style>
+    <details className="dt-delivery-disclosure">
+      <summary className="dt-delivery-summary" title={item.ticketTitle}>
+        <Icon name="review" size={14} />
+        <span className="dt-delivery-label">Publication</span>
+        <span className="dt-delivery-state" role="status">{state}</span>
+        <span className="dt-delivery-hint">View details</span>
+        <span className="dt-delivery-chevron"><Icon name="chevron-down" size={14} /></span>
+      </summary>
+      <div className="dt-delivery-body">{card}</div>
+    </details>
+  </section>
 }
 /** Independent privileged dock remains available even when Next steps owns ordinary suggestion rendering. */
 export function PublicationDock({ sessionId, removed }: { sessionId: string; removed?: boolean }) {
