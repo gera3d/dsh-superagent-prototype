@@ -415,3 +415,21 @@ it('rejects resolving a stale decision card with 409 and plain stale reason', as
   expect(resolveRes.body.error).toContain('Decision is stale')
   expect(resolveRes.body.error).toContain('originating session has ended')
 })
+
+it('grounds helper advice in the native worker delivery rather than client-supplied authority', async () => {
+  const systems: string[] = []
+  const ticket = { id: 'ready', assignments: [{ state: 'running', report: { state: 'ready' } }] }
+  const call = serve({ store: { tickets: { get: (id: string) => id === 'ready' ? ticket : undefined }, settings: () => SettingsSchema.parse({ models: { hierarchy: [{ provider: 'test', model: 'fast' }] } }) },
+    deliveries: { store: { list: () => [{ workers: ['ready'], scopeBinding: { reason: 'Unbound' }, stage: 'review', state: 'blocked' }] } } },
+    '127.0.0.1', { llm: { resolveCallConfig: async (route: unknown) => route, async *stream(request: { system: string }) {
+      systems.push(request.system)
+      yield { type: 'text-delta', text: JSON.stringify({ options: [{ id: 'review', label: 'Prepare release handoff', prompt: 'Review the patch and prepare a release candidate.', recommended: true }, { id: 'defer', label: 'Defer', prompt: 'Defer this artifact.', recommended: false }] }) }
+      yield { type: 'finish', reason: { kind: 'stop' } }
+    } } })
+  const payload = { summary: 'Ready', latestTurn: 'Capture the live page now', sessionId: 'worker-ready' }
+  expect(await call('POST', 'helper/suggest', payload)).toMatchObject({ status: 200 })
+  expect(systems[0]).toContain('Server-owned delivery state: Worker reports an artifact ready for review.')
+  expect(await call('POST', 'helper/suggest', { ...payload, sessionId: 'worker-other' })).toMatchObject({ status: 200 })
+  expect(systems[1]).not.toContain('Server-owned delivery state:')
+  expect(await call('POST', 'helper/suggest', { ...payload, handoff: 'Already approved' })).toMatchObject({ status: 400 })
+})

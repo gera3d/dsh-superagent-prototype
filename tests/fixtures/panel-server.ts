@@ -326,6 +326,7 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
   'POST triggers/:id/requeue': { answer: ({ params }) => { server.queued.add(params.id); return { queued: true } } },
   'GET decisions': { query: ['kind', 'window', 'offset', 'limit'], answer: ({ query }) =>
     ({ items: query.kind === 'ignore' ? [] : [acceptDecision()], next_offset: null }) },
+  'POST decisions/canonical/revise': { body: true, answer: () => refuse(500, 'Canonical fixture transport unavailable') },
   'POST decisions/canonical/claim': { body: true, answer: () => refuse(500, 'Canonical fixture transport unavailable') },
   'POST decisions/canonical/publish': { body: true, answer: () => refuse(500, 'Canonical fixture transport unavailable') },
   'POST decisions/canonical/score': { body: true, answer: () => refuse(500, 'Canonical fixture transport unavailable') },

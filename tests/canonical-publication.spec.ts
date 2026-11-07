@@ -125,3 +125,25 @@ it('strict HTTP schemas require full source identity and bounded exact helper ch
   expect(CanonicalPublishSchema.safeParse({ ...source, leaseToken: randomUUID(), model: 'helper', options }).success).toBe(true)
   expect(CanonicalPublishSchema.safeParse({ ...source, leaseToken: randomUUID(), model: 'helper', options: [...options, ...options, options[0]] }).success).toBe(false)
 })
+
+it('explicit correction retires immutable choices and publishes a linked current replacement', () => {
+  const queue = inbox(), first = ready(queue)
+  const request = { ...source, expectedDecisionId: first.item.id, reason: 'Artifact readiness was mistaken for live deployment.' }
+  expect(() => queue.reviseCanonical({ ...request, expectedDecisionId: 'wrong' }, events)).toThrow('current unstaged')
+  expect(() => queue.reviseCanonical(request, [...events, { type: 'turn/start', seq: 4, data: { turn: 2 } } as SessionEvent])).toThrow('current durable')
+  const replacement = queue.reviseCanonical(request, events).item
+  expect(queue.get(first.item.id)).toMatchObject({ status: 'stale', choices: first.item.choices, canonical: first.item.canonical })
+  expect(replacement).toMatchObject({ status: 'pending', supersedesDecisionId: first.item.id, choices: [] })
+  expect(queue.findSource(source)?.id).toBe(replacement.id)
+  expect(() => queue.stage(first.item.id, { choiceId: options[0]!.id, attemptId: randomUUID(), draftText: options[0]!.prompt })).toThrow('stale')
+  const claim = queue.claimCanonical({ ...source, owner: 'corrector' }, events)
+  const corrected = options.map(o => ({ ...o, prompt: 'Review the actual release candidate before deployment.' }))
+  expect(queue.publishCanonical({ ...source, leaseToken: claim.leaseToken!, model: 'helper', options: corrected }, events).item.choices.map(c => c.prompt)).toEqual(corrected.map(c => c.prompt))
+  expect(() => queue.reviseCanonical(request, events)).toThrow('current unstaged')
+})
+it('correction cannot discard a staged or resolved native choice', () => {
+  const queue = inbox(), first = ready(queue)
+  queue.stage(first.item.id, { choiceId: options[0]!.id, attemptId: randomUUID(), draftText: options[0]!.prompt })
+  expect(() => queue.reviseCanonical({ ...source, expectedDecisionId: first.item.id, reason: 'Correction' }, events)).toThrow('current unstaged')
+  expect(queue.get(first.item.id)?.staging).toBeDefined()
+})

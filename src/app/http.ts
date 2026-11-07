@@ -210,6 +210,7 @@ export const CanonicalPublishSchema = CanonicalWriteSchema.extend({ model: z.str
 export const CanonicalScoreSchema = CanonicalWriteSchema.extend({ evaluation: DecisionEvaluationSchema }).strict()
 export const CanonicalFailureSchema = CanonicalWriteSchema.extend({ error: z.string().min(1).max(4000) }).strict()
 export async function canonicalOperation(ctx: Context, inbox: DecisionInbox, operation: string, body: unknown) {
+  if (operation === 'revise') { const input = CanonicalSourceSchema.extend({ expectedDecisionId: z.string().min(1).max(300), reason: z.string().trim().min(1).max(1000) }).strict().parse(body); return inbox.reviseCanonical(input, await durableDecisionEvents(ctx, input.sessionId)) }
   if (operation === 'claim') { const input = CanonicalClaimSchema.parse(body); return inbox.claimCanonical(input, await durableDecisionEvents(ctx, input.sessionId)) }
   if (operation === 'publish') { const input = CanonicalPublishSchema.parse(body); return inbox.publishCanonical(input, await durableDecisionEvents(ctx, input.sessionId)) }
   if (operation === 'score') { const input = CanonicalScoreSchema.parse(body); return inbox.scoreCanonical(input, await durableDecisionEvents(ctx, input.sessionId)) }
@@ -292,6 +293,7 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
       const since = window ? new Date(Date.now() - 86_400_000).toISOString() : ''
       return decisionList(views(runtime), kind.split(',').filter(Boolean), offset, limit, since)
     },
+    'POST decisions/canonical/revise': async ({ body }) => canonicalOperation(ctx, inbox(), 'revise', await body()),
     'POST decisions/canonical/claim': async ({ body }) => canonicalOperation(ctx, inbox(), 'claim', await body()),
     'POST decisions/canonical/publish': async ({ body }) => canonicalOperation(ctx, inbox(), 'publish', await body()),
     'POST decisions/canonical/score': async ({ body }) => canonicalOperation(ctx, inbox(), 'score', await body()),
@@ -432,8 +434,15 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
       return { ok: true, id: saved.id }
     },
     'POST helper/suggest': async ({ body }) => {
-      const digest = HelperDigestSchema.parse(await body(HELPER_BODY_MAX_BYTES))
-      return suggestHelper(ctx, digest, store.settings())
+      const request = HelperDigestSchema.extend({ sessionId: z.string().min(1).max(300).optional() }).parse(await body(HELPER_BODY_MAX_BYTES))
+      const { sessionId, ...digest } = request
+      const ticketId = sessionId ? ticketOfSession(sessionId) : undefined
+      const ticket = ticketId ? store.tickets.get(ticketId) : undefined
+      const delivery = ticket && runtime.deliveries?.store.list().find(d => d.workers.includes(`worker-${ticket.id}`) || d.workers.includes(ticket.id))
+      const handoff = delivery?.scopeBinding && delivery.stage === 'review' && !['accepted', 'cancelled', 'abandoned'].includes(delivery.state)
+        && !ticket?.ended && ticket?.assignments.at(-1)?.report?.state === 'ready'
+        ? 'Worker reports an artifact ready for review. Delivery scope is unbound; no release revision, target or acceptance requirements are confirmed. No publish action or live deployment evidence is available.' : undefined
+      return suggestHelper(ctx, digest, store.settings(), handoff)
     },
     'POST decisions/evaluate': async ({ body }) => {
       const payload = DecisionEvaluation.parse(await body())

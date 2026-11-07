@@ -35,6 +35,7 @@ export interface Api {
   'POST threads/:key/unsubscribe': { response: { removed: boolean; thread: string; context_delivery: Delivery } }
   'POST triggers/:id/requeue': { response: { queued: boolean } }
   'GET decisions': { query?: Paged & { kind?: string; window?: '24h' }; response: DecisionListView }
+  'POST decisions/canonical/revise': { body: Omit<CanonicalClaim, 'owner' | 'purpose'> & { expectedDecisionId: string; reason: string }; response: CanonicalResult }
   'POST decisions/canonical/claim': { body: CanonicalClaim; response: CanonicalResult }
   'POST decisions/canonical/publish': { body: CanonicalPublish; response: CanonicalResult }
   'POST decisions/canonical/score': { body: CanonicalScore; response: CanonicalResult }
@@ -54,7 +55,7 @@ export interface Api {
   'POST deliveries/:id/confirm': { body: { revision: number; actionId: string }; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
   'GET decisions/inbox': { response: { items: PendingDecisionItem[] } }
   'POST decisions/inbox': { body: PendingDecisionItem; response: { ok: boolean; id: string } }
-  'POST helper/suggest': { body: HelperDigest; response: HelperSuggestions }
+  'POST helper/suggest': { body: HelperDigest & { sessionId?: string }; response: HelperSuggestions }
   'POST decisions/evaluate': { body: DecisionEvaluationRequest; response: DecisionEvaluationResult }
   'POST decisions/character-evaluate': { body: DecisionEvaluationRequest & { characterId?: string; diff?: string; testOutput?: string; ticketRequest?: string }; response: CharacterEvaluationResult }
   'POST decisions/:id/lifecycle': { body: { action: LifecycleAction; approval?: { publicationId: string; requestId: string } }; response: LifecycleResult }
