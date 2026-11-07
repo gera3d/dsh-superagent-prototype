@@ -23,6 +23,7 @@ import { DeliveryIntakeRequest } from './delivery-intake.ts'
 import { FindingIntakeSchema, FindingConfirmSchema, FindingReviewSchema, FindingError, findingDecision } from './finding.ts'
 import type { FindingRuntime } from './finding-runtime.ts'
 import { FindingEvidenceRequest } from './finding-evidence.ts'
+import { snapshotProof } from './publication-proof.ts'
 import { FeatureDeliveryRuntime, deliveryDecision, reconcileInboxCurrency } from './delivery-runtime.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
 import { PromptConflict, SKILL_NAME, SKILL_PREFIX, TEAM_SECTIONS, builtInBase, builtInParts, defaultPrompts, savePrompts, type Prompts }
@@ -268,11 +269,14 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
   const { store } = runtime
   const ticket = (id: string) => { if (!store.tickets.get(id)) throw new RouteError(404, 'Ticket not found'); return id }
   const promptBody = (input: { body: (maxBytes?: number) => Promise<unknown> }) => input.body(4 * runtime.machine.promptMaxChars.get() + 4096)
-  const contextFor = (sessionId?: string) => {
+  const contextFor = async (sessionId?: string) => {
     const ticketId = sessionId ? ticketOfSession(sessionId) : undefined
     const ticket = ticketId ? store.tickets.get(ticketId) : undefined
     const delivery = ticket && runtime.deliveries?.store.list().find(d => d.workers.includes(`worker-${ticket.id}`) || d.workers.includes(ticket.id))
-    return adviceContext(ticket, delivery)
+    // Pre-upgrade prepared cards carry no recorded proof; derive the exact-pin observation from the live protected snapshot.
+    const prepared = delivery?.preparedPublication
+    const proof = prepared ? await snapshotProof(prepared, runtime.publication) : undefined
+    return adviceContext(ticket, proof && delivery && prepared ? { ...delivery, preparedPublication: { ...prepared, proof } } : delivery)
   }
   return {
     'GET state': () => stateView(runtime),
@@ -448,17 +452,17 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
     },
     'POST helper/context': async ({ body }) => {
       const request = z.object({ sessionId: z.string().min(1).max(300) }).strict().parse(await body(1024))
-      return { context: contextFor(request.sessionId) }
+      return { context: await contextFor(request.sessionId) }
     },
     'POST helper/suggest': async ({ body }) => {
       const request = HelperDigestSchema.extend({ sessionId: z.string().min(1).max(300).optional() }).parse(await body(HELPER_BODY_MAX_BYTES))
       const { sessionId, ...digest } = request
-      return suggestHelper(ctx, digest, store.settings(), contextFor(sessionId))
+      return suggestHelper(ctx, digest, store.settings(), await contextFor(sessionId))
     },
     'POST decisions/evaluate': async ({ body }) => {
       const payload = DecisionEvaluation.parse(await body())
       const settings = store.settings()
-      return evaluateDecisionWithFallback({ ...payload, context: `${payload.context.slice(-16000)}\nSHARED WORKFLOW CONTEXT:\n${contextFor(payload.sessionId)}` }, {
+      return evaluateDecisionWithFallback({ ...payload, context: `${payload.context.slice(-16000)}\nSHARED WORKFLOW CONTEXT:\n${await contextFor(payload.sessionId)}` }, {
         decisions: settings.decisions,
         settings,
         call: request => configuredDecisionReply(ctx, request, settings),

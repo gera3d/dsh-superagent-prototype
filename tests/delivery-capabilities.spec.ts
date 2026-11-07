@@ -196,3 +196,116 @@ it('preserves held-publication disposition and rejects model-selected action IDs
   h.setVerdict({ actionId: action.id, fingerprint: action.fingerprint, rationale: 'No disposition supplied.' })
   await expect(recommendDeliveryAction(d, action, h.deps)).rejects.toThrow()
 })
+
+const batchFile = (filename: string, additions: number) => ({ filename, status: 'modified', additions, deletions: 0,
+  patch: '@@ -0,0 +1 @@\n' + Array.from({ length: additions }, () => '+x').join('\n') })
+const batchVerdict = (verdict: 'passed' | 'failed', rationale: string, findings: unknown[] = []) => ({ verdict, findings, rationale })
+function multiRefFixture() {
+  const h = fixture(); const l = h.lease()
+  l.bindings = { ...l.bindings, refs: [{ repository: 'org/repo', pr: 17, headSha: HEAD, baseSha: BASE },
+    { repository: 'other/repo', pr: 28, headSha: NEW, baseSha: BASE }] }
+  h.gh.mockImplementation(async (args: string[]) => {
+    expect(args[0]).toBe('api'); expect(args.slice(-2)).toEqual(['--method', 'GET'])
+    if (args[1]!.endsWith('/files?per_page=100&page=1')) return [batchFile('src/code.ts', 20_000)]
+    const secondary = args[1]!.includes('other/repo')
+    return { head: { sha: secondary ? NEW : HEAD }, base: { sha: BASE }, changed_files: 1 }
+  })
+  const answers = (values: unknown[]) => h.stream.mockImplementation(async function* () {
+    const value = values.shift()
+    if (!value) throw new Error('Unexpected extra review batch')
+    yield { type: 'text-delta', text: JSON.stringify(value) }; yield { type: 'finish', reason: { kind: 'stop' } }
+  })
+  return { ...h, lease: () => l, answers }
+}
+
+it('reviews each pinned PR as its own bounded batch when the combined source/artifact payload exceeds the aggregate cap', async () => {
+  const h = multiRefFixture()
+  h.answers([batchVerdict('passed', 'Artifact batch retains the fences.'),
+    batchVerdict('passed', 'Source batch retains the fences and complete diff.')])
+  const result = await h.caps.review!.execute(h.lease())
+  expect(result.outcome).toBe('passed')
+  // Two exact-content batches with the same filename are both reviewed; nothing is skipped by filename.
+  expect(h.stream).toHaveBeenCalledTimes(2)
+  const saved = JSON.parse(String(store.db.prepare('SELECT value FROM delivery_capability_review WHERE id=?').get(h.lease().id)!.value))
+  expect(saved.batches).toHaveLength(2)
+  expect(saved.batches.map((batch: { pr: number }) => batch.pr)).toEqual([17, 28])
+  expect(saved.diffs.reduce((total: number, diff: unknown) => total + Buffer.byteLength(JSON.stringify(diff)), 0)).toBeGreaterThan(100_000)
+  expect(saved.diffs.every((diff: unknown) => Buffer.byteLength(JSON.stringify(diff)) <= 100_000)).toBe(true)
+  expect(result.evidence).toHaveLength(1)
+})
+
+it('aggregates a failed batch into one bounded final verdict only after every batch completed', async () => {
+  const h = multiRefFixture()
+  h.answers([batchVerdict('passed', 'Artifact batch is complete.'),
+    batchVerdict('failed', 'Source batch changes behavior.', [{ repository: 'other/repo', pr: 28, headSha: NEW, path: 'src/code.ts', line: 1, severity: 'high', message: 'Restore the source fence.' }])])
+  const result = await h.caps.review!.execute(h.lease())
+  expect(result.outcome).toBe('failed')
+  const saved = JSON.parse(String(store.db.prepare('SELECT value FROM delivery_capability_review WHERE id=?').get(h.lease().id)!.value))
+  expect(saved.verdict).toMatchObject({ verdict: 'failed', findings: [{ repository: 'other/repo', pr: 28, headSha: NEW }] })
+  expect(saved.batches.map((batch: { verdict: string }) => batch.verdict)).toEqual(['passed', 'failed'])
+  expect(saved.verdict.rationale).toContain('Batch 2/2 other/repo#28')
+})
+
+it('never persists a partial aggregate when a later batch is unbound or incomplete', async () => {
+  const h = multiRefFixture()
+  h.answers([batchVerdict('passed', 'Artifact batch is complete.'),
+    { verdict: 'passed', findings: [{ repository: 'other/repo', pr: 28, headSha: NEW, path: 'src/code.ts', line: 1, severity: 'low', message: 'x' }], rationale: 'Contradictory.' }])
+  expect((await h.caps.review!.execute(h.lease())).blocker).toContain('Contradictory')
+  expect(h.stream).toHaveBeenCalledTimes(2)
+  expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
+})
+
+it('gives advice bounded server-derived prepared-publication proof and separates source, artifact and target', async () => {
+  const h = fixture(); const review = h.lease(); deliveries.complete(review, await h.caps.review!.execute(review))
+  const prepared = { id: 'manifest', ticketId: 'original', decisionId: 'decision', repository: 'org/repo', pr: 17, headSha: HEAD,
+    patchSha256: 'd'.repeat(64), environment: 'isolated-service@127.0.0.1:3082', preparedAt: '2026-11-06T00:00:02.000Z',
+    scopeSha256: 'e'.repeat(64), components: ['dsh-superagent'], effects: ['Restart the exact existing service'],
+    refs: [{ repository: 'org/repo', pr: 17, headSha: HEAD, baseSha: BASE }],
+    proof: { observedAt: '2026-11-06T00:00:02.000Z', status: { checks: 'passed' as const, review: 'approved' as const }, verified: true,
+      reviewer: 'Independent reviewer', reportSha256: 'f'.repeat(64), reviewExcerpt: 'Verified review excerpt for the exact pins.',
+      checks: [{ name: 'pnpm test', completedAt: '2026-11-06T00:00:01.000Z', reportSha256: 'a'.repeat(64), excerpt: 'Full backend suite passed.' }],
+      limitations: ['Native browser acceptance remains separate.'], counts: { checks: 1, limitations: 1 } } }
+  const bound = deliveries.compareAndSwap('feature', deliveries.get('feature')!.revision, d => { d.preparedPublication = prepared })
+  const action = bound.nextAction!
+  let request: { messages: { content: { text: string }[] }[] } | undefined
+  h.stream.mockImplementationOnce(async function* (value: unknown) {
+    request = value as typeof request
+    yield { type: 'text-delta', text: JSON.stringify({ disposition: 'take', actionId: action.id, fingerprint: action.fingerprint,
+      rationale: 'Hand the exact prepared publication to the authorized publisher.' }) }
+    yield { type: 'finish', reason: { kind: 'stop' } }
+  })
+  await recommendDeliveryAction(bound, action, h.deps)
+  const payload = JSON.parse(request!.messages[0]!.content[0]!.text)
+  expect(payload.preparedPublication).toMatchObject({ repository: 'org/repo', pr: 17, headSha: HEAD, environment: 'isolated-service@127.0.0.1:3082',
+    proof: { verified: true, reviewer: 'Independent reviewer', reviewExcerpt: 'Verified review excerpt for the exact pins.',
+      checks: [{ name: 'pnpm test', excerpt: 'Full backend suite passed.' }], limitations: ['Native browser acceptance remains separate.'] } })
+  expect(payload.bindings.artifact).toBe('old-artifact')
+  // The adviser receives the recorded owner and the next-stage owner instead of inferring either.
+  expect(payload.owner).toBe('alice')
+  expect(payload.stageOwner).toContain('authorized release operator through the protected publication gate')
+  expect(payload.authorities).toEqual(['alice'])
+  expect(payload.preparedPublication.totals).toEqual({ components: 1, effects: 1, refs: 1, checks: 1, limitations: 1 })
+  expect(payload.proofState).toBe('verified-exact-pin-observation')
+})
+
+it('reports missing or unverified prepared proof as a hold-worthy unknown instead of assuming freshness', async () => {
+  const h = fixture(); const review = h.lease(); deliveries.complete(review, await h.caps.review!.execute(review))
+  const before = deliveries.get('feature')!
+  const action = before.nextAction!
+  const read = async (delivery: typeof before) => {
+    let payload: { proofState: string } | undefined
+    h.stream.mockImplementationOnce(async function* (request: unknown) {
+      payload = JSON.parse((request as { messages: { content: { text: string }[] }[] }).messages[0]!.content[0]!.text)
+      yield { type: 'text-delta', text: JSON.stringify({ disposition: 'hold', actionId: action.id, fingerprint: action.fingerprint,
+        rationale: 'Verify the prepared publication before handing it off.' }) }
+      yield { type: 'finish', reason: { kind: 'stop' } }
+    })
+    await recommendDeliveryAction(delivery, action, h.deps)
+    return payload!.proofState
+  }
+  expect(await read(before)).toBe('missing')
+  const prepared = { id: 'manifest', ticketId: 'original', decisionId: 'decision', repository: 'org/repo', pr: 17, headSha: HEAD,
+    patchSha256: 'd'.repeat(64), environment: 'isolated', preparedAt: '2026-11-06T00:00:02.000Z', refs: [{ repository: 'org/repo', pr: 17, headSha: HEAD }] }
+  const withPrepared = deliveries.compareAndSwap(before.id, before.revision, d => { d.preparedPublication = prepared })
+  expect(await read(withPrepared)).toBe('proof-not-recorded')
+})

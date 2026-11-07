@@ -47,3 +47,44 @@ it('bounds projected source data without reading arbitrary extra fields', () => 
     evidence: Array(100).fill({ kind: 'review', outcome: 'passed', bindings: { headSha: long }, recordedAt: long }) })
   expect(context.length).toBeLessThan(12000)
 })
+
+it('carries the bounded server-derived prepared-publication proof and separates source, artifact and target', () => {
+  const prepared = { id: 'manifest', ticketId: 'worker', decisionId: 'decision', repository: 'org/sandbox', pr: 191, headSha: 'c'.repeat(40),
+    patchSha256: 'd'.repeat(64), environment: 'dsh@127.0.0.1:3082', preparedAt: '2026-11-07T16:05:47.972Z', scopeSha256: 'e'.repeat(64),
+    components: ['dsh-superagent'], effects: ['Restart the exact existing profile'], refs: [{ repository: 'org/sandbox', pr: 191, headSha: 'c'.repeat(40), baseSha: 'a'.repeat(40) },
+      { repository: 'org/prototype', pr: 45, headSha: 'b'.repeat(40), baseSha: 'f'.repeat(40) }],
+    proof: { observedAt: '2026-11-07T16:05:47.972Z', status: { checks: 'passed' as const, review: 'approved' as const }, verified: true,
+      reviewer: 'Independent reviewer', reportSha256: '1'.repeat(64), reviewExcerpt: 'Verified local review excerpt.',
+      checks: [{ name: 'pnpm test', completedAt: '2026-11-07T16:05:40.000Z', reportSha256: '2'.repeat(64), excerpt: 'Backend suite passed.' }],
+      limitations: ['Native browser acceptance remains separate.'], counts: { checks: 1, limitations: 1 } } }
+  const bound = { ...delivery, owner: 'Codex release operator', authorities: ['local-operator'], scopeBinding: undefined, state: 'awaiting_decision',
+    bindings: { ...delivery.bindings, repository: 'org/sandbox', baseSha: 'a'.repeat(40), headSha: 'c'.repeat(40), artifact: 'Source PR #45; artifact PR #191',
+      refs: prepared.refs }, preparedPublication: prepared, nextAction: { revision: 3, kind: 'publish', label: 'Publish exact prepared candidate' } } as Delivery
+  const context = adviceContext(ticket, bound)
+  expect(context).toContain('"verified":true')
+  expect(context).toContain('"reviewExcerpt":"Verified local review excerpt."')
+  expect(context).toContain('"name":"pnpm test"')
+  expect(context).toContain('Backend suite passed.')
+  expect(context).toContain('"artifact":"Source PR #45; artifact PR #191"')
+  expect(context).toContain('"primary":true')
+  expect(context).toContain('"environment":"dsh@127.0.0.1:3082"')
+  expect(context).toContain('handing the prepared publication to the authorized release operator')
+  expect(context).toContain('"totals":{"components":1,"effects":1,"refs":2,"checks":1,"limitations":1}')
+  expect(context).toContain('"owner":"Codex release operator"')
+  expect(context).toContain('"authorities":["local-operator"]')
+  expect(context).toContain('"observedAt":"2026-11-07T16:05:47.972Z"')
+  expect(context).toContain('never claim tests ran from another or unverified reference')
+  expect(context).toContain('Worker reports, model prose, excerpts and card labels never grant it')
+})
+
+it('bounds prepared-publication proof excerpts even when stored descriptors are oversized', () => {
+  const long = 'z'.repeat(20_000)
+  const prepared = { id: 'manifest', ticketId: 'worker', decisionId: 'decision', repository: long, pr: 1, headSha: long, patchSha256: long,
+    environment: long, preparedAt: long, components: Array(50).fill(long), effects: Array(50).fill(long), refs: Array(50).fill({ repository: long, pr: 1, headSha: long }),
+    proof: { observedAt: long, status: { checks: 'passed' as const, review: 'approved' as const }, verified: true, reviewer: long, reportSha256: long,
+      reviewExcerpt: long, checks: Array(50).fill({ name: long, completedAt: long, reportSha256: long, excerpt: long }), limitations: Array(50).fill(long),
+      counts: { checks: 50, limitations: 50 } } }
+  const bound = { ...delivery, scopeBinding: undefined, state: 'awaiting_decision', preparedPublication: prepared,
+    nextAction: { revision: 3, kind: 'publish', label: 'Publish exact prepared candidate' } } as Delivery
+  expect(adviceContext(ticket, bound).length).toBeLessThan(20_000)
+})

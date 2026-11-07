@@ -34,7 +34,9 @@ export interface Delivery {
   recommendation?: DeliveryRecommendation
   recommendationError?: { kind: DeliveryActionKind; fingerprint: string; message: string; attempts: number; nextRetryAt?: number }
   preparation?: { fingerprint: string; message: string; attempts: number; nextRetryAt?: number }
-  preparedPublication?: { id: string; ticketId: string; decisionId: string; repository: string; pr: number; headSha: string; patchSha256: string; environment: string; preparedAt: string; scopeSha256?: string; components?: string[]; effects?: string[]; refs?: DeliveryBindings['refs'] }
+  preparedPublication?: { id: string; ticketId: string; decisionId: string; repository: string; pr: number; headSha: string; patchSha256: string; environment: string; preparedAt: string; scopeSha256?: string; components?: string[]; effects?: string[]; refs?: DeliveryBindings['refs']
+    /** Bounded descriptors of the review/check evidence the trusted adapter recorded for these exact pins; `proof.verified` states whether checks passed and the review was approved. */
+    proof?: import('./publication-proof.ts').PublicationProof }
   acceptance?: { evidenceIds: string[]; fingerprint: string; at: string; actor: string }
   attempts: { review: number; fix: number; maxReview: number; maxFix: number }
   evidence: DeliveryEvidence[]; workers: string[]; audit: DeliveryAudit[]

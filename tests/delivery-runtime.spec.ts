@@ -7,6 +7,7 @@ import { FeatureDeliveryRuntime, deliveryDecision, reconcileInboxCurrency } from
 import { DecisionInbox, ticketDecisions } from '../src/app/decision-inbox.ts'
 import { publicationConversation, type LifecyclePublication } from '../src/app/lifecycle-publication.ts'
 import type { Ticket } from '../src/core/model.ts'
+import type { Delivery, DeliveryAction } from '../src/app/feature-delivery.ts'
 
 const cleanup: (() => void)[] = []
 afterEach(async () => { vi.restoreAllMocks(); for (const done of cleanup.splice(0).reverse()) done() })
@@ -127,5 +128,81 @@ it('persists evidence-linked source-empty generated advice retirement without re
   expect(() => inbox.stage(generated.id, { choiceId: 'checks', attemptId: 'attempt', draftText: 'Read every PR check' })).toThrow('stale')
   expect(inbox.get(question.id)?.status).toBe('pending')
   expect(runtime.project(inbox.list()).find(item => item.id === generated.id)?.status).toBe('stale')
+  await runtime.stop()
+})
+
+function provenPublication(headSha: string) {
+  const evidence = { repository: 'org/repo', prNumber: 12, headSha, patchSha256: 'd'.repeat(64), observedAt: at, checks: 'passed' as const,
+    review: 'approved' as const, mergeable: true, state: 'open' as const,
+    local: { reviewer: 'Codex', reportSha256: '1'.repeat(64), reviewExcerpt: 'r'.repeat(2000),
+      checks: [{ name: 'pnpm test', reportSha256: '2'.repeat(64), completedAt: at, outputExcerpt: 'c'.repeat(1000) }],
+      limitations: ['Native acceptance remains separate.'] } }
+  return { pinsFor: () => ({ repository: 'org/repo', prNumber: 12, headSha: 'a'.repeat(40), patchSha256: 'd'.repeat(64) }),
+    scopeFor: () => ({ environment: 'isolated', refs: [{ repository: 'org/repo', pr: 12, headSha: 'a'.repeat(40), baseSha: 'b'.repeat(40) }],
+      components: ['Example'], effects: ['Rebuild example'], manifestSha256: 'e'.repeat(64) }),
+    service: { prepare: vi.fn(async (input: object) => ({ ...input, id: 'manifest', status: 'prepared' as const, createdAt: at, updatedAt: at,
+      outcomes: [], audit: [], requests: {}, evidence })) } } as unknown as LifecyclePublication
+}
+
+it('records bounded server-derived review/check proof when the prepared publication has exact verified evidence', async () => {
+  const { runtime, worker, intake } = fixture({}, { publication: provenPublication('a'.repeat(40)) })
+  const initial = intake('feature', [worker('one', false).id])
+  runtime.store.compareAndSwap(initial.id, initial.revision, d => { d.stage = 'ready_to_publish' })
+  await runtime.request()
+  const prepared = runtime.store.get('feature')!.preparedPublication!
+  expect(prepared.proof).toMatchObject({ verified: true, reviewer: 'Codex', status: { checks: 'passed', review: 'approved' },
+    limitations: ['Native acceptance remains separate.'], counts: { checks: 1, limitations: 1 } })
+  expect(prepared.proof!.reviewExcerpt).toHaveLength(600)
+  expect(prepared.proof!.checks).toEqual([{ name: 'pnpm test', completedAt: at, reportSha256: '2'.repeat(64), excerpt: 'c'.repeat(200) }])
+  await runtime.stop()
+})
+
+it('never records publication proof when the adapter evidence does not match the prepared pins', async () => {
+  const { runtime, worker, intake } = fixture({}, { publication: provenPublication('3'.repeat(40)) })
+  const initial = intake('feature', [worker('one', false).id])
+  runtime.store.compareAndSwap(initial.id, initial.revision, d => { d.stage = 'ready_to_publish' })
+  await runtime.request()
+  const prepared = runtime.store.get('feature')!.preparedPublication!
+  expect(prepared.headSha).toBe('a'.repeat(40))
+  expect(prepared).not.toHaveProperty('proof')
+  await runtime.stop()
+})
+
+
+it('derives exact-pin proof from the live snapshot for a pre-upgrade prepared card without persisting or repairing it', async () => {
+  const evidence = { repository: 'org/repo', prNumber: 12, headSha: 'a'.repeat(40), patchSha256: 'd'.repeat(64), observedAt: at, checks: 'passed' as const,
+    review: 'approved' as const, mergeable: true, state: 'open' as const,
+    local: { reviewer: 'Codex', reportSha256: '1'.repeat(64), reviewExcerpt: 'Recorded review.',
+      checks: [{ name: 'pnpm test', reportSha256: '2'.repeat(64), completedAt: at, outputExcerpt: 'Suite passed.' }],
+      limitations: ['Native acceptance remains separate.'] } }
+  // Pre-upgrade prepare recorded no evidence, so the durable card has no proof descriptor.
+  const prepare = vi.fn(async (input: object) => ({ ...input, id: 'manifest', status: 'prepared' as const, createdAt: at, updatedAt: at,
+    outcomes: [], audit: [], requests: {} }))
+  const peek = vi.fn(() => ({ id: 'manifest', ticketId: 'one', conversationId: 'c', repository: 'org/repo', prNumber: 12,
+    headSha: 'a'.repeat(40), patchSha256: 'd'.repeat(64), status: 'prepared' as const, createdAt: at, updatedAt: at, outcomes: [], audit: [],
+    requests: {}, evidence }))
+  const publication = { pinsFor: () => ({ repository: 'org/repo', prNumber: 12, headSha: 'a'.repeat(40), patchSha256: 'd'.repeat(64) }),
+    scopeFor: () => ({ environment: 'isolated', refs: [{ repository: 'org/repo', pr: 12, headSha: 'a'.repeat(40), baseSha: 'b'.repeat(40) }],
+      components: ['Example'], effects: ['Rebuild example'], manifestSha256: 'e'.repeat(64) }),
+    service: { prepare, peek } } as unknown as LifecyclePublication
+  const seen: { delivery: Delivery; action: DeliveryAction }[] = []
+  const recommend = vi.fn(async (delivery: Delivery, action: DeliveryAction) => {
+    seen.push({ delivery, action })
+    return { disposition: 'take' as const, actionId: action.id, kind: action.kind, fingerprint: action.fingerprint,
+      rationale: 'Hand the recorded publication to the release operator.', provider: 'test', recordedAt: at }
+  })
+  const { runtime, worker, intake } = fixture({}, { publication, recommend })
+  const initial = intake('feature', [worker('one', false).id])
+  runtime.store.compareAndSwap(initial.id, initial.revision, d => { d.stage = 'ready_to_publish' })
+  await runtime.request()
+  const stored = runtime.store.get('feature')!
+  expect(stored.preparedPublication).toBeDefined()
+  expect(stored.preparedPublication).not.toHaveProperty('proof')
+  expect(peek).toHaveBeenCalledWith('one')
+  expect(seen[0]!.delivery.preparedPublication?.proof).toMatchObject({ verified: true, reviewer: 'Codex', counts: { checks: 1, limitations: 1 } })
+  expect(seen[0]!.delivery.preparedPublication!.id).toBe(stored.preparedPublication!.id)
+  // The advice copy keeps the recorded action scope; no descriptor or history is written back.
+  expect(seen[0]!.action.fingerprint).toBe(stored.nextAction!.fingerprint)
+  expect(stored.recommendation).toMatchObject({ disposition: 'take', actionId: stored.nextAction!.id })
   await runtime.stop()
 })

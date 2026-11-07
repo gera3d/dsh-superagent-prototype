@@ -1,9 +1,10 @@
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PublicationService, type PublicationAction, type PublicationAdapter, type PublicationAuthority, type PublicationEvidence, type PublicationPrepareInput, type PublicationSnapshot, type PublicationStage } from '../src/app/publication.ts'
 import { FilePublicationPersistence } from '../src/app/publication-persistence.ts'
+import { snapshotProof } from '../src/app/publication-proof.ts'
 
 const now = Date.parse('2026-11-06T00:00:00Z')
 const pins: PublicationPrepareInput = { ticketId: 'ticket-1', conversationId: 'conversation-1', repository: 'owner/repo', prNumber: 159, headSha: 'a'.repeat(40), patchSha256: 'b'.repeat(64) }
@@ -257,5 +258,33 @@ describe('publication state machine', () => {
     const p = await f.service.prepare(pins)
     expect(p.status).toBe('blocked'); expect(p.audit.at(-1)?.detail).toBe('gh unavailable'); expect(f.calls).toEqual([])
     await expect(f.service.prepare({ ...pins, headSha: 'main' })).rejects.toMatchObject({ status: 400 })
+  })
+})
+
+
+describe('pure advice peek', () => {
+  it('reads a stored running outcome without recovery, save, audit or lease mutation', async () => {
+    const f = fixture(), prepared = await f.service.prepare(pins)
+    // A live owner has committed its write-ahead running outcome; only that owner may recover it.
+    await f.store.exclusive(async () => {
+      const document = f.store.load()
+      document.publications[prepared.id]!.outcomes.push({ stage: 'merge', operationId: 'op-running', status: 'running', startedAt: new Date(now).toISOString() })
+      f.store.save(document)
+    })
+    const committed = readFileSync(f.path, 'utf8')
+    const save = vi.spyOn(f.store, 'save')
+    const peeked = f.service.peek('ticket-1')
+    expect(peeked?.outcomes.map(o => o.status)).toEqual(['running'])
+    expect(save).not.toHaveBeenCalled()
+    expect(readFileSync(f.path, 'utf8')).toBe(committed)
+    // The advice read is a clone: mutating it cannot rewrite the journal or another caller's view.
+    peeked!.status = 'interrupted'
+    expect(f.store.peek().publications[prepared.id]!.status).toBe(prepared.status)
+    expect(f.service.peek('ticket-1')?.status).toBe(prepared.status)
+    const proof = await snapshotProof({ id: prepared.id, ticketId: prepared.ticketId, decisionId: 'decision', repository: prepared.repository,
+      pr: prepared.prNumber, headSha: prepared.headSha, patchSha256: prepared.patchSha256, environment: 'isolated', preparedAt: prepared.updatedAt }, { service: f.service })
+    expect(proof).toMatchObject({ verified: true, counts: { checks: 0, limitations: 0 } })
+    expect(save).not.toHaveBeenCalled()
+    expect(readFileSync(f.path, 'utf8')).toBe(committed)
   })
 })
