@@ -1,0 +1,76 @@
+{
+  "verifiedAt": "2026-11-07T15:20:38.494927+00:00",
+  "state": "deployed-api-verified-ui-pending",
+  "sourcePrs": {
+    "backend": [
+      40,
+      41,
+      43,
+      44
+    ],
+    "plugin": [
+      14,
+      15,
+      16
+    ]
+  },
+  "runtimePid": 859,
+  "checks": {
+    "backendFullPassed": 2170,
+    "backendSkipped": 2,
+    "backendFailed": 0,
+    "nodePassed": 22,
+    "uiPassed": 184,
+    "typecheck": "passed",
+    "build": "passed"
+  },
+  "live": {
+    "primaryGenerationSeconds": 9.11,
+    "fallbackUsed": false,
+    "decisionId": "chat-a9801a7b206add4096309faaa7ff03d8",
+    "phase": "scored",
+    "recommended": "Hand off complete release package",
+    "scorePercent": 82,
+    "otherScoresPercent": [
+      14,
+      4
+    ],
+    "staged": false,
+    "sent": false,
+    "features": [
+      "Checks current target before relying on old pins/results.",
+      "Keeps PR body outside pinned candidate.",
+      "Bundles remaining release package and names authorized operator confirmation."
+    ],
+    "oldChoicesPreserved": true,
+    "contextChars": 4068,
+    "generationAndRanking": "Managed primary helper and configured OpenRouter ranker, full choice prompts and same server context."
+  },
+  "runtime": {
+    "paused": false,
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "health": {
+      "runtime": "ready",
+      "relay": "ready",
+      "notice": "ready",
+      "launch": "ready",
+      "delivery": "ready",
+      "assessment": "ready",
+      "reply": "ready",
+      "evals": "ready",
+      "models": "ready",
+      "github": "ready"
+    }
+  },
+  "limits": [
+    "Mac is locked. Browser card visibility/reload/screenshot remains pending; unlock request open.",
+    "No cost-summary reply sent, source PR created, cost-summary merge, deployment or acceptance performed.",
+    "Publishing still requires exact current candidate, tests and protected action/scope confirmation.",
+    "Primary helper succeeded once on the actual source turn; no long-term failure-free guarantee.",
+    "Startup history gate unchanged."
+  ]
+}
