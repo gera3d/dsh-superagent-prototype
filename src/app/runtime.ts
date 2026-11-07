@@ -37,6 +37,7 @@ import { TextCache } from './cache.ts'
 import { Effects } from './effects.ts'
 import { Prompts } from './prompts.ts'
 import { registerHttp, type HttpHost } from './http.ts'
+import { JobUsageReader } from './job-usage.ts'
 import type { LinkTarget } from './views/records.ts'
 import { candidateCard, repliedTo, sourceLink, type LinkHost } from './links.ts'
 import { eventNotice, followupNotice } from './notices.ts'
@@ -78,6 +79,7 @@ export class Runtime extends Service implements SourceHost {
   readonly settings: Settings
   readonly executor: DshExecutor
   readonly assessor: MasterAssessor
+  readonly usage: JobUsageReader
   readonly outbox: Outbox
   readonly engine: Engine
   readonly passes: Passes
@@ -180,6 +182,7 @@ export class Runtime extends Service implements SourceHost {
           }
         } })
       const deliveryDeps = { ctx, store, commands, engine, lifetime: this.lifetime }
+      this.usage = new JobUsageReader(ctx)
       this.deliveries = new FeatureDeliveryRuntime(store, {
         ...createDeliveryCapabilities(deliveryDeps),
         ...deliveryPublicationCapabilities(new DeliveryStore(store.db), store.tickets, this.publication),
@@ -262,7 +265,7 @@ export class Runtime extends Service implements SourceHost {
   private httpHost(): HttpHost {
     const runtime = this
     const { store, commands, publication, deliveries, findings, sources, prompts, sessions, settings, engine, executor, health, machine, masterId, ready, sourceLinks, setup, passes } = this
-    return { store, commands, publication, deliveries, findings, sources, prompts, sessions, settings, engine, executor, health, machine, masterId, ready, sourceLinks,
+    return { store, commands, publication, deliveries, findings, sources, prompts, sessions, settings, engine, executor, usage: this.usage, health, machine, masterId, ready, sourceLinks,
       get deployment() { return setup.deployment },
       get setupProblem() { return setup.problem }, get feishuProblem() { return setup.feishuProblem },
       configured: () => setup.configured(), links: () => runtime.links(), ticketEnvironment: ticket => runtime.ticketEnvironment(ticket),
