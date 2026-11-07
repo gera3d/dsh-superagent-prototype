@@ -25,7 +25,7 @@ it('keeps superseded typed delivery history in its actual old conversation while
     state.items[1]!.delivery!.scopeBinding = { reason: 'Missing release binding', sourceTriggerId: 'source' } as any
     state.items[1]!.delivery!.work = { state: 'awaiting_direction', owner: 'user', nextStep: 'Choose a Senior Developer next step in this conversation.' }
     await act(async () => root.render(<PublicationDock sessionId="worker-active" />))
-    expect(container.textContent).toContain('ready for your next step')
+    expect(container.textContent).toContain('Ready for your next step')
     expect(container.textContent).toContain('Preparing a reply does not merge or publish it')
     expect(container.textContent).not.toContain('owned / in progress')
     expect(container.querySelectorAll('button')).toHaveLength(0)

@@ -2,6 +2,12 @@
 
 Updated November 06, 2026 at 09:31 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
 
+## Active UI repair — compact native delivery status
+
+[Issue #35](https://github.com/gera3d/dsh-superagent-prototype/issues/35), owner Codex. Match the Senior Developer character/suggestion interface: shared composer alignment, small theme-token typography, native expandable status row, and bounded report/details. Preserve all typed action guards and existing prepare-then-Send behavior. Implementation and 33 focused tests pass; types/build and native visual acceptance are pending. No live restart while the cost-summary review worker is running.
+
+Gera submitted the 78% review recommendation successfully: decision `chat-fa5cbd2de5d26ca29e192a9a3903f1d6` is `resolved / submitted`, choice `review-patch-and-tests`, native message `fc3720f0-ac45-4e01-919c-c07a2b84536c`. One worker is active on the review. The prior UNSENT checkpoint below is historical; the next step is to observe this review and its new recommendation without manual nudges.
+
 ## Resolved repair — recommendation selection and delivery handoff
 
 [Plugin issue #12](https://github.com/gera3d/dsh-plugins/issues/12), owner Codex, explicitly authorized by Gera. **Reviewed, merged, deployed and native reply preparation verified.** [Plugin PR #13](https://github.com/gera3d/dsh-plugins/pull/13) separates manual reply preparation from automation eligibility, shows progress, suppresses duplicate clicks and cancels on thread changes. [Backend PR #34](https://github.com/gera3d/dsh-superagent-prototype/pull/34) adds explicit linked recommendation correction, server-owned handoff context and truthful delivery ownership. Privileged action, source/CAS and native Send proof guards remain.

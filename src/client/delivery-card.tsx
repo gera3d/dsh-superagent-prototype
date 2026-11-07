@@ -1,7 +1,8 @@
 /** Canonical delivery presentation on every surface. Confirmation is typed, never chat. */
 import { useRef, useState } from 'react'
 import type { PendingDecisionItem } from '../core/decision.ts'
-import { Button } from './controls.tsx'
+import { Button, Icon } from './controls.tsx'
+import STYLES from './delivery-card.css?raw'
 
 export interface DeliveryConfirmation { revision: number; actionId: string }
 export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile }: { item: PendingDecisionItem; onConfirm: (request: DeliveryConfirmation) => Promise<unknown>; onRecheck?: (request: { revision: number }) => Promise<unknown>; onReconcile?: (request: DeliveryConfirmation) => Promise<unknown> }) {
@@ -47,10 +48,26 @@ export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile }: { item
     catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)) }
     finally { acting.current = false; setBusy(false) }
   }
-  return <section id={`delivery-${d.id}`} className="dt-delivery-card" aria-label={`Feature delivery: ${d.title}`} style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: 8, padding: 18, color: '#e6edf3' }}>
-    <small>Feature delivery · {d.work?.state === 'superseded' ? 'Superseded history' : `${d.stage.replaceAll('_', ' ')} · ${d.work?.state === 'owned' ? 'owned / in progress' : d.work?.state === 'awaiting_direction' ? 'ready for your next step' : d.state.replaceAll('_', ' ')}`}</small>
+  const status = d.work?.state === 'superseded' ? 'Superseded history' : d.acceptance ? 'Accepted'
+    : d.work?.state === 'awaiting_direction' ? 'Ready for your next step'
+    : d.work?.state === 'owned' || d.state === 'running' ? 'In progress'
+    : d.state === 'awaiting_decision' ? `${d.stage.replaceAll('_', ' ')} ready`
+    : d.state.replaceAll('_', ' ')
+  const hint = d.work?.state === 'awaiting_direction' ? 'Your next step below'
+    : available ? 'Review action' : reconcileAvailable ? 'Handoff needs attention' : recheckAvailable ? 'Configuration needs attention' : 'View details'
+  return <section id={`delivery-${d.id}`} className="dt-delivery-card" aria-label={`Feature delivery: ${d.title}`}>
+    <style>{STYLES}</style>
+    <details className="dt-delivery-disclosure">
+      <summary className="dt-delivery-summary">
+        <Icon name="review" size={14} />
+        <span className="dt-delivery-label">Delivery</span>
+        <span className="dt-delivery-state" role="status">{status}</span>
+        <span className="dt-delivery-hint">{hint}</span>
+        <span className="dt-delivery-chevron"><Icon name="chevron-down" size={14} /></span>
+      </summary>
+      <div className="dt-delivery-body">
     <h3>{d.title}</h3>
-    <p><strong>Owner: {d.work?.owner ?? d.owner}</strong></p>
+    <p className="dt-delivery-owner">Owner: {d.work?.owner === 'user' ? 'You' : d.work?.owner ?? d.owner}</p>
     {d.work && <section aria-label="Current work ownership"><p role="status">{d.work.nextStep}</p>
       {d.work.progress && <><p><strong>Latest worker report:</strong> {d.work.progress.length > 480 ? `${d.work.progress.slice(0, 480)}…` : d.work.progress}</p>
         {d.work.progress.length > 480 && <details><summary>Full worker progress report</summary><p style={{ whiteSpace: 'pre-wrap' }}>{d.work.progress}</p></details>}</>}
@@ -86,5 +103,7 @@ export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile }: { item
     <details><summary>Acceptance requirements</summary><ul>{d.requirements.map(requirement => <li key={requirement}>{requirement}</li>)}</ul>{d.acceptance && <p>Accepted evidence: {d.acceptance.evidenceIds.join(', ')}</p>}</details>
     <details><summary>Recorded evidence ({d.evidence.length})</summary><ul>{d.evidence.map(e => <li key={e.id}>{e.kind}: {e.outcome} · {e.recordedAt} · {e.reference} · Scope: {e.bindings.repository} #{e.bindings.sourceIssue} / {e.bindings.headSha}{e.requirements?.length ? ` · Requirements: ${e.requirements.join(', ')}` : ''}</li>)}</ul></details>
     <details><summary>Delivery history and attempts ({d.audit.length})</summary><p>Review attempts: {d.attempts.review}/{d.attempts.maxReview} · Fix attempts: {d.attempts.fix}/{d.attempts.maxFix}</p><ol>{d.audit.map((entry, i) => <li key={i}>{entry.at} · {entry.event} · {entry.actor}</li>)}</ol></details>
+      </div>
+    </details>
   </section>
 }
