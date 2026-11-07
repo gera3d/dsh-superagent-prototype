@@ -35,3 +35,10 @@
 @media (prefers-reduced-motion: reduce) {
   .dt-delivery-chevron { transition: none; }
 }
+
+/* Finding forms share the compact conversation dock; the full Decisions form stays unchanged. */
+.dt-finding-card.dt-delivery-card .dt-delivery-body label { display: block; }
+.dt-finding-card.dt-delivery-card .dt-delivery-body input:not([type='checkbox']),
+.dt-finding-card.dt-delivery-card .dt-delivery-body textarea,
+.dt-finding-card.dt-delivery-card .dt-delivery-body select { box-sizing: border-box; width: 100%; max-width: 100%; margin-top: 4px; padding: 6px 8px; border: 1px solid var(--dsw-alias-border-l2); border-radius: var(--dsw-radius-sm, 6px); background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-primary); font: inherit; }
+.dt-finding-card.dt-delivery-card .dt-delivery-body textarea { resize: vertical; }

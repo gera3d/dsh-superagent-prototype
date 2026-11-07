@@ -50,3 +50,24 @@ it('associated no-origin dispatched finding suppresses inline generic synthesis 
   await act(async () => { view.root.render(<InlineDecision {...{ session: { sessionId: 'worker-ticket-current', running: false, openState: 'open', pendingSubmissions: [] }, input: { phase: 'plain', draft: '', attachmentIds: [] }, inputActions: {}, useConversation: (select: any) => select({ views: new Map([['chat', chat]]) }) } as any} />) })
   expect(view.node.textContent).toBe(''); expect(fixture.call).not.toHaveBeenCalled()
 })
+
+it('keeps dispatched evidence forms collapsed in chat across polling and bounds the opened dock', async () => {
+  const item = dispatched(); fixture.items = [item]
+  const view = await mounted(); await view.render('worker-ticket-current')
+  const disclosure = view.node.querySelector('.dt-finding-card > details') as HTMLDetailsElement
+  expect(disclosure).not.toBeNull()
+  expect(disclosure.open).toBe(false)
+  expect(disclosure.querySelector(':scope > summary')?.textContent).toContain('In progress')
+  expect(disclosure.querySelector('[aria-label="Record operator evidence"]')).not.toBeNull()
+  expect(view.node.querySelector('.dt-finding-card')?.getAttribute('style')).toBeNull()
+  await act(async () => { disclosure.open = true })
+  const draft = disclosure.querySelector('[aria-label="Durable evidence reference"]') as HTMLInputElement
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
+  await act(async () => { setter.call(draft, 'ci:preserved-draft'); draft.dispatchEvent(new Event('input', { bubbles: true })) })
+  await act(async () => { disclosure.open = false })
+  item.finding!.revision++; await view.render('worker-ticket-current')
+  expect(disclosure.open).toBe(false)
+  expect(draft.value).toBe('ci:preserved-draft')
+  expect(fixture.call).not.toHaveBeenCalled()
+  expect(disclosure.querySelector('.dt-delivery-body')).not.toBeNull()
+})
