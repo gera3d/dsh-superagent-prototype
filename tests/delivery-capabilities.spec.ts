@@ -293,6 +293,90 @@ it('never persists a partial aggregate when a later batch is unbound or incomple
   expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
 })
 
+type ReviewFile = { filename: string; status: string; additions: number; deletions: number; patch: string }
+const artifactPatch = (nested: string): ReviewFile => ({ filename: 'patches/JOB_COST_SUMMARY.patch', status: 'modified', additions: 3, deletions: 0,
+  patch: '@@ -0,0 +1,3 @@\n+diff --git a/src/nested.ts b/src/nested.ts\n+' + nested + '\n+--- a/src/nested.ts' })
+function targetedFixture(filesFor: (repository: string, pr: number) => ReviewFile[]) {
+  const h = multiRefFixture()
+  h.gh.mockImplementation(async (args: string[]) => {
+    expect(args[0]).toBe('api'); expect(args.slice(-2)).toEqual(['--method', 'GET'])
+    const files = /^repos\/(.+)\/pulls\/(\d+)\/files\?per_page=100&page=1$/.exec(args[1]!)
+    if (files) return filesFor(files[1]!, Number(files[2]))
+    const secondary = args[1]!.includes('other/repo')
+    return { head: { sha: secondary ? NEW : HEAD }, base: { sha: BASE }, changed_files: 1 }
+  })
+  const requests: { system: string; messages: { content: { text: string }[] }[] }[] = []
+  let answers: unknown[] = []
+  h.stream.mockImplementation(async function* (request: unknown) {
+    requests.push(request as typeof requests[number])
+    const value = answers.shift()
+    if (!value) throw new Error('Unexpected extra review batch')
+    yield { type: 'text-delta', text: JSON.stringify(value) }; yield { type: 'finish', reason: { kind: 'stop' } }
+  })
+  return { ...h, requests, answer: (...values: unknown[]) => { answers = values } }
+}
+
+it('names one authoritative reviewTarget per call with exact outer paths and no competing global refs', async () => {
+  const h = targetedFixture((_repository, pr) => pr === 17 ? [artifactPatch('nested source identity is data only')] : [batchFile('src/code.ts', 10)])
+  h.answer(batchVerdict('passed', 'Artifact batch retains the fences.'), batchVerdict('passed', 'Source batch retains the fences.'))
+  expect((await h.caps.review!.execute(h.lease())).outcome).toBe('passed')
+  expect(h.requests).toHaveLength(2)
+  const payloads = h.requests.map(request => JSON.parse(request.messages[0]!.content[0]!.text))
+  expect(payloads[0].reviewTarget).toEqual({ repository: 'org/repo', pr: 17, headSha: HEAD, baseSha: BASE, allowedPaths: ['patches/JOB_COST_SUMMARY.patch'] })
+  expect(payloads[1].reviewTarget).toEqual({ repository: 'other/repo', pr: 28, headSha: NEW, baseSha: BASE, allowedPaths: ['src/code.ts'] })
+  for (const payload of payloads) {
+    expect(Object.keys(payload).sort()).toEqual(['batch', 'requirements', 'reviewTarget'])
+    expect(payload.bindings).toBeUndefined()
+    expect(payload.reviewTarget.allowedPaths).toEqual(payload.batch.diff.files.map((file: { filename: string }) => file.filename))
+  }
+  const identitySets = payloads.map(payload => {
+    const found: string[] = []
+    const walk = (value: unknown) => {
+      if (Array.isArray(value)) value.forEach(walk)
+      else if (value && typeof value === 'object') {
+        const object = value as Record<string, unknown>
+        if (typeof object.repository === 'string' && typeof object.pr === 'number') found.push(`${object.repository}#${object.pr}`)
+        Object.values(object).forEach(walk)
+      }
+    }
+    walk(payload.reviewTarget); walk(payload.batch)
+    return [...new Set(found)]
+  })
+  expect(identitySets).toEqual([['org/repo#17'], ['other/repo#28']])
+  expect(h.requests[0]!.system).toContain('reviewTarget is the single authoritative identity')
+  expect(h.requests[0]!.system).toContain('OUTER artifact filename')
+  expect(h.requests[0]!.system).toContain('no path_note or any other additional key')
+  expect(h.requests[0]!.system).toContain('exactly verdict, findings and rationale')
+  expect(h.requests[0]!.system).toContain('concise')
+})
+
+it('reviews a file containing an embedded source patch as its outer artifact filename and rejects nested identities', async () => {
+  const h = targetedFixture((_repository, pr) => pr === 17
+    ? [artifactPatch('nested source diff for other/repo#28 ' + NEW + ' at src/nested.ts')]
+    : [batchFile('src/code.ts', 10)])
+  h.answer({ verdict: 'failed', findings: [{ repository: 'org/repo', pr: 17, headSha: HEAD, path: 'src/nested.ts', line: 2, severity: 'high', message: 'nested identity' }], rationale: 'Nested path used.' })
+  expect((await h.caps.review!.execute(h.lease())).blocker).toContain('not bound to supplied diff')
+  expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
+  const first = JSON.parse(h.requests[0]!.messages[0]!.content[0]!.text)
+  expect(first.reviewTarget).toMatchObject({ repository: 'org/repo', pr: 17, allowedPaths: ['patches/JOB_COST_SUMMARY.patch'] })
+  expect(first.batch.diff.files[0]).toMatchObject({ filename: 'patches/JOB_COST_SUMMARY.patch', patch: expect.stringContaining('other/repo#28 ' + NEW) })
+  h.answer({ verdict: 'failed', findings: [{ repository: 'org/repo', pr: 17, headSha: HEAD, path: 'patches/JOB_COST_SUMMARY.patch', line: 1, severity: 'high', message: 'Outer artifact patch retains a concrete defect.' }], rationale: 'Outer artifact path used.' },
+    batchVerdict('passed', 'Source batch retains the fences.'))
+  const outer = await h.caps.review!.execute(h.lease())
+  expect(outer.outcome).toBe('failed')
+  const saved = JSON.parse(String(store.db.prepare('SELECT value FROM delivery_capability_review WHERE id=?').get(h.lease().id)!.value))
+  expect(saved.verdict).toMatchObject({ verdict: 'failed', findings: [{ repository: 'org/repo', pr: 17, path: 'patches/JOB_COST_SUMMARY.patch' }] })
+})
+
+it('rejects path_note and extra finding keys instead of legalizing or dropping them', async () => {
+  const h = fixture(), l = h.lease()
+  h.setVerdict({ verdict: 'passed', findings: [], rationale: 'ok', path_note: 'patches/JOB_COST_SUMMARY.patch' })
+  expect((await h.caps.review!.execute(l)).outcome).toBe('uncertain')
+  h.setVerdict({ verdict: 'failed', findings: [{ repository: 'org/repo', pr: 17, headSha: HEAD, path: 'src/code.ts', line: 1, severity: 'high', message: 'x', path_note: 'nested' }], rationale: 'bad' })
+  expect((await h.caps.review!.execute(l)).outcome).toBe('uncertain')
+  expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
+})
+
 it('gives advice bounded server-derived prepared-publication proof and separates source, artifact and target', async () => {
   const h = fixture(); const review = h.lease(); deliveries.complete(review, await h.caps.review!.execute(review))
   const prepared = { id: 'manifest', ticketId: 'original', decisionId: 'decision', repository: 'org/repo', pr: 17, headSha: HEAD,
