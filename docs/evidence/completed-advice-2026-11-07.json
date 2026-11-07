@@ -1,0 +1,121 @@
+{
+  "state": "deployed-and-native-verified",
+  "verifiedAt": "2026-11-07T22:22:13.786686+00:00",
+  "pr": 54,
+  "sourceHead": "749e2ec1e37a629386b3baf7dda660bf43b9dbb3",
+  "merge": "22e6b3aa9140883d157dfe8243238f3d1c673fc5",
+  "qualification": {
+    "full": {
+      "head": "749e2ec1e37a629386b3baf7dda660bf43b9dbb3",
+      "startedAt": "2026-11-07T22:10:11.047706+00:00",
+      "finishedAt": "2026-11-07T22:13:24.289871+00:00",
+      "exitCode": 0,
+      "passed": 2219,
+      "optionalSkipped": 2,
+      "failed": 0
+    },
+    "focusedPassed": 57,
+    "typecheckExitCode": 0,
+    "buildExitCode": 0,
+    "productionSourcesUnchangedAfterTypesBuild": true,
+    "initialFullRun": "2216passed, two optional skips, three failures: missing test index and two prior compact-style selectors. All corrected before the clean final full run."
+  },
+  "live": {
+    "verifiedAt": "2026-11-07T22:20:35.230268+00:00",
+    "sessionId": "worker-1a452dbe559fbc04cd315dc403e5cf5e",
+    "decisionId": "chat-9b8cf316e58ef8fba84db5e30bdcb27c",
+    "oldRecommendation": "Hand off to release operator for native live acceptance",
+    "decisionStatus": "stale",
+    "retirementReason": "Work completed: delivery repair-46-headroom-1a45 was verified and accepted at 2026-11-07T19:03:53.376Z. No further release action is needed; earlier recommendations are retained as history.",
+    "historicalChoicesAndScoresUnchanged": true,
+    "stagingUnchanged": true,
+    "originalAcceptedDeliveriesAndPublicationJournalUnchanged": true,
+    "suggest": {
+      "status": "not-ready",
+      "reason": "stale"
+    },
+    "forceRefresh": {
+      "status": "not-ready",
+      "reason": "stale"
+    },
+    "claimStatus": 409,
+    "claimError": "Canonical decision is staged, stale or closed",
+    "stageStatus": 409,
+    "stageError": "Decision is stale or closed; no staging is allowed",
+    "completionContext": true,
+    "workerMessagesSent": 0,
+    "newWorkerJobsCreated": 0
+  },
+  "nativeChrome": {
+    "sameWorkerConversation": true,
+    "old72PercentRecommendationAbsent": true,
+    "PublishedAcceptedResolvedRemainVisible": true,
+    "emptyComposerAndDisabledSend": true,
+    "nativeRefreshCannotReviveOldSuggestions": true,
+    "screenshotSha256": "69e8db258caf263e534cbcca963bef495b2f39118523296dd684d71d6929ca86"
+  },
+  "deployment": {
+    "files": {
+      "docs/007-architecture.md": {
+        "before": "76673a05c8551ee7af815bcae5408d00587c2c1d450cd53af8826ccdd77c8a2f",
+        "after": "aaaba8e940d0ffafd7f2012a0f60e28d2f1296b66522003b4b2211ba9c49d2a9"
+      },
+      "src/app/advice-context.ts": {
+        "before": "24676e4d30096b12b114c9374b958db44bc50fd2d60c67d3b1b623561a13c08c",
+        "after": "3cfef1272912e309f8e86f822fa02133d5c0b943452f533076897d036a5fcfc8"
+      },
+      "src/app/delivery-runtime.ts": {
+        "before": "edbe9c36dfd7d837e3ad5b2769f4db5114f43fdee631e9f0c8d3c6c97d5c2221",
+        "after": "ce912bacc8b863fa609a1772ac723b8cd7a95074a58bc236d6187f334dad4fe1"
+      },
+      "tests/completed-advice.spec.ts": {
+        "before": null,
+        "after": "1ccc67fcbe82dc3fa7bb3ef72ed3e7d130f904780171fa47b0c03e95918a82e7"
+      },
+      "tests/worker-report-fallback.spec.tsx": {
+        "before": "2700dd7dd98c2652782cb4a032a5838f4956f9bc650a4b87ce3033143a5b51dd",
+        "after": "a5427369814f58f67007f041cd9479fc9c61d13ca4710565668a90879d6b3b02"
+      }
+    },
+    "builtAssetsCount": 27,
+    "builtAssetsInventorySha256": "369c91e125811079bdf7644020b550ce31b2b4e2bfaffa43389a4d897eefe634",
+    "rollbackRetained": true,
+    "initialRestart": {
+      "commandExitCode": 1,
+      "daemonStarted": true,
+      "blocker": "githubRateLimited during existing deployment check",
+      "reportedQuotaReset": "2026-11-07T22:20:06Z",
+      "credentialsChanged": false,
+      "checksBypassed": false
+    },
+    "setupRecovery": "Existing deployment check passed after GitHub quota reset at22:20:06Z; same credentials, no guard bypass.",
+    "sourceMergeRecovery": "Connector merge timed out; normal non-forced Git merge/push succeeded. Source PR54 merged as22e6b3a."
+  },
+  "finalStatus": {
+    "health": {
+      "runtime": "ready",
+      "relay": "ready",
+      "notice": "ready",
+      "launch": "ready",
+      "delivery": "ready",
+      "assessment": "ready",
+      "reply": "ready",
+      "evals": "ready",
+      "models": "ready",
+      "github": "starting"
+    },
+    "paused": false,
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    }
+  },
+  "limits": [
+    "Historical worker text remains historical; current delivery acceptance is authoritative.",
+    "Pre-acceptance canonical advice retires only for accepted recorded deliveries with no newer active scope; later user questions remain usable.",
+    "No model/key/routing/native Send/autopilot/approval changes; original cost-summary job remains accepted and unmessaged.",
+    "Native acceptance at current Chrome desktop size/dark theme.",
+    "GitHub source first post-setup poll is still starting at this checkpoint; runtime and nine other components are ready."
+  ]
+}
