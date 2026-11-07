@@ -126,7 +126,7 @@ it.each(['current', 'prior'] as const)('links a %s verification job to its mount
     expect(container.textContent).toContain(`Linked existing delivery: ${finding.existingDeliveryId}`)
     expect(container.textContent).not.toContain('No linked delivery record')
     expect(container.querySelectorAll('.dt-finding-card')).toHaveLength(1)
-    expect(container.querySelectorAll('.dt-delivery-card')).toHaveLength(0)
+    expect(container.querySelectorAll('[aria-label^="Feature delivery:"]')).toHaveLength(0)
     expect(JSON.stringify(items)).toBe(before); expect(JSON.stringify(events)).toBe(eventsBefore)
   } finally { await act(async () => root.unmount()) }
 })

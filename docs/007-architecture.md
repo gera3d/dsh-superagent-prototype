@@ -484,6 +484,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/delivery-currency.spec.ts` | Active native owner/progress, source-history supersession across repeated ends and differing generated scopes, ambiguity refusal, persisted advisor retirement and completion stability |
 | `tests/delivery-ownership-dock.spec.tsx` | Actual Conversation dock retains superseded history and active owner/progress through mounted session switches without dispatch |
 | `tests/delivery-runtime.spec.ts` | Shared ended-worker projection, nonauthoritative advisory failures, preparation recovery, cancellation and advice currency |
+| `tests/completed-advice.spec.ts` | Accepted-delivery recommendation retirement, replay/staging guards, draft/history preservation and completion context |
 | `tests/delivery-evidence.spec.ts` | Trusted operator evidence, exact request replay, wrong scope/requirements/revision rejection and acceptance audit |
 | `tests/delivery-card.spec.tsx` | Canonical delivery recommendation and one typed confirmation, stale recommendation and scope details |
 | `tests/delivery-confirm-schema.spec.ts` | Strict typed confirmation body rejects expanded authority and arbitrary commands |
