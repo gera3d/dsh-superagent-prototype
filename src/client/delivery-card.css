@@ -1,5 +1,5 @@
 /* Standalone conversation disclosure, using the same DSH tokens and scale as the Senior Developer controls. */
-.dt-delivery-card { box-sizing: border-box; min-width: 0; width: 100%; color: var(--dsw-alias-label-secondary); font-family: var(--dsw-font-family, inherit); font-size: 12px; line-height: 20px; }
+.dt-delivery-card { box-sizing: border-box; min-width: 0; width: 100%; background: var(--dsw-alias-bg-layer-1); border-radius: var(--dsw-radius-md, 8px); color: var(--dsw-alias-label-secondary); font-family: var(--dsw-font-family, inherit); font-size: 12px; line-height: 20px; }
 .dt-delivery-disclosure { border: 1px solid var(--dsw-alias-border-l2); border-radius: var(--dsw-radius-md, 8px); background: transparent; }
 .dt-delivery-summary { box-sizing: border-box; display: flex; align-items: center; gap: 6px; min-height: 32px; padding: 5px 10px; cursor: pointer; list-style: none; border-radius: inherit; }
 .dt-delivery-summary::-webkit-details-marker { display: none; }
