@@ -1,6 +1,14 @@
 # DeepSeek Harness project status
 
-Updated November 07, 2026 at 08:17 AM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 07, 2026 at 08:29 AM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+
+## Active work — release handoff gaps and Ended-list repair
+
+Gera explicitly authorized implementation, testing, deployment and native verification of [#46](https://github.com/gera3d/dsh-superagent-prototype/issues/46) and [#47](https://github.com/gera3d/dsh-superagent-prototype/issues/47). **Starting implementation, not deployed.** Codex owns independent review, release, verification and status updates. One bounded Harness implementation job will cover both changes in the same backend; no duplicate Codex implementation or specialist fan-out.
+
+Current live refresh: all ten components, including GitHub, ready; executor unpaused, capacity three, zero running/queued. The previous GitHub polling limit is no longer current. Keep the qualified DeepSeek economy route, saved provider priorities/keys, native Send and opt-in autopilot unchanged.
+
+Required outcomes: bounded complete independent review of source plus artifact references without discarding evidence or widening the context cap; compact verified publication/check evidence supplied to Senior Developer advice with exact source/artifact/target identities and next owner; permission requests only for genuine missing authority, never repeat already authorized preparation; mixed legacy numeric/ISO Ended-list sorting works without rewriting historical rows. Finish with an exact tested source PR, pinned protected deployment/rollback and native proof for both cases. Record all remaining gaps and operator interventions.
 
 ## Current release — completed-job cost summary
 
@@ -104,4 +112,4 @@ The scheduler concurrency behavior is regression-tested; no additional three-job
 
 ## Next action
 
-The cost-summary release is complete and accepted; no further user click or worker continuation is required for it. Open follow-ups are [#46](https://github.com/gera3d/dsh-superagent-prototype/issues/46) for release-advice evidence/context and duplicate-review friction, and [#47](https://github.com/gera3d/dsh-superagent-prototype/issues/47) for the legacy Ended-list sorting defect. These are recorded limitations, not completed fixes. No new workers were dispatched automatically for them. Existing provider routes, credentials, conservation priorities and autopilot settings are preserved. GitHub polling is currently rate-limited; do not describe it as healthy or assume new GitHub intake is progressing until recovery is observed.
+Finish #46 and #47 under the current user authorization: implementation, independent review, testing, deployment and native verification. Codex owns follow-through; no routine user confirmation or duplicate jobs required. Use the exact current source base and keep the prior accepted cost-summary job closed. Preserve routing, credentials, approval guards and historical evidence.
