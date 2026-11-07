@@ -1,6 +1,15 @@
 # DeepSeek Harness project status
 
-Updated November 07, 2026 at 3:16 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 07, 2026 at 3:41 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+
+## Active parallel work — approved November07 afternoon
+
+Gera explicitly authorized progressing BOTH the existing Sonnet candidate through release and the advice-progress repair in parallel. Capacity remains3; two native Fix-now choices dispatched distinct Harness workers in isolated workspaces. Actual request headers for both show saved Anthropic Pro/Max Sonnet5.5, with tool activity. Root temporarily selected Sonnet for admission, then restored the saved routine Google executor default after both headers were verified. OpenAI remains conserved; no keys, hierarchy, quota marks or concurrency limits changed. Google first-response integration remains unqualified.
+
+- **Advice progress implementation:** finding94ce5265-c613-4e50-b008-5f297e330e62, worker a291438f297872fcaa5e3c59a453fe4d. Root owns review/release. Latest observed report is waiting after investigation with no code/tests yet; a status-only turn was reported. Check native continuation before claiming active implementation or completion. Scope: durable exact-job outside progress, shared drafting/ranking context, stale-card invalidation and stale-click rejection; no live mutations by worker.
+- **Sonnet independent release qualification:** finding1442f2ba-e3b6-480d-97b4-ea687702033e, worker db75771d60c45d0bdfe2727590eadc02. Last observed working. Exact candidate52af0df, full final-tree suite/types/build and applicability/limits review; no worker source/live edits. Root opened [Bound eligible worker quality escalation to one attempt](https://github.com/gera3d/dsh-superagent-prototype/pull/55) as a draft against superagent-core, not merged or deployed. Existing branch was already pushed; old push/no-PR recommendation now needs currency correction and is not current authority.
+
+**Standing coordination:** an ACTIVE hourly heartbeat, “Advance approved Harness project work,” is saved for this Codex chat and verified in the local scheduler record. It checks the shared project record and live state, advances already-authorized work through supported gates, and keeps one execution owner. It is not a new permission grant or a substitute for protected publication/live acceptance. No claim that its first scheduled run has executed. Project-wide standing routine, not a separate automation per worker. Administrator/specialist agent roles are under discussion only; no new administrator agent or role permissions have been created.
 
 ## Active work — subscription priority and bounded Sonnet quality
 
