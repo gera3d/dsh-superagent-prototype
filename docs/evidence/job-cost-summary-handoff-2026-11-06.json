@@ -1,0 +1,115 @@
+{
+  "at": "2026-11-07T04:31:14.552631+00:00",
+  "issue": 190,
+  "artifactPR": 191,
+  "ticket": "85f05a35653102da234bed56549c26dd",
+  "implementation": "worker-ready-isolated-not-merged-not-deployed",
+  "workerReportedChecks": {
+    "focused": 19,
+    "adjacent": 206,
+    "typecheck": "passed",
+    "build": "passed"
+  },
+  "workflow": "partial-failed-actionable-handoff",
+  "observed": [
+    {
+      "id": "chat-80b012401cd8db18bcf529d6cf9b79ee",
+      "sessionId": "worker-85f05a35653102da234bed56549c26dd",
+      "status": "pending",
+      "actionMode": "stage_response",
+      "choices": [
+        {
+          "id": "opt-1",
+          "label": "Request live cockpit capture",
+          "prompt": "As the next handoff step, capture the before/after of the live cockpit cost summary page (not just the isolated component renders) for a completed job and attach those screenshots to reports/JOB_COST_SUMMARY.md and PR #191.",
+          "description": "Closes the stated evidence gap; exercises the recommendation-to-action handoff loop."
+        },
+        {
+          "id": "opt-2",
+          "label": "Review and merge PR #191",
+          "prompt": "I've reviewed PR #191 and the reports/JOB_COST_SUMMARY.md evidence \u2014 merge it to the ticket branch and confirm the ticket state after merge.",
+          "description": "Human-owned merge is the last blocked step toward shipping the feature."
+        },
+        {
+          "id": "opt-3",
+          "label": "Show real dollar amounts",
+          "prompt": "Make the cost summary show actual dollar amounts instead of 'unavailable': add a recorded-price fixture to the 19 focused tests so the projection is exercised with real prices, and note in the report what's still missing for live price data.",
+          "description": "Turns the labeled-unavailable limitation into verified behavior of the pricing path."
+        },
+        {
+          "id": "opt-4",
+          "label": "Wrap up the experiment",
+          "prompt": "Write a short handoff summary of this cost-summary experiment: what the Senior Developer recommended, which action I chose, and what the next worker should pick up \u2014 then post it in the thread.",
+          "description": "Captures the handoff-loop findings before context is lost."
+        }
+      ],
+      "recommendation": {
+        "recommendedValue": "opt-1",
+        "confidence": 0,
+        "rationale": "Closes the stated evidence gap; exercises the recommendation-to-action handoff loop.",
+        "distribution": [],
+        "provider": "deepseek-official/deepseek-flash",
+        "latencyMs": 0
+      },
+      "canonicalPhase": "ready"
+    },
+    {
+      "id": "delivery-auto-85f05a35653102da234bed56549c26dd",
+      "sessionId": "worker-85f05a35653102da234bed56549c26dd",
+      "status": "pending",
+      "actionMode": "feature_delivery",
+      "choices": [],
+      "recommendation": {
+        "recommendedValue": "",
+        "confidence": 0,
+        "rationale": "No executable action is currently available.",
+        "distribution": [],
+        "provider": "Not evaluated",
+        "latencyMs": 0
+      },
+      "canonicalPhase": null,
+      "delivery": {
+        "stage": "review",
+        "state": "blocked",
+        "blocker": "Operator-confirmed delivery scope, target and acceptance requirements are missing",
+        "scopeBinding": {
+          "reason": "Operator-confirmed delivery scope, target and acceptance requirements are missing",
+          "sourceTriggerId": "32c0c48ecb357c9a2c07e3604234a838"
+        },
+        "bindings": {
+          "repository": "gera3d/superagent-sandbox",
+          "sourceIssue": 190,
+          "baseSha": "",
+          "headSha": "",
+          "refs": []
+        }
+      }
+    }
+  ],
+  "gaps": [
+    {
+      "id": "scope-aware-recommendation",
+      "evidence": "Recommended opt-1 requests live cockpit screenshots before this isolated feature is installed, while worker scope forbids deployment."
+    },
+    {
+      "id": "artifact-versus-source-delivery",
+      "evidence": "Opt-2 treats merging sandbox patch artifact PR 191 as shipping the feature and pre-fills a claim that the user already reviewed it."
+    },
+    {
+      "id": "unbound-delivery",
+      "evidence": "Native delivery is review/blocked, choices empty, because confirmed target and acceptance requirements are missing. The intake deliberately requested a sandbox patch artifact; a prepared real backend delivery candidate is not present."
+    },
+    {
+      "id": "score-incomplete",
+      "evidence": "Observed canonical decision phase ready, confidence 0, empty score distribution; scoring not demonstrated."
+    }
+  ],
+  "nativeThreadVerification": "Pending: Mac locked; unlock requested. Shared inbox decision is attributed to the correct worker session.",
+  "manualAdvancementInterventions": [],
+  "nextDecisionOwner": "Gera",
+  "selectedChoice": null,
+  "limitations": [
+    "Unknown monetary cost remains explicitly unavailable in the feature because no price metadata is configured.",
+    "Cards existing does not prove useful recommendations or successful action execution."
+  ]
+}

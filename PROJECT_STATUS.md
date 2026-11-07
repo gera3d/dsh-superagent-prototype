@@ -1,14 +1,23 @@
 # DeepSeek Harness project status
 
-Updated November 06, 2026 at 8:10 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 06, 2026 at 8:32 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
 
 ## Active feature experiment — job cost summary
 
 [Superagent issue #190](https://github.com/gera3d/superagent-sandbox/issues/190) is created for one DeepSeek worker. Scope: a completed-job receipt using actual model/provider and native token/cache usage, with candid actual/estimated/unknown cost and coverage. No worker merge, deployment, live edits, premium fallback, credential changes or specialist fan-out.
 
-**Current stage: worker completing its handoff.** Native ticket `85f05a35653102da234bed56549c26dd`, session `worker-85f05a35653102da234bed56549c26dd`. The worker opened [artifact PR #191](https://github.com/gera3d/superagent-sandbox/pull/191) with `patches/JOB_COST_SUMMARY.patch`, `reports/JOB_COST_SUMMARY.md` and isolated before/after captures. It reports implementation and focused checks complete and is verifying its PR before the ready report. These are worker-reported results, not root review, deployment or live acceptance. No merge or deployment has occurred for this feature.
+**Current stage: worker ready; user choice deliberately unselected.** Native ticket `85f05a35653102da234bed56549c26dd` reported ready at 8:28:04 PM Pacific on November 06. [Artifact PR #191](https://github.com/gera3d/superagent-sandbox/pull/191) remains open and unmerged, with code head `0e4039b` and artifact head `1b2bf4d18cabc034fd04c253c985891850d14616`. Worker-reported checks: 19 focused and 206 adjacent tests, type check and build passed. Code remains isolated; this feature is not deployed. Monetary cost is honestly unavailable without price metadata; the feature reports recorded worker-session token/cache/route usage and labels estimates/coverage limitations.
 
-Intake initially waited for GitHub REST quota reset, then started normally at 8:14:54 PM Pacific on November 06. No duplicate job, alternate intake, manual retry or service restart was used.
+**Workflow experiment result: partial, not accepted.** The shared inbox automatically received four prompts for the correct worker session, decision `chat-80b012401cd8db18bcf529d6cf9b79ee`. However:
+
+- Recommended “Request live cockpit capture” asks for the new feature in the live app before deployment, outside the worker's authorized scope.
+- “Review and merge PR #191” pre-fills an unsupported claim that the user reviewed it and treats the sandbox artifact merge as shipping the real backend change.
+- The real delivery is `review / blocked` with no executable action: confirmed delivery target and acceptance requirements have not been bound. The intake requested an artifact handoff, so a deployable backend candidate still needs preparation. Keep the approval boundary; expose the missing preparation as the correct next step.
+- The observed canonical phase is `ready`, with confidence zero and no score distribution. Scoring has not been demonstrated.
+
+No recommendation was clicked, no follow-up was sent to the worker, and no merge/deployment occurred. Native thread-card visual verification is pending because the Mac locked; an unlock request is outstanding. The observer only opened/refreshed the UI and read status/inbox data; these actions did not advance the job.
+
+Intake initially waited for GitHub REST quota reset, then started normally at 8:14:54 PM Pacific. No duplicate job, alternate intake, manual retry or restart was used.
 
 **Decision owner: Gera.** Worker completion must yield a useful Senior Developer recommendation in the same thread and shared inbox. Gera chooses which prompt/action to send. Codex must not quietly advance that transition using earlier broad release approval. Any manual nudge, missing card, unsupported action or view mismatch is a recorded workflow gap, not a successful experiment. Implementation completion alone does not mean deployed or verified.
 
@@ -20,7 +29,7 @@ The authorized routine cleanup and economical routing rollout are **deployed and
 
 **Conserve mode ON.** Worker, orchestrator/evaluator, helper and automatic recommendation ranker resolve to the qualified Flash 1017 Particle AI flex OpenRouter preset. Existing saved credentials and provider connections are unchanged. Google/Antigravity and Anthropic are marked exhausted; OpenAI is temporarily conserved. The normal hierarchy and role choices are preserved beneath the override. When subscriptions return, explicitly mark those providers available and disable conservation to use the saved priorities again. Reset dates are manual reminders, not automatic quota detection. No top-ups or new keys.
 
-Capacity: **three workers**, executor unpaused. Final native snapshot: **zero running, zero queued, zero worker reviews awaiting action**; all ten health components, including GitHub, ready. Conversation autopilot remains opt-in and was not required for this rollout.
+Capacity: **three workers**, executor unpaused. At the previous release checkpoint: **zero running, zero queued, zero worker reviews awaiting action**; all ten health components, including GitHub, ready. Conversation autopilot remains opt-in and was not required for this rollout.
 
 ## Completed work
 
@@ -44,6 +53,6 @@ The scheduler concurrency behavior is regression-tested; no additional three-job
 
 ## Next action
 
-The earlier release remains complete. Follow issue #190 through native worker pickup and completion; observe the in-thread Senior Developer recommendation, then leave its next choice for Gera. Keep this checkpoint current and record interventions explicitly.
+The earlier release remains complete. Issue #190 implementation is ready in isolation. The next useful response is to review/prepare the actual backend candidate and its explicit delivery binding before requesting live verification. The current Senior Developer prompts do not express that path correctly; leave the choice unselected and treat this as a recommendation/context handoff defect, not a successful end-to-end test. Keep this checkpoint current and record interventions explicitly.
 
 Durable evidence: [release verification](docs/evidence/routine-cleanup-live-2026-11-06.json), [review and release notes](reports/ROUTINE_CLEANUP_RELEASE.md). Native screenshots and detailed rollback/runtime records are retained locally in the cockpit project's `token-optimization` directory.
