@@ -1,10 +1,18 @@
 # DeepSeek Harness project status
 
-Updated November 07, 2026 at 2:07 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 07, 2026 at 2:23 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
 
-## Active repair — retire completed Senior Developer recommendations
+## Completed repair — Senior Developer retires completed steps
 
-User's current screenshot reproduces pending canonical `chat-9b8cf316e58ef8fba84db5e30bdcb27c` offering native acceptance at72% while delivery `repair-46-headroom-1a45` is accepted and its finding resolved. [PR54](https://github.com/gera3d/dsh-superagent-prototype/pull/54), exact candidate03b14ed, adds accepted-delivery currency retirement for pre-acceptance canonical advice and explicit completion context. Old choices/scores/history and staged drafts remain; future user questions, unrelated sessions and newer active scopes are preserved.38 focused tests, types/build pass; full suite running. Not deployed or native verified yet. Codex owns review/deployment/same-thread verification under current user approval. No Send/autopilot/route/key/authority changes.
+[PR54](https://github.com/gera3d/dsh-superagent-prototype/pull/54) is reviewed, merged, deployed and native verified in the exact worker conversation from Gera's screenshot. Exact candidate749e2ec1e37a629386b3baf7dda660bf43b9dbb3; normal Git merge22e6b3a preserved the current checkpoint after the connector merge timed out. No forced push or protection override. Installed postimages and compiled assets verified; rollback sources/assets/SQLite retained.
+
+**Result:** old canonical decision `chat-9b8cf316e58ef8fba84db5e30bdcb27c` is now stale with an explicit accepted-delivery completion reason. Native Chrome refresh removed the72% acceptance handoff and its alternatives; Published, Accepted and Resolved remain visible above the empty composer, Send disabled. Normal suggestion lookup and forced refresh return stale; claim and old selection return409. Old choices/scores and staging are preserved as history. Original accepted cost-summary and repair delivery rows and publication journal are byte-unchanged. No worker message, new job, or approval was submitted.
+
+Authoritative recorded acceptance now overrides older worker reports for drafting/fallback/ranking context. Pre-acceptance canonical advice retires for the accepted scope, while genuinely later user questions, unrelated sessions and newer active scopes remain usable. A worker finishing or PR merging alone does not trigger completion. Send/autopilot/model/key/routing and all approval/submission guards unchanged.
+
+**Qualification:** final exact-head full suite **2,219 passed / two optional skips / zero failures, actual exit0**;57 focused tests, types and build pass. Initial full run caught the required new-test index entry and two older compact-UI class assertions; all corrected and the complete suite rerun cleanly. [Immutable live verification](https://github.com/gera3d/dsh-superagent-prototype/blob/804747ffbaec04e48c7777ef4a1d3dff627119a3/docs/evidence/completed-advice-2026-11-07.json).
+
+Restart started the new daemon but its deployment check paused on exhausted GitHub quota. At the reported2:20 PM Pacific reset, the ordinary setup check succeeded with the same credentials and no guard bypass. Runtime is ready; executor restored unpaused, capacity3, zero running/queued. At2:22 PM, the nine runtime components are ready and GitHub's first normal post-setup polling round is still starting; this checkpoint does not claim that round completed. Native evidence covers current Chrome desktop/dark theme. No other feature or new job was queued.
 
 ## GitHub access — connector verified; native polling recovered
 
