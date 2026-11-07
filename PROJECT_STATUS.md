@@ -1,8 +1,16 @@
 # DeepSeek Harness project status
 
-Updated November 06, 2026 at 6:27 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 06, 2026 at 8:10 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
 
-## Goal and result
+## Active feature experiment — job cost summary
+
+[Superagent issue #190](https://github.com/gera3d/superagent-sandbox/issues/190) is created for one DeepSeek worker. Scope: a completed-job receipt using actual model/provider and native token/cache usage, with candid actual/estimated/unknown cost and coverage. No worker merge, deployment, live edits, premium fallback, credential changes or specialist fan-out.
+
+**Current stage: awaiting native GitHub intake.** The harness GitHub poller is rate-limited: REST core remaining 0 of 5000; reset reported for November 06 at 8:14:06 PM PST. The issue was created through the existing connected GitHub tool. No duplicate job or alternate intake has been used. Codex will observe normal pickup after the limit resets; no settings/authentication changes.
+
+**Decision owner: Gera.** Worker completion must yield a useful Senior Developer recommendation in the same thread and shared inbox. Gera chooses which prompt/action to send. Codex must not quietly advance that transition using earlier broad release approval. Any manual nudge, missing card, unsupported action or view mismatch is a recorded workflow gap, not a successful experiment. Implementation completion alone does not mean deployed or verified.
+
+## Previous release — goal and result
 
 The authorized routine cleanup and economical routing rollout are **deployed and verified**. [Backend release PR #33](https://github.com/gera3d/dsh-superagent-prototype/pull/33) merged to `superagent-core` at `fb591843c3f9ff19965a49e45a4157ed195fc890`. The deployed source/assets were compared against the qualified candidate; rollback copies preserve the preceding source, assets and SQLite snapshots.
 
@@ -34,6 +42,6 @@ The scheduler concurrency behavior is regression-tested; no additional three-job
 
 ## Next action
 
-No implementation or approval remains for this release. Maintain this checkpoint at new dispatch, review, deployment, verification or blocker milestones. New feature work requires its own tracked scope; do not silently reopen completed cleanup.
+The earlier release remains complete. Follow issue #190 through native worker pickup and completion; observe the in-thread Senior Developer recommendation, then leave its next choice for Gera. Keep this checkpoint current and record interventions explicitly.
 
 Durable evidence: [release verification](docs/evidence/routine-cleanup-live-2026-11-06.json), [review and release notes](reports/ROUTINE_CLEANUP_RELEASE.md). Native screenshots and detailed rollback/runtime records are retained locally in the cockpit project's `token-optimization` directory.
