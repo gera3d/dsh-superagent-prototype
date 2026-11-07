@@ -223,4 +223,3 @@ export function fallbackNote(to: RoleModel, reason: string): string {
   }
   return `Fell back to available ladder model (${modelName}): ${why}.`
 }
-
