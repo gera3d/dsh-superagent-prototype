@@ -293,6 +293,187 @@ it('never persists a partial aggregate when a later batch is unbound or incomple
   expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
 })
 
+type ReviewFile = { filename: string; status: string; additions: number; deletions: number; patch: string }
+const artifactPatch = (nested: string): ReviewFile => ({ filename: 'patches/JOB_COST_SUMMARY.patch', status: 'modified', additions: 3, deletions: 0,
+  patch: '@@ -0,0 +1,3 @@\n+diff --git a/src/nested.ts b/src/nested.ts\n+' + nested + '\n+--- a/src/nested.ts' })
+function targetedFixture(filesFor: (repository: string, pr: number) => ReviewFile[]) {
+  const h = multiRefFixture()
+  h.gh.mockImplementation(async (args: string[]) => {
+    expect(args[0]).toBe('api'); expect(args.slice(-2)).toEqual(['--method', 'GET'])
+    const files = /^repos\/(.+)\/pulls\/(\d+)\/files\?per_page=100&page=1$/.exec(args[1]!)
+    if (files) return filesFor(files[1]!, Number(files[2]))
+    const secondary = args[1]!.includes('other/repo')
+    return { head: { sha: secondary ? NEW : HEAD }, base: { sha: BASE }, changed_files: 1 }
+  })
+  const requests: { system: string; messages: { content: { text: string }[] }[] }[] = []
+  let answers: unknown[] = []
+  h.stream.mockImplementation(async function* (request: unknown) {
+    requests.push(request as typeof requests[number])
+    const value = answers.shift()
+    if (!value) throw new Error('Unexpected extra review batch')
+    yield { type: 'text-delta', text: JSON.stringify(value) }; yield { type: 'finish', reason: { kind: 'stop' } }
+  })
+  return { ...h, requests, answer: (...values: unknown[]) => { answers = values } }
+}
+
+it('names one authoritative reviewTarget per call with exact outer paths and no competing global refs', async () => {
+  const h = targetedFixture((_repository, pr) => pr === 17 ? [artifactPatch('nested source identity is data only')] : [batchFile('src/code.ts', 10)])
+  h.answer(batchVerdict('passed', 'Artifact batch retains the fences.'), batchVerdict('passed', 'Source batch retains the fences.'))
+  expect((await h.caps.review!.execute(h.lease())).outcome).toBe('passed')
+  expect(h.requests).toHaveLength(2)
+  const payloads = h.requests.map(request => JSON.parse(request.messages[0]!.content[0]!.text))
+  expect(payloads[0].reviewTarget).toEqual({ repository: 'org/repo', pr: 17, headSha: HEAD, baseSha: BASE, allowedPaths: ['patches/JOB_COST_SUMMARY.patch'] })
+  expect(payloads[1].reviewTarget).toEqual({ repository: 'other/repo', pr: 28, headSha: NEW, baseSha: BASE, allowedPaths: ['src/code.ts'] })
+  for (const payload of payloads) {
+    expect(Object.keys(payload).sort()).toEqual(['batch', 'requirements', 'reviewTarget'])
+    expect(payload.bindings).toBeUndefined()
+    expect(payload.reviewTarget.allowedPaths).toEqual(payload.batch.diff.files.map((file: { filename: string }) => file.filename))
+  }
+  const identitySets = payloads.map(payload => {
+    const found: string[] = []
+    const walk = (value: unknown) => {
+      if (Array.isArray(value)) value.forEach(walk)
+      else if (value && typeof value === 'object') {
+        const object = value as Record<string, unknown>
+        if (typeof object.repository === 'string' && typeof object.pr === 'number') found.push(`${object.repository}#${object.pr}`)
+        Object.values(object).forEach(walk)
+      }
+    }
+    walk(payload.reviewTarget); walk(payload.batch)
+    return [...new Set(found)]
+  })
+  expect(identitySets).toEqual([['org/repo#17'], ['other/repo#28']])
+  expect(h.requests[0]!.system).toContain('reviewTarget is the single authoritative identity')
+  expect(h.requests[0]!.system).toContain('OUTER artifact filename')
+  expect(h.requests[0]!.system).toContain('no path_note or any other additional key')
+  expect(h.requests[0]!.system).toContain('exactly verdict, findings and rationale')
+  expect(h.requests[0]!.system).toContain('concise')
+})
+
+it('reviews a file containing an embedded source patch as its outer artifact filename and rejects nested identities', async () => {
+  const h = targetedFixture((_repository, pr) => pr === 17
+    ? [artifactPatch('nested source diff for other/repo#28 ' + NEW + ' at src/nested.ts')]
+    : [batchFile('src/code.ts', 10)])
+  h.answer({ verdict: 'failed', findings: [{ repository: 'org/repo', pr: 17, headSha: HEAD, path: 'src/nested.ts', line: 2, severity: 'high', message: 'nested identity' }], rationale: 'Nested path used.' })
+  expect((await h.caps.review!.execute(h.lease())).blocker).toContain('not bound to supplied diff')
+  expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
+  const first = JSON.parse(h.requests[0]!.messages[0]!.content[0]!.text)
+  expect(first.reviewTarget).toMatchObject({ repository: 'org/repo', pr: 17, allowedPaths: ['patches/JOB_COST_SUMMARY.patch'] })
+  expect(first.batch.diff.files[0]).toMatchObject({ filename: 'patches/JOB_COST_SUMMARY.patch', patch: expect.stringContaining('other/repo#28 ' + NEW) })
+  h.answer({ verdict: 'failed', findings: [{ repository: 'org/repo', pr: 17, headSha: HEAD, path: 'patches/JOB_COST_SUMMARY.patch', line: 1, severity: 'high', message: 'Outer artifact patch retains a concrete defect.' }], rationale: 'Outer artifact path used.' },
+    batchVerdict('passed', 'Source batch retains the fences.'))
+  const outer = await h.caps.review!.execute(h.lease())
+  expect(outer.outcome).toBe('failed')
+  const saved = JSON.parse(String(store.db.prepare('SELECT value FROM delivery_capability_review WHERE id=?').get(h.lease().id)!.value))
+  expect(saved.verdict).toMatchObject({ verdict: 'failed', findings: [{ repository: 'org/repo', pr: 17, path: 'patches/JOB_COST_SUMMARY.patch' }] })
+})
+
+it('rejects path_note and extra finding keys instead of legalizing or dropping them', async () => {
+  const h = fixture(), l = h.lease()
+  h.setVerdict({ verdict: 'passed', findings: [], rationale: 'ok', path_note: 'patches/JOB_COST_SUMMARY.patch' })
+  expect((await h.caps.review!.execute(l)).outcome).toBe('uncertain')
+  h.setVerdict({ verdict: 'failed', findings: [{ repository: 'org/repo', pr: 17, headSha: HEAD, path: 'src/code.ts', line: 1, severity: 'high', message: 'x', path_note: 'nested' }], rationale: 'bad' })
+  expect((await h.caps.review!.execute(l)).outcome).toBe('uncertain')
+  expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
+})
+
+it('drops only unknown null-valued review metadata and preserves every real finding exactly', async () => {
+  const h = fixture(), l = h.lease()
+  const findings = [
+    { repository: 'org/repo', pr: 17, headSha: HEAD, path: 'src/code.ts', line: 5, severity: 'medium', message: 'In apply, a settlement with no sample returns before storing the replacement slot; later samples inflate attempts.', message_extra: null },
+    { repository: 'org/repo', pr: 17, headSha: HEAD, path: 'src/code.ts', line: 9, severity: 'high', message: 'The `unattributed` flag is only ever set true and is never cleared after a same-step replacement.' },
+  ]
+  h.setVerdict({ verdict: 'failed', findings, rationale: 'Two concrete findings from the real preflight response.', path_note: null, message_extra: null })
+  const result = await h.caps.review!.execute(l)
+  expect(result.outcome).toBe('failed')
+  const saved = JSON.parse(String(store.db.prepare('SELECT value FROM delivery_capability_review WHERE id=?').get(l.id)!.value))
+  expect(saved.verdict.findings).toHaveLength(2)
+  expect(saved.verdict.findings.map((finding: { line: number }) => finding.line)).toEqual([5, 9])
+  expect(saved.verdict.findings.map((finding: { severity: string }) => finding.severity)).toEqual(['medium', 'high'])
+  expect(saved.verdict.findings.map((finding: { message: string }) => finding.message)).toEqual(findings.map(finding => finding.message))
+  expect(saved.verdict.findings.every((finding: Record<string, unknown>) => !('message_extra' in finding))).toBe(true)
+  expect(saved.verdict).not.toHaveProperty('path_note'); expect(saved.verdict).not.toHaveProperty('message_extra')
+})
+
+it('accepts a passed review with null-only unknown root metadata without weakening strict schema', async () => {
+  const h = fixture(), l = h.lease()
+  h.setVerdict({ verdict: 'passed', findings: [], rationale: 'Complete batch satisfies intake.', extra: null })
+  expect((await h.caps.review!.execute(l)).outcome).toBe('passed')
+  const saved = JSON.parse(String(store.db.prepare('SELECT value FROM delivery_capability_review WHERE id=?').get(l.id)!.value))
+  expect(saved.verdict).not.toHaveProperty('extra')
+})
+
+it('still rejects null core review keys instead of normalizing them', async () => {
+  const h = fixture(), l = h.lease()
+  h.setVerdict({ verdict: null, findings: [], rationale: 'bad', path_note: null })
+  expect((await h.caps.review!.execute(l)).outcome).toBe('uncertain')
+  h.setVerdict({ verdict: 'passed', findings: null, rationale: 'bad' })
+  expect((await h.caps.review!.execute(l)).outcome).toBe('uncertain')
+  h.setVerdict({ verdict: 'failed', findings: [{ repository: 'org/repo', pr: 17, headSha: HEAD, path: 'src/code.ts', line: 1, severity: null, message: 'x' }], rationale: 'bad' })
+  expect((await h.caps.review!.execute(l)).outcome).toBe('uncertain')
+  h.setVerdict({ verdict: 'failed', findings: [{ repository: 'org/repo', pr: 17, headSha: HEAD, path: 'src/code.ts', line: 1, severity: 'high', message: null }], rationale: 'bad' })
+  expect((await h.caps.review!.execute(l)).outcome).toBe('uncertain')
+  expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
+})
+
+it('keeps unknown non-null review metadata and objects present so strict schema still rejects them', async () => {
+  const h = fixture(), l = h.lease()
+  h.setVerdict({ verdict: 'passed', findings: [], rationale: 'ok', path_note: 'patches/JOB_COST_SUMMARY.patch' })
+  expect((await h.caps.review!.execute(l)).outcome).toBe('uncertain')
+  h.setVerdict({ verdict: 'passed', findings: [], rationale: 'ok', approved: true })
+  expect((await h.caps.review!.execute(l)).outcome).toBe('uncertain')
+  h.setVerdict({ verdict: 'passed', findings: [], rationale: 'ok', metadata: {} })
+  expect((await h.caps.review!.execute(l)).outcome).toBe('uncertain')
+  h.setVerdict({ verdict: 'failed', findings: [{ repository: 'org/repo', pr: 17, headSha: HEAD, path: 'src/code.ts', line: 1, severity: 'high', message: 'x', message_extra: 'not null' }], rationale: 'bad' })
+  expect((await h.caps.review!.execute(l)).outcome).toBe('uncertain')
+  expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
+})
+
+it('still rejects unbound finding identity and unknown paths even when unknown metadata is null', async () => {
+  const h = fixture(), l = h.lease()
+  h.setVerdict({ verdict: 'failed', findings: [{ repository: 'org/repo', pr: 17, headSha: NEW, path: 'src/code.ts', line: 1, severity: 'high', message: 'wrong head', message_extra: null }], rationale: 'bad' })
+  expect((await h.caps.review!.execute(l)).blocker).toContain('not bound to supplied diff')
+  h.setVerdict({ verdict: 'failed', findings: [{ repository: 'org/repo', pr: 17, headSha: HEAD, path: 'src/nested.ts', line: 1, severity: 'high', message: 'nested path', message_extra: null }], rationale: 'bad' })
+  expect((await h.caps.review!.execute(l)).blocker).toContain('not bound to supplied diff')
+  expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
+})
+
+it('never applies null-metadata canonicalization to advice responses', async () => {
+  const h = fixture(); const d = deliveries.get('feature')!, action = d.nextAction!
+  h.setVerdict({ disposition: 'take', actionId: action.id, fingerprint: action.fingerprint, rationale: 'Take the recorded next action.', path_note: null })
+  await expect(recommendDeliveryAction(d, action, h.deps)).rejects.toThrow()
+})
+
+it('rejects a parsed root __proto__ object instead of inheriting injected verdict fields', async () => {
+  const h = fixture(), l = h.lease()
+  const raw = '{"__proto__":{"verdict":"passed","findings":[],"rationale":"injected prototype verdict"}}'
+  h.stream.mockImplementationOnce(async function* () { yield { type: 'text-delta', text: raw }; yield { type: 'finish', reason: { kind: 'stop' } } })
+  const blocked = await h.caps.review!.execute(l)
+  expect(blocked.outcome).toBe('uncertain')
+  expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
+  expect(({} as Record<string, unknown>).verdict).toBeUndefined()
+  expect(({} as Record<string, unknown>).findings).toBeUndefined()
+  expect(({} as Record<string, unknown>).rationale).toBeUndefined()
+  expect(Object.prototype).not.toHaveProperty('verdict')
+  const withCore = '{"verdict":"passed","findings":[],"rationale":"own core","__proto__":{"verdict":"failed","findings":[],"rationale":"injected"}}'
+  h.stream.mockImplementationOnce(async function* () { yield { type: 'text-delta', text: withCore }; yield { type: 'finish', reason: { kind: 'stop' } } })
+  const rejected = await h.caps.review!.execute(l)
+  expect(rejected.outcome).toBe('uncertain')
+  expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
+})
+
+it('rejects a parsed finding __proto__ carrying identity fields instead of letting it pollute the finding', async () => {
+  const h = fixture(), l = h.lease()
+  const finding = '{"__proto__":{"repository":"org/repo","pr":17,"headSha":"' + HEAD + '","path":"src/code.ts","line":1,"severity":"high","message":"injected"},"message":"real message"}'
+  const raw = '{"verdict":"failed","findings":[' + finding + '],"rationale":"adversarial finding metadata"}'
+  h.stream.mockImplementationOnce(async function* () { yield { type: 'text-delta', text: raw }; yield { type: 'finish', reason: { kind: 'stop' } } })
+  expect((await h.caps.review!.execute(l)).outcome).toBe('uncertain')
+  expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
+  expect(({} as Record<string, unknown>).repository).toBeUndefined()
+  expect(({} as Record<string, unknown>).severity).toBeUndefined()
+  expect(Object.prototype).not.toHaveProperty('repository')
+})
+
 it('gives advice bounded server-derived prepared-publication proof and separates source, artifact and target', async () => {
   const h = fixture(); const review = h.lease(); deliveries.complete(review, await h.caps.review!.execute(review))
   const prepared = { id: 'manifest', ticketId: 'original', decisionId: 'decision', repository: 'org/repo', pr: 17, headSha: HEAD,
