@@ -13,7 +13,7 @@ Base: exact qualified installed source 9992decdacf43b93be04faf4858efbb2ed88a03a,
 
 ## Checks
 
-141 focused review regressions passed. Type check passed; build passed. Initial full suite: 2147 passed, two skipped, six failures; all six were corrected or confirmed as a subprocess timing failure and passed in a 74-test recheck without relaxing the timeout. A final stable-candidate full suite is running. Subsequent results and live proof belong in PROJECT_STATUS.md and the deployment evidence record.
+141 focused review regressions passed. Type check passed; build passed. Initial full suite: 2147 passed, two skipped, six failures; all six were corrected or confirmed as a subprocess timing failure and passed in a 74-test recheck without relaxing the timeout. Final stable-candidate full suite: 2154 passed, two skipped, zero failures (120 passing files). Type check and build pass. Subsequent results and live proof belong in PROJECT_STATUS.md and the deployment evidence record.
 
 ## Deployment and rollback
 
