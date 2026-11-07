@@ -1,0 +1,135 @@
+{
+  "state": "deployed-and-native-verified",
+  "verifiedAt": "2026-11-07T19:22:43.419375+00:00",
+  "sourcePRs": [
+    52,
+    53
+  ],
+  "sourceHead": "949cf74fb59b953367a515af4ffdbfbb4324f3d7",
+  "deployments": [
+    {
+      "state": "installed-awaiting-browser-verification",
+      "at": "2026-11-07T19:17:11.810940+00:00",
+      "source": "a09a219fe6782b36d979c11c8a54ff2d219f357d",
+      "merge": "e141bd7b167524a5716f3aa0eb7166170b6b2ed3",
+      "pr": 52,
+      "backup": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/compact-finding-evidence/rollback-20261107T191711Z",
+      "files": {
+        "src/client/delivery-card.css": {
+          "before": "561116948017e99c52858ba0081d3bdf0b6fd685fb8326462ca0cb28a9bbc22d",
+          "after": "f344fc021274d45c32c1859d5f818fedb3ab4359d22f77f051d6a17a545fe4c8"
+        },
+        "src/client/finding-card.tsx": {
+          "before": "f5284049e21b65ac97a8c152abba2e76dc3d1e246b73524be5a59a87a5bb94bc",
+          "after": "41e13ccfeb36a650c79aa2175664486478862f782c7edec921d40aa25ad58b17"
+        },
+        "src/client/publication-cards.tsx": {
+          "before": "bf39c0bf0abf0985132ba2a09857ddaace1cf8cbeaea0c9438d7176094ff0d6a",
+          "after": "c352e2df3fde9c7c449d94ff227a7114e25ca72e621290bd0ea900659fbea908"
+        },
+        "tests/finding-consumers.spec.tsx": {
+          "before": "d397a20457eb3873b9e3b68ab1bececd050dd0d1ec9c90d886f16ac965e747b3",
+          "after": "8992e402d4c78095cc34b37b4431942591175ebeaf49a97a860a097ae2d1d38f"
+        },
+        "lib/client.js": {
+          "before": "31728b143dac335d0b41ebf02b77dbd3f88c26cd3c01f686cca589f504be997d",
+          "after": "001020556dfbf845d71fe93cae56615bbd9aeda1a5fe6ecd5141af1e861caccb"
+        }
+      },
+      "checks": {
+        "focusedPassed": 55,
+        "typecheckExitCode": 0,
+        "buildExitCode": 0
+      },
+      "restartPerformed": false,
+      "method": "Pinned reviewed UI postimages and atomic client asset replacement; no backend changes."
+    },
+    {
+      "state": "installed-awaiting-browser-verification",
+      "at": "2026-11-07T19:20:45.375257+00:00",
+      "source": "949cf74fb59b953367a515af4ffdbfbb4324f3d7",
+      "merge": "90afe9d7fb48ad5cbf18e44feea7e9d0ec1589d9",
+      "pr": 53,
+      "backup": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/compact-finding-evidence/rollback-20261107T192045Z",
+      "files": {
+        "src/client/lifecycle-card.tsx": {
+          "before": "e2f2ddd9860243bfcb7f99248985bda4bf15726c84677d92118d80d39add5116",
+          "after": "58b9f690264f65adbce652ded4a6af4c92c2162dd681b467356447a8ef71c393"
+        },
+        "src/client/publication-cards.tsx": {
+          "before": "c352e2df3fde9c7c449d94ff227a7114e25ca72e621290bd0ea900659fbea908",
+          "after": "dddebd476b4cdbd9b094fa2505d9e3460627921785711235ea06f64463df2ffc"
+        },
+        "tests/finding-consumers.spec.tsx": {
+          "before": "8992e402d4c78095cc34b37b4431942591175ebeaf49a97a860a097ae2d1d38f",
+          "after": "69eed4022d797895a7e4433a24d96e0547a172d399228d892dcf3258d5f6e9d7"
+        },
+        "lib/client.js": {
+          "before": "001020556dfbf845d71fe93cae56615bbd9aeda1a5fe6ecd5141af1e861caccb",
+          "after": "4c17b961034b9d58cfe145f3dee3488e2136e93c44dac08b6834606682e354f0"
+        }
+      },
+      "checks": {
+        "focusedPassed": 81,
+        "typecheckExitCode": 0,
+        "buildExitCode": 0
+      },
+      "restartPerformed": false,
+      "method": "Pinned reviewed UI postimages and atomic client asset replacement; no backend changes."
+    }
+  ],
+  "qualification": {
+    "focusedPassed": 81,
+    "testExitCode": 0,
+    "typecheckExitCode": 0,
+    "buildExitCode": 0,
+    "fullSuiteRun": false
+  },
+  "nativeChrome": {
+    "chatDefaultCollapsed": [
+      "Publication",
+      "Delivery",
+      "Finding"
+    ],
+    "findingExpandedHeightBounded": true,
+    "publicationExpandedHeightBounded": true,
+    "composerVisibleCollapsedAndExpanded": true,
+    "leftCollapsed": true,
+    "nativeSendOrApprovalPerformed": false,
+    "screenshotSha256": {
+      "live-final-collapsed.png": "cb27d6c568b79850a4207cbed3a88ddb978af38f76bdb445c20cc8fcc8445747",
+      "live-expanded.png": "99ff1e39fcf1aa27b1330333680bd9a259a90fd31712c3ec201f2cdc18322a14",
+      "live-final-publication-expanded.png": "e42d96386214a392a357f34d16f3cead7990c9d01c4f3d3564e283b4fc194719",
+      "live-final-restored.png": "5dacc99c313c8a9bd0577316c147f1c55f0a3680cc44721a642effd58343594d"
+    }
+  },
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "error"
+  },
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "preserved": [
+    "Full Decisions finding/evidence renderer",
+    "All typed confirmation, evidence, review, publish and approval guards",
+    "Evidence draft across collapse and poll updates, covered by consumer test",
+    "Routes, keys, conservation, autopilot and native Send"
+  ],
+  "method": "Reviewed UI-only postimages and atomic client.js asset update with installed preimage checks and source/asset backups. Browser reload, no daemon restart.",
+  "limits": [
+    "Native acceptance at current desktop Chrome size and dark theme; no separate mobile/light-theme acceptance.",
+    "No full backend suite repeated for this scoped UI change;81 focused tests/types/build passed.",
+    "Nine runtime services ready. GitHub poll reports API quota exhaustion; separate CLI still completed source merge/status updates. No credentials or poll workaround changed."
+  ]
+}

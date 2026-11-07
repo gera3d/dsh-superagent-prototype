@@ -1,10 +1,12 @@
 # DeepSeek Harness project status
 
-Updated November 07, 2026 at 11:06 AM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 07, 2026 at 11:23 AM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
 
-## Active UI repair — chat metadata crowding
+## Completed UI repair — chat metadata stays compact
 
-User screenshot November07 shows the full finding evidence form occupying most of chat. PR52 merged (sourcea09a219) and UI postimages/client asset installed with rollback;55 focused tests/types/build pass. Native Chrome confirms finding default-collapsed, aligned with delivery, expanded body height-bounded and composer visible. Full Decisions view remains intact. Browser acceptance additionally exposed oversized legacy publication history above it. A narrow follow-up applies the same conversation-only disclosure there; current tests/build/types and native verification pending. No backend/action/approval/routing/Send/autopilot changes or daemon restart.
+User screenshot showed the full finding/evidence form consuming chat. [PR52](https://github.com/gera3d/dsh-superagent-prototype/pull/52) and [PR53](https://github.com/gera3d/dsh-superagent-prototype/pull/53) are merged, installed and native Chrome verified. Finding and legacy publication/history cards in the conversation dock now default to compact collapsed strips using the same delivery/Senior Developer alignment, tokens, spacing and chevron. Expanded details share a bounded scroll area (`min(240px,25vh)`); conversation and composer remain visible. Full Decisions forms remain available. Collapse preserves evidence drafts, polling does not force expansion, and opening details never submits an action.
+
+**Qualification:**81 focused finding/consumer/delivery/lifecycle/style tests pass, actual-exit types/build pass. Native collapsed and expanded finding/publication layouts verified in installed dark-theme desktop Chrome; left collapsed, no message or approval submitted. Reviewed UI postimages and client asset installed atomically after exact preimage checks, rollback sources/assets saved. No daemon restart, backend/permission/routing/key/Send/autopilot changes. Nine runtime health services ready, executor unpaused, capacity3, zero running/queued; **GitHub polling reports quota exhaustion** (separate CLI still completed source merges/status writes). No quota-reset time or bypass claimed. [Live evidence](docs/evidence/compact-chat-metadata-2026-11-07.json). Source head949cf74, final merge90afe9d. No full backend suite or separate mobile/light-theme acceptance claimed for this UI-only repair.
 
 ## Completed repair — #46 and #47 deployed, native verified and accepted
 
