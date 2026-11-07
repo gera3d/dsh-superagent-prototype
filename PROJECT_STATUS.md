@@ -1,6 +1,10 @@
 # DeepSeek Harness project status
 
-Updated November 07, 2026 at 11:28 AM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 07, 2026 at 2:07 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+
+## Active repair — retire completed Senior Developer recommendations
+
+User's current screenshot reproduces pending canonical `chat-9b8cf316e58ef8fba84db5e30bdcb27c` offering native acceptance at72% while delivery `repair-46-headroom-1a45` is accepted and its finding resolved. [PR54](https://github.com/gera3d/dsh-superagent-prototype/pull/54), exact candidate03b14ed, adds accepted-delivery currency retirement for pre-acceptance canonical advice and explicit completion context. Old choices/scores/history and staged drafts remain; future user questions, unrelated sessions and newer active scopes are preserved.38 focused tests, types/build pass; full suite running. Not deployed or native verified yet. Codex owns review/deployment/same-thread verification under current user approval. No Send/autopilot/route/key/authority changes.
 
 ## GitHub access — connector verified; native polling recovered
 
