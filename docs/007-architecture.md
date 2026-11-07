@@ -306,6 +306,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/app/delivery-intake.ts` | Strict explicit intake schema with per-repository heads, bases and requirements |
 | `src/app/delivery-evidence.ts` | Audited local-operator external evidence recording and exact-bound acceptance re-evaluation |
 | `src/client/delivery-card.tsx` | Shared current delivery recommendation, typed confirmation and inspectable evidence/history |
+| `src/client/delivery-card.css` | The delivery card styles |
 | `src/client/worker-report-fallback.tsx` | Provenance-labelled recorded report rendering after an actual blank completed final reply |
 | `src/index.ts` | The main plugin entry: reads the machine settings, starts the Runtime, and gives it the restart that a save of a Source's account uses |
 | `src/deployment.ts` | The plugin `Config` and `Machine`; `resolveDeployment` and `resolveFeishuBot` read the repository and the accounts from the Source settings, each CLI run as Executor shells run it; `SETUP_FIELDS` lists the Source fields setup reads. The code names no person, account or organization |
