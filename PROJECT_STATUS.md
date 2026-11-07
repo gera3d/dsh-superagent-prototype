@@ -44,7 +44,9 @@ Scoring repair was explicitly authorized by Gera after the workflow experiment e
 
 The later recommendation/context repair above supersedes this scoring-only checkpoint. Cost-summary release preparation and the user-owned continuation remain pending.
 
-## Active feature experiment — job cost summary
+## Job cost summary — earlier experiment history
+
+**Historical checkpoint below, superseded by the active acceptance record at the top of this file.** The current decision is `chat-a9801a7b206add4096309faaa7ff03d8`, pending, unstaged and unsent, recommending “Hand off complete release package” at 82%. Prior prepared replies, scores and original worker checks below describe earlier attempts; they are not the current composer or release state. The cost-summary feature remains undeployed.
 
 [Superagent issue #190](https://github.com/gera3d/superagent-sandbox/issues/190) is created for one DeepSeek worker. Scope: a completed-job receipt using actual model/provider and native token/cache usage, with candid actual/estimated/unknown cost and coverage. No worker merge, deployment, live edits, premium fallback, credential changes or specialist fan-out.
 
