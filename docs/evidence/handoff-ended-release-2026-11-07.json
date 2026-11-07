@@ -1,0 +1,196 @@
+{
+  "updatedAt": "2026-11-07T17:49:50.829694+00:00",
+  "scope": "Release handoff46 and Ended-list47",
+  "state": "deployed; four of five native acceptance requirements verified, paired native review still running",
+  "source": {
+    "head": "55ca309c05fc762d1df16d1921bca8f53fde7cfe",
+    "sourcePRs": [
+      48,
+      49
+    ],
+    "merge49": "e3d8b83",
+    "artifactPR": 193,
+    "artifactHead": "a2946446dce391cb2e08a6a29e7a923b1b07deab",
+    "patchSha256": "438627bce8c2257787f39c7d741c879eae04d7019d32398d71da2496db4810a4",
+    "review": "https://github.com/gera3d/dsh-superagent-prototype/pull/49#issuecomment-6710786232"
+  },
+  "qualification": {
+    "passed": 2199,
+    "skipped": 2,
+    "failed": 0,
+    "focused": 26,
+    "actualTypecheckExit": 0,
+    "actualBuildExit": 0
+  },
+  "protectedDeployment": {
+    "verifiedAt": "2026-11-07T17:46:36.539378+00:00",
+    "publicationId": "02232bf0-3eb4-465d-9a88-7b8313e01cb4",
+    "pins": {
+      "repository": "gera3d/superagent-sandbox",
+      "prNumber": 193,
+      "headSha": "a2946446dce391cb2e08a6a29e7a923b1b07deab",
+      "patchSha256": "438627bce8c2257787f39c7d741c879eae04d7019d32398d71da2496db4810a4"
+    },
+    "pids": [
+      59263
+    ],
+    "previousPid": 51035,
+    "health": {
+      "runtime": "ready",
+      "relay": "ready",
+      "notice": "ready",
+      "launch": "ready",
+      "delivery": "ready",
+      "assessment": "ready",
+      "reply": "ready",
+      "evals": "ready",
+      "models": "ready",
+      "github": "ready"
+    },
+    "readinessRetries": 61
+  },
+  "protectedStages": [
+    {
+      "stage": "merge",
+      "status": "succeeded",
+      "startedAt": "2026-11-07T17:41:40.215Z",
+      "finishedAt": "2026-11-07T17:41:45.716Z"
+    },
+    {
+      "stage": "apply",
+      "status": "succeeded",
+      "startedAt": "2026-11-07T17:41:48.540Z",
+      "finishedAt": "2026-11-07T17:41:52.632Z"
+    },
+    {
+      "stage": "build",
+      "status": "succeeded",
+      "startedAt": "2026-11-07T17:41:55.216Z",
+      "finishedAt": "2026-11-07T17:43:09.851Z"
+    },
+    {
+      "stage": "restart",
+      "status": "succeeded",
+      "startedAt": "2026-11-07T17:43:12.790Z",
+      "finishedAt": "2026-11-07T17:43:42.229Z"
+    },
+    {
+      "stage": "verify",
+      "status": "succeeded",
+      "startedAt": "2026-11-07T17:43:44.971Z",
+      "finishedAt": "2026-11-07T17:46:36.903Z"
+    }
+  ],
+  "rollbackRetained": true,
+  "priorAttempt": {
+    "id": "997077dd-1788-46b6-b961-489b0743fa05",
+    "restart": "failed: transient GitHub setup rate limit",
+    "finalStatus": "rolled_back",
+    "historyRetained": true
+  },
+  "pureLegacyProofRead": {
+    "at": "2026-11-07T17:45:33.694447+00:00",
+    "helperSeconds": 0.06926345499232411,
+    "contextBytes": 12378,
+    "publicationBeforeSha256": "28eefe19f9c73f3ae3ddc2b673e9d1f7f7739e95f7d97fef25302b38c41b6d62",
+    "publicationAfterSha256": "28eefe19f9c73f3ae3ddc2b673e9d1f7f7739e95f7d97fef25302b38c41b6d62",
+    "publicationUnchanged": true,
+    "acceptedDeliveryBeforeSha256": "df47d3ce0ed18f2b14cfdde63925541bfb6c02f1b140cd58f37227797fcfaf9c",
+    "acceptedDeliveryAfterSha256": "df47d3ce0ed18f2b14cfdde63925541bfb6c02f1b140cd58f37227797fcfaf9c",
+    "acceptedDeliveryUnchanged": true,
+    "legacyRows": [
+      {
+        "id": "839b41ca4534bb0748214bd59bda0119",
+        "updatedAt": 1793822843308,
+        "rowSha256": "ee81f7ef1078c6d5cae2ceed8e24156c2ea8ce47db2d1ff965a850db953ca0e6",
+        "afterSha256": "ee81f7ef1078c6d5cae2ceed8e24156c2ea8ce47db2d1ff965a850db953ca0e6",
+        "unchanged": true
+      },
+      {
+        "id": "9560325c5144615141fff2373d6ef749",
+        "updatedAt": 1793822843308,
+        "rowSha256": "31dd119985dae581db66028cea691314c011bd75e56ce5c86c98e5f3babb1e1e",
+        "afterSha256": "31dd119985dae581db66028cea691314c011bd75e56ce5c86c98e5f3babb1e1e",
+        "unchanged": true
+      },
+      {
+        "id": "31a2cc45435bfbf9ca059369efda8ef6",
+        "updatedAt": 1793822843308,
+        "rowSha256": "4eb6ee073a858d5adb6b8b1b20794c308763f9937701f7fce2e2265aa532e6ac",
+        "afterSha256": "4eb6ee073a858d5adb6b8b1b20794c308763f9937701f7fce2e2265aa532e6ac",
+        "unchanged": true
+      },
+      {
+        "id": "012fd8b284a2e57c6cdbe110c1ea2d20",
+        "updatedAt": 1793822843308,
+        "rowSha256": "3a90b4bca5f3069d0b966d76fe954ebe58914eb4411888ec2e720a3ef5a419b4",
+        "afterSha256": "3a90b4bca5f3069d0b966d76fe954ebe58914eb4411888ec2e720a3ef5a419b4",
+        "unchanged": true
+      }
+    ],
+    "endedApiHttp": 200,
+    "endedSeconds": 0.02816010918468237,
+    "endedResponseKeys": [
+      "items",
+      "total",
+      "next_offset"
+    ]
+  },
+  "currentDeliveryContext": {
+    "deliveryId": "repair-46-47-final-1e13",
+    "owner": "Codex release operator",
+    "bytes": 12687,
+    "preparedPins": {
+      "repository": "gera3d/superagent-sandbox",
+      "pr": 193,
+      "headSha": "a2946446dce391cb2e08a6a29e7a923b1b07deab",
+      "patchSha256": "438627bce8c2257787f39c7d741c879eae04d7019d32398d71da2496db4810a4"
+    },
+    "verified": true,
+    "observedAt": "2026-11-07T17:43:44.918Z",
+    "status": {
+      "checks": "passed",
+      "review": "approved"
+    },
+    "checkTotals": 3,
+    "checkReportHashes": [
+      "07dbb81cd621165db48b981be00e59519e1519e04cd6a13468ec06b715186f90",
+      "25b13293e80a69112da30428c34430fb8852697a63360a915eea6c727ed9ee61",
+      "a4353197234f789c688b3a6b5fa9ecc8a6ab0132cb44421f42a05e5ffc5781fd"
+    ]
+  },
+  "nativeBrowser": {
+    "endedList": "passed: Execution\u2192Ended loads normally, includes legacy rows and current ended jobs",
+    "retainedCostReceipt": {
+      "attempts": 424,
+      "inputTokens": 16647438,
+      "outputTokens": 171983,
+      "cacheReadTokens": 37342976,
+      "cost": "unavailable: no recorded price",
+      "acceptedOriginalJobUnchanged": true
+    },
+    "screenshots": [
+      {
+        "name": "live-ended.png",
+        "sha256": "40d7d895d5fb24eff661414638d1b90df095cab00c47639bbebf2d452e3be913"
+      },
+      {
+        "name": "live-cost-retained.png",
+        "sha256": "bdb4836da6f1c2bec071b41e05e76e69c7fb1f565a3c010e02ee4122cce4e060"
+      }
+    ]
+  },
+  "nativePairedReview": {
+    "state": "running",
+    "completeFinalVerdictPersisted": false,
+    "priorIncompleteAttempts": 2,
+    "newCompleteButUnboundResponse": "rejected, no partial result persisted",
+    "currentAttempt": "one exact read-only reconciliation retry, no effects or worker wake"
+  },
+  "limits": [
+    "Operator-assisted release; no autonomous publication success claimed.",
+    "Two optional native tests skipped in the suite; separately observed browser checks are recorded above.",
+    "No model/key/routing/autopilot/Send changes.",
+    "No fabricated dollar costs; original cost-summary job remains accepted and closed."
+  ]
+}
