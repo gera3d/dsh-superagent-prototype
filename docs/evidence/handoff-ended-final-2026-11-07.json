@@ -1,0 +1,356 @@
+{
+  "state": "deployed-and-native-verified",
+  "verifiedAt": "2026-11-07T19:02:17.944122+00:00",
+  "scope": [
+    "#46 bounded complete review and verified prepared-proof/owner context",
+    "#47 mixed historical timestamp Ended list"
+  ],
+  "source": {
+    "head": "004578b2065ff12c94e098028f4aac7484c611f4",
+    "pr": 51,
+    "repository": "gera3d/dsh-superagent-prototype",
+    "precedingQualifiedPRs": [
+      48,
+      49,
+      50
+    ]
+  },
+  "artifact": {
+    "repository": "gera3d/superagent-sandbox",
+    "prNumber": 195,
+    "headSha": "a012ff6f5588e9a62ce70b2cf7d200b0405cdef4",
+    "patchSha256": "bf2ddcf77775a30e9df22ab39a16cba4783671c4b2ec40afe81fb70b552c6557"
+  },
+  "qualification": {
+    "full": {
+      "head": "004578b2065ff12c94e098028f4aac7484c611f4",
+      "startedAt": "2026-11-07T18:39:55.135142+00:00",
+      "finishedAt": "2026-11-07T18:43:47.639115+00:00",
+      "exitCode": 0,
+      "log": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/handoff-headroom64/full-suite.log",
+      "passed": 2210,
+      "optionalSkipped": 2,
+      "failed": 0,
+      "logSha256": "7c9e6112d1d8f440fcf285e2546249193dff519f9695c844e4a2715d53643614"
+    },
+    "focusedPassed": 54,
+    "typecheckExitCode": 0,
+    "buildExitCode": 0
+  },
+  "protectedDeployment": {
+    "id": "9c093dc0-6d36-4483-a8b9-49eec1c979df",
+    "status": "published",
+    "outcomes": [
+      {
+        "stage": "merge",
+        "operationId": "9c093dc0-6d36-4483-a8b9-49eec1c979df:merge",
+        "status": "succeeded",
+        "startedAt": "2026-11-07T18:51:54.527Z",
+        "detail": "merge completed for pinned head a012ff6f5588e9a62ce70b2cf7d200b0405cdef4",
+        "finishedAt": "2026-11-07T18:52:00.368Z"
+      },
+      {
+        "stage": "apply",
+        "operationId": "9c093dc0-6d36-4483-a8b9-49eec1c979df:apply",
+        "status": "succeeded",
+        "startedAt": "2026-11-07T18:52:03.001Z",
+        "detail": "apply completed for pinned head a012ff6f5588e9a62ce70b2cf7d200b0405cdef4",
+        "finishedAt": "2026-11-07T18:52:07.101Z"
+      },
+      {
+        "stage": "build",
+        "operationId": "9c093dc0-6d36-4483-a8b9-49eec1c979df:build",
+        "status": "succeeded",
+        "startedAt": "2026-11-07T18:52:09.736Z",
+        "detail": "build completed for pinned head a012ff6f5588e9a62ce70b2cf7d200b0405cdef4",
+        "finishedAt": "2026-11-07T18:53:23.491Z"
+      },
+      {
+        "stage": "restart",
+        "operationId": "9c093dc0-6d36-4483-a8b9-49eec1c979df:restart",
+        "status": "succeeded",
+        "startedAt": "2026-11-07T18:53:29.486Z",
+        "detail": "restart completed for pinned head a012ff6f5588e9a62ce70b2cf7d200b0405cdef4",
+        "finishedAt": "2026-11-07T18:53:57.607Z"
+      },
+      {
+        "stage": "verify",
+        "operationId": "9c093dc0-6d36-4483-a8b9-49eec1c979df:verify",
+        "status": "succeeded",
+        "startedAt": "2026-11-07T18:54:00.662Z",
+        "detail": "verify completed for pinned head a012ff6f5588e9a62ce70b2cf7d200b0405cdef4; configured HTTP release verification only, browser acceptance not performed",
+        "finishedAt": "2026-11-07T18:56:40.839Z"
+      }
+    ],
+    "health": {
+      "runtime": "ready",
+      "relay": "ready",
+      "notice": "ready",
+      "launch": "ready",
+      "delivery": "ready",
+      "assessment": "ready",
+      "reply": "ready",
+      "evals": "ready",
+      "models": "ready",
+      "github": "ready"
+    },
+    "verificationRecordSha256": "e1dca46532a479593e25f79ab1108e88b71dbe38ae92dd7d19dd31c2ba8436b5",
+    "sourceAndAssets": "Exact protected inventories verified; sources/assets/SQLite rollback retained."
+  },
+  "nativePairedReview": {
+    "fingerprint": "e2c8f3614a7b3ee2b5762f778a62e92675a4dbd2415009e2313bd1c1e4b97162",
+    "bindingFingerprint": "c6f10a9d2ef9ffed53838cfd111dd586d73135bb60bdbe50bf70ce32458f8740",
+    "provider": "openrouter / deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial",
+    "verdict": {
+      "verdict": "failed",
+      "findings": [
+        {
+          "repository": "gera3d/superagent-sandbox",
+          "pr": 191,
+          "headSha": "d3e679a75f527d17c4c79016aa0e01e77c4ff494",
+          "path": "patches/JOB_COST_SUMMARY.patch",
+          "line": 273,
+          "severity": "medium",
+          "message": "The fold sets `this.unattributed = true` permanently when a sample lacks a recorded route. If that sample is later withdrawn by a same-(turn,step) replacement that has a route, the final summary still reports `attribution: 'partial'` and marks an estimated cost partial even though all surviving samples are attributed. Derive attribution from the final buckets or clear the flag when the last unattributed sample is withdrawn."
+        },
+        {
+          "repository": "gera3d/superagent-sandbox",
+          "pr": 191,
+          "headSha": "d3e679a75f527d17c4c79016aa0e01e77c4ff494",
+          "path": "patches/JOB_COST_SUMMARY.patch",
+          "line": 265,
+          "severity": "medium",
+          "message": "A settlement event with no usage sample returns before updating `this.last`, so the same-step replacement/dedup slot never sees no-sample settlements. Duplicate no-sample settlements at one (turn, step) each increment `attempts`; a no-sample settlement followed by a same-step sample counts two attempts and one report, producing false partial coverage. Record the slot even when the sample is absent and withdraw any prior sample on replacement."
+        },
+        {
+          "repository": "gera3d/superagent-sandbox",
+          "pr": 191,
+          "headSha": "d3e679a75f527d17c4c79016aa0e01e77c4ff494",
+          "path": "patches/JOB_COST_SUMMARY.patch",
+          "line": 568,
+          "severity": "medium",
+          "message": "The capture script resolves output to `resolve(root, '../evidence/ui-fixtures')` relative to the repository root, writing outside the checkout, while the committed/referenced evidence is at `evidence/job-usage-*.png`. Running the fixture therefore does not reproduce the documented evidence and may fail or pollute the parent directory. Resolve the output under the repository's `evidence` directory and use the exact committed filenames."
+        },
+        {
+          "repository": "gera3d/superagent-sandbox",
+          "pr": 191,
+          "headSha": "d3e679a75f527d17c4c79016aa0e01e77c4ff494",
+          "path": "patches/JOB_COST_SUMMARY.patch",
+          "line": 738,
+          "severity": "low",
+          "message": "The retry test emits `retry(0, 1)` while the last settlement is `(0, 0)` and then sends `message(0, 1)`, which is already a new step. The `llm/retry-started` event is a no-op, so the test would pass even if retry handling were removed. Exercise retry against the same `(turn, step)` as the prior sample so the clearing behavior is actually tested."
+        },
+        {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "pr": 45,
+          "headSha": "5b72826efbf420cb6179636ac599735bc673062b",
+          "path": "src/app/job-usage.ts",
+          "line": 221,
+          "severity": "medium",
+          "message": "`unattributed` is set once and never cleared: `apply` sets it permanently for any settlement without a recorded route, and `summary` derives both `coverage.attribution` and the `partial` cost flag from that boolean. When a same-step replacement (via `withdraw`) moves the only unattributed sample onto a recorded route, the UNATTRIBUTED bucket ends with `reported: 0` yet the result still reports `attribution: 'partial'`, marks the estimate `partial`, and the panel claims \"Some attempts have no recorded model route.\" Derive attribution from the UNATTRIBUTED bucket's `reported` count when building `coverage` and `partial`."
+        },
+        {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "pr": 45,
+          "headSha": "5b72826efbf420cb6179636ac599735bc673062b",
+          "path": "src/app/job-usage.ts",
+          "line": 175,
+          "severity": "medium",
+          "message": "When a settlement carries no usable usage sample the fold returns before updating `this.last`, so no replacement slot exists for that turn/step. A later settlement for the same turn/step that does carry usage (e.g. an `assistant/attempt` without usage followed by the settled `assistant/message` with usage, both of which the code treats as settlements of one step) is then counted as a new attempt: `attempts` increments twice while `reported` counts once, so a single attempt is reported as \"Partial coverage: 1 of 2\" and its cost is flagged `partial`. Record the slot (or an explicit sample-less marker) even when the sample is missing, so a late sample revises instead of duplicating."
+        },
+        {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "pr": 45,
+          "headSha": "5b72826efbf420cb6179636ac599735bc673062b",
+          "path": "src/app/http.ts",
+          "line": 153,
+          "severity": "medium",
+          "message": "The usage read is gated only on `detail.assignments.some(assignment => assignment.startedAt)`, not on the ticket having ended, even though the panel renders it solely for ended tickets. Every poll of an in-flight Ticket therefore opens the live worker Session log, and because that log keeps changing `JobUsageReader.of` calls `ctx.sessionPersistence.flush()` on each poll \u2014 a global side effect and extra I/O on a GET path whose result is discarded. Gate on the ending state (the same condition the client uses) instead of on any started Assignment."
+        },
+        {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "pr": 45,
+          "headSha": "5b72826efbf420cb6179636ac599735bc673062b",
+          "path": "src/app/job-usage.ts",
+          "line": 268,
+          "severity": "low",
+          "message": "`folds` retains a `FoldState` per worker Session id forever, and each fold also keeps a `seen` Set of every event `seq` it has consumed; nothing evicts entries or bounds the cache. A long-lived host that renders many Tickets keeps memory proportional to the total events of every Session ever viewed. Bound the map (size cap / LRU) or drop folds for Sessions that can no longer be polled."
+        },
+        {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "pr": 45,
+          "headSha": "5b72826efbf420cb6179636ac599735bc673062b",
+          "path": "tests/fixtures/capture-job-usage.mjs",
+          "line": 9,
+          "severity": "low",
+          "message": "The capture script hardcodes a macOS Chrome path and imports Vite from a pnpm store path pinned to `vite@8.2.2_@types+node@22.20.0_yaml@2.9.1`, so it fails with ENOENT or a module-resolution error on any other machine, and after any Vite/lockfile bump. Resolve the browser from configuration/environment (e.g. `CHROME_PATH`) and import from the `vite` package name rather than an absolute store path."
+        }
+      ],
+      "rationale": "Batch 1/2 gera3d/superagent-sandbox#191@d3e679a75f52: The patch artifact contains a defensible usage fold and UI, but the fold's replacement bookkeeping has two concrete correctness gaps: attribution can remain stale after a replacement, and no-sample settlements bypass the replacement slot, which can overcount attempts and falsely report partial coverage. The evidence capture script also writes outside the repository, so it cannot reproduce the referenced screenshots, and the retry test does not actually exercise the retry branch it claims to cover. These are actionable defects in the supplied artifact, not style concerns.\nBatch 2/2 gera3d/dsh-superagent-prototype#45@5b72826efbf4: Reviewed the added projection, its HTTP/client wiring, locales, docs and tests. The fold is sound for the core replay/replacement/retry cases covered by tests, but three behavioural defects remain: the unattributed flag is monotonic and keeps cost/attribution 'partial' after a replacement resolves the gap; settlements without a usage sample never establish the replacement slot, so a late sample for the same step inflates the attempt denominator and reports false partial coverage; and ticket-page usage is gated on a started Assignment rather than an ended ticket, causing live-log reads plus a global `sessionPersistence.flush()` on each poll of in-flight Tickets while the result is never shown. Also flagged are unbounded fold caching and the evidence script's hardcoded Chrome/pnpm paths. No tests were executed in this review and no merge or acceptance authority is granted."
+    },
+    "result": {
+      "outcome": "failed",
+      "evidence": [
+        {
+          "id": "independent-review:verify-46-cost-review:2:review:1acf72b73c1fb781",
+          "kind": "review",
+          "bindings": {
+            "repository": "gera3d/superagent-sandbox",
+            "sourceIssue": 190,
+            "baseSha": "80019c30dfd0ec2f856c8f59dbbbf58401e2d3f0",
+            "headSha": "d3e679a75f527d17c4c79016aa0e01e77c4ff494",
+            "artifact": "Historical paired PR review only; never reopen, wake, change or republish the accepted cost-summary job",
+            "environment": "diagnostic-read-only:46",
+            "refs": [
+              {
+                "repository": "gera3d/superagent-sandbox",
+                "pr": 191,
+                "headSha": "d3e679a75f527d17c4c79016aa0e01e77c4ff494",
+                "baseSha": "80019c30dfd0ec2f856c8f59dbbbf58401e2d3f0"
+              },
+              {
+                "repository": "gera3d/dsh-superagent-prototype",
+                "pr": 45,
+                "headSha": "5b72826efbf420cb6179636ac599735bc673062b",
+                "baseSha": "9934071b1a24db504f5ac194b795a1696bcaa153"
+              }
+            ]
+          },
+          "recordedAt": "2026-11-07T19:01:00.164Z",
+          "reference": "sqlite:delivery_capability_review/verify-46-cost-review%3A2%3Areview%3A1acf72b73c1fb781",
+          "outcome": "failed"
+        }
+      ]
+    },
+    "batches": [
+      {
+        "repository": "gera3d/superagent-sandbox",
+        "pr": 191,
+        "headSha": "d3e679a75f527d17c4c79016aa0e01e77c4ff494",
+        "diffSha256": "5cec0143c2d24d1e11cde811bcd8665f37569fffe399a3683dfbb0e81280377b",
+        "verdict": "failed",
+        "rationale": "The patch artifact contains a defensible usage fold and UI, but the fold's replacement bookkeeping has two concrete correctness gaps: attribution can remain stale after a replacement, and no-sample settlements bypass the replacement slot, which can overcount attempts and falsely report partial coverage. The evidence capture script also writes outside the repository, so it cannot reproduce the referenced screenshots, and the retry test does not actually exercise the retry branch it claims to cover. These are actionable defects in the supplied artifact, not style concerns.",
+        "provider": "openrouter / deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial"
+      },
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 45,
+        "headSha": "5b72826efbf420cb6179636ac599735bc673062b",
+        "diffSha256": "ea1e50362f564e798a6a3b8603920fd4d3101b58ff4aee6294cbcd500e017933",
+        "verdict": "failed",
+        "rationale": "Reviewed the added projection, its HTTP/client wiring, locales, docs and tests. The fold is sound for the core replay/replacement/retry cases covered by tests, but three behavioural defects remain: the unattributed flag is monotonic and keeps cost/attribution 'partial' after a replacement resolves the gap; settlements without a usage sample never establish the replacement slot, so a late sample for the same step inflates the attempt denominator and reports false partial coverage; and ticket-page usage is gated on a started Assignment rather than an ended ticket, causing live-log reads plus a global `sessionPersistence.flush()` on each poll of in-flight Tickets while the result is never shown. Also flagged are unbounded fold caching and the evidence script's hardcoded Chrome/pnpm paths. No tests were executed in this review and no merge or acceptance authority is granted.",
+        "provider": "openrouter / deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial"
+      }
+    ],
+    "contractComplete": true,
+    "sqliteRecordSha256": "982e2579d4d0731459c1a0aef94a47e62c9f0d959be5586b03faabea818d292c",
+    "meaning": "Complete bounded native review protocol proved. Any FAILED verdict concerns historical cost-summary code, not approval of current handoff repair; all findings retained verbatim for a separate verification decision."
+  },
+  "nativeHistoryAndReads": {
+    "at": "2026-11-07T18:59:31.070313+00:00",
+    "endedCount": 76,
+    "descendingMixedTimestamps": true,
+    "legacyNumericRowsUnchanged": true,
+    "legacyAcceptedProofVerified": true,
+    "offeredAction": null,
+    "preparedRefs": [
+      {
+        "repository": "gera3d/superagent-sandbox",
+        "pr": 191,
+        "headSha": "d3e679a75f527d17c4c79016aa0e01e77c4ff494",
+        "baseSha": "80019c30dfd0ec2f856c8f59dbbbf58401e2d3f0"
+      },
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 45,
+        "headSha": "5b72826efbf420cb6179636ac599735bc673062b",
+        "baseSha": "9934071b1a24db504f5ac194b795a1696bcaa153"
+      }
+    ],
+    "proofCheckCount": 5,
+    "readOnlyHashes": {
+      "at": "2026-11-07T18:58:15.589383+00:00",
+      "helperSeconds": 0.05720225581899285,
+      "contextBytes": 12378,
+      "publicationBeforeSha256": "608e4c00908f968a1a73bbda346699f371342524430d7e838390c6c62b23db42",
+      "publicationAfterSha256": "608e4c00908f968a1a73bbda346699f371342524430d7e838390c6c62b23db42",
+      "publicationUnchanged": true,
+      "acceptedDeliveryBeforeSha256": "df47d3ce0ed18f2b14cfdde63925541bfb6c02f1b140cd58f37227797fcfaf9c",
+      "acceptedDeliveryAfterSha256": "df47d3ce0ed18f2b14cfdde63925541bfb6c02f1b140cd58f37227797fcfaf9c",
+      "acceptedDeliveryUnchanged": true,
+      "legacyRows": [
+        {
+          "id": "839b41ca4534bb0748214bd59bda0119",
+          "updatedAt": 1793822843308,
+          "rowSha256": "ee81f7ef1078c6d5cae2ceed8e24156c2ea8ce47db2d1ff965a850db953ca0e6",
+          "afterSha256": "ee81f7ef1078c6d5cae2ceed8e24156c2ea8ce47db2d1ff965a850db953ca0e6",
+          "unchanged": true
+        },
+        {
+          "id": "9560325c5144615141fff2373d6ef749",
+          "updatedAt": 1793822843308,
+          "rowSha256": "31dd119985dae581db66028cea691314c011bd75e56ce5c86c98e5f3babb1e1e",
+          "afterSha256": "31dd119985dae581db66028cea691314c011bd75e56ce5c86c98e5f3babb1e1e",
+          "unchanged": true
+        },
+        {
+          "id": "31a2cc45435bfbf9ca059369efda8ef6",
+          "updatedAt": 1793822843308,
+          "rowSha256": "4eb6ee073a858d5adb6b8b1b20794c308763f9937701f7fce2e2265aa532e6ac",
+          "afterSha256": "4eb6ee073a858d5adb6b8b1b20794c308763f9937701f7fce2e2265aa532e6ac",
+          "unchanged": true
+        },
+        {
+          "id": "012fd8b284a2e57c6cdbe110c1ea2d20",
+          "updatedAt": 1793822843308,
+          "rowSha256": "3a90b4bca5f3069d0b966d76fe954ebe58914eb4411888ec2e720a3ef5a419b4",
+          "afterSha256": "3a90b4bca5f3069d0b966d76fe954ebe58914eb4411888ec2e720a3ef5a419b4",
+          "unchanged": true
+        }
+      ],
+      "endedApiHttp": 200,
+      "endedSeconds": 0.04503232426941395,
+      "endedResponseKeys": [
+        "items",
+        "total",
+        "next_offset"
+      ]
+    },
+    "nativeEndedVisible": true,
+    "nativeCostReceipt": {
+      "settledAttempts": 424,
+      "input": 16647438,
+      "output": 171983,
+      "cacheRead": 37342976,
+      "cost": "unavailable: no recorded price"
+    },
+    "localScreenshots": {
+      "live-ended.png": "068f151d4f74a80fdc8775a7704626d886719617508098a900974bf8d672c071",
+      "live-cost-retained.png": "c562887a4d7fb1559bd631c90d92f98d7725f7d22fa64735ac8f27d84fb0438f"
+    }
+  },
+  "currentRecommendation": {
+    "observedNativePublishRecommendation": "take: Publish bound artifact, exact final four checks and correct owner; full2210 proof included",
+    "published": true,
+    "currentContextSha256": "8462cc3dc324d5249dbe532b1ae221f04eeb0506c86e0f362362591799260c1b"
+  },
+  "interventions": [
+    "Root independently reviewed source changes, returned prototype safety defect to implementation worker, and qualified all final checks.",
+    "Earlier protected restart failed under transient GitHub polling quota; protected rollback succeeded before intermediate deployments.",
+    "Earlier native partial/malformed/unbound/extra-key verdicts were rejected; no partial review imported.",
+    "Native original publish confirmation returned uncertain before enqueue. Zero grants/requests/effects and exact pins/manifest/confirmation verified, then explicit local operator continuation used unmodified protected coordinator with original request ID; successful deployment followed. Generic initial enqueue cause is not diagnosed.",
+    "Original historical review retried under explicit finite local operator instructions; this is assisted verification, not autonomous success."
+  ],
+  "preserved": [
+    "Original accepted cost-summary job closed and unmessaged; accepted row hash unchanged by proof read.",
+    "All current strict complete-diff/schema/non-null-extra/prototype/identity/lease/atomicity and protected publication checks retained.",
+    "No auto-send, autopilot, provider/key/conservation or premium fallback changes.",
+    "All previous failed/rolled-back/superseded records retained as history."
+  ],
+  "limits": [
+    "Two optional tests skipped; native desktop Chrome verified separately.",
+    "Valid model code findings are observations requiring reproduction; complete review is not proof that historical cost code has no defects.",
+    "Initial uncertain publication enqueue remains a recorded follow-up; no claim that all future jobs progress autonomously."
+  ],
+  "acceptance": "Native main delivery acceptance and scoped findings reconciliation follow this immutable evidence publication."
+}
