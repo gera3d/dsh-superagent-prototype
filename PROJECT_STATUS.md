@@ -1,8 +1,8 @@
 # DeepSeek Harness project status
 
-Updated November 07, 2026 at 11:03 AM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 07, 2026 at 11:06 AM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
 
-## Current repair — #46 and #47 deployed and native verified; acceptance reconciliation
+## Completed repair — #46 and #47 deployed, native verified and accepted
 
 Exact source `004578b2065ff12c94e098028f4aac7484c611f4` (PR51; preceding qualified PR48–50) is live through merged artifact195 at `a012ff6f5588e9a62ce70b2cf7d200b0405cdef4`. Protected publication `9c093dc0-6d36-4483-a8b9-49eec1c979df` completed all five phases; all ten health components ready. Full exact-head suite **2,210 pass / two optional skips / zero failures, actual exit0**; 54 focused tests, types and build pass. Exact installed source/assets inventories and rollback retained.
 
@@ -12,7 +12,13 @@ Native Chrome Execution→Ended renders76 jobs with correctly ordered numeric/IS
 
 Native publication recommendation used final proof and correctly said Publish bound artifact. Its first actual confirmation failed uncertain BEFORE any grant or effects. Root verified zero effects and exact confirmation/pins/manifest and explicitly continued the original unattempted authorization via the unmodified protected coordinator; publication succeeded. The generic enqueue cause is not diagnosed; retain it as a separate verification decision. Assisted follow-through is recorded, not claimed autonomous.
 
-Current main delivery `repair-46-headroom-1a45` awaits final evidence/acceptance. Four completed repair findings and four superseded/diagnostic delivery records will be reconciled against this immutable proof, preserving history. #47 already closed; #46 closes after reconciliation. Executor remains temporarily paused, capacity3, zero workers running/queued; processing will be restored before final status. Model routes/credentials/conservation/autopilot/native Send and all strict review/publication guards unchanged.
+Main delivery `repair-46-headroom-1a45` was **accepted in the actual native card**, revision18 at19:03:53Z. Senior Developer recommended Accept verified delivery from current proof; root confirmed that exact action. All four scoped repair findings are resolved; four superseded/diagnostic cards retired with audit/history retained. #46 and #47 are closed. [Acceptance checkpoint](docs/evidence/handoff-ended-acceptance-2026-11-07.json). Final19:04Z health: all ten services ready, executor **unpaused**, capacity3, **zero running/queued**. No implementation or verification jobs are left running for this scope.
+
+Two new, separate **verification decisions** are visible in the harness, with genuine DeepSeek recommendations and no confirmation/job dispatched:
+- `6162b441-a582-484c-9d49-b3bd12ea0175`: reproduce/deduplicate the nine historical cost-code review observations, plus earlier cache/wording observations, against current source before claiming defects or fixing anything.
+- `cccbf29e-2ff3-439b-97f0-b4bcc9961937`: investigate the generic pre-effect publication enqueue failure; initial cause remains unknown. No silent publication retry or authority expansion is authorized by that verification card.
+
+These are recorded limits, not claims that historical cost code is defect-free or that all future publication handoffs are autonomous. Model routes/credentials/conservation/autopilot/native Send and strict review/publication guards remain unchanged.
 
 ## Current release — completed-job cost summary
 
@@ -24,7 +30,7 @@ Native Chrome: Superagent → Search “Show a trustworthy cost summary” → a
 
 **Workflow experiment is assisted, not autonomous success.** Codex supplied the current-head continuation, independently reviewed the source, reconciled the oversized native review through the existing typed coordinator, inspected full prepared proof and confirmed the eligible protected publication despite a model hold. Each intervention is retained. [Issue #46](https://github.com/gera3d/dsh-superagent-prototype/issues/46) tracks duplicate review context and prepared-proof visibility/advice gaps. No further user nudges were required after the explicit full-release instruction.
 
-**Separate observed navigation defect:** native Execution → Ended crashes on four historical numeric timestamps; the actual receipt opens through native Search. [Issue #47](https://github.com/gera3d/dsh-superagent-prototype/issues/47) records the unchanged sorting defect. It was not silently repaired by editing old database rows, and this release does not claim every existing navigation path is healthy. No duplicate workers were dispatched for these follow-ups.
+**Historical navigation defect, now resolved by the completed repair above:** [Issue #47](https://github.com/gera3d/dsh-superagent-prototype/issues/47) fixed numeric/ISO timestamp sorting. Native Execution→Ended now renders correctly without editing the four original database rows.
 
 ## Completed repair — release-aware Senior Developer context
 
@@ -116,4 +122,4 @@ The scheduler concurrency behavior is regression-tested; no additional three-job
 
 ## Next action
 
-Finish #46 and #47 under the current user authorization: implementation, independent review, testing, deployment and native verification. Codex owns follow-through; no routine user confirmation or duplicate jobs required. Use the exact current source base and keep the prior accepted cost-summary job closed. Preserve routing, credentials, approval guards and historical evidence.
+Requested #46/#47 repair scope is deployed, native verified, accepted and closed. No continuation of the original accepted cost-summary job is needed. The two separate unconfirmed verification decisions above are the next choices in the harness; both explain actual observations, allowed verification scope and limits. Preserve routing, credentials, approval guards and history. Use the top current checkpoint and immutable evidence rather than older historical status sections before reporting state.
