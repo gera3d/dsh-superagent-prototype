@@ -1,5 +1,5 @@
 {
-  "state": "published-native-verified-acceptance-pending",
+  "state": "published-native-verified-accepted",
   "verifiedAt": "2026-11-07T16:13:37.029594+00:00",
   "source": {
     "pr": 45,
@@ -79,7 +79,7 @@
       "maxWorkers": 3
     },
     "sourceAndAssetsMatchPinnedInventories": true,
-    "paused": true
+    "paused": false
   },
   "native": {
     "path": "Superagent \u2192 Search \u201cShow a trustworthy cost summary\u201d \u2192 actual ended job",
@@ -123,7 +123,8 @@
     "screenshot": "token-optimization/cost-summary-release/live-job-usage.png",
     "screenshotSha256": "7988ae9ae98a87fb97bd29b6bf6945622682bb5588663991ace8e0cca7232cb7",
     "observedModelProviderTokenBucketsAndCoverage": true,
-    "observedNoRecordedPrice": true
+    "observedNoRecordedPrice": true,
+    "acceptedThrough": "Native Confirm: Accept verified delivery; pending count decreased and History count increased; published record observed in History."
   },
   "rollback": {
     "protectedLedger": "token-optimization/cost-summary-release/protected-release/operations/a98ee7af-81ca-406f-8dc1-adc9b7d45f9a/ledger.json",
@@ -136,5 +137,26 @@
     "Two optional tests skipped; actual native receipt observed separately.",
     "Manual operator continuation, review reconciliation and publication were required; autonomous handoff not proven (issue #46).",
     "Ended-jobs list has an unchanged legacy timestamp sorting defect; native Search opens the verified receipt. Tracked separately."
-  ]
+  ],
+  "delivery": {
+    "id": "auto-85f05a35653102da234bed56549c26dd",
+    "revision": 25,
+    "stage": "accepted",
+    "state": "accepted",
+    "acceptance": {
+      "evidenceIds": [
+        "implementation:134127754fef5b468bd2eef92c0d37fab8cf8ee01387c6b0b239c330d60b29b2",
+        "codex-external-review:5b72826efbf420cb6179636ac599735bc673062b",
+        "publication:a98ee7af-81ca-406f-8dc1-adc9b7d45f9a:2026-11-07T16:11:10.562Z:publication",
+        "native-cost-summary:5b72826:20261107"
+      ],
+      "fingerprint": "2de3fbfd0587ccf672c29c83ca34cbd4dc76befeafc9b2455655ba0f1de960f6",
+      "at": "2026-11-07T16:15:05.688Z",
+      "actor": "local-operator"
+    }
+  },
+  "followUps": {
+    "workflow": "https://github.com/gera3d/dsh-superagent-prototype/issues/46",
+    "legacyEndedNavigation": "https://github.com/gera3d/dsh-superagent-prototype/issues/47"
+  }
 }

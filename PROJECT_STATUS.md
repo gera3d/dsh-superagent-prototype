@@ -1,12 +1,12 @@
 # DeepSeek Harness project status
 
-Updated November 07, 2026 during live cost-summary acceptance. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 07, 2026 at 08:17 AM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
 
 ## Current release — completed-job cost summary
 
-**Published and native receipt verified; final delivery acceptance is being recorded.** Gera authorized full follow-through November 07. [Source PR #45](https://github.com/gera3d/dsh-superagent-prototype/pull/45) merged exact reviewed head `5b72826` as `1907b325`. Artifact PR #191 was updated and merged through protected publication `a98ee7af-81ca-406f-8dc1-adc9b7d45f9a`. Merge, apply, build, restart and verification all succeeded; coordinator completed. Actual source and built assets match pinned inventories; source/assets/database rollback retained.
+**Published, native receipt verified and accepted in the original harness delivery.** Gera authorized full follow-through November 07. [Source PR #45](https://github.com/gera3d/dsh-superagent-prototype/pull/45) merged exact reviewed head `5b72826` as `1907b325`. Artifact PR #191 was updated and merged through protected publication `a98ee7af-81ca-406f-8dc1-adc9b7d45f9a`. Merge, apply, build, restart and verification all succeeded; coordinator completed. Actual source and built assets match pinned inventories; source/assets/database rollback retained.
 
-Qualification on the current candidate: **2,183 passed, two optional skips, zero failures**; 22 focused / 208 related tests, actual-exit types and build pass. All ten services including GitHub ready; zero running/queued. Workers remain temporarily paused until acceptance bookkeeping finishes, then will be restored to unpaused capacity three. Model routing, keys, conservation, autopilot and native Send behavior are unchanged.
+Qualification on the current candidate: **2,183 passed, two optional skips, zero failures**; 22 focused / 208 related tests, actual-exit types and build pass. All ten services including GitHub ready; zero running/queued. Processing is restored: executor unpaused, capacity three, zero running/queued. Original delivery revision 25 is accepted with implementation, independent review, protected publication and native verification evidence; no pending actions remain for this job. Model routing, keys, conservation, autopilot and native Send behavior are unchanged.
 
 Native Chrome: Superagent → Search “Show a trustworthy cost summary” → actual completed job shows OpenRouter / DeepSeek Flash 1017, **424 settled attempts**, **16,647,438 input**, **171,983 output**, **37,342,976 cache-read** tokens. Coverage excludes helper/ranker/other sessions; partial cache reporting is explicit. It says **Cost unavailable: no recorded price**. No dollar amount is invented. Evidence: [live release verification](docs/evidence/cost-summary-release-2026-11-07.json); local screenshot `token-optimization/cost-summary-release/live-job-usage.png`.
 
@@ -14,7 +14,7 @@ Native Chrome: Superagent → Search “Show a trustworthy cost summary” → a
 
 **Separate observed navigation defect:** native Execution → Ended crashes on four historical numeric timestamps; the actual receipt opens through native Search. [Issue #47](https://github.com/gera3d/dsh-superagent-prototype/issues/47) records the unchanged sorting defect. It was not silently repaired by editing old database rows, and this release does not claim every existing navigation path is healthy. No duplicate workers were dispatched for these follow-ups.
 
-## Active acceptance — release-aware Senior Developer context
+## Completed repair — release-aware Senior Developer context
 
 [Issue #39](https://github.com/gera3d/dsh-superagent-prototype/issues/39), owner Codex, explicitly authorized November 07. **Reviewed, merged, deployed, live generation/ranking API verified and native browser acceptance complete.**
 
@@ -104,6 +104,4 @@ The scheduler concurrency behavior is regression-tested; no additional three-job
 
 ## Next action
 
-Gera sent the recommendation and authorized full release follow-through. Codex owns the next steps: finish candidate review, publish and verify the cost-summary release without requesting another routine continuation. Do not reuse the historical `0f9d17a` / `b26007d` exact-tree claims after this source release; revalidate/reconcile before publishing. Cost-summary artifact PR #191 remains unmerged and undeployed.
-
-Durable evidence: [release verification](docs/evidence/routine-cleanup-live-2026-11-06.json), [review and release notes](reports/ROUTINE_CLEANUP_RELEASE.md). Native screenshots and detailed rollback/runtime records are retained locally in the cockpit project's `token-optimization` directory.
+The cost-summary release is complete and accepted; no further user click or worker continuation is required for it. Open follow-ups are [#46](https://github.com/gera3d/dsh-superagent-prototype/issues/46) for release-advice evidence/context and duplicate-review friction, and [#47](https://github.com/gera3d/dsh-superagent-prototype/issues/47) for the legacy Ended-list sorting defect. These are recorded limitations, not completed fixes. No new workers were dispatched automatically for them. Existing provider routes, credentials, conservation priorities and autopilot settings are preserved.
