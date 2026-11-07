@@ -1,6 +1,12 @@
 # DeepSeek Harness project status
 
-Updated November 07, 2026 at 2:24 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 07, 2026 at 2:46 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+
+## Active work — subscription priority and bounded Sonnet quality
+
+Gera confirmed Google and Anthropic subscriptions renewed and approved reserving OpenAI for direct Codex conversation. Existing settings were saved and changed through their revision-checked management API: conservation override OFF; routine worker Google Gemini3.8 Flash/high; eligible availability order Google→Anthropic Sonnet5.5→the existing pinned Particle OpenRouter DeepSeek route. OpenAI is retained but conserved; the unqualified direct-DeepSeek last-resort substitution is parked. Automatic difficulty escalation remains0 pending the separate quality-policy implementation. Availability routing was checked against the installed policy with simulated exhausted states, including fail-closed after all eligible routes; this was not a real quota-exhaustion or coding-quality test. Old settings retained locally for rollback, credentials unchanged, no restart.
+
+Gera approved the next real harness task: **Use one bounded Sonnet quality escalation without spending OpenAI allowance**. Its canonical finding was created and explicitly confirmed in the native Decisions view. It is now running in one Google Flash worker, no specialist fan-out. The actual worker request header names Google Flash/high; no response or implementation result has been qualified yet. Scope: one evidence/authority-based Sonnet quality attempt, then review; keep quota fallback separate and never treat cheaper DeepSeek as a quality upgrade. Return a minimal current-source candidate, tests/types/build and source/artifact handoff; no worker live edits, merges, deployments, route/key changes or automatic acceptance. Root reviews the result; a current Senior Developer next-step decision remains part of the finish line. The previously accepted cost-summary job stays closed/unmessaged. This quality feature is **not yet implemented or deployed**.
 
 ## Completed repair — Senior Developer retires completed steps
 
@@ -120,9 +126,9 @@ The authorized routine cleanup and economical routing rollout are **deployed and
 
 ## Current routing and capacity
 
-**Conserve mode ON.** Worker, orchestrator/evaluator, helper and automatic recommendation ranker resolve to the qualified Flash 1017 Particle AI flex OpenRouter preset. Existing saved credentials and provider connections are unchanged. Google/Antigravity and Anthropic are marked exhausted; OpenAI is temporarily conserved. The normal hierarchy and role choices are preserved beneath the override. When subscriptions return, explicitly mark those providers available and disable conservation to use the saved priorities again. Reset dates are manual reminders, not automatic quota detection. No top-ups or new keys.
+**Subscription priority is active; the previous forced-DeepSeek conservation override is OFF.** Google Flash is the routine worker default and Google/Anthropic are marked available from Gera's confirmation. OpenAI remains conserved and excluded from managed defaults, availability fallback and escalation. The tested pinned DeepSeek route is the last eligible availability fallback; all-unavailable stops rather than spending OpenAI. Resets/remaining percentages are not automatically measured. The managed ranker follows its source conversation's effective model; the broader app's saved default and old conversation selections were not changed by the two settings saves. Default-policy previews are not proof of live model response or subscription balance.
 
-Capacity: **three workers**, executor unpaused. At the previous release checkpoint: **zero running, zero queued, zero worker reviews awaiting action**; all ten health components, including GitHub, ready. Conversation autopilot remains opt-in and was not required for this rollout.
+Capacity remains three. One approved quality-policy worker is running on a recorded Google request; no extra coding worker or cost-summary follow-up was started. Difficulty escalation is currently disabled until the bounded Sonnet rule is implemented, reviewed and enabled. Saved settings are backed up; no keys/top-ups/provider connections/native Send/autopilot changes.
 
 ## Completed work
 
