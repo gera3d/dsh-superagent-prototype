@@ -1,12 +1,14 @@
 # DeepSeek Harness project status
 
-Updated November 06, 2026 at 09:31 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 06, 2026 at 09:45 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
 
-## Active UI repair — compact native delivery status
+## Resolved UI repair — compact native delivery status
 
-[Issue #35](https://github.com/gera3d/dsh-superagent-prototype/issues/35), owner Codex. Match the Senior Developer character/suggestion interface: shared composer alignment, small theme-token typography, native expandable status row, and bounded report/details. Preserve all typed action guards and existing prepare-then-Send behavior. Implementation, 33 focused tests, type check and build pass. PR #36 is merged; source/client assets are applied and the service is restarting for native visual acceptance. The cost-summary review worker completed before deployment; its next recommendation was already scored and preserved before restart.
+[Issue #35](https://github.com/gera3d/dsh-superagent-prototype/issues/35), owner Codex. **Reviewed, merged, deployed and native visual acceptance complete.** [PR #36](https://github.com/gera3d/dsh-superagent-prototype/pull/36) replaces the oversized standalone block with a compact default-collapsed delivery disclosure aligned to the Senior Developer suggestions/composer. [PR #37](https://github.com/gera3d/dsh-superagent-prototype/pull/37) adds the native opaque surface; [PR #38](https://github.com/gera3d/dsh-superagent-prototype/pull/38) bounds expanded details so the header, recommendation and composer stay visible together. DSH theme tokens and small typography replace hard-coded document styling. Scope, publication effects, evidence, history and guarded actions remain inspectable. Prepare-then-Send and autopilot behavior are unchanged.
 
-Gera submitted the 78% review recommendation successfully: decision `chat-fa5cbd2de5d26ca29e192a9a3903f1d6` is `resolved / submitted`, choice `review-patch-and-tests`, native message `fc3720f0-ac45-4e01-919c-c07a2b84536c`. The review turn finished without a manual nudge and produced current decision `chat-39050640ad10732f63c75371e299f500`: “Prepare the release candidate” at 65%, with two alternatives at 12% and 23%. This next choice remains unselected. The prior UNSENT checkpoint below is historical; the cost-summary feature is still not deployed.
+Qualification: **33 focused tests pass; type check and production build pass.** Native Chrome expanded/collapsed views verified at the current desktop size/dark theme; no separate mobile/light-theme acceptance claimed. All ten services ready, executor unpaused, zero running/queued. Existing source/assets rollback retained. Evidence: [compact delivery UI verification](docs/evidence/compact-delivery-ui-2026-11-06.json). Local screenshots: `token-optimization/compact-delivery-ui/live-collapsed.png` and `live-expanded.png`.
+
+**Cost-summary test progressed:** Gera submitted the prior 78% review prompt; its decision resolved with native submission proof. The review turn finished in 2m55s without a manual nudge, reported no blockers and four nits, and automatically produced current scored decision `chat-39050640ad10732f63c75371e299f500`: “Prepare the release candidate” **65%**, with alternatives **12%** and **23%**. Choices and scores survived the UI rollout unchanged; this next decision is pending and unselected. The cost-summary feature itself is still an isolated artifact, not merged or deployed.
 
 ## Resolved repair — recommendation selection and delivery handoff
 
@@ -76,6 +78,6 @@ The scheduler concurrency behavior is regression-tested; no additional three-job
 
 ## Next action
 
-Gera can review/edit the already prepared **Review patch and test evidence (78%)** reply and press native Send to continue the same cost-summary worker. Do not send it for the user. Then observe the worker review, its next Senior Developer recommendation, preparation of an actual source release candidate and explicit delivery binding, and eventual live verification. Cost-summary PR #191 is still only an artifact handoff. Keep that distinction and record any further manual intervention.
+Gera can choose the new **Prepare the release candidate (65%)** recommendation or another option in the same cost-summary worker conversation, review the prepared reply, and press Send. Do not choose or send on the user's behalf. The next worker result should name the actual source candidate, exact target and acceptance checks before any publication. Cost-summary artifact PR #191 remains unmerged and undeployed. The prior UNSENT review checkpoint is historical; Gera submitted it and the review handoff above completed.
 
 Durable evidence: [release verification](docs/evidence/routine-cleanup-live-2026-11-06.json), [review and release notes](reports/ROUTINE_CLEANUP_RELEASE.md). Native screenshots and detailed rollback/runtime records are retained locally in the cockpit project's `token-optimization` directory.

@@ -1,0 +1,62 @@
+{
+  "verifiedAt": "2026-11-07T05:45:33.751704+00:00",
+  "state": "deployed-native-verified",
+  "issue": 35,
+  "sourcePrs": [
+    36,
+    37,
+    38
+  ],
+  "sourceMerge": "97796aeabde4b2f7adce7ba5a06f6c07ea8254a4",
+  "qualification": {
+    "focusedTestsPassed": 33,
+    "typecheck": "passed",
+    "build": "passed"
+  },
+  "nativeChecks": [
+    "Compact default disclosure aligned with composer and Senior Developer suggestions.",
+    "Native theme surface and typography; no hard-coded card colors.",
+    "Opaque surface prevents chat text showing through.",
+    "Expanded report remains within a bounded scroller, with header, recommendation and composer visible.",
+    "Expanded and collapsed in native Chrome; restored collapsed as the final state.",
+    "No action, merge, publication, recommendation selection or native Send triggered during visual verification."
+  ],
+  "screenshots": [
+    "live-collapsed.png",
+    "live-expanded.png"
+  ],
+  "preservedRecommendation": {
+    "decisionId": "chat-39050640ad10732f63c75371e299f500",
+    "status": "pending",
+    "label": "Prepare the release candidate",
+    "percent": 65,
+    "choicesUnchanged": true,
+    "scoresUnchanged": true,
+    "staged": false
+  },
+  "runtime": {
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "paused": false,
+    "health": {
+      "runtime": "ready",
+      "relay": "ready",
+      "notice": "ready",
+      "launch": "ready",
+      "delivery": "ready",
+      "assessment": "ready",
+      "reply": "ready",
+      "evals": "ready",
+      "models": "ready",
+      "github": "ready"
+    }
+  },
+  "limits": [
+    "Native screenshots verify the installed dark theme at the current desktop size; no separate mobile or light-theme browser acceptance is claimed.",
+    "Cost-summary artifact PR 191 is still unmerged and the cost-summary feature is not deployed.",
+    "Existing startup decision-write recovery gate is unchanged."
+  ]
+}
