@@ -1,0 +1,140 @@
+{
+  "state": "published-native-verified-acceptance-pending",
+  "verifiedAt": "2026-11-07T16:13:37.029594+00:00",
+  "source": {
+    "pr": 45,
+    "head": "5b72826efbf420cb6179636ac599735bc673062b",
+    "merge": "1907b325e243cf5ca85b16a5a73fc23f1f063c8e",
+    "base": "9934071b1a24db504f5ac194b795a1696bcaa153"
+  },
+  "publication": {
+    "id": "a98ee7af-81ca-406f-8dc1-adc9b7d45f9a",
+    "status": "published",
+    "coordination": "completed",
+    "head": "d3e679a75f527d17c4c79016aa0e01e77c4ff494",
+    "patchSha256": "2d4481c0840c9da41f4fbd2c30c1d90199322a347ec7308ba0f55308fc6c9a56",
+    "phases": [
+      {
+        "stage": "merge",
+        "status": "succeeded",
+        "startedAt": "2026-11-07T16:06:47.184Z",
+        "finishedAt": "2026-11-07T16:06:52.533Z"
+      },
+      {
+        "stage": "apply",
+        "status": "succeeded",
+        "startedAt": "2026-11-07T16:06:55.209Z",
+        "finishedAt": "2026-11-07T16:06:59.122Z"
+      },
+      {
+        "stage": "build",
+        "status": "succeeded",
+        "startedAt": "2026-11-07T16:07:01.749Z",
+        "finishedAt": "2026-11-07T16:08:02.934Z"
+      },
+      {
+        "stage": "restart",
+        "status": "succeeded",
+        "startedAt": "2026-11-07T16:08:05.735Z",
+        "finishedAt": "2026-11-07T16:08:35.135Z"
+      },
+      {
+        "stage": "verify",
+        "status": "succeeded",
+        "startedAt": "2026-11-07T16:08:38.657Z",
+        "finishedAt": "2026-11-07T16:11:10.512Z"
+      }
+    ]
+  },
+  "qualification": {
+    "fullPassed": 2183,
+    "fullSkipped": 2,
+    "fullFailed": 0,
+    "focusedPassed": 22,
+    "relatedPassed": 208,
+    "types": "passed",
+    "build": "passed",
+    "currentHeadFullSuite": "/tmp/cur-full.log, exit0; 2183pass/2skip/0fail"
+  },
+  "runtime": {
+    "pids": [
+      22621
+    ],
+    "previousPid": 859,
+    "health": {
+      "runtime": "ready",
+      "relay": "ready",
+      "notice": "ready",
+      "launch": "ready",
+      "delivery": "ready",
+      "assessment": "ready",
+      "reply": "ready",
+      "evals": "ready",
+      "models": "ready",
+      "github": "ready"
+    },
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "sourceAndAssetsMatchPinnedInventories": true,
+    "paused": true
+  },
+  "native": {
+    "path": "Superagent \u2192 Search \u201cShow a trustworthy cost summary\u201d \u2192 actual ended job",
+    "ticketId": "85f05a35653102da234bed56549c26dd",
+    "ended": {
+      "at": "2026-11-07T16:06:51.000Z",
+      "by": "executor",
+      "outcome": "merged"
+    },
+    "usage": {
+      "sessionId": "worker-85f05a35653102da234bed56549c26dd",
+      "routes": [
+        {
+          "provider": "openrouter",
+          "model": "deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial",
+          "attempts": 424,
+          "uncachedInputTokens": 16647438,
+          "outputTokens": 171983,
+          "cacheReadTokens": 37342976,
+          "totalTokens": 54162397
+        }
+      ],
+      "totals": {
+        "uncachedInputTokens": 16647438,
+        "outputTokens": 171983,
+        "totalTokens": 54162397,
+        "cacheReadTokens": 37342976
+      },
+      "coverage": {
+        "attempts": 424,
+        "reported": 424,
+        "cacheRead": "partial",
+        "cacheWrite": "unreported",
+        "attribution": "complete"
+      },
+      "cost": {
+        "kind": "unavailable",
+        "reason": "noRecordedPrice"
+      }
+    },
+    "screenshot": "token-optimization/cost-summary-release/live-job-usage.png",
+    "screenshotSha256": "7988ae9ae98a87fb97bd29b6bf6945622682bb5588663991ace8e0cca7232cb7",
+    "observedModelProviderTokenBucketsAndCoverage": true,
+    "observedNoRecordedPrice": true
+  },
+  "rollback": {
+    "protectedLedger": "token-optimization/cost-summary-release/protected-release/operations/a98ee7af-81ca-406f-8dc1-adc9b7d45f9a/ledger.json",
+    "databaseBackup": "token-optimization/cost-summary-release/protected-release/orchestrator-before.sqlite",
+    "previousManifest": "token-optimization/cost-summary-release/publication-runner-before.json"
+  },
+  "limitations": [
+    "No production rate metadata: money unavailable, not zero or a billed figure.",
+    "Worker-session coverage excludes helpers, rankers and other sessions; cache buckets may be partially reported.",
+    "Two optional tests skipped; actual native receipt observed separately.",
+    "Manual operator continuation, review reconciliation and publication were required; autonomous handoff not proven (issue #46).",
+    "Ended-jobs list has an unchanged legacy timestamp sorting defect; native Search opens the verified receipt. Tracked separately."
+  ]
+}
