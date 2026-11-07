@@ -1,0 +1,85 @@
+{
+  "state": "live-verified",
+  "verifiedAt": "2026-11-07T05:00:46.864337+00:00",
+  "issue": "https://github.com/gera3d/dsh-plugins/issues/9",
+  "pullRequests": [
+    10,
+    11
+  ],
+  "sourceHead": "c99b44f70f17f1fe02311dc78918c0fdabd4e7bf",
+  "sourceMerge": "bfa72d0608c29ec2455eebebd314ff43b071c05d",
+  "checks": {
+    "hostParserPassed": 22,
+    "uiBehaviorPassed": 181,
+    "backendContractPassed": 16,
+    "typecheck": "passed",
+    "build": "passed"
+  },
+  "decisionId": "chat-80b012401cd8db18bcf529d6cf9b79ee",
+  "draftRevision": "6cc30ea400226d7ef8e50e59fd769f1aa1ff8dd1fab9a4802459bdc28e936b22",
+  "phase": "scored",
+  "choicesUnchanged": true,
+  "choiceSelected": false,
+  "nativeThreadDistribution": [
+    {
+      "id": "opt-1",
+      "probability": 0.62
+    },
+    {
+      "id": "opt-2",
+      "probability": 0.18
+    },
+    {
+      "id": "opt-3",
+      "probability": 0.12
+    },
+    {
+      "id": "opt-4",
+      "probability": 0.08
+    }
+  ],
+  "inboxDistribution": [
+    {
+      "id": "opt-1",
+      "probability": 0.62
+    },
+    {
+      "id": "opt-2",
+      "probability": 0.18
+    },
+    {
+      "id": "opt-3",
+      "probability": 0.12
+    },
+    {
+      "id": "opt-4",
+      "probability": 0.08
+    }
+  ],
+  "evaluator": "openrouter / deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial (model-reported scores, not calibrated)",
+  "autopilot": "OFF; fallback provenance remains blocked for unattended execution",
+  "screenshot": "token-optimization/scoring-repair/live-scored-thread.png",
+  "limitations": [
+    "Scores are model-reported preferences, not calibrated correctness probabilities.",
+    "The inappropriate live-capture recommendation and unbound delivery are still unresolved separate items.",
+    "Cost-summary PR 191 remains unmerged and undeployed."
+  ],
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "executor": {
+    "paused": false,
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  }
+}

@@ -104,7 +104,7 @@
       "evidence": "Observed canonical decision phase ready, confidence 0, empty score distribution; scoring not demonstrated."
     }
   ],
-  "nativeThreadVerification": "Verified in the actual worker thread after unlock: all four choices match shared inbox; all Not scored; unscored/fallback label; no delivery confirmation offered; autopilot OFF; no choice selected.",
+  "nativeThreadVerification": "Same choices verified in the thread and shared inbox; genuine scores now 62/18/12/8 after explicitly authorized scoring repair. No choice selected. Other recommendation/context and delivery-binding gaps remain unresolved.",
   "manualAdvancementInterventions": [],
   "nextDecisionOwner": "Gera",
   "selectedChoice": null,
@@ -112,5 +112,32 @@
     "Unknown monetary cost remains explicitly unavailable in the feature because no price metadata is configured.",
     "Cards existing does not prove useful recommendations or successful action execution."
   ],
-  "nativeScreenshot": "token-optimization/job-cost-summary-native-handoff.png"
+  "nativeScreenshot": "token-optimization/job-cost-summary-native-handoff.png",
+  "scoringRepair": {
+    "state": "live-verified",
+    "pullRequests": [
+      10,
+      11
+    ],
+    "distribution": [
+      {
+        "id": "opt-1",
+        "probability": 0.62
+      },
+      {
+        "id": "opt-2",
+        "probability": 0.18
+      },
+      {
+        "id": "opt-3",
+        "probability": 0.12
+      },
+      {
+        "id": "opt-4",
+        "probability": 0.08
+      }
+    ],
+    "choiceSelected": false,
+    "verifiedAt": "2026-11-07T05:00:46.864337+00:00"
+  }
 }

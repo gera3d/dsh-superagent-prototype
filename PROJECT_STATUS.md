@@ -1,12 +1,16 @@
 # DeepSeek Harness project status
 
-Updated November 06, 2026 at 8:49 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 06, 2026 at 9:01 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
 
-## Active bug repair — missing Senior Developer scores
+## Resolved bug — missing Senior Developer scores
 
 [Plugin issue #9](https://github.com/gera3d/dsh-plugins/issues/9) is authorized by Gera's screenshot/report. Owner: Codex; no duplicate harness worker. Reproduced in the actual PR #191 worker thread and in regression tests. Cause: host and UI permanently excluded fallback-generated suggestions from scoring, suppressed explicit retry and hid valid persisted distributions.
 
-State: reviewed repairs merged and deployed in plugin [PR #10](https://github.com/gera3d/dsh-plugins/pull/10) and [PR #11](https://github.com/gera3d/dsh-plugins/pull/11); live score verification pending. All 22 host/parser and 181 UI/behavior tests pass, with type check and build. Live qualification found and corrected an additional persistence marker (`session/end-seed`) that changed the completed-turn hash after restart; the original published revision is now preserved. Permit independent real scoring while retaining fallback provenance and the existing unattended-execution restrictions. No fabricated probabilities, automatic sends or recommendation selections. Regression cases cover fallback generation, retry after scorer failure, renewed leases/host reload, stale/staged/resolved sources, persisted scores and autopilot remaining blocked for fallback provenance. Existing cost-summary PR #191 stays unmerged and undeployed; its user-owned next choice remains unselected.
+**State: deployed and live verified.** Plugin [PR #10](https://github.com/gera3d/dsh-plugins/pull/10) restores real scoring of fallback suggestions; [PR #11](https://github.com/gera3d/dsh-plugins/pull/11) prevents a persistence restore marker from invalidating the existing turn hash. Qualification: 22 host/parser tests, 181 UI/behavior tests and 16 backend contract tests pass; type check/build pass. Rollback sources and assets are retained.
+
+The original decision and all four exact prompts are unchanged. After browser reload, the actual thread and shared inbox both show **62%, 18%, 12%, 8%**, supplied by the configured OpenRouter/Particle evaluator. Canonical phase is `scored`. No choice was staged or selected; autopilot remains OFF and fallback provenance remains blocked for unattended execution. No worker was nudged or user response sent. The executor is unpaused, with zero running/queued jobs. Cost-summary PR #191 remains unmerged and undeployed. Live evidence: [scoring verification](docs/evidence/senior-developer-scoring-2026-11-06.json); local screenshot `token-optimization/scoring-repair/live-scored-thread.png`.
+
+Scoring repair was explicitly authorized by Gera after the workflow experiment exposed it; this operator repair is not counted as autonomous success of that experiment.
 
 Other handoff-context and delivery-binding defects below remain separate unresolved items; scoring alone will not make an inappropriate recommendation safe.
 
@@ -21,9 +25,9 @@ Other handoff-context and delivery-binding defects below remain separate unresol
 - Recommended “Request live cockpit capture” asks for the new feature in the live app before deployment, outside the worker's authorized scope.
 - “Review and merge PR #191” pre-fills an unsupported claim that the user reviewed it and treats the sandbox artifact merge as shipping the real backend change.
 - The real delivery is `review / blocked` with no executable action: confirmed delivery target and acceptance requirements have not been bound. The intake requested an artifact handoff, so a deployable backend candidate still needs preparation. Keep the approval boundary; expose the missing preparation as the correct next step.
-- The observed canonical phase is `ready`, with confidence zero and no score distribution. Native UI confirms every prompt is Not scored and labels the group unscored/fallback. Scoring has not passed.
+- **Scoring gap resolved:** the original unscored observation is retained in the experiment record. Plugin repairs #10/#11 now produce the same genuine 62/18/12/8 percent distribution in thread and inbox, with unchanged choices.
 
-No recommendation was clicked, no follow-up was sent to the worker, and no merge/deployment occurred. Native thread-card verification is now complete after the Mac was unlocked: the same four prompts appear in the actual worker thread, all marked Not scored, with an unscored/fallback label. The delivery card says implementation reported ready but no confirmation is currently offered. Autopilot is OFF. No choice was selected. Screenshot retained locally as `token-optimization/job-cost-summary-native-handoff.png`. The observer only opened/refreshed the UI and read status/inbox data; these actions did not advance the job.
+No recommendation was clicked, no follow-up was sent to the worker, and no merge/deployment occurred. Native thread-card verification is now complete after the Mac was unlocked: the same four prompts appear in the actual worker thread; they were initially Not scored, and now display real matching scores after the authorized repair. The delivery card says implementation reported ready but no confirmation is currently offered. Autopilot is OFF. No choice was selected. Screenshot retained locally as `token-optimization/job-cost-summary-native-handoff.png`. The observer only opened/refreshed the UI and read status/inbox data; these actions did not advance the job.
 
 Intake initially waited for GitHub REST quota reset, then started normally at 8:14:54 PM Pacific. No duplicate job, alternate intake, manual retry or restart was used.
 
