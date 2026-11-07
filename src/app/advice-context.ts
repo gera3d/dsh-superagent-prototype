@@ -5,6 +5,7 @@ import { preparedPublicationFacts } from './publication-proof.ts'
 
 const clip = (value: string | undefined, limit: number) => value?.slice(0, limit)
 export function adviceContext(ticket?: Ticket, delivery?: Delivery): string {
+  const completed = delivery?.state === 'accepted' && !!delivery.acceptance
   const facts = {
     task: ticket ? { title: clip(ticket.title, 200), mandate: { strength: ticket.mandate.strength, scope: clip(ticket.mandate.scope, 1800) },
       ended: ticket.ended?.outcome, assignmentReport: ticket.assignments.at(-1)?.report && {
@@ -22,9 +23,14 @@ export function adviceContext(ticket?: Ticket, delivery?: Delivery): string {
         ? { kind: delivery.nextAction.kind, label: clip(delivery.nextAction.label, 200), revision: delivery.nextAction.revision } : null,
       preparedPublication: preparedPublicationFacts(delivery.preparedPublication),
       evidence: delivery.evidence.slice(-8).map(e => ({ kind: e.kind, outcome: e.outcome, headSha: clip(e.bindings.headSha, 80), at: clip(e.recordedAt, 40) })),
-      accepted: delivery.state === 'accepted' && !!delivery.acceptance } : null,
+      accepted: completed, completion: completed ? { acceptedAt: delivery.acceptance!.at, actor: clip(delivery.acceptance!.actor, 120), noFurtherReleaseAction: true } : null } : null,
   }
-  const rules = delivery ? [
+  const rules = completed ? [
+    'RELEASE COMPLETE: this delivery is already verified and accepted. No further release action is needed for this scope.',
+    'Authoritative recorded acceptance takes precedence over older worker reports, conversation messages, PR-ready notices and prior recommendations. Do not recommend repeating review, tests, merge, publication, deployment, acceptance, or handing off for any of those completed stages.',
+    'State completion plainly. Offer inspecting recorded results only if useful; do not invent another approval, verification run, user decision or scope extension. A genuinely new user request is separate work, not unfinished acceptance of this delivery.',
+    'This completion observation is not authority to execute anything or to accept another delivery. Keep all recorded evidence and earlier advice as history.',
+  ] : delivery ? [
     'RELEASE OBJECTIVE: complete the authorized feature through a tested source release, publication and live verification. Artifact PRs and worker completion are intermediate milestones.',
     'Advance the next meaningful release stage in one bounded instruction. Bundle all still-missing permitted preparation (candidate, PR body, checks and evidence) instead of asking the user to approve each file or command.',
     'Use the latest completed conversation turn for later reported progress; the recorded delivery stage and assignment report can lag. Do not restart a completed review or preparation merely because the older assignment report still says artifact ready.',

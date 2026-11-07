@@ -67,7 +67,19 @@ export function projectDeliveries(store: DeliveryStore, items: PendingDecisionIt
 /** Persist currency before any canonical producer/lookup or native staging can use old advice. */
 export function reconcileInboxCurrency(inbox: DecisionInbox, deliveries: DeliveryStore, publication?: LifecyclePublication, findings?: FindingStore): void {
   const original = inbox.list()
-  const work = deriveDeliveryWork(deliveries.list(), readDeliveryWorkers(deliveries.db))
+  const recorded = deliveries.list()
+  // An accepted delivery is authoritative completion, unlike a worker report, merged PR or resolved finding.
+  // Retire only advice from before acceptance. Later user conversations and newly active work remain usable.
+  for (const item of original) {
+    if (item.status !== 'pending' || !item.canonical || !item.sessionId || !Number.isFinite(item.createdAt)) continue
+    const linked = recorded.filter(delivery => delivery.workers.some(worker => workerTicket(worker) === workerTicket(item.sessionId!)))
+    if (linked.some(delivery => !['accepted', 'cancelled', 'abandoned'].includes(delivery.state))) continue
+    const completed = linked.filter(delivery => delivery.state === 'accepted' && delivery.acceptance
+      && Number.isFinite(Date.parse(delivery.acceptance.at)) && item.createdAt <= Date.parse(delivery.acceptance.at))
+      .sort((a, b) => Date.parse(b.acceptance!.at) - Date.parse(a.acceptance!.at))[0]
+    if (completed) inbox.invalidate(item, `Work completed: delivery ${completed.id} was verified and accepted at ${completed.acceptance!.at}. No further release action is needed; earlier recommendations are retained as history.`)
+  }
+  const work = deriveDeliveryWork(recorded, readDeliveryWorkers(deliveries.db))
   const findingWorkers = new Map<string, string>()
   for (const finding of findings?.list() ?? []) {
     for (const job of [finding.job, ...(finding.priorJobs ?? [])]) if (job?.ticketId) {
