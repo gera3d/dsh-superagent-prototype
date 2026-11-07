@@ -1,6 +1,12 @@
 # DeepSeek Harness project status
 
-Updated November 07, 2026 at 11:23 AM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 07, 2026 at 11:28 AM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+
+## GitHub access — connector verified; native polling recovered
+
+At November07 19:28Z, the connected GitHub tool successfully read merged PR53 and the complete current project file from superagent-core. Use this connector for Codex coordination reads and supported writes; keep the harness worker's existing authorized GitHub account and protected release path.
+
+The harness GitHub source is now ready: its last completed successful polling round started19:25:10Z, after the earlier quota errors. All ten components report ready; executor unpaused, capacity3, zero running/queued. Source inspection confirms ordinary failed rounds retry and a complete successful round restores ready state. Recovery occurred before any code, credential, route or restart change; no repair deployment or automatic alternate-credential fallback is claimed. This record is being written through the connected GitHub tool to verify that alternative for project updates too. Rate limits can recur; a successful connector request does not make the harness immune.
 
 ## Completed UI repair — chat metadata stays compact
 
