@@ -2,6 +2,12 @@
 
 Updated November 06, 2026 at 9:01 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
 
+## Active repair — recommendation selection and delivery handoff
+
+[Plugin issue #12](https://github.com/gera3d/dsh-plugins/issues/12), owner Codex, explicitly authorized by Gera. Native click reproduction: highest-scored suggestion is rejected before staging because the autopilot exact-prompt allowlist is reused for manual selection. Screenshot retained at `token-optimization/recommendation-click-blocked.png`.
+
+Implementation in qualification: separate manual reply preparation from automation eligibility; show preparation in progress; preserve privileged-action guards and native Send proof; explicitly replace incorrect recommendations with a linked revision while retaining immutable history; ground advice in server-owned artifact/release readiness; show the ready unbound delivery as awaiting the user's next step. **Not deployed or verified yet.** Cost-summary artifact PR #191 stays unmerged; no reply sent on Gera's behalf.
+
 ## Resolved bug — missing Senior Developer scores
 
 [Plugin issue #9](https://github.com/gera3d/dsh-plugins/issues/9) is authorized by Gera's screenshot/report. Owner: Codex; no duplicate harness worker. Reproduced in the actual PR #191 worker thread and in regression tests. Cause: host and UI permanently excluded fallback-generated suggestions from scoring, suppressed explicit retry and hid valid persisted distributions.
