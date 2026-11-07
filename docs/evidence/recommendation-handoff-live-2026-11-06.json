@@ -1,0 +1,88 @@
+{
+  "verifiedAt": "2026-11-07T05:30:22.433129+00:00",
+  "sourcePrs": {
+    "backend": 34,
+    "plugin": 13
+  },
+  "backendMerge": "c40789a1c67524709130b93c843f43fd56d030b0",
+  "pluginMerge": "16c2abba3b4910a21178af4dd788627b4f999f2d",
+  "state": "live-reply-preparation-verified",
+  "oldDecision": {
+    "id": "chat-80b012401cd8db18bcf529d6cf9b79ee",
+    "status": "stale",
+    "choicesRetained": true
+  },
+  "currentDecision": {
+    "id": "chat-fa5cbd2de5d26ca29e192a9a3903f1d6",
+    "supersedesDecisionId": "chat-80b012401cd8db18bcf529d6cf9b79ee",
+    "phase": "scored",
+    "recommendedChoice": "review-patch-and-tests",
+    "recommendedPercent": 78,
+    "status": "pending",
+    "staged": true,
+    "submitted": false
+  },
+  "delivery": {
+    "state": "awaiting_direction",
+    "owner": "user",
+    "nextStep": "Review artifact and prepare actual release candidate, target and acceptance checks; no prepared deployment."
+  },
+  "nativeUi": {
+    "beforeClick": "Review patch and test evidence 78% Recommended; empty composer; Send disabled; autopilot OFF",
+    "afterClick": "Exact full selected prompt inserted into composer; Send enabled; suggestions hidden; no error",
+    "replySent": false,
+    "screenshot": "live-prepared-reply.png"
+  },
+  "runtime": {
+    "paused": false,
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "health": {
+      "runtime": "ready",
+      "relay": "ready",
+      "notice": "ready",
+      "launch": "ready",
+      "delivery": "ready",
+      "assessment": "ready",
+      "reply": "ready",
+      "evals": "ready",
+      "models": "ready",
+      "github": "ready"
+    }
+  },
+  "qualification": {
+    "backend": {
+      "fullSuite": {
+        "passed": 2158,
+        "failed": 1,
+        "skipped": 2,
+        "failure": "Unchanged delivery-evidence CLI integration test exceeded 5000ms under concurrent test/build load"
+      },
+      "failedTestFocusedRerun": {
+        "passed": 1,
+        "failed": 0,
+        "durationSeconds": 3.42
+      },
+      "focusedContracts": 114,
+      "finalFocusedSubset": 79,
+      "httpAndPresentation": 16,
+      "typecheck": "passed",
+      "build": "passed"
+    },
+    "plugin": {
+      "hostParser": 22,
+      "uiBehavior": 184,
+      "typecheck": "passed",
+      "build": "passed"
+    }
+  },
+  "limits": [
+    "Cost-summary artifact PR 191 is not merged or deployed.",
+    "Native Send was deliberately not pressed; worker continuation after Send remains the user-owned next step.",
+    "Startup history restoration globally gates decision writes; cancellation prevents indefinite manual readiness waits, but global startup policy is unchanged.",
+    "One unchanged CLI test timed out in full run and passed its exact focused rerun."
+  ]
+}
