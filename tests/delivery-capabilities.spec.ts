@@ -64,6 +64,44 @@ it('invokes the configured executor independently with no tools and persists exa
   const saved = JSON.parse(String(row.value)); expect(saved.provider).toBe('configured / executor'); expect(saved.lease.id).toBe(l.id); expect(saved.lease.action).toEqual(l.action); expect(saved.result.evidence[0].bindings).toEqual(bindings)
   deliveries.complete(l, result); const d = deliveries.get('feature')!; expect(d.stage).toBe('ready_to_publish'); expect(d.state).not.toBe('accepted'); expect(d.authorities).toEqual(['alice'])
 })
+it('gives independent review bounded token and time headroom while advice keeps its tighter budget', async () => {
+  const h = fixture(); const timeout = vi.spyOn(AbortSignal, 'timeout')
+  const review = h.lease(); deliveries.complete(review, await h.caps.review!.execute(review))
+  expect(h.stream).toHaveBeenCalledWith(expect.objectContaining({ tools: [], maxTokens: 32_768 }))
+  expect(timeout).toHaveBeenCalledWith(180_000)
+  const d = deliveries.get('feature')!, action = d.nextAction!
+  h.setVerdict({ disposition: 'hold', actionId: action.id, fingerprint: action.fingerprint, rationale: 'Hold until separately authorized deployment review completes.' })
+  await recommendDeliveryAction(d, action, h.deps)
+  expect(h.stream).toHaveBeenLastCalledWith(expect.objectContaining({ maxTokens: 8_192 }))
+  expect(timeout).toHaveBeenCalledWith(60_000)
+})
+it('fails closed with privacy-safe incomplete, malformed and oversized review-response diagnostics', async () => {
+  const h = fixture(), l = h.lease()
+  h.stream.mockImplementationOnce(async function* () {
+    yield { type: 'text-delta', text: '{"verdict":"passed","findings":[],"rationale":"partial' }
+    yield { type: 'finish', reason: { kind: 'max-tokens' } }
+  })
+  const incomplete = await h.caps.review!.execute(l)
+  expect(incomplete.outcome).toBe('uncertain')
+  expect(incomplete.blocker).toContain('review model response incomplete (finish reason: max-tokens)')
+  expect(incomplete.blocker).toContain('no partial result accepted')
+  h.stream.mockImplementationOnce(async function* () {
+    yield { type: 'text-delta', text: '{"verdict":' }
+    yield { type: 'finish', reason: { kind: 'stop' } }
+  })
+  const malformed = await h.caps.review!.execute(l)
+  expect(malformed.blocker).toContain('review model returned malformed JSON')
+  h.stream.mockImplementationOnce(async function* () { yield { type: 'text-delta', text: 'x'.repeat(32_001) } })
+  const oversized = await h.caps.review!.execute(l)
+  expect(oversized.blocker).toContain('review model response exceeded 32000-character bound')
+  expect(store.db.prepare('SELECT * FROM delivery_capability_review').all()).toHaveLength(0)
+})
+it('never accepts an oversized advice response', async () => {
+  const h = fixture(); const review = h.lease(); deliveries.complete(review, await h.caps.review!.execute(review))
+  const d = deliveries.get('feature')!, action = d.nextAction!
+  h.stream.mockImplementationOnce(async function* () { yield { type: 'text-delta', text: 'x'.repeat(32_001) }; yield { type: 'finish', reason: { kind: 'stop' } } })
+  await expect(recommendDeliveryAction(d, action, h.deps)).rejects.toThrow(/advice model response exceeded 32000-character bound/)
+})
 it('reconciles a persisted review without another model invocation and fences changed replay heads', async () => {
   const h = fixture(), l = h.lease(); const first = await h.caps.review!.execute(l)
   const restarted = createDeliveryCapabilities(h.deps)
