@@ -11,7 +11,7 @@
 .dt-delivery-hint { margin-left: auto; font-size: 11px; color: var(--dsw-alias-label-tertiary); white-space: nowrap; }
 .dt-delivery-chevron { display: inline-flex; transition: transform .15s ease; }
 .dt-delivery-disclosure[open] > .dt-delivery-summary .dt-delivery-chevron { transform: rotate(180deg); }
-.dt-delivery-body { max-height: min(360px, 45vh); overflow: auto; overscroll-behavior: contain; padding: 8px 12px 12px; border-top: 1px solid var(--dsw-alias-border-l2); overflow-wrap: anywhere; }
+.dt-delivery-body { max-height: min(240px, 25vh); overflow: auto; overscroll-behavior: contain; padding: 8px 12px 12px; border-top: 1px solid var(--dsw-alias-border-l2); overflow-wrap: anywhere; }
 .dt-delivery-body h3 { margin: 0 0 4px; font-size: 13px; line-height: 20px; font-weight: 500; color: var(--dsw-alias-label-primary); }
 .dt-delivery-body p { margin: 6px 0; }
 .dt-delivery-owner { color: var(--dsw-alias-label-tertiary); }
