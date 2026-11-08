@@ -93,3 +93,25 @@ it('does not read undeclared native default services when an explicit advice rou
   const settings = SettingsSchema.parse({ models: { helper: { provider: 'configured', model: 'advice' } } })
   await expect(configuredDecisionReply(ctx as unknown as Context, { ...request, sessionId: 'source' }, settings)).resolves.toEqual({ text, provider: 'configured / advice' })
 })
+
+it('preserves in-band provider availability so scoring uses the eligible fallback', async () => {
+  const routes: string[] = []
+  const ctx = { agents: { get: () => undefined }, get: () => undefined, llm: {
+    resolveCallConfig: async (route: unknown) => route,
+    stream: async function* (route: { provider: string }) {
+      routes.push(route.provider)
+      if (route.provider === 'anthropic') { yield { type: 'finish', reason: { kind: 'error', failure: { message: 'Provider quota unavailable', code: 'RATE_LIMIT', status: 429 } } }; return }
+      yield { type: 'text-delta', text }; yield { type: 'finish', reason: { kind: 'stop' } }
+    }
+  } }
+  const settings = SettingsSchema.parse({ models: { helper: { provider: 'anthropic', model: 'advice' }, hierarchy: [{ provider: 'anthropic', model: 'advice' }, { provider: 'openai-codex', model: 'saved' }, { provider: 'openrouter', model: 'qualified' }], subscriptions: [{ provider: 'openai-codex', status: 'conserved' }] } })
+  await expect(configuredDecisionReply(ctx as unknown as Context, request, settings)).resolves.toMatchObject({ text, provider: expect.stringContaining('openrouter / qualified') })
+  expect(routes).toEqual(['anthropic', 'openrouter'])
+})
+it('does not treat an in-band authentication failure as permission to change provider', async () => {
+  const stream = vi.fn(async function* () { yield { type: 'finish', reason: { kind: 'error', failure: { message: 'Authentication failed', code: 'AUTH', status: 401 } } } })
+  const ctx = { agents: { get: () => undefined }, get: () => undefined, llm: { resolveCallConfig: async (route: unknown) => route, stream } }
+  const settings = SettingsSchema.parse({ models: { helper: { provider: 'configured', model: 'advice' } } })
+  await expect(configuredDecisionReply(ctx as unknown as Context, request, settings)).rejects.toThrow('Authentication failed')
+  expect(stream).toHaveBeenCalledTimes(1)
+})
