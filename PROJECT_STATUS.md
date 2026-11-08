@@ -1,6 +1,14 @@
 # DeepSeek Harness project status
 
-Updated November 8, 2026, 2:24 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
+Updated November 8, 2026, 7:27 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
+
+## Active bounded correction — native retry dispatched
+
+Verified November 8, 2026, 7:27 AM PST: native access is available again. Codex used **Reopen bounded triage**, then confirmed **Fix now** on the existing completion-advice finding. Its revision-4 job is running; the prior ended assignment and all three occurrences/review evidence remain attached as history. Harness reports one running worker, zero queued. This is a correction dispatch, not a completed fix or deployment.
+
+The current Senior Developer recommendation explicitly identifies the failed full native fixture: a conditional statement about a hypothetical future request must not count as immediate unfinished work. The worker must use the full recorded conversation, preserve the earlier negative-case fixes, and return narrow tested patches. Codex retains review/release ownership. Current job: `finding:e6d9e1da-9c21-494a-b418-35afdbe02a9a:r4`; ticket `cf2c9c8117f4870abc3dc067a903ab43`; assignment `55659d5ad22cc213a5be94aba0419bff`. No duplicate finding, direct revival of the ended mandate, acceptance, or deployment occurred.
+
+Nine local components report ready; GitHub polling is again rate-limited. Git transport is available for this project record update. No new credentials, scope, access or spending policy changes.
 
 ## Operational check — revised candidate still requires correction
 
