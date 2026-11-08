@@ -34,6 +34,24 @@ blocked, complete (+ non-working `unknown`). Derived by `specialist-activity.ts`
 future or untimed events → `unknown`/stale, never animated. `role="status"`, focusable, text label, `prefers-reduced-motion`
 disables animation. Custom GIF/sprite: pass `art` (URL); none is bundled.
 
+## Pilot transcript (mock, from `tests/specialist-advice.spec.ts`; not live)
+```
+task            "Deploy the Worker with wrangler to Cloudflare"
+route           profile=cloudflare_specialist basis=keyword (single profile)
+discovery       native tools: bash, read, mcp__chrome__navigate  (no Cloudflare MCP)
+capabilities    granted=[advice.read]  refused=[cloudflare.docs.read, cloudflare.account.read: no_native_tool]
+next decision   "Cloudflare capability unavailable: decide whether to connect an official Cloudflare MCP server ... or keep ... advice-only."
+job identity    existing decision record (session/message/turn/seq/draftRevision); items before=0 after=1, same tables
+advice          tool-free; options published once: docs-first (recommended), dry-run
+status          waiting (choices published, nothing staged)
+continuation    user stages -> Send -> native submission proof -> resolved(docs-first); character stays cloudflare_specialist
+```
+
+## UI evidence (header of the existing decision dock; same fixture, 800px viewport, light theme)
+Real renders of the component via headless Chrome with the shipped CSS; baseline = `8e20607`, changed = this branch.
+`docs/evidence/022/before-waiting.png`, `after-waiting.png` (Senior Developer default), `before-cloudflare.png` (identical to baseline),
+`after-cloudflare.png` (unavailable capability shown as text). Dark theme and a live-session capture were not taken.
+
 ## Provenance
 | Item | Source | Pin | Use |
 |---|---|---|---|
