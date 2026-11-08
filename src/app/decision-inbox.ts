@@ -9,6 +9,7 @@ import { ticketStage, latestReport, type Ticket } from '../core/index.ts'
 import { workerSessionId } from '../executor/dsh.ts'
 import { isStallGuardStuck } from '../core/stall-guard.ts'
 import { parseInlineAlternatives } from '../client/inline-alternatives.ts'
+import { isConversationCloseoutEvents, CONVERSATION_CLOSED_REASON, CONVERSATION_CLOSED_MESSAGE } from './conversation-closeout.ts'
 
 /** Same ticket projection for the regular runtime and independently loaded inbox provider. */
 export function ticketDecisions(tickets: Ticket[]): PendingDecisionItem[] {
@@ -337,6 +338,12 @@ export class DecisionInbox {
       || events.some(event => event.seq > end.seq && (event.type === 'turn/start' || event.type === 'user/message' && event.data.source.kind === 'user')))
       throw new InboxError(409, 'Canonical source is not the current durable completed turn')
     const item = this.findSource(input)
+    // A completed close-out is neither an error nor a new task: retire unstaged advice and refuse to open more.
+    // Staged or submitted work keeps its own guards below.
+    if (!item?.staging && isConversationCloseoutEvents(events, input.sourceTurn)) {
+      this.retireClosedOut(input.sessionId, events)
+      throw new InboxError(409, CONVERSATION_CLOSED_MESSAGE)
+    }
     if (item && (item.status !== 'pending' || item.invalidation || item.parentDecisionId)) throw new InboxError(409, 'Canonical decision is staged, stale or closed')
     if (item && (item.sourceSeq !== input.sourceSeq || item.sourceTurn !== input.sourceTurn || item.sourceMessageId !== input.sourceMessageId)) throw new InboxError(409, 'Canonical source identity changed')
     if (item?.canonical && item.canonical.draftRevision !== input.draftRevision) throw new InboxError(409, 'Canonical draft revision changed')
@@ -462,6 +469,19 @@ export class DecisionInbox {
       }
     }
     for (const item of items) this.put(item)
+  }
+  /**
+   * Retire still-unstaged chat advice for the latest completed turn when the durable history shows an explicit,
+   * un-reopened close-out. Choices, scores and option history stay on the row; staged/submitted work keeps its guards.
+   */
+  retireClosedOut(sessionId: string, events: readonly SessionEvent[]): void {
+    const end = events.findLast(event => event.type === 'turn/end')
+    if (end?.type !== 'turn/end' || end.data.reason.kind !== 'completed' || !isConversationCloseoutEvents(events, end.data.turn)) return
+    for (const item of this.list()) {
+      if (item.sessionId !== sessionId || item.status !== 'pending' || item.invalidation || item.staging || item.lifecycle || item.parentDecisionId
+        || item.actionMode && item.actionMode !== 'stage_response' || decisionSourceTurn(item, events) !== end.data.turn) continue
+      this.invalidate(item, CONVERSATION_CLOSED_REASON, end.seq, end.time)
+    }
   }
   invalidate(item: PendingDecisionItem, reason: string, sourceSeq?: number, at = Date.now()): void {
     if (item.status === 'stale' || item.invalidation) return
@@ -595,6 +615,7 @@ export class DecisionInbox {
   /** Reconcile a complete immutable session snapshot. A watermark prevents cold reads racing newer live events. */
   capture(sessionId: string, events: readonly SessionEvent[], title = 'Conversation decision'): void {
     this.reconcileSubmissions(sessionId, events)
+    this.retireClosedOut(sessionId, events)
     const lastSeq = events.at(-1)?.seq ?? -1
     const cursor = Number(this.db.prepare('SELECT seq FROM decision_inbox_cursor WHERE session = ?').get(sessionId)?.seq ?? -1)
     if (lastSeq <= cursor) return
@@ -616,7 +637,8 @@ export class DecisionInbox {
           const alternatives = parseInlineAlternatives(text)
           const question = alternatives?.question ?? decisionQuestion(text)
           const laterHuman = events.some(event => event.seq > end.seq && event.type === 'user/message' && event.data.source.kind === 'user')
-          if (question && !laterHuman) {
+          const closed = isConversationCloseoutEvents(events, end.data.turn)
+          if (question && !laterHuman && !closed) {
             const sourceMessageId = message.data.message.id
             const id = `chat-${createHash('sha256').update(`${sessionId}\0${sourceMessageId}`).digest('hex').slice(0, 32)}`
             // Explicit alternatives stay verbatim; either path is padded to the option minimum.
@@ -699,6 +721,7 @@ export function captureAdvisorTask(inbox: DecisionInbox, sessionId: string, even
   if (assistant?.type !== 'assistant/message' || assistant.data.interrupted) return
   const text = assistant.data.message.content.filter(part => part.type === 'text').map(part => part.text).join('\n').trim()
   if (text.length < 20) return
+  if (isConversationCloseoutEvents(events, end.data.turn)) return inbox.retireClosedOut(sessionId, events)
   inbox.ensureAdvisor({ sessionId, sourceMessageId: assistant.data.message.id, sourceTurn: end.data.turn, sourceSeq: assistant.seq,
     key: String(end.seq), question: decisionQuestion(text) ?? 'Choose the next step for this thread', context: text,
     title: request.replace(/\s+/g, ' ').slice(0, 120), createdAt: end.time })
