@@ -393,6 +393,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/app/publication-operator-entry.ts` | Explicit trusted-local Codex/operator CLI; never an autonomous tool |
 | `src/infra/publication-runner.ts` | Hash-pinned phase scripts, GitHub/local evidence and settled subprocess execution |
 | `src/app/decision-inbox.ts` | Durable SQLite decision queue, completed-turn recovery, explicit question/offer capture, source deduplication and stale detection; staging stays pending and only a bound durable native submission confirms resolution, without executing work |
+| `src/app/progress.ts` | Durable revisioned observations of release steps completed outside a worker (branch pushed, PR opened, checks, review) with exact source identity, evidence, provenance, owner and remaining stage; folds to current progress; carries no authority |
 | `src/app/decision-inbox-provider.ts` | Independently loaded inbox routes and capture lifecycle; shares the existing database without restarting the orchestrator |
 | `src/app/api.ts` | `Api`, every route with its parameters, query, body and response, and the filters of the lists; it imports only types, so the panel bundles it |
 | `src/app/views/text.ts` | The two forms of a view's text: `preview`, plain text on one line, and `markdown` without HTML; `plain` and `readable` |
@@ -474,6 +475,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/finding-runtime.spec.ts` | Configured-model wiring, real Engine/Effects/DshExecutor atomic handoff, terminal delivery relations, reconciliation isolation and background-quiescent recovery |
 | `tests/finding-card.spec.tsx` | Canonical advice, typed triage/review, stale/duplicate controls, deferred history and explicit report truncation |
 | `tests/finding-consumers.spec.tsx` | Real dock association for no-origin dispatched findings, mounted conversation switching and generic inline suppression |
+| `tests/progress.spec.ts` | Outside progress observations: stage folding, duplicate/out-of-order reports, changed heads, stale advice retirement with history, completed/new-scope isolation, the pushed Sonnet branch fixture |
 | `tests/finding-advice.spec.ts` | Persisted finding-owned generic advisor retirement before lookup/staging; genuine questions and native staged submissions retained |
 | `tests/finding-observe-cli.spec.ts` | Observation-only CLI loopback transport and argument/origin/authority fences without spoofed approval headers |
 | `tests/feature-delivery.spec.ts` | Durable transitions, CAS concurrency, restart/lease cancellation, scoped approvals, finite retries, backfill and acceptance |
@@ -749,3 +751,7 @@ Point `DSH_HOME` at a temporary directory and create a new profile there. Copy t
 
 - Trust: which Trigger fields are trusted, such as the Source's actor and Thread membership, and which are not, such as the body and quotes.
 - Deployment isolation: the agent's profile on its own pinned DeepSeek Harness installation, so upgrading DeepSeek Harness elsewhere does not break it.
+
+### Local outside-progress receipts
+
+`scripts/progress-observe.ts` previews a strict JSON receipt with `--preview --input FILE`, then records it only with an existing absolute `--database`, `--input`, explicit `--reference` and exact `--expected-hash`. It validates ticket/job association and writes the same append-only ProgressStore used by the management routes. It does not execute work or change acceptance/publication/Send. Normal inbox/context reads reconcile stale advice. Duplicate identical receipts are idempotent; a genuinely later rerun is a new observation. New failed/pending checks override older readiness.
