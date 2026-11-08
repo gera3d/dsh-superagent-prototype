@@ -1,0 +1,93 @@
+{
+  "at": "2026-11-08T22:40:45.619048+00:00",
+  "findingId": "f9335259-b51c-4e97-9750-3923b7e2138b",
+  "job": {
+    "id": "finding:f9335259-b51c-4e97-9750-3923b7e2138b:r7",
+    "ticketId": "e10f46849fff53974766d4e277bf75a4",
+    "assignmentId": "f4ea13447ab035fe67db32975b53bbf6"
+  },
+  "stage": "deployed_native_verified_pending_finding_acceptance",
+  "source": {
+    "hostFixHead": "03db05822083539c39792df04d83144534706f9b",
+    "hostFixMerge": "610516e62199062db03c435cf958bc11793fe1cf",
+    "styleHead": "e674c8f478c1f039c7d87d7959038688f6c14701",
+    "styleMerge": "36b6361734535f4329e75bd62f6ec515a68000c2"
+  },
+  "rootChecks": {
+    "hostDataUiClientTests": 26,
+    "hostTypesExit": 0,
+    "hostBuildExit": 0,
+    "styleUiClientTests": 16,
+    "styleBuildExit": 0,
+    "nativeBoot": true,
+    "compactBadge": true,
+    "styledSidebarCards": true,
+    "refreshClicked": true,
+    "composerVisible": true,
+    "liveReplySent": false
+  },
+  "providers": [
+    {
+      "provider": "google",
+      "source": "antigravity",
+      "status": "available",
+      "stale": false,
+      "rollingWindow": {
+        "fraction": 0.7102543711662292,
+        "resetTime": "2026-11-09T02:12:43Z",
+        "stale": false
+      },
+      "weeklyWindow": {
+        "fraction": 0.6559086441993713,
+        "resetTime": "2026-11-14T22:42:10Z",
+        "stale": false
+      }
+    },
+    {
+      "provider": "antigravity-claude",
+      "source": "antigravity",
+      "status": "available",
+      "stale": false,
+      "rollingWindow": {
+        "fraction": 1,
+        "resetTime": "2026-11-09T03:37:53Z",
+        "stale": false
+      },
+      "weeklyWindow": {
+        "fraction": 0.4993376135826111,
+        "resetTime": "2026-11-12T16:11:42Z",
+        "stale": false
+      }
+    },
+    {
+      "provider": "anthropic-direct",
+      "source": "direct",
+      "status": "unavailable",
+      "stale": false,
+      "rollingWindow": null,
+      "weeklyWindow": null
+    }
+  ],
+  "limits": [
+    "Direct Anthropic subscription quota unavailable: no supported existing authenticated reader",
+    "Quota comes from local provider snapshots; can be stale and is labelled as such",
+    "Screenshots captured in tool timeline, not saved as local image files"
+  ],
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "starting"
+  },
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  }
+}
