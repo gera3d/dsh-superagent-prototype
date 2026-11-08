@@ -29,6 +29,8 @@ async function executeDecisionCall(ctx: Context, selected: ModelSelection, reque
       if (text.length > 32000) throw new Error('Recommendation response exceeded its size limit')
     }
     if (chunk.type === 'finish') {
+      // Native providers may report quota/outage failures as a finish event rather than throw.
+      if (chunk.reason.kind === 'error') throw Object.assign(new Error(chunk.reason.failure.message), chunk.reason.failure)
       if (chunk.reason.kind !== 'stop') throw new Error('Recommendation did not finish normally')
       finished = true
     }
