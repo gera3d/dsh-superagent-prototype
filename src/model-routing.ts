@@ -141,25 +141,41 @@ export function routingView(settings: Pick<Settings, 'eval' | 'executor' | 'mode
       helper: safe(() => helperRoute(settings)), ranker: conservationActive(settings) ? safe(() => economyRoute(settings)) : null },
     skipped: skippedProviders(settings), errors: [...new Set(errors)] }
 }
+/** A job gets at most one quality escalation; `maxEscalations` 0 keeps it off, and larger values never buy a second attempt. */
+export const QUALITY_ESCALATION_LIMIT = 1
 /**
- * The routes a job type may still escalate to, in hierarchy order after its current route. `previous` is the last escalated
- * route and `used` how many escalations the ticket already recorded; the hierarchy's `maxEscalations` caps the latter.
+ * Whether a route exists for availability or cost, not for quality: the economy route (the operator's override or the
+ * qualified default), the direct DeepSeek flash route, or any route on a DeepSeek model. These are never a quality upgrade.
+ */
+export function isFallbackOnlyRoute(settings: Pick<Settings, 'models'>, route: RoleModel): boolean {
+  const economy = plainRoute(settings.models.economyRoute ?? ECONOMY_ROUTE)
+  const same = (a: RoleModel, b: RoleModel) => a.provider === b.provider && a.model === b.model
+  return same(route, economy) || same(route, DEEPSEEK_FALLBACK_ROUTE) || /deepseek/i.test(`${route.provider} ${route.model}`)
+}
+/**
+ * The routes a job may still use for its one quality escalation: hierarchy routes after `previous` (the route the job
+ * actually runs on, else the job type's default), without parked providers and without availability-only DeepSeek routes.
+ * `used` counts the quality escalations the ticket already recorded; one is the most any job gets. A job that already runs
+ * on an availability-only route has no quality base and returns to a person instead.
  */
 export function escalationChain(settings: Pick<Settings, 'eval' | 'executor' | 'models'>, job: JobType, previous?: RoleModel,
   used = 0): RoleModel[] {
   // Conserve mode pins the economy route; escalating would spend the parked subscription allowances.
   if (conservationActive(settings)) return []
-  if (used >= settings.models.maxEscalations) return []
+  if (used >= Math.min(settings.models.maxEscalations, QUALITY_ESCALATION_LIMIT)) return []
   const current = previous ?? defaultRoute(settings, job)
+  if (current && isFallbackOnlyRoute(settings, current)) return []
   const hierarchy = settings.models.hierarchy
-  // A current route outside the hierarchy leaves the whole hierarchy open; one inside it starts after its own place.
-  const index = current ? hierarchy.findIndex(entry => sameRoute(entry, current)) : -1
+  // A current route outside the hierarchy leaves the whole hierarchy open; one inside it starts after its own place. A route
+  // that differs only by reasoning effort (a Session header reports its own) still holds the place of its model.
+  const exact = current ? hierarchy.findIndex(entry => sameRoute(entry, current)) : -1
+  const index = exact >= 0 || !current ? exact : hierarchy.findIndex(entry => entry.provider === current.provider && entry.model === current.model)
   return hierarchy.slice(index + 1).filter(entry => !current || !sameRoute(entry, current))
-    .filter(entry => !routeSkipReason(settings, entry)).map(plainRoute)
+    .filter(entry => !routeSkipReason(settings, entry) && !isFallbackOnlyRoute(settings, entry)).map(plainRoute)
 }
 /**
- * The next escalation step for a job type: from its current route to the next hierarchy route, or `undefined` once the
- * hierarchy ends or the ticket reached `maxEscalations`.
+ * The quality escalation step for a job type: from its current route to the next eligible stronger hierarchy route, or
+ * `undefined` once the job used its one attempt, is already on the last eligible route, or escalation is off.
  */
 export function escalationStep(settings: Pick<Settings, 'eval' | 'executor' | 'models'>, job: JobType, previous?: RoleModel,
   used = 0): { from: RoleModel; to: RoleModel } | undefined {
@@ -167,12 +183,25 @@ export function escalationStep(settings: Pick<Settings, 'eval' | 'executor' | 'm
   const to = escalationChain(settings, job, previous, used)[0]
   return from && to ? { from, to } : undefined
 }
+/**
+ * Decision for a failed executor report. Concrete evidence is the report's own non-blank summary; the text is never parsed
+ * and availability failures never reach this path (the Executor marks them non-escalatable). `running` is the route the
+ * worker's Session actually uses, which differs from the default after an availability fallback. The attempt count is the
+ * ticket's persisted escalations, so restarts, replays and quota fallback cannot reset it.
+ */
+export function qualityEscalation(settings: Pick<Settings, 'eval' | 'executor' | 'models'>, ticket: { escalations?: { to: RoleModel }[] },
+  reason: string, running?: RoleModel | null): { from: RoleModel; to: RoleModel } | undefined {
+  if (!reason.trim()) return undefined
+  const used = ticket.escalations?.length ?? 0
+  return escalationStep(settings, 'executor', running ?? ticket.escalations?.at(-1)?.to, used)
+}
 
 /**
  * When a model cannot serve a request due to availability reasons, determine the next fallback route:
  * 1. Try the next available model in the escalation ladder (hierarchy);
- * 2. When none of Gemini, GPT and Claude (the ladder) can serve it, fall back to DeepSeek's cheap flash model.
- * DeepSeek flash is NOT a rung of the escalation ladder and hard tasks never escalate to it.
+ * 2. When no eligible ladder route can serve it, fall back to the economy route: the operator's pinned, qualified DeepSeek
+ *    route when set, else the portable direct DeepSeek flash default.
+ * DeepSeek is availability and cost insurance only: hard tasks never escalate to it (see `escalationChain`).
  */
 export function unavailableFallbackStep(
   settings: Pick<Settings, 'models'>,
@@ -205,10 +234,10 @@ export function unavailableFallbackStep(
     }
   }
 
-  // All ladder routes have been tried or are unavailable. Fall back to DeepSeek cheap flash!
-  if (!routeSkipReason(settings, DEEPSEEK_FALLBACK_ROUTE) && !hasTried(DEEPSEEK_FALLBACK_ROUTE)
-    && (!current || !sameRoute(current, DEEPSEEK_FALLBACK_ROUTE))) {
-    return { from: current ?? undefined, to: DEEPSEEK_FALLBACK_ROUTE, isDeepSeekFlash: true }
+  // All ladder routes have been tried or are unavailable: the economy route is the last resort, unless it is parked or tried.
+  const economy = plainRoute(settings.models.economyRoute ?? ECONOMY_ROUTE)
+  if (!routeSkipReason(settings, economy) && !hasTried(economy) && (!current || !sameRoute(current, economy))) {
+    return { from: current ?? undefined, to: economy, isDeepSeekFlash: true }
   }
 
   return undefined
@@ -218,7 +247,7 @@ export function unavailableFallbackStep(
 export function fallbackNote(to: RoleModel, reason: string): string {
   const modelName = `${to.provider}/${to.model}`
   const why = reason.replace(/\s+/g, ' ').slice(0, 150)
-  if (to.provider === DEEPSEEK_FALLBACK_ROUTE.provider && to.model === DEEPSEEK_FALLBACK_ROUTE.model) {
+  if (/deepseek/i.test(`${to.provider} ${to.model}`)) {
     return `Fell back to DeepSeek cheap flash model (${modelName}): ${why}. Quality may be lower.`
   }
   return `Fell back to available ladder model (${modelName}): ${why}.`

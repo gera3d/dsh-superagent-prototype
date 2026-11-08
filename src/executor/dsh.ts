@@ -427,6 +427,16 @@ export class DshExecutor implements Executor {
   }
   /** Number of open tickets whose worker holds a worker slot: its turn runs, or its shell jobs or subagents still run after its turn ended. */
   activeCount(): number { return this.host.store.tickets.open().filter(ticket => this.running(ticket)).length }
+  /**
+   * The route the ticket's worker Session runs on: the latest availability fallback this Executor selected, else the route of
+   * the Session's last request, which survives a restart. Undefined while neither exists. Quality escalation starts here, so
+   * a worker already on Sonnet, or on the DeepSeek fallback, is never "escalated" again by a later task failure.
+   */
+  currentRoute(ticket: Ticket): RoleModel | undefined {
+    const fallback = this.unavailableRoutes.get(ticket.id)?.at(-1)
+    const config = fallback ?? this.host.context.agents.get(workerSessionId(ticket.id) as SessionId)?.session.requestHeader()?.config as RoleModel | undefined
+    return config ? { provider: config.provider, model: config.model, ...config.reasoningEffort ? { reasoningEffort: config.reasoningEffort } : {} } : undefined
+  }
   /** Whether a ticket's worker holds a worker slot: its turn runs, or its shell jobs or subagents do after its turn ended. */
   running(ticket: Ticket): boolean {
     if (!runningAssignment(ticket)) return false
