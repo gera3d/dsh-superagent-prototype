@@ -18,6 +18,10 @@ Intake is **resumed** after the safe idle deployment. Latest executor snapshot: 
 
 ## Parallel qualification completed; three original corrections assigned
 
+Coordination ownership: the existing hourly automation is ACTIVE and its saved target is now the fresh **New voice chat** (`01a1bd74-4349-7fd3-bd92-5ee39f297f4e`), verified from the saved automation configuration. No duplicate or retargeting was performed by this bounded executor. Future scheduled coordination checks current workers before dispatching; this long chat is not the ongoing conversational owner.
+
+
+
 A finite operational pass for the fresh New voice chat used the three existing Harness slots for **linked read-only independent review findings**, not replacement feature intakes or repeated implementation. Parent finding/candidate/history stayed intact. All three reviewers actually returned on Antigravity Gemini3.8Flash; recorded route usage totals were120,942,75,311 and85,398 tokens (including cache), not inferred from settings. No OpenAI execution, provider/worker-limit/credential/spending changes or new automation. [Independent reviewer results and provider events](docs/evidence/parallel-independent-reviews.json).
 
 - Advisor reviewer73a95659 passed existing qualification cases (reported32 backend/audit and27 plugin focused tests). Root final review adds a narrow counterexample: a current **unverified state=evidence** row plus waiting report “Build failed. Tests pending.” still asserts candidate testing complete. Root test1fails. Therefore no release; preserve95 earlier root passing tests without treating them as complete semantic coverage.
