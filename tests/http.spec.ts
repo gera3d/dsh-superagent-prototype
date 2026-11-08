@@ -487,3 +487,13 @@ it('derives exact-pin prepared proof for helper context on a pre-upgrade card wi
   // The advice copy carries the observation; the recorded card is not rewritten.
   expect(delivery.preparedPublication).not.toHaveProperty('proof')
 })
+
+it('does not gate target-validated native stage on unrelated historical recovery', async () => {
+  let release!: () => void
+  const gate = new Promise<void>(resolve => { release = resolve })
+  const call = serve({}, '127.0.0.1', { sessionPersistence: { flush: async () => {}, list: async () => { await gate; return [] } } })
+  try {
+    const response = await Promise.race([call('POST', 'decisions/not-found/stage', { choiceId: 'a', attemptId: '00000000-0000-4000-8000-000000000001', draftText: 'A' }), new Promise(resolve => setTimeout(() => resolve('timeout'), 1000))])
+    expect(response).toMatchObject({ status: 404, body: { error: 'Decision not found' } })
+  } finally { release() }
+})

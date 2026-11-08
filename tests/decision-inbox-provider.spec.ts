@@ -215,8 +215,8 @@ it('serves the persisted inbox and validated canonical writes while historical r
     expect(first).not.toBe('timeout')
     expect(first).toMatchObject({ status: 200, body: { recovery: { pending: true } } })
     expect((first as any).body.items.find((entry: any) => entry.id === persisted.id)).toMatchObject({ status: 'pending' })
-    // Only mutations that can close or rewrite item state wait for the scan.
-    expect(await within(call('POST', `${persisted.id}/stage`, { choiceId: 'a', attemptId: randomUUID(), draftText: 'Do A' }), 200)).toBe('timeout')
+    // Target-bound staging rejects missing durable history immediately, without waiting for unrelated recovery.
+    expect(await within(call('POST', `${persisted.id}/stage`, { choiceId: 'a', attemptId: randomUUID(), draftText: 'Do A' }), 1000)).toMatchObject({ status: 409 })
     // Canonical writes still reject a source that is not the current durable completed turn.
     const source = { sourceMessageId: 'wrong-message', sourceSeq: 1, sourceTurn: 1, draftRevision: 'revision-hash' }
     expect(await call('POST', 'canonical/claim', { ...source, sessionId: 'fresh-session', owner: 'tab-a' }))
@@ -234,6 +234,7 @@ it('serves the persisted inbox and validated canonical writes while historical r
     expect(await call('POST', 'canonical/fail', { ...source, sourceMessageId: 'message', sessionId: 'fail-session', leaseToken: failedClaim.body.leaseToken, error: 'helper unavailable' }))
       .toMatchObject({ status: 200, body: { item: { canonical: { error: 'helper unavailable' } } } })
     const claimedId = (claim as any).body.item.id
+    expect(await within(call('POST', `${claimedId}/stage`, { choiceId: 'first', attemptId: randomUUID(), draftText: 'Complete first continuation' }), 1000)).toMatchObject({ status: 200, body: { execution: 'not_executed', staging: { choiceId: 'first' } } })
     expect(await within(call('GET', 'inbox'), 1000)).toMatchObject({ status: 200, body: { recovery: { pending: true } } })
     // Recovery finishes, the old session's question appears, and the fresh canonical item keeps its state.
     releaseRecovery()
