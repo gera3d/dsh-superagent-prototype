@@ -1,0 +1,238 @@
+{
+  "at": "2026-11-08T23:38:24.371340+00:00",
+  "load": {
+    "running": 3,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "health": {
+    "runtime": {
+      "state": "ready",
+      "detail": "Orchestrator is ready",
+      "at": "2026-11-08T22:37:51.904Z"
+    },
+    "relay": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T23:32:55.204Z"
+    },
+    "notice": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T23:35:46.213Z"
+    },
+    "launch": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T23:37:48.017Z"
+    },
+    "delivery": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T22:37:48.899Z"
+    },
+    "assessment": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T22:37:48.900Z"
+    },
+    "reply": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T22:37:48.901Z"
+    },
+    "evals": {
+      "state": "ready",
+      "detail": "No unavailable Eval in the last hour"
+    },
+    "models": {
+      "state": "ready",
+      "detail": "No managed Session is waiting on a model budget retry"
+    },
+    "github": {
+      "state": "ready",
+      "detail": "0 notifications; next poll \u2265 60s",
+      "at": "2026-11-08T23:33:31.819Z"
+    }
+  },
+  "corrections": [
+    {
+      "findingId": "12779824-b82e-484d-9502-d2150ba58aa1",
+      "title": "Recommend the actual review handoff for completed finding work",
+      "state": "running",
+      "job": {
+        "id": "finding:12779824-b82e-484d-9502-d2150ba58aa1:r12",
+        "ticketId": "7c017292cef5dee4d08138181ec47a40",
+        "assignmentId": "ff2c549eeef9c883fa8064c997f3c225"
+      },
+      "ticketStage": "working",
+      "usage": {
+        "sessionId": "worker-7c017292cef5dee4d08138181ec47a40",
+        "routes": [],
+        "totals": {
+          "uncachedInputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0
+        },
+        "coverage": {
+          "attempts": 0,
+          "reported": 0,
+          "cacheRead": "unreported",
+          "cacheWrite": "unreported",
+          "attribution": "complete"
+        },
+        "cost": {
+          "kind": "unavailable",
+          "reason": "noRecordedPrice"
+        }
+      },
+      "modelSelection": {
+        "lastUsed": {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "reasoningEffort": "high"
+        },
+        "pending": null
+      },
+      "sessionStats": {
+        "turns": 0,
+        "steps": 0,
+        "llmMs": 0,
+        "toolMs": 0,
+        "ttftMs": 0,
+        "ttftSteps": 0,
+        "decodeMs": 0,
+        "decodeTokens": 0,
+        "lastTurn": null,
+        "openStep": {
+          "turn": 1,
+          "step": 1,
+          "startTime": 1794181000214,
+          "firstTokenTime": null
+        },
+        "pendingCalls": {}
+      }
+    },
+    {
+      "findingId": "51f309ca-d396-4983-a55d-ef4432a8572f",
+      "title": "Workers on antigravity cannot file ready reports",
+      "state": "running",
+      "job": {
+        "id": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r10",
+        "ticketId": "4700747e8faad848915bdd5d4b01f3b6",
+        "assignmentId": "e31d9be5be5913afb72ba422af2fa5b2"
+      },
+      "ticketStage": "working",
+      "usage": {
+        "sessionId": "worker-4700747e8faad848915bdd5d4b01f3b6",
+        "routes": [],
+        "totals": {
+          "uncachedInputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0
+        },
+        "coverage": {
+          "attempts": 0,
+          "reported": 0,
+          "cacheRead": "unreported",
+          "cacheWrite": "unreported",
+          "attribution": "complete"
+        },
+        "cost": {
+          "kind": "unavailable",
+          "reason": "noRecordedPrice"
+        }
+      },
+      "modelSelection": {
+        "lastUsed": {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "reasoningEffort": "high"
+        },
+        "pending": null
+      },
+      "sessionStats": {
+        "turns": 0,
+        "steps": 0,
+        "llmMs": 0,
+        "toolMs": 0,
+        "ttftMs": 0,
+        "ttftSteps": 0,
+        "decodeMs": 0,
+        "decodeTokens": 0,
+        "lastTurn": null,
+        "openStep": {
+          "turn": 1,
+          "step": 1,
+          "startTime": 1794181030073,
+          "firstTokenTime": null
+        },
+        "pendingCalls": {}
+      }
+    },
+    {
+      "findingId": "a338ad44-893d-4ebf-b8ff-aa0c3067e384",
+      "title": "Advance already-approved Harness work while the Mac is locked",
+      "state": "running",
+      "job": {
+        "id": "finding:a338ad44-893d-4ebf-b8ff-aa0c3067e384:r5",
+        "ticketId": "30ffdddaf50ec74afd2f465809e02d86",
+        "assignmentId": "e027545124bff51d853a23eb4e918d89"
+      },
+      "ticketStage": "working",
+      "usage": {
+        "sessionId": "worker-30ffdddaf50ec74afd2f465809e02d86",
+        "routes": [],
+        "totals": {
+          "uncachedInputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0
+        },
+        "coverage": {
+          "attempts": 0,
+          "reported": 0,
+          "cacheRead": "unreported",
+          "cacheWrite": "unreported",
+          "attribution": "complete"
+        },
+        "cost": {
+          "kind": "unavailable",
+          "reason": "noRecordedPrice"
+        }
+      },
+      "modelSelection": {
+        "lastUsed": {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "reasoningEffort": "high"
+        },
+        "pending": null
+      },
+      "sessionStats": {
+        "turns": 0,
+        "steps": 0,
+        "llmMs": 0,
+        "toolMs": 0,
+        "ttftMs": 0,
+        "ttftSteps": 0,
+        "decodeMs": 0,
+        "decodeTokens": 0,
+        "lastTurn": null,
+        "openStep": {
+          "turn": 1,
+          "step": 1,
+          "startTime": 1794181068114,
+          "firstTokenTime": null
+        },
+        "pendingCalls": {}
+      }
+    }
+  ],
+  "owners": {
+    "implementation": "Harness original-finding correction workers",
+    "independentRelease": "Codex single owner",
+    "headlessActivation": "Gera specific confirmation required, no activation now"
+  },
+  "noNewDeployment": true,
+  "priorReviews": "parallel-independent-reviews.json"
+}

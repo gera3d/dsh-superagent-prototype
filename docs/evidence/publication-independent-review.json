@@ -39,5 +39,18 @@
   },
   "initialCause": "insufficient evidence; do not infer SQLite lock or fence mismatch as proven",
   "livePublicationEffects": false,
-  "nextOwner": "Codex records verification; any logging/diagnostic implementation is a later scoped decision preserving all native gates"
+  "nextOwner": "Codex records verification; any logging/diagnostic implementation is a later scoped decision preserving all native gates",
+  "resolution": {
+    "outcome": "verified",
+    "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/publication-independent-review.json",
+    "requirements": [
+      "Preserve original confirmation/request ID and distinction between zero effects and uncertain effects",
+      "Reproduce or explicitly mark insufficient evidence; never invent initial cause",
+      "Propose tested narrow handling retaining every approval/pin/manifest/idempotency safeguard; no live publication effects"
+    ],
+    "at": "2026-11-08T23:33:55.188Z",
+    "actor": "local-operator",
+    "jobId": "finding:a1707f3a-a020-4b8b-8374-50887c5e3265:r1"
+  },
+  "findingState": "resolved"
 }

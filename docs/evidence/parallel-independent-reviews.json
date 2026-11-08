@@ -1,0 +1,299 @@
+{
+  "at": "2026-11-08T23:34:18.604945+00:00",
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "health": {
+    "runtime": {
+      "state": "ready",
+      "detail": "Orchestrator is ready",
+      "at": "2026-11-08T22:37:51.904Z"
+    },
+    "relay": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T23:32:55.204Z"
+    },
+    "notice": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T22:42:37.777Z"
+    },
+    "launch": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T23:26:24.101Z"
+    },
+    "delivery": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T22:37:48.899Z"
+    },
+    "assessment": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T22:37:48.900Z"
+    },
+    "reply": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T22:37:48.901Z"
+    },
+    "evals": {
+      "state": "ready",
+      "detail": "No unavailable Eval in the last hour"
+    },
+    "models": {
+      "state": "ready",
+      "detail": "No managed Session is waiting on a model budget retry"
+    },
+    "github": {
+      "state": "ready",
+      "detail": "0 notifications; next poll \u2265 60s",
+      "at": "2026-11-08T23:29:11.156Z"
+    }
+  },
+  "lanes": [
+    {
+      "id": "73a95659-851a-420f-ada3-6f5535d33616",
+      "title": "Independently review the existing advisor handoff candidate",
+      "state": "running",
+      "job": {
+        "id": "finding:73a95659-851a-420f-ada3-6f5535d33616:r1",
+        "ticketId": "9ed144edd3de2aaa5a83421cb65449ce",
+        "assignmentId": "75185c655b8eea14745db892daed656d"
+      },
+      "ticketStage": "idle",
+      "usage": {
+        "sessionId": "worker-9ed144edd3de2aaa5a83421cb65449ce",
+        "routes": [
+          {
+            "provider": "antigravity",
+            "model": "gemini-3.8-flash",
+            "attempts": 1,
+            "uncachedInputTokens": 2964,
+            "outputTokens": 3619,
+            "cacheReadTokens": 114359,
+            "totalTokens": 120942
+          }
+        ],
+        "totals": {
+          "uncachedInputTokens": 2964,
+          "outputTokens": 3619,
+          "totalTokens": 120942,
+          "cacheReadTokens": 114359
+        },
+        "coverage": {
+          "attempts": 1,
+          "reported": 1,
+          "cacheRead": "exact",
+          "cacheWrite": "unreported",
+          "attribution": "complete"
+        },
+        "cost": {
+          "kind": "unavailable",
+          "reason": "noRecordedPrice"
+        }
+      },
+      "modelSelection": {
+        "lastUsed": {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "reasoningEffort": "high"
+        },
+        "pending": null
+      },
+      "sessionStats": {
+        "turns": 1,
+        "steps": 1,
+        "llmMs": 422967,
+        "toolMs": 0,
+        "ttftMs": 10513,
+        "ttftSteps": 1,
+        "decodeMs": 412454,
+        "decodeTokens": 3619,
+        "lastTurn": 1,
+        "openStep": null,
+        "pendingCalls": {}
+      }
+    },
+    {
+      "id": "868c2b60-06cb-4777-b1c6-426cde787ba1",
+      "title": "Independently review the existing worker reporting transport",
+      "state": "running",
+      "job": {
+        "id": "finding:868c2b60-06cb-4777-b1c6-426cde787ba1:r1",
+        "ticketId": "97be81bc28e55d8a7d6c50ac36f334bd",
+        "assignmentId": "b4d0c513b999f9ccdb1ff3407257d2eb"
+      },
+      "ticketStage": "idle",
+      "usage": {
+        "sessionId": "worker-97be81bc28e55d8a7d6c50ac36f334bd",
+        "routes": [
+          {
+            "provider": "antigravity",
+            "model": "gemini-3.8-flash",
+            "attempts": 1,
+            "uncachedInputTokens": 2324,
+            "outputTokens": 1468,
+            "cacheReadTokens": 71519,
+            "totalTokens": 75311
+          }
+        ],
+        "totals": {
+          "uncachedInputTokens": 2324,
+          "outputTokens": 1468,
+          "totalTokens": 75311,
+          "cacheReadTokens": 71519
+        },
+        "coverage": {
+          "attempts": 1,
+          "reported": 1,
+          "cacheRead": "exact",
+          "cacheWrite": "unreported",
+          "attribution": "complete"
+        },
+        "cost": {
+          "kind": "unavailable",
+          "reason": "noRecordedPrice"
+        }
+      },
+      "modelSelection": {
+        "lastUsed": {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "reasoningEffort": "high"
+        },
+        "pending": null
+      },
+      "sessionStats": {
+        "turns": 1,
+        "steps": 1,
+        "llmMs": 313429,
+        "toolMs": 0,
+        "ttftMs": 15582,
+        "ttftSteps": 1,
+        "decodeMs": 297847,
+        "decodeTokens": 1468,
+        "lastTurn": 1,
+        "openStep": null,
+        "pendingCalls": {}
+      }
+    },
+    {
+      "id": "d0d6aa3c-0934-42c1-8716-130fd6bd4122",
+      "title": "Independently assess the existing headless coordination authority boundary",
+      "state": "running",
+      "job": {
+        "id": "finding:d0d6aa3c-0934-42c1-8716-130fd6bd4122:r1",
+        "ticketId": "62f6b9bd3c7db92ca7955dbf5adf6a81",
+        "assignmentId": "790df61c23bb18197b04d47ff4aaf127"
+      },
+      "ticketStage": "idle",
+      "usage": {
+        "sessionId": "worker-62f6b9bd3c7db92ca7955dbf5adf6a81",
+        "routes": [
+          {
+            "provider": "antigravity",
+            "model": "gemini-3.8-flash",
+            "attempts": 1,
+            "uncachedInputTokens": 3252,
+            "outputTokens": 640,
+            "cacheReadTokens": 81506,
+            "totalTokens": 85398
+          }
+        ],
+        "totals": {
+          "uncachedInputTokens": 3252,
+          "outputTokens": 640,
+          "totalTokens": 85398,
+          "cacheReadTokens": 81506
+        },
+        "coverage": {
+          "attempts": 1,
+          "reported": 1,
+          "cacheRead": "exact",
+          "cacheWrite": "unreported",
+          "attribution": "complete"
+        },
+        "cost": {
+          "kind": "unavailable",
+          "reason": "noRecordedPrice"
+        }
+      },
+      "modelSelection": {
+        "lastUsed": {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "reasoningEffort": "high"
+        },
+        "pending": null
+      },
+      "sessionStats": {
+        "turns": 1,
+        "steps": 1,
+        "llmMs": 351671,
+        "toolMs": 0,
+        "ttftMs": 18140,
+        "ttftSteps": 1,
+        "decodeMs": 333531,
+        "decodeTokens": 640,
+        "lastTurn": 1,
+        "openStep": null,
+        "pendingCalls": {}
+      }
+    }
+  ],
+  "quota": [
+    {
+      "provider": "google",
+      "source": "antigravity",
+      "status": "available",
+      "rollingWindow": {
+        "fraction": 0.7102543711662292,
+        "resetTime": "2026-11-09T02:12:43Z",
+        "stale": false
+      },
+      "weeklyWindow": {
+        "fraction": 0.6559086441993713,
+        "resetTime": "2026-11-14T22:42:10Z",
+        "stale": false
+      },
+      "stale": true
+    },
+    {
+      "provider": "antigravity-claude",
+      "source": "antigravity",
+      "status": "available",
+      "rollingWindow": {
+        "fraction": 1,
+        "resetTime": "2026-11-09T03:37:53Z",
+        "stale": false
+      },
+      "weeklyWindow": {
+        "fraction": 0.4993376135826111,
+        "resetTime": "2026-11-12T16:11:42Z",
+        "stale": false
+      },
+      "stale": true
+    },
+    {
+      "provider": "anthropic-direct",
+      "source": "direct",
+      "status": "unavailable",
+      "rollingWindow": null,
+      "weeklyWindow": null,
+      "stale": false
+    }
+  ],
+  "noDeploymentThisPass": true,
+  "reviewVerdicts": {
+    "advisor": "Harness reviewer passed; root extra provenance test1failed, correction required",
+    "reporting": "Require production turn/nonce binding before release",
+    "headless": "Default-off/route/TOCTOU/previous exact authorization corrections before activation"
+  },
+  "rootAdvisorCounterexample": "Current unverified evidence plus Build failed. Tests pending. is asserted as testing complete",
+  "reviewWorkersRetiredIdle": true
+}

@@ -66,5 +66,19 @@
     "No live source changed or accepted original cost job reopened",
     "Proposed repairs require separately confirmed bounded implementation scope"
   ],
-  "nextOwner": "Codex records verification; Gera may confirm one bounded follow-up repair scope, not a repeat of original accepted job"
+  "nextOwner": "Codex records verification; Gera may confirm one bounded follow-up repair scope, not a repeat of original accepted job",
+  "resolution": {
+    "outcome": "verified",
+    "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/cost-verification-independent-review.json",
+    "requirements": [
+      "All nine native findings retained with exact historical bindings and deduplicated into testable cases",
+      "Check current code and reproduce alleged defects before classifying them as confirmed; preserve false-positive evidence",
+      "Include earlier recreated-log cache and coverage-wording observations without treating private preflight as native acceptance",
+      "Return one bounded repair recommendation with actual reproduction evidence; no live mutation or original-job reopen"
+    ],
+    "at": "2026-11-08T23:32:36.433Z",
+    "actor": "local-operator",
+    "jobId": "finding:1accfa18-853b-42e5-8a9b-f24375d50d3e:r1"
+  },
+  "findingState": "resolved"
 }
