@@ -59,7 +59,7 @@ it('retires the Sonnet "Push branch" card after the branch was pushed outside th
   expect(JSON.stringify(f.deliveries.list())).toBe(delivery)
   const before = JSON.stringify(f.inbox.list()); f.reconcile(); expect(JSON.stringify(f.inbox.list())).toBe(before)
   const context = adviceContext(undefined, undefined, f.progress.current('worker-sonnet-quality'))
-  expect(context).toContain('EXTERNAL PROGRESS'); expect(context).toContain('branch_pushed is already done'); expect(context).toContain('52af0dfd320b')
+  expect(context).toContain('EXTERNAL PROGRESS'); expect(context).toContain('latest branch_pushed outcome'); expect(context).toContain('52af0dfd320b')
   expect(context).toContain('not authority to execute, publish, merge, deploy or accept'); expect(context).toContain('"authority":"none"')
   expect(adviceContext(undefined, undefined, undefined)).not.toContain('EXTERNAL PROGRESS')
 })
@@ -81,7 +81,7 @@ it('folds branch-pushed, PR-opened, checks and review progress, ignoring duplica
   // Late older push report: kept as history, never regresses the stage.
   p.observe(pushed(), provenance, T0 + 3100)
   expect(p.current('worker-sonnet-quality')).toMatchObject({ kind: 'pr_opened', observations: 2, revision: first.observation.seq })
-  const dup = p.observe(open({ evidence: 'repeated', observedAt: iso(9000) }), provenance, T0 + 4000)
+  const dup = p.observe(open(), provenance, T0 + 4000)
   expect(dup).toMatchObject({ duplicate: true }); expect(dup.observation.seq).toBe(first.observation.seq); expect(p.history('sonnet-quality')).toHaveLength(2)
   p.observe(pushed({ kind: 'checks', pr: 77, outcome: 'pending', observedAt: iso(3000) }), provenance, T0 + 5000)
   expect(p.current('sonnet-quality')).toMatchObject({ kind: 'checks', outcome: 'pending' })
@@ -135,4 +135,32 @@ it('does not let progress reopen or retire work covered by an accepted delivery,
   // Genuinely newer outside progress after acceptance is still plain data: the delivery stays accepted and unchanged.
   f.progress.observe(open({ observedAt: new Date(at + 60_000).toISOString() }), provenance, at + 90_000); f.reconcile()
   expect(f.deliveries.get('feature')).toEqual(accepted)
+})
+
+it('a later failed check blocks prior review readiness and a later rerun remains observable', () => {
+  const p = fixture().progress
+  p.observe(pushed({ kind: 'review', pr: 77, outcome: 'passed', observedAt: iso(3000) }), provenance)
+  p.observe(pushed({ kind: 'checks', pr: 77, outcome: 'failed', observedAt: iso(4000) }), provenance)
+  expect(p.current('sonnet-quality')).toMatchObject({ kind: 'checks', outcome: 'failed' })
+  expect(adviceContext(undefined, undefined, p.current('sonnet-quality'))).toContain('not a successful completion')
+  const rerun = p.observe(pushed({ kind: 'checks', pr: 77, outcome: 'passed', observedAt: iso(5000) }), provenance)
+  expect(rerun.duplicate).toBe(false)
+  p.observe(pushed({ kind: 'checks', pr: 77, outcome: 'failed', observedAt: iso(6000), evidence: 'new failed run' }), provenance)
+  expect(p.current('sonnet-quality')).toMatchObject({ kind: 'checks', outcome: 'failed' })
+})
+
+it('a late older head cannot replace newer facts recorded on the current head', () => {
+  const p = fixture().progress
+  p.observe(pushed({ observedAt: iso(1000) }), provenance)
+  p.observe(open({ observedAt: iso(9000) }), provenance)
+  p.observe(pushed({ commit: MOVED, observedAt: iso(5000) }), provenance)
+  expect(p.current('sonnet-quality')).toMatchObject({ commit: PUSHED, kind: 'pr_opened' })
+})
+
+it('does not retire a recommendation that explicitly says not to repeat a completed action', () => {
+  const f = fixture()
+  const item = f.advice(T0 + 1000, 'worker-sonnet-quality', [
+    { ...push[0]!, label: 'Do not push again; inspect the diff', prompt: 'Do not push again. Inspect the current diff.' }, push[1]!])
+  f.progress.observe(pushed(), provenance, T0 + 2000); f.reconcile()
+  expect(f.inbox.get(item.id)?.status).toBe('pending')
 })

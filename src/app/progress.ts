@@ -34,6 +34,7 @@ export function remainingStage(kind: ProgressKind, outcome?: string): string {
   if (kind === 'branch_pushed') return 'Open an exact-base pull request, then exact-head checks and source review'
   if (kind === 'pr_opened') return 'Exact-head checks, then source review'
   if (kind === 'checks') return outcome === 'passed' ? 'Source review' : 'Fix or rerun the exact-head checks, then source review'
+  if (kind === 'review' && outcome && outcome !== 'passed') return 'Resolve the reported source review findings before release'
   return 'Release operator confirmation and acceptance; this observation grants neither'
 }
 
@@ -46,7 +47,7 @@ export class ProgressStore {
   /** Idempotent: an identical fact is returned unchanged. Out-of-order or older facts are kept as history without regressing current progress. */
   observe(raw: ProgressInput, provenance: ProgressProvenance, now = Date.now()): { observation: ProgressObservation; duplicate: boolean } {
     const input = ProgressObservationSchema.parse(raw)
-    const key = [input.ticketId, input.kind, input.repository, input.branch, input.commit, input.pr ?? '', input.outcome ?? ''].join('|')
+    const key = JSON.stringify([input.ticketId, input.kind, input.repository, input.branch, input.commit, input.pr, input.outcome, input.jobId, input.observedAt, input.evidence, input.owner])
     const existing = this.db.prepare('SELECT seq, value FROM progress_observation WHERE dedup_key=?').get(key)
     if (existing) return { observation: { ...JSON.parse(String(existing.value)), seq: Number(existing.seq) }, duplicate: true }
     const { observedAt, ...rest } = input
@@ -62,7 +63,7 @@ export class ProgressStore {
   current(ticketId: string): ProgressView | undefined { return foldProgress(this.history(ticketId)) }
 }
 
-/** A newer head replaces an older one; on the same head the furthest stage wins, so late or repeated reports never regress it. */
+/** A newer-observed head replaces an older one; positive progress advances while newer failed/pending checks invalidate readiness. */
 export function foldProgress(history: readonly ProgressObservation[]): ProgressView | undefined {
   let state: ProgressView | undefined, headAt = 0
   const old = new Set<string>()
@@ -78,7 +79,10 @@ export function foldProgress(history: readonly ProgressObservation[]): ProgressV
       if (state.commit !== o.commit) old.add(state.commit)
       old.delete(o.commit); state = { ...fields, observations: count, supersededCommits: [...old] }; headAt = o.observedAt; continue
     }
-    const further = RANK[o.kind] > RANK[state.kind] || RANK[o.kind] === RANK[state.kind] && o.observedAt > state.observedAt
+    headAt = Math.max(headAt, o.observedAt)
+    // A newer failure/pending result overrides an earlier positive review; later reruns remain distinct facts.
+    const blocking = (o.kind === 'checks' || o.kind === 'review') && o.outcome !== undefined && o.outcome !== 'passed' && o.observedAt >= state.observedAt
+    const further = blocking || RANK[o.kind] > RANK[state.kind] && o.observedAt >= state.observedAt || RANK[o.kind] === RANK[state.kind] && o.observedAt >= state.observedAt
     state = further ? { ...fields, observations: count, supersededCommits: state.supersededCommits } : { ...state, observations: count }
   }
   return state

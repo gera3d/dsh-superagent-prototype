@@ -751,3 +751,7 @@ Point `DSH_HOME` at a temporary directory and create a new profile there. Copy t
 
 - Trust: which Trigger fields are trusted, such as the Source's actor and Thread membership, and which are not, such as the body and quotes.
 - Deployment isolation: the agent's profile on its own pinned DeepSeek Harness installation, so upgrading DeepSeek Harness elsewhere does not break it.
+
+### Local outside-progress receipts
+
+`scripts/progress-observe.ts` previews a strict JSON receipt with `--preview --input FILE`, then records it only with an existing absolute `--database`, `--input`, explicit `--reference` and exact `--expected-hash`. It validates ticket/job association and writes the same append-only ProgressStore used by the management routes. It does not execute work or change acceptance/publication/Send. Normal inbox/context reads reconcile stale advice. Duplicate identical receipts are idempotent; a genuinely later rerun is a new observation. New failed/pending checks override older readiness.

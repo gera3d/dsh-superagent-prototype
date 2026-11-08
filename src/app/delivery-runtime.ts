@@ -75,14 +75,15 @@ function retireSupersededProgress(inbox: DecisionInbox, progress: ProgressStore,
     if (!current) continue
     const linked = deliveries.filter(delivery => delivery.workers.some(worker => workerTicket(worker) === ticketId))
     if (linked.some(delivery => delivery.state === 'accepted' && delivery.acceptance && current.observedAt <= Date.parse(delivery.acceptance.at))) continue
-    const rank = { branch_pushed: 1, pr_opened: 2, checks: current.outcome === 'passed' ? 3 : 2, review: 4 }[current.kind]
+    const rank = { branch_pushed: 1, pr_opened: 2, checks: current.outcome === 'passed' ? 3 : 2, review: current.outcome && current.outcome !== 'passed' ? 3 : 4 }[current.kind]
     for (const item of inbox.list()) {
       if (item.status !== 'pending' || !item.sessionId || workerTicket(item.sessionId) !== ticketId || !Number.isFinite(item.createdAt) || item.createdAt > current.changedAt
         || !item.id.startsWith('chat-') && !item.canonical || item.actionMode && item.actionMode !== 'stage_response' || item.staging?.candidateSubmission) continue
       const picked = item.choices.find(choice => choice.id === item.recommendation.recommendedValue)
       const label = picked?.label ?? ''
       const text = `${item.question}\n${item.context}\n${item.choices.map(c => `${c.label}\n${c.prompt ?? ''}`).join('\n')}`
-      const step = STEP_ADVICE.find(([r, pattern]) => r <= rank && pattern.test(label))
+      const negated = /\b(?:do not|don['’]t|never|without|no need to)\b/i.test(label)
+      const step = !negated && STEP_ADVICE.find(([r, pattern]) => r <= rank && pattern.test(label))
       const head = current.supersededCommits.find(commit => text.includes(commit.slice(0, 7)))
       if (step || head) inbox.invalidate(item, step
         ? `Progress ${current.kind} was observed at ${current.branch}@${current.commit.slice(0, 12)} (revision ${current.revision}); this step is done. Remaining: ${current.remaining}. Earlier advice is retained as history, not authority.`
