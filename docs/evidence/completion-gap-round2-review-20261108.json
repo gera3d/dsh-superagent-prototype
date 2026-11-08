@@ -1,0 +1,32 @@
+{
+  "backendHead": "710420c9efae3751a58d85eb25b164c86723bd05",
+  "pluginHead": "0411e845ad73fa7de4ebf1030cc6cc56c92443ea",
+  "cases": [
+    {
+      "name": "Full real native close-out turn",
+      "expectedClosed": true,
+      "backendClosed": false,
+      "pluginClosed": false
+    },
+    {
+      "name": "Explicit negation",
+      "expectedClosed": false,
+      "backendClosed": false,
+      "pluginClosed": false
+    },
+    {
+      "name": "Close notes then continue implementation",
+      "expectedClosed": false,
+      "backendClosed": false,
+      "pluginClosed": false
+    }
+  ],
+  "diagnosis": {
+    "hasCloseoutIntent": true,
+    "hasContinuingIntent": false,
+    "assistantConfirmsClose": false,
+    "note": "Full actual assistant response includes conditional future capabilities statement; worker positive fixture omitted this paragraph"
+  },
+  "verdict": "Changes required; full real native reproduction still fails; no merge/deploy",
+  "handoff": "Original assignment ended ready; preserve finding/history and use native bounded review/retry, currently blocked by Mac lock"
+}
