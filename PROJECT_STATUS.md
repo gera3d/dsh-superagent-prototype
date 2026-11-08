@@ -1,6 +1,10 @@
 # DeepSeek Harness project status
 
-Updated November 7, 2026, 6:12 PM PST. Owner: Codex. Check this record and live evidence before claiming completion.
+Updated November 7, 2026, 7:14 PM PST. Owner: Codex. Check this record and live evidence before claiming completion.
+
+## Operational check — GitHub quota, November 7, 7:13 PM PST
+
+The completed release remains accepted: all six findings are resolved, related specialist decisions remain stale/resolved, intake is resumed and there are no running or queued workers. Nine local health components are ready, but **GitHub polling currently reports an API rate-limit error** (three consecutive failed polls). The configured account's core allowance is 0 of 5,000 remaining; GitHub reports reset at **7:20:30 PM PST** (03:20:30 UTC). The existing source poller owns its normal automatic retry after reset. No worker was reopened, no extra job or retry was sent, and provider/settings/credentials were unchanged. No user action is needed. [Verified snapshot](docs/evidence/coordination-github-rate-limit-20261108T0313Z.json).
 
 ## Current goal
 
@@ -25,7 +29,7 @@ Backend PRs [55](https://github.com/gera3d/dsh-superagent-prototype/pull/55), [5
 
 ## Qualification and current next owner
 
-The preceding integrated source passed **2,275 tests, two skipped**. Latest evaluator/HTTP/routing regressions: **55 passed**, types/build pass. Final plugin: **17 real-backend contract, 24 host/parser, 201 UI/behavior tests**, types/build pass. Final paired full suite passed **2,279 tests, two skipped, zero failures** on frozen source with the exact corrected companion. Fresh native 72/18/10 scoring and highest-choice stage → Send → submission-proof completed while historical recovery remained pending. Backups and postimage hashes are retained locally. Intake has resumed; no workers or queued jobs. Both specialist findings are now accepted and all six findings for this scope are resolved. All ten service components, including GitHub, report ready. No user action is required for these completed tracks; seven unrelated inbox decisions remain visible.
+The preceding integrated source passed **2,275 tests, two skipped**. Latest evaluator/HTTP/routing regressions: **55 passed**, types/build pass. Final plugin: **17 real-backend contract, 24 host/parser, 201 UI/behavior tests**, types/build pass. Final paired full suite passed **2,279 tests, two skipped, zero failures** on frozen source with the exact corrected companion. Fresh native 72/18/10 scoring and highest-choice stage → Send → submission-proof completed while historical recovery remained pending. Backups and postimage hashes are retained locally. Intake has resumed; no workers or queued jobs. Both specialist findings are now accepted and all six findings for this scope are resolved. All ten service components, including GitHub, were ready at release acceptance; the current operational check above records the later quota limit. No user action is required for these completed tracks; seven unrelated inbox decisions remain visible.
 
 ## Limits preserved
 

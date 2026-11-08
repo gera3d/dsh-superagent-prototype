@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-11-08T03:13:00Z",
+  "releaseState": "all six approved findings remain resolved",
+  "workerLoad": {
+    "running": 0,
+    "queued": 0
+  },
+  "health": {
+    "localReadyComponents": 9,
+    "github": "error",
+    "reason": "API rate limit exceeded; three consecutive failed polls"
+  },
+  "githubCore": {
+    "limit": 5000,
+    "remaining": 0,
+    "used": 5000,
+    "resetAt": "2026-11-08T03:20:30+00:00"
+  },
+  "owner": "existing GitHub source poller; retry at its normal cadence after reset",
+  "actions": "read-only rate-limit check; no worker wake, retries, settings, credentials or scope changes",
+  "openAI": "conserved"
+}
