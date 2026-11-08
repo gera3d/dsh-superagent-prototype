@@ -15,6 +15,8 @@ import { DecisionInboxItem, DecisionStageRequest, DecisionSubmissionRequest, Dec
 import { DecisionInbox, InboxError, decisionQuestion, registerDecisionCapture, ticketDecisions, submitDecision, stageDecision, restartDecision } from './decision-inbox.ts'
 import { parseInlineAlternatives } from '../client/inline-alternatives.ts'
 import type { Ticket } from '../core/index.ts'
+import { SettingsSchema } from '../policy.ts'
+import { KV } from '../kv.ts'
 
 /** Retire old heuristic false positives without resetting capture cursors or changing recorded choices. */
 export function revalidateCapturedDecisions(db: DatabaseSync, inbox: DecisionInbox): number {
@@ -31,7 +33,7 @@ export function revalidateCapturedDecisions(db: DatabaseSync, inbox: DecisionInb
 }
 
 export const name = 'dsh-decision-inbox'
-export const inject = ['webServer', 'sessionPersistence']
+export const inject = { required: ['webServer', 'sessionPersistence'], optional: ['tools'] }
 export function apply(ctx: Context, config: { database: string }): void {
   if (ctx.webServer.host !== '127.0.0.1') throw new Error('Decision inbox requires a loopback server')
   if (!config?.database || !isAbsolute(config.database) || !existsSync(config.database)) throw new Error('database must name an existing absolute orchestrator.sqlite file')
@@ -49,6 +51,14 @@ export function apply(ctx: Context, config: { database: string }): void {
       }
     }
     const inbox = new DecisionInbox(db, item => registerResolution(item.id))
+    // Read the same versioned settings without opening/migrating a second runtime Store.
+    const adviceSettings = () => {
+      if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='kv'").get()) return undefined
+      const pointer = db.prepare('SELECT value FROM kv WHERE key=?').get(KV.settings.revision)
+      if (!pointer) return undefined
+      const version = db.prepare('SELECT value FROM kv WHERE key=?').get(KV.settings.version(JSON.parse(String(pointer.value))))
+      return version ? SettingsSchema.parse(JSON.parse(String(version.value)).settings) : undefined
+    }
     const publication = loadLifecyclePublication(dirname(config.database))
     const deliveries = new DeliveryStore(db)
     const findings = new FindingStore(db)
@@ -93,7 +103,7 @@ export function apply(ctx: Context, config: { database: string }): void {
         let body: unknown
         try { body = JSON.parse(Buffer.concat(chunks).toString('utf8')) } catch { throw new InboxError(400, 'The request body is not JSON') }
         if (canonical) {
-          const result = await canonicalOperation(ctx, inbox, canonical[1]!, body)
+          const result = await canonicalOperation(ctx, inbox, canonical[1]!, body, adviceSettings())
           currency()
           send(200, { ...result, item: projectedGet(result.item.id) ?? result.item }); return
         }

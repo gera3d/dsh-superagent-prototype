@@ -34,6 +34,12 @@ export function discoverNativeTools(tools: { schemas?: () => readonly { name: st
   catch { return { toolNames: [], at: now } }
 }
 
+/** Optional services may be absent from an independently injected provider; absence must fail closed, not abort publication. */
+export function discoverContextTools(ctx: Pick<Context, 'tools'>): NativeDiscovery {
+  try { return discoverNativeTools(ctx.tools) }
+  catch { return { toolNames: [], at: Date.now() } }
+}
+
 /** Inheritance only: the profile names a role; the existing routing (parked providers, conserve mode) decides. */
 export function specialistRoute(settings: Settings, profile: SpecialistProfile): RoleModel | null {
   return profile.modelPolicy.inherit === 'helper' ? helperRoute(settings) : defaultRoute(settings, profile.modelPolicy.inherit === 'eval' ? 'eval' : 'executor')

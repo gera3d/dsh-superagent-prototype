@@ -12,7 +12,7 @@ import { configuredDecisionReply } from './decision-evaluator.ts'
 import { evaluateDecisionWithFallback } from './decision-ranker.ts'
 import { evaluateWithCharacter } from './character-evaluator.ts'
 import { HELPER_BODY_MAX_BYTES, HelperDigestSchema } from './routes/helper.ts'
-import { attributionFor, discoverNativeTools, SpecialistAttributionSchema, suggestWithSpecialist } from './specialist-advice.ts'
+import { attributionFor, discoverContextTools, SpecialistAttributionSchema, suggestWithSpecialist } from './specialist-advice.ts'
 import { DEFAULT_SENIOR_DEVELOPER_CHARACTER } from '../core/character.ts'
 import { DecisionInbox, InboxError, decisionQuestion, durableDecisionEvents, registerDecisionCapture, ticketDecisions, submitDecision, stageDecision, restartDecision } from './decision-inbox.ts'
 import { sourceSkills } from './context.ts'
@@ -228,7 +228,7 @@ export async function canonicalOperation(ctx: Context, inbox: DecisionInbox, ope
     const published = inbox.publishCanonical(input, await durableDecisionEvents(ctx, input.sessionId))
     // Attribution only, on the SAME record, derived from the registry. A staged/closed/invalidated record refuses it and the publication stands.
     const profiles = seedProfiles(settings?.characters.characters.find(character => character.id === DEFAULT_SENIOR_DEVELOPER_CHARACTER.id))
-    const attribution = specialist ? attributionFor(specialist, profiles, discoverNativeTools(ctx.tools)) : undefined
+    const attribution = specialist ? attributionFor(specialist, profiles, discoverContextTools(ctx)) : undefined
     if (!attribution || published.item.character) return published
     try { return { ...published, item: inbox.attributeCharacter(published.item.id, attribution) } }
     catch (error) { if (error instanceof InboxError) return published; throw error }
