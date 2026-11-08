@@ -30,6 +30,12 @@ Limits: English heuristic closeout; quoted/negated requests, real work/blockers/
 
 Important reporting correction: worker summaries can concatenate early progress and a final handoff. Read the complete report and latest status, not only its first few hundred characters. Root initially described the allowance task as unfinished after reading opening progress notes; the full report actually contains a candidate and evidence. That interpretation is corrected here. All three new candidate reports still require independent review.
 
+## Workstream HUD / Decisions ownership audit
+
+Native HUD currently shows9 waiting threads and2 working. Raw shared inbox has11 pending rows; the two active findings are correctly separated into Working by the HUD. The views share the records, but **Needs you is not yet a reliable user-action filter**. Among the9 waiting: four blocked findings await Codex review (headless, allowance, reporting and cost verification); three historical unbound deliveries still request scope/target details and need exact evidence reconciliation; an ended cost-verification chat retains generic continuation advice; one ordinary explanation/verification conversation is separate from project release. No new product choice requiring Gera was established by this audit. No buttons were clicked or work resent.
+
+The original closed Cloudflare decision is not pending after the deployed completion correction. Do not tell the user every old card is stale, every card is safe to execute, or that all delivery records are reconciled because six findings were accepted. The historical unbound delivery rows for subscription routing, finding concurrency and evidence recording need mapping to their actual released source/evidence before retirement. Review-needed work owned by Codex must not be presented as another permission request for Gera. [Native/shared-record audit](docs/evidence/hud-decision-ownership-audit.json).
+
 ## Historical checkpoints
 
 ## Three current workers admitted; completion pair merged, not installed

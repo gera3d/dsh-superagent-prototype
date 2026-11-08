@@ -1,0 +1,139 @@
+{
+  "at": "2026-11-08T19:09:09.581057+00:00",
+  "rawPending": 11,
+  "nativeHudWaitingThreads": 9,
+  "nativeHudWorking": 2,
+  "cloudflareClosedDecisionPending": false,
+  "assessment": "Shared list projection agrees; owner/relevance labels are not yet a curated user-action queue. Four blocked findings belong to root review, three old unbound deliveries require evidence reconciliation, one ended verification chat still offers continuation, one ordinary explanation chat is separate from project release. Two active finding rows are pending in raw inbox but filtered as working by HUD. No decisions executed in this audit.",
+  "pending": [
+    {
+      "id": "chat-917a1a95b4ca62ade3ff9ab51f5f4511",
+      "title": "Conversation next steps",
+      "mode": "stage_response",
+      "findingState": null,
+      "deliveryState": null,
+      "owner": null,
+      "sessionId": "worker-775c713393968c216c6cce864c65727a",
+      "sourceTurn": 3,
+      "choices": [
+        "Audit report and repro evidence",
+        "Draft bounded repair proposal",
+        "Run existing suite as baseline"
+      ]
+    },
+    {
+      "id": "chat-715d4bb2be0769a9aa7dbbe99f33c06d",
+      "title": "Explain rollback in exactly five words. Do not use tools or start work.",
+      "mode": "stage_response",
+      "findingState": null,
+      "deliveryState": null,
+      "owner": null,
+      "sessionId": "session-7d897a3c-fe7a-4231-b7ff-dd7b48cc5141",
+      "sourceTurn": 3,
+      "choices": [
+        "Draft explanation",
+        "Focus on risk",
+        "Check constraints"
+      ]
+    },
+    {
+      "id": "delivery-auto-1aa9568a8df574db0cef146a58004c4b",
+      "title": "Add temporary subscription conservation and restore-priority settings",
+      "mode": "feature_delivery",
+      "findingState": null,
+      "deliveryState": "blocked",
+      "owner": "worker:1aa9568a8df574db0cef146a58004c4b",
+      "sessionId": "worker-1aa9568a8df574db0cef146a58004c4b",
+      "sourceTurn": null,
+      "choices": []
+    },
+    {
+      "id": "delivery-auto-71dc25902ccec92c851634c58cf365f0",
+      "title": "Let operators record verified finding evidence through the native card",
+      "mode": "feature_delivery",
+      "findingState": null,
+      "deliveryState": "blocked",
+      "owner": "worker:71dc25902ccec92c851634c58cf365f0",
+      "sessionId": "worker-71dc25902ccec92c851634c58cf365f0",
+      "sourceTurn": null,
+      "choices": []
+    },
+    {
+      "id": "delivery-auto-d65f3131a9ae77d9de524535e4a01a26",
+      "title": "Let independent confirmed findings use configured worker capacity",
+      "mode": "feature_delivery",
+      "findingState": null,
+      "deliveryState": "blocked",
+      "owner": "worker:d65f3131a9ae77d9de524535e4a01a26",
+      "sessionId": "worker-d65f3131a9ae77d9de524535e4a01a26",
+      "sourceTurn": null,
+      "choices": []
+    },
+    {
+      "id": "finding-a338ad44-893d-4ebf-b8ff-aa0c3067e384",
+      "title": "Advance already-approved Harness work while the Mac is locked",
+      "mode": "finding_triage",
+      "findingState": "blocked",
+      "deliveryState": null,
+      "owner": "Harness implementation worker; Codex coordinator and reviewer",
+      "sessionId": null,
+      "sourceTurn": null,
+      "choices": []
+    },
+    {
+      "id": "finding-12779824-b82e-484d-9502-d2150ba58aa1",
+      "title": "Recommend the actual review handoff for completed finding work",
+      "mode": "finding_triage",
+      "findingState": "running",
+      "deliveryState": null,
+      "owner": "Harness implementation worker; Codex reviewer and release coordinator",
+      "sessionId": null,
+      "sourceTurn": null,
+      "choices": []
+    },
+    {
+      "id": "finding-f9335259-b51c-4e97-9750-3923b7e2138b",
+      "title": "Show Google and Anthropic remaining allowance beside chat",
+      "mode": "finding_triage",
+      "findingState": "blocked",
+      "deliveryState": null,
+      "owner": "Harness implementation worker; Codex review and release coordinator",
+      "sessionId": null,
+      "sourceTurn": null,
+      "choices": []
+    },
+    {
+      "id": "finding-51f309ca-d396-4983-a55d-ef4432a8572f",
+      "title": "Workers on antigravity cannot file ready reports",
+      "mode": "finding_triage",
+      "findingState": "blocked",
+      "deliveryState": null,
+      "owner": "dsh-superagent executor/runtime",
+      "sessionId": null,
+      "sourceTurn": null,
+      "choices": []
+    },
+    {
+      "id": "finding-1accfa18-853b-42e5-8a9b-f24375d50d3e",
+      "title": "Verify cost-summary review findings against the current implementation",
+      "mode": "finding_triage",
+      "findingState": "blocked",
+      "deliveryState": null,
+      "owner": "Harness verification worker; Codex review coordinator",
+      "sessionId": null,
+      "sourceTurn": null,
+      "choices": []
+    },
+    {
+      "id": "finding-a1707f3a-a020-4b8b-8374-50887c5e3265",
+      "title": "Investigate the publication confirmation that stopped before enqueue",
+      "mode": "finding_triage",
+      "findingState": "running",
+      "deliveryState": null,
+      "owner": "Harness verification worker; Codex review coordinator",
+      "sessionId": null,
+      "sourceTurn": null,
+      "choices": []
+    }
+  ]
+}
