@@ -22,6 +22,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-chat/client'
 import { PluginConfig, usePageForm } from './deployment.tsx'
 import { BrandLogoMark, BrandWordmark } from './branding-mark.tsx'
+import ALLOWANCE_STYLES from './client.css?raw'
 import { AllowanceHeaderBadge, AllowanceSidebarBody, ALLOWANCE_TAB_ID, ALLOWANCE_TAB_KIND, AllowanceIcon, type AllowanceClientContext } from './account-allowance.tsx'
 import { en, zh } from './locales.ts'
 import type { T } from './text.ts'
@@ -86,7 +87,7 @@ export function apply(ctx: ClientContext): void {
   // Compact account allowance badge beside chat in conversation session header
   ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
     name: 'conversation.session.header.actions', id: 'dsh-superagent.account-allowance', order: 15,
-  }, () => <AllowanceHeaderBadge ctx={ctx as AllowanceClientContext} t={t} />))
+  }, () => <><style>{ALLOWANCE_STYLES}</style><AllowanceHeaderBadge ctx={ctx as AllowanceClientContext} t={t} /></>))
   // Detailed allowance pane registered in the documented Right Sidebar slot when available
   if (typeof (ctx as any).inject === 'function') {
     (ctx as any).inject(['sidebarRightTabs'], (scope: ClientContext) => {
