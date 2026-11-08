@@ -2,6 +2,14 @@
 
 Updated November 8, 2026, 7:27 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
 
+## Current reconciliation — completion claims must remain bounded
+
+Live recheck on November 8 morning: all ten health components, including GitHub, report ready. Two jobs are dispatched, zero queued, but both native projections still show turn 1/step 1 without a first token or completed step. Do not label this proven productive execution. Both are selected on Google Flash; broad Google integration remains unqualified. Keep OpenAI conserved. Investigate a verified provider stall within the existing assignments before duplicating work.
+
+The canonical findings also contain two older items awaiting decision, with no dispatched job: **Verify cost-summary review findings against the current implementation**, and **Investigate the publication confirmation that stopped before enqueue**. Their relevance has not yet been reconciled against later releases; do not claim they are resolved, dispatch them blindly, or imply the active two repairs cover them. They need bounded triage against current evidence.
+
+Native System Settings now visibly shows **Require password after screen saver begins or display is turned off: Never**, following explicit user confirmation and the user's password authorization. This confirms the setting saved, not a guarantee against manual lock, logout, restart or sleep. The earlier four-track release remains installed and its six findings resolved; the subsequent correction and unattended-coordination implementation remain unverified.
+
 ## Screen-independent coordination repair — dispatched
 
 The user requested a solution to overnight progress depending on an unlocked Mac. Codex inspected the actual HTTP finding authorization and remote MCP typed-action boundary, recorded a bounded finding, then used native **Fix now**. The canonical finding reports running. Harness owns an isolated candidate; the completion-advice repair remains separate and active. No claim of a deployed solution.
