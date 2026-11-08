@@ -1,10 +1,12 @@
 # DeepSeek Harness project status
 
-Updated November 7, 2026, 9:13 PM PST. Owner: Codex. Check this record and live evidence before claiming completion.
+Updated November 7, 2026, 10:16 PM PST. Owner: Codex. Check this record and live evidence before claiming completion.
 
-## Operational check — services ready, correction awaiting worker revision
+## Operational check — correction still held, GitHub quota waiting
 
-Verified November 7, 2026, 9:13 PM PST: all ten service components are ready, intake is resumed, and no workers are currently running or queued. The original six release findings remain accepted. The completion correction below has an open/idle assignment with checkpointed candidate patches; a running finding label is not current worker activity. The earlier GitHub quota interruption remains recovered. No provider, credentials, permissions or spending settings changed.
+Verified November 7, 2026, 10:16 PM PST: the same correction worker remains idle with the previously reviewed candidate; no revised turn or patch is reported. No workers are running or queued. The Mac is still locked, so the recorded review has **not** been sent through the native worker interface; the earlier unlock request remains the only required user action for that handoff. No duplicate continuation, new job, source edit, deployment, model/settings or credential change was made.
+
+Nine local health components report ready. GitHub polling has hit the previously observed hourly core API limit again: 0 of 5,000 remaining, reset reported for **10:21 PM PST**. The existing source poller owns its normal automatic retry. This does not reopen accepted release work or authorize a separate implementation task. [Current bounded-pass snapshot](docs/evidence/coordination-completion-held-20261108T0615Z.json).
 
 ## Open correction — recommendations after explicit completion
 

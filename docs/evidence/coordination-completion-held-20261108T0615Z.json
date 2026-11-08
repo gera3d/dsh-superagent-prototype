@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-11-07T22:16:33.374680-08:00",
+  "completionCorrection": "same reviewed candidate; changes required; native continuation still unsent because Mac remains locked",
+  "workerActivity": {
+    "running": 0,
+    "queued": 0,
+    "lastCompletedTurn": 1
+  },
+  "github": {
+    "state": "error",
+    "reason": "core API rate limit exceeded",
+    "remaining": 0,
+    "limit": 5000,
+    "resetAt": "2026-11-07T22:21:33-08:00"
+  },
+  "actions": "bounded read-only verification; no worker resend, new job, configuration, credentials, provider change or deployment",
+  "nextOwner": "Codex sends the already recorded review to the same worker once native UI is available; existing GitHub poller retries normally after reset"
+}
