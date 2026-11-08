@@ -1,9 +1,9 @@
 /** Server-side validation of the specialist registry (zod stays out of the client bundle). */
 import { z } from 'zod'
 import type { CharacterConfig } from './character.ts'
-import { ACTIVITY_STATES, CAPABILITY_IDS, type CapabilityId, type KnowledgeRef, type SpecialistProfile } from './specialist-profile.ts'
+import { ACTIVITY_STATES, CAPABILITY_IDS, matchCharacterId, type CapabilityId, type KnowledgeRef, type SpecialistProfile } from './specialist-profile.ts'
 
-const Id = z.string().regex(/^[a-z][a-z0-9_]{1,63}$/)
+const Id = z.string().regex(/^[a-z][a-z0-9_-]{1,63}$/)
 const Text = (max: number) => z.string().trim().min(1).max(max)
 
 export const KnowledgeRefSchema = z.object({
@@ -41,10 +41,10 @@ export function validateRegistry(profiles: readonly SpecialistProfile[], charact
     if (!parsed.success) { problems.push({ profileId: String(profile?.id), problem: parsed.error.issues[0]?.message ?? 'Invalid profile' }); continue }
     if (seen.has(profile.id)) problems.push({ profileId: profile.id, problem: 'Duplicate profile id' })
     seen.add(profile.id)
-    if (profile.characterId && !characters.some(character => character.id === profile.characterId))
+    if (profile.characterId && !characters.some(character => matchCharacterId(character.id, profile.characterId)))
       problems.push({ profileId: profile.id, problem: `Character ${profile.characterId} is not configured` })
     if (profile.characterId) {
-      const character = characters.find(item => item.id === profile.characterId)
+      const character = characters.find(item => matchCharacterId(item.id, profile.characterId))
       if (character && character.mode !== 'suggest_only') problems.push({ profileId: profile.id, problem: 'Linked character is not suggest_only; specialists never auto-push' })
     }
     const unpinned = profile.knowledge.find(ref => !/^[0-9a-f]{40}$/.test(ref.pin) && !/^v?\d+\.\d+/.test(ref.pin))

@@ -2,9 +2,11 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { z } from 'zod'
 import { UserError, type EngineForSettings } from '../core/index.ts'
-import { BrandingConfigSchema, CharactersConfigSchema, DecisionsConfigSchema, EvalConfigSchema, ExecutorConfigSchema, ModelsConfigSchema, PolicyConfigSchema, SettingsSchema, policyEffects, policyVersion }
+import { BrandingConfigSchema, CharactersConfigSchema, DEFAULT_CHARACTERS, DecisionsConfigSchema, EvalConfigSchema, ExecutorConfigSchema, ModelsConfigSchema, PolicyConfigSchema, SettingsSchema, policyEffects, policyVersion }
   from '../policy.ts'
-import type { Settings as SettingsValue, SettingsBlock, SettingsOrigin, SettingsSave } from '../policy.ts'
+import type { CharactersConfig, Settings as SettingsValue, SettingsBlock, SettingsOrigin, SettingsSave } from '../policy.ts'
+import { DEFAULT_SENIOR_DEVELOPER_CHARACTER, type CharacterConfig } from '../core/character.ts'
+import { matchCharacterId } from '../core/specialist-profile.ts'
 import type { SourceHost } from '../sources/host.ts'
 import type { HealthBoard, HealthEntry } from '../infra/health.ts'
 import type { SourceRegistry } from '../sources/registry.ts'
@@ -47,7 +49,51 @@ const BLOCKS: Record<'policy' | 'eval' | 'executor' | 'decisions' | 'models' | '
   },
   decisions: { parse: value => DecisionsConfigSchema.parse(value), merge: (settings, value) => ({ ...settings, decisions: value as SettingsValue['decisions'] }) },
   models: { parse: value => ModelsConfigSchema.parse(value), merge: (settings, value) => ({ ...settings, models: value as SettingsValue['models'] }) },
-  characters: { parse: value => CharactersConfigSchema.parse(value), merge: (settings, value) => ({ ...settings, characters: value as SettingsValue['characters'] }) },
+  characters: {
+    parse: value => CharactersConfigSchema.parse(value),
+    merge: (settings, value) => {
+      const parsed = { ...(value as SettingsValue['characters']) }
+      const activeItem = parsed.items?.find(i => i.id === parsed.activeCharacterId)
+      if (activeItem) {
+        const characters = [...parsed.characters]
+        const matchingIndex = characters.findIndex(c => matchCharacterId(c.id, activeItem.id))
+        if (matchingIndex >= 0) {
+          const current = characters[matchingIndex]!
+          characters[matchingIndex] = {
+            ...current,
+            name: activeItem.name,
+            specialty: activeItem.specialty,
+            brief: activeItem.brief,
+            enabled: activeItem.enabled,
+            inclinedTools: activeItem.tools,
+            mode: activeItem.mode === 'auto' ? 'auto_push' : 'suggest_only',
+          }
+          parsed.defaultCharacterId = current.id
+        } else {
+          characters.push({
+            id: activeItem.id.replaceAll('-', '_'),
+            name: activeItem.name,
+            specialty: activeItem.specialty,
+            brief: activeItem.brief,
+            standards: [
+              'Never deploy or merge without tests',
+              'Verify diffs against project rules',
+              'Reject hand-waving or incomplete fixes',
+              'Check edge cases and error handling',
+            ],
+            permissionToDisagree: true,
+            inclinedTools: activeItem.tools,
+            mode: activeItem.mode === 'auto' ? 'auto_push' : 'suggest_only',
+            apiKeyEnv: '',
+            enabled: activeItem.enabled,
+          })
+          parsed.defaultCharacterId = activeItem.id.replaceAll('-', '_')
+        }
+        parsed.characters = characters
+      }
+      return { ...settings, characters: parsed }
+    },
+  },
   branding: { parse: value => BrandingConfigSchema.parse(value), merge: (settings, value) => ({ ...settings, branding: value as SettingsValue['branding'] }) },
   source: {
     parse: (value, sources, id) => sources.validate(id, z.object({ enabled: z.boolean(), config: z.unknown() }).parse(value)),
@@ -292,4 +338,70 @@ export class Settings {
     const after = await kind.refreshLabels(this.host.sourceHost)
     return { added: Object.entries(after).filter(([key]) => !(key in before)).map(([, name]) => name).sort((a, b) => a.localeCompare(b)) }
   }
+}
+
+/**
+ * Resolves the single effective advisor character persona across the UI-backed items list and characters config.
+ * Prioritizes the active UI character, preserves editable fields, and ensures compatible fallback.
+ */
+export function effectiveAdvisorCharacter(settings?: { characters?: CharactersConfig } | null, characterId?: string): CharacterConfig {
+  const chars = settings?.characters
+  if (!chars) return DEFAULT_SENIOR_DEVELOPER_CHARACTER
+  const targetId = characterId ?? chars.activeCharacterId ?? chars.defaultCharacterId
+
+  const matchingConfig = chars.characters?.find(c => matchCharacterId(c.id, targetId))
+    ?? (matchCharacterId(targetId, DEFAULT_SENIOR_DEVELOPER_CHARACTER.id) ? chars.characters?.find(c => matchCharacterId(c.id, DEFAULT_SENIOR_DEVELOPER_CHARACTER.id)) : undefined)
+
+  const item = chars.items?.find(c => matchCharacterId(c.id, targetId))
+    ?? (!characterId && chars.activeCharacterId ? chars.items?.find(c => matchCharacterId(c.id, chars.activeCharacterId)) : undefined)
+
+  if (item) {
+    const defaultTemplate = DEFAULT_CHARACTERS.find(c => matchCharacterId(c.id, item.id))
+    const isDefaultItem = defaultTemplate
+      && item.name === defaultTemplate.name
+      && item.specialty === defaultTemplate.specialty
+      && (item.brief === defaultTemplate.brief || item.brief === DEFAULT_SENIOR_DEVELOPER_CHARACTER.brief)
+
+    const name = (!isDefaultItem || !matchingConfig?.name) ? item.name : matchingConfig.name
+    const specialty = (!isDefaultItem || !matchingConfig?.specialty) ? item.specialty : matchingConfig.specialty
+    const brief = (!isDefaultItem || !matchingConfig?.brief) ? item.brief : matchingConfig.brief
+    const enabled = item.enabled && (matchingConfig ? matchingConfig.enabled : true)
+
+    if (item.enabled || characterId) {
+      return {
+        id: item.id,
+        name,
+        specialty,
+        brief,
+        standards: matchingConfig?.standards ?? [
+          'Never deploy or merge without tests',
+          'Verify diffs against project rules',
+          'Reject hand-waving or incomplete fixes',
+          'Check edge cases and error handling',
+        ],
+        permissionToDisagree: matchingConfig?.permissionToDisagree ?? true,
+        inclinedTools: matchingConfig?.inclinedTools ?? item.tools,
+        mode: item.mode === 'auto' ? 'auto_push' : 'suggest_only',
+        apiKeyEnv: matchingConfig?.apiKeyEnv ?? '',
+        enabled,
+      }
+    }
+  }
+
+  if (matchingConfig) {
+    if (matchingConfig.enabled || characterId) {
+      return matchingConfig
+    }
+  }
+
+  const fallback = chars.characters?.find(c => c.id === chars.defaultCharacterId && c.enabled)
+    ?? chars.characters?.find(c => c.enabled)
+    ?? chars.items?.find(i => i.enabled)
+
+  if (fallback) {
+    if ('standards' in fallback) return fallback
+    return effectiveAdvisorCharacter(settings, fallback.id)
+  }
+
+  return DEFAULT_SENIOR_DEVELOPER_CHARACTER
 }
