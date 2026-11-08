@@ -1,0 +1,31 @@
+{
+  "checkedAt": "2026-11-07T23:12:36.752259-08:00",
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "candidateHeads": {
+    "repo": "b2653c2bb0f4b82ce069faa247fe7d2ad5575fe0",
+    "dsh-next-steps": "baa24529d115241ff205f1f55ea77ab268a83fb8"
+  },
+  "candidateDirty": {
+    "repo": "",
+    "dsh-next-steps": ""
+  },
+  "continuation": "not sent; native UI remains locked",
+  "nextOwner": "Codex after native UI unlock; preserve same worker/assignment",
+  "changes": "No implementation, test rerun, new worker, settings, credentials, spending, merge or deployment"
+}

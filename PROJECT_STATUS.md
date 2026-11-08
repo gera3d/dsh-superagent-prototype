@@ -1,12 +1,12 @@
 # DeepSeek Harness project status
 
-Updated November 7, 2026, 10:16 PM PST. Owner: Codex. Check this record and live evidence before claiming completion.
+Updated November 7, 2026, 11:12 PM PST. Owner: Codex. Check this record and live evidence before claiming completion.
 
-## Operational check — correction still held, GitHub quota waiting
+## Operational check — services recovered, native correction still held
 
-Verified November 7, 2026, 10:16 PM PST: the same correction worker remains idle with the previously reviewed candidate; no revised turn or patch is reported. No workers are running or queued. The Mac is still locked, so the recorded review has **not** been sent through the native worker interface; the earlier unlock request remains the only required user action for that handoff. No duplicate continuation, new job, source edit, deployment, model/settings or credential change was made.
+Verified November 7, 2026, 11:12 PM PST: all ten service components, including GitHub polling, report ready again after the prior quota reset. No workers are running or queued. Both reviewed candidate heads remain unchanged with clean worktrees; there is no revised worker output. The Mac remains locked, so the previously recorded correction has **not** been sent through the native interface. The original worker/assignment is preserved and the existing unlock request remains pending; no repeated continuation or duplicate job was created. [Bounded read-only check](docs/evidence/coordination-completion-held-20261108T0711Z.json).
 
-Nine local health components report ready. GitHub polling has hit the previously observed hourly core API limit again: 0 of 5,000 remaining, reset reported for **10:21 PM PST**. The existing source poller owns its normal automatic retry. This does not reopen accepted release work or authorize a separate implementation task. [Current bounded-pass snapshot](docs/evidence/coordination-completion-held-20261108T0615Z.json).
+The earlier hourly GitHub quota interruption and automatic recovery remain history, not completion of the separate advice correction. No source edits, test reruns, deployment, provider/settings, credentials, permissions or spending changes occurred in this pass.
 
 ## Open correction — recommendations after explicit completion
 
