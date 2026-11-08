@@ -2,7 +2,7 @@
  * Bounded profile selection and Administrator coordination. Pure; grants nothing.
  * Selecting a profile only chooses WHO advises; the work, owner and authority stay on the existing recorded job.
  */
-import type { SpecialistProfile } from './specialist-profile.ts'
+import { matchCharacterId, type SpecialistProfile } from './specialist-profile.ts'
 import { canUse, type CapabilityResolution } from './specialist-capability.ts'
 
 export const ROUTING_TEXT_MAX = 4000
@@ -28,16 +28,16 @@ const mentions = (haystack: string, word: string) => new RegExp(`(?<![a-z0-9_])$
 export function routeSpecialist(text: string, profiles: readonly SpecialistProfile[], requestedProfileId?: string): RouteDecision {
   const enabled = profiles.filter(profile => profile.activityStates.length > 0)
   if (requestedProfileId) {
-    const requested = enabled.find(profile => profile.id === requestedProfileId)
+    const requested = enabled.find(profile => matchCharacterId(profile.id, requestedProfileId))
     if (requested) return { profileId: requested.id, basis: 'requested', score: 1, selected: 1, alternatives: [] }
   }
   const haystack = text.slice(0, ROUTING_TEXT_MAX).toLowerCase()
   const scored = enabled.map((profile, index) => ({ profileId: profile.id, index,
     score: profile.routing.keywords.reduce((total, word) => total + (mentions(haystack, word) ? 1 : 0), 0) }))
-    .sort((a, b) => b.score - a.score || (a.profileId === DEFAULT_PROFILE_ID ? -1 : b.profileId === DEFAULT_PROFILE_ID ? 1 : a.index - b.index))
+    .sort((a, b) => b.score - a.score || (matchCharacterId(a.profileId, DEFAULT_PROFILE_ID) ? -1 : matchCharacterId(b.profileId, DEFAULT_PROFILE_ID) ? 1 : a.index - b.index))
   const best = scored[0]
   if (!best || best.score === 0) {
-    const fallback = enabled.find(profile => profile.id === DEFAULT_PROFILE_ID) ?? enabled[0]
+    const fallback = enabled.find(profile => matchCharacterId(profile.id, DEFAULT_PROFILE_ID)) ?? enabled[0]
     return { profileId: fallback?.id ?? DEFAULT_PROFILE_ID, basis: 'default', score: 0, selected: 1, alternatives: [] }
   }
   return { profileId: best.profileId, basis: 'keyword', score: best.score, selected: 1,

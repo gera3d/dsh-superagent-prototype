@@ -105,6 +105,18 @@ export function seedProfiles(character: CharacterConfig = DEFAULT_SENIOR_DEVELOP
   ]
 }
 
+/** Helper for comparing character and profile IDs interchangeably across kebab-case and snake_case. */
+export function matchCharacterId(a: string | undefined, b: string | undefined): boolean {
+  if (!a || !b) return false
+  if (a === b) return true
+  return a.replaceAll('-', '_') === b.replaceAll('-', '_')
+}
+
+export function findCharacter(characters: readonly CharacterConfig[], id: string | undefined): CharacterConfig | undefined {
+  if (!id) return undefined
+  return characters.find(item => item.id === id) ?? characters.find(item => matchCharacterId(item.id, id))
+}
+
 /**
  * Settings win for the editable character fields (name, specialty), matching how the helper already resolves
  * `senior_developer`. A disabled linked character disables the profile. Capabilities, owner and knowledge never
@@ -112,14 +124,17 @@ export function seedProfiles(character: CharacterConfig = DEFAULT_SENIOR_DEVELOP
  */
 export function resolveProfile(profile: SpecialistProfile, characters: readonly CharacterConfig[]): { profile: SpecialistProfile; enabled: boolean } {
   if (!profile.characterId) return { profile, enabled: true }
-  const character = characters.find(item => item.id === profile.characterId)
+  const character = findCharacter(characters, profile.characterId)
   if (!character) return { profile, enabled: true }
   return { enabled: character.enabled, profile: { ...profile, specialty: character.specialty, identity: { ...profile.identity, name: character.name } } }
 }
 
 /** Compatibility projection used by the existing helper/evaluator prompts (`helperSystemPrompt`). */
 export function profileCharacter(profile: SpecialistProfile, characters: readonly CharacterConfig[] = []): CharacterConfig {
-  const linked = profile.characterId ? characters.find(item => item.id === profile.characterId) ?? (profile.characterId === DEFAULT_SENIOR_DEVELOPER_CHARACTER.id ? DEFAULT_SENIOR_DEVELOPER_CHARACTER : undefined) : undefined
+  const linked = profile.characterId
+    ? findCharacter(characters, profile.characterId)
+      ?? (matchCharacterId(profile.characterId, DEFAULT_SENIOR_DEVELOPER_CHARACTER.id) ? DEFAULT_SENIOR_DEVELOPER_CHARACTER : undefined)
+    : undefined
   if (linked) return { ...linked, mode: 'suggest_only' }
   return { id: profile.id, name: profile.identity.name, specialty: profile.specialty,
     brief: `${profile.identity.title}. Advise within the declared specialty and cite the pinned references by name; never claim tool access that was not discovered.`,
@@ -130,6 +145,5 @@ export function profileCharacter(profile: SpecialistProfile, characters: readonl
 /** Existing `DecisionCharacterAttribution.characterId` uses kebab-case for the legacy Senior Developer. */
 export function profileForCharacterId(profiles: readonly SpecialistProfile[], characterId: string | undefined): SpecialistProfile | undefined {
   if (!characterId) return undefined
-  const normalized = characterId.replaceAll('-', '_')
-  return profiles.find(profile => profile.id === normalized || profile.characterId === normalized)
+  return profiles.find(profile => matchCharacterId(profile.id, characterId) || matchCharacterId(profile.characterId, characterId))
 }

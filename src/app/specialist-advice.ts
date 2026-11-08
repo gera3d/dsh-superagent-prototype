@@ -23,6 +23,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import { DEFAULT_SENIOR_DEVELOPER_CHARACTER } from '../core/character.ts'
 import { helperSystemPrompt, suggestHelper, type HelperDigest, type HelperSuggestions } from './routes/helper.ts'
 import { defaultRoute, helperRoute } from './role-models.ts'
+import { effectiveAdvisorCharacter } from './settings.ts'
 
 export type AdviceOption = { id: string; label: string; prompt: string; why: string; recommended: boolean }
 /** Injected model call; production would wrap the existing helper transport. Receives no tools. */
@@ -110,11 +111,12 @@ export function prepareSpecialist(input: PrepareInput): PreparedSpecialist {
  * character, no advice capability) yields no specialist and the unchanged Senior Developer helper.
  */
 export async function suggestWithSpecialist(ctx: Context, digest: HelperDigest, settings: Settings, workflowContext: string | undefined,
-  options: { profiles?: readonly SpecialistProfile[]; deliveries?: readonly CoordinationDelivery[]; tools?: Parameters<typeof discoverNativeTools>[0] } = {}): Promise<HelperSuggestions & { specialist?: SpecialistAttribution }> {
-  const profiles = options.profiles ?? seedProfiles(settings.characters.characters.find(character => character.id === DEFAULT_SENIOR_DEVELOPER_CHARACTER.id))
+  options: { profiles?: readonly SpecialistProfile[]; deliveries?: readonly CoordinationDelivery[]; tools?: Parameters<typeof discoverNativeTools>[0]; persona?: CharacterConfig } = {}): Promise<HelperSuggestions & { specialist?: SpecialistAttribution }> {
+  const persona = options.persona ?? effectiveAdvisorCharacter(settings)
+  const profiles = options.profiles ?? seedProfiles(persona)
   const prepared = prepareSpecialist({ profiles, settings, discovery: discoverNativeTools(options.tools), deliveries: options.deliveries, task: `${digest.summary}\n${digest.latestTurn}` })
-  if (prepared.status === 'refused') return suggestHelper(ctx, digest, settings, workflowContext)
-  const suggestions = await suggestHelper(ctx, digest, settings, workflowContext, { system: prepared.system, route: prepared.modelRoute })
+  if (prepared.status === 'refused') return suggestHelper(ctx, digest, settings, workflowContext, undefined, persona)
+  const suggestions = await suggestHelper(ctx, digest, settings, workflowContext, { system: prepared.system, route: prepared.modelRoute }, persona)
   return { ...suggestions, specialist: prepared.attribution }
 }
 
@@ -128,7 +130,34 @@ export type SpecialistAdviceResult =
   | { status: 'advised'; route: RouteDecision; resolution: CapabilityResolution; item: PendingDecisionItem; modelRoute: RoleModel | null }
   | { status: 'refused'; route: RouteDecision; resolution: CapabilityResolution; reason: string }
 
-const characters = (settings: Settings): CharacterConfig[] => settings.characters.characters
+export function effectiveCharacters(settings: Settings): CharacterConfig[] {
+  if (!settings?.characters) return [DEFAULT_SENIOR_DEVELOPER_CHARACTER]
+  const chars = settings.characters.characters ?? []
+  const items = settings.characters.items ?? []
+  const map = new Map<string, CharacterConfig>()
+
+  for (const c of chars) {
+    map.set(c.id, c)
+  }
+
+  for (const item of items) {
+    const eff = effectiveAdvisorCharacter(settings, item.id)
+    map.set(item.id, eff)
+    const norm = item.id.replaceAll('-', '_')
+    if (!map.has(norm) || norm === 'senior_developer') {
+      map.set(norm, { ...eff, id: norm })
+    }
+  }
+
+  const activeEff = effectiveAdvisorCharacter(settings)
+  map.set(activeEff.id, activeEff)
+  const activeNorm = activeEff.id.replaceAll('-', '_')
+  map.set(activeNorm, { ...activeEff, id: activeNorm })
+
+  return Array.from(map.values())
+}
+
+const characters = (settings: Settings): CharacterConfig[] => effectiveCharacters(settings)
 
 /** Standalone claim-owning variant (own lease). The host-driven path claims/publishes itself and uses `suggestWithSpecialist`. */
 export async function adviseWithSpecialist(input: SpecialistAdviceInput): Promise<SpecialistAdviceResult> {

@@ -12,7 +12,7 @@ import { THREAD_FILTERS, TICKET_FILTERS, type Api, type ApiResponse, type RouteP
 import { configuredDecisionReply } from './decision-evaluator.ts'
 import { evaluateDecisionWithFallback } from './decision-ranker.ts'
 import { evaluateWithCharacter } from './character-evaluator.ts'
-import { HELPER_BODY_MAX_BYTES, HelperDigestSchema } from './routes/helper.ts'
+import { HELPER_BODY_MAX_BYTES, HelperDigestSchema, helperSystemPrompt } from './routes/helper.ts'
 import { attributionFor, discoverContextTools, SpecialistAttributionSchema, suggestWithSpecialist } from './specialist-advice.ts'
 import { DEFAULT_SENIOR_DEVELOPER_CHARACTER } from '../core/character.ts'
 import { DecisionInbox, InboxError, decisionQuestion, durableDecisionEvents, registerDecisionCapture, ticketDecisions, submitDecision, stageDecision, restartDecision } from './decision-inbox.ts'
@@ -33,7 +33,7 @@ import { PromptConflict, SKILL_NAME, SKILL_PREFIX, TEAM_SECTIONS, builtInBase, b
   from './prompts.ts'
 import { policyVersion, type Settings as PolicySettings } from '../policy.ts'
 import { seedProfiles } from '../core/specialist-profile.ts'
-import { SettingsConflict, type Settings } from './settings.ts'
+import { SettingsConflict, effectiveAdvisorCharacter, type Settings } from './settings.ts'
 import { SetupError, type SetupProblem } from '../setup.ts'
 import { UserError, ticketStage, type EngineForPeople, type Ticket } from '../core/index.ts'
 import type { Deployment, Machine } from '../deployment.ts'
@@ -292,7 +292,16 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
     // Pre-upgrade prepared cards carry no recorded proof; derive the exact-pin observation from the live protected snapshot.
     const prepared = delivery?.preparedPublication
     const proof = prepared ? await snapshotProof(prepared, runtime.publication) : undefined
-    return adviceContext(ticket, proof && delivery && prepared ? { ...delivery, preparedPublication: { ...prepared, proof } } : delivery, ticket ? progress().current(ticket.id) : undefined)
+    const basisScope = ticket?.mandate?.basis?.source === 'finding' ? ticket.mandate.basis.scope : undefined
+    const findingId = basisScope && typeof basisScope === 'object' && 'findingId' in basisScope && typeof basisScope.findingId === 'string'
+      ? basisScope.findingId
+      : undefined
+    const finding = ticket && runtime.findings?.store ? (
+      (findingId && runtime.findings.store.get(findingId))
+      || runtime.findings.store.list().find(f => f.job?.ticketId === ticket.id || f.priorJobs?.some(pj => pj.ticketId === ticket.id) || f.sessionId === sessionId)
+    ) : (sessionId && runtime.findings?.store ? runtime.findings.store.list().find(f => f.sessionId === sessionId) : undefined)
+    const persona = effectiveAdvisorCharacter(store.settings())
+    return adviceContext(ticket, proof && delivery && prepared ? { ...delivery, preparedPublication: { ...prepared, proof } } : delivery, ticket ? progress().current(ticket.id) : undefined, finding, persona)
   }
   return {
     'GET state': () => stateView(runtime),
@@ -482,12 +491,18 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
     },
     'POST helper/context': async ({ body }) => {
       const request = z.object({ sessionId: z.string().min(1).max(300) }).strict().parse(await body(1024))
-      return { context: await contextFor(request.sessionId) }
+      const persona = effectiveAdvisorCharacter(store.settings())
+      return {
+        context: await contextFor(request.sessionId),
+        persona: { name: persona.name, specialty: persona.specialty, brief: persona.brief },
+        systemPrompt: helperSystemPrompt(persona),
+      }
     },
     'POST helper/suggest': async ({ body }) => {
       const request = HelperDigestSchema.extend({ sessionId: z.string().min(1).max(300).optional() }).parse(await body(HELPER_BODY_MAX_BYTES))
       const { sessionId, ...digest } = request
-      return suggestWithSpecialist(ctx, digest, store.settings(), await contextFor(sessionId), { tools: ctx.tools, deliveries: runtime.deliveries?.store.list() })
+      const persona = effectiveAdvisorCharacter(store.settings())
+      return suggestWithSpecialist(ctx, digest, store.settings(), await contextFor(sessionId), { tools: ctx.tools, deliveries: runtime.deliveries?.store.list(), persona })
     },
     'POST decisions/evaluate': async ({ body }) => {
       const payload = DecisionEvaluation.parse(await body())
@@ -501,9 +516,7 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
     'POST decisions/character-evaluate': async ({ body }) => {
       const payload = CharacterEvaluationRequestSchema.parse(await body())
       const settings = store.settings()
-      const character = (payload.characterId
-        ? settings.characters.characters.find(c => c.id === payload.characterId)
-        : undefined) ?? settings.characters.characters.find(c => c.id === settings.characters.defaultCharacterId) ?? settings.characters.characters[0] ?? DEFAULT_SENIOR_DEVELOPER_CHARACTER
+      const character = effectiveAdvisorCharacter(settings, payload.characterId)
       const rankerResult = await evaluateDecisionWithFallback(payload, {
         decisions: settings.decisions,
         settings,

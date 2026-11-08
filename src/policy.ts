@@ -201,10 +201,10 @@ export const CharacterConfigSchema = z.object({
 export type CharacterConfig = z.infer<typeof CharacterConfigSchema>
 
 export const CharactersConfigSchema = z.object({
-  items: z.array(CharacterSchema).max(LIMITS.charactersMax).default(DEFAULT_CHARACTERS),
+  items: z.array(CharacterSchema).max(LIMITS.charactersMax).default(() => DEFAULT_CHARACTERS.map(c => ({ ...c, tools: [...c.tools] }))),
   activeCharacterId: z.string().trim().default('senior-developer'),
   defaultCharacterId: z.string().trim().min(1).default('senior_developer'),
-  characters: z.array(CharacterConfigSchema).default([DEFAULT_SENIOR_DEVELOPER_CHARACTER]),
+  characters: z.array(CharacterConfigSchema).default(() => [DEFAULT_SENIOR_DEVELOPER_CHARACTER].map(c => ({ ...c, standards: [...c.standards], inclinedTools: [...c.inclinedTools] }))),
 }).strict()
 export type CharactersConfig = z.infer<typeof CharactersConfigSchema>
 export const AllowedSchema = z.object({ id: z.string().trim().min(1).max(200), name: z.string().trim().max(100).optional() }).strict()
