@@ -1,0 +1,33 @@
+{
+  "backendHead": "b2653c2bb0f4b82ce069faa247fe7d2ad5575fe0",
+  "pluginHead": "baa24529d115241ff205f1f55ea77ab268a83fb8",
+  "method": "Imported actual committed candidate functions with node --experimental-transform-types; no implementation edits or duplicate suites",
+  "cases": [
+    {
+      "human": "Do not treat this as final; keep working.",
+      "assistant": "Understood. The fix is not complete.",
+      "expectedClosed": false,
+      "backendClosed": true,
+      "pluginClosed": true
+    },
+    {
+      "human": "Please close out the investigation notes, then fix the unresolved regression and run tests.",
+      "assistant": "Understood. I will fix the regression and run tests next.",
+      "expectedClosed": false,
+      "backendClosed": true,
+      "pluginClosed": true
+    }
+  ],
+  "verdict": "Changes required; do not merge/deploy",
+  "nextOwner": "Original Harness worker after native continuation; Codex owns review and release",
+  "handoffBlocker": "Mac locked; native worker continuation not sent",
+  "providerEvidence": {
+    "lastUsed": "antigravity/gemini-3.8-flash",
+    "nativeReportedAttempts": 1,
+    "nativeReportedOutputTokens": 532,
+    "nativeReportedCacheReadTokens": 117285,
+    "firstTokenMs": 8631,
+    "nativeReportedTurnDurationMs": 1768148
+  },
+  "limits": "Recorded first response is real but one slow turn does not broadly qualify Google integration; do not infer quota exhaustion or accepted work."
+}
