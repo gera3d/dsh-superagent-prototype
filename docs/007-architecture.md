@@ -338,6 +338,11 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/core/index.ts` | The core's exports |
 | `src/core/decision.ts` | `evaluateDecision`: pure validation over an injected model transport; no vendor HTTP or credential access. Scores are not calibrated. |
 | `src/core/character.ts` | Autopilot character profile definitions, reviewer prompts, personas, disagreement capabilities, and locked escalation boundaries |
+| `src/core/specialist-profile.ts` | Typed specialist registry and seeds (Administrator, Senior Developer, Cloudflare Specialist); declarations only, never grants |
+| `src/core/specialist-schema.ts` | Server-side strict validation of the specialist registry against configured characters |
+| `src/core/specialist-capability.ts` | Declared ∩ natively discovered capability resolution with refusal and next decision |
+| `src/core/specialist-routing.ts` | Bounded single-profile selection and Administrator proposals over recorded deliveries |
+| `src/core/specialist-activity.ts` | Native-event and decision-record to avatar-state mapper with staleness rules |
 | `src/core/options.ts` | The Phase 0 option contract: `OPTION_MIN` and `OPTION_MAX`, generic marked fallbacks, and `normalizeChoices`, which deduplicates, backfills short sets and keeps options beyond the shown maximum as `hiddenOptions`. |
 | `src/app/decision-evaluator.ts` | Tool-free auxiliary requests through DSH's authenticated LLM service, using the source Session's effective model or the configured default. |
 | `src/app/character-evaluator.ts` | Character evaluator: evaluates candidate decisions through domain characters, assessments and disagreements, enforcing locked escalation bounds |
@@ -394,6 +399,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/infra/publication-runner.ts` | Hash-pinned phase scripts, GitHub/local evidence and settled subprocess execution |
 | `src/app/decision-inbox.ts` | Durable SQLite decision queue, completed-turn recovery, explicit question/offer capture, source deduplication and stale detection; staging stays pending and only a bound durable native submission confirms resolution, without executing work |
 | `src/app/progress.ts` | Durable revisioned observations of release steps completed outside a worker (branch pushed, PR opened, checks, review) with exact source identity, evidence, provenance, owner and remaining stage; folds to current progress; carries no authority |
+| `src/app/specialist-advice.ts` | Profile-routed advice over the existing canonical decision record (claim, tool-free advice, publish, attribution); no new store or job |
 | `src/app/decision-inbox-provider.ts` | Independently loaded inbox routes and capture lifecycle; shares the existing database without restarting the orchestrator |
 | `src/app/api.ts` | `Api`, every route with its parameters, query, body and response, and the filters of the lists; it imports only types, so the panel bundles it |
 | `src/app/views/text.ts` | The two forms of a view's text: `preview`, plain text on one line, and `markdown` without HTML; `plain` and `readable` |
@@ -444,6 +450,8 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/decision-handoff.tsx` | Reactive Decisions-to-native-composer handoff through the shared staging bridge, independent of Workstream installation. |
 | `src/client/inline-decision.css` | Responsive, composer-scoped presentation for the inline decision dock |
 | `src/client/inline-decision.tsx` | Fallback conversation dock when Next steps is not installed; yields to the existing Next steps DOM ownership handshake. Captured empty decisions request advisor enrichment; selections use stage/submission/discard routes, never auto-send. |
+| `src/client/specialist-status.tsx` | Compact accessible specialist avatar/status; presentation only, state comes from native evidence |
+| `src/client/specialist-status.css` | Theme-token styling, evidence-gated animation and reduced-motion fallback for the specialist status |
 | `src/client/decision-submission.ts` | Shared browser staging/submission journal: preserves drafts and attachments, freezes native reference serialization, binds explicit native Send attempts to request IDs and waits for host-confirmed durable admission; never auto-sends or infers a response from matching text alone |
 | `src/client/inline-alternatives.ts` | Parses explicit lettered alternatives; ignores fenced content and ordinary numbered sequential task lists. |
 | `src/client/thread.tsx`, `ticket.tsx` | The record pages: a Thread with its timeline, and a Ticket with its authorization, Inputs and Assignments |
@@ -547,6 +555,10 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/dock-guard.spec.tsx` | The empty-dock guard: a blank conversation renders no decision card and never touches the composer |
 | `tests/options.spec.ts` | The shared option contract: four-to-six enforcement, marked fallbacks and hidden options beyond the shown maximum |
 | `tests/decision-submission.spec.ts` | Durable resolve-on-send proof, exact native request/session/source identity, candidate races, retries, discard, invalidation, close/reopen recovery and legacy-writer guards |
+| `tests/specialist-profile.spec.ts` | Registry compatibility, strict validation, pinned provenance, capability intersection and refusal, bounded routing, Administrator bounds |
+| `tests/specialist-advice.spec.ts` | Shared canonical record continuity, no duplicate job, native Send continuation, model-route inheritance and fail-closed discovery |
+| `tests/specialist-activity.spec.ts` | Event and record to avatar state mapping, stale and unknown evidence |
+| `tests/specialist-status.spec.tsx` | Avatar accessibility, keyboard, reduced-motion, compact layout and custom art slot |
 | `tests/decision-restart.spec.ts` | Restarted decision ancestry, retry deduplication, server-owned checkpoints, fresh native submission proof and preservation of recorded parent history |
 | `tests/decision-submission-client.spec.ts` | Shared native-Send linkage, preserved draft text/attachments/reference chips, reload journal recovery, failed-send retries, cancellation and exclusion of unrelated identical-text messages |
 | `tests/canonical-next-steps.spec.ts` | Actual producer and SQLite inbox share source identity, full prompts, recommendation and scores with bounded on-demand generation |
