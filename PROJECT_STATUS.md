@@ -1,14 +1,22 @@
 # DeepSeek Harness project status
 
-Updated November 7, 2026, 8:02 PM PST. Owner: Codex. Check this record and live evidence before claiming completion.
+Updated November 7, 2026, 8:17 PM PST. Owner: Codex. Check this record and live evidence before claiming completion.
 
 ## Operational check — GitHub polling recovered
 
 Verified November 7, 2026, 8:02 PM PST: all ten health components, including GitHub, report ready. The prior hourly API-limit interruption has cleared and the native source poll succeeded with zero notifications. Intake is resumed, no workers are running or queued, and all six approved release findings remain resolved. No workers were reopened and no settings, credentials or scope changed. The earlier [quota incident snapshot](docs/evidence/coordination-github-rate-limit-20261108T0313Z.json) is preserved as history.
 
+## Open correction — recommendations after explicit completion
+
+The user's 8:03 PM screenshot exposed a remaining gap after the accepted release: the completed Cloudflare validation still offered **Start real Cloudflare guidance — 48%**, even though the preceding choice and response explicitly closed the check. The confirmation was correct; the unsolicited next-work recommendation was not. The prior six findings remain resolved and the release stays installed, but **completion relevance is not fully fixed**. Do not report every recommendation behavior as complete.
+
+The same canonical source-turn reproduction is preserved in [evidence](docs/evidence/completion-gap-reproduction.json). A single deduplicated correction, **Stop proposing new work after an explicit conversation close-out**, was recorded, recommended **Fix now** by the Senior Developer, and confirmed through the native protected triage controls under the existing advice-repair authorization. It is **running** with one tracked Harness job, not a competing release or new Cloudflare task. [Dispatch and actual native request projection](docs/evidence/completion-gap-dispatch-20261108.json).
+
+Harness owns implementation in its isolated workspace; Codex owns review, integration, deployment and final native proof. Scope: complete/no-action behavior for an explicit close-out, consistent chat/inbox state, preservation of unresolved work and later explicit reopening, meaningful regressions, no fake scores or auto-send. No new features, access, credentials, settings, paid overflow or Cloudflare connection. The native projection records Google Flash selected for the first request; a usable first response is not yet qualified by that selection. Leave the original job identity intact and do not resend the old recommendation. No further continuation was sent in this bounded coordination pass.
+
 ## Current goal
 
-Finish and verify the four approved tracks in the installed Harness. Review, blocker fixes, merge, deployment and native verification are already authorized. **All four approved tracks are reviewed, merged, deployed and verified in the installed Harness. All six associated findings, including qualification and specialist correction, are resolved through native evidence acceptance.**
+Finish and verify the four approved tracks in the installed Harness. Review, blocker fixes, merge, deployment and native verification are already authorized. **The four-track release remains deployed and its six findings were accepted. The subsequent explicit-completion gap above is open; the overall recommendation experience must not be called fully complete until that correction is verified.**
 
 | Track | Verified work | Remaining action |
 |---|---|---|

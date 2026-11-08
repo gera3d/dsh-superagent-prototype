@@ -1,0 +1,99 @@
+{
+  "checkedAt": "2026-11-07T20:17:24.418321-08:00",
+  "finding": {
+    "id": "e6d9e1da-9c21-494a-b418-35afdbe02a9a",
+    "title": "Stop proposing new work after an explicit conversation close-out",
+    "state": "running",
+    "revision": 1,
+    "job": {
+      "id": "finding:e6d9e1da-9c21-494a-b418-35afdbe02a9a:r1",
+      "ticketId": "e2b1dddc51f78965de0aa8cfd6aad40a",
+      "assignmentId": "b81888bf2b44a2d1ccec599404bc6320"
+    },
+    "confirmation": {
+      "revision": 1,
+      "choiceId": "fix_now",
+      "actor": "local-operator",
+      "at": "2026-11-08T04:15:22.782Z"
+    },
+    "recommendation": {
+      "choiceId": "fix_now",
+      "rationale": "Evidence confirms that after an explicit conversation close-out and final acknowledgment, the system generated a pending card recommending unsolicited new guidance at 48%. Fixing now ensures the Next steps dock and shared inbox reliably display a completed state rather than proposing unprompted follow-up tasks, assuming worker capacity is available.",
+      "provider": "antigravity / gemini-3.8-flash",
+      "recordedAt": "2026-11-08T04:14:55.583Z",
+      "revision": 1
+    }
+  },
+  "requestProjection": {
+    "modelSelection": {
+      "ver": 2,
+      "seq": 19,
+      "val": {
+        "lastUsed": {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "reasoningEffort": "high"
+        },
+        "pending": null
+      }
+    },
+    "llmRetry": {
+      "ver": 1,
+      "seq": 19,
+      "val": {}
+    },
+    "sessionStats": {
+      "ver": 1,
+      "seq": 19,
+      "val": {
+        "turns": 0,
+        "steps": 0,
+        "llmMs": 0,
+        "toolMs": 0,
+        "ttftMs": 0,
+        "ttftSteps": 0,
+        "decodeMs": 0,
+        "decodeTokens": 0,
+        "lastTurn": null,
+        "openStep": {
+          "turn": 1,
+          "step": 1,
+          "startTime": 1794111325384,
+          "firstTokenTime": null
+        },
+        "pendingCalls": {}
+      }
+    },
+    "turnBoundary": {
+      "ver": 2,
+      "seq": 19,
+      "val": {
+        "openTurnStartSeq": 9,
+        "lastStepStartSeq": 11,
+        "lastStepBoundary": {
+          "kind": "start",
+          "seq": 11
+        },
+        "lastTurn": 1
+      }
+    }
+  },
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "error"
+  },
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "limits": "New completion-relevance correction only; no code reviewed, tests passed or deployment claimed. Google lastUsed route is recorded, not qualification of a usable first response. No extra continuation sent."
+}
