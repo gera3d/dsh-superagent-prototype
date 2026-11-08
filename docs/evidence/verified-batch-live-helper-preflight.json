@@ -1,0 +1,8 @@
+{
+  "status": 500,
+  "elapsedSeconds": 9.984,
+  "configuredHelper": null,
+  "response": {
+    "error": "Helper suggestion unavailable"
+  }
+}

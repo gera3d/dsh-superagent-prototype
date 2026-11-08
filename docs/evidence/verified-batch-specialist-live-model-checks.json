@@ -1,0 +1,82 @@
+{
+  "at": "2026-11-08T01:16:14.199478+00:00",
+  "cases": [
+    {
+      "name": "normal-worker",
+      "status": 200,
+      "seconds": 3.656,
+      "response": {
+        "options": [
+          {
+            "id": "next-1",
+            "label": "Summarize findings plainly",
+            "prompt": "Explain in plain language what the read-only qualification checked and what it found, without proposing code changes. Separate what is directly observed from what remains uncertain, and note anything that would need a separate authorized step to confirm.",
+            "recommended": true
+          },
+          {
+            "id": "next-2",
+            "label": "Clarify scope boundaries",
+            "prompt": "Walk through the boundaries of this read-only pass: what was in scope, what was deliberately not examined, and why. Flag any decision that would require explicit human confirmation before anything beyond explanation happens.",
+            "recommended": false
+          },
+          {
+            "id": "next-3",
+            "label": "List open questions",
+            "prompt": "List the open questions this pass left unresolved, ordered by how much they would affect the stated goal. For each, note what evidence would answer it and whether obtaining that evidence would fall outside the current read-only scope.",
+            "recommended": false
+          }
+        ],
+        "specialist": {
+          "profileId": "senior_developer",
+          "basis": "default",
+          "unavailable": []
+        }
+      }
+    },
+    {
+      "name": "cloudflare",
+      "status": 200,
+      "seconds": 5.284,
+      "response": {
+        "options": [
+          {
+            "id": "next-1",
+            "label": "Explain local dev to deploy flow",
+            "prompt": "Walk me through the standard Cloudflare Workers + Wrangler lifecycle conceptually: project scaffolding, the role of wrangler.toml/wrangler.jsonc bindings, `wrangler dev` local simulation versus `wrangler deploy`, and how secrets are referenced by environment variable name at runtime. Explanatory only \u2014 do not install, scaffold, deploy or run anything, and note which steps would normally require a recorded deployment to verify.",
+            "recommended": true
+          },
+          {
+            "id": "next-2",
+            "label": "Compare Workers to Pages",
+            "prompt": "Explain at a conceptual level when a Cloudflare Workers project is the better fit versus Cloudflare Pages, covering routing, static assets, bindings to KV/D1/R2, and how Wrangler is used in each case. Keep it advisory \u2014 no tools, no file edits, no deploys \u2014 and flag anything that would need live account access to confirm.",
+            "recommended": false
+          },
+          {
+            "id": "next-3",
+            "label": "Map my intended use case",
+            "prompt": "Ask me a short set of clarifying questions about what I'm building on Cloudflare (runtime needs, storage, traffic shape, static assets) and then suggest which primitives \u2014 Workers, Pages, KV, D1, R2, Durable Objects \u2014 would likely fit, with tradeoffs. Explanatory advice only; do not execute tools or change any configuration.",
+            "recommended": false
+          }
+        ],
+        "specialist": {
+          "profileId": "cloudflare_specialist",
+          "basis": "keyword",
+          "unavailable": [
+            "cloudflare.docs.read",
+            "cloudflare.account.read"
+          ]
+        }
+      }
+    },
+    {
+      "name": "administrator",
+      "status": 500,
+      "seconds": 20.246,
+      "response": {
+        "error": "Helper suggestion unavailable"
+      }
+    }
+  ],
+  "effects": "tool-free helper generation only; no conversation sends or work dispatch",
+  "passed": false
+}

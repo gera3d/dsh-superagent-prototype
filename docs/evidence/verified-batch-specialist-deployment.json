@@ -1,0 +1,171 @@
+{
+  "state": "installed-awaiting-native-verification",
+  "backup": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/verified-batch/specialist-rollback-20261108T011427Z",
+  "at": "2026-11-08T01:14:28.433786+00:00",
+  "components": {
+    "dsh-superagent": {
+      "head": "d7c399f1bbfdef0065e63761ef6d642d4890f696",
+      "files": {
+        "src/app/api.ts": {
+          "before": "63ef4a450f2c18b0c94c521333c3e96c6417fe5bbac00222acb5bcc22048abad",
+          "after": "f7b0450cfb192d271d51c7225992753b7d6b80499ac7a708d5b198c80bad6148"
+        },
+        "src/app/decision-inbox.ts": {
+          "before": "0f01e4cfac29a72a27cd45379f6e92251e604715e07ecb860f2d62d6b06ff8be",
+          "after": "d32045e24fc13e9bf1969a52cfe30ca451e0b7a4cd1590f1bc8be812a0276415"
+        },
+        "src/app/http.ts": {
+          "before": "698fc6b992833ebf7761cfe674db47e664c00d02c7097e14d4616beb8e89c34f",
+          "after": "370a3400e576fff2bcbf14ffd26640ae167acfd9a53828932510240141741eb8"
+        },
+        "src/app/routes/helper.ts": {
+          "before": "cf209a9ff2a2f05453cce92df9360606ad306b84877acae1bcb1b82dc073eb6a",
+          "after": "f575a9076fd07c932b949264d2aaf1e12da36f0d68e613919fc3583a88880366"
+        },
+        "src/app/specialist-advice.ts": {
+          "before": null,
+          "after": "ec77f7c6179bfa5079b70bf04ba4e5478175c01f7e08ae18221779d60e009081"
+        },
+        "src/client/inline-decision.tsx": {
+          "before": "f1187e660dae8f9f9f39e8ff5f37cba836264c7a2a4ab572af745a8ec5eaa796",
+          "after": "c2b8f1e846f5c6fda342ad27bce926ffb58ee1014c0c5c2714079e7fd495d04f"
+        },
+        "src/client/specialist-status.css": {
+          "before": null,
+          "after": "474298e1a281277f6a00b7c06196c4d6429499f36b1bfe51c4d0c87382749d6b"
+        },
+        "src/client/specialist-status.tsx": {
+          "before": null,
+          "after": "ddc5874bc7d144a33f059d479f48750f08c1dd84c3b8ffa85d6e66d7bb8a157f"
+        },
+        "src/core/decision.ts": {
+          "before": "03d9a4d863f15619a0d1a924663a8c743471b62812cd3031e07010276baa0417",
+          "after": "f181fecc7972abb4cb1f5005dc9792b538cc39688c7b4ad803e4bce4c9585bb6"
+        },
+        "src/core/specialist-activity.ts": {
+          "before": null,
+          "after": "39ce83c07d0b9abbb3718d5b836678348c09e78f0c435257feda505cd2b393c5"
+        },
+        "src/core/specialist-capability.ts": {
+          "before": null,
+          "after": "0d2641d6c804fc75b5ac959626ce6f3875dc1361972bda635af86a541b925fb2"
+        },
+        "src/core/specialist-profile.ts": {
+          "before": null,
+          "after": "86135111cb581bf79d0b7b9f1b059d6c9230738c992f96275babab507c9e3e8e"
+        },
+        "src/core/specialist-routing.ts": {
+          "before": null,
+          "after": "3aefecc44ad0125940fce2fdaa4f3da01ede82c2d3d787cf88b727c0e683310c"
+        },
+        "src/core/specialist-schema.ts": {
+          "before": null,
+          "after": "91b8e712458facac4e10668c31f366a826a3e2834692a7789115f61cbc52cb67"
+        },
+        "tests/canonical-next-steps.spec.ts": {
+          "before": "835d525a5da6c9135b6c0e29d453ecd790823bada9ec68fc48a91421ca32b1b6",
+          "after": "26337d06cc2e0dff598c18b8e175fe8339b0abc0bc0562ef8dbfff57b782cd4a"
+        },
+        "tests/http.spec.ts": {
+          "before": "d1e2acecaedd239fc4dffb3081942e9d538e4e26b4bddf7a6dc1edb445b24532",
+          "after": "4eff420575926faf2a6b2ef3a16813f29a0024bb18b8e56ef92b07d5c28a192e"
+        },
+        "tests/inline-decision.spec.tsx": {
+          "before": "11ad0e40a922445881fbd89a4e9763b19d4919eca9562f221c2ce54fb413965d",
+          "after": "4092a5e6e670dac777a5b91fd357ba19adaa7d81a0c249da075b4c9a7283f426"
+        },
+        "tests/specialist-activity.spec.ts": {
+          "before": null,
+          "after": "ceaaed7569a2278af064062aad26073c51a4b2f1379ee077f45c74c4c9892ff2"
+        },
+        "tests/specialist-advice.spec.ts": {
+          "before": null,
+          "after": "248b9b409b2138a5d6a9708136bdf717ba9484ea463f06edfa690e8a8b2cb608"
+        },
+        "tests/specialist-integration.spec.ts": {
+          "before": null,
+          "after": "88415142ee89abfb24e502f0e9d099fcb9736f1572d81357ed2b991db0420365"
+        },
+        "tests/specialist-profile.spec.ts": {
+          "before": null,
+          "after": "3ade825318641bc38720f67f692f363034f7d9c19979960bd7681803ed210f2a"
+        },
+        "tests/specialist-status.spec.tsx": {
+          "before": null,
+          "after": "d83fbe4bbbe9bf35dde3c977628bfd9c925d5ab3975bf4d12139e648663534d8"
+        }
+      },
+      "assets": {
+        "lib/client.js": "cf33b466cd9a8c8d8cdbbf1b0dda90acdfb9a3784a3c34c2d0e306010cf283ee",
+        "lib/decision-DmnHTHt-.d.ts": "34b30aa446af2d1f8b1d1dd0b2d76b47fe905eb73d0686cf73f32dc53edeb54e",
+        "lib/decision-inbox-provider-canonical.d.ts": "f11ffcc6cf706fefcfaafbe092160933aad86823b222e8fbddfb9db7473c5278",
+        "lib/http-Cggiv813.js": "f84291408c0239732cd3f40214729388130cec070e9f8c93f80f22ae0911071f",
+        "lib/publication-worker.js": "f1236d939ae901cd8f8e8d3e830fc48e836fa1d500bea322e675436706df6aa5",
+        "lib/decision-provider.d.ts": "6b5408ac5b6e6f1a049da951dcb2c09dd2169c3bf1cef8bd097ddad6d149c3c9",
+        "lib/index.js": "d0b9cb6053aaa9d00bba3c5dd1e6592dd2539d9c205a1bac1b9ddc4d668e8147",
+        "lib/decision-provider.js": "1d76c0665c39697d0525fa5faaf714a70c60669029d9a65318c1d0a0ed16b12b",
+        "lib/deployment-TlAra6FB.d.ts": "f2dde560d476d5d2c2a62f4fecdb19ab09c06db219e7f13a5c5119a81cfd9485",
+        "lib/decision-inbox-provider.js": "9153dcf139e5de6671b4e666c66b221db76c890835b4d33a0cd9dc0320742df1",
+        "lib/poll-oRE9AWj8.js": "dad589d6739726cf4e9505262d440953853c90d9a3ac6b5edc69090db1acf702",
+        "lib/publication-operator.js": "3b992a0c199f15d738f22fc8cd6b0b234546cbfa29bdd76747c120effd735f68",
+        "lib/github-pull-CMKL7i1S.js": "e8ef5a1a1550e4b8142000cc0f0ab1ade29d0996132e29ae5ae58ff6c1da9e84",
+        "lib/feishu-watch.d.ts": "2da5161ffcbd8da7b515d9f35891cb4cc76d8d1c867268286bcb4f8de685701d",
+        "lib/github-watch.d.ts": "73d99b1c8458b06c15a7a6db7f81900166ba964ed6461e1b1a68db04b806e015",
+        "lib/publication-operator.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+        "lib/publication-worker.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+        "lib/index.d.ts": "aee459a680cb2de8c5afb9be10744b259939cbfd4a1e089f2f37aa960fe859db",
+        "lib/decision-inbox-provider-live.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20",
+        "lib/lifecycle-publication-BOzATP8c.js": "a40aef2f340353fff69b1f06ef041a70fdc2b2c2eba6f4233e630bc26b125d95",
+        "lib/feishu-watch.js": "718ae13ad3c3440d9405cb0b42ff4f60b440f46127015c69c7792f800c26598f",
+        "lib/feishu-CWhPYo9e.js": "373b603a4499baa32c520d863038761a67d578bfa881eac874843cf99e9c302d",
+        "lib/kind-C5c5172w.d.ts": "36bd067a70c38905e918bf26ccd33c3cd7dc42460bf15c7d3a60c83873a4aa0b",
+        "lib/publication-ticket-DDM1VEof.js": "71acd0b3bf8c09dac1332422dcdabf666ebb53e176c5300b487881a020b5a5db",
+        "lib/github-watch.js": "5c3b083552d6cad04ef9c0be3ebf6708ae85f6ccf4ccee26eb3de6ca67b88086",
+        "lib/decision-inbox-provider-canonical.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20",
+        "lib/publication-context-BTCaE_WV.js": "9f0976ce831b0b7be0a16b88ad1764bea13ace8ac1d225517482cdb911106ef4"
+      }
+    },
+    "dsh-next-steps": {
+      "head": "aa334849aabca2cead33ddcf7fb9e9c1822416af",
+      "files": {
+        "src/client/index.tsx": {
+          "before": "4d72d16a05577cc8c3e1e0b427342e0a8f60243a7b91cffff4db2e7e4a9478da",
+          "after": "8440e4c7dd6fc97ee59aeee1cc346469433da2df8208ee149e2acac3c7911519"
+        },
+        "src/client/specialist-activity.ts": {
+          "before": null,
+          "after": "ac739317ab5b4daff99a616f43fb8544e849d0d6353093312ad3ccf52719aa27"
+        },
+        "src/client/specialist-badge.tsx": {
+          "before": null,
+          "after": "ff44001cf88e3a92b4ec687005afbb23e5895d6110f0b5503c3ba7eb0719d397"
+        },
+        "src/index.ts": {
+          "before": "90b22a8fa9e5615c4a048e15ca9c8aa1b31d4d30cefb8ff85c6071c4e70fdd6f",
+          "after": "57ebf82e837799fe155d476bbf0a47aa2c2467eb56c25991ffb622310842d1e4"
+        },
+        "test/host.test.mjs": {
+          "before": "54c1585377ac277647a31e785d3ba6dd94cc84cccde7005406fa1a3ebae195eb",
+          "after": "16f1051a63129d520380000a864f58960a4fb2b621dd8f6461f2545dae6d2629"
+        },
+        "test/specialist-badge.test.tsx": {
+          "before": null,
+          "after": "d788c9d8ee7db65f0e87c5e9db5b4d3b4941fcbb1e432ec91d5593f9410bd4bc"
+        }
+      },
+      "assets": {
+        "lib/client.js": "d9996983a6d16687f69b7696d040f8587cd3f67bb44c8b45a483962a9f5a6916",
+        "lib/index.js": "45850c016eff25168300e5f1c5992df98041b68952f1eea4285da66bc941bbde",
+        "lib/index.d.ts": "2444d202005d4c7e903ef02a3bfaf0f945c5dc8bd8c03d01a21dd427e22dffed"
+      }
+    }
+  },
+  "limits": [
+    "Cloudflare advice-only with native connection unavailable; no new access",
+    "Existing profile registry is bounded v1, not autonomous administrative execution"
+  ],
+  "authority": "Gera authorized all four tracks through review, blockers, deployment and installed verification; no new permission requested.",
+  "restartExitCode": 1,
+  "restartRetryExitCode": 0,
+  "restartNote": "Initial restart refused because another control operation held its lock; no service was stopped then. Retried after observing no lock holder, preserving the initial failure log."
+}
