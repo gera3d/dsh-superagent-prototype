@@ -2,6 +2,18 @@
 
 Updated November 8, 2026, 9:29 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
 
+## Reporting integration failure confirmed; idle slots released through supported stop
+
+All three report-only turns returned an explicit inability to call `orchestrator_report` in the Antigravity/Gemini runtime. They did not produce the required structured report; plain-text ready status is not a native tool result. This confirms a provider/tool integration gap, not a missing reminder. No further identical prompts should be sent.
+
+Codex verified all three assignments idle and used the existing authenticated MCP `stop_ticket` action on completion advice, advisor Settings and unattended coordination. Each stopped successfully and reconciled to blocked evidence review, without accepting work or deleting candidate source, reports, history or paired PRs. The original mandates are ended and must not be directly revived; root still owns review/release from retained exact source/evidence. This released finding capacity without DB edits or fabricated ready/verified states.
+
+The allowance-display job then dispatched automatically and is now working on ticket `f5084b7d915773bcb1386779692fd87b`. The existing model-observed finding **Workers on antigravity cannot file ready reports** was explicitly confirmed in native triage; its repair is working on ticket `57859ac28ab698610a99031c54515220`. Executor load is two running, zero queued, max three. These are dispatched requests, not proof of successful implementation/tool bridging. No OpenAI or global routing change.
+
+The cost-summary and publication-verification queued items were attempted by the dispatcher, but **blocked before creating workers** because their immutable repository `gera3d/dsh-superagent-prototype` differs from configured intake/dispatch `gera3d/superagent-sandbox`. Preserve them as evidence, not running jobs or completed verification. Codex must reconcile canonical execution metadata and historical source target through supported scoped records, retaining original evidence/supersession and existing user authorization. Do not weaken the repository boundary or mutate records directly to force dispatch. [Current canonical state and job identities](docs/evidence/reporting-tool-failure-and-queue-release.json).
+
+Next priorities remain root paired completion release (checks passed, no merge/deployment yet), independent review of advisor/headless candidates, permanent reporting/queue transition repair, and metadata reconciliation for the two blocked verifications. No privileged delegation has been enabled.
+
 ## Queue blockage traced to missing structured worker reports
 
 Installed finding reconciliation treats assignment reports `progress` or `waiting` as resumed work; a prose-only completed turn defaults to `waiting` in executor turn-end handling. Thus three idle workers kept three findings running and held finding capacity while executors were idle. All three current assignments remain non-ended. This is a concrete state/reporting gap; candidate completion text is not a structured ready report.

@@ -1,0 +1,92 @@
+{
+  "load": {
+    "running": 2,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "findings": [
+    {
+      "id": "6162b441-a582-484c-9d49-b3bd12ea0175",
+      "title": "Verify cost-summary review findings against the current implementation",
+      "state": "blocked",
+      "job": {
+        "id": "finding:6162b441-a582-484c-9d49-b3bd12ea0175:r1"
+      },
+      "blocker": "Finding repository does not match the configured deployment repository; no worker was dispatched."
+    },
+    {
+      "id": "cccbf29e-2ff3-439b-97f0-b4bcc9961937",
+      "title": "Investigate the publication confirmation that stopped before enqueue",
+      "state": "blocked",
+      "job": {
+        "id": "finding:cccbf29e-2ff3-439b-97f0-b4bcc9961937:r1"
+      },
+      "blocker": "Finding repository does not match the configured deployment repository; no worker was dispatched."
+    },
+    {
+      "id": "e6d9e1da-9c21-494a-b418-35afdbe02a9a",
+      "title": "Stop proposing new work after an explicit conversation close-out",
+      "state": "blocked",
+      "job": {
+        "id": "finding:e6d9e1da-9c21-494a-b418-35afdbe02a9a:r4",
+        "ticketId": "cf2c9c8117f4870abc3dc067a903ab43",
+        "assignmentId": "55659d5ad22cc213a5be94aba0419bff"
+      },
+      "blocker": "Assignment ended without a qualifying report; review/verification required: ticket/cf2c9c8117f4870abc3dc067a903ab43/report/55659d5ad22cc213a5be94aba0419bff. End, idle or merge is not resolution.",
+      "ticketStage": "ended",
+      "sessionId": "worker-cf2c9c8117f4870abc3dc067a903ab43"
+    },
+    {
+      "id": "a338ad44-893d-4ebf-b8ff-aa0c3067e384",
+      "title": "Advance already-approved Harness work while the Mac is locked",
+      "state": "blocked",
+      "job": {
+        "id": "finding:a338ad44-893d-4ebf-b8ff-aa0c3067e384:r1",
+        "ticketId": "a4c7e59be9c53dbaeb2019caaf93cca9",
+        "assignmentId": "8c30c4674fe37bd81d9f24368ad753fb"
+      },
+      "blocker": "Assignment ended without a qualifying report; review/verification required: ticket/a4c7e59be9c53dbaeb2019caaf93cca9/report/8c30c4674fe37bd81d9f24368ad753fb. End, idle or merge is not resolution.",
+      "ticketStage": "ended",
+      "sessionId": "worker-a4c7e59be9c53dbaeb2019caaf93cca9"
+    },
+    {
+      "id": "12779824-b82e-484d-9502-d2150ba58aa1",
+      "title": "Recommend the actual review handoff for completed finding work",
+      "state": "blocked",
+      "job": {
+        "id": "finding:12779824-b82e-484d-9502-d2150ba58aa1:r2",
+        "ticketId": "f08f01eef8bdb9a75399edc2c40a1582",
+        "assignmentId": "1f3c128cf95040adb86acb5f9e43a4ab"
+      },
+      "blocker": "Assignment ended without a qualifying report; review/verification required: ticket/f08f01eef8bdb9a75399edc2c40a1582/report/1f3c128cf95040adb86acb5f9e43a4ab. End, idle or merge is not resolution.",
+      "ticketStage": "ended",
+      "sessionId": "worker-f08f01eef8bdb9a75399edc2c40a1582"
+    },
+    {
+      "id": "f9335259-b51c-4e97-9750-3923b7e2138b",
+      "title": "Show Google and Anthropic remaining allowance beside chat",
+      "state": "running",
+      "job": {
+        "id": "finding:f9335259-b51c-4e97-9750-3923b7e2138b:r1",
+        "ticketId": "f5084b7d915773bcb1386779692fd87b",
+        "assignmentId": "02af1205881c23e6f7be77ed0b966af0"
+      },
+      "blocker": null,
+      "ticketStage": "working",
+      "sessionId": "worker-f5084b7d915773bcb1386779692fd87b"
+    },
+    {
+      "id": "51f309ca-d396-4983-a55d-ef4432a8572f",
+      "title": "Workers on antigravity cannot file ready reports",
+      "state": "running",
+      "job": {
+        "id": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r1",
+        "ticketId": "57859ac28ab698610a99031c54515220",
+        "assignmentId": "7d000dc8c6ba034c0fa64cbc08a32394"
+      },
+      "blocker": null,
+      "ticketStage": "working",
+      "sessionId": "worker-57859ac28ab698610a99031c54515220"
+    }
+  ]
+}
