@@ -40,8 +40,8 @@ async function executeDecisionCall(ctx: Context, selected: ModelSelection, reque
 export async function configuredDecisionReply(ctx: Context, request: DecisionEvaluationRequest, settings?: Settings): Promise<DecisionModelReply> {
   // Use the source conversation's last effective route, otherwise the configured default.
   // Never mutate model selection, read credentials, or send work to the source agent.
-  const source = request.sessionId ? ctx.agents.get(request.sessionId as SessionId) : undefined
-  const sourceSelection = source?.session.requestHeader()?.config
+  const source = !settings?.models.helper && request.sessionId ? ctx.agents.get(request.sessionId as SessionId) : undefined
+  const sourceSelection = settings?.models.helper ?? source?.session.requestHeader()?.config
     ?? (ctx.get('agentDefaultModel') as { currentSelection(): ModelSelection } | undefined)?.currentSelection()
   const route = settings ? evaluatorRoute(settings, sourceSelection) : sourceSelection
   const selected = route as ModelSelection | undefined
