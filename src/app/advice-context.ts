@@ -11,7 +11,7 @@ export function adviceContext(ticket?: Ticket, delivery?: Delivery, progress?: P
   const current = completed && progress && delivery!.acceptance && progress.observedAt <= Date.parse(delivery!.acceptance.at) ? undefined : progress
   const facts = {
     progress: current ? { stage: current.kind, outcome: current.outcome, repository: clip(current.repository, 200), branch: clip(current.branch, 200), commit: current.commit, baseSha: current.baseSha,
-      pr: current.pr, owner: clip(current.owner, 120), remaining: clip(current.remaining, 200), observedAt: new Date(current.observedAt).toISOString(), revision: current.revision,
+      pr: current.pr, environment: current.environment, owner: clip(current.owner, 120), remaining: clip(current.remaining, 200), observedAt: new Date(current.observedAt).toISOString(), revision: current.revision,
       evidence: clip(current.evidence, 300), provenance: current.provenance, supersededCommits: current.supersededCommits.slice(-4), authority: current.authority } : null,
     task: ticket ? { title: clip(ticket.title, 200), mandate: { strength: ticket.mandate.strength, scope: clip(ticket.mandate.scope, 1800) },
       ended: ticket.ended?.outcome, assignmentReport: ticket.assignments.at(-1)?.report && {

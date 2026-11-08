@@ -164,3 +164,19 @@ it('does not retire a recommendation that explicitly says not to repeat a comple
   f.progress.observe(pushed(), provenance, T0 + 2000); f.reconcile()
   expect(f.inbox.get(item.id)?.status).toBe('pending')
 })
+
+
+it('records exact-target deployment and verification without granting acceptance or repeating release work', () => {
+  const f = fixture(), p = f.progress
+  expect(() => p.observe(pushed({ kind: 'verified', outcome: 'passed', pr: 77 }), provenance)).toThrow('target environment')
+  expect(() => p.observe(pushed({ kind: 'verified', outcome: 'failed', pr: 77, environment: 'installed-superagent' }), provenance)).toThrow('passed outcome')
+  p.observe(pushed({ kind: 'merged', outcome: 'passed', pr: 77, observedAt: iso(1000) }), provenance)
+  p.observe(pushed({ kind: 'deployed', outcome: 'passed', pr: 77, environment: 'installed-superagent', observedAt: iso(2000) }), provenance)
+  const card = f.advice(T0 + 3000, 'worker-sonnet-quality', [{ ...push[0]!, label: 'Verify deployed candidate', prompt: 'Verify the deployed candidate.' }, push[1]!])
+  p.observe(pushed({ kind: 'verified', outcome: 'passed', pr: 77, environment: 'installed-superagent', evidence: 'test:live-proof', observedAt: iso(4000) }), provenance, T0 + 5000)
+  f.reconcile()
+  expect(p.current('sonnet-quality')).toMatchObject({ kind: 'verified', environment: 'installed-superagent', authority: 'none' })
+  expect(f.inbox.get(card.id)).toMatchObject({ status: 'stale', choices: card.choices })
+  expect(adviceContext(undefined, undefined, p.current('sonnet-quality'))).toContain('no repeat implementation, merge or deployment')
+  expect(f.deliveries.list()).toHaveLength(0)
+})

@@ -66,7 +66,7 @@ export function projectDeliveries(store: DeliveryStore, items: PendingDecisionIt
 }
 
 const STEP_ADVICE: [number, RegExp][] = [[1, /\bpush(?:ing)?\b/i], [2, /\b(?:open|create|submit)\b.*\b(?:pr|pull request)\b/i],
-  [3, /\b(?:run|rerun|wait for|verify)\b.*\b(?:checks?|ci)\b|\bexact-head checks?\b/i], [4, /\b(?:request|await|perform|start)\b.*\breview\b/i]]
+  [3, /\b(?:run|rerun|wait for|verify)\b.*\b(?:checks?|ci)\b|\bexact-head checks?\b/i], [4, /\b(?:request|await|perform|start)\b.*\breview\b/i], [5, /\bmerge\b/i], [6, /\b(?:deploy|publish)\b/i], [7, /\b(?:verify|verification|live acceptance)\b/i]]
 /** Retire pending, unsent generated advice whose recommended action is a release step already observed done, or that targets a superseded head.
  *  Newer items, unrelated questions, resolved history and work covered by a completed delivery are untouched; nothing is deleted or sent. */
 function retireSupersededProgress(inbox: DecisionInbox, progress: ProgressStore, deliveries: Delivery[]): void {
@@ -75,7 +75,7 @@ function retireSupersededProgress(inbox: DecisionInbox, progress: ProgressStore,
     if (!current) continue
     const linked = deliveries.filter(delivery => delivery.workers.some(worker => workerTicket(worker) === ticketId))
     if (linked.some(delivery => delivery.state === 'accepted' && delivery.acceptance && current.observedAt <= Date.parse(delivery.acceptance.at))) continue
-    const rank = { branch_pushed: 1, pr_opened: 2, checks: current.outcome === 'passed' ? 3 : 2, review: current.outcome && current.outcome !== 'passed' ? 3 : 4 }[current.kind]
+    const rank = { branch_pushed: 1, pr_opened: 2, checks: current.outcome === 'passed' ? 3 : 2, review: current.outcome && current.outcome !== 'passed' ? 3 : 4, merged: 5, deployed: 6, verified: 7 }[current.kind]
     for (const item of inbox.list()) {
       if (item.status !== 'pending' || !item.sessionId || workerTicket(item.sessionId) !== ticketId || !Number.isFinite(item.createdAt) || item.createdAt > current.changedAt
         || !item.id.startsWith('chat-') && !item.canonical || item.actionMode && item.actionMode !== 'stage_response' || item.staging?.candidateSubmission) continue
