@@ -1,6 +1,6 @@
 # DeepSeek Harness project status
 
-Updated November 7, 2026, 5:45 PM PST. Owner: Codex. Check this record AND its live evidence before reporting completion.
+Updated November 7, 2026, 5:53 PM PST. Owner: Codex. Check this record AND its live evidence before reporting completion.
 
 ## Current goal — verify every approved track in the installed Harness
 
@@ -21,9 +21,9 @@ Live tool-free helper probes passed normal-worker→Senior Developer and Cloudfl
 
 The earlier helper probe also exposed malformed structured output on Google; root assigned the **advice helper** to saved Anthropic Sonnet for quality with existing availability fallback, while preserving Google as routine worker preference and OpenAI conservation. Intake is temporarily paused for installed verification; zero Harness workers/queued jobs. No new keys, quota reset assumptions, tool grants or Cloudflare connection.
 
-## Latest native continuation
+## Current native verification
 
-The specialist worker saved a checkpoint and explicitly reported no commands/tests/builds in flight. Root paused intake, backed up changed sources, both asset directories, SQLite and settings, installed exact reviewed postimages, restarted successfully and verified all ten service components ready. The same open specialist assignment survived. Intake resumed; selecting “Resume and wire the dock — 62%” prepared its full prompt, native Send resumed that same job, and the shared record has native submission proof. One worker is active, zero queued, configured capacity remains three. No permanent heavy-test scheduling lock was added.
+Native Chrome shows Cloudflare Specialist, unavailable advice-only access and real 90/7/3 scores. After PR63, selecting the highest-rated choice inserted its exact prompt while historical recovery was still pending. Native Send once resolved the same canonical decision with matching submission proof and the harmless reply completed. A fresh follow-up exposed the remaining 20-second host deadline versus 60-second backend allowance. Plugin PR19 is merged with 17 contract, 24 host/parser and 201 UI/behavior tests, types/build passing; its deployment and fresh automatic score check are the final live qualification step. No test sent Cloudflare tools or changed accounts/access. Intake is paused for that restart, with zero workers/queued jobs.
 
 ## Qualification and honest limits
 
