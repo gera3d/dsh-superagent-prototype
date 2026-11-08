@@ -73,3 +73,15 @@ it('never calls a parked source/default ranker provider, and fails closed withou
   await expect(configuredDecisionReply(ctx as unknown as Context, { ...request, sessionId: 'source' }, settings)).rejects.toThrow('No eligible')
   expect(resolveCallConfig).not.toHaveBeenCalled(); expect(stream).not.toHaveBeenCalled()
 })
+
+it('scores on the explicit advice route while retaining conservation and source fallback', async () => {
+  const resolveCallConfig = vi.fn(async (value: unknown) => value)
+  const ctx = { agents: { get: () => ({ session: { requestHeader: () => ({ config: { provider: 'source', model: 'slow' } }) } }) },
+    get: vi.fn(), llm: { resolveCallConfig, stream: async function* () { yield { type: 'text-delta', text }; yield { type: 'finish', reason: { kind: 'stop' } } } } }
+  const settings = SettingsSchema.parse({ models: { helper: { provider: 'anthropic', model: 'advice' }, hierarchy: [{ provider: 'source', model: 'slow' }], economyRoute: { provider: 'economy', model: 'cheap' } } })
+  await configuredDecisionReply(ctx as unknown as Context, { ...request, sessionId: 'source' }, settings)
+  expect(resolveCallConfig).toHaveBeenLastCalledWith({ provider: 'anthropic', model: 'advice' }, expect.any(AbortSignal))
+  settings.models.conserve = true
+  await configuredDecisionReply(ctx as unknown as Context, { ...request, sessionId: 'source' }, settings)
+  expect(resolveCallConfig).toHaveBeenLastCalledWith({ provider: 'economy', model: 'cheap' }, expect.any(AbortSignal))
+})

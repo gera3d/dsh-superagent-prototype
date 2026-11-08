@@ -126,9 +126,9 @@ export const roleDefaults = (settings: Pick<Settings, 'eval' | 'executor' | 'mod
 export function helperRoute(settings: Pick<Settings, 'models'>): RoleModel | null {
   return constrainedRoute(settings, settings.models.helper)
 }
-/** The configured-model ranker/evaluator route: the economy route in conserve mode, else the supplied fallback. */
+/** Score advice on the explicitly configured helper route; otherwise inherit the source. Conservation still wins. */
 export function evaluatorRoute(settings: Pick<Settings, 'models'>, fallback?: RoleModel | null): RoleModel | null {
-  return constrainedRoute(settings, fallback)
+  return constrainedRoute(settings, settings.models.helper ?? fallback)
 }
 /** Effective routes and skipped providers for the settings panel and the `models` resource. */
 export function routingView(settings: Pick<Settings, 'eval' | 'executor' | 'models'>) {
