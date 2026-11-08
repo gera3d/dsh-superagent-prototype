@@ -269,7 +269,7 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
               }).catch(reason => { if (mounted.current) setFailure(reason instanceof Error ? reason.message : String(reason)) })
             }}>Discard staged link</button>
           </p>}
-          {item.status === 'resolved' && <p role="status">Recorded choice: {item.choices.find(choice => choice.id === item.resolvedChoice)?.label ?? item.resolvedChoice ?? 'Not specified'}. {item.resolutionBasis === 'submitted'
+          {item.status === 'resolved' && <p role="status" data-decision-receipt={item.id}>Recorded choice: {item.choices.find(choice => choice.id === item.resolvedChoice)?.label ?? item.resolvedChoice ?? 'Not specified'}. {item.resolutionBasis === 'submitted'
             ? 'Linked response confirmed submitted. This does not confirm downstream execution.'
             : 'Native submission is not confirmed for this historical record.'} Choose any option again to start a new decision; the previous choice is preserved. Selecting again only prepares a new draft.</p>}
         </div>

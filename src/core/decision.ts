@@ -123,6 +123,8 @@ export interface DecisionCharacterAttribution {
   mode: 'suggest' | 'auto'
   correction?: string
   rationale?: string
+  /** Declared specialist capabilities the native Harness did not expose when this advice was produced (bounded ids). */
+  unavailable?: string[]
 }
 
 export interface DecisionModelReply { text: string; provider: string }

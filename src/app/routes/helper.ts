@@ -106,13 +106,16 @@ async function callHelper(ctx: Context, route: RoleModel, digest: HelperDigest, 
   } catch (error) { throw new HelperFailure(stage, error) }
 }
 
+/** A specialist's system prompt and inherited role route; the SAME tool-free call and ladder run either way. */
+export interface HelperSpecialist { system: string; route: RoleModel | null }
+
 /** Null uses the existing starred/first ladder route, then the DSH default if the ladder is empty. */
-export async function suggestHelper(ctx: Context, input: HelperDigest, settings: Settings, workflowContext?: string): Promise<HelperSuggestions> {
+export async function suggestHelper(ctx: Context, input: HelperDigest, settings: Settings, workflowContext?: string, specialist?: HelperSpecialist): Promise<HelperSuggestions> {
   const digest = HelperDigestSchema.parse(input)
   const character = settings.characters.characters.find(item => item.id === DEFAULT_SENIOR_DEVELOPER_CHARACTER.id && item.enabled)
     ?? DEFAULT_SENIOR_DEVELOPER_CHARACTER
-  const system = helperSystemPrompt(character) + (workflowContext ? '\nShared workflow context:\n' + workflowContext : '')
-  const selected = constrainedRoute(settings, helperRoute(settings)
+  const system = (specialist?.system ?? helperSystemPrompt(character)) + (workflowContext ? '\nShared workflow context:\n' + workflowContext : '')
+  const selected = constrainedRoute(settings, (specialist?.route ?? helperRoute(settings))
     ?? (ctx.get('agentDefaultModel') as { currentSelection(): RoleModel } | undefined)?.currentSelection())
   if (!selected?.provider || !selected.model) {
     ctx.logger?.warn('helper/suggest failure: %s', JSON.stringify({ category: 'no-model', stage: 'configuration' }))

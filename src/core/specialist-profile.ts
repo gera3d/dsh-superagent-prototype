@@ -86,7 +86,7 @@ export function seedProfiles(character: CharacterConfig = DEFAULT_SENIOR_DEVELOP
     { id: 'administrator', version: 1, identity: { name: 'Administrator', title: 'Coordinator of already-authorized work', avatar: 'administrator' },
       specialty: 'Ownership, sequencing and hand-offs across recorded deliveries', knowledge: [],
       capabilities: ['records.read', 'coordinate.typed_action'], modelPolicy: { inherit: 'eval' }, owner: { kind: 'operator', id: 'gera' },
-      activityStates: ALL_STATES, routing: { keywords: ['owner', 'coordinate', 'sequence', 'handoff', 'hand-off', 'status', 'who owns', 'delivery'] } },
+      activityStates: ALL_STATES, routing: { keywords: ['who owns', 'coordinate', 'handoff', 'hand-off', 'delivery status', 'next owner', 'sequence the'] } },
     seniorDeveloper(character),
     { id: 'cloudflare_specialist', version: 1, identity: { name: 'Cloudflare Specialist', title: 'Cloudflare platform advisor', avatar: 'cloudflare_specialist' },
       specialty: 'Cloudflare Workers, Pages, DNS, R2, D1, KV and Wrangler guidance',
@@ -101,7 +101,7 @@ export function seedProfiles(character: CharacterConfig = DEFAULT_SENIOR_DEVELOP
       // Declared, not granted: docs/account reads need a connected native Cloudflare MCP tool; writes are never grantable.
       capabilities: ['advice.read', 'cloudflare.docs.read', 'cloudflare.account.read'],
       modelPolicy: { inherit: 'helper' }, owner: { kind: 'operator', id: 'gera' }, activityStates: ALL_STATES,
-      routing: { keywords: ['cloudflare', 'wrangler', 'workers', 'worker', 'pages', 'r2', 'd1', 'kv', 'durable object', 'dns', 'wrangler.toml'] } },
+      routing: { keywords: ['cloudflare', 'wrangler', 'wrangler.toml', 'workers.dev', 'workers kv', 'durable object', 'durable objects', 'r2 bucket', 'd1 database', 'kv namespace'] } },
   ]
 }
 

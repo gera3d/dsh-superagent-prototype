@@ -67,3 +67,15 @@ it('animates only evidence-backed working states, with a reduced-motion fallback
   expect(css).not.toMatch(/background(-color)?:\s*#/)
   expect(css).not.toMatch(/position:\s*(fixed|absolute)/)
 })
+
+it('turns working evidence into unknown on its own timer without any prop change', async () => {
+  const { vi } = await import('vitest')
+  vi.useFakeTimers(); vi.setSystemTime(1_000_000 + 1000)
+  const host = document.createElement('div'); document.body.append(host)
+  const root = createRoot(host); roots.push(root)
+  act(() => root.render(<SpecialistStatus profile={profiles[1]!} activity={{ state: 'investigating', stale: false, at: 1_000_000, reason: 'Turn in progress' }} />))
+  expect(host.firstElementChild?.getAttribute('data-state')).toBe('investigating')
+  act(() => { vi.setSystemTime(1_000_000 + 91_000); vi.advanceTimersByTime(91_000) })
+  expect(host.firstElementChild?.getAttribute('data-state')).toBe('unknown')
+  vi.useRealTimers()
+})

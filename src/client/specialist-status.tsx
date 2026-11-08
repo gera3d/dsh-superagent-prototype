@@ -4,7 +4,7 @@
  * Code-native SVG/CSS. Custom art: set `--dsa-spec-art` / pass `art` (a GIF/sprite URL) to replace the glyph.
  */
 import { useEffect, useState } from 'react'
-import type { Activity } from '../core/specialist-activity.ts'
+import { applyStaleness, STALE_AFTER_MS, type Activity } from '../core/specialist-activity.ts'
 import type { SpecialistProfile } from '../core/specialist-profile.ts'
 import css from './specialist-status.css?raw'
 
@@ -35,9 +35,16 @@ export interface SpecialistStatusProps {
 
 export function SpecialistStatus({ profile, activity, note, art, now: nowProp }: SpecialistStatusProps) {
   const [tick, setTick] = useState(() => Date.now())
-  // Only tick when there is an age to keep honest; the clock never changes the state itself.
-  useEffect(() => { if (nowProp !== undefined || activity.at === undefined) return; const timer = setInterval(() => setTick(Date.now()), 15000); return () => clearInterval(timer) }, [nowProp, activity.at])
+  // Keep the age honest, and re-evaluate at the exact moment working evidence expires, with no prop change needed.
+  useEffect(() => {
+    if (nowProp !== undefined || activity.at === undefined) return
+    const interval = setInterval(() => setTick(Date.now()), 15000)
+    const remaining = activity.at + STALE_AFTER_MS - Date.now()
+    const expiry = remaining > 0 && !activity.stale ? setTimeout(() => setTick(Date.now()), remaining + 5) : undefined
+    return () => { clearInterval(interval); if (expiry) clearTimeout(expiry) }
+  }, [nowProp, activity.at, activity.stale])
   const now = nowProp ?? tick
+  activity = applyStaleness(activity, now)
   // A state the profile does not declare cannot be shown; fall back to unknown rather than to a working look.
   const supported = activity.state === 'unknown' || profile.activityStates.includes(activity.state)
   const shown = supported ? activity : { ...activity, state: 'unknown' as const, reason: `State ${activity.state} is not supported by this profile` }

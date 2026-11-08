@@ -11,7 +11,8 @@ import { THREAD_FILTERS, TICKET_FILTERS, type Api, type ApiResponse, type RouteP
 import { configuredDecisionReply } from './decision-evaluator.ts'
 import { evaluateDecisionWithFallback } from './decision-ranker.ts'
 import { evaluateWithCharacter } from './character-evaluator.ts'
-import { HELPER_BODY_MAX_BYTES, HelperDigestSchema, suggestHelper } from './routes/helper.ts'
+import { HELPER_BODY_MAX_BYTES, HelperDigestSchema } from './routes/helper.ts'
+import { attributionFor, SpecialistAttributionSchema, suggestWithSpecialist } from './specialist-advice.ts'
 import { DEFAULT_SENIOR_DEVELOPER_CHARACTER } from '../core/character.ts'
 import { DecisionInbox, InboxError, decisionQuestion, durableDecisionEvents, registerDecisionCapture, ticketDecisions, submitDecision, stageDecision, restartDecision } from './decision-inbox.ts'
 import { sourceSkills } from './context.ts'
@@ -215,13 +216,21 @@ export const DecisionEvaluationSchema = z.object({ recommendedValue: z.string(),
 const CanonicalSourceSchema = z.object({ sessionId: z.string().min(1).max(300), sourceMessageId: z.string().min(1).max(300), sourceTurn: z.number().int().nonnegative(), sourceSeq: z.number().int().nonnegative(), draftRevision: z.string().min(1).max(300) })
 const CanonicalWriteSchema = CanonicalSourceSchema.extend({ leaseToken: z.string().uuid() })
 export const CanonicalClaimSchema = CanonicalSourceSchema.extend({ owner: z.string().min(1).max(300), purpose: z.literal('score').optional() }).strict()
-export const CanonicalPublishSchema = CanonicalWriteSchema.extend({ model: z.string().min(1).max(300), options: z.array(z.object({ id: z.string().min(1).max(200), label: z.string().min(1).max(2000), prompt: z.string().min(1).max(12000), why: z.string().max(4000), recommended: z.boolean(), added: z.boolean().optional() }).strict()).min(2).max(4) }).strict()
+export const CanonicalPublishSchema = CanonicalWriteSchema.extend({ specialist: SpecialistAttributionSchema.optional(), model: z.string().min(1).max(300), options: z.array(z.object({ id: z.string().min(1).max(200), label: z.string().min(1).max(2000), prompt: z.string().min(1).max(12000), why: z.string().max(4000), recommended: z.boolean(), added: z.boolean().optional() }).strict()).min(2).max(4) }).strict()
 export const CanonicalScoreSchema = CanonicalWriteSchema.extend({ evaluation: DecisionEvaluationSchema }).strict()
 export const CanonicalFailureSchema = CanonicalWriteSchema.extend({ error: z.string().min(1).max(4000) }).strict()
 export async function canonicalOperation(ctx: Context, inbox: DecisionInbox, operation: string, body: unknown) {
   if (operation === 'revise') { const input = CanonicalSourceSchema.extend({ expectedDecisionId: z.string().min(1).max(300), reason: z.string().trim().min(1).max(1000) }).strict().parse(body); return inbox.reviseCanonical(input, await durableDecisionEvents(ctx, input.sessionId)) }
   if (operation === 'claim') { const input = CanonicalClaimSchema.parse(body); return inbox.claimCanonical(input, await durableDecisionEvents(ctx, input.sessionId)) }
-  if (operation === 'publish') { const input = CanonicalPublishSchema.parse(body); return inbox.publishCanonical(input, await durableDecisionEvents(ctx, input.sessionId)) }
+  if (operation === 'publish') {
+    const { specialist, ...input } = CanonicalPublishSchema.parse(body)
+    const published = inbox.publishCanonical(input, await durableDecisionEvents(ctx, input.sessionId))
+    // Attribution only, on the SAME record, derived from the registry. A staged/closed/invalidated record refuses it and the publication stands.
+    const attribution = specialist ? attributionFor(specialist) : undefined
+    if (!attribution || published.item.character) return published
+    try { return { ...published, item: inbox.attributeCharacter(published.item.id, attribution) } }
+    catch (error) { if (error instanceof InboxError) return published; throw error }
+  }
   if (operation === 'score') { const input = CanonicalScoreSchema.parse(body); return inbox.scoreCanonical(input, await durableDecisionEvents(ctx, input.sessionId)) }
   if (operation === 'fail') { const input = CanonicalFailureSchema.parse(body); return inbox.failCanonical(input, await durableDecisionEvents(ctx, input.sessionId)) }
   throw new InboxError(404, 'Unknown canonical operation')
@@ -467,7 +476,7 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
     'POST helper/suggest': async ({ body }) => {
       const request = HelperDigestSchema.extend({ sessionId: z.string().min(1).max(300).optional() }).parse(await body(HELPER_BODY_MAX_BYTES))
       const { sessionId, ...digest } = request
-      return suggestHelper(ctx, digest, store.settings(), await contextFor(sessionId))
+      return suggestWithSpecialist(ctx, digest, store.settings(), await contextFor(sessionId), { tools: ctx.tools, deliveries: runtime.deliveries?.store.list() })
     },
     'POST decisions/evaluate': async ({ body }) => {
       const payload = DecisionEvaluation.parse(await body())

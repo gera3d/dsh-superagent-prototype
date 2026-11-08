@@ -20,6 +20,10 @@ export interface RouteDecision {
   alternatives: { profileId: string; score: number }[]
 }
 
+const escapeRegex = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+/** Whole-word/phrase match only, so a keyword never fires inside another word ("worker" in "coworker", "kv" in "kvm"). */
+const mentions = (haystack: string, word: string) => new RegExp(`(?<![a-z0-9_])${escapeRegex(word.toLowerCase())}(?![a-z0-9_])`).test(haystack)
+
 /** Deterministic keyword scoring over a length-bounded text; ties resolve to registry order, then the default. */
 export function routeSpecialist(text: string, profiles: readonly SpecialistProfile[], requestedProfileId?: string): RouteDecision {
   const enabled = profiles.filter(profile => profile.activityStates.length > 0)
@@ -29,7 +33,7 @@ export function routeSpecialist(text: string, profiles: readonly SpecialistProfi
   }
   const haystack = text.slice(0, ROUTING_TEXT_MAX).toLowerCase()
   const scored = enabled.map((profile, index) => ({ profileId: profile.id, index,
-    score: profile.routing.keywords.reduce((total, word) => total + (haystack.includes(word.toLowerCase()) ? 1 : 0), 0) }))
+    score: profile.routing.keywords.reduce((total, word) => total + (mentions(haystack, word) ? 1 : 0), 0) }))
     .sort((a, b) => b.score - a.score || (a.profileId === DEFAULT_PROFILE_ID ? -1 : b.profileId === DEFAULT_PROFILE_ID ? 1 : a.index - b.index))
   const best = scored[0]
   if (!best || best.score === 0) {

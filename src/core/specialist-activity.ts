@@ -50,10 +50,20 @@ export function activityFromSessionEvents(events: readonly SessionEvent[]): Acti
       case 'tool/result': out.push({ type: 'tool_end', at, failed: data?.message?.isError === true }); break
       case 'approval/asked': out.push({ type: 'approval_asked', at }); break
       case 'approval/decided': out.push({ type: 'approval_decided', at }); break
-      case 'turn/end': out.push({ type: 'turn_end', at, outcome: data?.reason?.kind === 'completed' ? 'completed' : data?.reason?.kind === 'cancelled' ? 'cancelled' : 'failed' }); break
+      case 'turn/end': out.push({ type: 'turn_end', at, outcome: data?.reason?.kind === 'completed' ? 'completed' : ['aborted', 'interrupted', 'cancelled'].includes(data?.reason?.kind) ? 'cancelled' : 'failed' }); break
     }
   }
   return out
+}
+
+/**
+ * Re-evaluates an already derived activity at a later `now`. Working evidence ages into `unknown`/stale without any new
+ * event or prop change, so a UI timer can call this alone. Settled states are facts and persist.
+ */
+export function applyStaleness(activity: Activity, now: number): Activity {
+  if (activity.stale || activity.state === 'unknown' || activity.at === undefined || !WORKING_STATES.includes(activity.state)) return activity
+  if (now - activity.at <= STALE_AFTER_MS) return activity
+  return { state: 'unknown', stale: true, at: activity.at, reason: `Last ${activity.state} evidence is ${Math.round((now - activity.at) / 1000)}s old; not shown as working` }
 }
 
 /** Derives the state from the LAST event. The caller supplies `now`; nothing here reads a clock. */
