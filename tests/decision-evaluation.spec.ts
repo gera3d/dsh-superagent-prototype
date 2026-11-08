@@ -85,3 +85,11 @@ it('scores on the explicit advice route while retaining conservation and source 
   await configuredDecisionReply(ctx as unknown as Context, { ...request, sessionId: 'source' }, settings)
   expect(resolveCallConfig).toHaveBeenLastCalledWith({ provider: 'economy', model: 'cheap' }, expect.any(AbortSignal))
 })
+
+it('does not read undeclared native default services when an explicit advice route is available', async () => {
+  const ctx = { agents: { get: () => { throw new Error('Source no longer loaded') } },
+    get: () => { throw new Error('cannot get property agentDefaultModel without inject') },
+    llm: { resolveCallConfig: async (value: unknown) => value, stream: async function* () { yield { type: 'text-delta', text }; yield { type: 'finish', reason: { kind: 'stop' } } } } }
+  const settings = SettingsSchema.parse({ models: { helper: { provider: 'configured', model: 'advice' } } })
+  await expect(configuredDecisionReply(ctx as unknown as Context, { ...request, sessionId: 'source' }, settings)).resolves.toEqual({ text, provider: 'configured / advice' })
+})
