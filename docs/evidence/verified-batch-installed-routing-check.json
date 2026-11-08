@@ -1,8 +1,8 @@
 {
-  "at": "2026-11-08T00:47:49.763Z",
+  "at": "2026-11-08T01:50:56.352Z",
   "checks": 10,
   "passed": 10,
-  "settingsRevision": 17,
+  "settingsRevision": 18,
   "default": {
     "provider": "antigravity",
     "model": "gemini-3.8-flash",

@@ -1,0 +1,53 @@
+
+> dsh-next-steps@0.1.0 test /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/verified-batch/specialist-plugins/dsh-next-steps
+> node --experimental-strip-types --test test/*.test.mjs
+
+✔ feature delivery metadata never becomes native chat suggestions (47.275522ms)
+✔ canonical projection preserves Track A privileged action kinds without label inference (7.306987ms)
+✔ helper 2–4 choices retain exact IDs, order, labels, full prompts and recommendation (3.037168ms)
+✔ capture-before-helper: pending visible, cards precede scores, publication and scoring same exact record (201.552358ms)
+✔ helper-before-capture: early result retained, never displayed unlinked, final publication once (18.744278ms)
+✔ simultaneous tabs/hosts and reload share durable lease and persisted choices (27.278134ms)
+dsh-next-steps-score-diagnostic {"stage":"evaluate","code":"network","attempt":1,"elapsedMs":1,"deadlineMs":60000,"retryable":true}
+dsh-next-steps-score-diagnostic {"stage":"evaluate","code":"network","attempt":2,"elapsedMs":504,"deadlineMs":60000,"retryable":true}
+dsh-next-steps-score-diagnostic {"stage":"evaluate","code":"network","rev":"505626de","attempt":2,"elapsedMs":510,"retryable":true}
+✔ concurrent requests and score failure retain unscored cards without fake probabilities (523.062066ms)
+dsh-next-steps-score-diagnostic {"stage":"evaluate","code":"http-503","attempt":1,"elapsedMs":1,"deadlineMs":60000,"retryable":true}
+dsh-next-steps-score-diagnostic {"stage":"evaluate","code":"http-503","attempt":2,"elapsedMs":502,"deadlineMs":60000,"retryable":true}
+dsh-next-steps-score-diagnostic {"stage":"evaluate","code":"http-503","rev":"505626de","attempt":2,"elapsedMs":502,"retryable":true}
+✔ explicit refresh retries failed scoring without regenerating or replacing choices (515.382942ms)
+dsh-next-steps-score-diagnostic {"stage":"claim","code":"stale","status":409}
+✔ expired scoring lease renews, cached scores never resurrect resolved records (12.334762ms)
+dsh-next-steps-score-diagnostic {"stage":"evaluate","code":"http-503","attempt":1,"elapsedMs":1,"deadlineMs":60000,"retryable":true}
+✔ source changing during failed ranking cannot resurrect unscored cards (510.21986ms)
+✔ stale publication and staged choice cannot replace durable choices or resurrect resolved decision (9.394513ms)
+✔ shared transport unavailable is visible and never generates a competing local decision (2.098092ms)
+dsh-next-steps-score-diagnostic {"stage":"evaluate","code":"http-503","attempt":1,"elapsedMs":1,"deadlineMs":60000,"retryable":true}
+✔ source snapshot includes tools, ignores bookkeeping and rejects interrupted/continued source (0.763891ms)
+✔ fallback-generated canonical choices receive real scores without regenerating their prompts (10.629447ms)
+dsh-next-steps-score-diagnostic {"stage":"evaluate","code":"http-503","attempt":2,"elapsedMs":512,"deadlineMs":60000,"retryable":true}
+dsh-next-steps-score-diagnostic {"stage":"evaluate","code":"http-503","rev":"505626de","attempt":2,"elapsedMs":528,"retryable":true}
+dsh-next-steps-score-diagnostic {"stage":"claim","code":"stale","status":409}
+✔ failed fallback scoring retries only on explicit refresh and survives renewed leases (547.559908ms)
+dsh-next-steps-score-diagnostic {"stage":"claim","code":"stale","status":409}
+✔ fallback scoring after host reload uses the existing choices and refuses staged records (20.891958ms)
+dsh-next-steps-score-diagnostic {"stage":"evaluate","code":"invalid-distribution","attempt":1,"elapsedMs":0,"deadlineMs":60000,"retryable":true}
+dsh-next-steps-score-diagnostic {"stage":"evaluate","code":"invalid-distribution","attempt":2,"elapsedMs":503,"deadlineMs":60000,"retryable":true}
+dsh-next-steps-score-diagnostic {"stage":"evaluate","code":"invalid-distribution","rev":"505626de","attempt":2,"elapsedMs":503,"retryable":true}
+✔ invalid fallback ranking stays unscored and a continued source invalidates in-flight scores (510.28466ms)
+dsh-next-steps-score-diagnostic {"stage":"claim","code":"stale","status":409}
+✔ restoring a completed session seed does not invalidate its canonical content identity or scoring (7.371936ms)
+✔ bounded specialist attribution is relayed on publish, projected to the dock, and the internal field never leaves the host (3.832426ms)
+✔ malformed or oversized specialist metadata is ignored and advice still publishes unattributed (3.33998ms)
+✔ digest waits for a finished turn (4.49809ms)
+✔ digest captures goal, tools, and final answer; ignores injected context (7.216373ms)
+✔ digest captures worker relayed tickets and unpacks title/trigger (0.499747ms)
+✔ parser puts the recommended option first and tolerates fences (5.642037ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3440.550192

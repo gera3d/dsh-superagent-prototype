@@ -1,0 +1,36 @@
+
+> dsh-next-steps@0.1.0 test:contract /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/verified-batch/specialist-plugins/dsh-next-steps
+> node --experimental-transform-types --test test/contract/*.test.mjs
+
+(node:33638) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33638) ExperimentalWarning: Transform Types is an experimental feature and might change at any time
+✔ happy path persists real percentages and the evaluator label; choice order and ids unchanged (261.273726ms)
+✔ failure then Refresh: failed run leaves the published card intact, Refresh retries and persists (615.416202ms)
+✔ bounded recovery without Refresh: cooldown then at most three runs, then a non-retryable failure (1632.300149ms)
+✔ slow successful evaluator is accepted and persisted (1281.260225ms)
+✔ evaluator deadline: a hung call times out, is retried once, and a good retry persists (721.00206ms)
+✔ invalid evaluator output is never persisted: empty distribution (unranked) (548.508121ms)
+✔ invalid evaluator output is never persisted: probabilities not summing to 1 (545.873861ms)
+✔ invalid evaluator output is never persisted: unknown choice ids (529.528838ms)
+✔ invalid evaluator output is never persisted: recommended value outside the choices (574.067417ms)
+✔ backend score error: one bounded retry recovers; a persistent error leaves the card unscored and reports the stage (77.055259ms)
+✔ lease expiring during evaluation: re-claims a score lease on the same source and persists (72.771613ms)
+dsh-next-steps-score-diagnostic {"stage":"claim","code":"held","attempt":0,"retryAfterMs":89994,"retryable":true}
+✔ lease held by another owner: no evaluator call, no write, retry window reported (31.425661ms)
+dsh-next-steps-score-diagnostic {"stage":"claim","code":"stale","status":409}
+✔ stale source: a new turn before scoring or during evaluation never gains scores (52.900068ms)
+dsh-next-steps-score-diagnostic {"stage":"claim","code":"stale","status":409}
+✔ staged or closed decision never gains scores (68.519589ms)
+✔ an exception inside a run is reported and never cached as a permanent rejection (71.738583ms)
+✔ diagnostics are privacy-safe: stage, code and numbers only, never prompt, option or context text (556.377117ms)
+dsh-next-steps-score-diagnostic {"stage":"evaluate","code":"http-500","attempt":1,"elapsedMs":62002,"deadlineMs":60000,"retryable":true}
+✔ second evaluator attempt receives only the remaining overall retry budget (545.230201ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11135.440752

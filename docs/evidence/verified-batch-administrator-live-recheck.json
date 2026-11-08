@@ -1,0 +1,31 @@
+{
+  "status": 200,
+  "seconds": 9.463,
+  "response": {
+    "options": [
+      {
+        "id": "next-1",
+        "label": "Map owners and handoffs",
+        "prompt": "Using only the recorded deliveries list, produce a read-only ownership and handoff map: group each delivery by its existing owner (worker IDs vs. Codex release operator/root release coordination), note its recorded status and blocking reason verbatim, and state which blocked items are waiting on operator-confirmed scope, target and acceptance. Do not propose new actions, owners, acceptance or settings changes, and make clear that unrecorded status is UNKNOWN rather than inferred.",
+        "recommended": true
+      },
+      {
+        "id": "next-2",
+        "label": "Trace superseded/replacement pair",
+        "prompt": "Read-only check of the handoff between auto-b69f469019a353ca5e0cd0747f3cbcbf (superseded restricted attempt, blocked, to be preserved) and its stated replacement auto-5ee3dda6e61420b3b927164ed5f4b98a (Codex root release coordination, no_action). Summarize what the records say about which attempt is authoritative and what is recorded as still missing. Do not propose acceptance, new work or a different owner; flag anything unrecorded as UNKNOWN.",
+        "recommended": false
+      },
+      {
+        "id": "next-3",
+        "label": "Trace repair-46 chain handoffs",
+        "prompt": "Read-only summary of the repair-46 lineage among the existing Codex release operator deliveries (repair-46-47-2a7a blocked after failed publication verification and rollback; repair-46-47-final-1e13, repair-46-context-7d66, repair-46-headroom-1a45 with no recorded next action). State the recorded ordering, what each blocked/no_action state implies for handoff, and explicitly note that no live release or deployment evidence is recorded. No new work or acceptance proposed.",
+        "recommended": false
+      }
+    ],
+    "specialist": {
+      "profileId": "administrator",
+      "basis": "keyword",
+      "unavailable": []
+    }
+  }
+}

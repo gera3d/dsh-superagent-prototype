@@ -1,0 +1,13 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/verified-batch/handoff-final
+
+(node:36449) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:36450) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  3 passed (3)
+      Tests  32 passed (32)
+   Start at  17:58:51
+   Duration  4.84s (transform 4.41s, setup 0ms, import 6.54s, tests 665ms, environment 1ms)
+
