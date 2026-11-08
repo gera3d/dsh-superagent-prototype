@@ -497,3 +497,20 @@ it('does not gate target-validated native stage on unrelated historical recovery
     expect(response).toMatchObject({ status: 404, body: { error: 'Decision not found' } })
   } finally { release() }
 })
+
+it('evaluates advice while unrelated historical recovery is blocked', async () => {
+  let release!: () => void
+  const gate = new Promise<void>(resolve => { release = resolve })
+  const call = serve({ store: { settings: () => SettingsSchema.parse({ models: { helper: { provider: 'configured', model: 'advice' } } }) } }, '127.0.0.1', {
+    sessionPersistence: { flush: async () => {}, list: async () => { await gate; return [] } },
+    agents: { get: () => undefined }, get: () => undefined,
+    llm: { resolveCallConfig: async (route: unknown) => route, async *stream() {
+      yield { type: 'text-delta', text: JSON.stringify({ recommended_value: 'a', confidence: .7, rationale: 'Recorded next step.', distribution: [{ id: 'a', probability: .7 }, { id: 'b', probability: .3 }] }) }
+      yield { type: 'finish', reason: { kind: 'stop' } }
+    } }
+  })
+  try {
+    const response = await Promise.race([call('POST', 'decisions/evaluate', { context: 'Read-only advice.', question: 'Choose?', choices: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }] }), new Promise(resolve => setTimeout(() => resolve('timeout'), 1000))])
+    expect(response).toMatchObject({ status: 200, body: { recommendedValue: 'a', distribution: [{ id: 'a', probability: .7 }, { id: 'b', probability: .3 }] } })
+  } finally { release() }
+})
