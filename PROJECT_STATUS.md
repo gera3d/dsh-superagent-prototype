@@ -2,6 +2,14 @@
 
 Updated November 8, 2026, 7:27 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
 
+## Screen-independent coordination repair — dispatched
+
+The user requested a solution to overnight progress depending on an unlocked Mac. Codex inspected the actual HTTP finding authorization and remote MCP typed-action boundary, recorded a bounded finding, then used native **Fix now**. The canonical finding reports running. Harness owns an isolated candidate; the completion-advice repair remains separate and active. No claim of a deployed solution.
+
+Scope: supported authenticated coordination for already-approved exact finding/job scope, preserving revision guards, replay protection, audit attribution, productive-worker detection and native publication confirmations. No spoofing browser approval headers, new credentials or enabled privileges. If scoped delegation requires broader security-sensitive access, return the concrete design for explicit owner confirmation before activation. Test unattended advancement and refusal cases without weakening or disabling the screen lock. Codex reviews the result and owns release verification.
+
+Canonical finding `a338ad44-893d-4ebf-b8ff-aa0c3067e384`; job `finding:a338ad44-893d-4ebf-b8ff-aa0c3067e384:r1`. Current state `running`.
+
 ## Active bounded correction — native retry dispatched
 
 Verified November 8, 2026, 7:27 AM PST: native access is available again. Codex used **Reopen bounded triage**, then confirmed **Fix now** on the existing completion-advice finding. Its revision-4 job is running; the prior ended assignment and all three occurrences/review evidence remain attached as history. Harness reports one running worker, zero queued. This is a correction dispatch, not a completed fix or deployment.
