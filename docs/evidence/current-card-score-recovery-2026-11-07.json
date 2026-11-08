@@ -1,0 +1,34 @@
+{
+  "at": 1794096689.384419,
+  "method": "normal canonical scoring claim and score API; expired lease respected; actual configured evaluator result",
+  "sourceUnchanged": true,
+  "choicesUnchanged": true,
+  "decisionId": "chat-5b590807605368ded9807c188a3f7f9b",
+  "phase": "scored",
+  "evaluation": {
+    "recommendedValue": "opt-1",
+    "confidence": 0.55,
+    "rationale": "The assignment report is already filed and states the candidate passes code review, and the release owner (Codex/Root) already has VERDICT.md and MANIFEST.sha256. The one open item is the full-suite exit 1. Supplied facts: delivery-evidence.spec.ts fails on base cdbc302 in 2 of 2 runs, and decision-submission-client.spec.ts passed on rerun. That is suggestive but thin evidence (one full run, a 2-run base sample). Repeated runs of the two specs, including more base runs, would turn 'treat as pre-existing' into recorded evidence, so the suite gate can be called green or not without further handoffs. This costs little, needs no source edits, and fits the mandate if run in the same isolated checkout. The main tradeoff against opt-2 is one extra step before handoff. Opt-2 is faster and already carries the caveats, but it passes the unresolved gate downstream, which risks rework. Opt-3 mostly restates limits already declared in the report and adds little. Assumptions: the mandate allows additional test runs in the isolated checkout (it forbids source, live, and settings edits, not reruns), and the machine is quiet enough for timeout results to mean something. If the owner is willing to accept the timeouts as pre-existing as-is, opt-2 becomes the better choice.",
+    "distribution": [
+      {
+        "id": "opt-1",
+        "probability": 0.55
+      },
+      {
+        "id": "opt-2",
+        "probability": 0.35
+      },
+      {
+        "id": "opt-3",
+        "probability": 0.1
+      }
+    ],
+    "provider": "anthropic / claude-sonnet-5-5 (model-reported scores, not calibrated)",
+    "latencyMs": 4754
+  },
+  "noWorkerPromptOrSubmission": true,
+  "noCodeOrSettingsChange": true,
+  "permanentPluginFix": false,
+  "nativeVerified": true,
+  "nativeResult": "Chrome exact qualifier thread shows 55,35,10 percent and Anthropic evaluator; same choice labels and prompts; no reply sent by recovery"
+}

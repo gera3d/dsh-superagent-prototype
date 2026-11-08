@@ -1,6 +1,12 @@
 # DeepSeek Harness project status
 
-Updated November 07, 2026 at 4:04 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 07, 2026 at 4:23 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+
+## Latest verified handoff — no new user action required
+
+Gera approved advancing the qualified Sonnet release from existing results with explicit timeout caveats rather than repeating completed checks. Root verified every entry in the independent qualification manifest (14 files), copied the verdict/manifest into repository evidence, and updated the existing source PR55 qualification record. It remains unmerged/undeployed. Native alternative “Prepare the source PR handoff” was selected, staged through the native composer and sent once in the same qualifier conversation. The worker could provide its existing package in chat but a tool command to write an extra HANDOFF-CODEX.md was refused because its bounded ticket had ended. This is a closed-ticket execution boundary, NOT a missing live-evaluation gate. No new ticket/file is needed merely to repackage already available evidence; root owns the remaining release actions. Earlier generated cards offering push/open-PR or more commands in the ended job are not current user obligations.
+
+Current qualifier card scores were manually recovered through normal canonical claim/evaluate/score after respecting the expired prior lease, using actual Anthropic results. Native Chrome verified55/35/10 on the SAME choices/prompts with Send disabled and no reply sent by that recovery. This restored one card, not the permanent plugin path. The scoring worker received and admitted the recovery evidence; the first uninstrumented failure cause remains unknown. No single-heavy-test guardrail was added; Gera set that discussion aside.
 
 ## Current priority — missing recommendation scores
 
