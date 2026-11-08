@@ -1,5 +1,6 @@
 /** Type-only management API contract between the web panel and host routes, imported by the panel without bundling host code. */
 import type { BrandingConfig } from '../policy.ts'
+import type { AccountAllowanceReport } from './account-allowance.ts'
 import type { LifecycleAction, LifecycleResult } from './lifecycle-decisions.ts'
 import type { DecisionEvaluationRequest, DecisionEvaluationResult, PendingDecisionItem } from '../core/decision.ts'
 import type { CharacterEvaluationResult } from '../core/character.ts'
@@ -30,6 +31,8 @@ export interface Api {
   'GET search': { query: { q: string }; response: SearchView }
   'GET sources': { response: SourceStatusView[] }
   'GET settings': { response: SettingsView }
+  'GET allowance': { response: AccountAllowanceReport }
+  'POST allowance/refresh': { response: { refreshed: boolean; report: AccountAllowanceReport } }
   'POST sources/:id/labels': { response: { added: string[] } }
   'GET threads': { query?: Paged & { filter?: ThreadFilter }; response: ThreadListView }
   'GET threads/:key': { query?: { limit?: number; before?: string; around?: string }; response: ThreadDetailView }

@@ -22,6 +22,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-chat/client'
 import { PluginConfig, usePageForm } from './deployment.tsx'
 import { BrandLogoMark, BrandWordmark } from './branding-mark.tsx'
+import { AllowanceHeaderBadge, AllowanceSidebarBody, ALLOWANCE_TAB_ID, ALLOWANCE_TAB_KIND, AllowanceIcon, type AllowanceClientContext } from './account-allowance.tsx'
 import { en, zh } from './locales.ts'
 import type { T } from './text.ts'
 import { DecisionHandoffDock } from './decision-handoff.tsx'
@@ -82,6 +83,21 @@ export function apply(ctx: ClientContext): void {
   ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
     name: 'conversation.input.dock', id: 'dsh-superagent.inline-decision', order: 10,
   }, props => <InlineDecision {...props} submissionBridge={submissionBridge} />))
+  // Compact account allowance badge beside chat in conversation session header
+  ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
+    name: 'conversation.session.header.actions', id: 'dsh-superagent.account-allowance', order: 15,
+  }, () => <AllowanceHeaderBadge ctx={ctx as AllowanceClientContext} t={t} />))
+  // Detailed allowance pane registered in the documented Right Sidebar slot
+  if ((ctx as any).sidebarRightTabs) {
+    ctx.effect(() => (ctx as any).sidebarRightTabs.register({
+      id: ALLOWANCE_TAB_ID, kind: ALLOWANCE_TAB_KIND, priority: 'extension',
+      title: () => t('allowanceTitle'),
+      guide: [{ id: 'allowance', order: 25, title: () => t('allowanceTitle'), description: () => t('allowanceLocalNote'), icon: AllowanceIcon }],
+    }))
+    ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
+      name: 'sidebar.right.pane.tab', key: ALLOWANCE_TAB_ID, locale: NS,
+    }, () => <AllowanceSidebarBody t={t} />))
+  }
   // `sidebar.brand.mark` is a single slot: the official brand plugin already occupies priority 0, so claim a lower
   // rank to shadow it instead of throwing on a duplicate registration (lowest priority renders).
   ctx.slots.inject('sidebar.brand.mark', () => ctx.slots.register({
