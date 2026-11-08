@@ -4,6 +4,7 @@ import type { LifecycleAction, LifecycleResult } from './lifecycle-decisions.ts'
 import type { DecisionEvaluationRequest, DecisionEvaluationResult, PendingDecisionItem } from '../core/decision.ts'
 import type { CharacterEvaluationResult } from '../core/character.ts'
 import type { HelperDigest, HelperSuggestions } from './routes/helper.ts'
+import type { SpecialistAttribution } from './specialist-advice.ts'
 import type { CanonicalClaim, CanonicalPublish, CanonicalScore, CanonicalFailure, CanonicalResult, DecisionResolution, DecisionStagingResult, DecisionDiscardResult, StageDecisionRequest, BindDecisionSubmission, RestartDecisionRequest, DecisionRestartResult } from './decision-inbox.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
 import type { PromptConfig, Prompts } from './prompts.ts'
@@ -37,7 +38,7 @@ export interface Api {
   'GET decisions': { query?: Paged & { kind?: string; window?: '24h' }; response: DecisionListView }
   'POST decisions/canonical/revise': { body: Omit<CanonicalClaim, 'owner' | 'purpose'> & { expectedDecisionId: string; reason: string }; response: CanonicalResult }
   'POST decisions/canonical/claim': { body: CanonicalClaim; response: CanonicalResult }
-  'POST decisions/canonical/publish': { body: CanonicalPublish; response: CanonicalResult }
+  'POST decisions/canonical/publish': { body: CanonicalPublish & { specialist?: SpecialistAttribution }; response: CanonicalResult }
   'POST decisions/canonical/score': { body: CanonicalScore; response: CanonicalResult }
   'POST decisions/canonical/fail': { body: CanonicalFailure; response: CanonicalResult }
   'GET progress': { query?: { ticket?: string }; response: { items: Array<import('./progress.ts').ProgressView | import('./progress.ts').ProgressObservation> } }
@@ -58,7 +59,7 @@ export interface Api {
   'GET decisions/inbox': { response: { items: PendingDecisionItem[] } }
   'POST decisions/inbox': { body: PendingDecisionItem; response: { ok: boolean; id: string } }
   'POST helper/context': { body: { sessionId: string }; response: { context: string } }
-  'POST helper/suggest': { body: HelperDigest & { sessionId?: string }; response: HelperSuggestions }
+  'POST helper/suggest': { body: HelperDigest & { sessionId?: string }; response: HelperSuggestions & { specialist?: SpecialistAttribution } }
   'POST decisions/evaluate': { body: DecisionEvaluationRequest; response: DecisionEvaluationResult }
   'POST decisions/character-evaluate': { body: DecisionEvaluationRequest & { characterId?: string; diff?: string; testOutput?: string; ticketRequest?: string }; response: CharacterEvaluationResult }
   'POST decisions/:id/lifecycle': { body: { action: LifecycleAction; approval?: { publicationId: string; requestId: string } }; response: LifecycleResult }

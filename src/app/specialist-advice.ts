@@ -52,10 +52,11 @@ export const SpecialistAttributionSchema = z.object({
 export type SpecialistAttribution = z.infer<typeof SpecialistAttributionSchema>
 
 /** Registry-derived decision attribution; undefined for an unknown id (the publish then records no attribution). */
-export function attributionFor(input: SpecialistAttribution, profiles: readonly SpecialistProfile[] = seedProfiles()): DecisionCharacterAttribution | undefined {
+export function attributionFor(input: SpecialistAttribution, profiles: readonly SpecialistProfile[] = seedProfiles(), discovery?: NativeDiscovery): DecisionCharacterAttribution | undefined {
   const profile = profiles.find(candidate => candidate.id === input.profileId)
   if (!profile) return undefined
-  const unavailable = [...new Set(input.unavailable)].filter(id => id !== 'cloudflare.write')
+  // Caller metadata cannot hide a missing native connection. Recompute from the current registry/discovery.
+  const unavailable = resolveCapabilities(profile, discovery).refused.filter(item => item.reason !== 'not_grantable').map(item => item.id)
   return { characterId: profile.id, name: profile.identity.name, specialty: profile.specialty, brief: profile.identity.title, mode: 'suggest',
     rationale: `Selected by ${input.basis}.${unavailable.length ? ` Unavailable: ${unavailable.join(', ')}.` : ''}`,
     ...(unavailable.length ? { unavailable } : {}) }
@@ -140,7 +141,7 @@ export async function adviseWithSpecialist(input: SpecialistAdviceInput): Promis
     input.inbox.failCanonical({ ...input.source, leaseToken: claim.leaseToken, error: error instanceof Error ? error.message : String(error) }, input.events)
     throw error
   }
-  const attribution = attributionFor(prepared.attribution, input.profiles)!
+  const attribution = attributionFor(prepared.attribution, input.profiles, input.discovery)!
   const item = input.inbox.attributeCharacter(claim.item.id, { ...attribution, rationale: [attribution.rationale, resolution.nextDecision].filter(Boolean).join(' ').slice(0, 600) })
   return { status: 'advised', route, resolution, item, modelRoute }
 }

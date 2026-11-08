@@ -555,6 +555,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/dock-guard.spec.tsx` | The empty-dock guard: a blank conversation renders no decision card and never touches the composer |
 | `tests/options.spec.ts` | The shared option contract: four-to-six enforcement, marked fallbacks and hidden options beyond the shown maximum |
 | `tests/decision-submission.spec.ts` | Durable resolve-on-send proof, exact native request/session/source identity, candidate races, retries, discard, invalidation, close/reopen recovery and legacy-writer guards |
+| `tests/specialist-integration.spec.ts` | Real helper/publish integration, canonical identity and capability revalidation, configured identity, provider conservation and event parity |
 | `tests/specialist-profile.spec.ts` | Registry compatibility, strict validation, pinned provenance, capability intersection and refusal, bounded routing, Administrator bounds |
 | `tests/specialist-advice.spec.ts` | Shared canonical record continuity, no duplicate job, native Send continuation, model-route inheritance and fail-closed discovery |
 | `tests/specialist-activity.spec.ts` | Event and record to avatar state mapping, stale and unknown evidence |

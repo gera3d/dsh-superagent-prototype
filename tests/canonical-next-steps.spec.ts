@@ -206,12 +206,26 @@ it('scores separately with concurrent deduplication and updates badges without r
 it.each(['unavailable', 'invalid'] as const)('keeps draft options unscored when ranker is %s', async mode => {
   const view = fixture()
   const draft = (await view.request('s0')).body
-  view.ranker.mockResolvedValueOnce(mode === 'unavailable' ? Response.json({ error: 'offline' }, { status: 503 }) : Response.json({ ...ranking, distribution: [{ id: 'wrong', probability: 1 }] }))
+  view.ranker.mockImplementation(async () => mode === 'unavailable' ? Response.json({ error: 'offline' }, { status: 503 }) : Response.json({ ...ranking, distribution: [{ id: 'wrong', probability: 1 }] }))
   const result = await view.score(draft.key)
   expect(result.status).toBe(200)
   expect(result.body).toMatchObject({ status: 'ready', options: draftOptions, isScored: false, fallback: false })
   expect(result.body.options.every((option: any) => option.percent === undefined)).toBe(true)
-   expect(result.body.options.filter((option: any) => option.recommended).map((option: any) => option.id)).toEqual(['choice-1'])
+  expect(view.ranker).toHaveBeenCalledTimes(2)
+  expect(result.body.scoreIssue).toMatchObject({ stage: 'evaluate', attempts: 2, retryable: true })
+  expect(result.body.options.filter((option: any) => option.recommended).map((option: any) => option.id)).toEqual(['choice-1'])
+  expect(view.prepare).not.toHaveBeenCalled()
+})
+
+it.each(['unavailable', 'invalid'] as const)('recovers a transient %s ranker result without regenerating choices', async mode => {
+  const view = fixture()
+  const draft = (await view.request('s0')).body
+  view.ranker.mockResolvedValueOnce(mode === 'unavailable' ? Response.json({ error: 'offline' }, { status: 503 }) : Response.json({ ...ranking, distribution: [{ id: 'wrong', probability: 1 }] }))
+  const result = await view.score(draft.key)
+  expect(result.body).toMatchObject({ status: 'ready', isScored: true, recommendedValue: ranking.recommendedValue, distribution: ranking.distribution })
+  expect(result.body.options.map(({ id, label, prompt }: any) => ({ id, label, prompt }))).toEqual(draft.options.map(({ id, label, prompt }: any) => ({ id, label, prompt })))
+  expect(view.ranker).toHaveBeenCalledTimes(2)
+  expect(view.helper).toHaveBeenCalledOnce()
   expect(view.prepare).not.toHaveBeenCalled()
 })
 

@@ -1,6 +1,6 @@
 # 022 Specialist profiles (bounded v1)
 
-Candidate only. Not live-qualified. Root owns independent review and release.
+Integrated release candidate. Root review includes real helper/Next steps wiring, capability and identity revalidation, generic-worker routing correction and stale-evidence expiry. Installed native qualification remains pending until the release record says otherwise.
 
 ## What it is
 One typed registry (`src/core/specialist-profile.ts`) over the existing character mechanism, seeding **Administrator**,
@@ -60,20 +60,18 @@ Real renders of the component via headless Chrome with the shipped CSS; baseline
 | Pixel Office | MIT, `7b04146b99b33769779d3814841a72be056944bc` | — | inspiration only, no code copied |
 | Pixel Agents | MIT, `b1bafd02896d90d83457266575a1e8e5011ce997` | — | normalized-event idea only, no code copied |
 
-## Integration seams (not implemented here)
-- Outside-progress observation repair (worker `a291438f297872fcaa5e3c59a453fe4d`): feed its events through
-  `activityFromSessionEvents` / `deriveActivity`; this change adds no observation store.
-- Sonnet quality policy `52af0df`: escalation untouched.
-- Wiring `adviseWithSpecialist` to an HTTP route and a real model call is deliberately left to the release owner.
+## Production integration
 
-## Release / rollback
-- Release: merge the branch; the avatar renders in the existing decision header with no settings, schema or DB migration.
-  `adviseWithSpecialist` is not reachable from any route yet, so behavior change is the header avatar only.
-- Rollback: revert the branch. The only persisted effect of the new code is the optional `character` attribution on a
-  decision record (already an existing optional field), which older code ignores.
+`POST helper/suggest` selects one bounded profile through the shared `prepareSpecialist` seam and the existing tool-free helper/model ladder. It returns enum-bounded attribution, relayed on the normal canonical publish. The server derives configured identity and recomputes unavailable native capabilities on publication; caller metadata cannot hide a missing connection. The same decision record, scores, source/lease guards and explicit stage → Send → durable native proof remain.
 
-## Known limitations
-- `tests/canonical-next-steps.spec.ts` and `tests/inline-decision.spec.tsx` need the missing sibling `../../dsh-next-steps`
-  (baseline failure), so the header integration is covered by typecheck + component tests of `SpecialistStatus`, not by that suite.
-- Baseline `vitest` already had 4 failing tests (timeouts in `delivery-evidence`, one in `decision-submission-client`).
-- Mock pilot only; no live model, no Cloudflare connection.
+The actual companion Next steps header now displays the compact profile/activity badge. The fallback InlineDecision dock also supports it, but it is not mistaken for the active dock. A timer expires working evidence without requiring another event, respects reduced motion and keyboard focus, and maps native aborted/interrupted events truthfully. Generic worker/job/status prose stays with Senior Developer; explicit Cloudflare Workers/Wrangler/product intent can choose Cloudflare.
+
+Outside-progress and completed-release observations continue through the existing progress store; no duplicate store or queue. Sonnet quality policy remains separate. Administrator gives advice only about recorded deliveries/delegated actions. No new connection, credentials, writes or acceptance authority are introduced.
+
+## Qualification / release
+
+Root integrates both exact backend and scoring-compatible plugin patches, records actual tests/types/build exits, merges qualified source and deploys with rollback. Read the current PROJECT_STATUS.md and linked evidence for installation/acceptance. Worker-only mocks or a completed turn are not live proof.
+
+## Limits
+
+Cloudflare remains advice-only/unavailable in this Harness until an official connection is separately authorized. Knowledge references identify pinned official sources; they are not tool grants. Custom GIF art can replace the bounded code-native animation later; no foreign application or runtime was installed. The existing Google connection issue is distinct from this profile integration. A fallback generation that has no specialist attribution uses a truthful default Senior Developer indicator rather than inventing a domain identity.

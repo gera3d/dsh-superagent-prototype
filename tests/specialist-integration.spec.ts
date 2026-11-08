@@ -113,3 +113,13 @@ it('native event parity: the dock copy of the mapper agrees with the backend map
   const old = deriveActivity(activityFromSessionEvents(native.slice(0, 1) as never), 1300)
   expect(applyStaleness(old, 1000 + STALE_AFTER_MS + 1).state).toBe('unknown')
 })
+
+it('publish revalidates missing tools and configured identity instead of trusting caller display metadata', async () => {
+  const inbox = open(); const claim = inbox.claimCanonical({ ...source, owner: 'host' }, events)
+  const result = await canonicalOperation(ctx({ tools: { schemas: () => [] } }), inbox, 'publish', { ...source, leaseToken: claim.leaseToken, model: 'helper', options, specialist: { ...attribution, unavailable: [] } })
+  expect(result.item.character?.unavailable).toEqual(['cloudflare.docs.read', 'cloudflare.account.read'])
+  const settings = SettingsSchema.parse({}); settings.characters.characters[0]!.name = 'My Senior Reviewer'
+  const other = open(); const second = other.claimCanonical({ ...source, owner: 'host' }, events)
+  const named = await canonicalOperation(ctx(), other, 'publish', { ...source, leaseToken: second.leaseToken, model: 'helper', options, specialist: { profileId: settings.characters.characters[0]!.id, basis: 'default', unavailable: [] } }, settings)
+  expect(named.item.character?.name).toBe('My Senior Reviewer')
+})
