@@ -1,16 +1,36 @@
 # DeepSeek Harness project status
 
-Updated November 8, 2026, 9:29 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
+Updated November 08, 2026, 11:05 AM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
 
-## Settings candidate failed actual primary-path review; correction queued
+## Current seven-track outcome
 
-Verified November 08, 2026, 10:31 AM PST: root independent test imported candidate backend `4502b86` and copied actual live Settings, changing only the active UI Senior Developer brief to an audit marker. `effectiveAdvisorCharacter` and fallback `helperSystemPrompt` include the marker, but actual primary `prepareSpecialist(seedProfiles(persona), settings, task)` does **not**. UI ID `senior-developer` and legacy ID `senior_developer` are still inconsistently resolved by profile/character projection. The candidate fails its central end-to-end requirement despite its passing isolated resolver tests. [Exact independent probe](docs/evidence/advisor-settings-independent-review.json). **Do not deploy this Settings candidate.**
+| Track | Verified current state | Next owner/action |
+|---|---|---|
+| Explicit conversation completion | **Merged, deployed, original-thread native verified, finding accepted.** | Complete for this bounded scope; preserve evidence/history. |
+| Senior Developer Settings / real review handoff | Earlier candidate failed actual primary-path persona test; correction dispatched under same finding, revised job. | Harness correction worker; Codex review and paired integration. |
+| Screen-independent coordination | Candidate preserved; not deployed or activated. | Codex security/authority review; explicit owner confirmation before any broader local delegation activation. |
+| Google + Anthropic allowance display | Full final report returns candidate,17 focused tests/types/build and before/after fixture captures; not yet independently accepted or deployed. Worker retired idle to evidence review. | Codex checks actual provider/account correctness, UI/contract and source compatibility. |
+| Antigravity structured reporting | Candidate returned (worker reports114tests/types/build); not deployed. Idle worker retired to evidence review. | Codex reviews report transport, provenance/currency and queue-state safety before release. |
+| Cost-summary historical findings | Verification report returned; source claims are not accepted repairs. Idle worker retired to evidence review. | Codex reads full findings/classification and verifies concrete defects before any repair decision. |
+| Publication confirmation before enqueue | Corrected verification finding dispatched. No live publication effect authorized by it. | Harness verification worker, then Codex review. |
 
-Root appended this failure to the same finding, used native Reopen bounded triage on the ended assignment and confirmed Fix now for only the recorded scope. It is now `queued`, job `finding:12779824-b82e-484d-9502-d2150ba58aa1:r6`, behind existing capacity; prior ended job/source/history are retained, not directly revived. Correction requires canonical alias/persona propagation through actual primary AND fallback, preserving disabled/specialist semantics and legacy data, with an actual path regression rather than another isolated resolver assertion.
+Intake is **resumed** after the safe idle deployment. Latest executor snapshot: `2` running, `0` executor-queued, max `3`. Finding state and executor activity are distinct: candidates awaiting review are not productive running workers. Google remains default, Anthropic helper, OpenAI conserved; no new routes, keys or privileges enabled. All current health components report: runtime=ready, relay=ready, notice=ready, launch=ready, delivery=ready, assessment=ready, reply=ready, evals=ready, models=ready, github=ready.
 
-The three current workers (allowance, Google reporting integration and cost verification) remain assigned on Google and are left alone; latest projections still have no completed first step or first-token observation, so dispatch is not qualified provider success. Publication investigation remains queued ahead of the newly requeued Settings correction. Completion pair is already merged but still **not installed**, because executor load is three running. Nine local components ready; GitHub polling has returned to the known API-limit error. Do not infer exhausted model quota or change routing from that.
+## Completion fix — installed and accepted proof
 
-Headless candidate handoff was inspected as a design artifact: it adds a mode-0600 same-UID instruction-file authorization path, beyond the existing authenticated MCP transport. No such privilege path is enabled. Security/authority review and any specific owner confirmation before activation remain separate from implementation test claims. The Mac Never setting is only the authorized immediate workaround.
+Source merges: backend [PR67](https://github.com/gera3d/dsh-superagent-prototype/pull/67) at `dbdfd010c1f91e4f7bae1ca81a9cfd28eb3c47a7`, plugin [PR20](https://github.com/gera3d/dsh-plugins/pull/20) at `cb91894fede10cd61fe92399c476e029cb1f73b2`. Root independently verified five captured/negative examples in both detectors,58 backend tests,32 plugin tests, exact source-head types/build checks, unchanged installed preimages, and paired rollback sources/assets/settings/SQLite snapshots before installation. No GitHub CI checks were reported; local checks are not CI.
+
+After confirming paused intake and zero active/queued executors, root installed byte-verified paired sources/assets and restarted successfully (exit0). On the original **Cloudflare access: explain in one** turn8, native Chrome before/after captures show the same final acknowledgement and composer, while the unsolicited48% guidance card and entire Next steps dock disappear after deployment. Canonical decision `chat-6fe4ae3e1aa4efe6acafcf000f3de3b4` becomes stale with explicit close-out reason; its three original choices remain. No reply was sent. Native evidence form recorded personally verified proof, selected that exact report, acknowledged all bounded requirements and accepted finding `e6d9e1da-9c21-494a-b418-35afdbe02a9a` through protected controls. Acceptance time `2026-11-08T19:03:02.395Z`. [Deployment/native/acceptance proof](docs/evidence/closeout-native-verification.json).
+
+Limits: English heuristic closeout; quoted/negated requests, real work/blockers/questions, failed tools and later reopening covered by regression tests. A new live model reopening conversation was not sent. Do not generalize this acceptance to all future phrases, Settings recommendations or reporting integration. Only completion behavior was included in this deployment.
+
+## Tracking and next release work
+
+[Latest post-release live state](docs/evidence/post-closeout-release-state.json) distinguishes canonical finding/job identities, ended worker mandates and active assignments. Do not resurrect ended mandates directly. The original repository-mismatched verifications remain deferred as superseded history with explicit replacement links. Hourly automation remains active, advances coherent bounded stages, and is not continuous execution between checks.
+
+Important reporting correction: worker summaries can concatenate early progress and a final handoff. Read the complete report and latest status, not only its first few hundred characters. Root initially described the allowance task as unfinished after reading opening progress notes; the full report actually contains a candidate and evidence. That interpretation is corrected here. All three new candidate reports still require independent review.
+
+## Historical checkpoints
 
 ## Three current workers admitted; completion pair merged, not installed
 

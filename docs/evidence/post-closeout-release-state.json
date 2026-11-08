@@ -1,0 +1,98 @@
+{
+  "at": "2026-11-08T19:05:34.368261+00:00",
+  "paused": false,
+  "load": {
+    "running": 2,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "completionResolution": {
+    "outcome": "verified",
+    "evidenceReference": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/verified-batch/closeout-native-verification.json",
+    "requirements": [
+      "Reproduce and preserve durable native source turn 8 and its canonical recommendation; related prior advice repair is already resolved, not unfinished release work",
+      "After an explicit user close-out and final acknowledgement, show a consistent complete/no-action state in native Next steps and shared inbox rather than unsolicited new-scope choices",
+      "Preserve useful advice for unanswered questions, blockers and active approved work; quoted or negated completion must not falsely stop work; explicit later user requests can reopen advice",
+      "Keep current source identity, canonical score/staging/submission guards, existing options/history and provider conservation; no fabricated scores or auto-send",
+      "Add meaningful regressions for completion, quotation/negation, unresolved questions, subsequent reopening and native/shared-record consistency against the exact installed pair; report actual tests/types/build exits",
+      "Return narrow patches and a reviewable handoff to root; no merge, deploy, new access or live settings changes by the worker"
+    ],
+    "at": "2026-11-08T19:03:02.395Z",
+    "actor": "local-operator",
+    "jobId": "finding:e6d9e1da-9c21-494a-b418-35afdbe02a9a:r4"
+  },
+  "openFindings": [
+    {
+      "id": "a338ad44-893d-4ebf-b8ff-aa0c3067e384",
+      "title": "Advance already-approved Harness work while the Mac is locked",
+      "state": "blocked",
+      "job": {
+        "id": "finding:a338ad44-893d-4ebf-b8ff-aa0c3067e384:r1",
+        "ticketId": "a4c7e59be9c53dbaeb2019caaf93cca9",
+        "assignmentId": "8c30c4674fe37bd81d9f24368ad753fb"
+      }
+    },
+    {
+      "id": "12779824-b82e-484d-9502-d2150ba58aa1",
+      "title": "Recommend the actual review handoff for completed finding work",
+      "state": "running",
+      "job": {
+        "id": "finding:12779824-b82e-484d-9502-d2150ba58aa1:r6",
+        "ticketId": "9c5b2ece23fdad8dac34df578f472f96",
+        "assignmentId": "58219076ad7d1de92af31ffd39c1e5ee"
+      }
+    },
+    {
+      "id": "f9335259-b51c-4e97-9750-3923b7e2138b",
+      "title": "Show Google and Anthropic remaining allowance beside chat",
+      "state": "blocked",
+      "job": {
+        "id": "finding:f9335259-b51c-4e97-9750-3923b7e2138b:r1",
+        "ticketId": "f5084b7d915773bcb1386779692fd87b",
+        "assignmentId": "02af1205881c23e6f7be77ed0b966af0"
+      }
+    },
+    {
+      "id": "51f309ca-d396-4983-a55d-ef4432a8572f",
+      "title": "Workers on antigravity cannot file ready reports",
+      "state": "blocked",
+      "job": {
+        "id": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r1",
+        "ticketId": "57859ac28ab698610a99031c54515220",
+        "assignmentId": "7d000dc8c6ba034c0fa64cbc08a32394"
+      }
+    },
+    {
+      "id": "1accfa18-853b-42e5-8a9b-f24375d50d3e",
+      "title": "Verify cost-summary review findings against the current implementation",
+      "state": "blocked",
+      "job": {
+        "id": "finding:1accfa18-853b-42e5-8a9b-f24375d50d3e:r1",
+        "ticketId": "775c713393968c216c6cce864c65727a",
+        "assignmentId": "24e5e03ccf6e11a2e2213870b3df6654"
+      }
+    },
+    {
+      "id": "a1707f3a-a020-4b8b-8374-50887c5e3265",
+      "title": "Investigate the publication confirmation that stopped before enqueue",
+      "state": "running",
+      "job": {
+        "id": "finding:a1707f3a-a020-4b8b-8374-50887c5e3265:r1",
+        "ticketId": "fd09fd8ae2c9f3619b81a8b353c14215",
+        "assignmentId": "df9750e61b51142383b129add1cf4cf8"
+      }
+    }
+  ]
+}
