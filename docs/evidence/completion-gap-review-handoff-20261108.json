@@ -1,0 +1,82 @@
+{
+  "at": "2026-11-08T09:26:24.271869+00:00",
+  "finding": {
+    "id": "e6d9e1da-9c21-494a-b418-35afdbe02a9a",
+    "title": "Stop proposing new work after an explicit conversation close-out",
+    "state": "running",
+    "revision": 2,
+    "job": {
+      "id": "finding:e6d9e1da-9c21-494a-b418-35afdbe02a9a:r1",
+      "ticketId": "e2b1dddc51f78965de0aa8cfd6aad40a",
+      "assignmentId": "b81888bf2b44a2d1ccec599404bc6320"
+    }
+  },
+  "nativeReviewHandoff": "One explicit correction prompt sent once through the original worker composer; native composer cleared; same assignment resumed",
+  "requestProjection": {
+    "modelSelection": {
+      "ver": 2,
+      "seq": 63,
+      "val": {
+        "lastUsed": {
+          "provider": "anthropic",
+          "model": "claude-sonnet-5-5"
+        },
+        "pending": null
+      }
+    },
+    "sessionStats": {
+      "ver": 1,
+      "seq": 63,
+      "val": {
+        "turns": 2,
+        "steps": 5,
+        "llmMs": 1778816,
+        "toolMs": 1180,
+        "ttftMs": 15427,
+        "ttftSteps": 5,
+        "decodeMs": 1763389,
+        "decodeTokens": 1294,
+        "lastTurn": 2,
+        "openStep": {
+          "turn": 2,
+          "step": 5,
+          "startTime": 1794129923053,
+          "firstTokenTime": null
+        },
+        "pendingCalls": {}
+      }
+    },
+    "turnBoundary": {
+      "ver": 2,
+      "seq": 63,
+      "val": {
+        "openTurnStartSeq": 25,
+        "lastStepStartSeq": 63,
+        "lastStepBoundary": {
+          "kind": "start",
+          "seq": 63
+        },
+        "lastTurn": 2
+      }
+    }
+  },
+  "qualityRoute": "One deliberate per-session Sonnet correction after concrete Google candidate review failures; global routing unchanged",
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "error"
+  },
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "limits": "Productive worker left alone. No revised candidate qualified, no merge/deploy/acceptance, no new job or permissions, no global model/credential/spending changes."
+}
