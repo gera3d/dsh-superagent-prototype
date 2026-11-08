@@ -1,0 +1,9 @@
+{
+  "pluginSource": "03f284c9c55e992338b734f17e289f1cae87cc56",
+  "files": {
+    "src/index.ts": "03f91aaceb2d7bc7697a50a15cf25de9b81305e4eeaba3e6dccaf065b6b48c2b",
+    "src/client/index.tsx": "620385b9f202a1182ddfd8fbd1a17dbd38a34321695ef4cdb5dfc594fe8ff853",
+    "test/contract/score-recovery.test.mjs": "35d7ac7e26667777ef1c879bb43dcf3da03ce699753feab11d618591b60ef53c",
+    "test/client.test.tsx": "c6757fd50e2f0e9a3715d7fbf8d19accef856da3df326d85b65e7a6328c08a67"
+  }
+}

@@ -1,6 +1,6 @@
 # DeepSeek Harness project status
 
-Updated November 7, 2026, 6:04 PM PST. Owner: Codex. Check this record and live evidence before claiming completion.
+Updated November 7, 2026, 6:09 PM PST. Owner: Codex. Check this record and live evidence before claiming completion.
 
 ## Current goal
 
@@ -25,7 +25,7 @@ Backend PRs [55](https://github.com/gera3d/dsh-superagent-prototype/pull/55), [5
 
 ## Qualification and current next owner
 
-The preceding integrated source passed **2,275 tests, two skipped**. Latest evaluator/HTTP/routing regressions: **55 passed**, types/build pass. Final plugin: **17 real-backend contract, 24 host/parser, 201 UI/behavior tests**, types/build pass. Final paired full suite is running on frozen source with the exact corrected companion. Backups and postimage hashes are retained locally. Intake is temporarily paused for the final restart; no workers or queued jobs. Codex owns remaining verification and evidence closure; no user action is required.
+The preceding integrated source passed **2,275 tests, two skipped**. Latest evaluator/HTTP/routing regressions: **55 passed**, types/build pass. Final plugin: **17 real-backend contract, 24 host/parser, 201 UI/behavior tests**, types/build pass. Final paired full suite passed **2,279 tests, two skipped, zero failures** on frozen source with the exact corrected companion. Fresh native 72/18/10 scoring and highest-choice stage → Send → submission-proof completed while historical recovery remained pending. Backups and postimage hashes are retained locally. Intake has resumed; no workers or queued jobs. Codex owns the final native evidence recording/acceptance for the two specialist findings; no user action is required.
 
 ## Limits preserved
 
@@ -39,3 +39,6 @@ Google Flash remains the saved routine worker preference, followed by Anthropic 
 - [Earlier scored native handoff](docs/evidence/verified-batch-native-score-and-handoff.json)
 - [Completed-work helper context](docs/evidence/verified-batch-live-completed-advice-context.json)
 - [Earlier release history](docs/project-history/2026-11-07-before-installed-verification.md), including the original Sonnet timeout caveats and separately verified prior releases. Earlier cost summary, compact delivery/finding UI, Ended-list navigation, evidence capture, subscription conservation, dispatch/settings/instruction fixes retain that evidence.
+
+- [Final installed verification and limits](docs/evidence/verified-batch-final-verification.md)
+- [Fresh automatic scores](docs/evidence/verified-batch-native-specialist-fresh-scores.json) and [final native Send proof](docs/evidence/verified-batch-native-specialist-final-send.json)

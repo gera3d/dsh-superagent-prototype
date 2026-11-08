@@ -1,0 +1,150 @@
+{
+  "at": "2026-11-08T02:05:42.182296+00:00",
+  "matched": 36,
+  "checks": [
+    {
+      "path": "dsh-superagent/src/app/decision-evaluator.ts",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/tests/decision-evaluation.spec.ts",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/client.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/decision-DmnHTHt-.d.ts",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/decision-inbox-provider-canonical.d.ts",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/http-Bzlw5wS1.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/publication-worker.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/decision-provider.d.ts",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/index.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/decision-provider.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/publication-context-ByVf_RZd.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/deployment-TlAra6FB.d.ts",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/decision-inbox-provider.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/poll-oRE9AWj8.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/publication-operator.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/github-pull-CMKL7i1S.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/feishu-watch.d.ts",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/github-watch.d.ts",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/publication-operator.d.ts",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/lifecycle-publication-DS-ppFNl.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/publication-worker.d.ts",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/publication-ticket-uFHI9O_c.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/index.d.ts",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/decision-inbox-provider-live.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/feishu-watch.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/feishu-CWhPYo9e.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/kind-C5c5172w.d.ts",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/github-watch.js",
+      "match": true
+    },
+    {
+      "path": "dsh-superagent/lib/decision-inbox-provider-canonical.js",
+      "match": true
+    },
+    {
+      "path": "dsh-next-steps/src/client/index.tsx",
+      "match": true
+    },
+    {
+      "path": "dsh-next-steps/src/index.ts",
+      "match": true
+    },
+    {
+      "path": "dsh-next-steps/test/client.test.tsx",
+      "match": true
+    },
+    {
+      "path": "dsh-next-steps/test/contract/score-recovery.test.mjs",
+      "match": true
+    },
+    {
+      "path": "dsh-next-steps/lib/client.js",
+      "match": true
+    },
+    {
+      "path": "dsh-next-steps/lib/index.js",
+      "match": true
+    },
+    {
+      "path": "dsh-next-steps/lib/index.d.ts",
+      "match": true
+    }
+  ]
+}

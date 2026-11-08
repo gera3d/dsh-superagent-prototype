@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "seconds": 3.747,
+  "response": {
+    "recommendedValue": "close",
+    "confidence": 0.65,
+    "rationale": "The recorded context states the read-only check is complete and that no actions or changes are requested, so closing the completed check is the minimal step that respects the stated scope; explaining more would add unrequested output without evidence the user needs it. The main tradeoff is that closing could leave a genuine question unanswered if the user actually wanted interpretation of the check \u2014 that preference is not recorded, so this recommendation is conditional on the \"no actions requested\" framing being accurate; if the user signals confusion or asks a follow-up, explaining more becomes the better choice.",
+    "distribution": [
+      {
+        "id": "close",
+        "probability": 0.65
+      },
+      {
+        "id": "explain",
+        "probability": 0.35
+      }
+    ],
+    "provider": "openrouter / deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial (fallback: openrouter/deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial) (model-reported scores, not calibrated)",
+    "latencyMs": 2882
+  }
+}
