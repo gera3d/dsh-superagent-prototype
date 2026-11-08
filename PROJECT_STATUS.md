@@ -1,6 +1,6 @@
 # DeepSeek Harness project status
 
-Updated November 7, 2026, 5:35 PM PST. Owner: Codex. Check this record AND its live evidence before reporting completion.
+Updated November 7, 2026, 5:45 PM PST. Owner: Codex. Check this record AND its live evidence before reporting completion.
 
 ## Current goal — verify every approved track in the installed Harness
 
@@ -33,7 +33,7 @@ The specialist worker saved a checkpoint and explicitly reported no commands/tes
 
 ## Latest correction milestone
 
-PRs 60 and 61 correct Administrator helper inheritance, inbox settings/capability discovery, and the installed Cordis dependency declaration. Native verification caught the incorrect optional-injection format after the earlier mock tests passed; the correction now tests the actual installed `Inject.resolve` API (four provider tests pass), with type checks/build passing. All three direct profile advice checks now pass, including Administrator after the helper-route correction. Fresh automatic Cloudflare card publication, scoring and Send acceptance are still being checked; do not call the specialist pilot complete yet.
+PRs 60 and 61 correct Administrator helper inheritance, inbox settings/capability discovery, and the installed Cordis dependency declaration. Native verification caught the incorrect optional-injection format after the earlier mock tests passed; the correction now tests the actual installed `Inject.resolve` API (four provider tests pass), with type checks/build passing. All three direct profile advice checks now pass, including Administrator after the helper-route correction. Fresh Cloudflare publication and real 90/7/3 scores are now visible in native Chrome with truthful unavailable capabilities. PR62 aligns scoring with the explicit advice route. Clicking its recommendation exposed a second startup bottleneck: stage/submission/restart still waited for every historical session. PR63 removes that wait only for operations that already re-read and validate their own durable source; 22 HTTP/provider regressions pass, including recovery deliberately held open. Types/build and fresh native Send verification remain; do not call the pilot complete yet.
 
 ## Open release work
 
