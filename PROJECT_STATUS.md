@@ -2,6 +2,16 @@
 
 Updated November 8, 2026, 9:29 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
 
+## Settings candidate failed actual primary-path review; correction queued
+
+Verified November 08, 2026, 10:31 AM PST: root independent test imported candidate backend `4502b86` and copied actual live Settings, changing only the active UI Senior Developer brief to an audit marker. `effectiveAdvisorCharacter` and fallback `helperSystemPrompt` include the marker, but actual primary `prepareSpecialist(seedProfiles(persona), settings, task)` does **not**. UI ID `senior-developer` and legacy ID `senior_developer` are still inconsistently resolved by profile/character projection. The candidate fails its central end-to-end requirement despite its passing isolated resolver tests. [Exact independent probe](docs/evidence/advisor-settings-independent-review.json). **Do not deploy this Settings candidate.**
+
+Root appended this failure to the same finding, used native Reopen bounded triage on the ended assignment and confirmed Fix now for only the recorded scope. It is now `queued`, job `finding:12779824-b82e-484d-9502-d2150ba58aa1:r6`, behind existing capacity; prior ended job/source/history are retained, not directly revived. Correction requires canonical alias/persona propagation through actual primary AND fallback, preserving disabled/specialist semantics and legacy data, with an actual path regression rather than another isolated resolver assertion.
+
+The three current workers (allowance, Google reporting integration and cost verification) remain assigned on Google and are left alone; latest projections still have no completed first step or first-token observation, so dispatch is not qualified provider success. Publication investigation remains queued ahead of the newly requeued Settings correction. Completion pair is already merged but still **not installed**, because executor load is three running. Nine local components ready; GitHub polling has returned to the known API-limit error. Do not infer exhausted model quota or change routing from that.
+
+Headless candidate handoff was inspected as a design artifact: it adds a mode-0600 same-UID instruction-file authorization path, beyond the existing authenticated MCP transport. No such privilege path is enabled. Security/authority review and any specific owner confirmation before activation remain separate from implementation test claims. The Mac Never setting is only the authorized immediate workaround.
+
 ## Three current workers admitted; completion pair merged, not installed
 
 User requested using available Antigravity capacity across all discussed work. Codex corrected the immutable repository mismatch by recording explicitly linked replacement verifications against the configured sandbox dispatch carrier, preserving the prototype as the inspected source target and retaining original requirements/evidence. The original blocked intakes never created workers; each was natively deferred as superseded history, not resolved or deleted. Replacements were natively confirmed; there are no competing active jobs for those scopes.

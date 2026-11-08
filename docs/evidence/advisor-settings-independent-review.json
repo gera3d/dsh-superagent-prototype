@@ -1,0 +1,14 @@
+{
+  "backendHead": "4502b86",
+  "case": "UI active Senior Developer brief edit reaches primary AND fallback prompts",
+  "activeUiId": "senior-developer",
+  "legacyIds": [
+    "senior_developer"
+  ],
+  "resolvedPersonaId": "senior-developer",
+  "resolvedBriefIncludesMarker": true,
+  "fallbackSystemIncludesMarker": true,
+  "primaryStatus": "prepared",
+  "primarySystemIncludesMarker": false,
+  "expectedPrimaryMarker": true
+}
