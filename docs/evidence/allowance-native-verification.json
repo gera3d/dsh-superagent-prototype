@@ -6,7 +6,7 @@
     "ticketId": "e10f46849fff53974766d4e277bf75a4",
     "assignmentId": "f4ea13447ab035fe67db32975b53bbf6"
   },
-  "stage": "deployed_native_verified_pending_finding_acceptance",
+  "stage": "deployed_native_verified_finding_accepted",
   "source": {
     "hostFixHead": "03db05822083539c39792df04d83144534706f9b",
     "hostFixMerge": "610516e62199062db03c435cf958bc11793fe1cf",
@@ -89,5 +89,35 @@
     "running": 0,
     "queued": 0,
     "maxWorkers": 3
-  }
+  },
+  "resolution": {
+    "outcome": "verified",
+    "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/allowance-native-verification.json",
+    "requirements": [
+      "Inspect installed dsh-agy-link 0.4.100 quota interfaces and current Anthropic account integration; verify actual support instead of treating README claims as operational proof",
+      "Read primary upstream guidelines: deepseek-ai/deepseek-harness docs/subsystems/sidebar-right.md, packages/client/ui-sidebar/README.md; references V1ki/dsh-plugin-subscriptions and Lirunhua/dsh-model-meter are community examples, not official DeepSeek plugins",
+      "Reuse existing provider-owned quota/account reads through supported authenticated local interfaces; do not send credentials to a new destination or expose tokens to browser/logs/repo; if access unsupported, report one concrete blocker",
+      "Show Google and Anthropic account-level reported remaining allowance, distinct provider quota windows/reset times, last refresh, stale/unavailable and rate-limit states; never turn missing data into zero or fabricate global percentages",
+      "Compact host-styled display visible beside chat with expandable details, never cover conversation/composer; preserve responsive layouts, accessibility and current routing, conserve OpenAI execution",
+      "Bounded refresh/cache/backoff, share requests and avoid per-render polling; no LLM needed to fetch/display allowance and no model warmup",
+      "Meaningful unit/contract tests for provider payloads, missing fields/stale/errors and UI behavior; real before/after captures matching viewport/theme; sequential heavy checks; no live mutation by worker",
+      "Report exact base/head, actual test/types/build exits, source and integration compatibility, narrow patches and rollback considerations; Codex owns deployment/native verification"
+    ],
+    "at": "2026-11-08T22:42:14.601Z",
+    "actor": "local-operator",
+    "jobId": "finding:f9335259-b51c-4e97-9750-3923b7e2138b:r7"
+  },
+  "postAcceptanceHealth": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "intakePaused": false
 }
