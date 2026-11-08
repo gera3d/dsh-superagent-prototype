@@ -2,6 +2,14 @@
 
 Updated November 8, 2026, 9:29 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
 
+## Routine follow-through corrected; release-head checks passed
+
+User challenged idle review/release work. Codex inspected the active hourly automation and updated its existing prompt (same schedule, active, no duplicate automation) to advance a coherent bounded stage with dependent steps, rather than stop after one trivial action/PR. It now prioritizes idle coordinator review/release and explicitly avoids claiming continuous activity between hourly passes. Scope, provider conservation and protected confirmations are unchanged.
+
+Root linked existing isolated dependencies (no install or live changes) and ran `tsc --noEmit` and `tsdown` sequentially on exact source PR heads backend `727939f3ff4cccce030b59e150f2df9f5f1dd20e` and plugin `5e723ae609a541917a788c612dcb76710d8e05d1`: all four checks exited zero. Earlier 58 backend and 32 plugin tests plus five independent replay cases remain passing evidence on byte-identical source files. **Ready for remaining release review/rollback preparation and native proof, not yet merged or deployed.**
+
+Current completion worker card still proposes re-verification, a human-case audit and regex probing; these choices are not evidence of the latest external root review/PR/check milestones. The Settings/fallback context repair is not installed. Do not tell the user every existing suggestion is valid or ask them to click through all threads: three jobs are already confirmed/queued, and review handoffs belong to the recorded coordinator. Exact-head facts must be refreshed before relying on cards.
+
 ## Completion correction advanced to paired source pull requests
 
 Verified November 8, 2026, 9:29 AM PST: round-4 completion candidate returned. Root independently replayed the full real native close-out and four prior false-positive cases against backend `5c921e2f90d9cdae2b8ee177e4d0d554527350ae` and plugin `800bd5eae3a5e92f06e9d5f76f788a494088d8ea`: all five pass in both detectors. Root directly ran 58 backend tests across closeout/source/submission/restart and 32 plugin host/unit tests, all passing. The initial pnpm wrapper attempted a dependency-state check and stopped before tests (no TTY); direct installed vitest succeeded without changing dependencies. Worker-reported type/build evidence remains separate from root qualification.
