@@ -1,6 +1,16 @@
 # DeepSeek Harness project status
 
-Updated November 8, 2026, 7:27 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
+Updated November 8, 2026, 8:29 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
+
+## Hourly review — three candidates returned; completion patch still rejected
+
+Verified November 8, 2026, 8:29 AM PST: all ten components report ready. The two previously waiting Google jobs returned candidate reports; all three candidate workers were idle at the start of this pass. They report isolated patches, not merged/deployed/accepted features. The Google request projections show one completed outer model step each (about 16–29 minutes), with no outer tool events; artifacts exist, but these outer counters alone do not validate claimed internal checks or broad Google integration health. OpenAI remains conserved and routing unchanged.
+
+Root independently imported the completion candidates at backend `29b1d152d55884b999447ab91cace903d610a6f9` and plugin `912f402` and replayed actual examples. The **full original native positive now passes both detectors**, but two conservative guards fail: a future hypothetical followed in the same sentence by immediate promised work, or a current deployment blocker, is incorrectly suppressed. Both detectors return closed=true instead of false. The regex removes the entire sentence after the hypothetical and loses the contrasting current-work clause. [Independent replay](docs/evidence/completion-gap-round3-independent-review.json). **No merge/deploy.**
+
+One bounded correction was sent through the native composer to the same current, non-ended assignment on Google Flash. The actual submitted message is visible and Stop generating confirms a new turn; prior job identity and all review history are preserved. This pass does not duplicate implementation or rerun full suites. Root recorded the two failures as a fourth occurrence on the existing finding before sending.
+
+The advisor Settings/handoff candidate is at backend `4502b86` with real checkpoint patches; source inspection began, but independent full review and paired integration remain outstanding. The unattended-coordination worker reports a file-based command candidate and 56 checks; no privileges are enabled and no activation is authorized by its report. That candidate still requires security/authority review and any required specific owner confirmation. The allowance display and both older verifications remain in the canonical finding queue (three queued, separate from executor load). Do not unqueue/reconfirm or create duplicate jobs to bypass finding capacity.
 
 ## All discussed remaining work assigned — capacity-managed finding queue
 

@@ -1,0 +1,22 @@
+{
+  "cases": [
+    {
+      "name": "full captured native turn",
+      "expected": true,
+      "backend": true,
+      "plugin": true
+    },
+    {
+      "name": "future condition followed by immediate work in same sentence",
+      "expected": false,
+      "backend": true,
+      "plugin": true
+    },
+    {
+      "name": "conditional later work with current blocker",
+      "expected": false,
+      "backend": true,
+      "plugin": true
+    }
+  ]
+}
