@@ -1,5 +1,6 @@
 /** Loopback-only management HTTP routes with same-origin enforcement for the web panel. */
 import { adviceContext } from './advice-context.ts'
+import { AccountAllowanceReader } from './account-allowance.ts'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import type { IncomingMessage, ServerResponse } from 'node:http'
@@ -68,6 +69,8 @@ export interface HttpHost {
   readonly executor: Pick<DshExecutor, 'activeCount'> & Partial<Pick<DshExecutor, 'running'>>
   /** Reads a completed job's recorded usage from its worker Session log. */
   readonly usage: Pick<JobUsageReader, 'of'>
+  /** Reads account allowance for Google and Anthropic from installed Antigravity pool. */
+  readonly allowance?: AccountAllowanceReader
   readonly health: Record<string, Health>
   readonly machine: Machine
   readonly masterId: string
@@ -279,6 +282,7 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
     }
   }
   const { store } = runtime
+  const allowanceReader = runtime.allowance ?? new AccountAllowanceReader()
   const ticket = (id: string) => { if (!store.tickets.get(id)) throw new RouteError(404, 'Ticket not found'); return id }
   const promptBody = (input: { body: (maxBytes?: number) => Promise<unknown> }) => input.body(4 * runtime.machine.promptMaxChars.get() + 4096)
   const contextFor = async (sessionId?: string) => {
@@ -297,6 +301,11 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
     'GET search': ({ query }) => search(views(runtime), query.q ?? '', runtime.sourceLinks),
     'GET sources': () => sourcesStatus(views(runtime), runtime.health, setupState(runtime)),
     'GET settings': () => settingsView(store, runtime.sources, runtime.health, setupState(runtime), runtime.machine.stateDir),
+    'GET allowance': () => allowanceReader.report(),
+    'POST allowance/refresh': async () => {
+      const report = await allowanceReader.refresh()
+      return { refreshed: true, report }
+    },
     'POST sources/:id/labels': ({ params }) => runtime.settings.refreshLabels(params.id),
     'GET threads': ({ query }) => {
       const { filter, offset, limit } = ThreadsQuery.parse(query)
