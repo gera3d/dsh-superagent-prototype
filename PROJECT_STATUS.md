@@ -2,6 +2,14 @@
 
 Updated November 8, 2026, 7:27 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
 
+## Advisor Settings and finding handoff repair — dispatched after live audit
+
+User requested fixing the actual recommendation configuration, explicitly including Superagent Settings. Live audit established two concrete seams: the Characters UI edits `characters.items/activeCharacterId`, while specialist/helper generation reads `characters.characters/defaultCharacterId`; native fallback uses a fixed prompt. Separately, `contextFor` gives finding-owned work without a delivery the ordinary-chat objective, omitting release owner-transfer guidance. The recorded team delivery prompt governs workers and does not automatically configure the helper/fallback. Eval admits work; execution runs it; ranker scores offered choices; branding and deployment are not substitutes for advisor policy.
+
+The same bounded recommendation finding now includes this audit as a second occurrence and was explicitly confirmed **Fix now** after refresh. Canonical state is running. Harness must demonstrate a compatible single editable policy/persona path, actual UI-backed setting-to-helper/fallback tests, canonical current finding ownership/state, and the right review handoff without fictional automatic Codex dispatch or expanded authority. Existing completion-detection and unattended-coordination work remain distinct. No live advisor code/settings changed yet.
+
+Finding `12779824-b82e-484d-9502-d2150ba58aa1`, job `finding:12779824-b82e-484d-9502-d2150ba58aa1:r2`.
+
 ## Current reconciliation — completion claims must remain bounded
 
 Live recheck on November 8 morning: all ten health components, including GitHub, report ready. Two jobs are dispatched, zero queued, but both native projections still show turn 1/step 1 without a first token or completed step. Do not label this proven productive execution. Both are selected on Google Flash; broad Google integration remains unqualified. Keep OpenAI conserved. Investigate a verified provider stall within the existing assignments before duplicating work.
