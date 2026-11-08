@@ -1,0 +1,22 @@
+{
+  "at": "2026-11-08T00:47:49.763Z",
+  "checks": 10,
+  "passed": 10,
+  "settingsRevision": 17,
+  "default": {
+    "provider": "antigravity",
+    "model": "gemini-3.8-flash",
+    "reasoningEffort": "high"
+  },
+  "quality": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-5-5"
+  },
+  "fallback": {
+    "provider": "openrouter",
+    "model": "deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial"
+  },
+  "openAI": "conserved",
+  "mode": "installed code with live saved settings; no provider failure or billable worker induced",
+  "findingLimit": "Bounded finding jobs retain the reviewed no-auto-escalation boundary"
+}

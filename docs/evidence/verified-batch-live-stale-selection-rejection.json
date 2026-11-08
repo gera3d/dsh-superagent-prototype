@@ -1,0 +1,8 @@
+{
+  "status": 409,
+  "result": {
+    "error": "Decision is stale or closed; no staging is allowed"
+  },
+  "decisionId": "chat-b9d1c0e2e1d8911b9db48ffda04b894d",
+  "note": "Old card already stale due to ended source; confirms stale staging refuses. Progress-specific retirement verified separately in isolated regressions."
+}

@@ -1,0 +1,55 @@
+{
+  "id": "chat-78a81b4ac0ff7a102945b3143f43627f",
+  "sessionId": "worker-e041041d3a5a9e32b6613d0ebbf7ddb2",
+  "status": "resolved",
+  "sourceMessageId": "cea2ed43-c7d7-4628-a764-1aaaffd124f3",
+  "sourceTurn": 1,
+  "choices": [
+    {
+      "id": "opt-1",
+      "label": "Resume and wire the dock",
+      "prompt": "Service health checks passed \u2014 resume this same job. First run tsc and the existing specialist-advice/helper tests against the checkpointed backend edits, then wire the compact profile/activity metadata into the real installed Next steps dock (not the suppressed InlineDecision fallback dock), keeping your plugin edits as a separate patch from root's scoring code. Also retarget the legacy InlineDecision role=status test at its actual submission receipt since the avatar adds another status element.",
+      "description": "Unblocks the unfinished half: the visible dock wiring root explicitly asked for."
+    },
+    {
+      "id": "opt-2",
+      "label": "Prove the checkpoint separation",
+      "prompt": "Before you continue, show me the checkpoint patch split into hunks: which are native Next steps plugin edits, which are backend route/schema edits, and confirm no scoring code is mixed in. Also list which of these files still need a tsc or test run before root can integrate them.",
+      "description": "Lets root integrate two clean patches without cross-contamination or untested hunks."
+    },
+    {
+      "id": "opt-3",
+      "label": "Qualify stale-evidence behavior",
+      "prompt": "Next, qualify the corrected stale-animation behavior: add tests using real native event shapes where aging evidence turns unknown without an unrelated prop change, plus failure, cancellation, reduced-motion and keyboard cases. Report which of these pass against the installed dock snapshot and which are still unverified.",
+      "description": "Covers the mandate item that mocks could otherwise paper over."
+    }
+  ],
+  "recommendation": {
+    "recommendedValue": "opt-1",
+    "confidence": 0.62,
+    "rationale": "Root said it would explicitly resume this same job after service health checks, with no new scope. The backend edits are checkpointed, but the Next steps dock wiring is still undone. The dock wiring is the core mandate item, and the mandate requires it to land in the real installed dock rather than the suppressed InlineDecision fallback. Resuming and then running tsc and the existing tests against the checkpoint is the most direct way to advance without repeating work. The main tradeoff versus opt-2 is that opt-2 gives a cleaner audit of the patch split, but it adds a handoff and mostly restates what the agent can check while continuing. Opt-3 depends on the dock wiring existing, so it is premature. The recommendation assumes that the health checks have in fact passed, which the supplied context does not confirm, and that the checkpoint is intact. If either is false, opt-2 becomes a safer first step. Opt-1's bundled prompt includes the legacy status-test fix that root requested, so that item is not lost.",
+    "distribution": [
+      {
+        "id": "opt-1",
+        "probability": 0.62
+      },
+      {
+        "id": "opt-2",
+        "probability": 0.23
+      },
+      {
+        "id": "opt-3",
+        "probability": 0.15
+      }
+    ],
+    "provider": "anthropic / claude-sonnet-5-5 (model-reported scores, not calibrated)",
+    "latencyMs": 4209
+  },
+  "resolvedChoice": "opt-1",
+  "resolutionBasis": "submitted",
+  "submissionId": "9d6b85ed-6272-4968-9a67-4c3fab9eb63c",
+  "submittedSeq": 585,
+  "resolvedAt": 1794098988567,
+  "verifiedAt": "2026-11-08T00:50:09.441042+00:00",
+  "browser": "Native Chrome showed 62/23/15, selected recommendation inserted exact prompt, native Send once; composer cleared. No auto-send or autopilot change."
+}

@@ -1,0 +1,173 @@
+{
+  "state": "installed-api-native-handoff-verified-specialist-pending",
+  "backup": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/verified-batch/rollback-20261108T004630Z",
+  "at": "2026-11-08T00:46:30.509140+00:00",
+  "checkpointTicket": "e041041d3a5a9e32b6613d0ebbf7ddb2",
+  "checkpointAssignment": "20132f4f7a0c234046cf4999247d8861",
+  "components": {
+    "dsh-superagent": {
+      "sourceHead": "35277cc59c21d2fb6403a0bf0b91ffd5deb3fa38",
+      "files": {
+        "scripts/progress-observe.ts": {
+          "before": null,
+          "after": "e63927a6274a9dadfd888f6599c38b382b0625da0e6e26cf639b66c39ac4ed00"
+        },
+        "src/app/advice-context.ts": {
+          "before": "3cfef1272912e309f8e86f822fa02133d5c0b943452f533076897d036a5fcfc8",
+          "after": "a6d96833575d84aaa961dca3183723158ce1d51690fda0b62e58fe6257a0b792"
+        },
+        "src/app/api.ts": {
+          "before": "a32157d2d8de1603dfa7ea499552bdac57521c9bc84d5f33357e781f8ada5a30",
+          "after": "63ef4a450f2c18b0c94c521333c3e96c6417fe5bbac00222acb5bcc22048abad"
+        },
+        "src/app/decision-inbox-provider.ts": {
+          "before": "c0dd77e807a4482048b60e7f872d4276eb40d0fc099c26adac9e574ee6a763d9",
+          "after": "41d745977333eb81b3713102c7dfa4ad3250fe825ee7750c5571c9a11d825287"
+        },
+        "src/app/delivery-runtime.ts": {
+          "before": "ce912bacc8b863fa609a1772ac723b8cd7a95074a58bc236d6187f334dad4fe1",
+          "after": "58be2c52cdd8a6b3043be44dba0e081710dfa3812ef13d02257d5e53226e69f0"
+        },
+        "src/app/http.ts": {
+          "before": "49dc6d6df0f836e1d1c18af7f7ba88ed3d9fd03bbfb33db3b7e1cfe61f59a7be",
+          "after": "698fc6b992833ebf7761cfe674db47e664c00d02c7097e14d4616beb8e89c34f"
+        },
+        "src/app/progress.ts": {
+          "before": null,
+          "after": "aed7f6e30be15169eaed92d033dcc7e3ad91bd3a5b209b2e0ad165ffa70ba104"
+        },
+        "src/app/runtime.ts": {
+          "before": "f26980d54f855035455c45afd540c1aa8f1f98df0623b1f9f01618a471a725ff",
+          "after": "e7c692714d022ccc5ee2019bd1b1678f028ca88b2d8c922bca7b8c1c53623c08"
+        },
+        "src/client/locales.ts": {
+          "before": "8804c8de874f31eefd3b13cfc821c6873ccabcb075690e81ddaca713450135d7",
+          "after": "56da7f629221be35582e7ceb660f7b5919dcf16ee155bf002d06067495120b29"
+        },
+        "src/executor/dsh.ts": {
+          "before": "3ebb14b276bb6d9b4581d27227174262b635065bdbcfdfab4e3ef9e76e2bc959",
+          "after": "ebbbf6b7f81b64cefa59019921d5f9b96e9b90c069aec3147d67a418dd9ac99e"
+        },
+        "src/model-routing.ts": {
+          "before": "fbb462492f539a7b2dfa0f27fa3888e2b94f3866bf84c162b68c27ac1091de18",
+          "after": "af47727851522647d90936b3c9ef73778194e2a64d23735767008ed1df9c9718"
+        },
+        "src/policy.ts": {
+          "before": "a0de3db144f4965bd14d55b3b16e3bb56e4443284e43862466e301b741fff55e",
+          "after": "3b87c4ae37d82fca0b5178ea773b0d469d487e2b610a516754030759530b6fb4"
+        },
+        "tests/fixtures/panel-server.ts": {
+          "before": "0c3bc3def179950aaf07f562b7276608448406d989372bce726bf2e60b068073",
+          "after": "91618a3364a3bb70be6894dd83d09ea6a521a1e966ef84788c7e8e4ede03833c"
+        },
+        "tests/model-fallback.spec.ts": {
+          "before": "d9cf6cbe3234cc2c935afdea286b258e59120c6bd68b625217c4edae8d4b4799",
+          "after": "906aca5a547f43298c4c63ab99c2b8c191f40261709e0277d516479d70a15a28"
+        },
+        "tests/progress.spec.ts": {
+          "before": null,
+          "after": "33565ce6f45c664b39b1bc1f7dcbb350f1da15fb20dc5c04560ea813432bf761"
+        },
+        "tests/role-models.spec.ts": {
+          "before": "f8274c3d221bb4ef9503b21450b26b21cc3fcd02ecd1a138d6172b2d461d06e0",
+          "after": "0b2405e85159f8b94e2e097cc78a6670fbc13df04365036965b932b616d555de"
+        }
+      },
+      "assets": {
+        "lib/client.js": "dbce5c7cffc1374c5aef342edd34ae5a061e31f9dc2b01e428ad2009c055f78f",
+        "lib/publication-context-DyumG5tb.js": "293e7720468f32e28c83cfd66c94346f5a419d3ee3e276654978c35adb8f0d3d",
+        "lib/kind-BiQV2LJC.d.ts": "7a76e4a336c882fde5812175ece91b6f02f442cc1b21673815e1b1ffb4c1fc08",
+        "lib/decision-inbox-provider-canonical.d.ts": "3588c72feb2d59815105d2e1dfa1401a2a9cafd20fff63193e236d9f6f17d407",
+        "lib/http-B1ZU5wJs.js": "e5a2fe96c2aa89c2f7d746799cf0a90b69e0f3614ca1cb9cee11d3089fea5421",
+        "lib/publication-ticket-DHxauDQH.js": "e55b782319341eb7e1e32502121005a82018c6241b4ce20a98da69039e45d06e",
+        "lib/publication-worker.js": "6ab8b963f2d72f07f6ff4535fcee2c3dfbb9d3ba92c63cbc18353140a4499b2c",
+        "lib/decision-provider.d.ts": "6b5408ac5b6e6f1a049da951dcb2c09dd2169c3bf1cef8bd097ddad6d149c3c9",
+        "lib/index.js": "7ea8c58110ba682037e582fe30e18b510e94b683cc4876a1720de4907f268c57",
+        "lib/decision-provider.js": "ae0cd7bdb27b8657b35cf91e21e7b880a93dc8598fe156ab676c5ed2a25f04d2",
+        "lib/deployment-TlAra6FB.d.ts": "f2dde560d476d5d2c2a62f4fecdb19ab09c06db219e7f13a5c5119a81cfd9485",
+        "lib/decision-inbox-provider.js": "fe630c6c5e0b9aa0642b0646a287e7c9e6c7cdd29cc4bf4fce69c3d5fd142bc3",
+        "lib/decision-DmaGzXiZ.d.ts": "ec69881882b55cdcbef2a2256b8b59a4677aa7ea4b12e58b7f7b1f5b11bb9013",
+        "lib/poll-oRE9AWj8.js": "dad589d6739726cf4e9505262d440953853c90d9a3ac6b5edc69090db1acf702",
+        "lib/publication-operator.js": "a3b34bf1ec17d668e0352d4ff5038ceca675c19816e85b71437074128f6deef5",
+        "lib/github-pull-CMKL7i1S.js": "e8ef5a1a1550e4b8142000cc0f0ab1ade29d0996132e29ae5ae58ff6c1da9e84",
+        "lib/feishu-watch.d.ts": "55f659b44b2bf94a39e457c25535c76f13ac56c26f1bdcb5efb6036af40a49ef",
+        "lib/github-watch.d.ts": "a2d24dd7791ba863f7b4b428adcb9c16e072217dc7e524510dc2e13c1ed79477",
+        "lib/publication-operator.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+        "lib/publication-worker.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+        "lib/lifecycle-publication-DGUQlK8y.js": "1c75b09bee450aeb532b196ea1fb2d884a23ba44e07e2d67ddef841e17ec6475",
+        "lib/index.d.ts": "aee459a680cb2de8c5afb9be10744b259939cbfd4a1e089f2f37aa960fe859db",
+        "lib/decision-inbox-provider-live.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20",
+        "lib/feishu-watch.js": "718ae13ad3c3440d9405cb0b42ff4f60b440f46127015c69c7792f800c26598f",
+        "lib/feishu-CWhPYo9e.js": "373b603a4499baa32c520d863038761a67d578bfa881eac874843cf99e9c302d",
+        "lib/github-watch.js": "5c3b083552d6cad04ef9c0be3ebf6708ae85f6ccf4ccee26eb3de6ca67b88086",
+        "lib/decision-inbox-provider-canonical.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20"
+      }
+    },
+    "dsh-next-steps": {
+      "sourceHead": "05067732fb860945bb1b06de98d889057fdb9e99",
+      "files": {
+        "package.json": {
+          "before": "43f0cf25fb32bec5d88e1fad008120ab39002eb4c55321f6f45df57c6b3c6333",
+          "after": "6afc1f62eeac61fbda8c546a5b40042a34508d686f7ca6e96a23adaf429103dc"
+        },
+        "src/client/index.tsx": {
+          "before": "04a8f494b38805b8ca635b08552a778a049d77f8e61aef756700a7da62b39b58",
+          "after": "4d72d16a05577cc8c3e1e0b427342e0a8f60243a7b91cffff4db2e7e4a9478da"
+        },
+        "src/index.ts": {
+          "before": "80de589f7f0c3184d779528ad23ae85fb95891542a38810f7dae01761241b9a9",
+          "after": "90b22a8fa9e5615c4a048e15ca9c8aa1b31d4d30cefb8ff85c6071c4e70fdd6f"
+        },
+        "test/client.test.tsx": {
+          "before": "5b0afe95a47510d53ff0da6a6225f5f8c39bdcb7b8961b66939b634c0a3562f9",
+          "after": "871ad281e4bd5d20352b14ce810b76f70060c1d830e6644beda9be30f3a344d7"
+        },
+        "test/contract/score-recovery.test.mjs": {
+          "before": null,
+          "after": "d9d166af2268d3c86066af69d159b30894abb9bcdc837455b46f3a7c8a1c0090"
+        },
+        "test/generation-failure.test.ts": {
+          "before": "4ecd2d5d69bc640a7c2e700faa9bfad8e91b9b756901123a4fd288155bfb77bf",
+          "after": "d9b8f574b3a663664808ebb4074d926b462633044e26e22cf0da47da9127c8e8"
+        },
+        "test/host.test.mjs": {
+          "before": "61cc157e309f30950a9640c3a043aad29648ba34c58d6150ed415994f84d340e",
+          "after": "54c1585377ac277647a31e785d3ba6dd94cc84cccde7005406fa1a3ebae195eb"
+        }
+      },
+      "assets": {
+        "lib/client.js": "4c341f8a20466e5a03a8f2b90a2cb9c32de41d2cb1822692eb69481b17b94294",
+        "lib/index.js": "f2f2647b5331dfff230dd84989c6ff18cf053458f9ff2aa230db668ccbe223e8",
+        "lib/index.d.ts": "48f141d2b458bc28354697da8dff39505e8c84c622be9a0e36956b62a3e7abc0"
+      }
+    }
+  },
+  "authority": "Gera explicitly authorized full review, blockers, deployment and installed verification; checkpointed existing work is preserved.",
+  "restartExitCode": 0,
+  "postimageChecks": 53,
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "proofs": [
+    "installed-routing-check.json",
+    "native-score-and-handoff.json",
+    "live-advice-context.json",
+    "live-stale-selection-rejection.json"
+  ],
+  "limits": [
+    "No live provider failure induced for quality escalation; installed code/live settings and controlled regressions checked",
+    "Bounded finding jobs do not auto-escalate",
+    "Original uninstrumented missing-score failure cause unproven",
+    "Google no-first-response integration issue not repaired by this batch",
+    "Specialist pilot still implementing native wiring, not deployed"
+  ]
+}
