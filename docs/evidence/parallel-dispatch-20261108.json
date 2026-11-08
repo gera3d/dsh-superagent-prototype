@@ -1,0 +1,139 @@
+{
+  "load": {
+    "running": 2,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "findings": [
+    {
+      "id": "6162b441-a582-484c-9d49-b3bd12ea0175",
+      "title": "Verify cost-summary review findings against the current implementation",
+      "state": "queued",
+      "job": {
+        "id": "finding:6162b441-a582-484c-9d49-b3bd12ea0175:r1"
+      },
+      "revision": 1
+    },
+    {
+      "id": "cccbf29e-2ff3-439b-97f0-b4bcc9961937",
+      "title": "Investigate the publication confirmation that stopped before enqueue",
+      "state": "queued",
+      "job": {
+        "id": "finding:cccbf29e-2ff3-439b-97f0-b4bcc9961937:r1"
+      },
+      "revision": 1
+    },
+    {
+      "id": "e6d9e1da-9c21-494a-b418-35afdbe02a9a",
+      "title": "Stop proposing new work after an explicit conversation close-out",
+      "state": "running",
+      "job": {
+        "id": "finding:e6d9e1da-9c21-494a-b418-35afdbe02a9a:r4",
+        "ticketId": "cf2c9c8117f4870abc3dc067a903ab43",
+        "assignmentId": "55659d5ad22cc213a5be94aba0419bff"
+      },
+      "revision": 5,
+      "ticketStage": "idle",
+      "sessionId": "worker-cf2c9c8117f4870abc3dc067a903ab43",
+      "model": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "high"
+      },
+      "stats": {
+        "turns": 1,
+        "steps": 1,
+        "llmMs": 984916,
+        "toolMs": 0,
+        "ttftMs": 10970,
+        "ttftSteps": 1,
+        "decodeMs": 973946,
+        "decodeTokens": 1824,
+        "lastTurn": 1,
+        "openStep": null,
+        "pendingCalls": {}
+      }
+    },
+    {
+      "id": "a338ad44-893d-4ebf-b8ff-aa0c3067e384",
+      "title": "Advance already-approved Harness work while the Mac is locked",
+      "state": "running",
+      "job": {
+        "id": "finding:a338ad44-893d-4ebf-b8ff-aa0c3067e384:r1",
+        "ticketId": "a4c7e59be9c53dbaeb2019caaf93cca9",
+        "assignmentId": "8c30c4674fe37bd81d9f24368ad753fb"
+      },
+      "revision": 1,
+      "ticketStage": "working",
+      "sessionId": "worker-a4c7e59be9c53dbaeb2019caaf93cca9",
+      "model": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "high"
+      },
+      "stats": {
+        "turns": 0,
+        "steps": 0,
+        "llmMs": 0,
+        "toolMs": 0,
+        "ttftMs": 0,
+        "ttftSteps": 0,
+        "decodeMs": 0,
+        "decodeTokens": 0,
+        "lastTurn": null,
+        "openStep": {
+          "turn": 1,
+          "step": 1,
+          "startTime": 1794151931507,
+          "firstTokenTime": null
+        },
+        "pendingCalls": {}
+      }
+    },
+    {
+      "id": "12779824-b82e-484d-9502-d2150ba58aa1",
+      "title": "Recommend the actual review handoff for completed finding work",
+      "state": "running",
+      "job": {
+        "id": "finding:12779824-b82e-484d-9502-d2150ba58aa1:r2",
+        "ticketId": "f08f01eef8bdb9a75399edc2c40a1582",
+        "assignmentId": "1f3c128cf95040adb86acb5f9e43a4ab"
+      },
+      "revision": 2,
+      "ticketStage": "working",
+      "sessionId": "worker-f08f01eef8bdb9a75399edc2c40a1582",
+      "model": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "high"
+      },
+      "stats": {
+        "turns": 0,
+        "steps": 0,
+        "llmMs": 0,
+        "toolMs": 0,
+        "ttftMs": 0,
+        "ttftSteps": 0,
+        "decodeMs": 0,
+        "decodeTokens": 0,
+        "lastTurn": null,
+        "openStep": {
+          "turn": 1,
+          "step": 1,
+          "startTime": 1794153035889,
+          "firstTokenTime": null
+        },
+        "pendingCalls": {}
+      }
+    },
+    {
+      "id": "f9335259-b51c-4e97-9750-3923b7e2138b",
+      "title": "Show Google and Anthropic remaining allowance beside chat",
+      "state": "queued",
+      "job": {
+        "id": "finding:f9335259-b51c-4e97-9750-3923b7e2138b:r1"
+      },
+      "revision": 1
+    }
+  ]
+}

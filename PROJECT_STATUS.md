@@ -2,6 +2,12 @@
 
 Updated November 8, 2026, 7:27 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
 
+## All discussed remaining work assigned — capacity-managed finding queue
+
+User explicitly requested assigning the discussed work to Harness using available Antigravity capacity. Through native protected triage, Codex confirmed the Google/Anthropic allowance display implementation and both existing read-only verifications (cost-summary findings and publication confirmation before enqueue). These three canonical findings are now **queued**, with stable job identities; they have not started and have no worker result yet. The finding queue is separate from executor `load.queued`, which currently reports zero: do not mistake that for an empty approved-work queue.
+
+Two executor jobs remain active on Google Flash (unattended coordination and advisor Settings/handoff wiring), but their current request projections have not produced a first token. The completion detector worker is idle with a round-3 candidate claiming passing tests; root must verify actual patches and full fixture before review/acceptance frees its finding slot. Its one-step model report is not independent execution proof. Actual execution max remains three; no new concurrency/settings changes, OpenAI execution, paid overflow, credentials or account changes. Preserve all six current tracks; no unrelated speculative features were invented. Google wait behavior remains a real qualification concern, not evidence of exhausted quota or a successful load test.
+
 ## Advisor Settings and finding handoff repair — dispatched after live audit
 
 User requested fixing the actual recommendation configuration, explicitly including Superagent Settings. Live audit established two concrete seams: the Characters UI edits `characters.items/activeCharacterId`, while specialist/helper generation reads `characters.characters/defaultCharacterId`; native fallback uses a fixed prompt. Separately, `contextFor` gives finding-owned work without a delivery the ordinary-chat objective, omitting release owner-transfer guidance. The recorded team delivery prompt governs workers and does not automatically configure the helper/fallback. Eval admits work; execution runs it; ranker scores offered choices; branding and deployment are not substitutes for advisor policy.
