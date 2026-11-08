@@ -1,10 +1,22 @@
 # DeepSeek Harness project status
 
-Updated November 07, 2026 at 4:23 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 07, 2026 at 4:31 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+
+## Current execution goal — qualify every approved deployment locally
+
+Gera explicitly instructed root to finish the four tracks and test them in the installed environment, using the Harness. Completion requires source review, meaningful regression tests, deployed source/assets verified by hash, live API behavior and native UI proof where applicable. No claim that all four are deployed. Sonnet is merged only; advice refresh is a returned candidate; specialist profiles are still qualifying; permanent score reliability is still implementing.
+
+Verification matrix:
+- Sonnet: exact seven-file reviewed patch, one persisted eligible escalation, cap off/on, actual-route fallback isolation, OpenAI exclusion, bounded-finding limit, health after restart. Existing full-suite timeout exception stays explicit.
+- Advice refresh: branch/PR observations stop obsolete advice; new head and failed checks invalidate old readiness; stale click rejected; history and unrelated questions preserved; no implicit publication authority.
+- Specialist profiles: capability intersection, disconnected Cloudflare shown truthfully, shared job ownership, compact UI, real activity and reduced motion; exact installed companion dependency before types/tests qualify.
+- Scores: genuine evaluator result reaches same canonical record and browser; failed first score can explicitly recover; lease/source races fail safely; no fabricated scores or changed choices/Send behavior.
+
+Live inspection found the scoring worker idle after status-only/output-limit turns. Root sent one native continuation at 4:30 PM to finish the original isolated repair and retain the unknown historical cause honestly. Specialist setup still reports missing companion imports and cannot count that as qualified. No active worker is cancelled for deployment; root prepares the release while obtaining a safe restart point.
 
 ## Latest verified handoff — no new user action required
 
-Gera approved advancing the qualified Sonnet release from existing results with explicit timeout caveats rather than repeating completed checks. Root verified every entry in the independent qualification manifest (14 files), copied the verdict/manifest into repository evidence, and updated the existing source PR55 qualification record. It remains unmerged/undeployed. Native alternative “Prepare the source PR handoff” was selected, staged through the native composer and sent once in the same qualifier conversation. The worker could provide its existing package in chat but a tool command to write an extra HANDOFF-CODEX.md was refused because its bounded ticket had ended. This is a closed-ticket execution boundary, NOT a missing live-evaluation gate. No new ticket/file is needed merely to repackage already available evidence; root owns the remaining release actions. Earlier generated cards offering push/open-PR or more commands in the ended job are not current user obligations.
+Gera approved advancing the qualified Sonnet release from existing results with explicit timeout caveats rather than repeating completed checks. Root verified every entry in the independent qualification manifest (14 files), copied the verdict/manifest into repository evidence, and updated the existing source PR55 qualification record. The exact-head source PR is now merged (merge cba8539970fa0104c1642ff6cd0aa5187b1704eb); it is NOT deployed or enabled yet. Native alternative “Prepare the source PR handoff” was selected, staged through the native composer and sent once in the same qualifier conversation. The worker could provide its existing package in chat but a tool command to write an extra HANDOFF-CODEX.md was refused because its bounded ticket had ended. This is a closed-ticket execution boundary, NOT a missing live-evaluation gate. No new ticket/file is needed merely to repackage already available evidence; root owns the remaining release actions. Earlier generated cards offering push/open-PR or more commands in the ended job are not current user obligations.
 
 Current qualifier card scores were manually recovered through normal canonical claim/evaluate/score after respecting the expired prior lease, using actual Anthropic results. Native Chrome verified55/35/10 on the SAME choices/prompts with Send disabled and no reply sent by that recovery. This restored one card, not the permanent plugin path. The scoring worker received and admitted the recovery evidence; the first uninstrumented failure cause remains unknown. No single-heavy-test guardrail was added; Gera set that discussion aside.
 
