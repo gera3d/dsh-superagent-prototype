@@ -8,6 +8,7 @@ import { publicationConversation } from './lifecycle-publication.ts'
 import { ticketDecisions, type DecisionInbox } from './decision-inbox.ts'
 import type { Store } from './store.ts'
 import type { FindingStore } from './finding.ts'
+import type { ProgressStore } from './progress.ts'
 import { deriveDeliveryWork, readDeliveryWorkers, workerTicket } from './delivery-currency.ts'
 import { publicationProof, snapshotProof } from './publication-proof.ts'
 
@@ -64,8 +65,34 @@ export function projectDeliveries(store: DeliveryStore, items: PendingDecisionIt
     && !(i.lifecycle && !i.lifecycle.publication && i.status === 'pending' && i.ticketId && workers.has(i.ticketId))), ...deliveries.map(deliveryDecision)]
 }
 
+const STEP_ADVICE: [number, RegExp][] = [[1, /\bpush(?:ing)?\b/i], [2, /\b(?:open|create|submit)\b.*\b(?:pr|pull request)\b/i],
+  [3, /\b(?:run|rerun|wait for|verify)\b.*\b(?:checks?|ci)\b|\bexact-head checks?\b/i], [4, /\b(?:request|await|perform|start)\b.*\breview\b/i]]
+/** Retire pending, unsent generated advice whose recommended action is a release step already observed done, or that targets a superseded head.
+ *  Newer items, unrelated questions, resolved history and work covered by a completed delivery are untouched; nothing is deleted or sent. */
+function retireSupersededProgress(inbox: DecisionInbox, progress: ProgressStore, deliveries: Delivery[]): void {
+  for (const ticketId of progress.tickets()) {
+    const current = progress.current(ticketId)
+    if (!current) continue
+    const linked = deliveries.filter(delivery => delivery.workers.some(worker => workerTicket(worker) === ticketId))
+    if (linked.some(delivery => delivery.state === 'accepted' && delivery.acceptance && current.observedAt <= Date.parse(delivery.acceptance.at))) continue
+    const rank = { branch_pushed: 1, pr_opened: 2, checks: current.outcome === 'passed' ? 3 : 2, review: 4 }[current.kind]
+    for (const item of inbox.list()) {
+      if (item.status !== 'pending' || !item.sessionId || workerTicket(item.sessionId) !== ticketId || !Number.isFinite(item.createdAt) || item.createdAt > current.changedAt
+        || !item.id.startsWith('chat-') && !item.canonical || item.actionMode && item.actionMode !== 'stage_response' || item.staging?.candidateSubmission) continue
+      const picked = item.choices.find(choice => choice.id === item.recommendation.recommendedValue)
+      const label = picked?.label ?? ''
+      const text = `${item.question}\n${item.context}\n${item.choices.map(c => `${c.label}\n${c.prompt ?? ''}`).join('\n')}`
+      const step = STEP_ADVICE.find(([r, pattern]) => r <= rank && pattern.test(label))
+      const head = current.supersededCommits.find(commit => text.includes(commit.slice(0, 7)))
+      if (step || head) inbox.invalidate(item, step
+        ? `Progress ${current.kind} was observed at ${current.branch}@${current.commit.slice(0, 12)} (revision ${current.revision}); this step is done. Remaining: ${current.remaining}. Earlier advice is retained as history, not authority.`
+        : `Advice targets superseded head ${head!.slice(0, 12)}; current ${current.branch} head is ${current.commit.slice(0, 12)} (progress revision ${current.revision}). Earlier advice is retained as history.`)
+    }
+  }
+}
+
 /** Persist currency before any canonical producer/lookup or native staging can use old advice. */
-export function reconcileInboxCurrency(inbox: DecisionInbox, deliveries: DeliveryStore, publication?: LifecyclePublication, findings?: FindingStore): void {
+export function reconcileInboxCurrency(inbox: DecisionInbox, deliveries: DeliveryStore, publication?: LifecyclePublication, findings?: FindingStore, progress?: ProgressStore): void {
   const original = inbox.list()
   const recorded = deliveries.list()
   // An accepted delivery is authoritative completion, unlike a worker report, merged PR or resolved finding.
@@ -79,6 +106,7 @@ export function reconcileInboxCurrency(inbox: DecisionInbox, deliveries: Deliver
       .sort((a, b) => Date.parse(b.acceptance!.at) - Date.parse(a.acceptance!.at))[0]
     if (completed) inbox.invalidate(item, `Work completed: delivery ${completed.id} was verified and accepted at ${completed.acceptance!.at}. No further release action is needed; earlier recommendations are retained as history.`)
   }
+  if (progress) retireSupersededProgress(inbox, progress, recorded)
   const work = deriveDeliveryWork(recorded, readDeliveryWorkers(deliveries.db))
   const findingWorkers = new Map<string, string>()
   for (const finding of findings?.list() ?? []) {

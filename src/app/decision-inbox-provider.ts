@@ -7,6 +7,7 @@ import { isAbsolute, dirname } from 'node:path'
 import { loadLifecyclePublication } from './publication-context.ts'
 import { DeliveryStore } from './feature-delivery.ts'
 import { FindingStore, projectFindings } from './finding.ts'
+import { ProgressStore } from './progress.ts'
 import { projectDeliveries, reconcileInboxCurrency } from './delivery-runtime.ts'
 import { existsSync } from 'node:fs'
 import { z } from 'zod'
@@ -51,7 +52,8 @@ export function apply(ctx: Context, config: { database: string }): void {
     const publication = loadLifecyclePublication(dirname(config.database))
     const deliveries = new DeliveryStore(db)
     const findings = new FindingStore(db)
-    const currency = () => reconcileInboxCurrency(inbox, deliveries, publication, findings)
+    const progress = new ProgressStore(db)
+    const currency = () => reconcileInboxCurrency(inbox, deliveries, publication, findings, progress)
     const projectedList = () => { currency(); return projectFindings(findings, projectDeliveries(deliveries, publication?.project?.(inbox.list()) ?? inbox.list())) }
     const projectedGet = (id: string) => projectedList().find(item => item.id === id)
     revalidateCapturedDecisions(db, inbox)

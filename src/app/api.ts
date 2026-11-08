@@ -40,6 +40,8 @@ export interface Api {
   'POST decisions/canonical/publish': { body: CanonicalPublish; response: CanonicalResult }
   'POST decisions/canonical/score': { body: CanonicalScore; response: CanonicalResult }
   'POST decisions/canonical/fail': { body: CanonicalFailure; response: CanonicalResult }
+  'GET progress': { query?: { ticket?: string }; response: { items: Array<import('./progress.ts').ProgressView | import('./progress.ts').ProgressObservation> } }
+  'POST progress/observe': { body: import('./progress.ts').ProgressInput; response: { observation: import('./progress.ts').ProgressObservation; duplicate: boolean; current: import('./progress.ts').ProgressView; execution_authorized: false } }
   'GET findings': { response: { items: import('./finding.ts').Finding[] } }
   'POST findings/observe': { body: import('./finding.ts').FindingIntake; response: { finding: import('./finding.ts').Finding; item: PendingDecisionItem; execution_authorized: false } }
   'POST findings': { body: import('./finding.ts').FindingIntake; response: { finding: import('./finding.ts').Finding; item: PendingDecisionItem } }

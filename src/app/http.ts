@@ -24,6 +24,7 @@ import { FindingIntakeSchema, FindingConfirmSchema, FindingReviewSchema, Finding
 import type { FindingRuntime } from './finding-runtime.ts'
 import { FindingEvidenceRequest } from './finding-evidence.ts'
 import { snapshotProof } from './publication-proof.ts'
+import { ProgressObservationSchema, ProgressStore } from './progress.ts'
 import { FeatureDeliveryRuntime, deliveryDecision, reconcileInboxCurrency } from './delivery-runtime.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
 import { PromptConflict, SKILL_NAME, SKILL_PREFIX, TEAM_SECTIONS, builtInBase, builtInParts, defaultPrompts, savePrompts, type Prompts }
@@ -256,7 +257,7 @@ export function isSessionEnded(runtime: HttpHost, item: PendingDecisionItem): bo
   return false
 }
 
-function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Routes {
+function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, progress: () => ProgressStore): Routes {
   const refreshTickets = () => {
     const open = runtime.store.tickets.open?.() ?? []
     inbox().syncTickets(ticketDecisions(open), open)
@@ -276,7 +277,7 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
     // Pre-upgrade prepared cards carry no recorded proof; derive the exact-pin observation from the live protected snapshot.
     const prepared = delivery?.preparedPublication
     const proof = prepared ? await snapshotProof(prepared, runtime.publication) : undefined
-    return adviceContext(ticket, proof && delivery && prepared ? { ...delivery, preparedPublication: { ...prepared, proof } } : delivery)
+    return adviceContext(ticket, proof && delivery && prepared ? { ...delivery, preparedPublication: { ...prepared, proof } } : delivery, ticket ? progress().current(ticket.id) : undefined)
   }
   return {
     'GET state': () => stateView(runtime),
@@ -315,6 +316,15 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox): Ro
     'POST decisions/canonical/publish': async ({ body }) => canonicalOperation(ctx, inbox(), 'publish', await body()),
     'POST decisions/canonical/score': async ({ body }) => canonicalOperation(ctx, inbox(), 'score', await body()),
     'POST decisions/canonical/fail': async ({ body }) => canonicalOperation(ctx, inbox(), 'fail', await body()),
+    'GET progress': ({ query }) => ({ items: query.ticket ? progress().history(query.ticket) : progress().tickets().flatMap(id => progress().current(id) ?? []) }),
+    'POST progress/observe': async ({ body, localApproval }) => {
+      if (!localApproval) throw new PublicationError(403, 'Explicit local operator progress observation required')
+      const input = ProgressObservationSchema.parse(await body())
+      if (!runtime.store.tickets.get(input.ticketId)) throw new PublicationError(409, 'Progress must be associated with an existing ticket')
+      const { observation, duplicate } = progress().observe(input as never, { source: 'operator', reference: 'orchestrator-http:progress-observation', actor: 'local-operator' })
+      if (runtime.deliveries) reconcileInboxCurrency(inbox(), runtime.deliveries.store, runtime.publication, runtime.findings?.store, progress())
+      return { observation, duplicate, current: progress().current(input.ticketId)!, execution_authorized: false as const }
+    },
     'GET findings': () => ({ items: runtime.findings?.store.list() ?? [] }),
     'POST findings/observe': async ({ body }) => {
       if (!runtime.findings) throw new PublicationError(409, 'Finding coordinator is not configured')
@@ -558,8 +568,10 @@ export function registerHttp(ctx: Context, runtime: HttpHost): () => void {
   if (ctx.webServer.host !== '127.0.0.1') throw new Error('Orchestrator management requires a loopback Web server')
   let savedInbox: DecisionInbox | undefined
   const inbox = () => savedInbox ??= new DecisionInbox(runtime.store.db)
+  let savedProgress: ProgressStore | undefined
+  const progress = () => savedProgress ??= new ProgressStore(runtime.store.db)
   const capture = registerDecisionCapture(ctx, inbox)
-  const table = routes(runtime, ctx, inbox)
+  const table = routes(runtime, ctx, inbox, progress)
   const disposers = [
     ctx.webServer.register({ kind: 'prefix', path: '/orchestrator', handler: async (req, res) => {
       const url = new URL(req.url ?? '/', 'http://localhost')
@@ -588,7 +600,7 @@ export function registerHttp(ctx: Context, runtime: HttpHost): () => void {
         await runtime.ready
         if (url.pathname.includes('/decisions/')) {
           await capture.ready
-          if (runtime.deliveries) reconcileInboxCurrency(inbox(), runtime.deliveries.store, runtime.publication, runtime.findings?.store)
+          if (runtime.deliveries) reconcileInboxCurrency(inbox(), runtime.deliveries.store, runtime.publication, runtime.findings?.store, progress())
         }
         const route = match(table, req.method ?? 'GET', url.pathname.slice('/orchestrator/api/'.length).split('/'))
         if (!route) throw new RouteError(404, 'Unknown operation')
@@ -599,7 +611,7 @@ export function registerHttp(ctx: Context, runtime: HttpHost): () => void {
           && ['cors', 'same-origin'].includes(String(req.headers['sec-fetch-mode'])) && req.headers['sec-fetch-dest'] === 'empty'
         let result = await route.run({ params: route.params as never, query, localApproval, body: maxBytes => readBody(req, maxBytes) })
         if (url.pathname.includes('/decisions/') && runtime.deliveries) {
-          reconcileInboxCurrency(inbox(), runtime.deliveries.store, runtime.publication, runtime.findings?.store)
+          reconcileInboxCurrency(inbox(), runtime.deliveries.store, runtime.publication, runtime.findings?.store, progress())
           if (result && typeof result === 'object' && 'item' in result && result.item && typeof result.item === 'object' && 'id' in result.item && typeof result.item.id === 'string') {
             result = { ...result, item: inbox().get(result.item.id) ?? result.item }
           }
