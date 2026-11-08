@@ -1,6 +1,14 @@
 # DeepSeek Harness project status
 
-Updated November 07, 2026 at 3:53 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+Updated November 07, 2026 at 4:04 PM PST. Owner: Codex. This is the current handoff checkpoint; use it with the linked live evidence before reporting completion.
+
+## Current priority — missing recommendation scores
+
+Gera explicitly made the unscored recommendations the most important repair. Exact live qualifier thread shows three “Not scored” fallback choices; native Refresh scores did not recover them. Root called the configured evaluator with the same options and received a valid Anthropic distribution in5.09s, but actual next-steps suggest (10.36s) and score (7.43s) returned ready/unscored. Root observed canonical phase ready and no distribution. Host/browser20s scoring limits vs evaluator60s, 10s canonical deadline, lease/cache/payload/source validation and hidden failures are investigation leads, NOT established causes. No probabilities fabricated or directly inserted into the database.
+
+Priority findingf8c2d0ac-8249-4b43-ac39-8e33c50e2ed2 confirmed in native Decisions; worker2014055284790a0528aeb3a175fb9d74 is running on actual Anthropic Sonnet requests with tool activity. Uses the slot freed by the completed qualifier. Exact installed customized next-steps snapshot must be preserved; root evidence is under token-optimization/missing-scores. Root owns independent review, narrow release and same-thread native verification. Choices/history/source and all staging/Send/autopilot/acceptance controls must remain intact. Temporary Sonnet admission default restored after verification; OpenAI remains excluded. Scoring repair is not yet implemented, deployed or verified.
+
+Sonnet independent qualification has returned: no code blocker found; committed-tree full run exit1 with2,227 passed, two skipped, two5s timeouts. One timeout reproduces on exact base twice; the other passes in its targeted rerun. Types/build and46 focused checks pass. This is NOT an all-green full suite or live acceptance. Source PR remains draft/unmerged. Do not repeat already completed control runs merely because an older card still says waiting. Release evidence review remains root-owned, behind the urgent scoring repair.
 
 ## Active third track — native specialist-agent pilot
 
