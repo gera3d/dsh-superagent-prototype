@@ -379,13 +379,23 @@ export function AllowanceHeaderBadge({
   const acPercent = formatPercent(agyClaude?.rollingWindow?.fraction)
   const dirPercent = formatPercent(directAnthropic?.rollingWindow?.fraction)
 
+  const getSidebarRight = useCallback((): AllowanceClientContext['sidebarRight'] => {
+    try {
+      if (typeof ctx?.get === 'function') return ctx.get('sidebarRight') as AllowanceClientContext['sidebarRight']
+      return ctx?.sidebarRight
+    } catch {
+      return undefined
+    }
+  }, [ctx])
+
   const handleClick = useCallback(() => {
-    if (ctx?.sidebarRight) {
-      ctx.sidebarRight.openTab(ALLOWANCE_TAB_KIND)
+    const sidebarRight = getSidebarRight()
+    if (sidebarRight) {
+      sidebarRight.openTab(ALLOWANCE_TAB_KIND)
     } else {
       setPopoverOpen(open => !open)
     }
-  }, [ctx])
+  }, [getSidebarRight])
 
   const isWarning = (
     google?.status === 'cooldown' || google?.status === 'exhausted' ||
@@ -425,7 +435,7 @@ export function AllowanceHeaderBadge({
         </span>
       </button>
 
-      {popoverOpen && !ctx?.sidebarRight && (
+      {popoverOpen && !getSidebarRight() && (
         <div className="dt-allowance-inline-popover">
           <div className="dt-allowance-popover-backdrop" onClick={() => setPopoverOpen(false)} />
           <div className="dt-allowance-popover-content">
