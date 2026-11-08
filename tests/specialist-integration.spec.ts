@@ -123,3 +123,18 @@ it('publish revalidates missing tools and configured identity instead of trustin
   const named = await canonicalOperation(ctx(), other, 'publish', { ...source, leaseToken: second.leaseToken, model: 'helper', options, specialist: { profileId: settings.characters.characters[0]!.id, basis: 'default', unavailable: [] } }, settings)
   expect(named.item.character?.name).toBe('My Senior Reviewer')
 })
+
+
+it('independent contexts with an uninjected tools getter still publish truthful unavailable attribution', async () => {
+  const inbox = open(); const claim = inbox.claimCanonical({ ...source, owner: 'host' }, events)
+  const context = { sessionPersistence: persistence, get tools() { throw new Error('cannot get property tools without inject') } }
+  const result = await canonicalOperation(context as never, inbox, 'publish', { ...source, leaseToken: claim.leaseToken, model: 'helper', options, specialist: attribution })
+  expect(result.item.character).toMatchObject({ characterId: 'cloudflare_specialist', unavailable: ['cloudflare.docs.read', 'cloudflare.account.read'] })
+  expect(inbox.list()).toHaveLength(1)
+})
+
+it('Administrator advice inherits the qualified helper route, independently of routine intake evaluation', () => {
+  const settings = SettingsSchema.parse({ models: { helper: { provider: 'anthropic', model: 'review-model' } }, eval: { model: { provider: 'routine', model: 'intake' } } })
+  const prepared = prepareSpecialist({ profiles: seedProfiles(), settings, task: 'who owns this delivery', deliveries: [{ id: 'd', title: 'Known work', owner: 'Codex', state: 'ready' }] })
+  expect(prepared.status === 'prepared' && prepared.modelRoute).toMatchObject({ provider: 'anthropic', model: 'review-model' })
+})

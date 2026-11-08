@@ -85,7 +85,7 @@ export function seedProfiles(character: CharacterConfig = DEFAULT_SENIOR_DEVELOP
   return [
     { id: 'administrator', version: 1, identity: { name: 'Administrator', title: 'Coordinator of already-authorized work', avatar: 'administrator' },
       specialty: 'Ownership, sequencing and hand-offs across recorded deliveries', knowledge: [],
-      capabilities: ['records.read', 'coordinate.typed_action'], modelPolicy: { inherit: 'eval' }, owner: { kind: 'operator', id: 'gera' },
+      capabilities: ['records.read', 'coordinate.typed_action'], modelPolicy: { inherit: 'helper' }, owner: { kind: 'operator', id: 'gera' },
       activityStates: ALL_STATES, routing: { keywords: ['who owns', 'coordinate', 'handoff', 'hand-off', 'delivery status', 'next owner', 'sequence the'] } },
     seniorDeveloper(character),
     { id: 'cloudflare_specialist', version: 1, identity: { name: 'Cloudflare Specialist', title: 'Cloudflare platform advisor', avatar: 'cloudflare_specialist' },
