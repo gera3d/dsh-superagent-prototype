@@ -4,7 +4,8 @@ import { randomUUID } from 'node:crypto'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { apply, revalidateCapturedDecisions } from '../src/app/decision-inbox-provider.ts'
+import { Inject } from '@deepseek-ai/cordis'
+import { apply, inject, revalidateCapturedDecisions } from '../src/app/decision-inbox-provider.ts'
 import { DecisionInbox } from '../src/app/decision-inbox.ts'
 import type { PendingDecisionItem } from '../src/core/decision.ts'
 
@@ -245,4 +246,8 @@ it('serves the persisted inbox and validated canonical writes while historical r
     expect(await within(call('POST', `${persisted.id}/stage`, { choiceId: 'a', attemptId: randomUUID(), draftText: 'Do A' }), 1000))
       .toMatchObject({ status: 409 })
   } finally { releaseRecovery(); await dispose?.(); rmSync(directory, { recursive: true }) }
+})
+
+it('declares actual Cordis services rather than dependency category names', () => {
+  expect(Object.keys(Inject.resolve(inject)).sort()).toEqual(['sessionPersistence', 'tools', 'webServer'])
 })

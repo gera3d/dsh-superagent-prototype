@@ -33,7 +33,7 @@ export function revalidateCapturedDecisions(db: DatabaseSync, inbox: DecisionInb
 }
 
 export const name = 'dsh-decision-inbox'
-export const inject = { required: ['webServer', 'sessionPersistence'], optional: ['tools'] }
+export const inject = ['webServer', 'sessionPersistence', 'tools']
 export function apply(ctx: Context, config: { database: string }): void {
   if (ctx.webServer.host !== '127.0.0.1') throw new Error('Decision inbox requires a loopback server')
   if (!config?.database || !isAbsolute(config.database) || !existsSync(config.database)) throw new Error('database must name an existing absolute orchestrator.sqlite file')
