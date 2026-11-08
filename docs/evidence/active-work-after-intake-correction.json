@@ -1,0 +1,237 @@
+{
+  "load": {
+    "running": 3,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "findings": [
+    {
+      "id": "6162b441-a582-484c-9d49-b3bd12ea0175",
+      "title": "Verify cost-summary review findings against the current implementation",
+      "state": "deferred",
+      "job": {
+        "id": "finding:6162b441-a582-484c-9d49-b3bd12ea0175:r1"
+      },
+      "blocker": null
+    },
+    {
+      "id": "cccbf29e-2ff3-439b-97f0-b4bcc9961937",
+      "title": "Investigate the publication confirmation that stopped before enqueue",
+      "state": "deferred",
+      "job": {
+        "id": "finding:cccbf29e-2ff3-439b-97f0-b4bcc9961937:r1"
+      },
+      "blocker": null
+    },
+    {
+      "id": "e6d9e1da-9c21-494a-b418-35afdbe02a9a",
+      "title": "Stop proposing new work after an explicit conversation close-out",
+      "state": "blocked",
+      "job": {
+        "id": "finding:e6d9e1da-9c21-494a-b418-35afdbe02a9a:r4",
+        "ticketId": "cf2c9c8117f4870abc3dc067a903ab43",
+        "assignmentId": "55659d5ad22cc213a5be94aba0419bff"
+      },
+      "blocker": "Assignment ended without a qualifying report; review/verification required: ticket/cf2c9c8117f4870abc3dc067a903ab43/report/55659d5ad22cc213a5be94aba0419bff. End, idle or merge is not resolution.",
+      "ticketStage": "ended",
+      "sessionId": "worker-cf2c9c8117f4870abc3dc067a903ab43",
+      "model": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "high"
+      },
+      "stats": {
+        "turns": 3,
+        "steps": 3,
+        "llmMs": 1424936,
+        "toolMs": 0,
+        "ttftMs": 43876,
+        "ttftSteps": 3,
+        "decodeMs": 1381060,
+        "decodeTokens": 4299,
+        "lastTurn": 3,
+        "openStep": null,
+        "pendingCalls": {}
+      }
+    },
+    {
+      "id": "a338ad44-893d-4ebf-b8ff-aa0c3067e384",
+      "title": "Advance already-approved Harness work while the Mac is locked",
+      "state": "blocked",
+      "job": {
+        "id": "finding:a338ad44-893d-4ebf-b8ff-aa0c3067e384:r1",
+        "ticketId": "a4c7e59be9c53dbaeb2019caaf93cca9",
+        "assignmentId": "8c30c4674fe37bd81d9f24368ad753fb"
+      },
+      "blocker": "Assignment ended without a qualifying report; review/verification required: ticket/a4c7e59be9c53dbaeb2019caaf93cca9/report/8c30c4674fe37bd81d9f24368ad753fb. End, idle or merge is not resolution.",
+      "ticketStage": "ended",
+      "sessionId": "worker-a4c7e59be9c53dbaeb2019caaf93cca9",
+      "model": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "high"
+      },
+      "stats": {
+        "turns": 2,
+        "steps": 2,
+        "llmMs": 1788273,
+        "toolMs": 0,
+        "ttftMs": 23624,
+        "ttftSteps": 2,
+        "decodeMs": 1764649,
+        "decodeTokens": 2536,
+        "lastTurn": 2,
+        "openStep": null,
+        "pendingCalls": {}
+      }
+    },
+    {
+      "id": "12779824-b82e-484d-9502-d2150ba58aa1",
+      "title": "Recommend the actual review handoff for completed finding work",
+      "state": "blocked",
+      "job": {
+        "id": "finding:12779824-b82e-484d-9502-d2150ba58aa1:r2",
+        "ticketId": "f08f01eef8bdb9a75399edc2c40a1582",
+        "assignmentId": "1f3c128cf95040adb86acb5f9e43a4ab"
+      },
+      "blocker": "Assignment ended without a qualifying report; review/verification required: ticket/f08f01eef8bdb9a75399edc2c40a1582/report/1f3c128cf95040adb86acb5f9e43a4ab. End, idle or merge is not resolution.",
+      "ticketStage": "ended",
+      "sessionId": "worker-f08f01eef8bdb9a75399edc2c40a1582",
+      "model": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "high"
+      },
+      "stats": {
+        "turns": 2,
+        "steps": 2,
+        "llmMs": 1762381,
+        "toolMs": 0,
+        "ttftMs": 24851,
+        "ttftSteps": 2,
+        "decodeMs": 1737530,
+        "decodeTokens": 3480,
+        "lastTurn": 2,
+        "openStep": null,
+        "pendingCalls": {}
+      }
+    },
+    {
+      "id": "f9335259-b51c-4e97-9750-3923b7e2138b",
+      "title": "Show Google and Anthropic remaining allowance beside chat",
+      "state": "running",
+      "job": {
+        "id": "finding:f9335259-b51c-4e97-9750-3923b7e2138b:r1",
+        "ticketId": "f5084b7d915773bcb1386779692fd87b",
+        "assignmentId": "02af1205881c23e6f7be77ed0b966af0"
+      },
+      "blocker": null,
+      "ticketStage": "working",
+      "sessionId": "worker-f5084b7d915773bcb1386779692fd87b",
+      "model": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "high"
+      },
+      "stats": {
+        "turns": 0,
+        "steps": 0,
+        "llmMs": 0,
+        "toolMs": 0,
+        "ttftMs": 0,
+        "ttftSteps": 0,
+        "decodeMs": 0,
+        "decodeTokens": 0,
+        "lastTurn": null,
+        "openStep": {
+          "turn": 1,
+          "step": 1,
+          "startTime": 1794161692805,
+          "firstTokenTime": null
+        },
+        "pendingCalls": {}
+      }
+    },
+    {
+      "id": "51f309ca-d396-4983-a55d-ef4432a8572f",
+      "title": "Workers on antigravity cannot file ready reports",
+      "state": "running",
+      "job": {
+        "id": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r1",
+        "ticketId": "57859ac28ab698610a99031c54515220",
+        "assignmentId": "7d000dc8c6ba034c0fa64cbc08a32394"
+      },
+      "blocker": null,
+      "ticketStage": "working",
+      "sessionId": "worker-57859ac28ab698610a99031c54515220",
+      "model": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "high"
+      },
+      "stats": {
+        "turns": 0,
+        "steps": 0,
+        "llmMs": 0,
+        "toolMs": 0,
+        "ttftMs": 0,
+        "ttftSteps": 0,
+        "decodeMs": 0,
+        "decodeTokens": 0,
+        "lastTurn": null,
+        "openStep": {
+          "turn": 1,
+          "step": 1,
+          "startTime": 1794161755951,
+          "firstTokenTime": null
+        },
+        "pendingCalls": {}
+      }
+    },
+    {
+      "id": "1accfa18-853b-42e5-8a9b-f24375d50d3e",
+      "title": "Verify cost-summary review findings against the current implementation",
+      "state": "running",
+      "job": {
+        "id": "finding:1accfa18-853b-42e5-8a9b-f24375d50d3e:r1",
+        "ticketId": "775c713393968c216c6cce864c65727a",
+        "assignmentId": "24e5e03ccf6e11a2e2213870b3df6654"
+      },
+      "blocker": null,
+      "ticketStage": "working",
+      "sessionId": "worker-775c713393968c216c6cce864c65727a",
+      "model": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "high"
+      },
+      "stats": {
+        "turns": 0,
+        "steps": 0,
+        "llmMs": 0,
+        "toolMs": 0,
+        "ttftMs": 0,
+        "ttftSteps": 0,
+        "decodeMs": 0,
+        "decodeTokens": 0,
+        "lastTurn": null,
+        "openStep": {
+          "turn": 1,
+          "step": 1,
+          "startTime": 1794162051062,
+          "firstTokenTime": null
+        },
+        "pendingCalls": {}
+      }
+    },
+    {
+      "id": "a1707f3a-a020-4b8b-8374-50887c5e3265",
+      "title": "Investigate the publication confirmation that stopped before enqueue",
+      "state": "queued",
+      "job": {
+        "id": "finding:a1707f3a-a020-4b8b-8374-50887c5e3265:r1"
+      },
+      "blocker": null
+    }
+  ]
+}

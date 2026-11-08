@@ -2,6 +2,16 @@
 
 Updated November 8, 2026, 9:29 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
 
+## Three current workers admitted; completion pair merged, not installed
+
+User requested using available Antigravity capacity across all discussed work. Codex corrected the immutable repository mismatch by recording explicitly linked replacement verifications against the configured sandbox dispatch carrier, preserving the prototype as the inspected source target and retaining original requirements/evidence. The original blocked intakes never created workers; each was natively deferred as superseded history, not resolved or deleted. Replacements were natively confirmed; there are no competing active jobs for those scopes.
+
+Current executor load is **three running, max three**: allowance display, Antigravity reporting-tool repair, and cost-summary verification. Publication-enqueue investigation is confirmed in the finding FIFO behind capacity. Zero executor queue does not mean zero canonical queued findings. These are current assignments, not yet verified outputs or success of the Google bridge. OpenAI remains conserved, no global routing or concurrency change.
+
+Source release advanced: both reviewed completion PRs were marked ready and merged at exact expected heads. [Backend PR](https://github.com/gera3d/dsh-superagent-prototype/pull/67) merge `dbdfd010c1f91e4f7bae1ca81a9cfd28eb3c47a7`; [plugin PR](https://github.com/gera3d/dsh-plugins/pull/20) merge `cb91894fede10cd61fe92399c476e029cb1f73b2`. Root source-head types/build checks all passed; focused90 tests and full native replay evidence preserved. GitHub reported no CI checks, not a passed CI run. Exact installed preimages validated, paired rollback sources/assets/settings and online SQLite backup prepared in the local private release package. **Merged only: live files have not changed.** Installation/restart waits for productive workers to settle; do not interrupt them or equate merge with native acceptance. Root owns that continuation without a new approval request.
+
+Original-to-replacement verification links: cost-summary `6162b441-a582-484c-9d49-b3bd12ea0175` → `1accfa18-853b-42e5-8a9b-f24375d50d3e`; publication `cccbf29e-2ff3-439b-97f0-b4bcc9961937` → `a1707f3a-a020-4b8b-8374-50887c5e3265`. [Current canonical admission/evidence snapshot](docs/evidence/active-work-after-intake-correction.json). The merge milestone was appended to the original completion finding as an observation, not acceptance. Settings/headless candidates remain independent root reviews; no new delegation privileges enabled.
+
 ## Reporting integration failure confirmed; idle slots released through supported stop
 
 All three report-only turns returned an explicit inability to call `orchestrator_report` in the Antigravity/Gemini runtime. They did not produce the required structured report; plain-text ready status is not a native tool result. This confirms a provider/tool integration gap, not a missing reminder. No further identical prompts should be sent.
