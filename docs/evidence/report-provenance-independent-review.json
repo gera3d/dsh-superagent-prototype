@@ -1,0 +1,17 @@
+{
+  "reviewedAt": "2026-11-08T19:28:57.331478+00:00",
+  "findingId": "51f309ca-d396-4983-a55d-ef4432a8572f",
+  "candidate": "358ae0a24c06cc6ccdaeea6f63c681e14f84ebae",
+  "verdict": "reject_pending_correction",
+  "independentTests": {
+    "passed": 0,
+    "failed": 3
+  },
+  "failures": [
+    "Quoted example promoted to ready despite explicit not-ready text",
+    "Unbound generic stale report accepted",
+    "Symlink report outside workspace accepted"
+  ],
+  "liveChanges": false,
+  "nextOwner": "Harness correction worker; Codex review"
+}

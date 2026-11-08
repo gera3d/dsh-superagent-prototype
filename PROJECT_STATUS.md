@@ -1,20 +1,30 @@
 # DeepSeek Harness project status
 
-Updated November 08, 2026, 11:05 AM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
+Updated November 08, 2026, 11:33 AM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
 
 ## Current seven-track outcome
 
 | Track | Verified current state | Next owner/action |
 |---|---|---|
 | Explicit conversation completion | **Merged, deployed, original-thread native verified, finding accepted.** | Complete for this bounded scope; preserve evidence/history. |
-| Senior Developer Settings / real review handoff | Earlier candidate failed actual primary-path persona test; correction dispatched under same finding, revised job. | Harness correction worker; Codex review and paired integration. |
+| Senior Developer Settings / real review handoff | Revised candidate returned at backend `b4d9ad3`; worker claims89 tests/types/build. Idle assignment retired to evidence review; not independently accepted or deployed. | Codex replays the actual Settings-to-primary/fallback persona path and reviews paired integration. |
 | Screen-independent coordination | Candidate preserved; not deployed or activated. | Codex security/authority review; explicit owner confirmation before any broader local delegation activation. |
 | Google + Anthropic allowance display | Full final report returns candidate,17 focused tests/types/build and before/after fixture captures; not yet independently accepted or deployed. Worker retired idle to evidence review. | Codex checks actual provider/account correctness, UI/contract and source compatibility. |
-| Antigravity structured reporting | Candidate returned (worker reports114tests/types/build); not deployed. Idle worker retired to evidence review. | Codex reviews report transport, provenance/currency and queue-state safety before release. |
+| Antigravity structured reporting | Candidate independently rejected: three report provenance checks fail. Same finding reopened through protected native triage; bounded correction is working. Not deployed. | Harness corrects quoted-prose promotion, stale/unbound files and symlinks; Codex reviews the revised transport and queue safety. |
 | Cost-summary historical findings | Verification report returned; source claims are not accepted repairs. Idle worker retired to evidence review. | Codex reads full findings/classification and verifies concrete defects before any repair decision. |
-| Publication confirmation before enqueue | Corrected verification finding dispatched. No live publication effect authorized by it. | Harness verification worker, then Codex review. |
+| Publication confirmation before enqueue | Investigation report returned; historical exception cause remains insufficient evidence. Worker claims isolated pre-effect reproduction, no live publication effects. Idle assignment retired to evidence review. | Codex verifies records/reproduction before deciding a bounded diagnostic follow-up; no new publish authorization. |
 
-Intake is **resumed** after the safe idle deployment. Latest executor snapshot: `2` running, `0` executor-queued, max `3`. Finding state and executor activity are distinct: candidates awaiting review are not productive running workers. Google remains default, Anthropic helper, OpenAI conserved; no new routes, keys or privileges enabled. All current health components report: runtime=ready, relay=ready, notice=ready, launch=ready, delivery=ready, assessment=ready, reply=ready, evals=ready, models=ready, github=ready.
+Intake is **resumed** after the safe idle deployment. Latest executor snapshot: `1` running (reporting correction), `0` executor-queued, max `3`. Finding state and executor activity are distinct: candidates awaiting review are not productive running workers. Google remains default, Anthropic helper, OpenAI conserved; no new routes, keys or privileges enabled. All current health components report: runtime=ready, relay=ready, notice=ready, launch=ready, delivery=ready, assessment=ready, reply=ready, evals=ready, models=ready, github=ready.
+
+## Reporting transport review — rejected and correction dispatched
+
+Root inspected candidate `358ae0a24c06cc6ccdaeea6f63c681e14f84ebae` and ran three independent adversarial checks. **All three fail**: an explicitly NOT-ready response containing a quoted JSON example becomes ready; a stale unbound generic `report.json` is accepted without ticket/assignment/turn currency; a report symlink outside the workspace is followed and accepted. These are status/provenance defects, not live acceptance. Candidate remains undeployed. [Independent verdict](docs/evidence/report-provenance-independent-review.json).
+
+Root appended the exact failures to the same finding and used native **Reopen bounded triage → Fix now**. Current job `finding:51f309ca-d396-4983-a55d-ef4432a8572f:r4`, ticket `e7d7391862548043bf9967ab1459dfda`, assignment `47ade97a05be85efe632abb8dc14c3f7`. Required correction: explicit current ticket/assignment/turn-bound transport; regular-file/no-symlink/size/currency validation; consume only after successful delivery; no ready promotion from quoted prose, emoji or missing-tool claims; missing-report blocked evidence must still release capacity safely without acceptance. No live source or permission change.
+
+Both previously dispatched jobs returned final reports and were verified idle. Root retired their assignments with the supported stop action, preserving all source/evidence and ending their mandates rather than leaving idle findings labelled running. Settings has a revised candidate pending independent replay. Publication investigation explicitly cannot establish the original exception; its report is not proof of a repaired publication path. [Reconciled current jobs and service health](docs/evidence/coordination-review-20261108-1124.json). Prior completed requests recorded Antigravity Gemini usage; new correction is working but has no reported token/result yet. Settings retain Google-first hierarchy, Anthropic helper and OpenAI conservation; no route changes made.
+
+Next concrete stage belongs to Codex: replay the revised Settings primary/fallback path, then review source compatibility and paired release; review the reporting correction when returned. These reviews are authorized, not additional user decisions. This coordination pass does not imply execution between scheduled checks.
 
 ## Completion fix — installed and accepted proof
 

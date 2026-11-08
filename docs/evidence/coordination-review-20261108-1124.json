@@ -1,0 +1,160 @@
+{
+  "at": "2026-11-08T19:30:09.930713+00:00",
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "health": {
+    "runtime": {
+      "state": "ready",
+      "detail": "Orchestrator is ready",
+      "at": "2026-11-08T18:57:45.839Z"
+    },
+    "relay": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T19:19:32.425Z"
+    },
+    "notice": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T19:29:51.278Z"
+    },
+    "launch": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T19:29:32.814Z"
+    },
+    "delivery": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T18:57:40.741Z"
+    },
+    "assessment": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T18:57:40.741Z"
+    },
+    "reply": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-08T18:57:40.741Z"
+    },
+    "evals": {
+      "state": "ready",
+      "detail": "No unavailable Eval in the last hour"
+    },
+    "models": {
+      "state": "ready",
+      "detail": "No managed Session is waiting on a model budget retry"
+    },
+    "github": {
+      "state": "ready",
+      "detail": "0 notifications; next poll \u2265 60s",
+      "at": "2026-11-08T19:25:22.878Z"
+    }
+  },
+  "findings": [
+    {
+      "id": "a338ad44-893d-4ebf-b8ff-aa0c3067e384",
+      "title": "Advance already-approved Harness work while the Mac is locked",
+      "state": "blocked",
+      "revision": 4,
+      "job": {
+        "id": "finding:a338ad44-893d-4ebf-b8ff-aa0c3067e384:r1",
+        "ticketId": "a4c7e59be9c53dbaeb2019caaf93cca9",
+        "assignmentId": "8c30c4674fe37bd81d9f24368ad753fb"
+      },
+      "blocker": "Assignment ended without a qualifying report; review/verification required: ticket/a4c7e59be9c53dbaeb2019caaf93cca9/report/8c30c4674fe37bd81d9f24368ad753fb. End, idle or merge is not resolution."
+    },
+    {
+      "id": "12779824-b82e-484d-9502-d2150ba58aa1",
+      "title": "Recommend the actual review handoff for completed finding work",
+      "state": "blocked",
+      "revision": 8,
+      "job": {
+        "id": "finding:12779824-b82e-484d-9502-d2150ba58aa1:r6",
+        "ticketId": "9c5b2ece23fdad8dac34df578f472f96",
+        "assignmentId": "58219076ad7d1de92af31ffd39c1e5ee"
+      },
+      "blocker": "Assignment ended without a qualifying report; review/verification required: ticket/9c5b2ece23fdad8dac34df578f472f96/report/58219076ad7d1de92af31ffd39c1e5ee. End, idle or merge is not resolution."
+    },
+    {
+      "id": "f9335259-b51c-4e97-9750-3923b7e2138b",
+      "title": "Show Google and Anthropic remaining allowance beside chat",
+      "state": "blocked",
+      "revision": 3,
+      "job": {
+        "id": "finding:f9335259-b51c-4e97-9750-3923b7e2138b:r1",
+        "ticketId": "f5084b7d915773bcb1386779692fd87b",
+        "assignmentId": "02af1205881c23e6f7be77ed0b966af0"
+      },
+      "blocker": "Assignment ended without a qualifying report; review/verification required: ticket/f5084b7d915773bcb1386779692fd87b/report/02af1205881c23e6f7be77ed0b966af0. End, idle or merge is not resolution."
+    },
+    {
+      "id": "51f309ca-d396-4983-a55d-ef4432a8572f",
+      "title": "Workers on antigravity cannot file ready reports",
+      "state": "running",
+      "revision": 4,
+      "job": {
+        "id": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r4",
+        "ticketId": "e7d7391862548043bf9967ab1459dfda",
+        "assignmentId": "47ade97a05be85efe632abb8dc14c3f7"
+      },
+      "blocker": null
+    },
+    {
+      "id": "1accfa18-853b-42e5-8a9b-f24375d50d3e",
+      "title": "Verify cost-summary review findings against the current implementation",
+      "state": "blocked",
+      "revision": 7,
+      "job": {
+        "id": "finding:1accfa18-853b-42e5-8a9b-f24375d50d3e:r1",
+        "ticketId": "775c713393968c216c6cce864c65727a",
+        "assignmentId": "24e5e03ccf6e11a2e2213870b3df6654"
+      },
+      "blocker": "Assignment ended without a qualifying report; review/verification required: ticket/775c713393968c216c6cce864c65727a/report/24e5e03ccf6e11a2e2213870b3df6654. End, idle or merge is not resolution."
+    },
+    {
+      "id": "a1707f3a-a020-4b8b-8374-50887c5e3265",
+      "title": "Investigate the publication confirmation that stopped before enqueue",
+      "state": "blocked",
+      "revision": 3,
+      "job": {
+        "id": "finding:a1707f3a-a020-4b8b-8374-50887c5e3265:r1",
+        "ticketId": "fd09fd8ae2c9f3619b81a8b353c14215",
+        "assignmentId": "df9750e61b51142383b129add1cf4cf8"
+      },
+      "blocker": "Assignment ended without a qualifying report; review/verification required: ticket/fd09fd8ae2c9f3619b81a8b353c14215/report/df9750e61b51142383b129add1cf4cf8. End, idle or merge is not resolution."
+    }
+  ],
+  "reportingCorrection": {
+    "ticket": "e7d7391862548043bf9967ab1459dfda",
+    "stage": "working",
+    "usage": {
+      "sessionId": "worker-e7d7391862548043bf9967ab1459dfda",
+      "routes": [],
+      "totals": {
+        "uncachedInputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0
+      },
+      "coverage": {
+        "attempts": 0,
+        "reported": 0,
+        "cacheRead": "unreported",
+        "cacheWrite": "unreported",
+        "attribution": "complete"
+      },
+      "cost": {
+        "kind": "unavailable",
+        "reason": "noRecordedPrice"
+      }
+    }
+  },
+  "idleRetiredToReview": [
+    "9c5b2ece23fdad8dac34df578f472f96",
+    "fd09fd8ae2c9f3619b81a8b353c14215"
+  ]
+}
