@@ -1,0 +1,14 @@
+{
+  "at": "2026-11-08T20:35:56.947049+00:00",
+  "findingId": "f9335259-b51c-4e97-9750-3923b7e2138b",
+  "candidate": "db3b5b12d45f0887b3c930f5e4f625684bb9a812",
+  "verdict": "correction_required_account_provenance",
+  "source": "Antigravity local primary account pool",
+  "actualCoverage": [
+    "Google Antigravity Gemini pool",
+    "Google Antigravity Claude model pool"
+  ],
+  "notEstablished": "Direct Anthropic subscription remaining allowance",
+  "required": "Explicit provider+account/source identity; direct subscription unavailable unless supported reader supplies it",
+  "liveChanges": false
+}

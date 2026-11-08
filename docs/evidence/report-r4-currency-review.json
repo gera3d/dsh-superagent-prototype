@@ -1,0 +1,14 @@
+{
+  "candidate": "ca4a923",
+  "oldAdversarialTests": {
+    "passed": 3,
+    "failed": 0
+  },
+  "remainingCurrencyFailures": [
+    "Identity fields optional; bound context accepts missing ticket and assignment",
+    "Actual production call supplies only ticket id, not assignment or turn timestamp; old same-ticket report accepted"
+  ],
+  "findingId": "51f309ca-d396-4983-a55d-ef4432a8572f",
+  "at": "2026-11-08T20:34:56.806260+00:00",
+  "verdict": "correction_required_not_deployed"
+}

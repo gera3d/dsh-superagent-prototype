@@ -1,0 +1,19 @@
+{
+  "candidate": "b4d9ad3",
+  "focusedExistingTests": {
+    "passed": 44,
+    "failed": 0
+  },
+  "independentStateTests": {
+    "passed": 0,
+    "failed": 2
+  },
+  "findings": [
+    "Current blocked/ended-evidence-review finding incorrectly tells advisor NOT to proceed with review, preventing the actual required coordinator review",
+    "A waiting report explicitly saying tests have not run is rewritten as candidate testing complete",
+    "Live advice also treats zero outer tool calls as no internal evidence; actual Google adapter has internal execution not represented there"
+  ],
+  "findingId": "12779824-b82e-484d-9502-d2150ba58aa1",
+  "at": "2026-11-08T20:34:56.793474+00:00",
+  "verdict": "correction_required_not_deployed"
+}
