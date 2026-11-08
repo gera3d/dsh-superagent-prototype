@@ -1,0 +1,36 @@
+{
+  "backendHead": "5c921e2f90d9cdae2b8ee177e4d0d554527350ae",
+  "pluginHead": "800bd5eae3a5e92f06e9d5f76f788a494088d8ea",
+  "cases": [
+    {
+      "name": "full captured native turn",
+      "expected": true,
+      "backend": true,
+      "plugin": true
+    },
+    {
+      "name": "explicit negation",
+      "expected": false,
+      "backend": false,
+      "plugin": false
+    },
+    {
+      "name": "close notes then continue",
+      "expected": false,
+      "backend": false,
+      "plugin": false
+    },
+    {
+      "name": "hypothetical then immediate work",
+      "expected": false,
+      "backend": false,
+      "plugin": false
+    },
+    {
+      "name": "hypothetical then blocker",
+      "expected": false,
+      "backend": false,
+      "plugin": false
+    }
+  ]
+}

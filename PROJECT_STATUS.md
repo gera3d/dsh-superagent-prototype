@@ -1,6 +1,14 @@
 # DeepSeek Harness project status
 
-Updated November 8, 2026, 8:29 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
+Updated November 8, 2026, 9:29 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
+
+## Completion correction advanced to paired source pull requests
+
+Verified November 8, 2026, 9:29 AM PST: round-4 completion candidate returned. Root independently replayed the full real native close-out and four prior false-positive cases against backend `5c921e2f90d9cdae2b8ee177e4d0d554527350ae` and plugin `800bd5eae3a5e92f06e9d5f76f788a494088d8ea`: all five pass in both detectors. Root directly ran 58 backend tests across closeout/source/submission/restart and 32 plugin host/unit tests, all passing. The initial pnpm wrapper attempted a dependency-state check and stopped before tests (no TTY); direct installed vitest succeeded without changing dependencies. Worker-reported type/build evidence remains separate from root qualification.
+
+Both full patches pass clean applicability checks against installed sources. Root prepared isolated canonical source branches and verified every changed file byte-identical to the reviewed candidates, then opened paired drafts: [Backend source correction](https://github.com/gera3d/dsh-superagent-prototype/pull/67) at `727939f3ff4cccce030b59e150f2df9f5f1dd20e`, and [Next steps correction](https://github.com/gera3d/dsh-plugins/pull/20) at `5e723ae609a541917a788c612dcb76710d8e05d1`. **Reviewed focused behavior and source PRs prepared; not merged, deployed or native verified.** Next owner is Codex release coordinator: finish release-head types/build checks, preserve rollback, then authorized paired merge/deploy and original-thread proof. No new user permission is needed for existing release scope; retain any exact protected native publication confirmation.
+
+All services report ready, no executors running at pass start. Advisor Settings and unattended-coordination candidates remain pending independent review, with no live changes. The three already-confirmed finding jobs remain queued; don't confuse zero executor queue with the canonical finding queue. No new worker or duplicated implementation was started this pass, and OpenAI remains conserved. Current routing/settings are unchanged from the previous read. The candidate/PR update was appended as an observation to the same canonical finding, preserving job/history; it is not acceptance.
 
 ## Hourly review — three candidates returned; completion patch still rejected
 
