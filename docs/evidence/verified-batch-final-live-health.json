@@ -54,6 +54,5 @@
     "queued": 0,
     "maxWorkers": 3
   },
-  "paused": false,
-  "at": "2026-11-08T02:09:17.044072+00:00"
+  "paused": false
 }

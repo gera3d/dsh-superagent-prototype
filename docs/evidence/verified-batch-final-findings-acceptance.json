@@ -1,0 +1,71 @@
+{
+  "at": "2026-11-08T02:11:49.511358+00:00",
+  "items": [
+    {
+      "id": "28ebe371-40d5-4630-8193-64d590129059",
+      "title": "Use one bounded Sonnet quality escalation without spending OpenAI allowance",
+      "state": "resolved",
+      "revision": 9,
+      "job": {
+        "id": "finding:28ebe371-40d5-4630-8193-64d590129059:r1",
+        "ticketId": "ba790a3ab96e4af5164302ecec9c7221",
+        "assignmentId": "84c2fce5d4e38919282f58477460c488"
+      }
+    },
+    {
+      "id": "94ce5265-c613-4e50-b008-5f297e330e62",
+      "title": "Refresh Senior Developer advice after outside release progress",
+      "state": "resolved",
+      "revision": 8,
+      "job": {
+        "id": "finding:94ce5265-c613-4e50-b008-5f297e330e62:r1",
+        "ticketId": "a291438f297872fcaa5e3c59a453fe4d",
+        "assignmentId": "7e028bae7c63c4c43ae78fbce7bc2dbe"
+      }
+    },
+    {
+      "id": "1442f2ba-e3b6-480d-97b4-ea687702033e",
+      "title": "Independently qualify the bounded Sonnet candidate for release",
+      "state": "resolved",
+      "revision": 3,
+      "job": {
+        "id": "finding:1442f2ba-e3b6-480d-97b4-ea687702033e:r1",
+        "ticketId": "db75771d60c45d0bdfe2727590eadc02",
+        "assignmentId": "2dbe93a3d0a17ec8f0c648fe6386fc9d"
+      }
+    },
+    {
+      "id": "7f6141a3-c0c0-45ce-a09f-ca085dab51a7",
+      "title": "Build native specialist profiles with truthful animated activity",
+      "state": "resolved",
+      "revision": 4,
+      "job": {
+        "id": "finding:7f6141a3-c0c0-45ce-a09f-ca085dab51a7:r1",
+        "ticketId": "80d57f57f9dc78a56d4a43e17bf757af",
+        "assignmentId": "ff6b74f256cb91a1392c2e423d4cb7ba"
+      }
+    },
+    {
+      "id": "f8c2d0ac-8249-4b43-ac39-8e33c50e2ed2",
+      "title": "Restore missing scores on the current Senior Developer cards",
+      "state": "resolved",
+      "revision": 9,
+      "job": {
+        "id": "finding:f8c2d0ac-8249-4b43-ac39-8e33c50e2ed2:r1",
+        "ticketId": "2014055284790a0528aeb3a175fb9d74",
+        "assignmentId": "189925d98201c78e881d9a017095f3ff"
+      }
+    },
+    {
+      "id": "e3efb68b-f4ac-46de-b845-0e85a86448ad",
+      "title": "Complete specialist pilot native wiring and qualification",
+      "state": "resolved",
+      "revision": 5,
+      "job": {
+        "id": "finding:e3efb68b-f4ac-46de-b845-0e85a86448ad:r1",
+        "ticketId": "e041041d3a5a9e32b6613d0ebbf7ddb2",
+        "assignmentId": "20132f4f7a0c234046cf4999247d8861"
+      }
+    }
+  ]
+}

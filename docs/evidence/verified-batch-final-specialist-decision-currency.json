@@ -1,0 +1,23 @@
+{
+  "at": "2026-11-08T02:12:26.698000+00:00",
+  "items": [
+    {
+      "id": "chat-822c9ca67994ddbbc92e2050112f44e8",
+      "sessionId": "worker-e041041d3a5a9e32b6613d0ebbf7ddb2",
+      "status": "stale",
+      "trigger": "Task-specific next steps"
+    },
+    {
+      "id": "chat-78a81b4ac0ff7a102945b3143f43627f",
+      "sessionId": "worker-e041041d3a5a9e32b6613d0ebbf7ddb2",
+      "status": "resolved",
+      "trigger": "Task-specific next steps"
+    },
+    {
+      "id": "chat-4e381fc88c518c5f46ac29faccb21ada",
+      "sessionId": "worker-80d57f57f9dc78a56d4a43e17bf757af",
+      "status": "stale",
+      "trigger": "Task-specific next steps"
+    }
+  ]
+}

@@ -1,17 +1,17 @@
 # DeepSeek Harness project status
 
-Updated November 7, 2026, 6:09 PM PST. Owner: Codex. Check this record and live evidence before claiming completion.
+Updated November 7, 2026, 6:12 PM PST. Owner: Codex. Check this record and live evidence before claiming completion.
 
 ## Current goal
 
-Finish and verify the four approved tracks in the installed Harness. Review, blocker fixes, merge, deployment and native verification are already authorized. **Three tracks are verified; the specialist integration and its newly exposed scoring fixes are installed and in final native qualification. The overall goal is still open.**
+Finish and verify the four approved tracks in the installed Harness. Review, blocker fixes, merge, deployment and native verification are already authorized. **All four approved tracks are reviewed, merged, deployed and verified in the installed Harness. All six associated findings, including qualification and specialist correction, are resolved through native evidence acceptance.**
 
 | Track | Verified work | Remaining action |
 |---|---|---|
 | Bounded Sonnet quality | Merged, deployed and enabled with maxEscalations=1. Ten checks against installed code and live settings confirm one quality attempt, separate availability fallback and conserved OpenAI exclusion. | No additional action; eligible non-finding jobs only. No provider failure was induced in production. |
 | Outside progress / stale advice | Merged/deployed. Append-only exact-source progress records cover outside push/PR/check/review/merge/deploy/verify actions. Current live helper context recognizes completed deployment; stale selections reject without Send. | Codex records future outside milestones through the exact-source receipt command. |
-| Score reliability / reply handoff | Recovery and diagnostics installed. Native 62/23/15 card was selected and sent with submission proof. Fresh specialist card showed real 90/7/3 scores; highest choice inserted its exact prompt and native Send resolved that same decision while historical recovery was still pending. | Final fresh-card check after the additional startup/provider fixes below; no fabricated scores or auto-send. |
-| Specialist profiles | One native registry, real Next steps dock, Administrator/Senior Developer/Cloudflare routing, bounded capability intersection, compact accessible activity states. Direct profile probes passed; Cloudflare native UI truthfully says unavailable/advice-only. | Codex verifies fresh automatic scores on the final installed source, records evidence and accepts the two specialist findings. |
+| Score reliability / reply handoff | Recovery and diagnostics installed. Native 62/23/15 card was selected and sent with submission proof. Fresh specialist card showed real 90/7/3 scores; highest choice inserted its exact prompt and native Send resolved that same decision while historical recovery was still pending. | Verified on final installed source: automatic 72/18/10 scores, highest-choice insertion, native Send once and matching submission proof. No fabricated scores or auto-send. |
+| Specialist profiles | One native registry, real Next steps dock, Administrator/Senior Developer/Cloudflare routing, bounded capability intersection, compact accessible activity states. Direct profile probes passed; Cloudflare native UI truthfully says unavailable/advice-only. | Complete. Fresh native score/Send loop verified; both specialist findings accepted. Their completed-worker recommendations are stale/resolved, with no pending action. |
 
 ## Live defects found and corrected during qualification
 
@@ -25,7 +25,7 @@ Backend PRs [55](https://github.com/gera3d/dsh-superagent-prototype/pull/55), [5
 
 ## Qualification and current next owner
 
-The preceding integrated source passed **2,275 tests, two skipped**. Latest evaluator/HTTP/routing regressions: **55 passed**, types/build pass. Final plugin: **17 real-backend contract, 24 host/parser, 201 UI/behavior tests**, types/build pass. Final paired full suite passed **2,279 tests, two skipped, zero failures** on frozen source with the exact corrected companion. Fresh native 72/18/10 scoring and highest-choice stage → Send → submission-proof completed while historical recovery remained pending. Backups and postimage hashes are retained locally. Intake has resumed; no workers or queued jobs. Codex owns the final native evidence recording/acceptance for the two specialist findings; no user action is required.
+The preceding integrated source passed **2,275 tests, two skipped**. Latest evaluator/HTTP/routing regressions: **55 passed**, types/build pass. Final plugin: **17 real-backend contract, 24 host/parser, 201 UI/behavior tests**, types/build pass. Final paired full suite passed **2,279 tests, two skipped, zero failures** on frozen source with the exact corrected companion. Fresh native 72/18/10 scoring and highest-choice stage → Send → submission-proof completed while historical recovery remained pending. Backups and postimage hashes are retained locally. Intake has resumed; no workers or queued jobs. Both specialist findings are now accepted and all six findings for this scope are resolved. All ten service components, including GitHub, report ready. No user action is required for these completed tracks; seven unrelated inbox decisions remain visible.
 
 ## Limits preserved
 
@@ -42,3 +42,5 @@ Google Flash remains the saved routine worker preference, followed by Anthropic 
 
 - [Final installed verification and limits](docs/evidence/verified-batch-final-verification.md)
 - [Fresh automatic scores](docs/evidence/verified-batch-native-specialist-fresh-scores.json) and [final native Send proof](docs/evidence/verified-batch-native-specialist-final-send.json)
+
+- [Native finding acceptance](docs/evidence/verified-batch-final-findings-acceptance.json), [completed-worker decision currency](docs/evidence/verified-batch-final-specialist-decision-currency.json) and [final health](docs/evidence/verified-batch-final-live-health.json)
