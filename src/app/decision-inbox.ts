@@ -261,6 +261,18 @@ export class DecisionInbox {
     this.save(saved)
     return saved
   }
+  /**
+   * Record which specialist advised this SAME decision. Attribution only: choices, recommendation and staging are
+   * untouched, and a staged, closed or invalidated record refuses it (CAS, like every other writer).
+   */
+  attributeCharacter(id: string, character: NonNullable<PendingDecisionItem['character']>): PendingDecisionItem {
+    const item = this.get(id)
+    if (!item) throw new InboxError(404, 'Decision not found')
+    if (item.status !== 'pending' || item.staging || item.invalidation) throw new InboxError(409, 'Only an open, unstaged decision can be attributed')
+    const next = { ...item, character: { ...character } }
+    this.save(next, item)
+    return next
+  }
   findSource(source: { sessionId: string; sourceMessageId?: string; sourceTurn?: number }): PendingDecisionItem | undefined {
     // list() places newer descendants ahead of their parents (strictly increasing createdAt).
     return this.list().find(item => item.sessionId === source.sessionId && (
