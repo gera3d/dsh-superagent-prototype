@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-11-07T20:02:46.662948-08:00",
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "github": {
+    "state": "ready",
+    "detail": "0 notifications; next poll \u2265 60s",
+    "at": "2026-11-08T03:57:22.683Z"
+  },
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "paused": false
+}
