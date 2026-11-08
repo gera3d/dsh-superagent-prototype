@@ -178,7 +178,7 @@ it('replaces the staged notice with confirmed submission status after the server
   expect(view.container.textContent).toContain('Nothing has been sent')
   inbox[0] = { ...inbox[0]!, status: 'resolved', resolvedChoice: 'option-b', resolutionBasis: 'submitted', submissionId: 'native-send', submittedSeq: 3 }
   await pollInbox()
-  expect(view.container.querySelector('[role="status"]')?.textContent).toContain('Linked response confirmed submitted')
+  expect(view.container.querySelector(`[data-decision-receipt="${item().id}"][role="status"]`)?.textContent).toContain('Linked response confirmed submitted')
   expect(view.container.textContent).not.toContain('Nothing has been sent')
   expect(view.container.textContent).not.toContain('Choice staged')
   expect(view.container.textContent).not.toContain('awaiting confirmed Send')

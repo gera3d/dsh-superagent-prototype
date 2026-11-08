@@ -1,5 +1,5 @@
 /** Supported Session dock extension: end-of-turn alternatives, shared inbox, draft-only selection. */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { AssistantBlock, ConversationNode, ConversationSnapshot } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { ChatSnapshot } from '@deepseek-ai/dsh-client-ui-chat/client'
@@ -9,6 +9,10 @@ import type { DecisionSubmissionBridge } from './decision-submission.ts'
 import { caller, usePoll } from './api.ts'
 import { activeFindingForSession } from './finding-association.ts'
 import { parseInlineAlternatives } from './inline-alternatives.ts'
+import { SpecialistStatus } from './specialist-status.tsx'
+import { decisionActivity } from '../core/specialist-activity.ts'
+import { DEFAULT_PROFILE_ID } from '../core/specialist-routing.ts'
+import { profileForCharacterId, seedProfiles } from '../core/specialist-profile.ts'
 import css from './inline-decision.css?raw'
 
 export type InlineDecisionProps = PropsRuntime<'conversation.input.dock'> & { submissionBridge?: DecisionSubmissionBridge }
@@ -113,6 +117,8 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
   // Recorded alternatives stay selectable: a new linked decision preserves the original history.
   const latestResolved = sessionItems.filter(item => item.status === 'resolved').sort((a, b) => b.createdAt - a.createdAt)[0]
   const items = pending.length ? pending : latestResolved ? [latestResolved] : []
+  const registry = useMemo(() => seedProfiles(), [])
+  const specialist = profileForCharacterId(registry, items[0]?.character?.characterId) ?? registry.find(profile => profile.id === DEFAULT_PROFILE_ID)!
   const lastSubmitted = sessionItems.filter(item => item.status === 'resolved' && item.resolutionBasis === 'submitted')
     .sort((a, b) => (b.resolvedAt ?? 0) - (a.resolvedAt ?? 0))[0]
   if (associatedFinding || session.removed || session.openState !== 'open' || !chat) return null
@@ -204,6 +210,7 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
     <style>{css}</style>
     <header className="dsa-decisions__header">
       <strong>Agent-Mini · Choose a direction</strong>
+      <SpecialistStatus profile={specialist} activity={decisionActivity(items[0], Date.now(), session)} note={items[0]?.character?.rationale} />
       <span className="dsa-decisions__meta">Shared decision queue · {data?.items.filter(decisionNeedsAttention).length ?? 0} pending</span>
     </header>
     {lastSubmitted && !items.some(item => item.id === lastSubmitted.id) && <p className="dsa-decisions__status" role="status" data-decision-receipt={lastSubmitted.id}>
@@ -262,7 +269,7 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
               }).catch(reason => { if (mounted.current) setFailure(reason instanceof Error ? reason.message : String(reason)) })
             }}>Discard staged link</button>
           </p>}
-          {item.status === 'resolved' && <p role="status">Recorded choice: {item.choices.find(choice => choice.id === item.resolvedChoice)?.label ?? item.resolvedChoice ?? 'Not specified'}. {item.resolutionBasis === 'submitted'
+          {item.status === 'resolved' && <p role="status" data-decision-receipt={item.id}>Recorded choice: {item.choices.find(choice => choice.id === item.resolvedChoice)?.label ?? item.resolvedChoice ?? 'Not specified'}. {item.resolutionBasis === 'submitted'
             ? 'Linked response confirmed submitted. This does not confirm downstream execution.'
             : 'Native submission is not confirmed for this historical record.'} Choose any option again to start a new decision; the previous choice is preserved. Selecting again only prepares a new draft.</p>}
         </div>

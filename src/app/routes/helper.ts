@@ -74,7 +74,7 @@ export function helperSystemPrompt(character: CharacterConfig): string {
     'Financial spending, destructive deletion, secrets, sending as the person and genuinely undecided choices require explicit human confirmation. Never suggest bypassing it.',
     'Never suggest harness restarts, process termination, live plugin updates or persistent environment/settings changes. Reference credentials by environment variable name only, never expose key values.',
     'Prefer two or three useful alternatives. Keep each prompt concise (roughly 300–700 characters); do not paste the handoff report into it.',
-    'Return ONLY JSON: {"options":[{"id":"unique-id","label":"Short action","prompt":"Concrete prompt for the worker","recommended":true}]}. No scores or markdown.',
+    'Return ONLY JSON with a REQUIRED zero-based recommended index: {"recommended":0,"options":[{"id":"next-1","label":"Short action","prompt":"Concrete prompt for the worker"},{"id":"next-2","label":"Alternative action","prompt":"Concrete alternative"}]}. Include 2–4 options and exactly one in-range recommended index. No scores or markdown.',
   ].join('\n')
 }
 
@@ -106,13 +106,16 @@ async function callHelper(ctx: Context, route: RoleModel, digest: HelperDigest, 
   } catch (error) { throw new HelperFailure(stage, error) }
 }
 
+/** A specialist's system prompt and inherited role route; the SAME tool-free call and ladder run either way. */
+export interface HelperSpecialist { system: string; route: RoleModel | null }
+
 /** Null uses the existing starred/first ladder route, then the DSH default if the ladder is empty. */
-export async function suggestHelper(ctx: Context, input: HelperDigest, settings: Settings, workflowContext?: string): Promise<HelperSuggestions> {
+export async function suggestHelper(ctx: Context, input: HelperDigest, settings: Settings, workflowContext?: string, specialist?: HelperSpecialist): Promise<HelperSuggestions> {
   const digest = HelperDigestSchema.parse(input)
   const character = settings.characters.characters.find(item => item.id === DEFAULT_SENIOR_DEVELOPER_CHARACTER.id && item.enabled)
     ?? DEFAULT_SENIOR_DEVELOPER_CHARACTER
-  const system = helperSystemPrompt(character) + (workflowContext ? '\nShared workflow context:\n' + workflowContext : '')
-  const selected = constrainedRoute(settings, helperRoute(settings)
+  const system = (specialist?.system ?? helperSystemPrompt(character)) + (workflowContext ? '\nShared workflow context:\n' + workflowContext : '')
+  const selected = constrainedRoute(settings, (specialist?.route ?? helperRoute(settings))
     ?? (ctx.get('agentDefaultModel') as { currentSelection(): RoleModel } | undefined)?.currentSelection())
   if (!selected?.provider || !selected.model) {
     ctx.logger?.warn('helper/suggest failure: %s', JSON.stringify({ category: 'no-model', stage: 'configuration' }))
