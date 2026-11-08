@@ -1,0 +1,43 @@
+{
+  "at": "2026-11-08T23:31:03.725116+00:00",
+  "findingId": "a1707f3a-a020-4b8b-8374-50887c5e3265",
+  "stage": "independently_reviewed_diagnosis_not_repaired",
+  "actualProductionCoordinatorTest": {
+    "passed": 1,
+    "isolatedStore": true,
+    "detachedLaunchMocked": true,
+    "captureBindingThrow": "zero grants, zero launches, zero stage calls; prepared preserved",
+    "sameRequestRetry": "one grant/launch after valid binding; repeated enqueue no second launch"
+  },
+  "historicalRead": "Original request id has later published state and successful detached audit beginning2026-11-07T18:51:51; not evidence identifying the earlier66ms exception",
+  "correctionToWorkerEvidence": "Worker reproduce-preeffect-enqueue.mjs reimplements a simplified coordinator/catch; root instead tested actual production PublicationCoordinator with temporary persistence and synthetic authority only. Initial root test fixture violated store read locking; fixture corrected, final production test passes.",
+  "sourceIdentity": {
+    "src/app/job-usage.ts": {
+      "installedMatchesCanonical": true,
+      "sha256": "b872079accff610faf2d19026f99bd563b953183a87257735eafa5b6030d52ac"
+    },
+    "src/app/http.ts": {
+      "installedMatchesCanonical": true,
+      "sha256": "3305e3ae5c614d77cc961a3cf54296393ea62cf0c0635f067c026036b636fffa"
+    },
+    "src/client/job-usage.tsx": {
+      "installedMatchesCanonical": true,
+      "sha256": "3cd1cf32f0d187dd638a5a35a438ee493b8cedca7e55e85ccabb551af8026e5c"
+    },
+    "tests/fixtures/capture-job-usage.mjs": {
+      "installedMatchesCanonical": true,
+      "sha256": "30f616b34965d1951046286c97b9c81795adcf1921f5e26c619c81fc54568ca6"
+    },
+    "src/app/publication-worker.ts": {
+      "installedMatchesCanonical": true,
+      "sha256": "9cb6c961cc3132ba9e1470d6352d899ea29ad7fdf1389cb333072bf63d9ea0cd"
+    },
+    "src/app/publication-persistence.ts": {
+      "installedMatchesCanonical": true,
+      "sha256": "76efe87255c0b38ecd907a0b7f74d9daa2ca922268e23ceb52e3eb55cdd5ecf4"
+    }
+  },
+  "initialCause": "insufficient evidence; do not infer SQLite lock or fence mismatch as proven",
+  "livePublicationEffects": false,
+  "nextOwner": "Codex records verification; any logging/diagnostic implementation is a later scoped decision preserving all native gates"
+}

@@ -1,0 +1,70 @@
+{
+  "at": "2026-11-08T23:31:03.722535+00:00",
+  "findingId": "1accfa18-853b-42e5-8a9b-f24375d50d3e",
+  "stage": "independently_verified_report_not_implementation",
+  "sourceIdentity": {
+    "src/app/job-usage.ts": {
+      "installedMatchesCanonical": true,
+      "sha256": "b872079accff610faf2d19026f99bd563b953183a87257735eafa5b6030d52ac"
+    },
+    "src/app/http.ts": {
+      "installedMatchesCanonical": true,
+      "sha256": "3305e3ae5c614d77cc961a3cf54296393ea62cf0c0635f067c026036b636fffa"
+    },
+    "src/client/job-usage.tsx": {
+      "installedMatchesCanonical": true,
+      "sha256": "3cd1cf32f0d187dd638a5a35a438ee493b8cedca7e55e85ccabb551af8026e5c"
+    },
+    "tests/fixtures/capture-job-usage.mjs": {
+      "installedMatchesCanonical": true,
+      "sha256": "30f616b34965d1951046286c97b9c81795adcf1921f5e26c619c81fc54568ca6"
+    },
+    "src/app/publication-worker.ts": {
+      "installedMatchesCanonical": true,
+      "sha256": "9cb6c961cc3132ba9e1470d6352d899ea29ad7fdf1389cb333072bf63d9ea0cd"
+    },
+    "src/app/publication-persistence.ts": {
+      "installedMatchesCanonical": true,
+      "sha256": "76efe87255c0b38ecd907a0b7f74d9daa2ca922268e23ceb52e3eb55cdd5ecf4"
+    }
+  },
+  "reproductions": {
+    "foldScriptExit": 0,
+    "advancedMockScriptExit": 0,
+    "distinctRevisionMockScriptExit": 0
+  },
+  "classification": {
+    "nativeEntries": 9,
+    "exactDuplicatePairs": [
+      [
+        1,
+        5
+      ],
+      [
+        2,
+        6
+      ]
+    ],
+    "distinctNativeConcerns": 7,
+    "additionalPreflightConcerns": 2,
+    "uniqueConcernsTotal": 9,
+    "correctionToWorkerReport": "Artifact fixture output-directory concern and source fixture browser/import concern share a file but are not exact duplicates. Artifact retry concern maps to source code; no extra native source finding was present."
+  },
+  "verified": [
+    "Sticky unattributed flag after route-correct same-step replacement",
+    "Missing-usage duplicate settlements inflate attempts",
+    "Retry fixture assertions unchanged when retry omitted",
+    "Running ticket usage reads can flush/read a log that browser hides; source gate inspected",
+    "Fold cache retains all50 mock sessions without bound; real workload memory impact not measured",
+    "Same-length rewritten log returns425 old tokens instead of20, also with distinct persistence revision",
+    "Coverage wording reports partial2of2 when only route attribution is partial",
+    "Fixture output escapes checkout",
+    "Fixture hardcodes macOS Chrome/internal dependency path"
+  ],
+  "limits": [
+    "Read-only source/mocked reproductions, no actual billing reconciliation",
+    "No live source changed or accepted original cost job reopened",
+    "Proposed repairs require separately confirmed bounded implementation scope"
+  ],
+  "nextOwner": "Codex records verification; Gera may confirm one bounded follow-up repair scope, not a repeat of original accepted job"
+}
