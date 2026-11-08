@@ -2,6 +2,14 @@
 
 Updated November 8, 2026, 9:29 AM PST. Owner: Codex. Check this record and live evidence before claiming completion.
 
+## Queue blockage traced to missing structured worker reports
+
+Installed finding reconciliation treats assignment reports `progress` or `waiting` as resumed work; a prose-only completed turn defaults to `waiting` in executor turn-end handling. Thus three idle workers kept three findings running and held finding capacity while executors were idle. All three current assignments remain non-ended. This is a concrete state/reporting gap; candidate completion text is not a structured ready report.
+
+Codex sent one native **report-only** correction to each existing worker: completion advice, advisor Settings, and unattended coordination. Each must call its actual available `orchestrator_report` with ready-for-root-review status and evidence, or explicitly report that the Google bridge cannot access that tool. No repeated implementation/tests, duplicate job, fabricated tool success, HTTP approval spoofing or acceptance to free slots. Native UI confirmed submitted messages; the coordination worker showed Stop generating. Responses and canonical slot release remain unverified. Preserve authority review before enabling headless delegation.
+
+Preventing recurrence requires enforcing structured turn-end handoff or a bounded missing-report recovery, separating awaiting-review from active execution, and alerting when approved work stays queued while no executors are busy. These systemic safeguards are **not implemented by the report-only requests**. Validate the actual provider/tool bridge before assuming a prompt alone fixes it. Preserve latest evidence and revision checks; no auto-acceptance from prose. Existing hourly follow-through change remains active.
+
 ## Routine follow-through corrected; release-head checks passed
 
 User challenged idle review/release work. Codex inspected the active hourly automation and updated its existing prompt (same schedule, active, no duplicate automation) to advance a coherent bounded stage with dependent steps, rather than stop after one trivial action/PR. It now prioritizes idle coordinator review/release and explicitly avoids claiming continuous activity between hourly passes. Scope, provider conservation and protected confirmations are unchanged.
