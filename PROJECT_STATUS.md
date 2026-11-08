@@ -1,20 +1,30 @@
 # DeepSeek Harness project status
 
-Updated November 08, 2026, 12:37 PM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
+Updated November 08, 2026, 01:14 PM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
 
 ## Current seven-track outcome
 
 | Track | Verified current state | Next owner/action |
 |---|---|---|
 | Explicit conversation completion | **Merged, deployed, original-thread native verified, finding accepted.** | Complete for this bounded scope; preserve evidence/history. |
-| Senior Developer Settings / real review handoff | Revised candidate `b4d9ad3` passes44 root focused tests, but fails2 independent current-state checks. Not deployed. | Harness correction required: review-needed blocked findings must permit coordinator review; waiting status must not assert completed tests. Native dispatch awaits unlocked Mac. |
+| Senior Developer Settings / real review handoff | Revised candidate `b4d9ad3` passes44 root focused tests, but fails2 independent current-state checks. Not deployed. | Harness correction required: review-needed blocked findings must permit coordinator review; waiting status must not assert completed tests. Same-finding bounded correction is confirmed and working after unlock. |
 | Screen-independent coordination | Candidate preserved; not deployed or activated. | Codex security/authority review; explicit owner confirmation before any broader local delegation activation. |
-| Google + Anthropic allowance display | Candidate source reads only the Google Antigravity pool and labels its Claude pool as Anthropic; direct Anthropic subscription coverage is unproven. Withheld. | Harness correction required for explicit account/source labels and unavailable direct quota; native dispatch awaits unlocked Mac. |
-| Antigravity structured reporting | Correction `ca4a923` passes original3 root checks but fails2 remaining identity/currency cases. Idle mandate stopped preserving evidence. Not deployed. | Harness must require actual current ticket/assignment/turn binding on producer and production consumer; native retry awaits unlocked Mac. |
+| Google + Anthropic allowance display | Candidate source reads only the Google Antigravity pool and labels its Claude pool as Anthropic; direct Anthropic subscription coverage is unproven. Withheld. | Harness correction required for explicit account/source labels and unavailable direct quota; same-finding bounded correction is confirmed and working after unlock. |
+| Antigravity structured reporting | Correction `ca4a923` passes original3 root checks but fails2 remaining identity/currency cases. Idle mandate stopped preserving evidence. Not deployed. | Harness must require actual current ticket/assignment/turn binding on producer and production consumer; same-finding bounded correction is confirmed and working after unlock. |
 | Cost-summary historical findings | Verification report returned; source claims are not accepted repairs. Idle worker retired to evidence review. | Codex reads full findings/classification and verifies concrete defects before any repair decision. |
 | Publication confirmation before enqueue | Investigation report returned; historical exception cause remains insufficient evidence. Worker claims isolated pre-effect reproduction, no live publication effects. Idle assignment retired to evidence review. | Codex verifies records/reproduction before deciding a bounded diagnostic follow-up; no new publish authorization. |
 
-Intake is **resumed** after the safe idle deployment. Latest executor snapshot: `0` running, `0` executor-queued, max `3`. Correction evidence is recorded but protected retries are not dispatched because the Mac is locked. Finding state and executor activity are distinct: candidates awaiting review are not productive running workers. Google remains default, Anthropic helper, OpenAI conserved; no new routes, keys or privileges enabled. All current health components report: runtime=ready, relay=ready, notice=ready, launch=ready, delivery=ready, assessment=ready, reply=ready, evals=ready, models=ready, github=ready.
+Intake is **resumed** after the safe idle deployment. Latest executor snapshot: `3` running, `0` executor-queued, max `3`. All three reviewed corrections were confirmed through native protected controls after user unlock; implementation/results remain unverified. Finding state and executor activity are distinct: candidates awaiting review are not productive running workers. Google remains default, Anthropic helper, OpenAI conserved; no new routes, keys or privileges enabled. All current health components report: runtime=ready, relay=ready, notice=ready, launch=ready, delivery=ready, assessment=ready, reply=ready, evals=ready, models=ready, github=ready.
+
+## Unlocked — all three original findings resumed through protected controls
+
+User unlocked the Mac. Codex verified native access, used **Reopen bounded triage → Fix now** for each existing finding, and independently read canonical job/ticket state. No competing finding, fabricated ready report, acceptance, provider-setting change, restart or deployment was introduced. Prior candidates and independent failed reviews remain attached.
+
+- **Recommend the actual review handoff for completed finding work**: finding `12779824-b82e-484d-9502-d2150ba58aa1`, job `finding:12779824-b82e-484d-9502-d2150ba58aa1:r9`, ticket `b9707b242b0567ed892ae8a2a61778cd`, assignment `f51ce46973d86fac69751c2e90ce5ed8`; canonical state `running`, executor `working`.
+- **Workers on antigravity cannot file ready reports**: finding `51f309ca-d396-4983-a55d-ef4432a8572f`, job `finding:51f309ca-d396-4983-a55d-ef4432a8572f:r7`, ticket `e131264007b78971c9508255a60398a4`, assignment `853c2403d0685f26cbdfd59d78602150`; canonical state `running`, executor `working`.
+- **Show Google and Anthropic remaining allowance beside chat**: finding `f9335259-b51c-4e97-9750-3923b7e2138b`, job `finding:f9335259-b51c-4e97-9750-3923b7e2138b:r4`, ticket `4a0294860ae0175497227ed31645062e`, assignment `c84977e1e14148b2281f6b70631267ab`; canonical state `running`, executor `working`.
+
+[Canonical dispatch evidence](docs/evidence/unlocked-correction-dispatch.json). Three executor slots are assigned. Dispatch/working does not establish returned output or passed corrections; current usage is not yet reported. Root owns independent review and approved release after exact-head checks and rollback; workers remain isolated implementation owners. The locked-screen blocker below is historical and cleared for these confirmations.
 
 ## Independent current-state reviews — concrete remaining blockers
 
