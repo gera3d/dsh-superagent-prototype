@@ -1,0 +1,63 @@
+{
+  "at": "2026-11-08T21:39:22.531013+00:00",
+  "sourcePr": "https://github.com/gera3d/dsh-superagent-prototype/pull/68",
+  "sourceHead": "2de2cd18f45b7cc0dbc6a4da3d06e628383c7d25",
+  "merge": "7fb04470010b34e3438ee21a4d3931d932561825",
+  "rootChecks": {
+    "focusedTests": 18,
+    "typecheckExit": 0,
+    "buildExit": 0,
+    "preimagesVerified": true,
+    "rollbackPrepared": true,
+    "restartExit": 0
+  },
+  "native": "Plugin activation failed: dsh-superagent loading; no acceptance",
+  "rollback": {
+    "sourceAssetsRestored": true,
+    "restartExit": 0,
+    "nativeSuperagentAndHudVisible": true,
+    "nativeComposerVisible": true
+  },
+  "stage": "merged_but_native_failed_rolled_back",
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "starting"
+  },
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "nextOwner": "Harness host-integration correction, Codex review; no acceptance",
+  "correction": {
+    "findingId": "f9335259-b51c-4e97-9750-3923b7e2138b",
+    "job": {
+      "id": "finding:f9335259-b51c-4e97-9750-3923b7e2138b:r7",
+      "ticketId": "e10f46849fff53974766d4e277bf75a4",
+      "assignmentId": "f4ea13447ab035fe67db32975b53bbf6"
+    },
+    "state": "running",
+    "ticketStage": "working"
+  },
+  "postRollbackHealth": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "starting"
+  },
+  "intakePaused": false
+}
