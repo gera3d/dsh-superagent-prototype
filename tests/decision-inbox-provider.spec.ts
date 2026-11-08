@@ -234,7 +234,10 @@ it('serves the persisted inbox and validated canonical writes while historical r
     expect(await call('POST', 'canonical/fail', { ...source, sourceMessageId: 'message', sessionId: 'fail-session', leaseToken: failedClaim.body.leaseToken, error: 'helper unavailable' }))
       .toMatchObject({ status: 200, body: { item: { canonical: { error: 'helper unavailable' } } } })
     const claimedId = (claim as any).body.item.id
-    expect(await within(call('POST', `${claimedId}/stage`, { choiceId: 'first', attemptId: randomUUID(), draftText: 'Complete first continuation' }), 1000)).toMatchObject({ status: 200, body: { execution: 'not_executed', staging: { choiceId: 'first' } } })
+    const attemptId = randomUUID()
+    expect(await within(call('POST', `${claimedId}/stage`, { choiceId: 'first', attemptId, draftText: 'Complete first continuation' }), 1000)).toMatchObject({ status: 200, body: { execution: 'not_executed', staging: { choiceId: 'first' } } })
+    expect(await within(call('POST', `${claimedId}/discard-staging`, { attemptId: randomUUID() }), 1000)).toMatchObject({ status: 409 })
+    expect(await within(call('POST', `${claimedId}/discard-staging`, { attemptId }), 1000)).toMatchObject({ status: 200, body: { item: { status: 'pending' } } })
     expect(await within(call('GET', 'inbox'), 1000)).toMatchObject({ status: 200, body: { recovery: { pending: true } } })
     // Recovery finishes, the old session's question appears, and the fresh canonical item keeps its state.
     releaseRecovery()

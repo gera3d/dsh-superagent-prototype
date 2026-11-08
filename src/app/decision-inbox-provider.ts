@@ -84,9 +84,9 @@ export function apply(ctx: Context, config: { database: string }): void {
         const path = new URL(req.url ?? '/', 'http://localhost').pathname
         const canonical = /^\/orchestrator\/api\/decisions\/canonical\/(claim|publish|score|fail)$/.exec(path)
         const inboxRead = path === '/orchestrator/api/decisions/inbox' && req.method === 'GET'
-        // Native stage/submission/restart read and validate their own durable target history.
+        // Native stage/submission/restart validate their durable target; discard is bound to an exact staging attempt.
         // Waiting for unrelated historical sessions here makes a current recommendation hang after restart.
-        const nativeTarget = /\/(stage|submission|restart)$/.test(path)
+        const nativeTarget = /\/(stage|submission|restart|discard-staging)$/.test(path)
         if (!inboxRead && !canonical && !nativeTarget) await capture.ready
         if (closed) { send(503, { error: 'Inbox provider is reloading' }); return }
         currency()

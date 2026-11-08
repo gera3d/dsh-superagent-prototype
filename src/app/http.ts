@@ -610,7 +610,7 @@ export function registerHttp(ctx: Context, runtime: HttpHost): () => void {
       try {
         await runtime.ready
         if (url.pathname.includes('/decisions/')) {
-          if (!/\/(stage|submission|restart)$/.test(url.pathname)) await capture.ready
+          if (!/\/(stage|submission|restart|discard-staging)$/.test(url.pathname)) await capture.ready
           if (runtime.deliveries) reconcileInboxCurrency(inbox(), runtime.deliveries.store, runtime.publication, runtime.findings?.store, progress())
         }
         const route = match(table, req.method ?? 'GET', url.pathname.slice('/orchestrator/api/'.length).split('/'))
