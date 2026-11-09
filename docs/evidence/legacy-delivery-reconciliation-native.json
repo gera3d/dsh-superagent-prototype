@@ -1,6 +1,6 @@
 {
   "at": "2026-11-09T23:29:52.471637+00:00",
-  "stage": "live receipts applied and native verified; protected repair acceptance follows",
+  "stage": "reviewed, merged, deployed, exact receipts applied, native verified and protected repair acceptance complete",
   "findingId": "60b19ba2-1ff6-4f95-af39-098829779103",
   "sourcePR": 80,
   "sourceHead": "90c0eb5f41e5d2461173297d0477cd189bf0cc4b",
@@ -104,8 +104,19 @@
       "maxWorkers": 3
     },
     "paused": false,
-    "setupProblem": "githubRateLimited",
-    "restartExit": 3
+    "health": {
+      "runtime": "ready",
+      "relay": "ready",
+      "notice": "ready",
+      "launch": "ready",
+      "delivery": "ready",
+      "assessment": "ready",
+      "reply": "ready",
+      "evals": "ready",
+      "models": "ready",
+      "github": "ready"
+    },
+    "setupProblem": null
   },
   "native": {
     "verified": true,
@@ -138,5 +149,41 @@
     "replyOrChoiceSent": false,
     "screenshotsExported": false
   },
-  "exactLiveReplayIdempotent": true
+  "exactLiveReplayIdempotent": true,
+  "updatedAt": "2026-11-09T23:43:29.465754+00:00",
+  "acceptance": {
+    "id": "60b19ba2-1ff6-4f95-af39-098829779103",
+    "state": "resolved",
+    "revision": 5,
+    "resolution": {
+      "outcome": "verified",
+      "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/legacy-delivery-reconciliation-native.json",
+      "requirements": [
+        "Read shared PROJECT_STATUS and docs/evidence/stale-advice-mapping.json plus routine-cleanup-live-2026-11-06.json. Confirm actual identities and distinct feature scopes; never infer closure just from title or worker ready.",
+        "Add narrow trusted operator reconciliation method and hash-preview/apply CLI restricted to above3 ID+source issue+original worker mappings, current revision, original unbound scope, no active worker/outbox, proof references and explicit operator attestation. Record later verified release/source references without fabricating missing original base/head/target/requirements or acceptance. Preserve all original evidence/audit; idempotent exact replay, reject changed replay/stale revision/mismatched issue, unsupported ID, missing proof/authority, active job or outbox. No generic CAS command.",
+        "All surfaces use canonical reconciliation as history with clear delivered-by-later-release caption/references. No pending action/recommendation on reconciled cards. Preserve ordinary later human request and unrelated cards. Superseded historical record is not accepted/published; no dispatch, settings writes, new grants or source binding.",
+        "Meaningful focused tests exercise real production store and projection, native/card rendering, CLIpreview apply, negative fencing and audit/identity preservation. No broad redundant full suite. Run targeted suites sequentially plus types/build; isolate companion dependency.",
+        "Return actual exact candidate HEAD and cumulative patch/check logs, durable structured report for actual ticket/assignment via installed reporting bridge. Candidate is review-ready only. Codex owns independent review, deployment, exact historical receipts and native verification through existing user authorization. Do not ask user for new routine approval; do not execute live reconciliation yourself."
+      ],
+      "at": "2026-11-09T23:41:47.835Z",
+      "actor": "local-operator",
+      "jobId": "finding:60b19ba2-1ff6-4f95-af39-098829779103:r3"
+    }
+  },
+  "postAcceptanceNative": {
+    "freshApplicationReload": true,
+    "hudNeedsYou": 1,
+    "hudWorking": 0,
+    "remainingItem": "Untouched ordinary explanation conversation",
+    "repairSourceCaption": "Resolved",
+    "repairSourceSuggestedNextStepsPresent": false,
+    "originalThreeThreadsCompletedHistoryNoNextSteps": true,
+    "noReplyOrRecommendationChoiceSent": true
+  },
+  "initialRestart": {
+    "exitCode": 3,
+    "setupProblem": "githubRateLimited",
+    "handling": "Observed existing-account core quota renewed (4982 remaining); used normal supported setup/check once at idle, without reauthentication or alternate account/transport."
+  },
+  "outerReportLimit": "R3 saved committed artifacts/check logs and .dsh-report.json but did not deliver a consumed structured ready report. Codex personally recorded verified current-job operator evidence, retired the verified-idle assignment through supported stop_ticket, then normal reconciliation and protected native acceptance resolved the repair. No worker identity was impersonated; this does not certify unattended handoff reliability."
 }

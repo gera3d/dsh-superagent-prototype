@@ -167,7 +167,7 @@
     }
   ],
   "backup": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/legacy-delivery-reconciliation/rollback-20261109T232650Z",
-  "stage": "installed; actual three historical receipts applied; native verification and repair acceptance pending",
+  "stage": "36 exact postimages installed; native verified; three historical receipts applied; repair accepted",
   "rollbackLimit": "Restore narrow source/assets only. Never overwrite later canonical history with database backup.",
   "installedAt": "2026-11-09T23:27:56.163028+00:00",
   "merge": "c2e2bf11d6a70117691af1533cdb6291bdd8963d",
@@ -178,5 +178,19 @@
     "maxWorkers": 3
   },
   "restartExitCode": 3,
-  "restartOutcome": "Service restarted; setup waiting on existing-account GitHub API rate limit403. No retry, reauthentication or account/transport workaround."
+  "restartOutcome": "Service restarted; setup waiting on existing-account GitHub API rate limit403. No retry, reauthentication or account/transport workaround.",
+  "finalHealth": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "setupRecovered": true,
+  "secondSetupCheck": "Normal supported setup/check after one canonical quota read showed4982 remaining; runtime/GitHub ready without credential changes."
 }

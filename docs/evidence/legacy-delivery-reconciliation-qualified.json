@@ -38,7 +38,7 @@
   "receiptFingerprint": "18e156234071f72aa4d3d742bc552299f83282aff373ff1ea61d9cc05199d7c7",
   "limits": [
     "No broad full-suite or CI-green claim.",
-    "No historical pins, acceptance, grants, original worker or evidence rewritten.",
-    "Current runtime setup waits on existing-account GitHub rate limit; no reauthentication/forced retry/transport workaround."
-  ]
+    "No historical pins, acceptance, grants, original worker or evidence rewritten."
+  ],
+  "setupRecovery": "Initial restart hit GitHub core quota403 and exit3; later normal setup recheck after canonical quota reset recovered. Final health is recorded in legacy-delivery-reconciliation-final.json."
 }
