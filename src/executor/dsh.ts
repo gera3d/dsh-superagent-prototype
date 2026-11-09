@@ -238,6 +238,11 @@ export class DshExecutor implements Executor {
   /** Assignment IDs currently waiting on a transient-failure backoff timer before resuming their worker turn. */
   private readonly resuming = new Set<string>()
   /**
+   * Assignment IDs whose worker turn failed on model availability and whose fallback route is being selected or its resume
+   * message queued. Such a turn is no end of the worker's work, so its idle must not finalize a missing report meanwhile.
+   */
+  private readonly fallingBack = new Set<string>()
+  /**
    * The looks at background work of workers that went idle, by ticket, which hold their slots; a look ends when its worker
    * runs again or its Assignment ends.
    */
@@ -506,6 +511,11 @@ export class DshExecutor implements Executor {
    * falls back to DeepSeek's cheap flash model. Hard task failures do not use this path.
    */
   private async handleUnavailableModel(ticket: Ticket, assignment: Assignment, agent: Agent, error: unknown): Promise<void> {
+    // Marked before the first await: the worker's idle event follows its error at once, ahead of the fallback turn's start.
+    this.fallingBack.add(assignment.id)
+    try { await this.selectFallback(ticket, assignment, agent, error) } finally { this.fallingBack.delete(assignment.id) }
+  }
+  private async selectFallback(ticket: Ticket, assignment: Assignment, agent: Agent, error: unknown): Promise<void> {
     const tried = this.unavailableRoutes.get(ticket.id) ?? []
     const current = (agent.session.requestHeader()?.config as RoleModel | undefined)
       ?? ticket.escalations?.find(item => item.assignmentId === assignment.id)?.to
@@ -525,7 +535,7 @@ export class DshExecutor implements Executor {
       await this.host.sessions.selectModel(agent, step.to)
     } catch (selectionError) {
       if (isModelUnavailable(selectionError)) {
-        await this.handleUnavailableModel(ticket, assignment, agent, selectionError)
+        await this.selectFallback(ticket, assignment, agent, selectionError)
         return
       }
       void this.background(Promise.resolve().then(() => { this.failed(ticket.id, `Fallback model selection failed: ${String(selectionError)}`) }))
@@ -801,7 +811,8 @@ export class DshExecutor implements Executor {
   private async workerIdle(ticket: Ticket, idle: Assignment, agent: Agent): Promise<void> {
     await agent.whenIdle()
     // A turn that failed for a passing reason goes on after its backoff, which is no end of the turn.
-    if (this.resuming.has(idle.id) || agent.status !== 'idle') return
+    if (this.resuming.has(idle.id) || this.fallingBack.has(idle.id) || agent.status !== 'idle'
+      || agent.inbox?.nextTurn.length || agent.inbox?.nextStep.length) return
     // A turn that ended as turns do starts the count of passing failures again.
     this.transient.delete(idle.id)
     // The ticket while the Assignment that went idle runs it.
@@ -838,7 +849,8 @@ export class DshExecutor implements Executor {
     try { quiet = await untilQuiet(this.host.context, agent, AbortSignal.any([this.host.lifetime, look.signal, limit.signal]), left) }
     finally { clearTimeout(timer); if (this.settling.get(ticket.id) === look) this.settling.delete(ticket.id) }
     const current = live()
-    if (this.host.closing() || look.signal.aborted || (!quiet && !limit.signal.aborted) || !current || this.resuming.has(idle.id)) return
+    if (this.host.closing() || look.signal.aborted || (!quiet && !limit.signal.aborted) || !current || this.resuming.has(idle.id) || this.fallingBack.has(idle.id)
+      || agent.status !== 'idle' || agent.inbox?.nextTurn.length || agent.inbox?.nextStep.length) return
     if (quiet) this.host.engine.turnEnded(ticket.id, idle.id)
     let stopped = ''
     if (!quiet) {
