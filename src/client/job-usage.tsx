@@ -29,7 +29,7 @@ export function JobUsageSummary({ usage }: { usage: JobUsage }) {
     : 'jobUsageUnreadable')}</Hint></div>
   const numbers = usage.routes.filter(route => route.totalTokens > 0)
   if (!numbers.length && usage.coverage.reported === 0) return <div className="dt-job-usage"><Hint>{t('jobUsageNoSamples')}</Hint></div>
-  const partial = usage.coverage.reported < usage.coverage.attempts || usage.coverage.attribution === 'partial'
+  const partial = usage.coverage.reported < usage.coverage.attempts
   const coverage = partial
     ? t('jobUsagePartial', { reported: usage.coverage.reported, attempts: usage.coverage.attempts })
     : t('jobUsageExact', { attempts: usage.coverage.attempts })

@@ -156,8 +156,8 @@ export type StateView = ReturnType<typeof stateView>
 async function ticketPage(runtime: HttpHost, id: string) {
   const detail = ticketDetail(views(runtime), id), ticket = runtime.store.tickets.get(id)
   if (!detail || !ticket) throw new RouteError(404, 'Ticket not found')
-  // A job's recorded usage is read from its one worker Session, only once an Assignment actually started in it.
-  const usage: JobUsage | undefined = detail.assignments.some(assignment => assignment.startedAt)
+  // A job's recorded usage is read from its one worker Session only once completed/ended and an Assignment actually started in it.
+  const usage: JobUsage | undefined = detail.ended && detail.assignments.some(assignment => assignment.startedAt)
     ? await runtime.usage.of(workerSessionId(id)) : undefined
   return { ...detail, environment: runtime.configured() ? runtime.ticketEnvironment(ticket) : [], ...usage ? { usage } : {} }
 }

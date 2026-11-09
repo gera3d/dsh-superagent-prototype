@@ -29,11 +29,55 @@ it('deduplicates replayed sequence numbers and repeated same-step settlements', 
 
 it('replaces one step’s earlier sample and counts a retried attempt again after llm/retry-started', () => {
   reset()
-  const value = fold([header('Particle AI', 'deepseek/flash'), message(0, 0, { inputTokens: 10, outputTokens: 5 }),
-    message(0, 0, { inputTokens: 12, outputTokens: 6 }), retry(0, 1), message(0, 1, { inputTokens: 20, outputTokens: 7 })])
-  const summary = value.summary('worker-t')
+  // Retrying the same step (0, 0) resets the replacement slot so the retried billing attempt counts again
+  const withRetry = fold([header('Particle AI', 'deepseek/flash'), message(0, 0, { inputTokens: 10, outputTokens: 5 }),
+    retry(0, 0), message(0, 0, { inputTokens: 12, outputTokens: 6 })])
+  const summary = withRetry.summary('worker-t')
   expect(summary.coverage).toMatchObject({ attempts: 2, reported: 2 })
-  expect(summary.totals).toMatchObject({ uncachedInputTokens: 32, outputTokens: 13, totalTokens: 45 })
+  expect(summary.totals).toMatchObject({ uncachedInputTokens: 22, outputTokens: 11, totalTokens: 33 })
+
+  reset()
+  // Without llm/retry-started, a second sample for the same step (0, 0) replaces the first sample
+  const withoutRetry = fold([header('Particle AI', 'deepseek/flash'), message(0, 0, { inputTokens: 10, outputTokens: 5 }),
+    message(0, 0, { inputTokens: 12, outputTokens: 6 })])
+  const replaced = withoutRetry.summary('worker-t')
+  expect(replaced.coverage).toMatchObject({ attempts: 1, reported: 1 })
+  expect(replaced.totals).toMatchObject({ uncachedInputTokens: 12, outputTokens: 6, totalTokens: 18 })
+})
+
+it('clears unattributed status when a same-step replacement provides route attribution', () => {
+  reset()
+  const value = fold([
+    message(0, 0, { inputTokens: 10, outputTokens: 5 }), // initially unattributed
+    header('Particle AI', 'deepseek/flash'),
+    message(0, 0, { inputTokens: 15, outputTokens: 8 }), // same step replacement with route
+  ])
+  const summary = value.summary('worker-t', { 'Particle AI/deepseek/flash': { input: 1, output: 2 } })
+  expect(summary.coverage).toMatchObject({ attempts: 1, reported: 1, attribution: 'complete' })
+  expect(summary.cost).toMatchObject({ kind: 'estimated', amount: 0.000031 })
+  expect((summary.cost as { partial?: boolean }).partial).toBeUndefined()
+})
+
+it('deduplicates sample-less settlements and treats same-step sample arrival as replacement', () => {
+  reset()
+  // Case A: duplicate no-sample settlements do not increment attempts
+  const duplicates = fold([
+    header('Particle AI', 'deepseek/flash'),
+    event('assistant/attempt', { turn: 0, step: 0 }),
+    event('assistant/attempt', { turn: 0, step: 0 }),
+    event('assistant/attempt', { turn: 0, step: 0 }),
+  ])
+  expect(duplicates.summary('worker-t').coverage).toMatchObject({ attempts: 1, reported: 0 })
+
+  reset()
+  // Case B: no-sample settlement followed by same-step sample revises that attempt without inflating count
+  const withSample = fold([
+    header('Particle AI', 'deepseek/flash'),
+    event('assistant/attempt', { turn: 0, step: 0 }),
+    message(0, 0, { inputTokens: 10, outputTokens: 5 }),
+  ])
+  expect(withSample.summary('worker-t').coverage).toMatchObject({ attempts: 1, reported: 1 })
+  expect(withSample.summary('worker-t').totals).toMatchObject({ uncachedInputTokens: 10, outputTokens: 5, totalTokens: 15 })
 })
 
 it('keeps uncached, cached-read and cached-write counts disjoint and reports where cache coverage stops', () => {
@@ -156,4 +200,53 @@ it('states a missing or unreadable worker Session rather than reporting zero usa
   expect(await missing.of('worker-t')).toMatchObject({ problem: 'missing', routes: [] })
   const unreadable = new JobUsageReader({ sessionPersistence: persistence([], { fail: true }).service } as never)
   expect(await unreadable.of('worker-t')).toMatchObject({ problem: 'unreadable', routes: [] })
+})
+
+it('bounds the fold cache with LRU eviction and evicts oldest entries at capacity', async () => {
+  const fake = persistence([])
+  const reader = new JobUsageReader({ sessionPersistence: fake.service } as never, { maxEntries: 3 })
+  for (let i = 0; i < 5; i++) {
+    await reader.of(`worker-${i}`)
+  }
+  expect(reader.folds.size).toBe(3)
+  expect(reader.folds.has('worker-0')).toBe(false)
+  expect(reader.folds.has('worker-1')).toBe(false)
+  expect(reader.folds.has('worker-2')).toBe(true)
+  expect(reader.folds.has('worker-3')).toBe(true)
+  expect(reader.folds.has('worker-4')).toBe(true)
+})
+
+it('invalidates fold cache when equal-length log is rewritten with changed revision', async () => {
+  reset()
+  const events = [
+    header('Particle AI', 'deepseek/flash'),
+    message(0, 0, { inputTokens: 100, outputTokens: 50 }),
+  ]
+  let revision = 'rev-1'
+  const customPersistence = {
+    async flush() {},
+    async stat() {
+      return { eventCount: events.length, revision }
+    },
+    async open() {
+      return {
+        async read(offset: number, length: number) {
+          return { events: events.slice(offset, offset + length), eventState: 'detached' as const }
+        },
+        async [Symbol.asyncDispose]() {},
+      }
+    },
+  }
+  const reader = new JobUsageReader({ sessionPersistence: customPersistence } as never)
+  const first = await reader.of('worker-rewrite')
+  expect(first?.totals.totalTokens).toBe(150)
+
+  // Recreate the session with same number of events (2 events) but totally different tokens and new revision
+  reset()
+  events[0] = header('Particle AI', 'deepseek/flash')
+  events[1] = message(0, 0, { inputTokens: 10, outputTokens: 5 })
+  revision = 'rev-2'
+
+  const second = await reader.of('worker-rewrite')
+  expect(second?.totals.totalTokens).toBe(15) // Not stale 150!
 })

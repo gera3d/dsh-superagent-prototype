@@ -129,7 +129,7 @@ interface RouteBucket {
 const emptyBucket = (route?: Route): RouteBucket => ({ ...route ? { route } : {}, reported: 0, cacheRead: 0,
   cacheReadReported: 0, cacheWrite: 0, cacheWriteReported: 0, uncachedInputTokens: 0, outputTokens: 0 })
 /** A settlement event indexes its replacement slot by model turn and step. */
-interface Slot { turn: number; step: number; sample: UsageSample; key: string }
+interface Slot { turn: number; step: number; sample?: UsageSample; key?: string }
 /**
  * The incremental fold of one worker Session log. `seq` deduplicates replayed events; the replacement slot mirrors
  * DSH's `tokenUsage` projection: a same-step settlement replaces its sample, and `llm/retry-started` ends that
@@ -144,7 +144,6 @@ export class JobUsageFold {
   private last: Slot | undefined
   private attempts = 0
   private reported = 0
-  private unattributed = false
   /** Consume new persisted events; a repeated `seq` is ignored so a replay never counts twice. */
   observe(events: readonly StoredEvent[]): void {
     for (const event of events) {
@@ -167,21 +166,26 @@ export class JobUsageFold {
     const turn = count(data?.turn), step = count(data?.step)
     const sample = usageOf(event)
     const replacement = turn !== undefined && step !== undefined && this.last?.turn === turn && this.last.step === step
-    // A duplicate settlement of the same step repeats its own sample and never counts again.
-    if (replacement && sample !== undefined && this.last && sameSample(this.last.sample, sample)) return
     const key = this.route ? routeKey(this.route) : UNATTRIBUTED
-    // A different sample for the same step revises that one attempt; any other settlement is a new attempt.
+    // A duplicate settlement of the same step repeats its own sample (or absence) on the same route and never counts again.
+    if (replacement && this.last?.key === key && sameSample(this.last?.sample, sample)) return
+    // A sample-less message on a step with known usage does not erase prior reported usage.
+    if (replacement && sample === undefined && this.last?.sample !== undefined) return
+    // A settlement on a new step begins a new attempt.
     if (!replacement) this.attempts += 1
-    if (sample === undefined) return
-    if (!replacement) this.reported += 1
-    // Replacing the previous sample of this step withdraws its old route's counters before the new sample is added.
-    if (replacement && this.last) this.withdraw(this.last)
-    const bucket = this.bucketOf(key, this.route)
-    bucket.reported += 1
-    if (sample.cacheReadTokens !== undefined) bucket.cacheReadReported += 1
-    if (sample.cacheWriteTokens !== undefined) bucket.cacheWriteReported += 1
-    if (!this.route) this.unattributed = true
-    this.add(key, sample, 1)
+    // Replacing a previous sample of this step withdraws its old route's counters.
+    if (replacement && this.last?.sample && this.last.key) {
+      this.withdraw({ key: this.last.key, sample: this.last.sample })
+      this.reported -= 1
+    }
+    if (sample !== undefined) {
+      this.reported += 1
+      const bucket = this.bucketOf(key, this.route)
+      bucket.reported += 1
+      if (sample.cacheReadTokens !== undefined) bucket.cacheReadReported += 1
+      if (sample.cacheWriteTokens !== undefined) bucket.cacheWriteReported += 1
+      this.add(key, sample, 1)
+    }
     this.last = turn === undefined || step === undefined ? undefined : { turn, step, sample, key }
   }
   private bucketOf(key: string, route?: Route): RouteBucket {
@@ -190,7 +194,7 @@ export class JobUsageFold {
     return bucket
   }
   /** Remove a replaced sample's counters from the route that had counted them. */
-  private withdraw({ key, sample }: Slot): void {
+  private withdraw({ key, sample }: { key: string; sample: UsageSample }): void {
     const bucket = this.buckets.get(key)
     if (!bucket) return
     bucket.reported -= 1
@@ -199,7 +203,7 @@ export class JobUsageFold {
     this.add(key, sample, -1)
   }
   private add(key: string, sample: UsageSample, sign: 1 | -1): void {
-    const bucket = this.bucketOf(key, this.route)
+    const bucket = this.buckets.get(key) ?? this.bucketOf(key, this.route)
     bucket.uncachedInputTokens += sign * sample.uncachedInputTokens
     bucket.outputTokens += sign * sample.outputTokens
     bucket.cacheRead += sign * (sample.cacheReadTokens ?? 0)
@@ -216,19 +220,22 @@ export class JobUsageFold {
       .sort((left, right) => right.totalTokens - left.totalTokens)
     const total = (pick: (item: RouteBucket) => number) => buckets.reduce((sum, item) => sum + pick(item), 0)
     const cacheReadReported = total(item => item.cacheReadReported), cacheWriteReported = total(item => item.cacheWriteReported)
+    const unattributed = this.buckets.get(UNATTRIBUTED)
+    const hasUnattributed = Boolean(unattributed && unattributed.reported > 0)
     const coverage: JobUsageCoverage = { attempts: this.attempts, reported: this.reported,
       cacheRead: coverageOf(cacheReadReported, this.reported), cacheWrite: coverageOf(cacheWriteReported, this.reported),
-      attribution: this.unattributed ? 'partial' : 'complete' }
+      attribution: hasUnattributed ? 'partial' : 'complete' }
     const uncachedInputTokens = total(item => item.uncachedInputTokens), outputTokens = total(item => item.outputTokens)
     const cacheReadTokens = total(item => item.cacheRead), cacheWriteTokens = total(item => item.cacheWrite)
-    const partial = this.unattributed || this.reported < this.attempts
+    const partial = hasUnattributed || this.reported < this.attempts
     return { sessionId, routes, totals: { uncachedInputTokens, outputTokens, totalTokens: uncachedInputTokens + outputTokens
       + cacheReadTokens + cacheWriteTokens, ...cacheReadReported > 0 ? { cacheReadTokens } : {},
       ...cacheWriteReported > 0 ? { cacheWriteTokens } : {} }, coverage, cost: estimateCost(routes, rates, partial) }
   }
 }
-const sameSample = (left: UsageSample, right: UsageSample): boolean =>
-  left.uncachedInputTokens === right.uncachedInputTokens && left.outputTokens === right.outputTokens
+const sameSample = (left?: UsageSample, right?: UsageSample): boolean =>
+  left === undefined ? right === undefined : right !== undefined
+  && left.uncachedInputTokens === right.uncachedInputTokens && left.outputTokens === right.outputTokens
   && left.cacheReadTokens === right.cacheReadTokens && left.cacheWriteTokens === right.cacheWriteTokens
 const coverageOf = (reported: number, samples: number): BucketCoverage =>
   reported === 0 ? 'unreported' : reported === samples ? 'exact' : 'partial'
@@ -261,13 +268,43 @@ const noUsage = (sessionId: string, problem: 'missing' | 'unreadable'): JobUsage
   cost: { kind: 'unavailable', reason: 'noRecordedPrice' }, problem })
 /** A fold and the persistence revision whose events it has consumed. */
 interface FoldState { fold: JobUsageFold; revision: SessionPersistenceRevision }
-/** Read a completed job's usage from its worker Session's durable log, keeping its fold for later polls. */
+
+const DEFAULT_CACHE_MAX_ENTRIES = 64
+
+/**
+ * Read a completed job's usage from its worker Session's durable log, keeping its fold for later polls.
+ * Folds are cached with bounded LRU eviction (default 64 entries). When a session log changes, growing logs
+ * with sequential continuity and count evidence are appended incrementally. Recreated, truncated or unknown-count
+ * logs with changed revisions invalidate earlier folds and re-fold from offset 0 to guarantee fresh counts.
+ * Note: If a persistence backend produces identical revisions for rewritten contents without event counts,
+ * incremental safety relies on distinct persistence revisions.
+ */
 export class JobUsageReader {
-  private readonly folds = new Map<string, FoldState>()
+  /** Bounded LRU cache of active fold states keyed by Session ID. */
+  readonly folds = new Map<string, FoldState>()
   private readonly rates?: Readonly<Record<string, UsageRate>>
-  constructor(private readonly ctx: Context, options: { rates?: Readonly<Record<string, UsageRate>> } = {}) {
+  private readonly maxEntries: number
+
+  constructor(private readonly ctx: Context, options: { rates?: Readonly<Record<string, UsageRate>>; maxEntries?: number } = {}) {
     this.rates = options.rates
+    this.maxEntries = options.maxEntries ?? DEFAULT_CACHE_MAX_ENTRIES
   }
+
+  private remember(sessionId: string, state: FoldState): void {
+    this.folds.delete(sessionId)
+    this.folds.set(sessionId, state)
+    while (this.folds.size > this.maxEntries) {
+      const oldest = this.folds.keys().next().value
+      if (oldest === undefined) break
+      this.folds.delete(oldest)
+    }
+  }
+
+  private touch(sessionId: string, state: FoldState): void {
+    this.folds.delete(sessionId)
+    this.folds.set(sessionId, state)
+  }
+
   /** The recorded summary for one worker Session, or the reason it cannot be shown. */
   async of(sessionId: string): Promise<JobUsage | undefined> {
     try {
@@ -275,22 +312,31 @@ export class JobUsageReader {
       const observed = await this.ctx.sessionPersistence.stat(sessionId as SessionId)
       if (!observed) { this.folds.delete(sessionId); return noUsage(sessionId, 'missing') }
       const cached = this.folds.get(sessionId)
-      if (cached && cached.revision === observed.revision) return cached.fold.summary(sessionId, this.rates)
+      if (cached && cached.revision === observed.revision) {
+        this.touch(sessionId, cached)
+        return cached.fold.summary(sessionId, this.rates)
+      }
       // Flush the worker's best-effort appends only when the log changed since the fold was built.
       await this.ctx.sessionPersistence.flush()
       const stat = await this.ctx.sessionPersistence.stat(sessionId as SessionId)
       if (!stat) { this.folds.delete(sessionId); return noUsage(sessionId, 'missing') }
       let fold = cached?.fold
-      // A Session recreated from a shorter log invalidates an earlier fold.
-      if (fold && stat.eventCount !== undefined && stat.eventCount < fold.offset) fold = undefined
+      // A Session rewritten, truncated or recreated with equal or fewer events invalidates an earlier fold.
+      // An absent eventCount provides no count evidence, so unequal revisions must be re-folded from offset 0.
+      if (fold && (stat.eventCount === undefined || stat.eventCount <= fold.offset)) fold = undefined
       fold ??= new JobUsageFold()
       await using handle = await this.ctx.sessionPersistence.open(sessionId as SessionId, 'read')
       for (;;) {
         const { events } = await handle.read(fold.offset, 256)
         if (!events.length) break
+        if (fold.offset > 0 && events[0]?.seq !== fold.offset) {
+          // Sequence discontinuity: log was recreated from scratch; reset and re-read from 0.
+          fold = new JobUsageFold()
+          continue
+        }
         fold.observe(events)
       }
-      this.folds.set(sessionId, { fold, revision: stat.revision })
+      this.remember(sessionId, { fold, revision: stat.revision })
       return fold.summary(sessionId, this.rates)
     } catch {
       this.folds.delete(sessionId)
