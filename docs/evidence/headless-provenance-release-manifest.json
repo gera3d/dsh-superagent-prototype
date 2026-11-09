@@ -1,0 +1,43 @@
+{
+  "at": "2026-11-09T01:27:20.584708+00:00",
+  "head": "2d3b72f0088103963be4faecb69b3e2d28d4d2dd",
+  "merge": "20a4dd6a0279b955a231613b260048e523fca887",
+  "pr": 73,
+  "enabledAtInstall": false,
+  "files": [
+    {
+      "path": "src/app/finding-coordination.ts",
+      "before": "c05c54a08db69e9cde044ba774a8d6dc12291d55e7602607eb978d055f38b7a5",
+      "after": "f4cbddac3a725e6f38240b01cd131f73220b99c14cdf962f8ba1b6f080eb8e7e"
+    },
+    {
+      "path": "src/app/finding-runtime.ts",
+      "before": "a994e309c36c399baa43238fb508c32e73760e1ece82d5deeb7c21d883cccee6",
+      "after": "ed7f6ce4a0e1ec8f795827c16fd1fa3c0da4d4194a8f18694e29f5387bfe95b5"
+    },
+    {
+      "path": "src/app/finding.ts",
+      "before": "d4ca347c2a6844f4a6ce462d4c6a1d9b3fcaa3c9db32549b5089b97e2a2abee0",
+      "after": "6d263c20021f1ce7837531fc229b622d1011335580dc1b2fb5b95afec43283a8"
+    },
+    {
+      "path": "src/core/engine.ts",
+      "before": "1cbcb078d465bb795ee22719f9527f92614fe51c059b9b3c7cabc8e1d35ea1f0",
+      "after": "6f4f5e67b5730480d7e913949451c44864123cdd9743047ec8186be06a6c5c20"
+    }
+  ],
+  "restart": 0,
+  "independentCandidateTests": 194,
+  "integratedTests": 232,
+  "types": 0,
+  "build": 0,
+  "legacyNativeRootCorrection": "Normalize equivalent optional native origin and property ordering; altered actor/authority still refused",
+  "restoredSettings": {
+    "value": {
+      "enabled": true
+    },
+    "revision": 3
+  },
+  "nativeLockStillConfirmed": true,
+  "nativeAcceptance": false
+}

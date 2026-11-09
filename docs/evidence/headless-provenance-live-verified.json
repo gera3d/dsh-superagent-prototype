@@ -1,0 +1,80 @@
+{
+  "at": "2026-11-09T01:29:09.032343+00:00",
+  "installedHead": "2d3b72f0088103963be4faecb69b3e2d28d4d2dd",
+  "pr": 73,
+  "finding": {
+    "id": "51f309ca-d396-4983-a55d-ef4432a8572f",
+    "state": "running",
+    "revision": 25,
+    "job": {
+      "id": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r25",
+      "ticketId": "408cd156be75eccedd255655f78b799a",
+      "assignmentId": "1d76907d5282012d491df360042162aa"
+    },
+    "confirmation": {
+      "revision": 25,
+      "choiceId": "fix_now",
+      "actor": "codex-coordinator",
+      "at": "2026-11-09T01:28:38.760Z"
+    }
+  },
+  "dispatchAudit": {
+    "event": "dispatched",
+    "actor": "codex-coordinator",
+    "at": "2026-11-09T01:29:08.829Z",
+    "detail": "408cd156be75eccedd255655f78b799a/1d76907d5282012d491df360042162aa"
+  },
+  "mandate": {
+    "strength": "explicit",
+    "policyVersion": "4a94ccdb073230148f3e77fb3c25f48b",
+    "actor": {
+      "source": "coordinator",
+      "id": "codex-coordinator",
+      "name": {
+        "zh": "codex-coordinator",
+        "en": "codex-coordinator"
+      }
+    },
+    "scope": "Executor tool exposure for the antigravity/Gemini route: orchestrator_report is declared for the Superagent worker executor but not exposed on that provider, so ready handoffs silently degrade to idle chat reports.",
+    "basis": {
+      "via": "addressed",
+      "addressed": "direct",
+      "source": "finding",
+      "sender": "codex-coordinator",
+      "scope": {
+        "repository": "gera3d/superagent-sandbox",
+        "findingId": "51f309ca-d396-4983-a55d-ef4432a8572f",
+        "jobId": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r25",
+        "bounded": true
+      }
+    }
+  },
+  "actualTrigger": {
+    "actor": {
+      "source": "coordinator",
+      "id": "codex-coordinator",
+      "name": {
+        "zh": "codex-coordinator",
+        "en": "codex-coordinator"
+      }
+    },
+    "human": false,
+    "at": "2026-11-09T01:29:08.826Z",
+    "preview": "Delegated coordinator codex-coordinator continued bounded fix finding 51f309ca-d396-4983-a55d-ef4432a8572f; job finding:"
+  },
+  "ticketStage": "working",
+  "assignmentState": "pending",
+  "coordination": {
+    "value": {
+      "enabled": true
+    },
+    "revision": 3
+  },
+  "nativeLockState": "CUA explicitly locked immediately before restoring repaired capability and executing necessary correction",
+  "nativeAcceptance": false,
+  "noPublication": true,
+  "protectedAcceptanceRefusal": {
+    "status": 403,
+    "body": "{\"error\":\"Explicit local operator evidence review required\"}"
+  }
+}

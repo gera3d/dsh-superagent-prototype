@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-09T01:24:28.084050+00:00",
+  "candidate": "d40f01a41a22627c53fedca3c8e01284f27163ac",
+  "retainedRootTestsPassed": 17,
+  "actualProducerConsumer": {
+    "normalSameTurnProgressReady": "pass",
+    "nativeWriteFailureRetry": "pass",
+    "postcommitBeforeCleanupCrashRecovery": "fail: duplicate Engine.report after reopen"
+  },
+  "firstFixtureHealthStub": "fixed; clean actual-path rerun2pass1fail",
+  "deployed": false,
+  "next": "Same-finding durable native-transaction delivery identity correction; headless temporarilyOFF until provenance requalified"
+}
