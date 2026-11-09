@@ -1,0 +1,59 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/quality-r3-review
+
+(node:12505) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/root-quality-r3.audit.spec.ts (4 tests | 4 failed) 35ms
+   × negative task scope is not authorization for the prohibited detour 8ms
+   × a prohibition on settings does not negate a separate repeat/reopen command 2ms
+   × newer failed canonical report invalidates false tests-passed option 2ms
+   × native canonical producer cannot recreate pending advice for accepted source when automatic capture correctly stops 22ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/root-quality-r3.audit.spec.ts > negative task scope is not authorization for the prohibited detour
+AssertionError: expected null not to be null
+ ❯ tests/root-quality-r3.audit.spec.ts:8:229
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/root-quality-r3.audit.spec.ts > a prohibition on settings does not negate a separate repeat/reopen command
+AssertionError: expected null not to be null
+ ❯ tests/root-quality-r3.audit.spec.ts:11:169
+      9| })
+     10| it('a prohibition on settings does not negate a separate repeat/reopen…
+     11|  expect(evaluateOptionQuality({id:'bad',label:'Finish',prompt:'Do not …
+       |                                                                                                                                                                         ^
+     12| })
+     13| it('newer failed canonical report invalidates false tests-passed optio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/root-quality-r3.audit.spec.ts > newer failed canonical report invalidates false tests-passed option
+AssertionError: expected null not to be null
+ ❯ tests/root-quality-r3.audit.spec.ts:16:145
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/root-quality-r3.audit.spec.ts > native canonical producer cannot recreate pending advice for accepted source when automatic capture correctly stops
+AssertionError: expected [ { …(18) } ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/root-quality-r3.audit.spec.ts:34:55
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  07:50:06
+   Duration  994ms (transform 531ms, setup 0ms, import 752ms, tests 35ms, environment 0ms)
+
