@@ -65,8 +65,15 @@ export function projectDeliveries(store: DeliveryStore, items: PendingDecisionIt
     && !(i.lifecycle && !i.lifecycle.publication && i.status === 'pending' && i.ticketId && workers.has(i.ticketId))), ...deliveries.map(deliveryDecision)]
 }
 
-const STEP_ADVICE: [number, RegExp][] = [[1, /\bpush(?:ing)?\b/i], [2, /\b(?:open|create|submit)\b.*\b(?:pr|pull request)\b/i],
-  [3, /\b(?:run|rerun|wait for|verify)\b.*\b(?:checks?|ci)\b|\bexact-head checks?\b/i], [4, /\b(?:request|await|perform|start)\b.*\breview\b/i], [5, /\bmerge\b/i], [6, /\b(?:deploy|publish)\b/i], [7, /\b(?:verify|verification|live acceptance)\b/i]]
+const STEP_ADVICE: [number, RegExp][] = [
+  [1, /\bpush(?:ing)?\b/i],
+  [2, /\b(?:open|create|submit)\b.*\b(?:pr|pull request)\b/i],
+  [3, /\b(?:run|rerun|wait for|verify)\b.*\b(?:checks?|ci|tests?)\b|\bexact-head (?:checks?|evidence)\b/i],
+  [4, /\b(?:request|await|perform|start|audit|inspect|verify)\b.*\breview\b|\b(?:audit|review)\b.*\b(?:regressions?|revert|code|patch|caption)\b/i],
+  [5, /\bmerge\b/i],
+  [6, /\b(?:deploy|publish)\b/i],
+  [7, /\b(?:verify|verification|live acceptance)\b/i],
+]
 /** Retire pending, unsent generated advice whose recommended action is a release step already observed done, or that targets a superseded head.
  *  Newer items, unrelated questions, resolved history and work covered by a completed delivery are untouched; nothing is deleted or sent. */
 function retireSupersededProgress(inbox: DecisionInbox, progress: ProgressStore, deliveries: Delivery[]): void {
@@ -87,7 +94,8 @@ function retireSupersededProgress(inbox: DecisionInbox, progress: ProgressStore,
       const head = current.supersededCommits.find(commit => text.includes(commit.slice(0, 7)))
       if (step || head) inbox.invalidate(item, step
         ? `Progress ${current.kind} was observed at ${current.branch}@${current.commit.slice(0, 12)} (revision ${current.revision}); this step is done. Remaining: ${current.remaining}. Earlier advice is retained as history, not authority.`
-        : `Advice targets superseded head ${head!.slice(0, 12)}; current ${current.branch} head is ${current.commit.slice(0, 12)} (progress revision ${current.revision}). Earlier advice is retained as history.`)
+        : `Advice targets superseded head ${head!.slice(0, 12)}; current ${current.branch} head is ${current.commit.slice(0, 12)} (progress revision ${current.revision}). Earlier advice is retained as history.`,
+        undefined, Date.now(), { kind: 'progress', ticketId, revision: current.revision, progressKind: current.kind })
     }
   }
 }
