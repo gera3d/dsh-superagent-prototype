@@ -1,0 +1,182 @@
+{
+  "sourceHead": "90c0eb5f41e5d2461173297d0477cd189bf0cc4b",
+  "base": "c4929b39c62d35d1b88b3fd14b1727c8536b57b6",
+  "sourcePR": 80,
+  "files": [
+    {
+      "path": "scripts/delivery-legacy-reconcile.ts",
+      "existed": false,
+      "beforeSha256": null,
+      "afterSha256": "3607a572a653bdb10a98ba7fbff68c237dac54596ec9ef23a16f1b14168f89b8"
+    },
+    {
+      "path": "src/app/advice-context.ts",
+      "existed": true,
+      "beforeSha256": "7bc8010efbb71bcd787f3c4421c296c2a6a64fc5db19213fad61628ebfae93c0",
+      "afterSha256": "673a663dc7cc6ceb368e4b55905d5b17f7704b273acef95f2e3e26ac4e63db7c"
+    },
+    {
+      "path": "src/app/delivery-currency.ts",
+      "existed": true,
+      "beforeSha256": "3f260cca89cfa5a3c55c9a176d7104d6304b12d78d1e5b5a368371f01baf6644",
+      "afterSha256": "14910a0b5ee9bbcae3079d545df8a2e29a8ccf7d9a5d2bd18e92c81d1c54a20e"
+    },
+    {
+      "path": "src/app/delivery-runtime.ts",
+      "existed": true,
+      "beforeSha256": "8c621d584de1a99975c83c326ddab029fab46a31d84297992c86651ee1aa43cc",
+      "afterSha256": "b8ba8b6e4a968f45e840a056cd696daf5181e05f32d0b31990b21ca204d884d7"
+    },
+    {
+      "path": "src/app/feature-delivery.ts",
+      "existed": true,
+      "beforeSha256": "5069392ac9a4f307554a557d47f54147add4efd20e7625a32608a197845874f2",
+      "afterSha256": "088b9350e0829c21258a1fa692c83347baf96cda5e372ff14d31d0f34e5c4341"
+    },
+    {
+      "path": "src/app/option-quality.ts",
+      "existed": true,
+      "beforeSha256": "6c7317b97cf85d2f6aa249984a6d2bd87ae0a2196c7d3807c7c141692d87d883",
+      "afterSha256": "07ad80415f6340f80a07e7eeea07d612395c921475727830ab1beb48fa44f7ef"
+    },
+    {
+      "path": "src/client/delivery-card.tsx",
+      "existed": true,
+      "beforeSha256": "67e37473069deb9f9b993c1e6a568d1d907b5461c37f6de2f3a27d13c0d0d916",
+      "afterSha256": "55006790b4ef9ddb2ada62cda9fe29806b552652c1d5cd9284d3af904828bde0"
+    },
+    {
+      "path": "src/core/publication-queue.ts",
+      "existed": true,
+      "beforeSha256": "bdec1c16bb687aa1687997d404de5d0d6e2ec8249edb00f2fbd6bdf6c6d04637",
+      "afterSha256": "f7937003e80d4673b8a773bcaacc37876cb587d7ce77cc03b1856cd2fb13e027"
+    }
+  ],
+  "assets": [
+    {
+      "path": "lib/deployment-BTCh8dP2.d.ts",
+      "afterSha256": "505a7f812d3cb688a9f41cafdeceb186d9d1d2806625b4f574f07b283141a8fa"
+    },
+    {
+      "path": "lib/client.js",
+      "afterSha256": "3dc98f2a8aeca517f27db2d4847b290a80086b66d39da0a26be9e913e3c6ea96"
+    },
+    {
+      "path": "lib/http-BdOYyGY3.js",
+      "afterSha256": "61a9b8481fa67d72dc945bd9cd189a965c9aa8b881b5dd68f7aaee5d1e943559"
+    },
+    {
+      "path": "lib/publication-ticket-DEsbkLrt.js",
+      "afterSha256": "3aacac3d58b95324ee0d5646c1ad78d371031e1537c9e0ba2ea2a2f18650a522"
+    },
+    {
+      "path": "lib/decision-inbox-provider-canonical.d.ts",
+      "afterSha256": "d88619cb1a628e381c2be0488fabb08ddaca76d60cb746fac60f65c4f935adf5"
+    },
+    {
+      "path": "lib/model-BSxHOzxq.d.ts",
+      "afterSha256": "e4463219981fb520f87b75001088e828ba27e12ce14e6d595f0de2e37255e803"
+    },
+    {
+      "path": "lib/lifecycle-publication-C8-lPBzp.js",
+      "afterSha256": "9f667efa0e1a3b00a92d38cb0ff7054ac1f88b60714361dd9d3762ba0e14576c"
+    },
+    {
+      "path": "lib/github-pull-D0dzdKap.js",
+      "afterSha256": "1c57a002b8d21434ee38b7f3b843106cdb5ce2e8cc51fa9f0653cd650f630882"
+    },
+    {
+      "path": "lib/kind-C7tBB5CH.d.ts",
+      "afterSha256": "ec04c776a213dfa0c0d443d460d6e84222e2a19f1be40a73d30d801b2eaea3fa"
+    },
+    {
+      "path": "lib/publication-worker.js",
+      "afterSha256": "b941a3b6605c07f5db9ceb1b88951539bc7ebaf9c237843a888c4a299d4cb6da"
+    },
+    {
+      "path": "lib/decision-provider.d.ts",
+      "afterSha256": "6b5408ac5b6e6f1a049da951dcb2c09dd2169c3bf1cef8bd097ddad6d149c3c9"
+    },
+    {
+      "path": "lib/index.js",
+      "afterSha256": "0029ac4106319c3dcc0f7ba31bd7384df7c14745c8e7bf29497903ea3c9c8e61"
+    },
+    {
+      "path": "lib/decision-provider.js",
+      "afterSha256": "d40cde74d6238c426a325060f59b3fc03739f0daf2cd9e6d814ac5e20f3186e0"
+    },
+    {
+      "path": "lib/publication-context-VwDwpAu4.js",
+      "afterSha256": "346b9164a43ff185e0dc60636586621e263fd979800c092bfb78bc332a7d050b"
+    },
+    {
+      "path": "lib/decision-inbox-provider.js",
+      "afterSha256": "7ff841f820d38446cae5639f2a36f0a898fbec6fc644df05abbf9fdc0c5fc38c"
+    },
+    {
+      "path": "lib/publication-operator.js",
+      "afterSha256": "d1980c4d243863432e402a6c5e64aae91a28c758c171e1882582e765fc0ab7ae"
+    },
+    {
+      "path": "lib/feishu-watch.d.ts",
+      "afterSha256": "8819e558b11538703a587ced671c64a26cab487f65a1036987c210dd7b5929e9"
+    },
+    {
+      "path": "lib/github-watch.d.ts",
+      "afterSha256": "a47513912d8ab64154aa4dca339b7e45b2e11f7e5e32afd909f933b52a6130a0"
+    },
+    {
+      "path": "lib/publication-operator.d.ts",
+      "afterSha256": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614"
+    },
+    {
+      "path": "lib/feishu-CVHwY3e7.js",
+      "afterSha256": "2f998efe797be309fdc2d029ef3705bc7eaa05ddd190bda66e51184393766588"
+    },
+    {
+      "path": "lib/policy-Bsd1aS5U.d.ts",
+      "afterSha256": "81a358b502b71a30153bbbccc1fc1f4fe2d3839f7017f3606f7706770db2b18b"
+    },
+    {
+      "path": "lib/publication-worker.d.ts",
+      "afterSha256": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614"
+    },
+    {
+      "path": "lib/index.d.ts",
+      "afterSha256": "78e0eb338131ce82dd68f7a156420e12f6d31b9e4e9219b158e9ced6565ee67b"
+    },
+    {
+      "path": "lib/decision-inbox-provider-live.js",
+      "afterSha256": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20"
+    },
+    {
+      "path": "lib/feishu-watch.js",
+      "afterSha256": "0f94d1a0b3d166f3f558ef88db9d105d30fe5aa738ac73ad13cc37a8e745753a"
+    },
+    {
+      "path": "lib/poll-YENBPt9-.js",
+      "afterSha256": "38eb3c0c3654f4c112e2ca574bb4c61e217ec7b6ea64f4a5ae1ba63001c215f5"
+    },
+    {
+      "path": "lib/github-watch.js",
+      "afterSha256": "c194996f24b6bd9d5d9e98a5e4364dc4f04a30190a0818c0fd75acb51e5b2248"
+    },
+    {
+      "path": "lib/decision-inbox-provider-canonical.js",
+      "afterSha256": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20"
+    }
+  ],
+  "backup": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/legacy-delivery-reconciliation/rollback-20261109T232650Z",
+  "stage": "installed; actual three historical receipts applied; native verification and repair acceptance pending",
+  "rollbackLimit": "Restore narrow source/assets only. Never overwrite later canonical history with database backup.",
+  "installedAt": "2026-11-09T23:27:56.163028+00:00",
+  "merge": "c2e2bf11d6a70117691af1533cdb6291bdd8963d",
+  "verifiedPostimages": 36,
+  "workerStateAtInstall": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "restartExitCode": 3,
+  "restartOutcome": "Service restarted; setup waiting on existing-account GitHub API rate limit403. No retry, reauthentication or account/transport workaround."
+}

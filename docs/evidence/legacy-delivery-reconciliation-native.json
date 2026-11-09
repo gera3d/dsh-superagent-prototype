@@ -1,0 +1,114 @@
+{
+  "at": "2026-11-09T23:29:52.471637+00:00",
+  "stage": "live exact receipts applied; native verification and protected repair acceptance pending",
+  "findingId": "60b19ba2-1ff6-4f95-af39-098829779103",
+  "sourcePR": 80,
+  "sourceHead": "90c0eb5f41e5d2461173297d0477cd189bf0cc4b",
+  "merge": "c2e2bf11d6a70117691af1533cdb6291bdd8963d",
+  "records": [
+    {
+      "id": "auto-1aa9568a8df574db0cef146a58004c4b",
+      "revision": 4,
+      "historicalCompletion": {
+        "reconciledAt": "2026-11-09T23:28:39.073Z",
+        "operator": "codex-coordinator",
+        "attestation": "User explicitly requested reconciliation of these exact three legacy records. Codex independently confirmed original ended worker identity, closed-completed GitHub issue and later PR33 merged release; original artifact is historical/superseded, not another release. Current installed feature verified: Saved conservation controls present; current normal hierarchy and provider marks retained; seven routing policy cases included in60tests. Detailed current and historical proof: https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/legacy-delivery-reconciliation-proof.json . No original missing pins, acceptance, new authority, new dispatch or publication inferred. Preserve original history; only reconcile this obsolete pending record as delivered by later release.",
+        "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/pull/33",
+        "sourceIssue": 184,
+        "releasePr": 33,
+        "releaseMergedSha": "fb591843c3f9ff19965a49e45a4157ed195fc890",
+        "caption": "Delivered by later release PR #33 (fb59184); source issue #184 closed. Retained as completed/superseded history; not typed delivery acceptance.",
+        "fingerprint": "581a152cd6d2a2277380f7a11b54e24bc74e08e5c9920443fec5c7a653a73866"
+      },
+      "originalBindings": {
+        "repository": "gera3d/superagent-sandbox",
+        "sourceIssue": 184,
+        "baseSha": "",
+        "headSha": "",
+        "refs": []
+      },
+      "typedAcceptancePresent": false
+    },
+    {
+      "id": "auto-71dc25902ccec92c851634c58cf365f0",
+      "revision": 4,
+      "historicalCompletion": {
+        "reconciledAt": "2026-11-09T23:28:39.073Z",
+        "operator": "codex-coordinator",
+        "attestation": "User explicitly requested reconciliation of these exact three legacy records. Codex independently confirmed original ended worker identity, closed-completed GitHub issue and later PR33 merged release; original artifact is historical/superseded, not another release. Current installed feature verified: Actual protected evidence/acceptance flow personally completed immediately before this task; current form/source matching verified. Detailed current and historical proof: https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/legacy-delivery-reconciliation-proof.json . No original missing pins, acceptance, new authority, new dispatch or publication inferred. Preserve original history; only reconcile this obsolete pending record as delivered by later release.",
+        "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/pull/33",
+        "sourceIssue": 188,
+        "releasePr": 33,
+        "releaseMergedSha": "fb591843c3f9ff19965a49e45a4157ed195fc890",
+        "caption": "Delivered by later release PR #33 (fb59184); source issue #188 closed. Retained as completed/superseded history; not typed delivery acceptance.",
+        "fingerprint": "1e45966aa0fc75a421f8b7749d201d38b4913fdccd51c385106da69d391b0cbf"
+      },
+      "originalBindings": {
+        "repository": "gera3d/superagent-sandbox",
+        "sourceIssue": 188,
+        "baseSha": "",
+        "headSha": "",
+        "refs": []
+      },
+      "typedAcceptancePresent": false
+    },
+    {
+      "id": "auto-d65f3131a9ae77d9de524535e4a01a26",
+      "revision": 4,
+      "historicalCompletion": {
+        "reconciledAt": "2026-11-09T23:28:39.073Z",
+        "operator": "codex-coordinator",
+        "attestation": "User explicitly requested reconciliation of these exact three legacy records. Codex independently confirmed original ended worker identity, closed-completed GitHub issue and later PR33 merged release; original artifact is historical/superseded, not another release. Current installed feature verified: Capacity3 in actual settings and original ended identity retained; FIFO/capacity/quiescence production store regression cases included in60tests. Detailed current and historical proof: https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/legacy-delivery-reconciliation-proof.json . No original missing pins, acceptance, new authority, new dispatch or publication inferred. Preserve original history; only reconcile this obsolete pending record as delivered by later release.",
+        "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/pull/33",
+        "sourceIssue": 182,
+        "releasePr": 33,
+        "releaseMergedSha": "fb591843c3f9ff19965a49e45a4157ed195fc890",
+        "caption": "Delivered by later release PR #33 (fb59184); source issue #182 closed. Retained as completed/superseded history; not typed delivery acceptance.",
+        "fingerprint": "33005a4a38a044cbf2861e02f16a071553c1083433bf0d88d32023745b1c0ebf"
+      },
+      "originalBindings": {
+        "repository": "gera3d/superagent-sandbox",
+        "sourceIssue": 182,
+        "baseSha": "",
+        "headSha": "",
+        "refs": []
+      },
+      "typedAcceptancePresent": false
+    }
+  ],
+  "receiptFingerprint": "18e156234071f72aa4d3d742bc552299f83282aff373ff1ea61d9cc05199d7c7",
+  "all15OriginalDeliveriesPreserved": true,
+  "onlyThreeChanged": true,
+  "settingsUnchanged": true,
+  "projected": [
+    {
+      "id": "delivery-auto-1aa9568a8df574db0cef146a58004c4b",
+      "status": "stale",
+      "choices": []
+    },
+    {
+      "id": "delivery-auto-71dc25902ccec92c851634c58cf365f0",
+      "status": "stale",
+      "choices": []
+    },
+    {
+      "id": "delivery-auto-d65f3131a9ae77d9de524535e4a01a26",
+      "status": "stale",
+      "choices": []
+    }
+  ],
+  "runtime": {
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "paused": false,
+    "setupProblem": "githubRateLimited",
+    "restartExit": 3
+  },
+  "native": {
+    "verified": false,
+    "reason": "Actual browser checks follow installation and exact receipts."
+  }
+}
