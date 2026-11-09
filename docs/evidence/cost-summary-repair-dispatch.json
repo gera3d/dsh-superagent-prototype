@@ -1,0 +1,40 @@
+{
+  "at": "2026-11-09T21:56:51.973891+00:00",
+  "approval": "Explicit user response: Approve cost-summary repair through deployment",
+  "scopeReference": "docs/reviews/cost-summary-bounded-repair-plan.md",
+  "finding": {
+    "id": "8157c834-c7a5-43c6-afdd-97cee8534c6b",
+    "revision": 1,
+    "state": "running",
+    "confirmation": {
+      "revision": 1,
+      "choiceId": "fix_now",
+      "actor": "local-operator",
+      "at": "2026-11-09T21:56:05.616Z"
+    },
+    "job": {
+      "id": "finding:8157c834-c7a5-43c6-afdd-97cee8534c6b:r1",
+      "ticketId": "a82c9eddefc65510854d28ec2444eb57",
+      "assignmentId": "233f9382d0a2988f16e42c9db5889744"
+    }
+  },
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "paused": false,
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "stage": "Native Fix now confirmed; implementation running, no candidate/review/merge/deployment yet"
+}

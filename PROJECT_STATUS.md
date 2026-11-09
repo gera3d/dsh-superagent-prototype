@@ -1,6 +1,10 @@
 # DeepSeek Harness project status
 
-Updated November 09, 2026, 1:47 PM PST. Owner: current Codex coordinator/reviewer. **This checkpoint describes the verified live stage. Dated records below the history divider preserve earlier attempts.**
+Updated November 09, 2026, 1:56 PM PST. Owner: current Codex coordinator/reviewer. **Active work and verified checkpoints below distinguish running implementation from released results.**
+
+## Active approved work
+
+**Cost-summary correctness repair is now explicitly approved and running.** Finding `8157c834-c7a5-43c6-afdd-97cee8534c6b` revision1, job `finding:8157c834-c7a5-43c6-afdd-97cee8534c6b:r1`, ticket `a82c9eddefc65510854d28ec2444eb57`, assignment `233f9382d0a2988f16e42c9db5889744`. Native Fix now confirmed at21:56:05Z. One isolated Harness implementation; original accepted cost feature and investigation remain untouched. [Approved scope](docs/reviews/cost-summary-bounded-repair-plan.md), [dispatch proof](docs/evidence/cost-summary-repair-dispatch.json). Codex owns independent review, focused missing checks, rollback/merge/deployment and actual ended-job UI verification under existing approval; no further routine reauthorization is needed. No candidate or new deployment exists yet. Leave the productive worker alone.
 
 ## Current verified checkpoint
 
@@ -11,16 +15,16 @@ Updated November 09, 2026, 1:47 PM PST. Owner: current Codex coordinator/reviewe
 | Earlier accepted fixes | Completion detection, Settings/context handoff, screen-independent coordination, allowance display and reporting bridge remain accepted scopes. | Direct Anthropic allowance unavailable; Cloudflare advice-only. No access or route changes. |
 | Cost-summary/publication investigations and old delivery gates | Investigations accepted for verification only; no new cost implementation repair or proven publication root cause. Three old typed gates remain unbound/unresolved. | Outside this completed repair; no bulk acceptance, binding, publication or new scope inferred. |
 
-Live Harness: **0 running,0 queued,max3; intake resumed; every runtime health component including GitHub ready.** Settings are unchanged from pre-release; OpenAI remains conserved. Implementation used the existing Antigravity subscription route and native scoring identified Anthropic. No new credential, permission, spend, routing, concurrency or schedule setting.
+Live Harness: **1 running,0 queued,max3; intake resumed; every runtime health component including GitHub ready.** Settings are unchanged from pre-release; OpenAI remains conserved. Implementation used the existing Antigravity subscription route and native scoring identified Anthropic. No new credential, permission, spend, routing, concurrency or schedule setting.
 
 ## Remaining open work — reconciled against live state
 
-- **Cost-summary correctness repair:** nine distinct concerns are verified and still present in the installed source. The original feature is live; the later task accepted investigation only and explicitly requires a separately confirmed bounded implementation decision. [Concrete repair scope and finish line](docs/reviews/cost-summary-bounded-repair-plan.md). Not dispatched or represented as already approved.
+- **Cost-summary correctness repair:** nine distinct concerns remain in installed source; a separate implementation is now user-approved and running as recorded above. Original feature/investigation acceptance is preserved. [Concrete repair scope and finish line](docs/reviews/cost-summary-bounded-repair-plan.md). Approval and actual dispatch are now recorded; implementation/release not yet verified.
 - **Three legacy delivery records:** subscription conservation, finding evidence capture and concurrent dispatch still have unbound source/target/acceptance requirements. Their feature code was delivered through later accepted releases. These are reconciliation records, not three new implementations or permission to publish. No bulk acceptance or invented bindings.
 - **Publication diagnostics:** earlier investigation accepted; original66ms pre-enqueue cause remains unproven. Additional phase/cause logging is optional, not implemented or dispatched.
 - **Capability limits:** direct Anthropic allowance data remains unavailable and Cloudflare profile remains advice-only. No new credential/access is authorized. A separate ordinary explanation conversation is not project backlog.
 
-[Read-only live reconciliation](docs/evidence/open-work-reconciliation-20261109.json):0 running,0 queued, no open source PRs; all implementation findings are resolved and deferred records are superseded verification history. No remaining approved implementation candidate was found to deploy. Await one bounded cost-repair confirmation rather than silently widening verification-only authority.
+[Read-only live reconciliation](docs/evidence/open-work-reconciliation-20261109.json):0 running,0 queued, no open source PRs; all implementation findings are resolved and deferred records are superseded verification history. That earlier read-only inventory found no ready implementation candidate. The user subsequently confirmed the linked bounded cost repair; its new implementation is running, not yet a deployable candidate.
 
 ## Verified behavior and evidence
 
