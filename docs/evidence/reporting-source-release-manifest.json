@@ -1,0 +1,67 @@
+{
+  "at": "2026-11-09T01:51:26.417956+00:00",
+  "head": "485d1131b3bfc0d33992207619bd387f36287ee4",
+  "pr": 74,
+  "merge": "9de83841e62bdfebb4a6767d9547ab0873f53ba3",
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "files": [
+    {
+      "path": "prompts/worker.md",
+      "before": "3c6e02fbd2050bb17d4adf644909acc9903b603bfc7248d46df5ef0aa9ef846e",
+      "after": "f24aff1e510763feca27ec4d811c156d6e0bf1057d6d41bbdb899f697c52e039"
+    },
+    {
+      "path": "src/app/execution-environment.ts",
+      "before": "82aae39bd65141df80f6a85991e35d05c9f0dfc748be88f78b7520ce97883b3f",
+      "after": "7dbdff2dadf6633dd2b5735581dd2352a65f31a27f23e20b7b98bdbb68a07033"
+    },
+    {
+      "path": "src/app/finding-runtime.ts",
+      "before": "ed7f6ce4a0e1ec8f795827c16fd1fa3c0da4d4194a8f18694e29f5387bfe95b5",
+      "after": "1ee75fe38c26589da86ac0a51fece110adef741fd94192e671c60680e72df51c"
+    },
+    {
+      "path": "src/app/runtime.ts",
+      "before": "e7c692714d022ccc5ee2019bd1b1678f028ca88b2d8c922bca7b8c1c53623c08",
+      "after": "f7bf3bfe0750b049a0f637b6b4e4f9d1f923df9f24f023454367a0134c5f0584"
+    },
+    {
+      "path": "src/app/sessions.ts",
+      "before": "a1b1f6b7a46b1a3f3e2ee79677da6bcdfd8db55fce331bef942f4ae0062c312d",
+      "after": "a5eae7be4024e1f4f94e5c849cfc6f13db21215d4face6a8a3ae0164cea5cad1"
+    },
+    {
+      "path": "src/executor/dsh.ts",
+      "before": "ebbbf6b7f81b64cefa59019921d5f9b96e9b90c069aec3147d67a418dd9ac99e",
+      "after": "94493450e587bf2decd5bff943ee8926276474f9e3b1981ecfb80794c43a08ff"
+    },
+    {
+      "path": "src/infra/environment.ts",
+      "before": "413680e755ed36b74157f364a38cb5dbe81e4af0db0fa88c8376c682e2282a7c",
+      "after": "db8a619564e7810f3d4541dd25b69b880d9fb8184bbd8c7cf78cc198c29342a1"
+    }
+  ],
+  "rollback": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/verified-batch/reporting-source-release-rollback",
+  "tests": {
+    "affectedSuites": 11,
+    "passed": 175,
+    "finalIdentityChecks": 8,
+    "countsOverlap": true,
+    "types": 0,
+    "build": 0
+  },
+  "nativeAccepted": false,
+  "restartExit": 0,
+  "installedProducerConsumerTests": {
+    "passed": 4,
+    "suites": 1,
+    "isolatedTemporaryStore": true,
+    "providerRequest": false
+  },
+  "nativeUI": "Reloaded installed Harness and original reporting finding; current blocked review and evidence controls visible",
+  "remaining": "Actual Gemini worker shell report using its current-turn prompt, followed by protected acceptance. Codex owns qualification; no broad reruns or new implementation needed."
+}
