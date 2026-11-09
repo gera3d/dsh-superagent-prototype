@@ -1,0 +1,132 @@
+{
+  "at": "2026-11-09T00:07:19.218262+00:00",
+  "items": [
+    {
+      "id": "12779824-b82e-484d-9502-d2150ba58aa1",
+      "revision": 15,
+      "state": "resolved",
+      "job": {
+        "id": "finding:12779824-b82e-484d-9502-d2150ba58aa1:r12",
+        "ticketId": "7c017292cef5dee4d08138181ec47a40",
+        "assignmentId": "ff2c549eeef9c883fa8064c997f3c225"
+      },
+      "resolution": {
+        "outcome": "verified",
+        "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/advisor-paired-source-qualified.json",
+        "requirements": [
+          "Reproduce current helper/context for worker-cf2c9c8117f4870abc3dc067a903ab43: delivery null causes generic ordinary-conversation rule although task is canonical finding revision 4 with root review/release scope; preserve exact before evidence",
+          "Inspect src/app/http.ts contextFor and advice-context.ts plus native helper/fallback/ranking paths; derive bounded structured finding/job state and next owner from canonical records, never arbitrary prose or stale prior jobs",
+          "For current tested worker-reported candidate awaiting root review, recommend one concrete permitted stage toward actual coordinator review; do not default to user walkthrough, duplicate implementation/test runs, or unconditional accept/deploy",
+          "Distinguish recommendation text/prepared native reply from actual action capability: if no supported route can notify Codex, identify that missing handoff explicitly instead of implying clicking a prompt invokes Codex; do not tell implementation worker to independently review itself",
+          "Preserve normal chat behavior, incomplete/failed review cases, resolved findings, prior attempts, current revision/source guards, score/rank preservation and exact publication confirmations",
+          "Regression test finding-without-delivery, current versus prior assignment, resolved finding, ordinary chat and shared helper/fallback context; run targeted types/build/checks sequentially and return exact heads/patches",
+          "No running installation edits, merge, deployment, new credentials/access or accepted finding by worker; root handles exact-head review, regression evidence, deployment and native verification"
+        ],
+        "at": "2026-11-09T00:04:11.920Z",
+        "actor": "local-operator",
+        "jobId": "finding:12779824-b82e-484d-9502-d2150ba58aa1:r12"
+      },
+      "ticketStage": "ended",
+      "usage": {
+        "sessionId": "worker-7c017292cef5dee4d08138181ec47a40",
+        "routes": [
+          {
+            "provider": "antigravity",
+            "model": "gemini-3.8-flash",
+            "attempts": 1,
+            "uncachedInputTokens": 2551,
+            "outputTokens": 778,
+            "cacheReadTokens": 151264,
+            "totalTokens": 154593
+          }
+        ],
+        "totals": {
+          "uncachedInputTokens": 2551,
+          "outputTokens": 778,
+          "totalTokens": 154593,
+          "cacheReadTokens": 151264
+        },
+        "coverage": {
+          "attempts": 1,
+          "reported": 1,
+          "cacheRead": "exact",
+          "cacheWrite": "unreported",
+          "attribution": "complete"
+        },
+        "cost": {
+          "kind": "unavailable",
+          "reason": "noRecordedPrice"
+        }
+      }
+    },
+    {
+      "id": "51f309ca-d396-4983-a55d-ef4432a8572f",
+      "revision": 13,
+      "state": "running",
+      "job": {
+        "id": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r13",
+        "ticketId": "ec68d2ce4a52bc1477431210e306ab70",
+        "assignmentId": "fa36577726b338dd16bb2f71c4bd1908"
+      },
+      "resolution": null,
+      "ticketStage": "working",
+      "usage": {
+        "sessionId": "worker-ec68d2ce4a52bc1477431210e306ab70",
+        "routes": [],
+        "totals": {
+          "uncachedInputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0
+        },
+        "coverage": {
+          "attempts": 0,
+          "reported": 0,
+          "cacheRead": "unreported",
+          "cacheWrite": "unreported",
+          "attribution": "complete"
+        },
+        "cost": {
+          "kind": "unavailable",
+          "reason": "noRecordedPrice"
+        }
+      }
+    },
+    {
+      "id": "a338ad44-893d-4ebf-b8ff-aa0c3067e384",
+      "revision": 8,
+      "state": "running",
+      "job": {
+        "id": "finding:a338ad44-893d-4ebf-b8ff-aa0c3067e384:r8",
+        "ticketId": "4456fb5dc5e906102293466b694654e2",
+        "assignmentId": "ae5f31d0deaaea59b87d2627e7ab4961"
+      },
+      "resolution": null,
+      "ticketStage": "working",
+      "usage": {
+        "sessionId": "worker-4456fb5dc5e906102293466b694654e2",
+        "routes": [],
+        "totals": {
+          "uncachedInputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0
+        },
+        "coverage": {
+          "attempts": 0,
+          "reported": 0,
+          "cacheRead": "unreported",
+          "cacheWrite": "unreported",
+          "attribution": "complete"
+        },
+        "cost": {
+          "kind": "unavailable",
+          "reason": "noRecordedPrice"
+        }
+      }
+    }
+  ],
+  "load": {
+    "running": 2,
+    "queued": 0,
+    "maxWorkers": 3
+  }
+}

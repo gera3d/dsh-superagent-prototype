@@ -1,0 +1,25 @@
+{
+  "at": "2026-11-09T00:05:40.069109+00:00",
+  "reporting": {
+    "candidate": "bdc23f0",
+    "tests": 2,
+    "failed": 2,
+    "findings": [
+      "Unknown session turn defaults to1",
+      "Delayed consume deletes newer atomically replaced report"
+    ],
+    "deployed": false
+  },
+  "headless": {
+    "source": "7215b13359d8601291daea635b51447cb81d58cf",
+    "carrier": "ca9ebc9eefb3b9b940989c933923ca0fb1a7aa2b",
+    "tests": 1,
+    "failed": 1,
+    "findings": [
+      "Prior defer-only local-operator confirmation accepted for headless fix_now"
+    ],
+    "deployed": false,
+    "enabled": false
+  },
+  "next": "Native same-finding bounded corrections under existing authorization"
+}

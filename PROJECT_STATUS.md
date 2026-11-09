@@ -1,20 +1,37 @@
 # DeepSeek Harness project status
 
-Updated November 08, 2026, 04:04 PM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
+Updated November 08, 2026, 04:08 PM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
 
 ## Current seven-track outcome
 
 | Track | Verified current state | Next owner/action |
 |---|---|---|
 | Explicit conversation completion | **Merged, deployed, original-thread native verified, finding accepted.** | Complete for this bounded scope; preserve evidence/history. |
-| Senior Developer Settings / real review handoff | Returned303d531/5255d57 independently integrated; paired source PR71/PR21 merged. Paired installed files/assets updated at safe idle; restart exit0 and actual-thread recommendation/scoring verified. Native finding acceptance pending. | Codex records/selects native verified evidence and bounded acceptance. Ready status does not certify tests passed; no automatic Codex dispatch bridge exists. |
-| Screen-independent coordination | Independent security review found default-on endpoint, target-binding and double-open/approval-proof defects. Original finding correction returned; independent authority review pending. Not deployed or activated. | Harness produces default-off authority-safe candidate; Codex reviews; Gera specific confirmation still required before broader privilege activation. |
+| Senior Developer Settings / real review handoff | Returned303d531/5255d57 independently integrated; paired source PR71/PR21 merged. Paired installed files/assets updated at safe idle; restart exit0 and actual-thread recommendation/scoring verified. **Native finding accepted** at00:04:11Z (4:04 PM PST), exact requirements and personally verified evidence selected. | Complete for bounded advisor scope; preserve evidence. Ready status does not certify tests passed; no automatic Codex dispatch bridge exists. |
+| Screen-independent coordination | Independent security review found default-on endpoint, target-binding and double-open/approval-proof defects. Root security regression fails1/1: defer-only operator audit is accepted for headless fix_now. Same finding correction r8 working; not deployed or activated. | Harness produces default-off authority-safe candidate; Codex reviews; Gera specific confirmation still required before broader privilege activation. |
 | Google + Anthropic allowance display | **Merged, deployed, styled native UI verified, bounded finding accepted.** Google/AGY Claude quota shown; direct Anthropic explicitly unavailable (no existing reader). | Complete for the bounded display; preserve source separation and unavailable direct subscription limitation. No new account access authorized. |
-| Antigravity structured reporting | Independent review confirms production turn/nonce binding remains absent in2041d78. Root requires correction; original finding returned bdc23f0; independent review pending, not deployed. | Harness wires real producer/consumer turn currency and narrow replay/race tests; Codex final review/release. |
+| Antigravity structured reporting | Independent review confirms production turn/nonce binding remains absent in2041d78. Root requires correction; bdc23f0 production turn wiring reviewed; root2/2 turn/consume-race tests fail. Same finding correction r13 working; not deployed. | Harness wires real producer/consumer turn currency and narrow replay/race tests; Codex final review/release. |
 | Cost-summary historical findings | **Verification independently completed and accepted**, not implementation repaired. Root reproduced and reconciled9 concerns with limits. | Prepare separately confirmed bounded cost repair scope; no duplicate accepted original job. No repair implementation queued this pass. |
 | Publication confirmation before enqueue | **Investigation independently completed and accepted**, not a repair. Actual production coordinator pre-effect/idempotency test passes; original66ms cause remains unproven. | Optional separately scoped diagnostic logging decision; preserve every publication approval and pin gate. |
 
-Intake is **resumed**. Latest executor snapshot: **0 running,0 queued,max3**. All three correction reports returned; idle assignments were retired through supported stop without accepting candidates. Reporting/headless await independent Codex review; advisor release is installed and native checked, with protected finding acceptance pending. Runtime,relay,notice,launch,delivery,assessment,reply,evals,models are ready; GitHub reports starting after restart (not yet claimed ready). Actual advisor/reporting requests used Antigravity Gemini3.8Flash; OpenAI remains conserved. No new credentials, routes, spending, worker limits, automation or privilege activation.
+Intake is **resumed**. Latest executor snapshot: **2 working,0 queued,max3**, reporting/headless narrowly corrected original findings below. Advisor is deployed, native verified and accepted. Runtime/relay/notice/launch/delivery/assessment/reply/evals/models ready; GitHub remained starting at last check after restart, not claimed ready. No new route/credentials/spend/worker-limit/automation or headless privilege activation. OpenAI remains conserved; new correction requests have no returned usage yet, so dispatch is not proof of productive completion.
+
+## Advisor accepted; reporting/headless boundary corrections dispatched
+
+Codex completed the protected native evidence record, selected the exact durable report, acknowledged all bounded requirements and accepted advisor finding `12779824-b82e-484d-9502-d2150ba58aa1` at `2026-11-09T00:04:11.920Z`. Scope is the deployed Settings/helper/fallback/current-finding context repair, not a guarantee of every future recommendation or an automatic Codex dispatch bridge. [Canonical acceptance and current jobs](docs/evidence/accepted-advisor-and-boundary-corrections.json).
+
+Independent root review of reporting `bdc23f0` confirms production now passes a session-derived turn, but2 new focused tests fail: unknown session identity fabricates turn1, and deferred consume unlinks a newer turn2 report atomically replaced onto the same path. Headless source `7215b13359d8601291daea635b51447cb81d58cf` (carrier `ca9ebc9eefb3b9b940989c933923ca0fb1a7aa2b`) has default-off/target/file-snapshot corrections, but1 new authority test fails: a prior local-operator **defer** audit entry alone authorizes later headless fix_now. These are concrete regressions, not user decisions or waived gates. Neither candidate was deployed. [Root boundary verdicts](docs/evidence/returned-candidate-root-boundaries.json).
+
+Exact failures were appended to the **original findings**, then natively reopened and confirmed **Fix now**. Old candidates, reports, original jobs and failed-review evidence remain preserved. New mandates:
+
+| Track | Current exact original-finding job / ticket / assignment | Next owner |
+|---|---|---|
+| Reporting | `finding:51f309ca-d396-4983-a55d-ef4432a8572f:r13` / `ec68d2ce4a52bc1477431210e306ab70` / `fa36577726b338dd16bb2f71c4bd1908` | Harness fixes unknown-turn and identity-safe consume; Codex independent targeted replay and release. |
+| Headless | `finding:a338ad44-893d-4ebf-b8ff-aa0c3067e384:r8` / `4456fb5dc5e906102293466b694654e2` / `ae5f31d0deaaea59b87d2627e7ab4961` | Harness binds actual prior execution approval/lineage; Codex authority review. Remains OFF; specific Gera approval before any broader activation. |
+
+Both ticket stages are working; no first response/usage returned yet. Leave these exact productive requests alone, do not restart on an observation timeout. No duplicate implementation or repeated full-suite run. Cost/publication investigations remain accepted **verification only**, no cost repair implementation or live publication effects added. Next scheduled pass reviews returned corrections; this bounded pass does not imply continuous execution between checks.
+
+## Historical checkpoint — advisor source release before native acceptance
 
 ## Advisor paired source qualified and merged; remaining candidates returned
 
