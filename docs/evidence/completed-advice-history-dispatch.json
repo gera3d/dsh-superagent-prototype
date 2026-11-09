@@ -190,5 +190,21 @@
     "workerChecks": "162 tests/13suites, types/build passed; root production native new-human-to-projection positive control failed",
     "rootReviewReference": "docs/reviews/completed-advice-history-e58640e-native-blocker.md",
     "continuation": "Supported same-finding retry_scope revision4 then prior-approved fix_now revision5 after r3 ended. No new features/settings/routing/spend/access/retirement or live acceptance."
+  },
+  "correctionR7": {
+    "at": "2026-11-09T19:46:37.314314+00:00",
+    "findingState": "running",
+    "revision": 7,
+    "job": {
+      "id": "finding:bf38fc9c-8273-4d61-9ae4-e98c45e51365:r7",
+      "ticketId": "704a19544bd016b118746a4ea00d062a",
+      "assignmentId": "977d1ad4a3af3deffc7346948296937c"
+    },
+    "r5Head": "424c380dc0dcd7402331ed78df79f3cd2332cbe4",
+    "r5WorkerChecks": "12 history +51 related tests, types/build pass; exact reported head matches Git",
+    "independentBackendChecks": "Real native claim/publish-to-projection positive1 +negative/identity4 pass",
+    "remainingRootFailure": "Real DecisionCard SSR labels pending/staged/read-only preview Historical because onExecute absent",
+    "reviewReference": "docs/reviews/completed-advice-history-424c380-caption-blocker.md",
+    "continuation": "Same approved finding retry_scope revision6 then prior-approved fix_now revision7 after r5 ended. UI-only fix; preserve backend. No extra user decision or live changes."
   }
 }
