@@ -1,0 +1,168 @@
+{
+  "at": "2026-11-09T01:57:40.372187+00:00",
+  "parentFinding": "51f309ca-d396-4983-a55d-ef4432a8572f",
+  "verificationFinding": "06fd14af-5535-411d-936c-477bf2bd2cfa",
+  "ticket": "92582a0a1a1bcff6cfa69a1b868d95dc",
+  "assignment": "0469615a5662df2e9d4488c269b0bb17",
+  "sourceHead": "485d1131b3bfc0d33992207619bd387f36287ee4",
+  "pr": 74,
+  "merge": "9de83841e62bdfebb4a6767d9547ab0873f53ba3",
+  "verdict": "blocked; no reporting acceptance",
+  "attemptCount": 1,
+  "actualEvents": [
+    {
+      "type": "model/selection",
+      "seq": 3,
+      "time": 1794189355379,
+      "data": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "high"
+      }
+    },
+    {
+      "type": "turn/start",
+      "seq": 9,
+      "time": 1794189355959,
+      "data": {
+        "turn": 1
+      }
+    },
+    {
+      "type": "turn/end",
+      "seq": 22,
+      "time": 1794189356231,
+      "data": {
+        "turn": 1,
+        "reason": {
+          "kind": "error",
+          "error": {
+            "message": "All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown) (earliest reset in 1007s). Add an account, wait for reset, or run /agy clear-cooldown.",
+            "code": "AGY_ERROR"
+          }
+        }
+      }
+    },
+    {
+      "type": "model/selection",
+      "seq": 23,
+      "time": 1794189356244,
+      "data": {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      }
+    },
+    {
+      "type": "turn/start",
+      "seq": 25,
+      "time": 1794189356531,
+      "data": {
+        "turn": 2
+      }
+    },
+    {
+      "type": "tool/call",
+      "seq": 33,
+      "time": 1794189360253,
+      "data": {
+        "turn": 2,
+        "step": 1,
+        "callId": "toolu_01GMvi6R5KJGP3i79C7Q2f2o",
+        "name": "bash",
+        "arguments": "{\"description\":\"Locate installed orchestrator_report CLI\",\"command\":\"which orchestrator_report; echo \\\"exit=$?\\\"; echo \\\"$PATH\\\" | tr ':' '\\\\n' | grep -i worker-bin; env | grep '^DSH_SUPERAGENT_' | grep -E 'TICKET|ASSIGNMENT|TURN'\"}"
+      }
+    },
+    {
+      "type": "tool/result",
+      "seq": 34,
+      "time": 1794189360257,
+      "data": {
+        "turn": 2,
+        "step": 1,
+        "message": {
+          "role": "tool",
+          "source": {
+            "kind": "tool",
+            "callId": "toolu_01GMvi6R5KJGP3i79C7Q2f2o"
+          },
+          "toolCallId": "toolu_01GMvi6R5KJGP3i79C7Q2f2o",
+          "content": [
+            {
+              "type": "text",
+              "text": "Error: Ticket ended; new work needs a new authorized ticket"
+            }
+          ],
+          "isError": true,
+          "id": "99611555-1d7e-40c7-af52-5f030c88dc81"
+        }
+      }
+    },
+    {
+      "type": "tool/call",
+      "seq": 38,
+      "time": 1794189361859,
+      "data": {
+        "turn": 2,
+        "step": 2,
+        "callId": "toolu_01MQVPw9J5o1LCjTQU8Y14e9",
+        "name": "bash",
+        "arguments": "{\"description\":\"Retry locating CLI\",\"command\":\"which orchestrator_report; echo \\\"exit=$?\\\"; env | grep -E '^DSH_SUPERAGENT_(TICKET|ASSIGNMENT|TURN)='\"}"
+      }
+    },
+    {
+      "type": "tool/result",
+      "seq": 39,
+      "time": 1794189361861,
+      "data": {
+        "turn": 2,
+        "step": 2,
+        "message": {
+          "role": "tool",
+          "source": {
+            "kind": "tool",
+            "callId": "toolu_01MQVPw9J5o1LCjTQU8Y14e9"
+          },
+          "toolCallId": "toolu_01MQVPw9J5o1LCjTQU8Y14e9",
+          "content": [
+            {
+              "type": "text",
+              "text": "Error: Ticket ended; new work needs a new authorized ticket"
+            }
+          ],
+          "isError": true,
+          "id": "5b838315-04ce-45b2-a5f4-8c5503ffb10c"
+        }
+      }
+    },
+    {
+      "type": "turn/end",
+      "seq": 44,
+      "time": 1794189365835,
+      "data": {
+        "turn": 2,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    }
+  ],
+  "facts": [
+    "Actual turn1 Antigravity Gemini3.8Flash request failed with AGY_ERROR, all accounts in cooldown, earliest reset1007seconds. Not inferred from catalog.",
+    "Actual model selection switches to Anthropic Sonnet5.5 at01:55:56.244Z. Native ticket is ended blocked at01:55:56.257Z, before actual fallback turn2 starts01:55:56.531Z.",
+    "Two real Sonnet bash calls refused because ticket ended; no report CLI command executed, no worker-produced ready report.",
+    "Actual provider events show3 Sonnet responses after1 failed Gemini attempt, not successful Gemini usage. No OpenAI execution.",
+    "No code/settings/credentials/limits/schedules changed; no cooldown clearing and no second verification dispatched."
+  ],
+  "remainingOwner": "Codex coordinates narrow existing reporting idle/fallback ordering correction through original finding, then finite postdeployment verification when existing Google route can serve; preserve all history.",
+  "nativeAcceptance": false,
+  "rollbackRestartExit": 0,
+  "correction": {
+    "jobId": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r31",
+    "ticketId": "b62c2f4207fd86b3cea3087aa71ec87a",
+    "assignmentId": "112fdd24c70f381235c9a33f4b3ea1e1",
+    "state": "working",
+    "observedNativeProgress": true,
+    "actualFallbackProvider": "anthropic",
+    "model": "claude-sonnet-5-5"
+  }
+}

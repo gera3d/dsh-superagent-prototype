@@ -63,5 +63,18 @@
     "providerRequest": false
   },
   "nativeUI": "Reloaded installed Harness and original reporting finding; current blocked review and evidence controls visible",
-  "remaining": "Actual Gemini worker shell report using its current-turn prompt, followed by protected acceptance. Codex owns qualification; no broad reruns or new implementation needed."
+  "remaining": "Actual Gemini worker shell report using its current-turn prompt, followed by protected acceptance. Codex owns qualification; no broad reruns or new implementation needed.",
+  "liveRollback": {
+    "at": "2026-11-09T01:58:01.772442+00:00",
+    "reason": "Actual postdeployment Gemini cooldown -> Sonnet fallback raced missing-report finalization; ticket ended before fallback turn started.",
+    "sourceAssetsOnly": true,
+    "databaseRestored": false,
+    "acceptedScopesPreserved": [
+      "advisor",
+      "completion",
+      "allowance",
+      "headless-provenance"
+    ],
+    "nativeAccepted": false
+  }
 }
