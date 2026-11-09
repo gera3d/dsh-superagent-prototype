@@ -13,22 +13,23 @@ import { deriveDeliveryWork, readDeliveryWorkers, workerTicket } from './deliver
 import { publicationProof, snapshotProof } from './publication-proof.ts'
 
 export function deliveryDecision(delivery: Delivery): PendingDecisionItem {
-  const action = delivery.work?.state === 'superseded' ? undefined : delivery.nextAction
+  const isHistorical = !!delivery.historicalCompletion || delivery.work?.state === 'superseded'
+  const action = isHistorical ? undefined : delivery.nextAction
   const model = action && delivery.recommendation?.actionId === action.id && delivery.recommendation.kind === action.kind && delivery.recommendation.fingerprint === action.fingerprint ? delivery.recommendation : undefined
   const terminal = ['accepted', 'cancelled', 'abandoned'].includes(delivery.state)
   return {
     id: `delivery-${delivery.id}`, ticketId: delivery.workers[0],
     ...(delivery.workers[0] ? { sessionId: `worker-${delivery.workers[0]}` } : {}),
     ticketTitle: delivery.title, trigger: 'Durable feature delivery',
-    status: delivery.work?.state === 'superseded' ? 'stale' : terminal ? 'resolved' : 'pending', actionMode: 'feature_delivery', delivery,
-    ...(delivery.work?.state === 'superseded' ? { staleReason: delivery.work.nextStep } : {}),
-    urgency: delivery.state === 'blocked' ? 'medium' : 'low',
+    status: isHistorical ? 'stale' : terminal ? 'resolved' : 'pending', actionMode: 'feature_delivery', delivery,
+    ...(isHistorical ? { staleReason: delivery.historicalCompletion?.caption ?? delivery.work?.nextStep } : {}),
+    urgency: isHistorical ? 'low' : delivery.state === 'blocked' ? 'medium' : 'low',
     createdAt: Date.parse(delivery.audit[0]?.at ?? '') || 0,
-    context: delivery.work ? `${delivery.work.state}; owner: ${delivery.work.owner}; ${delivery.work.progress ?? ''} ${delivery.work.nextStep}` : delivery.blocker ?? `${delivery.stage}: ${delivery.state}; owner: ${delivery.owner}`,
-    question: delivery.work?.nextStep ?? delivery.blocker ?? action?.label ?? `${delivery.stage}: ${delivery.state}`,
+    context: delivery.historicalCompletion ? delivery.historicalCompletion.caption : delivery.work ? `${delivery.work.state}; owner: ${delivery.work.owner}; ${delivery.work.progress ?? ''} ${delivery.work.nextStep}` : delivery.blocker ?? `${delivery.stage}: ${delivery.state}; owner: ${delivery.owner}`,
+    question: delivery.historicalCompletion ? delivery.historicalCompletion.caption : delivery.work?.nextStep ?? delivery.blocker ?? action?.label ?? `${delivery.stage}: ${delivery.state}`,
     choices: action ? [{ id: action.id, label: action.label, actionKind: 'lifecycle' }] : [],
     recommendation: { recommendedValue: model?.disposition === 'take' ? model.actionId : '', confidence: 0,
-      rationale: model?.rationale ?? delivery.recommendationError?.message ?? (action ? 'Eligible action; Senior Developer advice is not available.' : 'No executable action is currently available.'),
+      rationale: delivery.historicalCompletion ? 'Nonactionable completed history delivered by later release; no further action.' : model?.rationale ?? delivery.recommendationError?.message ?? (action ? 'Eligible action; Senior Developer advice is not available.' : 'No executable action is currently available.'),
       distribution: [], provider: model?.provider ?? 'Not evaluated', latencyMs: 0 },
   }
 }
@@ -37,6 +38,11 @@ export function deliveryDecision(delivery: Delivery): PendingDecisionItem {
 export function reconcileDeliveryAdvice(items: PendingDecisionItem[], deliveries: Delivery[] = []): PendingDecisionItem[] {
   const settled = new Map<string, number>()
   for (const delivery of deliveries) {
+    if (delivery.historicalCompletion) {
+      const time = Date.parse(delivery.historicalCompletion.reconciledAt) || Date.now()
+      for (const worker of delivery.workers) settled.set(`worker-${worker}`, Math.max(time, settled.get(`worker-${worker}`) ?? 0))
+      continue
+    }
     if (delivery.stage === 'implementation') continue
     const time = Math.max(0, ...delivery.evidence.filter(e => deliveryFingerprint(e.bindings) === deliveryFingerprint(delivery.bindings) && (e.generation ?? 0) === delivery.generation && (['review', 'publication', 'verification', 'rollback'].includes(e.kind) || (e.kind === 'implementation' && delivery.audit.some(a => a.event.startsWith('backfill:'))))).map(e => Date.parse(e.recordedAt) || 0))
     for (const worker of delivery.workers) if (time) settled.set(`worker-${worker}`, Math.max(time, settled.get(`worker-${worker}`) ?? 0))

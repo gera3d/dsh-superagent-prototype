@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "description": "Historical completion reconciliation for three legacy delivery records delivered by PR #33",
+  "records": [
+    {
+      "deliveryId": "auto-1aa9568a8df574db0cef146a58004c4b",
+      "revision": 3,
+      "sourceIssue": 184,
+      "originalWorkerId": "1aa9568a8df574db0cef146a58004c4b",
+      "releasePr": 33,
+      "releaseMergedSha": "fb591843c3f9ff19965a49e45a4157ed195fc890",
+      "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/pull/33",
+      "attestation": "Operator confirmed historical completion via verified later release PR #33; closed source issue #184. No typed acceptance or publication grant."
+    },
+    {
+      "deliveryId": "auto-71dc25902ccec92c851634c58cf365f0",
+      "revision": 3,
+      "sourceIssue": 188,
+      "originalWorkerId": "71dc25902ccec92c851634c58cf365f0",
+      "releasePr": 33,
+      "releaseMergedSha": "fb591843c3f9ff19965a49e45a4157ed195fc890",
+      "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/pull/33",
+      "attestation": "Operator confirmed historical completion via verified later release PR #33; closed source issue #188. No typed acceptance or publication grant."
+    },
+    {
+      "deliveryId": "auto-d65f3131a9ae77d9de524535e4a01a26",
+      "revision": 3,
+      "sourceIssue": 182,
+      "originalWorkerId": "d65f3131a9ae77d9de524535e4a01a26",
+      "releasePr": 33,
+      "releaseMergedSha": "fb591843c3f9ff19965a49e45a4157ed195fc890",
+      "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/pull/33",
+      "attestation": "Operator confirmed historical completion via verified later release PR #33; closed source issue #182. No typed acceptance or publication grant."
+    }
+  ]
+}
