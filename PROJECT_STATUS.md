@@ -1,10 +1,12 @@
 # DeepSeek Harness project status
 
-Updated November 09, 2026, 1:56 PM PST. Owner: current Codex coordinator/reviewer. **Active work and verified checkpoints below distinguish running implementation from released results.**
+Updated November 09, 2026, 2:19 PM PST. Owner: current Codex coordinator/reviewer. **Active work and verified checkpoints below distinguish running implementation from released results.**
 
 ## Active approved work
 
-**Cost-summary correctness repair is now explicitly approved and running.** Finding `8157c834-c7a5-43c6-afdd-97cee8534c6b` revision1, job `finding:8157c834-c7a5-43c6-afdd-97cee8534c6b:r1`, ticket `a82c9eddefc65510854d28ec2444eb57`, assignment `233f9382d0a2988f16e42c9db5889744`. Native Fix now confirmed at21:56:05Z. One isolated Harness implementation; original accepted cost feature and investigation remain untouched. [Approved scope](docs/reviews/cost-summary-bounded-repair-plan.md), [dispatch proof](docs/evidence/cost-summary-repair-dispatch.json). Codex owns independent review, focused missing checks, rollback/merge/deployment and actual ended-job UI verification under existing approval; no further routine reauthorization is needed. No candidate or new deployment exists yet. Leave the productive worker alone.
+**Cost-summary correctness repair remains approved; first candidate rejected, same-finding correctionrunning.** Finding `8157c834-c7a5-43c6-afdd-97cee8534c6b` revision3, job `finding:8157c834-c7a5-43c6-afdd-97cee8534c6b:r3`, ticket `d742210aad60f06f6bece9ba490c417e`, assignment `21918aff7a5af9d32fe5a1b85e33240d`. Actual R1 headf99080a91e2d734d40521cc9f0a37c3fb3f6d41e returned38 focused checks/types/build pass, but independent3-case audit failed: same-sample route correction, known usage erased by missing final sample, and unknown-eventCount rewrite freshness. [Exact review](docs/reviews/cost-summary-f99080a-blockers.md), [executable audit](docs/reviews/cost-summary-f99080a.audit.spec.ts), [actual result](docs/evidence/cost-summary-f99080a-root-audit.log), [correction](docs/evidence/cost-summary-repair-r3-correction.json). Structured report's different full SHA sharing first7 is preserved, not trusted as object identity.
+
+Harness owns the narrow correction in isolation; Codex owns independent exact-head review and authorized rollback/merge/deploy/actual ended-job verification. No new user decision or routine approval needed. Original accepted cost feature, investigation and handoff release remain untouched. **No cost-repair code merged, installed or accepted yet.**
 
 ## Current verified checkpoint
 

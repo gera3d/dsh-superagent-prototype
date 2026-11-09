@@ -1,0 +1,26 @@
+{
+  "at": "2026-11-09T22:19:12.511245+00:00",
+  "rejectedActualHead": "f99080a91e2d734d40521cc9f0a37c3fb3f6d41e",
+  "reportedDifferentHead": "f99080a256df2e737d94e24ef575a7daee364f9b",
+  "workerChecks": {
+    "focusedTests": 38,
+    "suites": 3,
+    "types": "passed",
+    "build": "passed"
+  },
+  "independentAudit": {
+    "failed": 3,
+    "passed": 0
+  },
+  "finding": {
+    "id": "8157c834-c7a5-43c6-afdd-97cee8534c6b",
+    "revision": 3,
+    "state": "running",
+    "job": {
+      "id": "finding:8157c834-c7a5-43c6-afdd-97cee8534c6b:r3",
+      "ticketId": "d742210aad60f06f6bece9ba490c417e",
+      "assignmentId": "21918aff7a5af9d32fe5a1b85e33240d"
+    }
+  },
+  "release": "withheld; no candidate changes installed"
+}
