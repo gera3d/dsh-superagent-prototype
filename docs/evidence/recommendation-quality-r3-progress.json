@@ -1,0 +1,25 @@
+{
+  "observedAt": "2026-11-09T15:43:09.788427+00:00",
+  "findingId": "8d447429-65ee-4f5f-aa7b-354c0f349673",
+  "jobId": "finding:8d447429-65ee-4f5f-aa7b-354c0f349673:r3",
+  "ticketId": "ff9d482f3aedf1252f94bee6ed484997",
+  "assignmentId": "430d6b6c105aa4c387e5ea774b228e79",
+  "ticketStage": "working",
+  "conversationId": "7fdc229f-f7dd-46ba-afc8-b667441a95a5",
+  "trajectoryId": "ad1d83f4-75a4-4b70-8f04-764a9a18c0b1",
+  "nestedStepCount": 179,
+  "latestNestedStep": 178,
+  "reviewReadProofSteps": [
+    16,
+    17,
+    18,
+    20
+  ],
+  "workerHead": "574e783a1f652e69cf60a08d8ed1c418eebe876c",
+  "workerStatus": " M src/app/advice-context.ts\n M src/app/character-evaluator.ts\n M src/app/decision-inbox.ts\n M src/app/decision-ranker.ts\n M src/app/routes/helper.ts\n?? src/app/option-quality.ts\n?? tests/advisor-option-quality.spec.ts\n",
+  "knownFailuresPreserved": {
+    "typecheck": "task-149: advice-context.ts references absent DeliveryScopeBinding.missing. Subsequent task-164 has empty stdout, not independently interpreted as exit0.",
+    "quality": "trajectory step174 reports prohibition false positive for Publish...without and repeat-command matching plus invalid test resolve setup; worker correcting."
+  },
+  "stage": "Productive revised implementation and worker tests, no finished corrected candidate/report or root qualification. Prior candidate fad9dfe rejected. No duplicated tests/retry/routes/settings/new scope/live release by coordinator."
+}
