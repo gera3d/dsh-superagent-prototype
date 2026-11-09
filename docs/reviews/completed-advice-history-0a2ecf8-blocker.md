@@ -1,0 +1,13 @@
+# Independent review: completed-advice history candidate
+
+Candidate `0a2ecf87ca266a3c3bd7216a317b75e823d8dd5d` is not approved for deployment. Worker reports163 targeted checks across15 suites, types and build passing; original failed fixture runs remain preserved. Root has not repeated that bundle.
+
+## Blocker: card creation time is not proof of a later human request
+
+`src/app/finding.ts` currently calls `item.createdAt > resolvedAt` a genuine newer human request. The production projection can therefore keep a completed parent actionable merely because a row was captured later. This does not inspect a newer human message, its origin or source identity.
+
+The original real reporting closure row projects to stale/history correctly. Root's controlled delayed-capture counterexample then reuses the same actual pre-acceptance sourceMessageId/sourceTurn/sourceSeq, changes only storage creation time to one second after resolution, and calls the candidate's real `projectFindings` against an isolated in-memory FindingStore populated with the real accepted parent. Expected history; actual pending. The source bytes tested before commit are hash-identical to the committed candidate; exact binding is in [the audit](../evidence/completed-advice-history-r1-root-audit.json). This is a controlled production-function counterexample, not a claim a new user made this request or that a live row was modified.
+
+Correct that predicate using available authoritative later-human/source evidence, with a truthful conservative result when evidence is unavailable. Do not infer user intent from publication/capture time, source turn alone, a worker/system message or a generic scope string. Preserve ordinary explicit user requests and an actual later human request after acceptance. Add both negative delayed-capture/system-only and positive real-human-source controls in the relevant production projection path. Preserve all stored choices/revisions and existing accepted parents. Do not weaken original native new-request or staging/submission proofs. Keep the three typed delivery gates unbound and visible.
+
+This is a bounded correction to the same newly approved history-presentation finding, not a regression/reopening of the previously accepted quality repair and not a new feature/retirement mechanism. Reuse the candidate, actual isolated layout and existing logs; no broad repository rediscovery or full suite repetition. Return exact corrected head/patch and focused actual evidence through the reporting bridge. Codex owns independent review and release; no additional user approval is needed for this correction.

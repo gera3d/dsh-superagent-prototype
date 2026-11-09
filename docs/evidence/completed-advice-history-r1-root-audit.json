@@ -1,0 +1,18 @@
+{
+  "stage": "Independent exact-committed-source counterexample; live original row unchanged and original-row positive control passed",
+  "case": "Delayed capture timestamp is not a newer human request",
+  "fixture": "Actual pre-acceptance reporting closure card with identical sourceMessageId/sourceTurn/sourceSeq; only row creation time delayed until after parent resolution in an isolated in-memory fixture",
+  "sourceSha256": "6843d8421cdf7621975511ce4d1eb5cc74747de6e2754b02a60422c7b1fcb74f",
+  "sourceIdentity": {
+    "sessionId": "worker-b62c2f4207fd86b3cea3087aa71ec87a",
+    "sourceMessageId": "4a1cfc5b-bab2-41a8-96fb-ebd43f197712",
+    "sourceTurn": 3,
+    "sourceSeq": 270
+  },
+  "expected": "stale",
+  "actual": "pending",
+  "passed": false,
+  "reason": "No new human message supplied; fresh storage time alone must not confer active-work semantics.",
+  "exactCandidateHead": "0a2ecf87ca266a3c3bd7216a317b75e823d8dd5d",
+  "sourceUnchangedSinceAudit": true
+}
