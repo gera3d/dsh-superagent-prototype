@@ -421,6 +421,54 @@ export function findingDecision(record: Finding): PendingDecisionItem {
   }
   return item
 }
+function tableExists(db: DatabaseSync, tableName: string): boolean {
+  try {
+    return !!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(tableName)
+  } catch {
+    return false
+  }
+}
+
+function isAuthoritativeLaterHumanRequest(store: FindingStore, item: PendingDecisionItem, resolvedAt: number): boolean {
+  if (!Number.isFinite(resolvedAt)) return false
+
+  // 1. Authoritative server-derived user source proof bound to this item's turn/sequence
+  if (item.userSource && item.userSource.kind === 'user') {
+    const userTime = item.userSource.time
+    if (Number.isFinite(userTime) && userTime > resolvedAt) {
+      if (item.sourceSeq === undefined || item.userSource.seq <= item.sourceSeq) {
+        if (item.sourceTurn === undefined || item.userSource.turn === undefined || item.userSource.turn === item.sourceTurn) {
+          return true
+        }
+      }
+    }
+  }
+
+  // 2. Authoritative database trigger verification bound to item.sourceMessageId
+  const db = (store as any).db as DatabaseSync | undefined
+  if (db) {
+    try {
+      if (tableExists(db, 'trigger') && item.sourceMessageId) {
+        const row = db.prepare('SELECT value FROM trigger WHERE id = ?').get(item.sourceMessageId)
+        if (row && typeof (row as any).value === 'string') {
+          const trigger = JSON.parse((row as any).value)
+          if (trigger.human === true) {
+            const triggerTime = trigger.at ? Date.parse(trigger.at) : NaN
+            if (Number.isFinite(triggerTime) && triggerTime > resolvedAt) {
+              return true
+            }
+          }
+        }
+      }
+    } catch {
+      return false
+    }
+  }
+
+  // Truthful conservative result when evidence is unavailable
+  return false
+}
+
 /** Replace old projections by identity, preserving non-finding decisions and full finding history. */
 export function projectFindings(store: FindingStore, items: PendingDecisionItem[]): PendingDecisionItem[] {
   const records = store.list()
@@ -428,17 +476,120 @@ export function projectFindings(store: FindingStore, items: PendingDecisionItem[
   const findingWorkers = new Set(records.flatMap(record => [record.job, ...(record.priorJobs ?? [])]
     .flatMap(job => job?.ticketId ? [job.ticketId.replace(/^worker-/, '')] : [])))
   const unresolvedDeliveries = new Set(records.filter(record => record.state !== 'resolved').map(record => record.existingDeliveryId).filter(Boolean))
+
+  const bare = (id?: string) => (id ? id.replace(/^worker-/, '') : '')
+  const findingBySession = new Map<string, Finding>()
+  const findingByTicket = new Map<string, Finding>()
+  const priorJobTickets = new Set<string>()
+
+  for (const record of records) {
+    if (record.sessionId) {
+      findingBySession.set(bare(record.sessionId), record)
+      findingBySession.set(record.sessionId, record)
+    }
+    if (record.job?.ticketId) {
+      const t = bare(record.job.ticketId)
+      findingByTicket.set(t, record)
+      findingByTicket.set(record.job.ticketId, record)
+    }
+    for (const pj of record.priorJobs ?? []) {
+      if (pj.ticketId) {
+        const pt = bare(pj.ticketId)
+        priorJobTickets.add(pt)
+        priorJobTickets.add(pj.ticketId)
+        if (!findingByTicket.has(pt)) {
+          findingByTicket.set(pt, record)
+          findingByTicket.set(pj.ticketId, record)
+        }
+      }
+    }
+  }
+
   // The canonical finding owns its job's evidence review, not a second generic publication prompt.
   // Actual publication/rollback records and human questions remain independently visible.
   const projected = items.filter(item => !ids.has(item.id)
     && !(item.lifecycle && !item.lifecycle.publication && item.ticketId && findingWorkers.has(item.ticketId.replace(/^worker-/, '')))).map(item => {
-    if (item.delivery?.nextAction?.kind !== 'accept' || !unresolvedDeliveries.has(item.delivery.id)) return item
-    const delivery = structuredClone(item.delivery)
-    delete delivery.nextAction; delete delivery.recommendation
-    const blocker = 'Linked finding evidence review remains outstanding'
-    delivery.state = 'blocked'; delivery.blocker = blocker
-    return { ...item, delivery, choices: [], recommendation: { recommendedValue: '', confidence: 0,
-      rationale: blocker, distribution: [], provider: 'Recommendation unavailable', latencyMs: 0 } }
+    if (item.delivery?.nextAction?.kind === 'accept' && unresolvedDeliveries.has(item.delivery.id)) {
+      const delivery = structuredClone(item.delivery)
+      delete delivery.nextAction; delete delivery.recommendation
+      const blocker = 'Linked finding evidence review remains outstanding'
+      delivery.state = 'blocked'; delivery.blocker = blocker
+      return { ...item, delivery, choices: [], recommendation: { recommendedValue: '', confidence: 0,
+        rationale: blocker, distribution: [], provider: 'Recommendation unavailable', latencyMs: 0 } }
+    }
+
+    // Preserve unbound typed delivery gates and canonical triage items untouched
+    if (item.delivery || item.actionMode === 'feature_delivery' || item.finding || item.actionMode === 'finding_triage') {
+      return item
+    }
+
+    const linkedFinding = (item.sessionId && (findingBySession.get(bare(item.sessionId)) || findingByTicket.get(bare(item.sessionId))))
+      || (item.ticketId && findingByTicket.get(bare(item.ticketId)))
+
+    if (!linkedFinding) {
+      return item
+    }
+
+    const itemTicket = bare(item.sessionId) || bare(item.ticketId)
+    const isSupersededPriorJob = itemTicket && priorJobTickets.has(itemTicket) && linkedFinding.job?.ticketId && bare(linkedFinding.job.ticketId) !== itemTicket
+    const isResolvedFinding = linkedFinding.state === 'resolved'
+
+    const resolvedAt = linkedFinding.resolution?.at
+      ? Date.parse(linkedFinding.resolution.at)
+      : (linkedFinding.updatedAt ? Date.parse(linkedFinding.updatedAt) : Date.now())
+
+    // Genuine newer human request after acceptance: requires authoritative human source proof
+    const isNewerHumanRequest = isAuthoritativeLaterHumanRequest(store, item, resolvedAt)
+
+    if (isResolvedFinding && !isNewerHumanRequest) {
+      const reason = `Work completed: parent finding ${linkedFinding.id} was verified and accepted at ${linkedFinding.resolution?.at ?? linkedFinding.updatedAt}. Retained as history, not execution authority.`
+      return {
+        ...item,
+        status: 'stale' as const,
+        staleReason: item.staleReason || reason,
+        invalidation: item.invalidation ?? {
+          at: Number.isFinite(resolvedAt) ? resolvedAt : Date.now(),
+          reason,
+        },
+        parentFinding: {
+          id: linkedFinding.id,
+          title: linkedFinding.title,
+          state: linkedFinding.state,
+          resolvedAt: linkedFinding.resolution?.at,
+        },
+      }
+    }
+
+    if (isSupersededPriorJob && item.status === 'pending') {
+      const reason = `Prior attempt superseded by finding ${linkedFinding.id} job ${linkedFinding.job?.id ?? ''}. Retained as history, not execution authority.`
+      return {
+        ...item,
+        status: 'stale' as const,
+        staleReason: item.staleReason || reason,
+        invalidation: item.invalidation ?? {
+          at: Date.now(),
+          reason,
+        },
+        parentFinding: {
+          id: linkedFinding.id,
+          title: linkedFinding.title,
+          state: linkedFinding.state,
+          resolvedAt: linkedFinding.resolution?.at,
+        },
+      }
+    }
+
+    // Still active or newer request: attach parentFinding metadata while keeping current status
+    return {
+      ...item,
+      parentFinding: {
+        id: linkedFinding.id,
+        title: linkedFinding.title,
+        state: linkedFinding.state,
+        resolvedAt: linkedFinding.resolution?.at,
+      },
+    }
   })
+
   return [...projected, ...records.map(findingDecision)]
 }

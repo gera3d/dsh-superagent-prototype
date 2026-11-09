@@ -7,12 +7,17 @@ export function publicationCompleted(item: PendingDecisionItem): boolean {
   const stage = p.status === 'published' ? 'verify' : p.status === 'rolled_back' ? 'rollback' : undefined
   return !!stage && p.outcomes.filter(outcome => outcome.stage === stage).at(-1)?.status === 'succeeded'
 }
+export function findingCompleted(item: PendingDecisionItem): boolean {
+  if (item.finding?.state === 'resolved') return true
+  if (item.status === 'stale' && (item.parentFinding?.state === 'resolved' || Boolean(item.staleReason && /parent finding|prior attempt/i.test(item.staleReason)))) return true
+  return false
+}
 export function decisionNeedsAttention(item: PendingDecisionItem): boolean {
   if (item.delivery) return item.status === 'pending' && !['accepted', 'cancelled', 'abandoned'].includes(item.delivery.state) && !item.invalidation
-  if (publicationCompleted(item)) return false
+  if (publicationCompleted(item) || findingCompleted(item)) return false
   return item.status === 'pending' || !!item.lifecycle?.recovery
 }
 export function decisionInHistory(item: PendingDecisionItem): boolean {
   if (item.delivery) return !decisionNeedsAttention(item)
-  return publicationCompleted(item) || item.status === 'resolved' && !item.lifecycle?.recovery
+  return publicationCompleted(item) || findingCompleted(item) || item.status === 'resolved' && !item.lifecycle?.recovery
 }

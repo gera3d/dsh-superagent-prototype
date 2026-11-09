@@ -114,7 +114,11 @@ export function apply(ctx: Context, config: { database: string }): void {
           if (id.startsWith('dec-')) refreshTickets()
           const operation = resolve[2]
           if (operation === 'restart') send(200, await restartDecision(ctx, inbox, id, DecisionRestartRequest.parse(body)))
-          else if (operation === 'stage') send(200, await stageDecision(ctx, inbox, id, DecisionStageRequest.parse(body)))
+          else if (operation === 'stage') {
+            const target = projectedGet(id)
+            if (target?.status === 'stale' || target?.invalidation) throw new InboxError(409, 'Decision is stale or closed; no staging is allowed')
+            send(200, await stageDecision(ctx, inbox, id, DecisionStageRequest.parse(body)))
+          }
           else if (operation === 'submission') send(200, await submitDecision(ctx, inbox, id, DecisionSubmissionRequest.parse(body)))
           else if (operation === 'discard-staging') send(200, inbox.discardStaging(id, DecisionDiscardRequest.parse(body).attemptId))
           else send(200, inbox.resolve(id, z.object({ choiceId: z.string().min(1).max(200) }).strict().parse(body).choiceId))
