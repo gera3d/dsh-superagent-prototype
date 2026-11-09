@@ -13,6 +13,15 @@ Updated November 09, 2026, 1:40 PM PST. Owner: current Codex coordinator/reviewe
 
 Live Harness: **0 running,0 queued,max3; intake resumed; every runtime health component including GitHub ready.** Settings are unchanged from pre-release; OpenAI remains conserved. Implementation used the existing Antigravity subscription route and native scoring identified Anthropic. No new credential, permission, spend, routing, concurrency or schedule setting.
 
+## Remaining open work — reconciled against live state
+
+- **Cost-summary correctness repair:** nine distinct concerns are verified and still present in the installed source. The original feature is live; the later task accepted investigation only and explicitly requires a separately confirmed bounded implementation decision. [Concrete repair scope and finish line](docs/reviews/cost-summary-bounded-repair-plan.md). Not dispatched or represented as already approved.
+- **Three legacy delivery records:** subscription conservation, finding evidence capture and concurrent dispatch still have unbound source/target/acceptance requirements. Their feature code was delivered through later accepted releases. These are reconciliation records, not three new implementations or permission to publish. No bulk acceptance or invented bindings.
+- **Publication diagnostics:** earlier investigation accepted; original66ms pre-enqueue cause remains unproven. Additional phase/cause logging is optional, not implemented or dispatched.
+- **Capability limits:** direct Anthropic allowance data remains unavailable and Cloudflare profile remains advice-only. No new credential/access is authorized. A separate ordinary explanation conversation is not project backlog.
+
+[Read-only live reconciliation](docs/evidence/open-work-reconciliation-20261109.json):0 running,0 queued, no open source PRs; all implementation findings are resolved and deferred records are superseded verification history. No remaining approved implementation candidate was found to deploy. Await one bounded cost-repair confirmation rather than silently widening verification-only authority.
+
 ## Verified behavior and evidence
 
 - Actual r15 source first recognized recorded deployment and offered **Codex: native live verification90%**, with conditional final acceptance10%. After personally verified live results were recorded through the existing hash-bound operator receipt CLI, the **same unchanged event digest** produced an immutable replacement: **Coordinator records final acceptance62% / Inspect recorded verification evidence38%**. Both explicitly excluded completed tests/review/merge/deploy/verification. No conversation choice selected or reply sent.

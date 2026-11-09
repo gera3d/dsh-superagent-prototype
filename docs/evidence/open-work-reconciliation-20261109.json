@@ -1,0 +1,25 @@
+{
+  "at": "2026-11-09T21:45:15.680367+00:00",
+  "scope": "Read-only current-source reconciliation; no new implementation authorized or dispatched",
+  "pending": {
+    "ordinaryConversation": 1,
+    "unboundDeliveryRecords": 3
+  },
+  "openPRs": 0,
+  "running": 0,
+  "queued": 0,
+  "currentDefectSources": {
+    "src/app/job-usage.ts": {
+      "sha256": "b872079accff610faf2d19026f99bd563b953183a87257735eafa5b6030d52ac",
+      "matchesVerifiedDefectiveSource": true
+    },
+    "src/client/job-usage.tsx": {
+      "sha256": "3cd1cf32f0d187dd638a5a35a438ee493b8cedca7e55e85ccabb551af8026e5c",
+      "matchesVerifiedDefectiveSource": true
+    },
+    "tests/fixtures/capture-job-usage.mjs": {
+      "sha256": "30f616b34965d1951046286c97b9c81795adcf1921f5e26c619c81fc54568ca6",
+      "matchesVerifiedDefectiveSource": true
+    }
+  }
+}
