@@ -1,6 +1,6 @@
 {
   "at": "2026-11-09T17:35:59.807034+00:00",
-  "stage": "native controls observed; protected acceptance not yet performed",
+  "stage": "protected native accepted; post-acceptance source verified",
   "sourceHead": "4b5851791863628d711f014fd8c63b95db6507b9",
   "merge": "30aee3a7db1729c026e6027347f80f889d24e0fd",
   "workerCandidate": "c3bb10125b9d5d3682f82ab4958ca665d1adf14f",
@@ -246,14 +246,51 @@
         "detail": "No managed Session is waiting on a model budget retry"
       },
       "github": {
-        "state": "error",
-        "detail": "4 consecutive failed polls; last: Error: gh: API rate limit exceeded for user ID 512583. If you reach out to GitHub Support for help, please include the request ID CC49:2B8C36:35E9FE:3AC753:6AF2030C and timestamp 2026-11-09 17:29:48 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (HTTP 403)",
-        "code": "pollFailures",
-        "values": {
-          "count": "4",
-          "error": "Error: gh: API rate limit exceeded for user ID 512583. If you reach out to GitHub Support for help, please include the request ID CC49:2B8C36:35E9FE:3AC753:6AF2030C and timestamp 2026-11-09 17:29:48 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (HTTP 403)"
-        }
+        "state": "ready",
+        "detail": "0 notifications; next poll \u2265 60s",
+        "at": "2026-11-09T17:33:04.235Z"
       }
     }
+  },
+  "acceptedAt": "2026-11-09T17:37:53.239Z",
+  "acceptance": {
+    "id": "8d447429-65ee-4f5f-aa7b-354c0f349673",
+    "state": "resolved",
+    "revision": 14,
+    "resolution": {
+      "outcome": "verified",
+      "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/recommendation-quality-native-verification.json",
+      "requirements": [
+        "Capture/reproduce the exact bad saved options before changes; inspect actual effective Settings persona/helper/fallback/ranking and canonical advice paths, actual tool capability and original accepted criteria. Preserve original evidence; do not treat zero outer tool calls as no internal work.",
+        "Every offered alternate as well as winner must be current-state/evidence grounded, relevant, distinct and within approved task with correct owner/capability; actual native-tool-gap and unrelated-delivery closure alternatives must not pass as useful next actions. Scores only rank choices, never certify usefulness.",
+        "Accepted parent with no newer human request produces completion/history and no pending actionable advice; repeat view/capture does not recreate meaningless choices. Current-source user questions and authorized new requests after acceptance still work; do not hide meaningful choices or suppress all recommendations.",
+        "Ready but unreviewed current candidate gives actual coordinator-owned supported review/evidence stage and only missing checks; newer failed/unverified evidence supersedes older ready; failed/prior attempts use current accepted resolution rather than stale retry advice. No false test/acceptance claim or fictional Codex dispatch.",
+        "Missing source/target/acceptance evidence for typed delivery gates gets exact missing inputs with owner, distinguishing discoverable evidence from true product/user choice; retain all native approval/publication gates and do not bind/accept/dismiss those deliveries.",
+        "Meaningful isolated regressions cover each saved bad example, all alternatives, ordinary conversation, genuine user choices, newly authorized work, changed parent/job/source/revision/authority, unresolved evidence and active work. Reuse prior tests without broad redundant reruns; sequential types/build/focused checks with actual commands/results.",
+        "Fresh advice consistency across helper and native fallback/capture, preserve current historical option sets/revisions/choices and staged/native submission proofs; do not bypass the separate lack of a safe historical retirement API. New-quality fix must stand without implementing retirement.",
+        "Return exact paired heads/bases/patches, actual targeted tests/types/build evidence and limits, durable report through available real reporting path, and proposed native all-option acceptance cases. No live edit/merge/deploy/accept by implementation worker; Codex handles authorized release after independent exact-head review."
+      ],
+      "at": "2026-11-09T17:37:53.239Z",
+      "actor": "local-operator",
+      "jobId": "finding:8d447429-65ee-4f5f-aa7b-354c0f349673:r11"
+    }
+  },
+  "postAcceptance": {
+    "at": "2026-11-09T17:38:57.435768+00:00",
+    "nativeSource": "Actual r11 source shows Finding Resolved, empty composer and disabled Send; no Suggested next steps or option buttons after history fully loads.",
+    "newChoiceSelected": false,
+    "replySent": false,
+    "pendingCount": 16,
+    "currentSourceRows": [
+      {
+        "id": "chat-55991230d8a233d12f328eec43ccc36f",
+        "status": "pending",
+        "sessionId": "worker-f2e857feb68baca2469103dc91d7a507",
+        "sourceMessageId": "4d655039-ca17-440d-be08-ee6673d3da53",
+        "sourceTurn": 1,
+        "sourceSeq": 20
+      }
+    ],
+    "historicalRowLimit": "Existing pre-acceptance immutable advice remains preserved; no newly created source row or bulk retirement."
   }
 }
