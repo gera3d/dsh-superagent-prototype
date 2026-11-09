@@ -1,0 +1,25 @@
+{
+  "at": "2026-11-09T00:26:22.683363+00:00",
+  "reportingCandidate": "5f8cd70f850258ab3d177c0c817cc152189a6dd0",
+  "rootTests": 2,
+  "failed": 2,
+  "failures": [
+    "Both report/runtime turn absent accepts ready",
+    "Rename of newer report between final comparison and unlink still loses new evidence"
+  ],
+  "reportingCurrentJob": {
+    "id": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r16",
+    "ticketId": "e532964d4410297ad7cdfa1a4f56c5b9",
+    "assignmentId": "a948e77baa4978f0f45826fd23596807"
+  },
+  "headlessCandidate": "62609e2c079b5299ccafa3ef3792fe50c3132a9b",
+  "headlessPR": 72,
+  "headlessDeployed": true,
+  "headlessEnabled": false,
+  "headlessAccepted": false,
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  }
+}

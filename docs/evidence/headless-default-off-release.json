@@ -1,0 +1,81 @@
+{
+  "at": "2026-11-09T00:23:40.820573+00:00",
+  "head": "9add229d92dd7958174475653597ed564a200a5f",
+  "merge": "2bbcdb8cd8e13dde38616bc0891370a6a6690bf8",
+  "enabled": false,
+  "files": [
+    {
+      "path": "scripts/finding-coordinate.ts",
+      "before": null,
+      "after": "f88606db76c2b097b720799afea535ccb10823008763c21d7163f8ddcb5881b3"
+    },
+    {
+      "path": "src/app/api.ts",
+      "before": "4423461badc7aa254d6b0f735e6f002e75d4a003757f439ad3e656a3d18b8710",
+      "after": "dcafc46636709fed39a6a2ea46f96a3f6d4d3bf45dbf5b3590beab16060c581a"
+    },
+    {
+      "path": "src/app/finding-coordination.ts",
+      "before": null,
+      "after": "c05c54a08db69e9cde044ba774a8d6dc12291d55e7602607eb978d055f38b7a5"
+    },
+    {
+      "path": "src/app/finding-runtime.ts",
+      "before": "97ef02044ae1c9f41a3323813b6d6b9739936509bb23673fb11bd91b47b27d10",
+      "after": "a994e309c36c399baa43238fb508c32e73760e1ece82d5deeb7c21d883cccee6"
+    },
+    {
+      "path": "src/app/finding.ts",
+      "before": "49ba8b6d8ec52306e1c7f06edb651f227f49c628c2a4f815b1cca7ce3853d723",
+      "after": "d4ca347c2a6844f4a6ce462d4c6a1d9b3fcaa3c9db32549b5089b97e2a2abee0"
+    },
+    {
+      "path": "src/app/http.ts",
+      "before": "1bf3c563b6e0b2a03fd2b4f035a6dcef11c811ac4f165b3fdd6a0b67031161ac",
+      "after": "e02c04415696e3179f5fa41c6dc072dd4ba754ec6a57887b838c4c8c419be7cf"
+    },
+    {
+      "path": "src/app/settings.ts",
+      "before": "344a63826ed8f14bcb2b6226f699d585955d0310b6786fa461802933a12d949b",
+      "after": "4084f97814e03ebb890c0bd2dd7aac1b85003ee3abf89db662ca4a6971aa6429"
+    },
+    {
+      "path": "src/app/views/settings.ts",
+      "before": "18879fffcc29ba4e8a479d04a03b99ed73fabc195f2ffe5d424eaa50a8bdf05d",
+      "after": "20cd684ffa08edec207ab3ffb2ad55ccaf509fbab755de7ff77291f3f761d92a"
+    },
+    {
+      "path": "src/policy.ts",
+      "before": "c7480633e10bce9b7f6b1c2c641a803cac2fb1438e9b99ec3f7d62e4896b354c",
+      "after": "98646873f98690a1bec0b988eef6ab44d5648d77d8c8720f941131203633d2cd"
+    }
+  ],
+  "deployed": true,
+  "nativeBootVerified": true,
+  "accepted": false,
+  "disabledEndpointStatus": 403,
+  "independentCandidateTests": 85,
+  "integratedInitial": {
+    "passed": 102,
+    "failed": 1,
+    "reason": "Outdated deployed persona ID expectation"
+  },
+  "correctedHttpAdviceTests": 37,
+  "types": 0,
+  "build": 0,
+  "restart": 0,
+  "ownerDecision": "Gera specific confirmation before enabling local same-UID private-file coordination; locked-screen functional verification not performed while disabled",
+  "reportingJob": {
+    "id": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r16"
+  },
+  "reportingCurrentJob": {
+    "id": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r16",
+    "ticketId": "e532964d4410297ad7cdfa1a4f56c5b9",
+    "assignmentId": "a948e77baa4978f0f45826fd23596807"
+  },
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  }
+}
