@@ -514,3 +514,58 @@ it('evaluates advice while unrelated historical recovery is blocked', async () =
     expect(response).toMatchObject({ status: 200, body: { recommendedValue: 'a', distribution: [{ id: 'a', probability: .7 }, { id: 'b', probability: .3 }] } })
   } finally { release() }
 })
+
+it('gates usage reading so in-flight running tickets do not read or flush usage while ended tickets do', async () => {
+  const usageOf = vi.fn(async () => ({
+    sessionId: 'worker-t1',
+    routes: [],
+    totals: { uncachedInputTokens: 10, outputTokens: 5, totalTokens: 15 },
+    coverage: { attempts: 1, reported: 1, cacheRead: 'unreported' as const, cacheWrite: 'unreported' as const, attribution: 'complete' as const },
+    cost: { kind: 'unavailable' as const, reason: 'noRecordedPrice' as const },
+  }))
+  const runningTicket = {
+    id: 't-running',
+    title: 'Running job',
+    decisionId: 'd',
+    mandate: { strength: 'explicit' as const, policyVersion: 'p', actor: { source: 'local' as const, id: 'u' }, scope: 'Run', basis: { via: 'addressed' as const } },
+    assignments: [{ id: 'a1', state: 'running' as const, startedAt: '2026-11-08T00:00:00Z', createdAt: '2026-11-08T00:00:00Z' }],
+    inputs: [],
+    undelivered: [],
+    channels: [],
+    createdAt: '2026-11-08T00:00:00Z',
+    updatedAt: '2026-11-08T00:00:00Z',
+  }
+  const endedTicket = {
+    ...runningTicket,
+    id: 't-ended',
+    ended: { at: '2026-11-08T01:00:00Z', by: 'executor' as const, outcome: 'merged' as const },
+  }
+  const tickets = new Map<string, unknown>([
+    ['t-running', runningTicket],
+    ['t-ended', endedTicket],
+  ])
+  const call = serve({
+    usage: { of: usageOf },
+    links: () => [],
+    store: {
+      tickets: { get: (id: string) => tickets.get(id) },
+      decisions: { get: () => undefined },
+      triggers: { get: () => undefined, disposition: () => undefined },
+      read: { threadsOfTicket: () => [], firstTrigger: () => undefined, subscribedThreads: () => [] },
+      settings: () => SettingsSchema.parse({ models: { hierarchy: [{ provider: 'test', model: 'fast' }] } }),
+    },
+    sources: { of: () => undefined, kind: () => undefined },
+  })
+
+  // Poll in-flight ticket: usage.of must NOT be called
+  const runningRes = await call('GET', 'tickets/t-running')
+  expect(runningRes.status).toBe(200)
+  expect(runningRes.body.usage).toBeUndefined()
+  expect(usageOf).not.toHaveBeenCalled()
+
+  // Poll ended ticket: usage.of IS called and returned
+  const endedRes = await call('GET', 'tickets/t-ended')
+  expect(endedRes.status).toBe(200)
+  expect(endedRes.body.usage).toMatchObject({ sessionId: 'worker-t1' })
+  expect(usageOf).toHaveBeenCalledWith('worker-t-ended')
+})

@@ -1,0 +1,11 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/cost-repair-qualified/release
+
+(node:28628) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  4 passed (4)
+      Tests  42 passed (42)
+   Start at  14:29:04
+   Duration  4.96s (transform 3.23s, setup 0ms, import 4.48s, tests 927ms, environment 1.69s)
+

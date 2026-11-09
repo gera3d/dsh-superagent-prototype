@@ -1,0 +1,39 @@
+{
+  "at": "2026-11-09T22:31:07.179520+00:00",
+  "findingId": "8157c834-c7a5-43c6-afdd-97cee8534c6b",
+  "jobId": "finding:8157c834-c7a5-43c6-afdd-97cee8534c6b:r3",
+  "ticketId": "d742210aad60f06f6bece9ba490c417e",
+  "assignmentId": "21918aff7a5af9d32fe5a1b85e33240d",
+  "workerHead": "f646235f10ca75b1003b38bfac291200e3324ff0",
+  "releaseBase": "ae4dc714e6ed2e4e108244a0585a6ce71d42ab3c",
+  "stage": "source reviewed and qualified; not merged, deployed or native accepted",
+  "checks": {
+    "workerFocusedTests": 41,
+    "workerSuites": 4,
+    "rootIndependentCasesPassed": 3,
+    "releaseFocusedTests": 42,
+    "releaseSuites": 4,
+    "releaseTypesExit": 0,
+    "releaseBuildExit": 0,
+    "fixtureCaptureExit": 0,
+    "offlineFrozenLockfileOnlyExit": 0,
+    "outsideOutputRejectedBeforeWriting": true
+  },
+  "baseInputs": {
+    "count": 211,
+    "mismatches": []
+  },
+  "workerRuntimeSourceBytesMatch": true,
+  "integrationDeltas": [
+    "Declared the already-installed Vite8.2.2 development dependency explicitly and pinned its existing lockfile snapshot; offline frozen validation passed.",
+    "Restricted fixture output override to checkout-contained paths; negative invocation rejected before writes.",
+    "Added known-missing-known replacement plus genuine same-step retry/cache control; final integrated42 tests includes the worker41 and this1 additional case."
+  ],
+  "deviation": "Worker created a development-only Vite link through its shared node_modules symlink during setup. No source/assets/settings were deployed by the worker. Integration now makes that existing dependency explicit; no additional runtime package, credential or account connection.",
+  "limits": [
+    "No full-suite/CI-green claim or external billing reconciliation.",
+    "No pricing feed added; no recorded price remains unavailable.",
+    "Unknown-eventCount changed-revision logs must refold; count-supported sequential appends remain incremental.",
+    "Original accepted feature and verification preserved; no unrelated delivery gate accepted."
+  ]
+}

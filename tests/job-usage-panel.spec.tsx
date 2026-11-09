@@ -59,6 +59,20 @@ it('labels partial coverage and an estimated cost instead of presenting either a
   expect(shown).not.toContain(zh.jobUsageCostEstimated.replace('{amount}', '$1.5'))
 })
 
+it('separates usage reporting coverage from route-attribution wording when all attempts reported usage', async () => {
+  const shown = await open({
+    sessionId: 'worker-t0',
+    routes: [{ provider: 'Particle AI', model: 'deepseek/flash', attempts: 2, uncachedInputTokens: 1000, outputTokens: 500,
+      totalTokens: 1500 }],
+    totals: { uncachedInputTokens: 1000, outputTokens: 500, totalTokens: 1500 },
+    coverage: { attempts: 2, reported: 2, cacheRead: 'unreported', cacheWrite: 'unreported', attribution: 'partial' },
+    cost: { kind: 'unavailable', reason: 'noRecordedPrice' },
+  })
+  expect(shown).toContain(zh.jobUsageExact.replace('{attempts}', '2'))
+  expect(shown).toContain(zh.jobUsageUnattributed)
+  expect(shown).not.toContain(zh.jobUsagePartial.replace('{reported}', '2').replace('{attempts}', '2'))
+})
+
 it('states an empty or missing worker Session instead of zero usage or cost', async () => {
   const empty = await open({ sessionId: 'worker-t0', routes: [], totals: { uncachedInputTokens: 0, outputTokens: 0,
     totalTokens: 0 }, coverage: { attempts: 0, reported: 0, cacheRead: 'unreported', cacheWrite: 'unreported',

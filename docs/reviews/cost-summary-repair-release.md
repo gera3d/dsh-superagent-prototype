@@ -1,0 +1,7 @@
+# Cost-summary repair release
+
+Fixes confirmed completed-job accounting, cache and coverage defects without adding billing feeds or changing routing. Missing same-step settlements deduplicate; known usage survives a later sample-less final message; late route identity can correct attribution even with identical token numbers. Real retries still count separately, and cache buckets remain disjoint. Reader cache is bounded, rewritten/unknown-count logs refresh safely, and running ticket reads avoid unused usage I/O. Coverage wording separates missing samples from missing route attribution. Portable fixture declares its public Vite dependency and keeps output inside the checkout.
+
+Exact Harness headf646235; final integrated42 focused tests/4 suites, types/build, actual isolated fixture capture, offline frozen lockfile validation and output-containment negative check pass. All211 installed base source/prompt/config inputs match. No broad full-suite or external-billing claim. Unknown-count changed logs refold conservatively; incremental appends retain count/sequence proof. Previous failed candidate and full-hash discrepancy remain evidence.
+
+Deploy at idle after narrow backup/postimage checks; restart using supported profile script, verify a real ended-job cost card and running/completed API behavior, record operator progress, then protected native evidence acceptance. Routine rollback restores source/assets/package/fixture only; never overwrite newer canonical history with a DB backup.

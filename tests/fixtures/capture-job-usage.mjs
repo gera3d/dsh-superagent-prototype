@@ -1,12 +1,44 @@
 // Isolated browser only. No connection to the user's CDP, profile or live application.
 // Builds the completed-job area twice (base area, then the same area with the new summary) and captures both with headless Chrome.
-import { build } from '../../node_modules/.pnpm/vite@8.2.2_@types+node@22.20.0_yaml@2.9.1/node_modules/vite/dist/node/index.js'
+import { build } from 'vite'
 import { execFileSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { resolve, relative, isAbsolute } from 'node:path'
+
 const root = resolve(import.meta.dirname, '../..')
-const output = resolve(root, '../evidence/ui-fixtures')
-const chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+const output = process.env.JOB_USAGE_FIXTURE_OUTPUT
+  ? resolve(root, process.env.JOB_USAGE_FIXTURE_OUTPUT)
+  : resolve(root, 'evidence/ui-fixtures')
+const relativeOutput = relative(root, output)
+if (relativeOutput === '..' || relativeOutput.startsWith('../') || relativeOutput.startsWith('..\\') || isAbsolute(relativeOutput)) {
+  throw new Error('JOB_USAGE_FIXTURE_OUTPUT must stay inside the checkout')
+}
+
+function resolveBrowser() {
+  if (process.env.CHROME_BIN && existsSync(process.env.CHROME_BIN)) return process.env.CHROME_BIN
+  if (process.env.BROWSER_BIN && existsSync(process.env.BROWSER_BIN)) return process.env.BROWSER_BIN
+  const candidates = [
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
+    '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+  ]
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate
+  }
+  return undefined
+}
+
+const chrome = resolveBrowser()
+if (!chrome) {
+  console.error('Error: Headless browser not found. Set CHROME_BIN or BROWSER_BIN to a valid Chrome/Chromium executable path.')
+  process.exit(1)
+}
+
 await mkdir(output, { recursive: true })
 const bundle = await build({ root, configFile: false, logLevel: 'error',
   define: { 'process.env.NODE_ENV': JSON.stringify('production') }, esbuild: { jsx: 'automatic' },
