@@ -1,0 +1,16 @@
+{
+  "at": "2026-11-09T21:14:03.889535+00:00",
+  "rejectedHead": "ad9fdd31ebf07d794ea0bafeb245f25d7446cfd6",
+  "rootAudit": {
+    "passed": 2,
+    "failed": 1
+  },
+  "finding": {
+    "id": "bf38fc9c-8273-4d61-9ae4-e98c45e51365",
+    "revision": 15,
+    "state": "queued",
+    "job": {
+      "id": "finding:bf38fc9c-8273-4d61-9ae4-e98c45e51365:r15"
+    }
+  }
+}
