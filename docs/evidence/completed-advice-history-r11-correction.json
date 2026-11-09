@@ -1,0 +1,99 @@
+{
+  "at": "2026-11-09T20:26:35.923595+00:00",
+  "finding": {
+    "id": "bf38fc9c-8273-4d61-9ae4-e98c45e51365",
+    "revision": 11,
+    "state": "running",
+    "job": {
+      "id": "finding:bf38fc9c-8273-4d61-9ae4-e98c45e51365:r11",
+      "ticketId": "bc3b44cc47424e34c9d8df6deb5a5c99",
+      "assignmentId": "44d86f5f85378cbf9271df8b26a41fe0"
+    },
+    "priorJobs": [
+      {
+        "id": "finding:bf38fc9c-8273-4d61-9ae4-e98c45e51365:r1",
+        "ticketId": "45a016728f1113d932c6b396449c8adb",
+        "assignmentId": "92b7ebff827a1c6f478d1bfeebfd534f"
+      },
+      {
+        "id": "finding:bf38fc9c-8273-4d61-9ae4-e98c45e51365:r3",
+        "ticketId": "64986fd6bbad003dccda789f43035579",
+        "assignmentId": "ed935430e206defa3bd622cc4242b72e"
+      },
+      {
+        "id": "finding:bf38fc9c-8273-4d61-9ae4-e98c45e51365:r5",
+        "ticketId": "0999d34805151c7ba36d207addcb42a0",
+        "assignmentId": "8138226126e8f8822530fa7fd23502d0"
+      },
+      {
+        "id": "finding:bf38fc9c-8273-4d61-9ae4-e98c45e51365:r7",
+        "ticketId": "704a19544bd016b118746a4ea00d062a",
+        "assignmentId": "977d1ad4a3af3deffc7346948296937c"
+      }
+    ],
+    "confirmation": {
+      "revision": 11,
+      "choiceId": "fix_now",
+      "actor": "codex-coordinator",
+      "at": "2026-11-09T20:26:23.559Z"
+    }
+  },
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "paused": false,
+  "health": {
+    "runtime": {
+      "state": "ready",
+      "detail": "Orchestrator is ready",
+      "at": "2026-11-09T20:06:16.116Z"
+    },
+    "relay": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-09T20:06:12.510Z"
+    },
+    "notice": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-09T20:08:19.163Z"
+    },
+    "launch": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-09T20:26:32.705Z"
+    },
+    "delivery": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-09T20:06:12.511Z"
+    },
+    "assessment": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-09T20:06:12.511Z"
+    },
+    "reply": {
+      "state": "ready",
+      "detail": "Nothing waiting",
+      "at": "2026-11-09T20:06:12.511Z"
+    },
+    "evals": {
+      "state": "ready",
+      "detail": "No unavailable Eval in the last hour"
+    },
+    "models": {
+      "state": "ready",
+      "detail": "No managed Session is waiting on a model budget retry"
+    },
+    "github": {
+      "state": "ready",
+      "detail": "0 notifications; next poll \u2265 60s",
+      "at": "2026-11-09T20:22:09.421Z"
+    }
+  },
+  "scope": "Remaining current-state advice handoff; PR77 history projection remains installed, no acceptance.",
+  "nativeEvidence": "docs/evidence/completed-advice-history-native.json"
+}
