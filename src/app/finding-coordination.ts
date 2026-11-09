@@ -5,7 +5,7 @@
 import { constants, closeSync, fstatSync, openSync, readFileSync, realpathSync } from 'node:fs'
 import { isAbsolute } from 'node:path'
 import { z } from 'zod'
-import { FindingError, type Finding, findingDecision, getOperatorExecutionApproval } from './finding.ts'
+import { FindingError, type Finding, findingDecision, getOperatorExecutionApproval, isReservedActor } from './finding.ts'
 import type { FindingRuntime } from './finding-runtime.ts'
 import type { PendingDecisionItem } from '../core/decision.ts'
 
@@ -68,6 +68,10 @@ export function readFindingCoordinationInstruction(
   }
 
   const instruction = FindingCoordinationInstructionSchema.parse(rawJson)
+
+  if (isReservedActor(instruction.actorId)) {
+    throw new FindingError(403, 'Headless instruction cannot claim reserved local-operator or native actor origin')
+  }
 
   if (instruction.findingId !== finding.id) {
     throw new FindingError(403, 'Explicit instruction finding ID does not match target finding')

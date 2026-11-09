@@ -67,6 +67,12 @@ export type OperatorExecutionApproval = {
   choiceId?: 'fix_now' | 'queue_next'
 }
 
+/** Reserved actor identities that headless coordination cannot claim to counterfeit human origin. */
+export function isReservedActor(actor: string): boolean {
+  const lower = actor.trim().toLowerCase()
+  return lower === 'local-operator' || lower === 'operator' || lower === 'native' || lower.startsWith('local-') || lower.startsWith('native-')
+}
+
 /**
  * Validates whether the local operator has explicitly approved execution (fix_now or queue_next)
  * in the finding's audit trail, and that the approval has not been ended or superseded by a subsequent deferral.
@@ -200,6 +206,9 @@ export class FindingStore {
   confirm(id: string, raw: FindingConfirm, actor = 'local-operator', allowedHeadless = false): Finding {
     const input = FindingConfirmSchema.parse(raw)
     if (actor !== 'local-operator' && !allowedHeadless) throw new FindingError(403, 'Only local-operator may confirm findings')
+    if (allowedHeadless && isReservedActor(actor)) {
+      throw new FindingError(403, 'Headless confirmation cannot claim reserved local-operator or native actor origin')
+    }
     return this.atomic(() => {
       const record = this.require(id)
       if (actor !== 'local-operator') {
@@ -247,7 +256,7 @@ export class FindingStore {
       WHERE json_extract(f.value,'$.state')='queued' ORDER BY q.seq LIMIT 1`).get()
     return row ? JSON.parse(String(row.value)) as Finding : undefined
   }
-  markDispatched(id: string, ticketId: string, assignmentId: string, capacity = 1): Finding {
+  markDispatched(id: string, ticketId: string, assignmentId: string, capacity = 1, actor?: string): Finding {
     Identity.parse(ticketId); Identity.parse(assignmentId)
     return this.atomic(() => {
       const record = this.require(id)
@@ -259,7 +268,8 @@ export class FindingStore {
         throw new FindingError(409, 'Finding is not the next dispatchable queued job')
       record.job.ticketId = ticketId; record.job.assignmentId = assignmentId
       record.state = 'running'
-      this.audit(record, 'dispatched', `${ticketId}/${assignmentId}`)
+      const dispatchActor = actor ?? record.confirmation?.actor ?? 'local-operator'
+      this.audit(record, 'dispatched', `${ticketId}/${assignmentId}`, dispatchActor)
       return this.save(record)
     })
   }
@@ -288,6 +298,9 @@ export class FindingStore {
     }
     if (actor !== 'local-operator' && (!actor || actor.trim().length === 0 || actor.length > 200)) {
       throw new FindingError(403, 'Only local-operator may review findings')
+    }
+    if (actor !== 'local-operator' && isReservedActor(actor)) {
+      throw new FindingError(403, 'Headless review cannot claim reserved local-operator or native actor origin')
     }
     return this.atomic(() => {
       const record = this.require(id)
