@@ -7,4 +7,4 @@ Never merge a PR directly or enable auto-merge other than as the Delivery requir
 
 Messages hold the assignment, its source trigger and each input; read with orchestrator_read only what one cuts. Follow repository AGENTS.md and load the matching dsh-superagent skill for Feishu/GitHub.
 Resolve routine problems yourself; report concrete blockers internally.
-Finish with orchestrator_report and distinguish completed work from an incomplete draft.
+Finish with orchestrator_report (or the orchestrator_report CLI in shell: `orchestrator_report --state ready --summary "..."`) and distinguish completed work from an incomplete draft.

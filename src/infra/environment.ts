@@ -15,7 +15,7 @@ const MARKER = '# Written by dsh-superagent on every start; edits are lost.'
 /** Markers of files written under the project's earlier names (`dsh-tag`, `dsh-go`, `dsh-freelancer`), which `dsh-superagent` owns and replaces too. */
 const LEGACY_MARKERS = ['dsh-tag', 'dsh-go', 'dsh-freelancer'].map(name => `# Written by ${name} on every start; edits are lost.`)
 /** Commands workers need, which `blockedCommands` cannot block: the shims and git. */
-export const WORKER_COMMANDS: readonly string[] = ['gh', 'git', 'lark-cli']
+export const WORKER_COMMANDS: readonly string[] = ['gh', 'git', 'lark-cli', 'orchestrator_report']
 export const workerBin = (stateDir: string): string => join(stateDir, 'worker-bin')
 export const workerGitConfig = (stateDir: string): string => join(stateDir, 'worker-gitconfig')
 const shellQuote = (value: string): string => `'${value.replaceAll("'", "'\\''")}'`
@@ -99,6 +99,61 @@ export async function writeEnvironment(deployment: Pick<Deployment, 'stateDir' |
   const fail = (message: string): string => `echo ${shellQuote(message)} >&2\nexit 1`
   await shim('gh', run(github.cli))
   await shim('lark-cli', feishu ? run(feishu.cli) : fail('lark-cli is unavailable: this installation has no Feishu bot.'))
+  const reportShimBody = [
+    'target="${DSH_SUPERAGENT_DIR:-.}/.dsh-report.json"',
+    'export target',
+    'exec node -e \'',
+    'const fs = require("node:fs");',
+    'const args = process.argv.slice(1);',
+    'let state, summary, humanAction, questionFor, prNumber, replyTo, ticketId, assignmentId, turnId, reportAt;',
+    'if (args.length === 1 && args[0].trim().startsWith("{")) {',
+    '  try {',
+    '    const parsed = JSON.parse(args[0]);',
+    '    state = parsed.state; summary = parsed.summary; humanAction = parsed.human_action;',
+    '    questionFor = parsed.question_for_trigger_id; prNumber = parsed.pr_number; replyTo = parsed.reply_to_trigger_id;',
+    '    ticketId = parsed.ticket_id; assignmentId = parsed.assignment_id; turnId = parsed.turn_id || parsed.turn || parsed.nonce;',
+    '    reportAt = parsed.at;',
+    '  } catch (e) { console.error("Invalid JSON argument to orchestrator_report:", e.message); process.exit(1); }',
+    '} else {',
+    '  for (let i = 0; i < args.length; i++) {',
+    '    if (args[i] === "--state" && args[i+1]) { state = args[++i]; }',
+    '    else if (args[i] === "--summary" && args[i+1]) { summary = args[++i]; }',
+    '    else if (args[i] === "--human-action" && args[i+1]) { humanAction = args[++i]; }',
+    '    else if (args[i] === "--question-for" && args[i+1]) { questionFor = args[++i]; }',
+    '    else if (args[i] === "--pr" && args[i+1]) { prNumber = parseInt(args[++i], 10); }',
+    '    else if (args[i] === "--reply-to" && args[i+1]) { replyTo = args[++i]; }',
+    '    else if (args[i] === "--ticket" && args[i+1]) { ticketId = args[++i]; }',
+    '    else if (args[i] === "--assignment" && args[i+1]) { assignmentId = args[++i]; }',
+    '    else if (args[i] === "--turn" && args[i+1]) { turnId = args[++i]; }',
+    '  }',
+    '}',
+    'ticketId = ticketId || process.env.DSH_SUPERAGENT_TICKET;',
+    'assignmentId = assignmentId || process.env.DSH_SUPERAGENT_ASSIGNMENT;',
+    'turnId = turnId || process.env.DSH_SUPERAGENT_TURN;',
+    'if (!state || !["progress", "ready", "blocked", "failed", "dropped"].includes(state)) {',
+    '  console.error("orchestrator_report requires valid --state (progress|ready|blocked|failed|dropped)"); process.exit(1);',
+    '}',
+    'if (!summary || typeof summary !== "string" || !summary.trim()) {',
+    '  console.error("orchestrator_report requires nonempty --summary"); process.exit(1);',
+    '}',
+    'const report = {',
+    '  state, summary: summary.trim(),',
+    '  ticket_id: ticketId || undefined,',
+    '  assignment_id: assignmentId || undefined,',
+    '  ...(turnId ? { turn_id: turnId } : {}),',
+    '  at: reportAt || new Date().toISOString(),',
+    '  ...(humanAction ? { human_action: humanAction.trim() } : {}),',
+    '  ...(questionFor ? { question_for_trigger_id: questionFor.trim() } : {}),',
+    '  ...(prNumber ? { pr_number: prNumber } : {}),',
+    '  ...(replyTo ? { reply_to_trigger_id: replyTo.trim() } : {})',
+    '};',
+    'const tmp = process.env.target + "." + process.pid + ".tmp";',
+    'fs.writeFileSync(tmp, JSON.stringify(report, null, 2));',
+    'fs.renameSync(tmp, process.env.target);',
+    'console.log("Report recorded for delivery: state=" + state);',
+    '\' -- "$@"',
+  ].join('\n')
+  await shim('orchestrator_report', reportShimBody)
   for (const name of new Set(blockedCommands.filter(name => !WORKER_COMMANDS.includes(name)))) {
     await shim(name, fail(`${name} is blocked in this installation; use gh, which acts as ${github.login}.`))
   }

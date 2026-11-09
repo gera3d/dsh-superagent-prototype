@@ -436,3 +436,98 @@ it('rechecks pause after awaiting prior native work before admitting another fin
   expect(runtime.store.get(first.id)?.state).toBe('queued')
   expect(h.start).not.toHaveBeenCalled()
 })
+
+it('surfaces evidence to review and stops ticket when finding worker turn ends in waiting without active work', async () => {
+  const h = fixture(), first = h.observe('waiting-worker'), second = h.observe('next-in-line')
+  h.confirm(first.id); h.confirm(second.id)
+  await h.runtime.request()
+  const job = h.runtime.store.get(first.id)!.job!
+  h.engine.assignmentStarted(job.ticketId!, job.assignmentId!)
+
+  // Simulate worker ending its turn without native orchestrator_report, recording state: 'waiting'
+  const chatEvidence = 'Implementation confirmed ready offline; 14 tests pass. orchestrator_report was unavailable on provider.'
+  h.engine.report(job.ticketId!, { state: 'waiting', summary: chatEvidence })
+
+  // Reconcile: worker is quiet (not busy) and no pending inputs.
+  // Must surface evidence as blocked review and stop ticket rather than sitting idle in running.
+  await h.runtime.request()
+  const reconciled = h.runtime.store.get(first.id)!
+  expect(reconciled.state).toBe('blocked')
+  expect(reconciled.reports).toHaveLength(1)
+  expect(reconciled.reports[0]).toMatchObject({
+    reference: `ticket/${job.ticketId}/report/${job.assignmentId}`,
+    evidence: chatEvidence,
+    state: 'blocked',
+  })
+  expect(h.store.tickets.get(job.ticketId!)?.ended).toBeDefined()
+
+  // With capacity freed up, the next queued finding can admit
+  expect(h.runtime.store.get(second.id)?.state).toBe('running')
+  expect(h.start).toHaveBeenCalledTimes(2)
+})
+
+it('preserves running finding during pending trigger race', async () => {
+  const h = fixture(), finding = h.observe('pending-race')
+  h.confirm(finding.id)
+  await h.runtime.request()
+  const job = h.runtime.store.get(finding.id)!.job!
+  h.engine.assignmentStarted(job.ticketId!, job.assignmentId!)
+
+  // Worker turn ended in waiting
+  h.engine.report(job.ticketId!, { state: 'waiting', summary: 'Turn finished' })
+
+  // New pending input arrives before reconciliation
+  const ticket = h.store.tickets.get(job.ticketId!)!
+  const triggerInput = { kind: 'trigger' as const, id: 'tr-pending-1', triggerId: 'tr-pending-1', at: new Date().toISOString(), readAt: null }
+  h.store.tickets.save({ ...ticket, inputs: [...ticket.inputs, triggerInput], undelivered: [...ticket.undelivered, 'tr-pending-1'] })
+
+  // Reconcile: must NOT stop ticket or transition to review; must stay running with resumed work
+  await h.runtime.request()
+  const current = h.runtime.store.get(finding.id)!
+  expect(current.state).toBe('running')
+  expect(h.store.tickets.get(job.ticketId!)?.ended).toBeUndefined()
+})
+
+it('preserves running finding during background worker race', async () => {
+  const h = fixture()
+  let isBusy = true
+  const runtime = new FindingRuntime({ ...h.deps, workerBusy: () => isBusy })
+  cleanup.push(() => runtime.stop())
+
+  const finding = h.observe('background-race')
+  h.confirm(finding.id)
+  await runtime.request()
+  const job = runtime.store.get(finding.id)!.job!
+  h.engine.assignmentStarted(job.ticketId!, job.assignmentId!)
+
+  // Worker reported waiting but background jobs are still busy
+  h.engine.report(job.ticketId!, { state: 'waiting', summary: 'Background tasks compiling' })
+
+  await runtime.request()
+  expect(runtime.store.get(finding.id)?.state).toBe('running')
+  expect(h.store.tickets.get(job.ticketId!)?.ended).toBeUndefined()
+
+  // Once background finishes and quiet, reconcile stops ticket and marks blocked review
+  isBusy = false
+  await runtime.request()
+  expect(runtime.store.get(finding.id)?.state).toBe('blocked')
+  expect(h.store.tickets.get(job.ticketId!)?.ended).toBeDefined()
+})
+
+it('preserves running finding and updates working evidence during progress report race', async () => {
+  const h = fixture(), finding = h.observe('progress-race')
+  h.confirm(finding.id)
+  await h.runtime.request()
+  const job = h.runtime.store.get(finding.id)!.job!
+  h.engine.assignmentStarted(job.ticketId!, job.assignmentId!)
+
+  // Worker reported progress
+  h.engine.report(job.ticketId!, { state: 'progress', summary: 'Pass 1 of 3 complete; continuing' })
+
+  // Reconcile: must stay running and update working evidence
+  await h.runtime.request()
+  const current = h.runtime.store.get(finding.id)!
+  expect(current.state).toBe('running')
+  expect(current.reports?.[0]?.evidence).toContain('Pass 1 of 3 complete')
+  expect(h.store.tickets.get(job.ticketId!)?.ended).toBeUndefined()
+})
