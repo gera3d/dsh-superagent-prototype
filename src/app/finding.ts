@@ -62,6 +62,45 @@ const choices: Finding['choices'] = [
 const immutable = ['title', 'problem', 'scope', 'owner', 'kind', 'requirements', 'repository', 'existingDeliveryId', 'sourceIssue'] as const
 
 /** Uses the owner's shared SQLite connection, so native dispatch and markDispatched can commit atomically. */
+export type OperatorExecutionApproval = {
+  approved: boolean
+  choiceId?: 'fix_now' | 'queue_next'
+}
+
+/**
+ * Validates whether the local operator has explicitly approved execution (fix_now or queue_next)
+ * in the finding's audit trail, and that the approval has not been ended or superseded by a subsequent deferral.
+ * Disallows prior deferral, foreign actors, and stale approvals.
+ */
+export function getOperatorExecutionApproval(finding: Finding): OperatorExecutionApproval {
+  if (!finding.audit || !Array.isArray(finding.audit)) return { approved: false }
+  let approval: OperatorExecutionApproval = { approved: false }
+  for (const entry of finding.audit) {
+    if (entry.actor !== 'local-operator') continue
+    if (entry.event === 'confirmed') {
+      if (entry.detail === 'fix_now' || entry.detail === 'queue_next') {
+        approval = { approved: true, choiceId: entry.detail }
+      } else if (entry.detail === 'defer') {
+        approval = { approved: false }
+      }
+    } else if (entry.event === 'reviewed') {
+      try {
+        const review = JSON.parse(entry.detail ?? '{}') as { decision?: string }
+        if (review.decision === 'defer') {
+          approval = { approved: false }
+        } else if (review.decision === 'retry_scope') {
+          if (approval.choiceId) {
+            approval.approved = true
+          }
+        }
+      } catch {
+        // ignore non-json review details
+      }
+    }
+  }
+  return approval
+}
+
 export class FindingStore {
   private depth = 0
   constructor(readonly db: DatabaseSync) {
@@ -158,22 +197,34 @@ export class FindingStore {
       return this.save(record)
     })
   }
-  confirm(id: string, raw: FindingConfirm, actor = 'local-operator'): Finding {
+  confirm(id: string, raw: FindingConfirm, actor = 'local-operator', allowedHeadless = false): Finding {
     const input = FindingConfirmSchema.parse(raw)
-    if (actor !== 'local-operator') throw new FindingError(403, 'Only local-operator may confirm findings')
+    if (actor !== 'local-operator' && !allowedHeadless) throw new FindingError(403, 'Only local-operator may confirm findings')
     return this.atomic(() => {
       const record = this.require(id)
+      if (actor !== 'local-operator') {
+        const approval = getOperatorExecutionApproval(record)
+        if (!approval.approved) {
+          throw new FindingError(403, 'Headless confirmation is only permitted for existing explicitly approved bounded work; prior deferral or unapproved scope requires native local operator approval')
+        }
+        if (input.choiceId !== 'defer' && input.choiceId !== approval.choiceId) {
+          throw new FindingError(403, `Headless confirmation must match the exact prior approved action (${approval.choiceId})`)
+        }
+        if (input.choiceId !== 'defer' && (!record.priorJobs || record.priorJobs.length === 0)) {
+          throw new FindingError(403, 'Headless confirmation is only supported for retrying existing bounded work with approved execution lineage')
+        }
+      }
       if (record.confirmation?.revision === input.revision && record.confirmation.choiceId === input.choiceId) return record
       if (record.revision !== input.revision || record.state !== 'awaiting_decision' || record.confirmation)
         throw new FindingError(409, 'Finding confirmation is stale or conflicts with the recorded choice')
-      record.confirmation = { ...input, actor: 'local-operator', at: new Date().toISOString() }
+      record.confirmation = { ...input, actor, at: new Date().toISOString() }
       if (input.choiceId === 'defer') record.state = 'deferred'
       else {
         record.state = 'queued'
         record.job = { id: `finding:${record.id}:r${record.revision}` }
         this.db.prepare('INSERT INTO finding_queue(finding_id,job_id) VALUES(?,?)').run(id, record.job.id)
       }
-      this.audit(record, 'confirmed', input.choiceId)
+      this.audit(record, 'confirmed', input.choiceId, actor)
       return this.save(record)
     })
   }
@@ -232,9 +283,23 @@ export class FindingStore {
   /** Explicit local operator review only. Acceptance affects this finding, never its attached delivery. */
   review(id: string, raw: FindingReview, actor = 'local-operator'): Finding {
     const input = FindingReviewSchema.parse(raw)
-    if (actor !== 'local-operator') throw new FindingError(403, 'Only local-operator may review findings')
+    if (input.decision === 'accept_evidence' && actor !== 'local-operator') {
+      throw new FindingError(403, 'Only local-operator may review and accept finding evidence')
+    }
+    if (actor !== 'local-operator' && (!actor || actor.trim().length === 0 || actor.length > 200)) {
+      throw new FindingError(403, 'Only local-operator may review findings')
+    }
     return this.atomic(() => {
       const record = this.require(id)
+      if (actor !== 'local-operator') {
+        const approval = getOperatorExecutionApproval(record)
+        if (!approval.approved) {
+          throw new FindingError(403, 'Headless review is only permitted for existing explicitly approved bounded work; prior deferral or unapproved scope requires native local operator approval')
+        }
+        if (!record.job && (!record.priorJobs || record.priorJobs.length === 0)) {
+          throw new FindingError(403, 'Headless review is only supported for existing bounded work with approved execution lineage')
+        }
+      }
       if (record.revision !== input.revision || record.state !== 'blocked') throw new FindingError(409, 'Finding review is stale or not awaiting evidence review')
       if (input.decision === 'accept_evidence') {
         const latestReport = record.job && record.reports.filter(report => report.jobId === record.job!.id).at(-1)
@@ -248,10 +313,10 @@ export class FindingStore {
         record.resolution = { outcome: input.outcome ?? 'verified', evidenceReference: input.evidenceReference,
           requirements: [...supplied], at: new Date().toISOString(), actor: 'local-operator', jobId: record.job!.id }
         record.state = 'resolved'; delete record.blocker
-        this.audit(record, record.resolution.outcome === 'no_repair_needed' ? 'no_repair_needed' : 'requirements_verified', input.evidenceReference)
+        this.audit(record, record.resolution.outcome === 'no_repair_needed' ? 'no_repair_needed' : 'requirements_verified', input.evidenceReference, actor)
       } else if (input.decision === 'retry_scope') this.reopen(record)
       else { record.state = 'deferred'; delete record.blocker }
-      this.audit(record, 'reviewed', JSON.stringify(input))
+      this.audit(record, 'reviewed', JSON.stringify(input), actor)
       return this.save(record)
     })
   }

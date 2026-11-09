@@ -60,7 +60,7 @@ it('serves compact helper drafts behind the management header and loopback Host 
   expect(await call('POST', 'helper/suggest', '{bad json')).toMatchObject({ status: 400 })
   expect(await call('POST', 'helper/suggest', 'x'.repeat(65537))).toMatchObject({ status: 400, body: { error: 'Request exceeds 65536 bytes' } })
   expect(resolveCallConfig).not.toHaveBeenCalled()
-  expect(await call('POST', 'helper/suggest', { ...digest, summary: 'x'.repeat(1499) })).toEqual({ status: 200, body: { options, specialist: { profileId: 'senior_developer', basis: 'default', unavailable: [] } } })
+  expect(await call('POST', 'helper/suggest', { ...digest, summary: 'x'.repeat(1499) })).toEqual({ status: 200, body: { options, specialist: { profileId: 'senior-developer', basis: 'default', unavailable: [] } } })
   expect(await call('POST', 'helper/suggest', digest, { host: 'localhost:3082', origin: 'http://localhost:3082' })).toMatchObject({ status: 200 })
 })
 
