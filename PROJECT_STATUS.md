@@ -1,6 +1,6 @@
 # DeepSeek Harness project status
 
-Updated November 08, 2026, 06:00 PM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
+Updated November 08, 2026, 06:10 PM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
 
 ## Current seven-track outcome
 
@@ -10,11 +10,19 @@ Updated November 08, 2026, 06:00 PM PST. Owner: Codex. Check this current sectio
 | Senior Developer Settings / real review handoff | Returned303d531/5255d57 independently integrated; paired source PR71/PR21 merged. Paired installed files/assets updated at safe idle; restart exit0 and actual-thread recommendation/scoring verified. **Native finding accepted** at00:04:11Z (4:04 PM PST), exact requirements and personally verified evidence selected. | Complete for bounded advisor scope; preserve evidence. Ready status does not certify tests passed; no automatic Codex dispatch bridge exists. |
 | Screen-independent coordination | **PR73 merged/deployed;232 integrated tests, types/build pass.** Actual locked-screen reporting r25 continuation has correct coordinator audit/mandate and nonhuman trigger. Enabled at revision3. **Native protected evidence accepted at01:36:02Z.** | Complete for bounded coordination scope; preserve exact prior-approval, actor and publication boundaries. |
 | Google + Anthropic allowance display | **Merged, deployed, styled native UI verified, bounded finding accepted.** Google/AGY Claude quota shown; direct Anthropic explicitly unavailable (no existing reader). | Complete for the bounded display; preserve source separation and unavailable direct subscription limitation. No new account access authorized. |
-| Antigravity structured reporting | **Not deployed.** **PR74 merged; deployed then rolled back after real-worker verification failed.**175 integrated/4 installed isolated tests did not cover fallback race. Original finding unaccepted. | Harness corrects premature idle finalization across availability fallback; Codex qualifies exact correction and real provider handoff. |
+| Antigravity structured reporting | **Not deployed.** **Cumulative PR74+75 merged/deployed after rollback correction**,193 affected tests/types/build pass; fresh real fallback verification active. Original finding unaccepted. | Codex verifies actual fallback then post-reset Gemini handoff, records once-only delivery and protected acceptance. |
 | Cost-summary historical findings | **Verification independently completed and accepted**, not implementation repaired. Root reproduced and reconciled9 concerns with limits. | Prepare separately confirmed bounded cost repair scope; no duplicate accepted original job. No repair implementation queued this pass. |
 | Publication confirmation before enqueue | **Investigation independently completed and accepted**, not a repair. Actual production coordinator pre-effect/idempotency test passes; original66ms cause remains unproven. | Optional separately scoped diagnostic logging decision; preserve every publication approval and pin gate. |
 
 Intake is **resumed**, live load **1 running,0 queued,max3**, original reporting correction r31. Runtime services ready; GitHub starting after rollback restart, not yet reported ready. Headless coordination is native verified/accepted, enabled revision3 under existing owner approval. Reporting r25 returned and PR74 was deployed then rolled back after actual fallback race; r31 is the same original-scope correction, not accepted. Codex owns qualification/release. No new routes, credentials, spending, worker limits or automation changes. OpenAI remains conserved.
+
+## Reporting fallback correction qualified and deployed; real transition verification active
+
+Harness r31 returned `bdd4e0740ac94d43ad7ddf8fc64848bc488998b5`. Root independently reproduced a remaining gap after the fallback prompt was queued but before the next turn started (1fail/2pass). Integrated correction protects actual queued next-turn/next-step input and rechecks running status as well as availability selection. Four production executor-listener/Engine/Store ordering tests cover error -> idle -> queued fallback -> running -> genuine terminal no-report; all193 tests/13 affected suites, types/build pass. Counts overlap prior175; no full suite/GitHub CI claimed.
+
+[PR75](https://github.com/gera3d/dsh-superagent-prototype/pull/75) exact head `0fed9d3d2f5f092d68af41115d16218a6187eb36` merged `5a30bf5ddf4ccb2ac3c74a64cc29d084b5f3817d`. Cumulative PR74+75 source/assets installed at paused0running/0queued after all7 source preimages matched, with new source/assets/online SQLite rollback. Supported restart exited0 and intake resumed. Previously accepted scopes preserved. [Release proof](docs/evidence/reporting-fallback-release-manifest.json).
+
+A fresh qualified-code fallback check uses the **same** linked verification finding `06fd14af-5535-411d-936c-477bf2bd2cfa:r3`, ticket `487236ccdb874bd9db0e60288cc2470c`, assignment `3bf9df79a01ed649a526e303bd2d7122`. Existing default Google attempt is unavailable during its recorded reset window; real Sonnet request is working under the live mandate. This is not Gemini-specific success or acceptance. Actual stored Google quota snapshot reports reset `2026-11-09T02:12:43Z`; wait for that specific eligibility change before a separate real Gemini handoff. No cooldown clearing, route/provider/settings/access/spending changes. Codex owns full output, exact once-only native delivery and protected evidence review.
 
 ## Actual real-worker verification failed; reporting release rolled back
 
