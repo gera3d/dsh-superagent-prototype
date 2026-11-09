@@ -51,7 +51,7 @@ export function deriveDeliveryWork(deliveries: Delivery[], records: DeliveryWork
     }
   }
   for (const old of records.tickets) {
-    if (old.mandate.strength !== 'inferred' || old.ended?.outcome !== 'dropped' || old.ended.by !== 'executor') continue
+    if (old.mandate?.strength !== 'inferred' || old.ended?.outcome !== 'dropped' || old.ended.by !== 'executor') continue
     const identity = source(old)
     const droppedAt = Math.min(...[...old.assignments.filter(a => a.report?.state === 'dropped').map(a => Date.parse(a.report!.at)), Date.parse(old.ended.at)].filter(Number.isFinite))
     if (!identity || !Number.isFinite(droppedAt)) continue

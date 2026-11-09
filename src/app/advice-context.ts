@@ -100,17 +100,22 @@ export function adviceContext(ticket?: Ticket, delivery?: Delivery, progress?: P
       } } : {}) } : null,
     delivery: delivery ? { id: clip(delivery.id, 200), revision: delivery.revision, recordedStage: delivery.stage, state: delivery.state,
       owner: clip(delivery.owner, 200), authorities: (delivery.authorities ?? []).slice(0, 5).map(a => clip(a, 120)),
-      delegatedActions: (delivery.delegatedActions ?? []).slice(0, 5), scopeBound: !delivery.scopeBinding, missingBinding: clip(delivery.scopeBinding?.reason, 300), blocker: clip(delivery.blocker, 300),
+      delegatedActions: (delivery.delegatedActions ?? []).slice(0, 5),
+      scopeBound: !delivery.scopeBinding && !delivery.historicalCompletion,
+      missingBinding: delivery.historicalCompletion ? undefined : clip(delivery.scopeBinding?.reason, 300),
+      blocker: delivery.historicalCompletion ? undefined : clip(delivery.blocker, 300),
       bindings: { repository: clip(delivery.bindings.repository, 200), sourceIssue: delivery.bindings.sourceIssue, baseSha: clip(delivery.bindings.baseSha, 80),
         headSha: clip(delivery.bindings.headSha, 80), environment: clip(delivery.bindings.environment, 160), artifact: clip(delivery.bindings.artifact, 300),
         refs: delivery.bindings.refs?.slice(0, 4).map(r => ({ repository: clip(r.repository, 200), pr: r.pr, headSha: clip(r.headSha, 80),
           primary: r.repository === delivery.bindings.repository && r.headSha === delivery.bindings.headSha })) },
       requirements: delivery.requirements.slice(0, 8).map(r => clip(r, 160)),
-      offeredAction: !delivery.scopeBinding && delivery.state === 'awaiting_decision' && delivery.nextAction?.revision === delivery.revision
+      offeredAction: !delivery.historicalCompletion && !delivery.scopeBinding && delivery.state === 'awaiting_decision' && delivery.nextAction?.revision === delivery.revision
         ? { kind: delivery.nextAction.kind, label: clip(delivery.nextAction.label, 200), revision: delivery.nextAction.revision } : null,
       preparedPublication: preparedPublicationFacts(delivery.preparedPublication),
       evidence: delivery.evidence.slice(-8).map(e => ({ kind: e.kind, outcome: e.outcome, headSha: clip(e.bindings.headSha, 80), at: clip(e.recordedAt, 40) })),
-      accepted: completed, completion: completed ? { acceptedAt: delivery.acceptance!.at, actor: clip(delivery.acceptance!.actor, 120), noFurtherReleaseAction: true } : null } : null,
+      accepted: completed, completion: completed ? { acceptedAt: delivery.acceptance!.at, actor: clip(delivery.acceptance!.actor, 120), noFurtherReleaseAction: true }
+        : delivery.historicalCompletion ? { historical: true, reconciledAt: delivery.historicalCompletion.reconciledAt, operator: clip(delivery.historicalCompletion.operator, 120), releasePr: delivery.historicalCompletion.releasePr, releaseMergedSha: clip(delivery.historicalCompletion.releaseMergedSha, 80), sourceIssue: delivery.historicalCompletion.sourceIssue, caption: clip(delivery.historicalCompletion.caption, 200), noFurtherReleaseAction: true }
+        : null } : null,
     ...(finding ? {
       finding: {
         id: clip(finding.id, 200), revision: finding.revision, state: finding.state,
@@ -150,6 +155,13 @@ export function adviceContext(ticket?: Ticket, delivery?: Delivery, progress?: P
     rules = [
       'STALE PRIOR ASSIGNMENT: this ticket represents an earlier attempt that was superseded by a newer finding job revision.',
       'Do not recommend implementation, review or release actions based on stale prior assignment state. Direct the user to the active finding job.',
+    ]
+  } else if (delivery?.historicalCompletion) {
+    rules = [
+      `HISTORICAL DELIVERY RECORD: this legacy delivery record was delivered by later release PR #${delivery.historicalCompletion.releasePr} (${delivery.historicalCompletion.releaseMergedSha.slice(0, 7)}); source issue #${delivery.historicalCompletion.sourceIssue} is closed completed.`,
+      'Retained as completed/superseded history; this is not typed delivery acceptance, new implementation or publication grant. No further original-release action is needed for this scope.',
+      'Do not recommend publication, deployment, binding, acceptance, or re-running completed work. Preserve genuine later human requests as separate work.',
+      'This historical completion observation is not authority to execute anything or to modify historical records. Keep all recorded evidence and earlier advice as history.',
     ]
   } else if (delivery) {
     rules = [

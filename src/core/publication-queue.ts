@@ -13,7 +13,10 @@ export function findingCompleted(item: PendingDecisionItem): boolean {
   return false
 }
 export function decisionNeedsAttention(item: PendingDecisionItem): boolean {
-  if (item.delivery) return item.status === 'pending' && !['accepted', 'cancelled', 'abandoned'].includes(item.delivery.state) && !item.invalidation
+  if (item.delivery) {
+    if (item.delivery.historicalCompletion) return false
+    return item.status === 'pending' && !['accepted', 'cancelled', 'abandoned'].includes(item.delivery.state) && !item.invalidation
+  }
   if (publicationCompleted(item) || findingCompleted(item)) return false
   return item.status === 'pending' || !!item.lifecycle?.recovery
 }

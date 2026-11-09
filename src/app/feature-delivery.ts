@@ -24,6 +24,47 @@ export interface DeliveryUnboundInput { ticketId: string; title: string; owner: 
 export interface DeliveryAction { id: string; kind: DeliveryActionKind; label: string; revision: number; fingerprint: string }
 export interface DeliveryAudit { at: string; event: string; actor: string; actionId?: string; authorization?: DeliveryConfirmationAuthority }
 export interface DeliveryReconciliation { id: string; actionId: string; revision: number; label: string }
+export interface DeliveryHistoricalCompletion {
+  reconciledAt: string
+  operator: string
+  attestation: string
+  evidenceReference: string
+  sourceIssue: number
+  releasePr: number
+  releaseMergedSha: string
+  caption: string
+  fingerprint: string
+}
+export interface LegacyHistoricalReconciliationRecord {
+  deliveryId: string
+  revision: number
+  sourceIssue: number
+  originalWorkerId: string
+  releasePr: number
+  releaseMergedSha: string
+  evidenceReference: string
+  attestation: string
+}
+export const LEGACY_RECONCILIATION_MAP: Readonly<Record<string, { sourceIssue: number; originalWorkerId: string; title: string; triggerId: string }>> = {
+  'auto-1aa9568a8df574db0cef146a58004c4b': {
+    sourceIssue: 184,
+    originalWorkerId: '1aa9568a8df574db0cef146a58004c4b',
+    title: 'Add temporary subscription conservation and restore-priority settings',
+    triggerId: '94e8322655e0271463212f4999519ab9',
+  },
+  'auto-71dc25902ccec92c851634c58cf365f0': {
+    sourceIssue: 188,
+    originalWorkerId: '71dc25902ccec92c851634c58cf365f0',
+    title: 'Let operators record verified finding evidence through the native card',
+    triggerId: '3883194f9a7bf24ab5251d8e93a53c97',
+  },
+  'auto-d65f3131a9ae77d9de524535e4a01a26': {
+    sourceIssue: 182,
+    originalWorkerId: 'd65f3131a9ae77d9de524535e4a01a26',
+    title: 'Let independent confirmed findings use configured worker capacity',
+    triggerId: '2c17c79704fc48254f6ac65c122a8436',
+  },
+}
 export interface Delivery {
   id: string; title: string; revision: number; stage: DeliveryStage; state: DeliveryState; owner: string
   /** Read-only native ownership projection; never persisted as an execution grant. */
@@ -31,6 +72,8 @@ export interface Delivery {
   nextAction?: DeliveryAction; blocker?: string; scopeBinding?: DeliveryScopeBinding; bindings: DeliveryBindings; requirements: string[]
   /** Derived recovery control for an existing parked outbox row; never a new mutation grant. */
   reconciliation?: DeliveryReconciliation
+  /** Explicit historical completion metadata for verified legacy delivery records. */
+  historicalCompletion?: DeliveryHistoricalCompletion
   recommendation?: DeliveryRecommendation
   recommendationError?: { kind: DeliveryActionKind; fingerprint: string; message: string; attempts: number; nextRetryAt?: number }
   preparation?: { fingerprint: string; message: string; attempts: number; nextRetryAt?: number }
@@ -111,7 +154,7 @@ const acceptanceReady = (d: Delivery): boolean => {
   return passed(d, 'publication') && passed(d, 'verification') && d.requirements.length > 0 && d.requirements.every(r => relevant.some(e => ['verification', 'acceptance'].includes(e.kind) && e.outcome === 'passed' && e.requirements?.includes(r)))
 }
 function nextKind(d: Delivery): DeliveryActionKind | undefined {
-  if (d.scopeBinding || terminal(d) || d.blocker || d.state === 'running') return undefined
+  if (d.historicalCompletion || d.scopeBinding || terminal(d) || d.blocker || d.state === 'running') return undefined
   if (d.stage === 'implementation') return 'implement'
   if (d.stage === 'review') return passed(d, 'review') ? undefined : currentEvidence(d).some(e => e.kind === 'review' && e.outcome === 'failed') ? 'fix' : 'review'
   if (d.stage === 'ready_to_publish') return 'publish'
@@ -120,6 +163,12 @@ function nextKind(d: Delivery): DeliveryActionKind | undefined {
 }
 function refresh(d: Delivery): Delivery {
   delete d.nextAction
+  if (d.historicalCompletion) {
+    delete d.recommendation
+    delete d.recommendationError
+    delete d.preparation
+    return d
+  }
   const kind = nextKind(d)
   if ((kind === 'review' && d.attempts.review >= d.attempts.maxReview) || (kind === 'fix' && d.attempts.fix >= d.attempts.maxFix)) { d.state = 'blocked'; d.blocker = 'Review/fix retry budget exhausted'; return d }
   if (kind) {
@@ -158,7 +207,7 @@ export class DeliveryStore {
   }
   private project(delivery: Delivery): Delivery {
     const d = refresh(delivery); delete d.reconciliation
-    if (d.state !== 'blocked' || d.scopeBinding) return d
+    if (d.historicalCompletion || d.state !== 'blocked' || d.scopeBinding) return d
     const row = this.db.prepare("SELECT id,value FROM feature_delivery_outbox WHERE delivery_id=? AND status='blocked' ORDER BY rowid DESC LIMIT 1").get(d.id)
     if (!row) return d
     let payload: { action?: DeliveryAction; bindings?: DeliveryBindings; authorization?: DeliveryConfirmationAuthority; preparedPublication?: Delivery['preparedPublication'] } | null
@@ -172,10 +221,19 @@ export class DeliveryStore {
     return d
   }
   get(id: string): Delivery | undefined {
-    const row = this.db.prepare('SELECT value FROM feature_delivery WHERE id=?').get(id)
-    return row ? this.project(JSON.parse(String(row.value)) as Delivery) : undefined
+    const row = this.db.prepare('SELECT revision, value FROM feature_delivery WHERE id=?').get(id)
+    if (!row) return undefined
+    const d = JSON.parse(String(row.value)) as Delivery
+    d.revision = Number(row.revision)
+    return this.project(d)
   }
-  list(): Delivery[] { return this.db.prepare('SELECT value FROM feature_delivery ORDER BY id').all().map(row => this.project(JSON.parse(String(row.value)) as Delivery)) }
+  list(): Delivery[] {
+    return this.db.prepare('SELECT revision, value FROM feature_delivery ORDER BY id').all().map(row => {
+      const d = JSON.parse(String(row.value)) as Delivery
+      d.revision = Number(row.revision)
+      return this.project(d)
+    })
+  }
   create(input: DeliveryCreate): Delivery {
     validateIntake(input)
     return this.atomic(() => {
@@ -232,7 +290,7 @@ export class DeliveryStore {
       if (before.state === 'running' && !allowFixRebind && !allowScopeBind && (!bindingMatches(d.bindings, before.bindings) || stable(d.preparedPublication) !== stable(before.preparedPublication))) throw new DeliveryConflict('In-flight scope and prepared publication are immutable')
       if (before.evidence.some(e => !d.evidence.some(next => next.id === e.id && stable(next) === stable(e))) || stable(d.audit.slice(0, before.audit.length)) !== stable(before.audit)) throw new DeliveryConflict('Evidence and audit history are append-only')
       if ((!allowScopeBind && (d.attempts.maxReview !== before.attempts.maxReview || d.attempts.maxFix !== before.attempts.maxFix || d.attempts.review < before.attempts.review || d.attempts.fix < before.attempts.fix)) || d.generation < before.generation || d.generation > before.generation + 1) throw new DeliveryConflict('Retry budgets and generations cannot be reset')
-      if (terminal(before) && stable({ ...d, nextAction: undefined }) !== stable({ ...before, nextAction: undefined })) throw new DeliveryConflict('Settled delivery is immutable')
+      if ((terminal(before) || before.historicalCompletion) && stable({ ...d, nextAction: undefined }) !== stable({ ...before, nextAction: undefined })) throw new DeliveryConflict('Settled delivery is immutable')
       if (d.state === 'accepted' && (!acceptanceReady(d) || !d.acceptance || d.acceptance.fingerprint !== fingerprint(d))) throw new DeliveryConflict('Acceptance lacks exact verified evidence')
       d.revision = revision + 1; refresh(d)
       if (!this.db.prepare('UPDATE feature_delivery SET revision=?,value=? WHERE id=? AND revision=?').run(d.revision, JSON.stringify(d), id, revision).changes) throw new DeliveryConflict('Concurrent delivery revision')
@@ -415,6 +473,163 @@ export class DeliveryStore {
       if (![159, 160].includes(record.sourceIssue) || record.bindings.sourceIssue !== record.sourceIssue) throw new Error('Backfill restricted to source issues #159 and #160')
       if (!record.id || !record.owner || !record.bindings.repository || !record.bindings.headSha || !record.bindings.baseSha || !record.requirements.length || record.requirements.some(r => !r.trim()) || !record.workers.length || record.workers.some(w => !w.id || !w.ended || !w.merged) || new Set(record.workers.map(w => w.id)).size !== record.workers.length || !record.evidence.length || new Set(record.evidence.map(e => e.id)).size !== record.evidence.length || record.evidence.some(e => !e.id || !e.reference || !Number.isFinite(Date.parse(e.recordedAt)) || !bindingMatches(e.bindings, record.bindings))) throw new Error('Backfill requires recorded, bound evidence and ended merged workers')
       return { sourceIssue: record.sourceIssue, id: record.id, stage: 'verifying' as const, state: 'blocked' as const, blocker: 'Read-only backfill preview; intake acceptance requires explicit verification', workers: record.workers.map(w => w.id), evidence: structuredClone(record.evidence) }
+    })
+  }
+  /** Pure preview: validates exact supported legacy delivery mapping and parameters; never touches database or workers. */
+  previewLegacyHistoricalReconciliation(records: readonly LegacyHistoricalReconciliationRecord[]): {
+    deliveryId: string; sourceIssue: number; originalWorkerId: string; title: string; stage: DeliveryStage; state: DeliveryState; status: 'stale'; caption: string; releasePr: number; releaseMergedSha: string; evidenceReference: string
+  }[] {
+    if (!Array.isArray(records) || records.length === 0 || records.length > 3) {
+      throw new Error('Reconciliation requires between 1 and 3 legacy delivery records')
+    }
+    const seen = new Set<string>()
+    return records.map(record => {
+      if (!record || typeof record !== 'object') throw new Error('Invalid reconciliation record')
+      const expected = LEGACY_RECONCILIATION_MAP[record.deliveryId]
+      if (!expected) throw new Error(`Unsupported delivery ID for legacy reconciliation: ${record.deliveryId}`)
+      if (seen.has(record.deliveryId)) throw new Error(`Duplicate delivery ID in reconciliation records: ${record.deliveryId}`)
+      seen.add(record.deliveryId)
+      if (record.sourceIssue !== expected.sourceIssue) {
+        throw new Error(`Mismatched source issue for ${record.deliveryId}: expected #${expected.sourceIssue}, got #${record.sourceIssue}`)
+      }
+      if (record.originalWorkerId !== expected.originalWorkerId) {
+        throw new Error(`Mismatched original worker ID for ${record.deliveryId}: expected ${expected.originalWorkerId}, got ${record.originalWorkerId}`)
+      }
+      if (record.revision !== 3) {
+        throw new Error(`Expected legacy revision 3 for ${record.deliveryId}, got ${record.revision}`)
+      }
+      if (record.releasePr !== 33) {
+        throw new Error(`Expected verified later release PR #33, got PR #${record.releasePr}`)
+      }
+      if (record.releaseMergedSha !== 'fb591843c3f9ff19965a49e45a4157ed195fc890') {
+        throw new Error(`Expected verified later release merged SHA fb591843c3f9ff19965a49e45a4157ed195fc890, got ${record.releaseMergedSha}`)
+      }
+      if (record.evidenceReference !== 'https://github.com/gera3d/dsh-superagent-prototype/pull/33') {
+        throw new Error(`Expected verified later release evidence URL https://github.com/gera3d/dsh-superagent-prototype/pull/33, got ${record.evidenceReference}`)
+      }
+      if (typeof record.attestation !== 'string' || !record.attestation.trim()) {
+        throw new Error(`Missing explicit operator attestation for ${record.deliveryId}`)
+      }
+      const caption = `Delivered by later release PR #${record.releasePr} (${record.releaseMergedSha.slice(0, 7)}); source issue #${record.sourceIssue} closed. Retained as completed/superseded history; not typed delivery acceptance.`
+      return {
+        deliveryId: record.deliveryId,
+        sourceIssue: record.sourceIssue,
+        originalWorkerId: record.originalWorkerId,
+        title: expected.title,
+        stage: 'review' as const,
+        state: 'blocked' as const,
+        status: 'stale' as const,
+        caption,
+        releasePr: record.releasePr,
+        releaseMergedSha: record.releaseMergedSha,
+        evidenceReference: record.evidenceReference,
+      }
+    })
+  }
+  /** Reconciles exact legacy deliveries as completed history with explicit operator attestation and later release proof. */
+  reconcileLegacyHistoricalCompletion(records: readonly LegacyHistoricalReconciliationRecord[], expectedHash: string, authority: DeliveryConfirmationAuthority, now = new Date().toISOString()): Delivery[] {
+    this.previewLegacyHistoricalReconciliation(records)
+    const recordsFingerprint = deliveryFingerprint(records)
+    if (recordsFingerprint !== expectedHash || authority.scope !== expectedHash || authority.source !== 'local_operator' || !authority.actor?.trim() || !authority.reference?.trim()) {
+      throw new DeliveryConflict('Exact reviewed records hash and structured local operator authority required')
+    }
+    return this.atomic(() => {
+      const results: Delivery[] = []
+      const marker = `historical-reconciliation:${expectedHash}:${authority.reference}`
+      for (const record of records) {
+        const d = this.get(record.deliveryId)
+        if (!d) throw new DeliveryConflict(`Delivery not found: ${record.deliveryId}`)
+        if (d.historicalCompletion) {
+          const recordFp = deliveryFingerprint(record)
+          if (d.historicalCompletion.fingerprint === recordFp && d.audit.some(a => a.event === marker && a.actor === authority.actor)) {
+            results.push(d)
+            continue
+          }
+          throw new DeliveryConflict(`Delivery ${record.deliveryId} already reconciled with different parameters`)
+        }
+        if (d.revision !== record.revision) {
+          throw new DeliveryConflict(`Stale delivery revision for ${record.deliveryId}: expected ${record.revision}, current ${d.revision}`)
+        }
+        if (!d.scopeBinding || d.bindings.baseSha !== '' || d.bindings.headSha !== '' || (d.bindings.refs && d.bindings.refs.length > 0)) {
+          throw new DeliveryConflict(`Delivery ${record.deliveryId} is not in original unbound scope`)
+        }
+        if (d.bindings.repository !== 'gera3d/superagent-sandbox') {
+          throw new DeliveryConflict(`Delivery ${record.deliveryId} is not in repository gera3d/superagent-sandbox: got ${d.bindings.repository}`)
+        }
+        if (d.bindings.sourceIssue !== record.sourceIssue) {
+          throw new DeliveryConflict(`Mismatched source issue for ${record.deliveryId}`)
+        }
+        if (d.stage !== 'review' || d.state !== 'blocked') {
+          throw new DeliveryConflict(`Delivery ${record.deliveryId} is not in unbound review blocked stage`)
+        }
+        if (d.owner !== `worker:${record.originalWorkerId}`) {
+          throw new DeliveryConflict(`Mismatched owner for ${record.deliveryId}: expected worker:${record.originalWorkerId}, got ${d.owner}`)
+        }
+        if (d.workers.length !== 1 || d.workers[0] !== record.originalWorkerId) {
+          throw new DeliveryConflict(`Delivery ${record.deliveryId} must have exactly one worker matching ${record.originalWorkerId}`)
+        }
+        const expectedMapping = LEGACY_RECONCILIATION_MAP[record.deliveryId]
+        if (expectedMapping?.triggerId && d.scopeBinding?.sourceTriggerId && d.scopeBinding.sourceTriggerId !== expectedMapping.triggerId) {
+          throw new DeliveryConflict(`Mismatched source trigger ID for ${record.deliveryId}`)
+        }
+        const activeOutbox = this.db.prepare("SELECT id FROM feature_delivery_outbox WHERE delivery_id=? AND status IN ('pending','leased','blocked') LIMIT 1").get(d.id)
+        if (activeOutbox) {
+          throw new DeliveryConflict(`Outstanding handoff requires its own reconciliation for ${record.deliveryId}`)
+        }
+        const tables = new Set(this.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map(r => String(r.name)))
+        if (!tables.has('ticket')) {
+          throw new DeliveryConflict(`Ticket table missing for worker verification of ${record.originalWorkerId}`)
+        }
+        for (const workerId of d.workers) {
+          const ticketRow = this.db.prepare('SELECT value FROM ticket WHERE id=?').get(workerId)
+          if (!ticketRow) {
+            throw new DeliveryConflict(`Original worker ticket row missing for ${workerId}`)
+          }
+          let ticket: { id?: string; ended?: unknown; assignments?: { state?: string; report?: { state?: string } }[] }
+          try {
+            ticket = JSON.parse(String(ticketRow.value))
+          } catch {
+            throw new DeliveryConflict(`Malformed worker JSON for ticket ${workerId}`)
+          }
+          if (!ticket || typeof ticket !== 'object' || !ticket.ended) {
+            throw new DeliveryConflict(`Worker ${workerId} ticket is not ended`)
+          }
+          const latest = ticket.assignments?.at(-1)
+          if (latest?.state === 'running' && !['ready', 'blocked', 'failed', 'dropped', 'waiting'].includes(latest?.report?.state ?? '')) {
+            throw new DeliveryConflict(`Worker ${workerId} still has active running assignment`)
+          }
+        }
+        const recordFp = deliveryFingerprint(record)
+        const caption = `Delivered by later release PR #${record.releasePr} (${record.releaseMergedSha.slice(0, 7)}); source issue #${record.sourceIssue} closed. Retained as completed/superseded history; not typed delivery acceptance.`
+        const metadata: DeliveryHistoricalCompletion = {
+          reconciledAt: now,
+          operator: authority.actor,
+          attestation: record.attestation,
+          evidenceReference: record.evidenceReference,
+          sourceIssue: record.sourceIssue,
+          releasePr: record.releasePr,
+          releaseMergedSha: record.releaseMergedSha,
+          caption,
+          fingerprint: recordFp,
+        }
+        d.historicalCompletion = metadata
+        d.revision = d.revision + 1
+        delete d.nextAction
+        delete d.recommendation
+        delete d.recommendationError
+        delete d.preparation
+        d.audit.push({
+          at: now,
+          event: marker,
+          actor: authority.actor,
+          authorization: authority,
+        })
+        if (!this.db.prepare('UPDATE feature_delivery SET revision=?,value=? WHERE id=? AND revision=?').run(d.revision, JSON.stringify(d), d.id, record.revision).changes) {
+          throw new DeliveryConflict(`Concurrent delivery revision on ${record.deliveryId}`)
+        }
+        results.push(this.project(d))
+      }
+      return results
     })
   }
 }

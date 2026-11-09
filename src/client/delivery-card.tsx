@@ -14,18 +14,19 @@ export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile }: { item
   const [reconciled, setReconciled] = useState<string>()
   const d = item.delivery
   if (!d) return <section role="status">Delivery metadata unavailable. Refresh before confirming.</section>
-  const action = d.scopeBinding || d.work?.state === 'superseded' ? undefined : d.nextAction
+  const isHistorical = !!d.historicalCompletion || d.work?.state === 'superseded'
+  const action = d.scopeBinding || isHistorical ? undefined : d.nextAction
   const key = `${d.id}:${d.revision}:${action?.id}`
-  const available = item.actionMode === 'feature_delivery' && item.status === 'pending' && !item.invalidation
+  const available = !isHistorical && item.actionMode === 'feature_delivery' && item.status === 'pending' && !item.invalidation
     && !d.scopeBinding && d.state === 'awaiting_decision' && action?.revision === d.revision && !!action.fingerprint && confirmed !== key
   const recordedAdvice = d.recommendation
   const recommendation = recordedAdvice && action && recordedAdvice.actionId === action.id && recordedAdvice.kind === action.kind && recordedAdvice.fingerprint === action.fingerprint && ['take', 'hold'].includes(recordedAdvice.disposition ?? '')
     ? recordedAdvice : undefined
   const endorsed = recommendation?.disposition === 'take'
   const pinnedRefs = [...new Map([...(d.bindings.refs ?? []), ...(d.preparedPublication?.refs ?? [])].map(ref => [JSON.stringify(ref), ref])).values()]
-  const recovery = d.reconciliation
+  const recovery = isHistorical ? undefined : d.reconciliation
   const recoveryKey = `${d.id}:${d.revision}:${recovery?.id}:${recovery?.actionId}`
-  const reconcileAvailable = !!onReconcile && item.actionMode === 'feature_delivery' && item.status === 'pending' && !item.invalidation && !d.scopeBinding && d.state === 'blocked' && !!recovery?.id && !!recovery.actionId && recovery.revision === d.revision && reconciled !== recoveryKey
+  const reconcileAvailable = !isHistorical && !!onReconcile && item.actionMode === 'feature_delivery' && item.status === 'pending' && !item.invalidation && !d.scopeBinding && d.state === 'blocked' && !!recovery?.id && !!recovery.actionId && recovery.revision === d.revision && reconciled !== recoveryKey
   const reconcile = async () => {
     if (!reconcileAvailable || !recovery || acting.current) return
     acting.current = true; setBusy(true); setError(undefined)
@@ -48,12 +49,14 @@ export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile }: { item
     catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)) }
     finally { acting.current = false; setBusy(false) }
   }
-  const status = d.work?.state === 'superseded' ? 'Superseded history' : d.acceptance ? 'Accepted'
+  const status = d.historicalCompletion ? 'Delivered by later release'
+    : d.work?.state === 'superseded' ? 'Superseded history' : d.acceptance ? 'Accepted'
     : d.work?.state === 'awaiting_direction' ? 'Ready for your next step'
     : d.work?.state === 'owned' || d.state === 'running' ? 'In progress'
     : d.state === 'awaiting_decision' ? `${d.stage.replaceAll('_', ' ')} ready`
     : d.state.replaceAll('_', ' ')
-  const hint = d.work?.state === 'awaiting_direction' ? 'Your next step below'
+  const hint = d.historicalCompletion ? 'Completed history'
+    : d.work?.state === 'awaiting_direction' ? 'Your next step below'
     : available ? 'Review action' : reconcileAvailable ? 'Handoff needs attention' : recheckAvailable ? 'Configuration needs attention' : 'View details'
   return <section id={`delivery-${d.id}`} className="dt-delivery-card" aria-label={`Feature delivery: ${d.title}`}>
     <style>{STYLES}</style>
@@ -67,7 +70,21 @@ export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile }: { item
       </summary>
       <div className="dt-delivery-body">
     <h3>{d.title}</h3>
+    {d.historicalCompletion && <p className="dt-delivery-caption">{d.historicalCompletion.caption}</p>}
     <p className="dt-delivery-owner">Owner: {d.work?.owner === 'user' ? 'You' : d.work?.owner ?? d.owner}</p>
+    {d.historicalCompletion && <section aria-label="Historical completion reconciliation" style={{ margin: '12px 0', padding: '10px 12px', background: 'rgba(56, 139, 253, 0.1)', border: '1px solid rgba(56, 139, 253, 0.3)', borderRadius: '6px' }}>
+      <p style={{ fontWeight: 600, color: 'var(--dsw-alias-label-primary, #e6edf3)', margin: '0 0 6px' }}>Historical completion reconciliation</p>
+      <p style={{ margin: '0 0 6px' }}>{d.historicalCompletion.caption}</p>
+      <dl style={{ margin: 0, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px' }}>
+        <dt>Source issue</dt><dd>#{d.historicalCompletion.sourceIssue} (closed completed)</dd>
+        <dt>Later release PR</dt><dd><a href={`https://github.com/gera3d/dsh-superagent-prototype/pull/${d.historicalCompletion.releasePr}`} target="_blank" rel="noreferrer">PR #{d.historicalCompletion.releasePr}</a></dd>
+        <dt>Merged SHA</dt><dd><code>{d.historicalCompletion.releaseMergedSha}</code></dd>
+        <dt>Evidence ref</dt><dd>{d.historicalCompletion.evidenceReference}</dd>
+        <dt>Reconciled at</dt><dd>{d.historicalCompletion.reconciledAt}</dd>
+        <dt>Operator</dt><dd>{d.historicalCompletion.operator}</dd>
+      </dl>
+      <p style={{ margin: '6px 0 0', fontSize: '11px', color: 'var(--dsw-alias-label-muted, #8b949e)' }}>Original unbound pins and history preserved. Not typed delivery acceptance, new implementation or publication grant.</p>
+    </section>}
     {d.work && <section aria-label="Current work ownership"><p role="status">{d.work.nextStep}</p>
       {d.work.progress && <><p><strong>Latest worker report:</strong> {d.work.progress.length > 480 ? `${d.work.progress.slice(0, 480)}…` : d.work.progress}</p>
         {d.work.progress.length > 480 && <details><summary>Full worker progress report</summary><p style={{ whiteSpace: 'pre-wrap' }}>{d.work.progress}</p></details>}</>}
@@ -75,13 +92,14 @@ export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile }: { item
       {!!d.work.replaces?.length && <p>Active replacement for {d.work.replaces.map(id => `worker-${id}`).join(', ')}.</p>}
     </section>}
     {d.scopeBinding && d.work?.state === 'awaiting_direction' && <p role="status">Release handoff needs preparation: the artifact is ready for review, but its deployable source revision, target and acceptance checks are not bound. Preparing a reply does not merge or publish it.</p>}
-    {d.blocker && !d.work && <p role="status">Blocked: {d.blocker}</p>}
+    {d.blocker && !d.work && !d.historicalCompletion && <p role="status">Blocked: {d.blocker}</p>}
     {recommendation ? <aside aria-label="Senior Developer recommendation"><strong>{endorsed ? `Senior Developer recommends: ${action!.label}` : 'Senior Developer recommends waiting'}</strong><p>{recommendation.rationale}</p><small>{recommendation.provider} · {recommendation.recordedAt}</small></aside>
       : d.recommendationError && d.work?.state !== 'superseded' ? <p role="status">Senior Developer advice unavailable: {d.recommendationError.message}. Advice failure does not veto an otherwise eligible action.</p> : action ? <p>No current Senior Developer recommendation recorded for this action.</p> : null}
     {action?.kind === 'publish' && <section aria-label="Publication effects"><p><strong>Before publishing:</strong> this confirms the pinned publication for {d.preparedPublication?.repository ?? d.bindings.repository}{d.preparedPublication ? ` PR #${d.preparedPublication.pr}` : ''} in {d.preparedPublication?.environment ?? d.bindings.environment ?? 'the configured environment'}. Inspect all pinned references below before confirming.</p>
       <p><strong>Components:</strong> {d.preparedPublication?.components?.length ? d.preparedPublication.components.join(', ') : 'Not recorded in this publication snapshot.'}</p>
       <p><strong>Effects:</strong> {d.preparedPublication?.effects?.length ? d.preparedPublication.effects.join('; ') : 'Not recorded; no component or restart effects are inferred.'}</p></section>}
     {d.acceptance ? <p role="status">Acceptance recorded by {d.acceptance.actor} at {d.acceptance.at}.</p>
+      : d.historicalCompletion ? <p role="status">Retired to completed history via later release. Not typed delivery acceptance.</p>
       : <p>Not accepted. {d.work?.state === 'awaiting_direction' ? 'Choose a next step in the Senior Developer suggestions. Release confirmation follows preparation.' : action?.label ?? (d.state === 'running' ? 'Work is in progress.' : 'No confirmation currently offered.')}</p>}
     {available && (endorsed ? <Button variant="primary" disabled={busy} onClick={() => { void confirm() }}>{busy ? 'Confirming…' : `Confirm: ${action!.label}`}</Button>
       : <details><summary>Inspect eligible action / proceed without recommendation</summary><p>{recommendation?.disposition === 'hold' ? 'The Senior Developer recommends waiting. ' : 'No current endorsement is recorded. '}An explicit operator override can confirm only this server-eligible action; it grants no additional authority.</p><Button variant="outline" disabled={busy} onClick={() => { void confirm() }}>{busy ? 'Confirming…' : `Proceed without recommendation: ${action!.label}`}</Button></details>)}
