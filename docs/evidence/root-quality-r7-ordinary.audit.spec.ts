@@ -12,3 +12,12 @@ it('ordinary unowned current human request to draft a native-tool issue remains 
  expect(res.item.choices.map(c=>c.id)).toEqual(['draft','clarify'])
  }finally{db.close()}
 })
+
+import {suggestHelper} from '../src/app/routes/helper.ts'
+import {SettingsSchema} from '../src/policy.ts'
+it('helper retains requested ordinary draft rather than converting it to a clarification loop',async()=>{
+ const options=[{id:'draft',label:'Draft requested native-tool gap issue',prompt:'Draft the new issue for the native-tool gap requested above. Do not file or send it.',recommended:true},{id:'clarify',label:'Clarify issue scope',prompt:'Ask which reproduction details belong in the requested issue draft.',recommended:false}]
+ const ctx:any={llm:{resolveCallConfig:async(r:any)=>r,async *stream(){yield{type:'text-delta',text:JSON.stringify({options})};yield{type:'finish',reason:{kind:'stop'}}}},logger:{warn(){}},get(){}}
+ const response=await suggestHelper(ctx,{summary:'User explicitly requests an unsent native-tool issue draft for review.',latestTurn:'User: Please draft a new issue for the native-tool gap; do not file or send it. Assistant: I can draft that for your review.'},SettingsSchema.parse({models:{helper:{provider:'test',model:'test'}}}))
+ expect(response.options.map(x=>x.id)).toEqual(['draft','clarify'])
+})
