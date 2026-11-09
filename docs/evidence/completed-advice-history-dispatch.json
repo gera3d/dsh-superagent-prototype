@@ -159,5 +159,20 @@
       "scope": "existing baseline tests, not candidate verification"
     },
     "candidate": "No modified source/candidate or durable report observed at this checkpoint. Productive internal inspection, not diagnosed stall; leave active worker alone."
+  },
+  "correction": {
+    "at": "2026-11-09T19:12:30.391572+00:00",
+    "findingState": "running",
+    "revision": 3,
+    "job": {
+      "id": "finding:bf38fc9c-8273-4d61-9ae4-e98c45e51365:r3",
+      "ticketId": "64986fd6bbad003dccda789f43035579",
+      "assignmentId": "ed935430e206defa3bd622cc4242b72e"
+    },
+    "rejectedCandidate": "0a2ecf87ca266a3c3bd7216a317b75e823d8dd5d",
+    "finalWorkerChecks": "159 tests/13 suites, types/build passed; earlier163/15 run retained",
+    "rootCounterexample": "Delayed storage timestamp with same old source wrongly kept pending; committed source bytes match audit. Original real-row positive control passed. No live row modified.",
+    "reviewReference": "docs/reviews/completed-advice-history-0a2ecf8-blocker.md",
+    "continuation": "Supported headless retry_scope revision2 then prior-approved fix_now revision3 after r1 ended; same finding and original history preserved. Actual r3 request/header seq18/context19 uses Antigravity Gemini3.8Flash high/maxTokens65536. Internal inspection remains active; no corrected candidate yet."
   }
 }

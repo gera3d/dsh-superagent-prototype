@@ -1,6 +1,6 @@
 # DeepSeek Harness project status
 
-Updated November 09, 2026, 10:34 AM PST. Owner: Codex coordinator/reviewer. **Only this current checkpoint describes the live stage. All dated attempt logs below the history divider are historical.**
+Updated November 09, 2026, 11:12 AM PST. Owner: Codex coordinator/reviewer. **Only this current checkpoint describes the live stage. All dated attempt logs below the history divider are historical.**
 
 ## Current verified checkpoint
 
@@ -15,7 +15,7 @@ Updated November 09, 2026, 10:34 AM PST. Owner: Codex coordinator/reviewer. **On
 
 Live Harness checkpoint: **1 running,0 queued,max3; intake resumed; all runtime health components including GitHub ready.** Settings blocks match pre-deployment backup; OpenAI remains conserved for Harness execution. Existing Google-first/Anthropic/DeepSeek configuration was not changed. These runtime/config facts do not certify quotas or universal provider reliability.
 
-Current canonical repair: finding `8d447429-65ee-4f5f-aa7b-354c0f349673`, **resolved revision14, verified native evidence explicitly selected and all bounded requirements acknowledged**, job `finding:8d447429-65ee-4f5f-aa7b-354c0f349673:r11`, ended ticket `f2e857feb68baca2469103dc91d7a507`, assignment `1ee8f030b311aa2b470ab37e618b94e7`. No implementation worker is still running. There are **16 pending decision rows**, not16 new jobs or16 safe user actions; old advice and binding gates remain separately scoped history. No historical user choice set was retired by this correction.
+Current canonical repair: finding `8d447429-65ee-4f5f-aa7b-354c0f349673`, **resolved revision14, verified native evidence explicitly selected and all bounded requirements acknowledged**, job `finding:8d447429-65ee-4f5f-aa7b-354c0f349673:r11`, ended ticket `f2e857feb68baca2469103dc91d7a507`, assignment `1ee8f030b311aa2b470ab37e618b94e7`. No implementation worker is still running. There are **18 pending decision rows**, not18 new jobs or18 safe user actions; old advice and binding gates remain separately scoped history. No historical user choice set was retired by this correction.
 
 ## Current verification evidence and limits
 
