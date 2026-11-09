@@ -1,0 +1,80 @@
+{
+  "at": "2026-11-09T22:33:35.963311+00:00",
+  "sourcePR": 79,
+  "sourceHead": "98b53652bb4a7ae456f7741e8d6125c924428a75",
+  "merge": "67573d27e01621433e4982f66518660c56e46d86",
+  "workerHead": "f646235f10ca75b1003b38bfac291200e3324ff0",
+  "backup": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/verified-batch/cost-repair-rollback-20261109T223335Z",
+  "files": [
+    {
+      "path": "package.json",
+      "before": "e47c86169dfc0fb1f362bf982151e23b7a2c5d1b72d8b0dd62ddc107db70d489",
+      "after": "ea58f628d74cf4367934763a165a16301a7d49ccb832d90613657fd8c4c59135"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "before": "2f604c7c5e9e15336ae79348dee465378a708929684d8928ea92039231a9cb5e",
+      "after": "622165dc458b69a936e85445985c9098913be31bf7cc5d3dbbd7bd572bae7235"
+    },
+    {
+      "path": "src/app/http.ts",
+      "before": "e02c04415696e3179f5fa41c6dc072dd4ba754ec6a57887b838c4c8c419be7cf",
+      "after": "4a6f66efbcb4744af4dc8c42a97e4d15f9a6fdc51d2ef251f66d88c269f8c440"
+    },
+    {
+      "path": "src/app/job-usage.ts",
+      "before": "b872079accff610faf2d19026f99bd563b953183a87257735eafa5b6030d52ac",
+      "after": "8563c3e378fe7539011e83d3e4531192de47af70575d5933d721e471e4626b9d"
+    },
+    {
+      "path": "src/client/job-usage.tsx",
+      "before": "3cd1cf32f0d187dd638a5a35a438ee493b8cedca7e55e85ccabb551af8026e5c",
+      "after": "e1f51f77a13166a7bc1bffc8cb85e681dcdb7939e72037ff618f2f595eaf18ea"
+    },
+    {
+      "path": "tests/fixtures/capture-job-usage.mjs",
+      "before": "30f616b34965d1951046286c97b9c81795adcf1921f5e26c619c81fc54568ca6",
+      "after": "46ac00179a796189d89cd2d850471de9dcf3337c3c99dd1f18a6a24e018a3fe7"
+    }
+  ],
+  "assets": {
+    "lib/deployment-BTCh8dP2.d.ts": "505a7f812d3cb688a9f41cafdeceb186d9d1d2806625b4f574f07b283141a8fa",
+    "lib/client.js": "cc8ba9db552dd1f470d701837c500af92b4cce205bd90042c5d50b91cd9619c2",
+    "lib/decision-inbox-provider-canonical.d.ts": "bd668848a1e460540358d3cfe4508aa09703e557991da47ac6bd8e2491490c4f",
+    "lib/model-BSxHOzxq.d.ts": "e4463219981fb520f87b75001088e828ba27e12ce14e6d595f0de2e37255e803",
+    "lib/github-pull-D0dzdKap.js": "1c57a002b8d21434ee38b7f3b843106cdb5ce2e8cc51fa9f0653cd650f630882",
+    "lib/policy-BPcc5tmR.d.ts": "84dffae02941d306854afabcd377bb0b18d4e5daca2527830b8d8622d32be0c2",
+    "lib/publication-worker.js": "83e0d5792c8adff7897e924cfc4088e7e1d9ea32a618f568dc0e6d3075fd3ad8",
+    "lib/decision-provider.d.ts": "6b5408ac5b6e6f1a049da951dcb2c09dd2169c3bf1cef8bd097ddad6d149c3c9",
+    "lib/index.js": "ab7b8d0543ddb5a2ce6836b3d96971f0730bc51cb276a6f54b5ee2080af2f956",
+    "lib/decision-provider.js": "3f3c34c98005e92a2c23e6d11dbe76e3ffa6f5e15386754177c839cfad8b5146",
+    "lib/kind-oOFNJjew.d.ts": "7d1d9a086103f4cf69f18a277fa9675943203a8ee5b1674555e5459e58bae4c3",
+    "lib/decision-inbox-provider.js": "3fb5c987fb21adef915f197cdcbb518cbc09e7da2aed5a99c6bb704bc064665b",
+    "lib/publication-operator.js": "127ddbb5044560f5fa7e11a30a51b325eabc4494ee37b3c77a0089ff9c0492b7",
+    "lib/publication-ticket-Drn4fLJp.js": "a0ea1cc496c14dee5b941c95b0d5e94ba9b948d72f81242d360d720619b6805d",
+    "lib/feishu-watch.d.ts": "9a46fb3c1a38944e537ccf24b0efa274e5763586c516bf0ea3541197c3afb440",
+    "lib/github-watch.d.ts": "97c2e3e24c73dbec1771ad64adfa43d6a0cb1d6fd9be6b6cd4561b21ee2996a8",
+    "lib/publication-operator.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+    "lib/feishu-CVHwY3e7.js": "2f998efe797be309fdc2d029ef3705bc7eaa05ddd190bda66e51184393766588",
+    "lib/lifecycle-publication-C-DAA-0v.js": "f87b138d2ea6e70f8682d530a7b34f471d003ebba151a966c60b27f91a5ebb6a",
+    "lib/publication-context-mx4J0Je-.js": "54f677911bfbfb960b2ab0c04c2b608c542cf49b22e5700e15c9153036ec3f4c",
+    "lib/publication-worker.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+    "lib/index.d.ts": "78e0eb338131ce82dd68f7a156420e12f6d31b9e4e9219b158e9ced6565ee67b",
+    "lib/decision-inbox-provider-live.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20",
+    "lib/feishu-watch.js": "0f94d1a0b3d166f3f558ef88db9d105d30fe5aa738ac73ad13cc37a8e745753a",
+    "lib/http-CuVdW9FB.js": "3edb04463e21eafc53ba2e409b15d7ada860dee44ba257a5fe07f59632f7b49e",
+    "lib/poll-YENBPt9-.js": "38eb3c0c3654f4c112e2ca574bb4c61e217ec7b6ea64f4a5ae1ba63001c215f5",
+    "lib/github-watch.js": "c194996f24b6bd9d5d9e98a5e4364dc4f04a30190a0818c0fd75acb51e5b2248",
+    "lib/decision-inbox-provider-canonical.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20"
+  },
+  "retainedLocalTests": [
+    "tests/http.spec.ts",
+    "tests/job-usage-panel.spec.tsx",
+    "tests/job-usage.spec.ts",
+    "tests/root-cost-review.audit.spec.ts"
+  ],
+  "stage": "merged, installed and restarted; actual UI verification/acceptance pending",
+  "priorAbortedAttempt": "First attempt stopped before any live source copy on tests/http.spec.ts preimage mismatch; unchanged service restarted. Local tests preserved; this install excludes non-fixture tests.",
+  "restartExitCode": 0,
+  "settingsUnchanged": true
+}
