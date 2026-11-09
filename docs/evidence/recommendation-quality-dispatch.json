@@ -1,0 +1,269 @@
+{
+  "observedAt": "2026-11-09T15:00:01.731369+00:00",
+  "finding": {
+    "dedupKey": "current-scope-all-option-advisor-quality-v1",
+    "title": "Make every Senior Developer option current, useful and within the approved task",
+    "problem": "User explicitly prioritizes actual recommendation quality before retirement. Fresh closure cards correctly recommend stopping but alternatives propose an unrequested native-tool-gap finding or unrelated deliveries, and accepted tasks still create pending confirmation replies. Earlier advisor context repair is accepted but did not prove all-option usefulness. Preserve accepted parent12779824-b82e-484d-9502-d2150ba58aa1 and reporting51f309ca-d396-4983-a55d-ef4432a8572f / verification06fd14af-5535-411d-936c-477bf2bd2cfa history.",
+    "scope": "Implement the user-approved bounded quality/lifecycle correction in isolated backend/plugin workspace, against current superagent-core and installed compatibility. First read docs/evidence/recommendation-quality-before.json and docs/reviews/advisor-option-quality-2026-11-09.md from /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/launch-retry-release (also on GitHub superagent-core at574e783). Four actual closure cards IDs6557f8ab,7d80df3b,f96fc47a,94e77e2d plus older advisor a71ba8a1/eb937970 are exact fixtures. Evaluate EVERY recommended/alternate choice against current parent/ticket/assignment/turn/evidence/approval, relevance, correct next owner and supported action. Resolve existing Settings/helper/native fallback/ranking/capture paths coherently; do not edit only a persona prompt. For accepted work with no newer user request, expose truthful completion/history without another pending choice or recreation on view. Preserve ordinary user conversations, legitimate unresolved choices and explicit new requests after acceptance. Ready-unreviewed work needs useful permitted coordinator-owned review/evidence action, not walkthrough/self-review, fiction about notification API, blanket reruns or unconditional publish. Unbound delivery advice identifies exact missing source/head/target/requirements and responsible evidence-gatherer or genuine user decision; no authority inference. Retain prior parent acceptance/history and stale/source/CAS/native publication/submission guards. Do not suppress all recommendations or merely reduce counts. No seven-card retirement implementation, broad dismissal, user alternative selection, conversation replies, new feature, privilege, credential/provider/route/worker-limit/spending/schedule change or live source edits. Harness implements candidate and targeted meaningful regression checks; Codex owns independent review and authorized exact-head release/native verification.",
+    "owner": "Harness implementation worker; Codex independent recommendation-quality reviewer and release owner",
+    "kind": "fix",
+    "requirements": [
+      "Capture/reproduce the exact bad saved options before changes; inspect actual effective Settings persona/helper/fallback/ranking and canonical advice paths, actual tool capability and original accepted criteria. Preserve original evidence; do not treat zero outer tool calls as no internal work.",
+      "Every offered alternate as well as winner must be current-state/evidence grounded, relevant, distinct and within approved task with correct owner/capability; actual native-tool-gap and unrelated-delivery closure alternatives must not pass as useful next actions. Scores only rank choices, never certify usefulness.",
+      "Accepted parent with no newer human request produces completion/history and no pending actionable advice; repeat view/capture does not recreate meaningless choices. Current-source user questions and authorized new requests after acceptance still work; do not hide meaningful choices or suppress all recommendations.",
+      "Ready but unreviewed current candidate gives actual coordinator-owned supported review/evidence stage and only missing checks; newer failed/unverified evidence supersedes older ready; failed/prior attempts use current accepted resolution rather than stale retry advice. No false test/acceptance claim or fictional Codex dispatch.",
+      "Missing source/target/acceptance evidence for typed delivery gates gets exact missing inputs with owner, distinguishing discoverable evidence from true product/user choice; retain all native approval/publication gates and do not bind/accept/dismiss those deliveries.",
+      "Meaningful isolated regressions cover each saved bad example, all alternatives, ordinary conversation, genuine user choices, newly authorized work, changed parent/job/source/revision/authority, unresolved evidence and active work. Reuse prior tests without broad redundant reruns; sequential types/build/focused checks with actual commands/results.",
+      "Fresh advice consistency across helper and native fallback/capture, preserve current historical option sets/revisions/choices and staged/native submission proofs; do not bypass the separate lack of a safe historical retirement API. New-quality fix must stand without implementing retirement.",
+      "Return exact paired heads/bases/patches, actual targeted tests/types/build evidence and limits, durable report through available real reporting path, and proposed native all-option acceptance cases. No live edit/merge/deploy/accept by implementation worker; Codex handles authorized release after independent exact-head review."
+    ],
+    "repository": "gera3d/superagent-sandbox",
+    "id": "8d447429-65ee-4f5f-aa7b-354c0f349673",
+    "occurrences": [
+      {
+        "id": "user-prioritizes-recommendation-quality-20261109",
+        "reference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/recommendation-quality-before.json",
+        "evidence": "Explicit implementation authorization: fix better recommendations first. Direct read of6 saved cards17alternatives shows fresh closure top choices state-aware but unrelated alternatives and redundant pending confirmations. Original accepted advisor requirements and saved native/test coverage are captured. Live15 pending (seven old system,three typed gates,one ordinary,four closure);0running0queued. Prior accepted scopes remain accepted. Retirement draft is secondary design only, not implementation.",
+        "at": "2026-11-09T14:55:30.963Z"
+      }
+    ],
+    "revision": 1,
+    "state": "running",
+    "choices": [
+      {
+        "id": "fix_now",
+        "kind": "fix_now",
+        "label": "Fix now"
+      },
+      {
+        "id": "queue_next",
+        "kind": "queue_next",
+        "label": "Queue next"
+      },
+      {
+        "id": "defer",
+        "kind": "defer",
+        "label": "Defer"
+      }
+    ],
+    "reports": [],
+    "audit": [
+      {
+        "event": "observed",
+        "actor": "external:observer",
+        "source": "external",
+        "reference": "orchestrator-http:observation-only",
+        "at": "2026-11-09T14:55:30.963Z",
+        "detail": "user-prioritizes-recommendation-quality-20261109"
+      },
+      {
+        "event": "recommendation_recorded",
+        "actor": "model:antigravity / gemini-3.8-flash",
+        "at": "2026-11-09T14:55:49.361Z",
+        "detail": "antigravity / gemini-3.8-flash"
+      },
+      {
+        "event": "confirmed",
+        "actor": "local-operator",
+        "at": "2026-11-09T14:58:44.589Z",
+        "detail": "fix_now"
+      },
+      {
+        "event": "dispatched",
+        "actor": "local-operator",
+        "at": "2026-11-09T14:58:44.643Z",
+        "detail": "4371e4ede24a7c7b512f1312f5e89a97/30f1cf79d7dd48020126ef6905296595"
+      }
+    ],
+    "createdAt": "2026-11-09T14:55:30.963Z",
+    "updatedAt": "2026-11-09T14:58:44.643Z",
+    "recommendation": {
+      "choiceId": "fix_now",
+      "rationale": "The user explicitly prioritized recommendation quality before retirement, and evidence from six saved cards confirms that offered alternatives propose unrequested tool-gap findings or unrelated deliveries while accepted tasks recreate pending choices. With zero running and zero queued workers and prior dependencies accepted, fixing now directly implements the authorized recommendation and alternative quality corrections in isolation.",
+      "provider": "antigravity / gemini-3.8-flash",
+      "recordedAt": "2026-11-09T14:55:49.357Z",
+      "revision": 1
+    },
+    "confirmation": {
+      "revision": 1,
+      "choiceId": "fix_now",
+      "actor": "local-operator",
+      "at": "2026-11-09T14:58:44.589Z"
+    },
+    "job": {
+      "id": "finding:8d447429-65ee-4f5f-aa7b-354c0f349673:r1",
+      "ticketId": "4371e4ede24a7c7b512f1312f5e89a97",
+      "assignmentId": "30f1cf79d7dd48020126ef6905296595"
+    }
+  },
+  "ticket": {
+    "id": "4371e4ede24a7c7b512f1312f5e89a97",
+    "stage": "working",
+    "assignments": [
+      {
+        "id": "30f1cf79d7dd48020126ef6905296595",
+        "state": "running",
+        "createdAt": "2026-11-09T14:58:44.640Z",
+        "startedAt": "2026-11-09T14:58:47.193Z",
+        "ref": "worker-4371e4ede24a7c7b512f1312f5e89a97"
+      }
+    ],
+    "sessionId": "worker-4371e4ede24a7c7b512f1312f5e89a97",
+    "summary": "",
+    "usage": {
+      "sessionId": "worker-4371e4ede24a7c7b512f1312f5e89a97",
+      "routes": [],
+      "totals": {
+        "uncachedInputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0
+      },
+      "coverage": {
+        "attempts": 0,
+        "reported": 0,
+        "cacheRead": "unreported",
+        "cacheWrite": "unreported",
+        "attribution": "complete"
+      },
+      "cost": {
+        "kind": "unavailable",
+        "reason": "noRecordedPrice"
+      }
+    }
+  },
+  "state": {
+    "setup": {
+      "machine": {
+        "stateDir": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent",
+        "promptMaxChars": 100000,
+        "admissionContextMaxPages": 10,
+        "admissionContextTimeoutMs": 15000
+      },
+      "problem": null,
+      "feishuProblem": null,
+      "accounts": {
+        "repository": "gera3d/superagent-sandbox",
+        "agent": "gera3d",
+        "feishu": null
+      }
+    },
+    "load": {
+      "running": 1,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "masterId": "orchestrator-core",
+    "paused": false,
+    "health": {
+      "runtime": {
+        "state": "ready",
+        "detail": "Orchestrator is ready",
+        "at": "2026-11-09T02:08:53.449Z"
+      },
+      "relay": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:19:01.591Z"
+      },
+      "notice": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:19:01.592Z"
+      },
+      "launch": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T14:58:47.384Z"
+      },
+      "delivery": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.011Z"
+      },
+      "assessment": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.012Z"
+      },
+      "reply": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.012Z"
+      },
+      "evals": {
+        "state": "ready",
+        "detail": "No unavailable Eval in the last hour"
+      },
+      "models": {
+        "state": "ready",
+        "detail": "No managed Session is waiting on a model budget retry"
+      },
+      "github": {
+        "state": "ready",
+        "detail": "0 notifications; next poll \u2265 60s",
+        "at": "2026-11-09T14:55:06.013Z"
+      }
+    }
+  },
+  "models": {
+    "value": {
+      "hierarchy": [
+        {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "reasoningEffort": "high",
+          "starred": true
+        },
+        {
+          "provider": "anthropic",
+          "model": "claude-sonnet-5-5",
+          "starred": true
+        },
+        {
+          "provider": "openrouter",
+          "model": "deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial",
+          "starred": false
+        },
+        {
+          "provider": "openai-codex",
+          "model": "gpt-6.1-sol",
+          "starred": true
+        }
+      ],
+      "maxEscalations": 1,
+      "helper": {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      },
+      "conserve": false,
+      "economyRoute": {
+        "provider": "openrouter",
+        "model": "deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial"
+      },
+      "subscriptions": [
+        {
+          "provider": "antigravity",
+          "status": "available",
+          "resetAt": ""
+        },
+        {
+          "provider": "anthropic",
+          "status": "available",
+          "resetAt": ""
+        },
+        {
+          "provider": "openai-codex",
+          "status": "conserved",
+          "resetAt": ""
+        },
+        {
+          "provider": "deepseek-official",
+          "status": "conserved",
+          "resetAt": ""
+        }
+      ]
+    },
+    "revision": 18
+  },
+  "limits": "Native Fix now confirmed and running observed. No candidate, test or release claim. No historical advice retired or user alternatives selected."
+}
