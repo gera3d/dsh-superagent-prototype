@@ -1,0 +1,377 @@
+{
+  "at": "2026-11-09T18:26:53.912527+00:00",
+  "purpose": "Bounded semantic qualification of useful current advice before applying it to remaining work. No implementation, retry, new job, legacy retirement or choice submission.",
+  "finding": {
+    "id": "8d447429-65ee-4f5f-aa7b-354c0f349673",
+    "state": "resolved",
+    "revision": 14,
+    "job": {
+      "id": "finding:8d447429-65ee-4f5f-aa7b-354c0f349673:r11",
+      "ticketId": "f2e857feb68baca2469103dc91d7a507",
+      "assignmentId": "1ee8f030b311aa2b470ab37e618b94e7"
+    }
+  },
+  "resolutionAt": "2026-11-09T17:37:53.239Z",
+  "gitHubSource": {
+    "title": "Fix current recommendation context and fresh option publication",
+    "head": "4b5851791863628d711f014fd8c63b95db6507b9",
+    "merge": "30aee3a7db1729c026e6027347f80f889d24e0fd",
+    "state": "MERGED"
+  },
+  "integrity": {
+    "postimages": [
+      {
+        "path": "src/app/advice-context.ts",
+        "match": true
+      },
+      {
+        "path": "src/app/character-evaluator.ts",
+        "match": true
+      },
+      {
+        "path": "src/app/decision-inbox.ts",
+        "match": true
+      },
+      {
+        "path": "src/app/decision-ranker.ts",
+        "match": true
+      },
+      {
+        "path": "src/app/option-quality.ts",
+        "match": true
+      },
+      {
+        "path": "src/app/routes/helper.ts",
+        "match": true
+      },
+      {
+        "path": "lib/deployment-BTCh8dP2.d.ts",
+        "match": true
+      },
+      {
+        "path": "lib/client.js",
+        "match": true
+      },
+      {
+        "path": "lib/decision-inbox-provider-canonical.d.ts",
+        "match": true
+      },
+      {
+        "path": "lib/model-BSxHOzxq.d.ts",
+        "match": true
+      },
+      {
+        "path": "lib/lifecycle-publication-DU9kiEya.js",
+        "match": true
+      },
+      {
+        "path": "lib/github-pull-D0dzdKap.js",
+        "match": true
+      },
+      {
+        "path": "lib/http-evUV_mqI.js",
+        "match": true
+      },
+      {
+        "path": "lib/publication-ticket-2bApSJWA.js",
+        "match": true
+      },
+      {
+        "path": "lib/policy-BQs9IVsX.d.ts",
+        "match": true
+      },
+      {
+        "path": "lib/publication-worker.js",
+        "match": true
+      },
+      {
+        "path": "lib/decision-provider.d.ts",
+        "match": true
+      },
+      {
+        "path": "lib/index.js",
+        "match": true
+      },
+      {
+        "path": "lib/decision-provider.js",
+        "match": true
+      },
+      {
+        "path": "lib/decision-inbox-provider.js",
+        "match": true
+      },
+      {
+        "path": "lib/publication-operator.js",
+        "match": true
+      },
+      {
+        "path": "lib/feishu-watch.d.ts",
+        "match": true
+      },
+      {
+        "path": "lib/github-watch.d.ts",
+        "match": true
+      },
+      {
+        "path": "lib/publication-operator.d.ts",
+        "match": true
+      },
+      {
+        "path": "lib/feishu-CVHwY3e7.js",
+        "match": true
+      },
+      {
+        "path": "lib/kind-Bl9OsSNa.d.ts",
+        "match": true
+      },
+      {
+        "path": "lib/publication-worker.d.ts",
+        "match": true
+      },
+      {
+        "path": "lib/index.d.ts",
+        "match": true
+      },
+      {
+        "path": "lib/decision-inbox-provider-live.js",
+        "match": true
+      },
+      {
+        "path": "lib/feishu-watch.js",
+        "match": true
+      },
+      {
+        "path": "lib/poll-YENBPt9-.js",
+        "match": true
+      },
+      {
+        "path": "lib/github-watch.js",
+        "match": true
+      },
+      {
+        "path": "lib/decision-inbox-provider-canonical.js",
+        "match": true
+      },
+      {
+        "path": "lib/publication-context-CnQeRe-7.js",
+        "match": true
+      }
+    ],
+    "settingsBlocksUnchanged": true,
+    "sourceEvidenceHead": "4b5851791863628d711f014fd8c63b95db6507b9",
+    "merge": "30aee3a7db1729c026e6027347f80f889d24e0fd",
+    "workerUsage": {
+      "sessionId": "worker-f2e857feb68baca2469103dc91d7a507",
+      "routes": [
+        {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "attempts": 1,
+          "uncachedInputTokens": 2633,
+          "outputTokens": 1123,
+          "cacheReadTokens": 135787,
+          "totalTokens": 139543
+        }
+      ],
+      "totals": {
+        "uncachedInputTokens": 2633,
+        "outputTokens": 1123,
+        "totalTokens": 139543,
+        "cacheReadTokens": 135787
+      },
+      "coverage": {
+        "attempts": 1,
+        "reported": 1,
+        "cacheRead": "exact",
+        "cacheWrite": "unreported",
+        "attribution": "complete"
+      },
+      "cost": {
+        "kind": "unavailable",
+        "reason": "noRecordedPrice"
+      }
+    }
+  },
+  "runtime": {
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "paused": false,
+    "health": {
+      "runtime": "ready",
+      "relay": "ready",
+      "notice": "ready",
+      "launch": "ready",
+      "delivery": "ready",
+      "assessment": "ready",
+      "reply": "ready",
+      "evals": "ready",
+      "models": "ready",
+      "github": "ready"
+    }
+  },
+  "providerEvidence": {
+    "actualEndedWorkerRoute": [
+      {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "attempts": 1,
+        "uncachedInputTokens": 2633,
+        "outputTokens": 1123,
+        "cacheReadTokens": 135787,
+        "totalTokens": 139543
+      }
+    ],
+    "recordedWorkerRequestEventReference": "recommendation-quality-r11-correction.json/providerEvent",
+    "freshHelperRoute": "Existing constrained Anthropic Sonnet helper settings unchanged; generation responses do not independently expose selected provider. No broader quota-health claim.",
+    "nativeScorer": "Prior actual worker card explicitly named Anthropic Sonnet with60/16/24; this stage does not rerun scoring."
+  },
+  "freshCalls": [
+    {
+      "case": "review-ready-saved-tests-already-verified",
+      "request": {
+        "summary": "Read-only recommendation qualification fixture. No task execution or publication.",
+        "latestTurn": "## Original goal (first human message)\nQualify useful recommendations for the approved feature release.\n\n## Latest human message\nThis is an isolated advice fixture, not a new implementation task. The implementation candidate is ready. Codex is the independent reviewer and release owner. Codex has already checked the saved focused test, typecheck and build results against the exact candidate head; all passed. The code diff still needs independent review. Existing user approval covers release after review and rollback preparation, through existing protected publication controls. No automated route can notify Codex. Give useful next steps, with correct owner, without repeating already verified checks or claiming release is done. Do not execute, send, file, merge or publish anything.\n\n## Agent's final message to the human\nCandidate and exact-head test logs are ready. Independent code review remains with Codex; no deployment or live verification has happened."
+      },
+      "at": "2026-11-09T18:25:02.776812+00:00",
+      "status": 200,
+      "seconds": 11.08,
+      "response": {
+        "options": [
+          {
+            "id": "next-1",
+            "label": "Codex reviews diff (manual handoff)",
+            "prompt": "Manual handoff to Codex (no automated notification exists; the user must relay it). Codex, as independent reviewer and release owner: review the code diff at the exact candidate head. Do not re-run the focused test, typecheck or build, which already passed against this head. Check the diff against project rules, edge cases, error handling, and regression risk, and confirm the existing tests cover the changed behavior. Report approve or specific corrective changes. If the head changes, say which prior checks are stale.",
+            "recommended": true
+          },
+          {
+            "id": "next-2",
+            "label": "Prepare rollback plan for review",
+            "prompt": "Under the existing approval for rollback preparation, draft a rollback plan for the candidate and hand it to Codex for review alongside the diff. Include the trigger conditions, the exact revert path through existing protected publication controls, the data or config impact, and the post-rollback checks. Do not execute, merge or publish anything. State plainly that release has not happened.",
+            "recommended": false
+          },
+          {
+            "id": "next-3",
+            "label": "List diff risk areas for Codex",
+            "prompt": "Without self-reviewing or approving, prepare a short reviewer aid for Codex. List the files and behaviors the diff touches, the edge cases and error paths worth inspecting, and any test gaps you see by reading the diff. Mark each item as an unverified observation, not a finding. Do not repeat the already-passed test, typecheck or build results. Delivery is a manual handoff via the user.",
+            "recommended": false
+          }
+        ],
+        "specialist": {
+          "profileId": "senior-developer",
+          "basis": "keyword",
+          "unavailable": []
+        }
+      }
+    },
+    {
+      "case": "unbound-delivery-current-evidence",
+      "request": {
+        "sessionId": "worker-1aa9568a8df574db0cef146a58004c4b",
+        "summary": "Read-only qualification of advice for this existing unbound delivery. No publication or record changes.",
+        "latestTurn": "## Original goal (first human message)\nMove the existing subscription-conservation feature toward a verified release.\n\n## Latest human message\nAdvice qualification only: the existing delivery lacks confirmed exact source base/head, deployment target and acceptance requirements. Preserve its history and controls. Explain the next useful evidence-gathering step and owner. Distinguish facts Codex can inspect in GitHub/installed evidence from a genuinely undecided product choice that needs me. Do not execute or bind anything, infer missing values, ask me to repeat already recorded approval, or suggest publishing before the missing evidence is verified.\n\n## Agent's final message to the human\nThe artifact report exists, but canonical delivery source/target/requirements remain unbound and no live acceptance proof is attached."
+      },
+      "at": "2026-11-09T18:25:08.316496+00:00",
+      "status": 200,
+      "seconds": 5.54,
+      "response": {
+        "options": [
+          {
+            "id": "next-1",
+            "label": "Codex gathers discoverable evidence",
+            "prompt": "Coordinator-owned (Codex / root operator), read-only, no manual dispatch API exists so this is a manual handoff: inspect GitHub for issue #184 and PR #185 on gera3d/superagent-sandbox. Record the current target branch head, PR #185 head SHA, whether the patch still applies to the reported base 9992decd, and exact-head check status. Also record any stated acceptance criteria in the issue and which installed or target artifact would be checked. Do not bind, publish, infer missing values, or treat worker-reported results as current evidence.",
+            "recommended": true
+          },
+          {
+            "id": "next-2",
+            "label": "Human confirms genuine product decisions",
+            "prompt": "Human owner decision list only, no execution. After Codex reports the discoverable facts, confirm only what cannot be inferred: (1) the delivery target (source PR vs artifact patch application), (2) acceptance requirements for conserve-mode and restore-priority behavior, and (3) whether the temporary nature needs an expiry or revert condition. Do not re-confirm approvals already recorded. Nothing is bound or published until these answers and the exact SHAs are recorded.",
+            "recommended": false
+          }
+        ],
+        "specialist": {
+          "profileId": "senior-developer",
+          "basis": "default",
+          "unavailable": []
+        }
+      }
+    }
+  ],
+  "freshOptionJudgments": [
+    {
+      "case": "review-ready-saved-tests-already-verified",
+      "options": [
+        {
+          "label": "Codex reviews diff (manual handoff)",
+          "verdict": "useful for the stated fixture",
+          "reason": "Correct independent owner and remaining exact-head diff review; explicitly avoids repeating saved verified checks. Manual relay boundary is truthful for this no-dispatch fixture, not evidence an automatic handoff exists."
+        },
+        {
+          "label": "Prepare rollback plan for review",
+          "verdict": "useful for the stated fixture",
+          "reason": "Rollback preparation is authorized and not yet reported complete; complementary to review, not permission to execute or publish."
+        },
+        {
+          "label": "List diff risk areas for Codex",
+          "verdict": "useful for the stated fixture",
+          "reason": "Reviewer aid identifies unknown risk/test gaps without worker self-approval or repeating passing commands. Less direct than independent review."
+        }
+      ]
+    },
+    {
+      "case": "unbound-delivery-current-evidence",
+      "options": [
+        {
+          "label": "Codex gathers discoverable evidence",
+          "verdict": "useful next step",
+          "reason": "Codex gathers exact GitHub/base/head/check/target facts; no binding, publication or guessed values. Artifact patch applicability is treated as evidence to verify, not assumed."
+        },
+        {
+          "label": "Human confirms genuine product decisions",
+          "verdict": "conditional alternative, not an immediate required user action",
+          "reason": "Explicitly waits for Codex discoverable facts and excludes reconfirming recorded approvals. Some target/procedure questions may be technical facts or coordinator choices, so this must not be presented as proof the user owes a decision before evidence is checked."
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "totalInspectedOptionPrompts": 17,
+    "previousInstalledHelperSamples": {
+      "cases": 3,
+      "options": 9,
+      "reference": "recommendation-quality-live-generated-options.json",
+      "includes": [
+        "ordinary requested unsent draft after stale summary",
+        "review-ready/no independent review yet",
+        "deployed/native verification pending"
+      ],
+      "parseFailure": "Initial installed-stage JSON parse failure preserved; only its separately recorded bounded successful recheck counted."
+    },
+    "previousActualNativeWorkerSample": {
+      "cases": 1,
+      "options": 3,
+      "reference": "recommendation-quality-native-verification.json",
+      "stage": "deployed but not accepted when generated; then actual source Resolved/noNextSteps after acceptance"
+    },
+    "thisStageFreshHelperSamples": {
+      "cases": 2,
+      "options": 5,
+      "kind": "tool-free fixture generation; no native choice published or selected"
+    },
+    "acceptedControls": "Prior native original r11 and accepted Gemini source show Resolved/noNextSteps; all6 accepted-source canonical contexts recognized resolution. No accepted source reopened in this pass.",
+    "ordinaryControls": "Prior installed helper generated3 relevant unsent-draft alternatives; actual ordinary explanation thread preserved no-action request; real Markdown objective and new-request-after-resolution production-path regression logs reused without rerunning."
+  },
+  "verdict": "Bounded sample supports useful stage/owner-aware guidance, with conditional alternatives and manual handoff limits explicit. No new concrete fresh-current-request regression demonstrated; preserve accepted repair and do not manufacture a worker.",
+  "limits": [
+    "Not an audit or guarantee of every thread, future generation, provider or model.",
+    "Fresh fixtures are not actual user work or new native end-to-end actions. No live new request after acceptance was sent.",
+    "Alternate choices are not equally direct; a score never certifies correctness. A conditional missing-evidence alternative is not a user decision until the discoverable facts are checked.",
+    "Manual handoff remains manual; useful text is not an automatic notification to Codex.",
+    "16 old pending rows remain a documented immutable history/interface limitation, not proof fresh generator failed and not permission to retire or overwrite them.",
+    "Old ordinary fixture source opener unavailable; previously saved as an excluded native proof limitation.",
+    "No settings/provider/credentials/spend/capacity/schedule/access change, full-suite rerun, delivery binding, protected publication or acceptance this stage."
+  ],
+  "nextOwnerStage": "Codex coordinator: assess advice against actual current source/evidence when the next approved job reaches a real handoff; only send a narrowly reproduced fresh current-request defect for correction. Do not repeat completed review/tests/deploy or expand into legacy retirement."
+}
