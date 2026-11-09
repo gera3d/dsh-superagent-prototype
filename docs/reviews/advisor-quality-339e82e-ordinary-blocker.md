@@ -1,0 +1,15 @@
+# Independent r7 positive-control review — ordinary requested work blocked
+
+Exact candidate `339e82e52cc69ccabec2ec614d43b617c4fe02d8`: **hold release for one reproduced ordinary-conversation regression**. New native publication boundary blocks the known bad alternate, and earlier root cases improve. Its context derivation must also preserve legitimate current user requests, as originally required.
+
+[Exact executable audit](../evidence/root-quality-r7-ordinary.audit.spec.ts), [actual1failed/1 output](../evidence/root-quality-r7-ordinary-audit.log). Root ran only this missing positive control in a pinned isolated worktree; no live writes or worker-suite duplication.
+
+No finding or delivery exists in the in-memory DB. A real current `user/message` asks: “Please draft a new issue for the native-tool gap. I want to review the draft before anything is filed.” A completed assistant source agrees only to drafting. Native claim succeeds. Publishing two valid options (draft the requested issue WITHOUT filing/sending; clarify draft details) throws400 unsolicited-task-detour. Nothing was unsolicited; the new guard uses empty context and ignores the authoritative current human request even though `events` are passed.
+
+## Smallest bounded correction
+
+- Preserve the current native boundary and previous bad-alternate/root5 regressions. Do not remove validation globally or loosen finding scope based on model-supplied option text.
+- For an ordinary conversation without an owned current finding/delivery, derive the current conversational objective from the **actual validated source turn’s latest human request** (using the existing source.kind=user, turn/source boundaries and existing runtime-context stripping), rather than an empty context or invented implementation objective. A requested unsent draft is in scope. Treat scope prohibitions and permission limits exactly; do not execute/file anything.
+- For a newly explicit human ask after accepted work, likewise preserve fresh legitimate advice without reviving the prior task or rewriting its authority/history. Keep immutable historical sets, CAS, source/revision/lease/staging/submission and publication gates.
+- Apply the same current-objective semantics to helper/native fallback/legacy paths that actually remain supported; if a legacy call has no durable source evidence, do not assume unrelated work is authorized. Test valid generic ordinary chat AND this explicit requested domain task. Existing “ordinary caching” test is too weak to catch the known scope filter regression.
+- Copy the exact root audit unchanged and add positive/current-negative controls. Return exact revised head and focused tests/types/build; no retirement, new permissions, route/settings changes or live deployment. Existing original scope/finding approval covers this correction; Codex owns review and authorized release.
