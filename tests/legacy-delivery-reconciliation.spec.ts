@@ -48,8 +48,18 @@ const VALID_RECORDS: LegacyHistoricalReconciliationRecord[] = [
 ]
 
 function seedLegacyDeliveries(store: DeliveryStore) {
+  store.db.exec('CREATE TABLE IF NOT EXISTS ticket (id TEXT PRIMARY KEY, value TEXT NOT NULL)')
   for (const record of VALID_RECORDS) {
     const meta = LEGACY_RECONCILIATION_MAP[record.deliveryId]!
+    store.db.prepare('INSERT OR REPLACE INTO ticket VALUES (?, ?)').run(
+      record.originalWorkerId,
+      JSON.stringify({
+        id: record.originalWorkerId,
+        mandate: { strength: 'explicit' },
+        ended: { by: 'executor', outcome: 'closed', at: '2026-11-07T02:22:10.000Z' },
+        assignments: [{ state: 'done' }],
+      })
+    )
     const d = {
       id: record.deliveryId,
       title: meta.title,
@@ -73,14 +83,14 @@ function seedLegacyDeliveries(store: DeliveryStore) {
       state: 'blocked',
       scopeBinding: {
         reason: 'Operator-confirmed delivery scope, target and acceptance requirements are missing',
-        sourceTriggerId: `trigger-${record.originalWorkerId}`,
+        sourceTriggerId: meta.triggerId,
       },
       attempts: { review: 0, fix: 0, maxReview: 3, maxFix: 2 },
       evidence: [],
       audit: [
         {
           at: '2026-11-06T23:49:39.824Z',
-          event: `tracked-unbound:trigger-${record.originalWorkerId}`,
+          event: `tracked-unbound:${meta.triggerId}`,
           actor: `worker:${record.originalWorkerId}`,
         },
       ],
@@ -230,10 +240,15 @@ describe('Legacy delivery historical completion reconciliation', () => {
   })
 
   it('rejects if active worker ticket is still running without ready report', () => {
-    store.db.exec(`
-      CREATE TABLE IF NOT EXISTS ticket (id TEXT PRIMARY KEY, value TEXT NOT NULL);
-      INSERT INTO ticket VALUES('1aa9568a8df574db0cef146a58004c4b', '{"id":"1aa9568a8df574db0cef146a58004c4b","assignments":[{"state":"running"}]}');
-    `)
+    store.db.prepare('INSERT OR REPLACE INTO ticket VALUES(?, ?)').run(
+      '1aa9568a8df574db0cef146a58004c4b',
+      JSON.stringify({
+        id: '1aa9568a8df574db0cef146a58004c4b',
+        mandate: { strength: 'explicit' },
+        ended: { by: 'executor', outcome: 'closed', at: '2026-11-07T02:22:10.000Z' },
+        assignments: [{ state: 'running' }],
+      })
+    )
     const hash = deliveryFingerprint(VALID_RECORDS)
     const authority: DeliveryConfirmationAuthority = {
       source: 'local_operator',

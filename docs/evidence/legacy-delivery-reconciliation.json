@@ -1,6 +1,5 @@
 {
   "schemaVersion": 1,
-  "description": "Historical completion reconciliation for three legacy delivery records delivered by PR #33",
   "records": [
     {
       "deliveryId": "auto-1aa9568a8df574db0cef146a58004c4b",
@@ -10,7 +9,7 @@
       "releasePr": 33,
       "releaseMergedSha": "fb591843c3f9ff19965a49e45a4157ed195fc890",
       "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/pull/33",
-      "attestation": "Operator confirmed historical completion via verified later release PR #33; closed source issue #184. No typed acceptance or publication grant."
+      "attestation": "User explicitly requested reconciliation of these exact three legacy records. Codex independently confirmed original ended worker identity, closed-completed GitHub issue and later PR33 merged release; original artifact is historical/superseded, not another release. Current installed feature verified: Saved conservation controls present; current normal hierarchy and provider marks retained; seven routing policy cases included in60tests. Detailed current and historical proof: https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/legacy-delivery-reconciliation-proof.json . No original missing pins, acceptance, new authority, new dispatch or publication inferred. Preserve original history; only reconcile this obsolete pending record as delivered by later release."
     },
     {
       "deliveryId": "auto-71dc25902ccec92c851634c58cf365f0",
@@ -20,7 +19,7 @@
       "releasePr": 33,
       "releaseMergedSha": "fb591843c3f9ff19965a49e45a4157ed195fc890",
       "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/pull/33",
-      "attestation": "Operator confirmed historical completion via verified later release PR #33; closed source issue #188. No typed acceptance or publication grant."
+      "attestation": "User explicitly requested reconciliation of these exact three legacy records. Codex independently confirmed original ended worker identity, closed-completed GitHub issue and later PR33 merged release; original artifact is historical/superseded, not another release. Current installed feature verified: Actual protected evidence/acceptance flow personally completed immediately before this task; current form/source matching verified. Detailed current and historical proof: https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/legacy-delivery-reconciliation-proof.json . No original missing pins, acceptance, new authority, new dispatch or publication inferred. Preserve original history; only reconcile this obsolete pending record as delivered by later release."
     },
     {
       "deliveryId": "auto-d65f3131a9ae77d9de524535e4a01a26",
@@ -30,7 +29,8 @@
       "releasePr": 33,
       "releaseMergedSha": "fb591843c3f9ff19965a49e45a4157ed195fc890",
       "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/pull/33",
-      "attestation": "Operator confirmed historical completion via verified later release PR #33; closed source issue #182. No typed acceptance or publication grant."
+      "attestation": "User explicitly requested reconciliation of these exact three legacy records. Codex independently confirmed original ended worker identity, closed-completed GitHub issue and later PR33 merged release; original artifact is historical/superseded, not another release. Current installed feature verified: Capacity3 in actual settings and original ended identity retained; FIFO/capacity/quiescence production store regression cases included in60tests. Detailed current and historical proof: https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/legacy-delivery-reconciliation-proof.json . No original missing pins, acceptance, new authority, new dispatch or publication inferred. Preserve original history; only reconcile this obsolete pending record as delivered by later release."
     }
-  ]
+  ],
+  "description": "Reviewed exact operator input; this document alone is not an execution receipt. See final native evidence for application."
 }

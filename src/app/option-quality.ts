@@ -46,6 +46,8 @@ export interface OptionQualityContext {
   deliveryScopeBound?: boolean
   deliveryMissingBinding?: string
   isDeliveryAccepted?: boolean
+  /** Recorded historical completion is distinct from typed delivery acceptance. */
+  isHistoricalDeliveryComplete?: boolean
   isReadyUnreviewed?: boolean
   hasNewerFailureOrPending?: boolean
   hasNestedProviderEvidence?: boolean
@@ -89,6 +91,9 @@ export function deriveOptionQualityContext(
       || Boolean(facts?.delivery?.accepted)
       || /\bRELEASE COMPLETE: this delivery is already verified and accepted\b/i.test(text)
       || /\b"state":\s*"accepted"\b/i.test(text))
+
+  const isHistoricalDeliveryComplete = overrides.isHistoricalDeliveryComplete
+    ?? (facts?.delivery?.completion?.historical === true && facts?.delivery?.completion?.noFurtherReleaseAction === true)
 
   const isReadyUnreviewed = overrides.isReadyUnreviewed
     ?? (/\bCANONICAL FINDING REVIEW OBJECTIVE\b/i.test(text)
@@ -173,6 +178,7 @@ export function deriveOptionQualityContext(
     deliveryScopeBound,
     deliveryMissingBinding,
     isDeliveryAccepted,
+    isHistoricalDeliveryComplete,
     isReadyUnreviewed,
     hasNewerFailureOrPending,
     hasNestedProviderEvidence,
@@ -280,9 +286,21 @@ export function evaluateOptionQuality(
     }
   }
 
+  // Historical receipts close only the original release scope, without inventing acceptance.
+  // Preserve explicit prohibitions/history inspection; do not manufacture another release handoff.
+  if (context.isHistoricalDeliveryComplete) {
+    const releaseAction = /\b(?:review|re-?run|run|repeat|test|check|merge|publish|deploy|bind|accept)(?:s|ed|ing)?\b|\b(?:deployment|publication|verification|acceptance)\b/i
+    const clauses = text.split(/(?<=[.!?;\n])\s+|;\s*/)
+    if (clauses.some(clause => releaseAction.test(clause)
+      && !/\b(?:do\s+not|never|no\s+further|without\s+(?:repeating|re-?running|reviewing|merging|deploying|publishing|accepting))\b/i.test(clause))) {
+      return { code: 'stale-completed-work', optionId: id,
+        message: `Option "${option.label}" repeats a release action for the recorded historical completion scope.` }
+    }
+  }
+
   // 2. Stale Completed Work
   // Ordering repeat tests, verification, or reopening on completed/resolved findings
-  if (context.isFindingResolved || context.isDeliveryAccepted) {
+  if (context.isFindingResolved || context.isDeliveryAccepted || context.isHistoricalDeliveryComplete) {
     const repeatPattern = /\b(?:(?:re-?run|repeat)\b[^.\n;]*?\b(?:tests?|verification|checks?)|reopen\b[^.\n;]*?\bfinding|retry\b[^.\n;]*?\bticket)\b/i
     if (repeatPattern.test(text)) {
       const clauses = text.split(/(?<=[.!?;\n])\s+|;\s*/)
@@ -427,7 +445,7 @@ export function filterQualityOptions(
 
   // If completed/resolved finding or accepted delivery with no new request:
   // "Accepted parent with no newer human request produces completion/history and no pending actionable advice"
-  if (context.isFindingResolved || context.isDeliveryAccepted) {
+  if (context.isFindingResolved || context.isDeliveryAccepted || context.isHistoricalDeliveryComplete) {
     // If all options were invalid or none were supplied, return empty (no pending advice on completed scope)
     if (clean.length === 0) {
       return []

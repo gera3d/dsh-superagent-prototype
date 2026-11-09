@@ -45,21 +45,24 @@ export interface LegacyHistoricalReconciliationRecord {
   evidenceReference: string
   attestation: string
 }
-export const LEGACY_RECONCILIATION_MAP: Readonly<Record<string, { sourceIssue: number; originalWorkerId: string; title: string }>> = {
+export const LEGACY_RECONCILIATION_MAP: Readonly<Record<string, { sourceIssue: number; originalWorkerId: string; title: string; triggerId: string }>> = {
   'auto-1aa9568a8df574db0cef146a58004c4b': {
     sourceIssue: 184,
     originalWorkerId: '1aa9568a8df574db0cef146a58004c4b',
     title: 'Add temporary subscription conservation and restore-priority settings',
+    triggerId: '94e8322655e0271463212f4999519ab9',
   },
   'auto-71dc25902ccec92c851634c58cf365f0': {
     sourceIssue: 188,
     originalWorkerId: '71dc25902ccec92c851634c58cf365f0',
     title: 'Let operators record verified finding evidence through the native card',
+    triggerId: '3883194f9a7bf24ab5251d8e93a53c97',
   },
   'auto-d65f3131a9ae77d9de524535e4a01a26': {
     sourceIssue: 182,
     originalWorkerId: 'd65f3131a9ae77d9de524535e4a01a26',
     title: 'Let independent confirmed findings use configured worker capacity',
+    triggerId: '2c17c79704fc48254f6ac65c122a8436',
   },
 }
 export interface Delivery {
@@ -550,29 +553,50 @@ export class DeliveryStore {
         if (!d.scopeBinding || d.bindings.baseSha !== '' || d.bindings.headSha !== '' || (d.bindings.refs && d.bindings.refs.length > 0)) {
           throw new DeliveryConflict(`Delivery ${record.deliveryId} is not in original unbound scope`)
         }
+        if (d.bindings.repository !== 'gera3d/superagent-sandbox') {
+          throw new DeliveryConflict(`Delivery ${record.deliveryId} is not in repository gera3d/superagent-sandbox: got ${d.bindings.repository}`)
+        }
         if (d.bindings.sourceIssue !== record.sourceIssue) {
           throw new DeliveryConflict(`Mismatched source issue for ${record.deliveryId}`)
         }
-        if (!d.workers.includes(record.originalWorkerId)) {
-          throw new DeliveryConflict(`Original worker ${record.originalWorkerId} not found in delivery ${record.deliveryId}`)
+        if (d.stage !== 'review' || d.state !== 'blocked') {
+          throw new DeliveryConflict(`Delivery ${record.deliveryId} is not in unbound review blocked stage`)
+        }
+        if (d.owner !== `worker:${record.originalWorkerId}`) {
+          throw new DeliveryConflict(`Mismatched owner for ${record.deliveryId}: expected worker:${record.originalWorkerId}, got ${d.owner}`)
+        }
+        if (d.workers.length !== 1 || d.workers[0] !== record.originalWorkerId) {
+          throw new DeliveryConflict(`Delivery ${record.deliveryId} must have exactly one worker matching ${record.originalWorkerId}`)
+        }
+        const expectedMapping = LEGACY_RECONCILIATION_MAP[record.deliveryId]
+        if (expectedMapping?.triggerId && d.scopeBinding?.sourceTriggerId && d.scopeBinding.sourceTriggerId !== expectedMapping.triggerId) {
+          throw new DeliveryConflict(`Mismatched source trigger ID for ${record.deliveryId}`)
         }
         const activeOutbox = this.db.prepare("SELECT id FROM feature_delivery_outbox WHERE delivery_id=? AND status IN ('pending','leased','blocked') LIMIT 1").get(d.id)
         if (activeOutbox) {
           throw new DeliveryConflict(`Outstanding handoff requires its own reconciliation for ${record.deliveryId}`)
         }
         const tables = new Set(this.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map(r => String(r.name)))
-        if (tables.has('ticket')) {
-          const ticketRow = this.db.prepare('SELECT value FROM ticket WHERE id=?').get(record.originalWorkerId)
-          if (ticketRow) {
-            try {
-              const ticket = JSON.parse(String(ticketRow.value)) as { ended?: unknown; assignments?: { state?: string; report?: { state?: string } }[] }
-              const latest = ticket.assignments?.at(-1)
-              if (!ticket.ended && latest?.state === 'running' && !['ready', 'blocked', 'failed', 'dropped', 'waiting'].includes(latest?.report?.state ?? '')) {
-                throw new DeliveryConflict(`Worker ${record.originalWorkerId} still has active running assignment`)
-              }
-            } catch (err) {
-              if (err instanceof DeliveryConflict) throw err
-            }
+        if (!tables.has('ticket')) {
+          throw new DeliveryConflict(`Ticket table missing for worker verification of ${record.originalWorkerId}`)
+        }
+        for (const workerId of d.workers) {
+          const ticketRow = this.db.prepare('SELECT value FROM ticket WHERE id=?').get(workerId)
+          if (!ticketRow) {
+            throw new DeliveryConflict(`Original worker ticket row missing for ${workerId}`)
+          }
+          let ticket: { id?: string; ended?: unknown; assignments?: { state?: string; report?: { state?: string } }[] }
+          try {
+            ticket = JSON.parse(String(ticketRow.value))
+          } catch {
+            throw new DeliveryConflict(`Malformed worker JSON for ticket ${workerId}`)
+          }
+          if (!ticket || typeof ticket !== 'object' || !ticket.ended) {
+            throw new DeliveryConflict(`Worker ${workerId} ticket is not ended`)
+          }
+          const latest = ticket.assignments?.at(-1)
+          if (latest?.state === 'running' && !['ready', 'blocked', 'failed', 'dropped', 'waiting'].includes(latest?.report?.state ?? '')) {
+            throw new DeliveryConflict(`Worker ${workerId} still has active running assignment`)
           }
         }
         const recordFp = deliveryFingerprint(record)

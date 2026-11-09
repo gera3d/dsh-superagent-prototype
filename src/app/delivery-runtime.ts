@@ -115,11 +115,15 @@ export function reconcileInboxCurrency(inbox: DecisionInbox, deliveries: Deliver
   for (const item of original) {
     if (item.status !== 'pending' || !item.canonical || !item.sessionId || !Number.isFinite(item.createdAt)) continue
     const linked = recorded.filter(delivery => delivery.workers.some(worker => workerTicket(worker) === workerTicket(item.sessionId!)))
-    if (linked.some(delivery => !['accepted', 'cancelled', 'abandoned'].includes(delivery.state))) continue
+    if (linked.some(delivery => !['accepted', 'cancelled', 'abandoned'].includes(delivery.state) && !delivery.historicalCompletion)) continue
     const completed = linked.filter(delivery => delivery.state === 'accepted' && delivery.acceptance
       && Number.isFinite(Date.parse(delivery.acceptance.at)) && item.createdAt <= Date.parse(delivery.acceptance.at))
       .sort((a, b) => Date.parse(b.acceptance!.at) - Date.parse(a.acceptance!.at))[0]
     if (completed) inbox.invalidate(item, `Work completed: delivery ${completed.id} was verified and accepted at ${completed.acceptance!.at}. No further release action is needed; earlier recommendations are retained as history.`)
+    const historical = linked.filter(delivery => delivery.historicalCompletion
+      && Number.isFinite(Date.parse(delivery.historicalCompletion.reconciledAt)) && item.createdAt <= Date.parse(delivery.historicalCompletion.reconciledAt))
+      .sort((a, b) => Date.parse(b.historicalCompletion!.reconciledAt) - Date.parse(a.historicalCompletion!.reconciledAt))[0]
+    if (historical) inbox.invalidate(item, `Work completed: delivery ${historical.id} was delivered by later release PR #${historical.historicalCompletion!.releasePr}. Retained as completed history; no further release action is needed.`)
   }
   if (progress) retireSupersededProgress(inbox, progress, recorded)
   const work = deriveDeliveryWork(recorded, readDeliveryWorkers(deliveries.db))
@@ -191,7 +195,7 @@ export class FeatureDeliveryRuntime {
   }
   private synchronizeWorkers(): void {
     for (const delivery of this.store.list()) {
-      if (['accepted', 'cancelled', 'abandoned'].includes(delivery.state)) continue
+      if (delivery.historicalCompletion || ['accepted', 'cancelled', 'abandoned'].includes(delivery.state)) continue
       const workers = delivery.workers.map(id => this.tickets.tickets.get(id))
       if (delivery.scopeBinding) {
         const blockedWorker = workers.find(ticket => ticket && (ticket.attention || ['blocked', 'failed'].includes(ticket.assignments.at(-1)?.report?.state ?? '')))
@@ -281,6 +285,7 @@ export class FeatureDeliveryRuntime {
     for (const snapshot of this.store.list()) {
       if (this.signal.aborted) return
       let delivery = snapshot
+      if (delivery.historicalCompletion) continue
       if (delivery.state === 'blocked' && delivery.preparation && delivery.blocker === delivery.preparation.message
         && delivery.preparation.attempts < 3 && (delivery.preparation.nextRetryAt ?? 0) <= Date.now()) {
         delivery = this.store.compareAndSwap(delivery.id, delivery.revision, d => { d.state = 'awaiting_decision'; delete d.blocker })
