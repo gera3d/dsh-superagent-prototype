@@ -1,0 +1,139 @@
+{
+  "at": "2026-11-09T18:34:33.712032+00:00",
+  "finding": {
+    "dedupKey": "completed-advice-history-presentation-v1",
+    "title": "Show completed recommendation cards as history and prove the real handoff",
+    "problem": "Gera approved a concrete live workflow test: completed recommendation cards must not solicit needless attention, while meaningful unresolved work has a clear next action and owner. Actual accepted quality finding8d447429 remains resolved; its source hides advice but old immutable chat-55991230d8a233d12f328eec43ccc36f is still pending in shared inbox, alongside accepted-source older cards. This is a presentation/actionability feature, not evidence that the accepted fresh generator regressed. Gera first requested a new Codex chat, then explicitly changed direction to keep this work here. Extra chat archived before execution; current chat owns this feature.",
+    "scope": "Implement a bounded current-state history/actionability presentation for finding-owned completed recommendation cards in the existing Workstream HUD/Decisions/source advice surfaces, preserving original stored choices, revisions, evidence and canonical accepted parents. Prefer a read-time projection based on authoritative linked finding/current job/source and newer human-request evidence rather than storage retirement. Leave unbound typed delivery gates and ordinary user decisions untouched unless their current authority is actually proven. This feature must exercise useful Senior Developer implementation-ready -> coordinator review -> already-authorized release -> live verification -> completion handoff without fabricating a user decision or automatic dispatch capability. Harness owns isolated implementation; Codex owns independent review/release/native proof. User approved this feature and routine follow-through in current conversation; no duplicate Codex chat or competing worker.",
+    "owner": "Harness implementation worker; current Codex chat sole coordinator/reviewer/release owner",
+    "kind": "fix",
+    "requirements": [
+      "Read current shared PROJECT_STATUS.md in gera3d/dsh-superagent-prototype on superagent-core, docs/evidence/recommendation-quality-native-verification.json and semantic-qualification.json, plus docs/023-obsolete-system-advice-retirement-draft.md as reference only. Inspect actual canonical source/finding/job projection and effective UI paths before changing. Never equate zero outer tool calls with no work.",
+      "Capture minimal current accepted-parent/pending-advice repro using existing actual chat-55991230 and accepted finding8d447429; preserve acceptance and records. Completed finding with no newer actual human request is history/non-actionable consistently in HUD/Decisions/source. No repeated verification prompt or new work is inferred from history.",
+      "Preserve meaningful pending work, fresh ordinary user choices, and genuine newer human request after acceptance. Confirm no unintended broad suppression. The3 unbound typed delivery gates remain visibly unresolved until source/target/requirements proof exists; do not bind, accept or publish them.",
+      "Do not delete, overwrite, bulk-dismiss or directly edit canonical SQLite choices/history. No implementation of the prior seven-card retirement proposal or new permissions/endpoints bypasses. A read-time derived view should leave original row identities/options/provenance intact; if no safe implementation fits, report exact blocker instead of inventing authority.",
+      "Advice must give concrete current next stage with correct owner, recognize completed review/tests/merge/deploy, ask user only for genuinely missing product choice or required native confirmation. Current coordinator handles routine review/release under standing approval; no need to make user relay or reconfirm steps the coordinator already owns. Scores only rank offered choices; inspect every option.",
+      "Preserve recommendation click-to-composer plus explicit Send; do not add auto-send, automatic Codex notification, agent authority, new queue or scheduler. Do not invent an approval or send/select a user conversation choice merely to demonstrate advancement.",
+      "Meaningful targeted regressions cover completed parent, old/prior attempts, later human request, unresolved evidence, unbound delivery exclusion, stable source/revision and ordinary positive control. Test real existing UI projection paths, not a mirror test. Sequential focused tests/types/build with actual results; reuse existing exact-head evidence without broad redundant full-suite reruns.",
+      "Use an isolated installed-compatible source candidate against current superagent-core (never moving main). Return exact base/head/diff/patch and durable structured report through existing real reporting path. Do not modify running install, merge, deploy, accept, change settings/routes/access/credentials/spend/capacity/schedules. Codex independently reviews, prepares rollback, releases at safe idle and native-verifies with existing protected gates.",
+      "Return clear coordinator-owned next action in the worker thread. Do not call implementation completion live acceptance. Record limitations and preserve original accepted quality finding/history. Candidate should be ready for same current coordinator to carry through authorized review and verification without asking Gera to reauthorize routine stages."
+    ],
+    "repository": "gera3d/superagent-sandbox",
+    "id": "bf38fc9c-8273-4d61-9ae4-e98c45e51365",
+    "occurrences": [
+      {
+        "id": "user-approved-real-handoff-walkthrough-20261109",
+        "reference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/recommendation-quality-semantic-qualification.json",
+        "evidence": "Current user explicitly approved completed-card history feature as real end-to-end recommendation workflow test, then changed from new Codex chat to keeping this chat. Live runtime idle0/0, accepted qualityrepair preservedrev14,16 pending historical rows. No new job yet.",
+        "at": "2026-11-09T18:33:10.176Z"
+      }
+    ],
+    "revision": 1,
+    "state": "running",
+    "choices": [
+      {
+        "id": "fix_now",
+        "kind": "fix_now",
+        "label": "Fix now"
+      },
+      {
+        "id": "queue_next",
+        "kind": "queue_next",
+        "label": "Queue next"
+      },
+      {
+        "id": "defer",
+        "kind": "defer",
+        "label": "Defer"
+      }
+    ],
+    "reports": [],
+    "audit": [
+      {
+        "event": "observed",
+        "actor": "external:observer",
+        "source": "external",
+        "reference": "orchestrator-http:observation-only",
+        "at": "2026-11-09T18:33:10.176Z",
+        "detail": "user-approved-real-handoff-walkthrough-20261109"
+      },
+      {
+        "event": "recommendation_recorded",
+        "actor": "model:antigravity / gemini-3.8-flash",
+        "at": "2026-11-09T18:33:34.388Z",
+        "detail": "antigravity / gemini-3.8-flash"
+      },
+      {
+        "event": "confirmed",
+        "actor": "local-operator",
+        "at": "2026-11-09T18:33:45.782Z",
+        "detail": "fix_now"
+      },
+      {
+        "event": "dispatched",
+        "actor": "local-operator",
+        "at": "2026-11-09T18:33:45.824Z",
+        "detail": "45a016728f1113d932c6b396449c8adb/92b7ebff827a1c6f478d1bfeebfd534f"
+      }
+    ],
+    "createdAt": "2026-11-09T18:33:10.176Z",
+    "updatedAt": "2026-11-09T18:33:45.824Z",
+    "recommendation": {
+      "choiceId": "fix_now",
+      "rationale": "The user explicitly approved implementing the completed-card history presentation as an end-to-end workflow verification and instructed keeping execution in the current conversation. With the runtime idle (0/0) and prior quality repair 8d447429 accepted, fixing now initiates this bounded read-time projection in isolation to present completed cards as non-actionable history without mutating canonical SQLite storage.",
+      "provider": "antigravity / gemini-3.8-flash",
+      "recordedAt": "2026-11-09T18:33:34.385Z",
+      "revision": 1
+    },
+    "confirmation": {
+      "revision": 1,
+      "choiceId": "fix_now",
+      "actor": "local-operator",
+      "at": "2026-11-09T18:33:45.782Z"
+    },
+    "job": {
+      "id": "finding:bf38fc9c-8273-4d61-9ae4-e98c45e51365:r1",
+      "ticketId": "45a016728f1113d932c6b396449c8adb",
+      "assignmentId": "92b7ebff827a1c6f478d1bfeebfd534f"
+    }
+  },
+  "ticket": {
+    "id": "45a016728f1113d932c6b396449c8adb",
+    "state": "open",
+    "stage": "working",
+    "sessionId": "worker-45a016728f1113d932c6b396449c8adb",
+    "directory": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-45a016728f11",
+    "assignments": [
+      {
+        "id": "92b7ebff827a1c6f478d1bfeebfd534f",
+        "state": "running",
+        "createdAt": "2026-11-09T18:33:45.822Z",
+        "startedAt": "2026-11-09T18:33:48.144Z",
+        "ref": "worker-45a016728f1113d932c6b396449c8adb"
+      }
+    ],
+    "usage": {
+      "sessionId": "worker-45a016728f1113d932c6b396449c8adb",
+      "routes": [],
+      "totals": {
+        "uncachedInputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0
+      },
+      "coverage": {
+        "attempts": 0,
+        "reported": 0,
+        "cacheRead": "unreported",
+        "cacheWrite": "unreported",
+        "attribution": "complete"
+      },
+      "cost": {
+        "kind": "unavailable",
+        "reason": "noRecordedPrice"
+      }
+    }
+  },
+  "extraCodexChat": "Created then user changed direction; model failed before execution, stop sent and chat archived. No competitor Harness assignment created.",
+  "owner": "Current original Codex chat coordinates/reviews/releases; Harness owns new isolated implementation.",
+  "limits": "Assigned/running is not implementation or live acceptance. Prior quality finding remains accepted. No new provider/settings/credentials/spend/capacity/schedule change or historical retirement."
+}
