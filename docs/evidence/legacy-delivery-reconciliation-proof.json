@@ -1,0 +1,131 @@
+{
+  "at": "2026-11-09T22:53:29.356185+00:00",
+  "scope": "User-approved reconciliation of exactly three completed legacy delivery records; no original source bindings or acceptance invented. Reconciliation has not yet been applied.",
+  "userApproval": "Reconcile those three legacy delivery records so they stop showing completed work as pending. Verify against what is live and update project file.",
+  "laterRelease": {
+    "repository": "gera3d/dsh-superagent-prototype",
+    "pr": 33,
+    "base": "b2cc8e9e48b8b3cd492be5e6c45e8de00c9ab87a",
+    "head": "343073b34cab6ef64dd225bf848dc2e8b8de7b21",
+    "merge": "fb591843c3f9ff19965a49e45a4157ed195fc890",
+    "mergedAt": "2026-11-07T02:16:13Z",
+    "reference": "https://github.com/gera3d/dsh-superagent-prototype/pull/33",
+    "historicalLiveProof": "docs/evidence/routine-cleanup-live-2026-11-06.json"
+  },
+  "records": [
+    {
+      "deliveryId": "auto-1aa9568a8df574db0cef146a58004c4b",
+      "sourceRepository": "gera3d/superagent-sandbox",
+      "sourceIssue": 184,
+      "sourceIssueState": "closed",
+      "sourceIssueStateReason": "completed",
+      "closedAt": "2026-11-07T02:25:52Z",
+      "issueReference": "https://github.com/gera3d/superagent-sandbox/issues/184",
+      "originalWorker": "1aa9568a8df574db0cef146a58004c4b",
+      "originalTicketStage": "ended",
+      "originalBindings": {
+        "repository": "gera3d/superagent-sandbox",
+        "sourceIssue": 184,
+        "baseSha": "",
+        "headSha": "",
+        "refs": []
+      },
+      "originalRevision": 3,
+      "artifactPR": 185,
+      "artifactDisposition": "Closed as superseded by corrected combined source release; do not apply independently.",
+      "featureVerified": "Saved conservation controls present; current normal hierarchy and provider marks retained; seven routing policy cases included in60tests."
+    },
+    {
+      "deliveryId": "auto-71dc25902ccec92c851634c58cf365f0",
+      "sourceRepository": "gera3d/superagent-sandbox",
+      "sourceIssue": 188,
+      "sourceIssueState": "closed",
+      "sourceIssueStateReason": "completed",
+      "closedAt": "2026-11-07T02:25:53Z",
+      "issueReference": "https://github.com/gera3d/superagent-sandbox/issues/188",
+      "originalWorker": "71dc25902ccec92c851634c58cf365f0",
+      "originalTicketStage": "ended",
+      "originalBindings": {
+        "repository": "gera3d/superagent-sandbox",
+        "sourceIssue": 188,
+        "baseSha": "",
+        "headSha": "",
+        "refs": []
+      },
+      "originalRevision": 3,
+      "artifactPR": 189,
+      "artifactDisposition": "Closed as superseded by corrected combined source release; do not apply independently.",
+      "featureVerified": "Actual protected evidence/acceptance flow personally completed immediately before this task; current form/source matching verified."
+    },
+    {
+      "deliveryId": "auto-d65f3131a9ae77d9de524535e4a01a26",
+      "sourceRepository": "gera3d/superagent-sandbox",
+      "sourceIssue": 182,
+      "sourceIssueState": "closed",
+      "sourceIssueStateReason": "completed",
+      "closedAt": "2026-11-07T02:25:50Z",
+      "issueReference": "https://github.com/gera3d/superagent-sandbox/issues/182",
+      "originalWorker": "d65f3131a9ae77d9de524535e4a01a26",
+      "originalTicketStage": "ended",
+      "originalBindings": {
+        "repository": "gera3d/superagent-sandbox",
+        "sourceIssue": 182,
+        "baseSha": "",
+        "headSha": "",
+        "refs": []
+      },
+      "originalRevision": 3,
+      "artifactPR": 186,
+      "artifactDisposition": "Closed as superseded by corrected combined source release; do not apply independently.",
+      "featureVerified": "Capacity3 in actual settings and original ended identity retained; FIFO/capacity/quiescence production store regression cases included in60tests."
+    }
+  ],
+  "currentChecks": {
+    "focusedTests": 60,
+    "suites": 3,
+    "failed": 0,
+    "sourceMatch": [
+      {
+        "path": "src/app/finding.ts",
+        "qualifiedSha256": "02f1ba33e628ed20939d3ceffdb53c3c09ed7e8e47198506d2c62addf6ad0b4d",
+        "installedSha256": "02f1ba33e628ed20939d3ceffdb53c3c09ed7e8e47198506d2c62addf6ad0b4d",
+        "same": true
+      },
+      {
+        "path": "src/app/finding-runtime.ts",
+        "qualifiedSha256": "1ee75fe38c26589da86ac0a51fece110adef741fd94192e671c60680e72df51c",
+        "installedSha256": "1ee75fe38c26589da86ac0a51fece110adef741fd94192e671c60680e72df51c",
+        "same": true
+      },
+      {
+        "path": "src/client/finding-card.tsx",
+        "qualifiedSha256": "41e13ccfeb36a650c79aa2175664486478862f782c7edec921d40aa25ad58b17",
+        "installedSha256": "41e13ccfeb36a650c79aa2175664486478862f782c7edec921d40aa25ad58b17",
+        "same": true
+      },
+      {
+        "path": "src/app/finding-evidence.ts",
+        "qualifiedSha256": "84ee3f68856b5d62cbc12cb44c64514a757525a60cec835f27b113816e312589",
+        "installedSha256": "84ee3f68856b5d62cbc12cb44c64514a757525a60cec835f27b113816e312589",
+        "same": true
+      },
+      {
+        "path": "src/app/role-models.ts",
+        "qualifiedSha256": "7d876f8d57947b21e2d94da4864460a38dccd1fe4f1262a2257353d2c5d7b8f0",
+        "installedSha256": "7d876f8d57947b21e2d94da4864460a38dccd1fe4f1262a2257353d2c5d7b8f0",
+        "same": true
+      }
+    ],
+    "nativeObservations": [
+      "Execution settings show subscription conservation and saved provider marks, economy mode off; OpenAI remains temporarily conserved; effective executor route is Antigravity; no settings changed.",
+      "Concurrent Tickets control remains three. Actual current repair dispatch works; no extra production load/stress jobs were fabricated.",
+      "Immediately preceding cost repair personally exercised the installed native evidence form: record verified evidence, select exact evidence, acknowledge requirements, explicit protected acceptance; canonical resolved at22:42:49Z."
+    ],
+    "limits": [
+      "Capacity/FIFO/same-finding safeguards independently rerun against matching installed store/runtime source; not a new three-job production stress test.",
+      "No quota balance or general Google health inferred from routing settings.",
+      "Historical release and source issue closure alone do not establish current typed acceptance of the unbound records."
+    ]
+  },
+  "reconciliationStage": "Narrow supported implementation active in finding60b19ba2; original records unchanged pending until review/deployment/exact receipt."
+}
