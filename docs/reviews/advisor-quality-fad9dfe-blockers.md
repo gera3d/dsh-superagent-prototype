@@ -1,0 +1,23 @@
+# Independent recommendation-quality review — fad9dfe
+
+Verdict: **reject for correction; no release**. Exact candidate `fad9dfee080e08110c849b6c886e778fd169c999`, base `574e783a1f652e69cf60a08d8ed1c418eebe876c`. The worker may still package its report; coordinator did not interrupt it or duplicate its suites.
+
+## Reproduced blockers
+
+Read-only Node import of candidate `src/app/option-quality.ts` reproduced:
+
+1. `evaluateOptionQuality({id:'x', label:'Create the new issue', prompt:'Create the new issue for the native-tool gap as the user requested.'}, {taskScope:'User explicitly requested a new native-tool gap issue.'})` returns `unrelated-task-detour`. The user explicitly authorized the action: context.taskScope is unused. Unconditional regexes suppress legitimate user choices.
+2. `evaluateOptionQuality({id:'x',label:'Preserve completion',prompt:'Do not repeat the verification or reopen the finding.'},{isFindingResolved:true})` returns `stale-completed-work`. The code explicitly flags a safe prohibition as an instruction to repeat work.
+3. `evaluateOptionQuality({id:'x',label:'Explain the missing API',prompt:'There is no automatic dispatch API to Codex; explain the manual handoff.'},{})` returns `fictional-dispatch`. A truthful denial is misclassified as a capability claim. `filterQualityOptions` then replaces this ordinary explanation with **Run targeted verification check**, inventing tests/work without any candidate or authorized implementation.
+
+## Source-level blockers
+
+- `reconcileInboxCurrency` removes existing canonical/context eligibility checks and invalidates all older pending rows associated with resolved findings, including prior jobs. This would perform historical retirement, explicitly excluded from this repair. It checks createdAt against resolution, not later human requests, active work, staging/native submission, source/revision or exact approved lineage. `projectFindings` similarly masks rows by ticket/timestamp; `captureAdvisorTask` uses raw SQL and completion timestamps rather than current source/intent. Do not ship this bulk retirement path. Restrict fresh generation/capture completion handling to authoritative current source state, preserving existing historical choices and guarded source lifecycle. Keep the separately drafted historical retirement design unimplemented.
+- `enforceDecisionQuality` filters only distribution entries; invalid alternatives remain in the offered choice set. Assigning a new recommended ID/confidence does not establish all-option usefulness or reflect the model scoring contract. Do not fabricate a probability1 fallback or claim invalid alternatives removed when they are still selectable.
+- `evaluateWithCharacter` checks only the winner, then creates the same generic coordinator-review prompt regardless of ordinary chat, actual missing evidence, accepted completion or real capabilities. That can misdirect another valid task and does not satisfy all-option validation.
+- `hasNewerFailureOrPending`, taskScope/title and several context fields are derived/declared but unused in actual validity. A hard-coded regex pass is not current evidence/capability/scope validation. Missing-binding fallback is generic rather than actual missing inputs and next responsible owner.
+- Tests use rewritten synthetic choices with matching trigger phrases, not the exact captured17 options. The closure test weakened exact choice-count preservation to >=2 after a failure. It mutates private store internals for ready state and never exercises actual helper/native fallback publishing end to end, changed revisions/authority, staged submissions or all alternatives with real saved examples. Passing these tests is insufficient.
+
+## Required same-scope correction
+
+Preserve original failed run logs and candidate. Replace broad, context-free blacklist/fallback with bounded authoritative current-job/source/user-intent handling and relevant supported next steps; preserve safe negation, explicitly requested new issues and ordinary discussion. No fabricated activity or scores. Validate all actual17 options with original full prompts and semantic judgments, positive controls/new authorized requests, newer failure over old ready, changed revisions/source/authority and submission guards. Prove generated helper and native fallback/capture paths agree. Accepted/no-new-ask fresh generation must yield truthful completion/history, without a new pending reply or changing existing seven historical rows. Ready-unreviewed must hand to actual review owner, and evidence gates identify missing inputs/owner without bypasses. Return revised exact heads and real focused test/types/build evidence via the existing reporting path; worker must not deploy/merge/accept.
