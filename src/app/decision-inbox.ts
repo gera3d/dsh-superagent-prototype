@@ -10,6 +10,19 @@ import { workerSessionId } from '../executor/dsh.ts'
 import { isStallGuardStuck } from '../core/stall-guard.ts'
 import { parseInlineAlternatives } from '../client/inline-alternatives.ts'
 import { isConversationCloseoutEvents, CONVERSATION_CLOSED_REASON, CONVERSATION_CLOSED_MESSAGE } from './conversation-closeout.ts'
+import { FindingStore } from './finding.ts'
+import { DeliveryStore } from './feature-delivery.ts'
+import { workerTicket } from './delivery-currency.ts'
+import { auditOptionSet, deriveOptionQualityContext, type OptionQualityContext } from './option-quality.ts'
+
+function tableExists(db: DatabaseSync, tableName: string): boolean {
+  try {
+    const row = db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(tableName)
+    return Boolean(row)
+  } catch {
+    return false
+  }
+}
 
 /** Same ticket projection for the regular runtime and independently loaded inbox provider. */
 export function ticketDecisions(tickets: Ticket[]): PendingDecisionItem[] {
@@ -129,7 +142,7 @@ function optionHistory(existing: PendingDecisionItem | undefined): DecisionOptio
 
 /** SQLite-backed shared decisions with CAS staging, durable native submission proof and preserved resolution history. */
 export class DecisionInbox {
-  constructor(private readonly db: DatabaseSync, private readonly changed?: (item: PendingDecisionItem) => void) {
+  constructor(readonly db: DatabaseSync, private readonly changed?: (item: PendingDecisionItem) => void) {
     db.exec(`CREATE TABLE IF NOT EXISTS decision_inbox (id TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS decision_inbox_cursor (session TEXT PRIMARY KEY, seq INTEGER NOT NULL);
       CREATE TRIGGER IF NOT EXISTS decision_inbox_canonical_guard BEFORE UPDATE OF value ON decision_inbox
@@ -302,8 +315,28 @@ export class DecisionInbox {
   publishAdvisor(input: AdvisorDecision): PendingDecisionItem {
     const existing = this.findSource(input)
     if (existing && (existing.status !== 'pending' || existing.parentDecisionId || existing.canonical)) return existing
+    try {
+      if (tableExists(this.db, 'finding')) {
+        const ticketId = input.sessionId.replace(/^worker-/, '')
+        const findings = new FindingStore(this.db)
+        const resolved = findings.list().find(f =>
+          (f.state === 'resolved' || Boolean(f.resolution))
+          && (f.id === ticketId || f.sessionId === input.sessionId || f.job?.ticketId === ticketId || f.priorJobs?.some(pj => pj.ticketId === ticketId))
+        )
+        if (resolved && !existing) {
+          throw new InboxError(409, 'Finding is already resolved; pending advice cannot be published')
+        }
+      }
+    } catch (e) {
+      if (e instanceof InboxError) throw e
+    }
     if (!input.options.length || input.options.some(option => !option.id || !option.label?.trim() || !option.prompt?.trim())
       || input.options.filter(option => option.recommended).length !== 1) throw new InboxError(400, 'Invalid advisor choices')
+    const qualityContext = this.deriveAuthoritativeQualityContext(input.sessionId, undefined, input.title)
+    const audit = auditOptionSet(input.options, qualityContext)
+    if (!audit.valid) {
+      throw new InboxError(400, `Invalid advisor choices: ${audit.issues.map(i => i.message).join('; ')}`)
+    }
     const selected = input.options.find(option => option.recommended)!
     // Keep the recommendation visible: it is always first, whatever the caller's order.
     const ordered = [selected, ...input.options.filter(option => option !== selected)].map(option => ({ id: option.id,
@@ -347,6 +380,9 @@ export class DecisionInbox {
     if (item && (item.status !== 'pending' || item.invalidation || item.parentDecisionId)) throw new InboxError(409, 'Canonical decision is staged, stale or closed')
     if (item && (item.sourceSeq !== input.sourceSeq || item.sourceTurn !== input.sourceTurn || item.sourceMessageId !== input.sourceMessageId)) throw new InboxError(409, 'Canonical source identity changed')
     if (item?.canonical && item.canonical.draftRevision !== input.draftRevision) throw new InboxError(409, 'Canonical draft revision changed')
+    if (!item?.staging && this.isSourceScopeResolved(input.sessionId, events)) {
+      throw new InboxError(409, 'Scope is completed and resolved; pending advice cannot be claimed or published')
+    }
     return item
   }
   /** Explicit CAS correction only: preserve published choices in their original immutable row. */
@@ -395,8 +431,16 @@ export class DecisionInbox {
   }
   publishCanonical(input: CanonicalPublish, events: readonly SessionEvent[]): CanonicalResult {
     const item = this.canonicalWriter(input, events)
+    if (!item?.staging && this.isSourceScopeResolved(input.sessionId, events)) {
+      throw new InboxError(409, 'Scope is completed and resolved; pending advice cannot be claimed or published')
+    }
     if (input.options.length < 2 || input.options.length > 4 || new Set(input.options.map(option => option.id)).size !== input.options.length
       || input.options.some(option => !option.id || !option.label.trim() || !option.prompt.trim()) || input.options.filter(option => option.recommended).length !== 1) throw new InboxError(400, 'Provide exactly 2–4 distinct helper choices and one recommendation')
+    const qualityContext = this.deriveAuthoritativeQualityContext(input.sessionId, events)
+    const audit = auditOptionSet(input.options, qualityContext)
+    if (!audit.valid) {
+      throw new InboxError(400, `Invalid canonical choices: ${audit.issues.map(i => i.message).join('; ')}`)
+    }
     const choices = input.options.map(option => ({ id: option.id, label: option.label, prompt: option.prompt, description: option.why }))
     const selected = input.options.find(option => option.recommended)!
     if (item.canonical!.phase !== 'pending') {
@@ -703,6 +747,151 @@ export class DecisionInbox {
     const finalItem = this.get(id)!
     return { resolved: true, choiceId, execution: 'not_executed', draft: { ...(item.sessionId ? { sessionId: item.sessionId } : {}), text: item.draftResponse ?? choice.prompt ?? choice.label }, item: finalItem }
   }
+  /** Authoritative completion check: completed findings with no newer user ask reject fresh advice. */
+  isSourceScopeResolved(sessionId: string, events: readonly SessionEvent[]): boolean {
+    try {
+      const ticketId = sessionId.replace(/^worker-/, '')
+      if (tableExists(this.db, 'finding')) {
+        const findings = new FindingStore(this.db)
+        const resolved = findings.list().find(f =>
+          (f.state === 'resolved' || Boolean(f.resolution))
+          && (f.id === ticketId || f.sessionId === sessionId || f.job?.ticketId === ticketId || f.priorJobs?.some(pj => pj.ticketId === ticketId))
+        )
+        if (resolved) {
+          const resolvedAt = Date.parse(resolved.resolution?.at ?? resolved.updatedAt ?? resolved.createdAt) || 0
+          const hasNewerHumanRequest = events.some(e =>
+            e.type === 'user/message'
+            && (e.data as any)?.source?.kind === 'user'
+            && Number.isFinite(e.time)
+            && e.time > resolvedAt
+          )
+          if (!hasNewerHumanRequest) return true
+        }
+      }
+    } catch {}
+    return false
+  }
+
+  /** Authoritative option quality context derived from stored finding, delivery, and event lineage. */
+  deriveAuthoritativeQualityContext(sessionId: string, events?: readonly SessionEvent[], fallbackTitle?: string): OptionQualityContext {
+    const overrides: Partial<OptionQualityContext> = {}
+
+    let latestHumanRequest: string | undefined
+    if (events && events.length > 0) {
+      const human = events.findLast(e => e.type === 'user/message' && (e.data as any)?.source?.kind === 'user')
+      if (human && human.type === 'user/message' && Array.isArray((human.data as any)?.content)) {
+        const text = (human.data as any).content
+          .filter((part: any) => part.type === 'text')
+          .map((part: any) => part.text)
+          .join('\n')
+          .split('Current runtime context.')[0]!
+          .trim()
+        if (text) latestHumanRequest = text
+      }
+    }
+
+    if (tableExists(this.db, 'finding')) {
+      try {
+        const ticketId = sessionId.replace(/^worker-/, '')
+        const findings = new FindingStore(this.db)
+        const finding = findings.list().find(f =>
+          f.id === ticketId || f.sessionId === sessionId || f.job?.ticketId === ticketId || f.priorJobs?.some(pj => pj.ticketId === ticketId)
+        )
+        if (finding) {
+          overrides.findingId = finding.id
+          overrides.taskTitle = finding.title
+          overrides.taskScope = finding.scope
+          overrides.findingState = finding.state
+          overrides.findingBlocker = finding.blocker
+          overrides.isFindingResolved = finding.state === 'resolved' || Boolean(finding.resolution)
+
+          if (Array.isArray(finding.reports) && finding.reports.length > 0) {
+            const reports = [...finding.reports]
+            const hasTimestamps = reports.every((r: any) => r.at && Number.isFinite(Date.parse(r.at)))
+            if (hasTimestamps) reports.sort((a: any, b: any) => Date.parse(a.at) - Date.parse(b.at))
+            const latest = reports[reports.length - 1]
+            if (latest && ['failed', 'waiting', 'blocked', 'pending'].includes(latest.state ?? '')) {
+              overrides.hasNewerFailureOrPending = true
+            }
+            const lastReadyIndex = reports.findLastIndex((r: any) => r.state === 'ready' || r.state === 'verified')
+            const lastFailedIndex = reports.findLastIndex((r: any) => ['failed', 'waiting', 'blocked', 'pending'].includes(r.state ?? ''))
+            if (lastFailedIndex > lastReadyIndex) {
+              overrides.hasNewerFailureOrPending = true
+            }
+            if (!finding.resolution && !overrides.hasNewerFailureOrPending && latest?.state === 'ready') {
+              overrides.isReadyUnreviewed = true
+            }
+          }
+        }
+      } catch {}
+    }
+
+    if (tableExists(this.db, 'feature_delivery')) {
+      try {
+        const ticketId = sessionId.replace(/^worker-/, '')
+        const deliveries = new DeliveryStore(this.db)
+        const delivery = deliveries.list().find(d =>
+          d.id === overrides.findingId || d.id === ticketId || d.workers?.includes(ticketId)
+        )
+        if (delivery) {
+          overrides.deliveryId = delivery.id
+          overrides.deliveryState = delivery.state
+          if (delivery.scopeBinding) {
+            overrides.deliveryScopeBound = false
+            overrides.deliveryMissingBinding = delivery.scopeBinding.reason
+          } else {
+            overrides.deliveryScopeBound = true
+          }
+          const raw = delivery as any
+          if (typeof raw.scopeBound === 'boolean') {
+            overrides.deliveryScopeBound = raw.scopeBound
+          }
+          if (typeof raw.missingBinding === 'string') {
+            overrides.deliveryMissingBinding = raw.missingBinding
+          } else if (Array.isArray(raw.missingBinding)) {
+            overrides.deliveryMissingBinding = raw.missingBinding.join(', ')
+          }
+          if (delivery.state === 'accepted' || Boolean(delivery.acceptance)) {
+            overrides.isDeliveryAccepted = true
+          }
+        }
+      } catch {}
+    }
+
+    if (events && (overrides.isFindingResolved || overrides.isDeliveryAccepted)) {
+      let resolvedAt = 0
+      if (overrides.findingId && tableExists(this.db, 'finding')) {
+        try {
+          const f = new FindingStore(this.db).get(overrides.findingId)
+          if (f) resolvedAt = Date.parse(f.resolution?.at ?? f.updatedAt ?? f.createdAt) || 0
+        } catch {}
+      }
+      const hasNewerHumanRequest = events.some(e =>
+        e.type === 'user/message'
+        && (e.data as any)?.source?.kind === 'user'
+        && Number.isFinite(e.time)
+        && e.time > resolvedAt
+      )
+      if (hasNewerHumanRequest) {
+        overrides.isFindingResolved = false
+        overrides.isDeliveryAccepted = false
+        if (latestHumanRequest) {
+          overrides.taskScope = latestHumanRequest
+          overrides.taskTitle = latestHumanRequest.replace(/\s+/g, ' ').slice(0, 120)
+        }
+      }
+    }
+
+    if (!overrides.findingId && !overrides.deliveryId) {
+      const conversationalObjective = latestHumanRequest || fallbackTitle
+      if (conversationalObjective) {
+        overrides.taskScope = conversationalObjective
+        overrides.taskTitle = conversationalObjective.replace(/\s+/g, ' ').slice(0, 120)
+      }
+    }
+
+    return deriveOptionQualityContext(undefined, overrides)
+  }
 }
 
 /** List completed human task threads without invoking a model; tool/internal continuations do not create new asks. */
@@ -722,6 +911,7 @@ export function captureAdvisorTask(inbox: DecisionInbox, sessionId: string, even
   const text = assistant.data.message.content.filter(part => part.type === 'text').map(part => part.text).join('\n').trim()
   if (text.length < 20) return
   if (isConversationCloseoutEvents(events, end.data.turn)) return inbox.retireClosedOut(sessionId, events)
+  if (inbox.isSourceScopeResolved(sessionId, events)) return
   inbox.ensureAdvisor({ sessionId, sourceMessageId: assistant.data.message.id, sourceTurn: end.data.turn, sourceSeq: assistant.seq,
     key: String(end.seq), question: decisionQuestion(text) ?? 'Choose the next step for this thread', context: text,
     title: request.replace(/\s+/g, ' ').slice(0, 120), createdAt: end.time })

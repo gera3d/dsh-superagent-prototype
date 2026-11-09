@@ -78,7 +78,7 @@ export function adviceContext(ticket?: Ticket, delivery?: Delivery, progress?: P
     progress: current ? { stage: current.kind, outcome: current.outcome, repository: clip(current.repository, 200), branch: clip(current.branch, 200), commit: current.commit, baseSha: current.baseSha,
       pr: current.pr, environment: current.environment, owner: clip(current.owner, 120), remaining: clip(current.remaining, 200), observedAt: new Date(current.observedAt).toISOString(), revision: current.revision,
       evidence: clip(current.evidence, 300), provenance: current.provenance, supersededCommits: current.supersededCommits.slice(-4), authority: current.authority } : null,
-    task: ticket ? { title: clip(ticket.title, 200), mandate: { strength: ticket.mandate.strength, scope: clip(ticket.mandate.scope, 1800) },
+    task: ticket ? { title: clip(ticket.title, 200), mandate: { strength: ticket.mandate.strength, scope: clip(ticket.mandate.scope, 1200) },
       ended: ticket.ended?.outcome, assignmentReport: report && {
         state: report.state, at: report.at, summary: clip(report.summary, 500),
         provenance: 'Worker-reported assignment snapshot; may predate later direct conversation turns.' },
@@ -142,6 +142,11 @@ export function adviceContext(ticket?: Ticket, delivery?: Delivery, progress?: P
     ]
   } else if (delivery) {
     rules = [
+      ...(delivery.scopeBinding ? [
+        'UNBOUND DELIVERY GATE: this delivery is blocked on missing scope binding inputs.',
+        'Identify the exact missing inputs (source issue, target repository, base/head SHA, environment, or acceptance criteria) and which responsible human owner or evidence-gatherer can provide them.',
+        'Distinguish discoverable evidence from genuine human product decisions. Do not recommend publication, deployment, binding, or acceptance until required scope evidence is confirmed.',
+      ] : []),
       'RELEASE OBJECTIVE: complete the authorized feature through a tested source release, publication and live verification. Artifact PRs and worker completion are intermediate milestones.',
       'Advance the next meaningful release stage in one bounded instruction. Bundle all still-missing permitted preparation (candidate, PR body, checks and evidence) instead of asking the user to approve each file or command.',
       'Use the latest completed conversation turn for later reported progress; the recorded delivery stage and assignment report can lag. Do not restart a completed review or preparation merely because the older assignment report still says artifact ready.',
@@ -180,6 +185,8 @@ export function adviceContext(ticket?: Ticket, delivery?: Delivery, progress?: P
         'The implementation worker cannot independently review, accept, merge or deploy its own candidate.',
         'Action capability distinction: no automated notification route to Codex is configured; state the handoff to the coordinator explicitly rather than implying clicking a prompt automatically invokes Codex.',
         'State which recorded owner performs the next stage (Codex reviewer and release coordinator / root operator). The user or operator decides and dispatches review under existing authorization.',
+        'Option scope rules: Every offered alternative, as well as the winner, must remain strictly within the approved task scope. Reject unsolicited scope detours such as opening separate findings for native tool gaps or listing unrelated deliveries.',
+        'Scores only rank choices, never certify usefulness. Never infer option quality from percentages or confidence scores alone.',
         'Evidence semantics: zero outer tool calls means nested-provider coverage unknown, not tests absent. Check saved logs/artifacts and exact head before proposing targeted missing checks; no reflexive full reruns or fictional dispatch.',
       ]
     } else {

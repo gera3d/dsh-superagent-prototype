@@ -15,6 +15,7 @@ import {
   type CharacterReviewModelCall,
   type CharacterReviewModelResponse,
 } from '../core/character.ts'
+import { auditOptionSet, deriveOptionQualityContext, type OptionQualityContext } from './option-quality.ts'
 
 export const CHARACTER_REVIEW_MODEL_ROUTE = {
   provider: 'antigravity',
@@ -159,6 +160,55 @@ export async function callHarnessCharacterReview(
  * 4. Fallback to heuristics if model fails or times out; never auto-approve on model failure.
  * 5. Candidate alignment.
  */
+function deriveQualityCounterProposal(qualityContext: OptionQualityContext): { counterChoice: DecisionChoice; direction: string } {
+  if (qualityContext.isFindingResolved || qualityContext.isDeliveryAccepted) {
+    return {
+      counterChoice: {
+        id: 'confirm_scope_completion',
+        label: 'State completion; no further action',
+        description: 'Work on this scope is already verified and resolved; state completion plainly and take no further action.',
+        prompt: 'The finding is recorded as verified and resolved. Confirm in one sentence that this scope is closed and no further action is needed.',
+        added: true,
+      },
+      direction: 'Work on this scope is already verified and resolved; confirm completion and do not repeat work.',
+    }
+  }
+  if (qualityContext.deliveryScopeBound === false) {
+    return {
+      counterChoice: {
+        id: 'gather_scope_binding_inputs',
+        label: 'Identify missing scope binding inputs',
+        description: 'Identify the exact missing inputs for the unbound delivery gate and assign the responsible human owner.',
+        prompt: `Read-only: identify the exact missing scope binding inputs (${qualityContext.deliveryMissingBinding || 'source issue, target repository, base/head SHA, or acceptance criteria'}) and which responsible human owner can provide them. Do not publish, deploy, or accept.`,
+        added: true,
+      },
+      direction: 'Identify exact missing scope binding inputs and owner before proceeding with publication.',
+    }
+  }
+  if (qualityContext.isReadyUnreviewed) {
+    return {
+      counterChoice: {
+        id: 'corrective_in_scope_review',
+        label: 'Hand off to coordinator for independent review',
+        description: 'Stay strictly within the approved task scope; dispatch isolated candidate to coordinator with only missing checks.',
+        prompt: 'Operator: explicitly dispatch candidate to coordinator for independent review with only missing checks.',
+        added: true,
+      },
+      direction: 'Reject out-of-scope detours and worker self-review; proceed with coordinator review.',
+    }
+  }
+  return {
+    counterChoice: {
+      id: 'clarify_user_instruction',
+      label: 'Clarify next step with user',
+      description: 'Stay focused on the user\'s stated conversational request; do not introduce unauthorized tasks or fake tests.',
+      prompt: 'Summarize the current discussion and ask the user for specific instructions on how they would like to proceed.',
+      added: true,
+    },
+    direction: 'Stay focused on user\'s stated request; do not introduce unrelated tasks or fake tests.',
+  }
+}
+
 export async function evaluateWithCharacter(
   character: CharacterConfig,
   request: DecisionEvaluationRequest & {
@@ -329,6 +379,30 @@ export async function evaluateWithCharacter(
       const recommendedChoice = request.choices.find(c => c.id === recommendedValue)
       const choiceLabel = recommendedChoice?.label ?? recommendedValue
 
+      const qualityContext = deriveOptionQualityContext(request.context)
+      const audit = auditOptionSet(request.choices, qualityContext)
+      const targetIssue = audit.issues.find(i => i.optionId === recommendedValue)
+
+      if (targetIssue) {
+        const { counterChoice, direction } = deriveQualityCounterProposal(qualityContext)
+        return {
+          characterId: character.id,
+          characterName: character.name,
+          specialty: character.specialty,
+          action: 'disagree',
+          recommendedValue: counterChoice.id,
+          critique: `Disagreement by ${character.name}: Approved proposal "${choiceLabel}" violates option quality standards: ${targetIssue.message}`,
+          counterProposal: counterChoice,
+          suggestedTools: character.inclinedTools,
+          direction,
+          mode: character.mode,
+          canAutoPush: false,
+          requiresHuman: true,
+          latencyMs: Date.now() - start,
+          modelRoute: modelReview.modelRoute,
+        }
+      }
+
       return {
         characterId: character.id,
         characterName: character.name,
@@ -348,6 +422,33 @@ export async function evaluateWithCharacter(
 
   // 4. Fallback Heuristics (when model call fails/times out or when no model review was configured)
   if (character.permissionToDisagree) {
+    const qualityContext = deriveOptionQualityContext(request.context)
+    const audit = auditOptionSet(request.choices, qualityContext)
+    const targetValue = options.rankerResult?.recommendedValue || request.choices[0]?.id || ''
+    const targetIssue = audit.issues.find(i => i.optionId === targetValue)
+
+    if (targetIssue) {
+      const prefix = modelFailed ? `[Fallback: ${fallbackReason}] ` : ''
+      const { counterChoice, direction } = deriveQualityCounterProposal(qualityContext)
+      return {
+        characterId: character.id,
+        characterName: character.name,
+        specialty: character.specialty,
+        action: 'disagree',
+        recommendedValue: counterChoice.id,
+        critique: `${prefix}Disagreement by ${character.name}: Proposed choice violates option quality standards: ${targetIssue.message}`,
+        counterProposal: counterChoice,
+        suggestedTools: character.inclinedTools,
+        direction,
+        mode: character.mode,
+        canAutoPush: false,
+        requiresHuman: true,
+        latencyMs: Date.now() - start,
+        fallback: modelFailed ? true : undefined,
+        fallbackReason: modelFailed ? fallbackReason : undefined,
+      }
+    }
+
     const weakAssessment = assessWeakProposals(
       character,
       request.context,
