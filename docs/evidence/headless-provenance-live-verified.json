@@ -71,10 +71,27 @@
     "revision": 3
   },
   "nativeLockState": "CUA explicitly locked immediately before restoring repaired capability and executing necessary correction",
-  "nativeAcceptance": false,
+  "nativeAcceptance": true,
   "noPublication": true,
   "protectedAcceptanceRefusal": {
     "status": 403,
     "body": "{\"error\":\"Explicit local operator evidence review required\"}"
-  }
+  },
+  "nativeUnlockedObserved": true,
+  "resolution": {
+    "outcome": "verified",
+    "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/headless-provenance-live-verified.json",
+    "requirements": [
+      "Trace existing MCP authentication, typed-action boundary, finding retry/confirmation, stale revision guards and audit before designing changes",
+      "Support only explicitly recorded authorized scope; bind commands to exact finding/job revision and actor; no blanket auto-approval, duplicate dispatch or resurrection of ended mandates",
+      "Keep native publication confirmations, new scope/spending/access decisions and acceptance checks intact; do not synthesize Origin or sec-fetch-site",
+      "Test existing approved correction advancement without GUI automation, including stale revision, unauthorized scope, replay/idempotency, existing productive worker and audit attribution; no need to lock or weaken the Mac",
+      "Return isolated reviewed candidate and evidence; any new security-sensitive delegation activation requires specific user confirmation before enabling",
+      "Make blocked coordination visible with exact owner and reason instead of repeated quiet polling; update shared project record at milestones"
+    ],
+    "at": "2026-11-09T01:36:02.974Z",
+    "actor": "local-operator",
+    "jobId": "finding:a338ad44-893d-4ebf-b8ff-aa0c3067e384:r11"
+  },
+  "nativeResult": "Native History shows the exact headless finding resolved, Finding review Verified with selected durable evidence and local-operator; no activation/lock cycle repeated"
 }
