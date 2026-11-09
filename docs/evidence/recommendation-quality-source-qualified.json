@@ -1,0 +1,37 @@
+{
+  "at": "2026-11-09T17:06:21.268293+00:00",
+  "workerHead": "c3bb10125b9d5d3682f82ab4958ca665d1adf14f",
+  "reviewedImplementationHead": "469ab18d156145278542b260a4897b4546ced464",
+  "sourceBase": "574e783a1f652e69cf60a08d8ed1c418eebe876c",
+  "tests": {
+    "suites": 16,
+    "passed": 138,
+    "failed": 0
+  },
+  "typesExit": 0,
+  "buildExit": 0,
+  "typeSetupFailure": "Initial qualification layout inherited an old ../dsh-next-steps symlink lacking specialist-activity.ts. Preserved failed log; moved release checkout into isolated quality-qualified/backend with matching installed companion link. No installed plugin or shared old symlink changed. Final type check exit0.",
+  "sourcePreimages": "All6changed/new source paths match installed preimages at574e783; no live write yet.",
+  "logs": {
+    "quality-release-tests.log": {
+      "sha256": "0b5d8eea0362e6011ca16c0c3ede36c1261c305c968062788ecba8a7dc072e73",
+      "tail": "\n RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/quality-source-release\n\n(node:33709) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:33708) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:33710) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:33713) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:33715) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:33716) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:33717) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:33718) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:33720) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:33722) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n\n Test Files  16 passed (16)\n      Tests  138 passed (138)\n   Start at  09:02:57\n   Duration  4.54s (transform 1.50s, setup 0ms, import 4.27s, tests 1.49s, environment 2ms)\n\n"
+    },
+    "quality-release-types.log": {
+      "sha256": "dd5c9e628534220669d0fcc15e38852ad50aaa588561f9dd78572871d82448a6",
+      "tail": "tests/specialist-integration.spec.ts(10,68): error TS2307: Cannot find module '../../dsh-next-steps/src/client/specialist-activity.ts' or its corresponding type declarations.\n"
+    },
+    "quality-release-types-final.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tail": ""
+    },
+    "quality-release-build.log": {
+      "sha256": "c6969698c1be707440f18c886fc67f441f9ec8ba9dfb97498e354d33312f57cc",
+      "tail": "                                319.72 kB \u2502 gzip:  88.84 kB\n\u2139 [ESM] lib/github-watch.js                          34.18 kB \u2502 gzip:  11.07 kB\n\u2139 [ESM] lib/publication-operator.js                  11.12 kB \u2502 gzip:   3.59 kB\n\u2139 [ESM] lib/decision-inbox-provider.js                9.53 kB \u2502 gzip:   3.40 kB\n\u2139 [ESM] lib/decision-provider.js                      1.87 kB \u2502 gzip:   0.91 kB\n\u2139 [ESM] lib/publication-worker.js                     1.52 kB \u2502 gzip:   0.75 kB\n\u2139 [ESM] lib/feishu-watch.js                           0.60 kB \u2502 gzip:   0.29 kB\n\u2139 [ESM] lib/decision-inbox-provider-canonical.js      0.16 kB \u2502 gzip:   0.11 kB\n\u2139 [ESM] lib/decision-inbox-provider-live.js           0.16 kB \u2502 gzip:   0.11 kB\n\u2139 [ESM] lib/lifecycle-publication-DU9kiEya.js       415.15 kB \u2502 gzip: 112.64 kB\n\u2139 [ESM] lib/http-evUV_mqI.js                        247.79 kB \u2502 gzip:  67.79 kB\n\u2139 [ESM] lib/feishu-CVHwY3e7.js                       48.32 kB \u2502 gzip:  14.58 kB\n\u2139 [ESM] lib/poll-YENBPt9-.js                         42.42 kB \u2502 gzip:  15.05 kB\n\u2139 [ESM] lib/publication-ticket-2bApSJWA.js           37.27 kB \u2502 gzip:  10.90 kB\n\u2139 [ESM] lib/github-pull-D0dzdKap.js                  25.97 kB \u2502 gzip:   8.44 kB\n\u2139 [ESM] lib/publication-context-CnQeRe-7.js           3.87 kB \u2502 gzip:   1.45 kB\n\u2139 [ESM] lib/index.d.ts                               30.51 kB \u2502 gzip:   9.35 kB\n\u2139 [ESM] lib/decision-inbox-provider-canonical.d.ts    7.53 kB \u2502 gzip:   2.41 kB\n\u2139 [ESM] lib/feishu-watch.d.ts                         5.98 kB \u2502 gzip:   2.00 kB\n\u2139 [ESM] lib/github-watch.d.ts                         0.39 kB \u2502 gzip:   0.22 kB\n\u2139 [ESM] lib/decision-provider.d.ts                    0.20 kB \u2502 gzip:   0.17 kB\n\u2139 [ESM] lib/publication-operator.d.ts                 0.01 kB \u2502 gzip:   0.03 kB\n\u2139 [ESM] lib/publication-worker.d.ts                   0.01 kB \u2502 gzip:   0.03 kB\n\u2139 [ESM] lib/kind-Bl9OsSNa.d.ts                       45.48 kB \u2502 gzip:   9.37 kB\n\u2139 [ESM] lib/policy-BQs9IVsX.d.ts                     22.01 kB \u2502 gzip:   5.87 kB\n\u2139 [ESM] lib/model-BSxHOzxq.d.ts                      21.52 kB \u2502 gzip:   7.17 kB\n\u2139 [ESM] lib/deployment-BTCh8dP2.d.ts                  9.29 kB \u2502 gzip:   3.14 kB\n\u2139 [ESM] 27 files, total: 1.34 MB\n\u2714 Build complete in 3027ms\n"
+    }
+  },
+  "nativeState": "Mac locked; manual unlock requested. No native UI acceptance or finding acceptance claimed.",
+  "generationReview": "Actual latest-human/original-goal digest extraction now supplies bounded objective to generating helper as well as validation. Canonical stored current scope/evidence gates publication for every alternate. Existing lexical heuristics remain bounded guards, not proof of universal semantic quality. Live useful review/ordinary generation/all-option inspection and completion proof still required.",
+  "history": "No historical seven-card retirement or user choice selected. All rejected candidates, original failures, canonical correction history preserved.",
+  "routes": "Existing Google/Anthropic subscription routes preserved; no credentials/settings/spending/capacity changes; OpenAI conserved."
+}
