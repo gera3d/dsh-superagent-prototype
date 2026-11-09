@@ -51,7 +51,7 @@
       "after": "db8a619564e7810f3d4541dd25b69b880d9fb8184bbd8c7cf78cc198c29342a1"
     }
   ],
-  "nativeAccepted": false,
+  "nativeAccepted": true,
   "restartExit": 0,
   "liveRuntime": {
     "setup": {
@@ -132,5 +132,114 @@
     "correction": "guard actual queued next-turn/next-step input and recheck running status before terminal finalization",
     "finalEventOrderingTests": 4,
     "countsOverlap": true
-  }
+  },
+  "protectedResolutions": {
+    "51f309ca-d396-4983-a55d-ef4432a8572f": {
+      "state": "resolved",
+      "revision": 38,
+      "resolution": {
+        "outcome": "verified",
+        "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/reporting-real-gemini-verified.json",
+        "requirements": [
+          "Ready/blocked/failed report delivery must not depend on a provider that lacks the tool",
+          "A ticket whose worker ends without a recorded report must surface its evidence instead of sitting idle"
+        ],
+        "at": "2026-11-09T02:23:23.326Z",
+        "actor": "local-operator",
+        "jobId": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r31"
+      }
+    },
+    "06fd14af-5535-411d-936c-477bf2bd2cfa": {
+      "state": "resolved",
+      "revision": 7,
+      "resolution": {
+        "outcome": "verified",
+        "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/reporting-real-gemini-verified.json",
+        "requirements": [
+          "Actual postdeployment Antigravity Gemini request/session returns; no predeployment worker report used",
+          "Actual installed orchestrator_report CLI produces ticket/assignment/current-turn bound report with real command evidence",
+          "Installed consumer records exact worker-produced ready report once in native ticket; correct review/capacity state follows",
+          "No implementation, test reruns, publication, scope or authority expansion; preserve original parent history and all refusal safeguards"
+        ],
+        "at": "2026-11-09T02:22:30.270Z",
+        "actor": "local-operator",
+        "jobId": "finding:06fd14af-5535-411d-936c-477bf2bd2cfa:r5"
+      }
+    }
+  },
+  "finalRuntime": {
+    "setup": {
+      "machine": {
+        "stateDir": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent",
+        "promptMaxChars": 100000,
+        "admissionContextMaxPages": 10,
+        "admissionContextTimeoutMs": 15000
+      },
+      "problem": null,
+      "feishuProblem": null,
+      "accounts": {
+        "repository": "gera3d/superagent-sandbox",
+        "agent": "gera3d",
+        "feishu": null
+      }
+    },
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "masterId": "orchestrator-core",
+    "paused": false,
+    "health": {
+      "runtime": {
+        "state": "ready",
+        "detail": "Orchestrator is ready",
+        "at": "2026-11-09T02:08:53.449Z"
+      },
+      "relay": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:19:01.591Z"
+      },
+      "notice": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:19:01.592Z"
+      },
+      "launch": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:13:30.123Z"
+      },
+      "delivery": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.011Z"
+      },
+      "assessment": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.012Z"
+      },
+      "reply": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.012Z"
+      },
+      "evals": {
+        "state": "ready",
+        "detail": "No unavailable Eval in the last hour"
+      },
+      "models": {
+        "state": "ready",
+        "detail": "No managed Session is waiting on a model budget retry"
+      },
+      "github": {
+        "state": "ready",
+        "detail": "0 notifications; next poll \u2265 60s",
+        "at": "2026-11-09T02:15:37.466Z"
+      }
+    }
+  },
+  "installedAssetsMatched": 27
 }
