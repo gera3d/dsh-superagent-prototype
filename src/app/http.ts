@@ -25,6 +25,7 @@ import { DeliveryIntakeRequest } from './delivery-intake.ts'
 import { FindingIntakeSchema, FindingConfirmSchema, FindingReviewSchema, FindingError, findingDecision } from './finding.ts'
 import type { FindingRuntime } from './finding-runtime.ts'
 import { FindingEvidenceRequest } from './finding-evidence.ts'
+import { coordinateFinding, FindingCoordinationRequestSchema } from './finding-coordination.ts'
 import { snapshotProof } from './publication-proof.ts'
 import { ProgressObservationSchema, ProgressStore } from './progress.ts'
 import { FeatureDeliveryRuntime, deliveryDecision, reconcileInboxCurrency } from './delivery-runtime.ts'
@@ -200,7 +201,7 @@ function imageMime(file: string): string {
 }
 
 const SourceBlock = z.templateLiteral(['source:', z.string().regex(/^[a-z][a-z0-9-]*$/)])
-const SettingsBlockSchema = z.union([z.enum(['policy', 'eval', 'executor', 'decisions', 'models', 'characters', 'branding']), SourceBlock])
+const SettingsBlockSchema = z.union([z.enum(['policy', 'eval', 'executor', 'decisions', 'models', 'characters', 'branding', 'coordination']), SourceBlock])
 const SaveRequest = z.object({ value: z.unknown(), revision: z.number().int().nonnegative() })
 const DecisionChoiceSchema = z.object({ id: z.string().min(1).max(200), label: z.string().min(1).max(2000), description: z.string().max(4000).optional(), prompt: z.string().min(1).max(12000).optional(), added: z.boolean().optional() })
 const DecisionEvaluation = z.object({ context: z.string().max(30000), sessionId: z.string().min(1).max(300).optional(), question: z.string().max(4000), choices: z.array(DecisionChoiceSchema).min(2).max(12), provider: z.enum(['auto', 'deepseek', 'typesafe-jev', 'openai-luna']).optional() })
@@ -410,6 +411,14 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
       const finding = runtime.findings.store.confirm(params.id, request, 'local-operator')
       void runtime.findings.request().catch(error => ctx.logger.warn('Finding dispatch: %s', String(error)))
       return { finding, item: findingDecision(finding) }
+    },
+    'POST findings/:id/coordinate': async ({ params, body }) => {
+      if (!runtime.findings) throw new PublicationError(409, 'Finding coordinator is not configured')
+      if (!runtime.store.settings().coordination?.enabled) {
+        throw new PublicationError(403, 'Headless coordination is disabled')
+      }
+      const { instructionFile } = FindingCoordinationRequestSchema.parse(await body())
+      return coordinateFinding(runtime.findings, params.id, instructionFile)
     },
     'GET deliveries': () => ({ items: runtime.deliveries?.store.list() ?? [] }),
     'POST deliveries': async ({ body, localApproval }) => {

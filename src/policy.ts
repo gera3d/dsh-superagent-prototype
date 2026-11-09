@@ -243,6 +243,11 @@ export const BrandingConfigSchema = z.object({
   hideWordmark: z.boolean().default(true),
 }).strict()
 export type BrandingConfig = z.infer<typeof BrandingConfigSchema>
+/** Headless coordination settings: default off, enables authenticated local operator instruction dispatch while locked. */
+export const CoordinationConfigSchema = z.object({
+  enabled: z.boolean().default(false),
+}).strict()
+export type CoordinationConfig = z.infer<typeof CoordinationConfigSchema>
 export const SettingsSchema = z.object({
   paused: z.boolean().default(false),
   sources: z.record(z.string().regex(/^[a-z][a-z0-9-]*$/), SourceInstanceSchema).default({}),
@@ -253,9 +258,10 @@ export const SettingsSchema = z.object({
   models: ModelsConfigSchema.default(() => ModelsConfigSchema.parse({})),
   characters: CharactersConfigSchema.default(() => CharactersConfigSchema.parse({})),
   branding: BrandingConfigSchema.default(() => BrandingConfigSchema.parse({})),
+  coordination: CoordinationConfigSchema.default(() => CoordinationConfigSchema.parse({})),
 }).strict()
 export type Settings = z.infer<typeof SettingsSchema>
-export type SettingsBlock = 'policy' | 'eval' | 'executor' | 'decisions' | 'models' | 'characters' | 'branding' | `source:${string}`
+export type SettingsBlock = 'policy' | 'eval' | 'executor' | 'decisions' | 'models' | 'characters' | 'branding' | 'coordination' | `source:${string}`
 export type SettingsSave = SettingsBlock | 'pause'
 export type SettingsOrigin = 'panel' | 'tool' | 'sync'
 

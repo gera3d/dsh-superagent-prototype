@@ -73,7 +73,12 @@ export class FindingRuntime {
   }
   /** Protected local review retires any still-live PR worker before scope replacement, deferral or acceptance. */
   review(id: string, request: FindingReview, actor = 'local-operator'): Finding {
-    if (actor !== 'local-operator') throw new FindingError(403, 'Only local-operator may review findings')
+    if (request.decision === 'accept_evidence' && actor !== 'local-operator') {
+      throw new FindingError(403, 'Only local-operator may review and accept finding evidence')
+    }
+    if (actor !== 'local-operator' && (!actor || actor.trim().length === 0 || actor.length > 200)) {
+      throw new FindingError(403, 'Only local-operator may review findings')
+    }
     return this.deps.store.atomic(() => {
       // A newer same-assignment review/CI report invalidates a click on older evidence.
       this.reconcile()
@@ -81,7 +86,7 @@ export class FindingRuntime {
       const reviewed = this.store.review(id, request, actor)
       const ticket = before?.job?.ticketId && this.deps.store.tickets.get(before.job.ticketId)
       if (ticket && !ticket.ended) this.deps.engine.stopTicket(ticket.id,
-        `Local operator finding review ${request.decision}; current bounded assignment retired before the next decision`)
+        `${actor} finding review ${request.decision}; current bounded assignment retired before the next decision`)
       return reviewed
     })
   }
@@ -99,7 +104,7 @@ export class FindingRuntime {
       await this.pass()
     }
   }
-  private reconcile(): void {
+  reconcile(): void {
     for (const finding of this.store.list()) {
       if (!['running', 'blocked'].includes(finding.state) || !finding.job?.ticketId || !finding.job.assignmentId) continue
       try {

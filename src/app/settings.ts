@@ -2,7 +2,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { z } from 'zod'
 import { UserError, type EngineForSettings } from '../core/index.ts'
-import { BrandingConfigSchema, CharactersConfigSchema, DEFAULT_CHARACTERS, DecisionsConfigSchema, EvalConfigSchema, ExecutorConfigSchema, ModelsConfigSchema, PolicyConfigSchema, SettingsSchema, policyEffects, policyVersion }
+import { BrandingConfigSchema, CharactersConfigSchema, CoordinationConfigSchema, DEFAULT_CHARACTERS, DecisionsConfigSchema, EvalConfigSchema, ExecutorConfigSchema, ModelsConfigSchema, PolicyConfigSchema, SettingsSchema, policyEffects, policyVersion }
   from '../policy.ts'
 import type { CharactersConfig, Settings as SettingsValue, SettingsBlock, SettingsOrigin, SettingsSave } from '../policy.ts'
 import { DEFAULT_SENIOR_DEVELOPER_CHARACTER, type CharacterConfig } from '../core/character.ts'
@@ -32,7 +32,7 @@ interface Block {
   merge(settings: SettingsValue, value: unknown, id: string): SettingsValue
   guard?(current: SettingsValue, candidate: SettingsValue, origin: SettingsOrigin): void
 }
-const BLOCKS: Record<'policy' | 'eval' | 'executor' | 'decisions' | 'models' | 'characters' | 'branding' | 'source', Block> = {
+const BLOCKS: Record<'policy' | 'eval' | 'executor' | 'decisions' | 'models' | 'characters' | 'branding' | 'coordination' | 'source', Block> = {
   policy: {
     parse: (value, sources) => {
       const policy = PolicyConfigSchema.parse(value)
@@ -95,6 +95,7 @@ const BLOCKS: Record<'policy' | 'eval' | 'executor' | 'decisions' | 'models' | '
     },
   },
   branding: { parse: value => BrandingConfigSchema.parse(value), merge: (settings, value) => ({ ...settings, branding: value as SettingsValue['branding'] }) },
+  coordination: { parse: value => CoordinationConfigSchema.parse(value), merge: (settings, value) => ({ ...settings, coordination: value as SettingsValue['coordination'] }) },
   source: {
     parse: (value, sources, id) => sources.validate(id, z.object({ enabled: z.boolean(), config: z.unknown() }).parse(value)),
     merge: (settings, value, id) => ({ ...settings, sources: { ...settings.sources, [id]: value as SettingsValue['sources'][string] } }),

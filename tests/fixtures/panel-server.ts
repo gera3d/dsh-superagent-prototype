@@ -13,7 +13,7 @@ import type { DroppedReply, HistoryView, Problem, PromptsView, SetupView, Source
   TicketRow, TicketStage,
   TriggerRow } from '../../src/client/api.ts'
 import { SETUP_FIELDS } from '../../src/deployment.ts'
-import { BrandingConfigSchema, CharactersConfigSchema, DecisionsConfigSchema, EvalConfigSchema, ExecutorConfigSchema, ModelsConfigSchema, PolicyConfigSchema, SettingsSchema } from '../../src/policy.ts'
+import { BrandingConfigSchema, CharactersConfigSchema, CoordinationConfigSchema, DecisionsConfigSchema, EvalConfigSchema, ExecutorConfigSchema, ModelsConfigSchema, PolicyConfigSchema, SettingsSchema } from '../../src/policy.ts'
 import { SetupError, type SetupCode } from '../../src/setup.ts'
 import { feishuChannel } from '../../src/sources/feishu-trigger.ts'
 import { githubChannel } from '../../src/sources/github-trigger.ts'
@@ -171,7 +171,8 @@ const settingsView = (): ApiResponse<'GET settings'> => ({
     decisions: { value: server.settings.decisions, revision: server.revisions.decisions ?? 0 },
     models: { value: server.settings.models, revision: server.revisions.models ?? 0 },
     characters: { value: server.settings.characters, revision: server.revisions.characters ?? 0 },
-    branding: { value: server.settings.branding, revision: server.revisions.branding ?? 0 } },
+    branding: { value: server.settings.branding, revision: server.revisions.branding ?? 0 },
+    coordination: { value: server.settings.coordination ?? { enabled: false }, revision: server.revisions.coordination ?? 0 } },
   sources: sourceSettings(),
   environment: { root: '/srv/dsh-superagent/work', variables: [
     { owner: 'executor', enabled: true, variables: [{ key: 'DSH_SUPERAGENT_DIR', description: { zh: '工单的执行目录',
@@ -431,6 +432,7 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
   'POST findings/:id/review': { body: true, answer: () => refuse(409, 'No fixture finding evidence review is authorized') },
   'POST findings/:id/revisit': { body: true, answer: () => refuse(409, 'No fixture finding revisit is authorized') },
   'POST findings/:id/confirm': { body: true, answer: () => refuse(409, 'No fixture finding confirmation is authorized') },
+  'POST findings/:id/coordinate': { body: true, answer: () => refuse(409, 'No fixture finding coordination is authorized') },
   'GET deliveries': { answer: () => ({ items: [] }) },
   'POST deliveries': { body: true, answer: () => refuse(409, 'No fixture delivery intake is authorized') },
   'POST deliveries/:id/reconcile': { body: true, answer: () => refuse(409, 'No fixture delivery reconciliation is authorized') },
@@ -494,7 +496,7 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
   } },
   'PUT settings/:block': { body: true, answer: ({ params: { block }, body }) => {
     const source = block.startsWith('source:') ? KINDS.find(kind => `source:${kind.kind}` === block) : undefined
-    if (!['policy', 'eval', 'executor', 'decisions', 'models', 'characters', 'branding'].includes(block) && !source) return block.startsWith('source:') ? refuse(404, 'Source not found')
+    if (!['policy', 'eval', 'executor', 'decisions', 'models', 'characters', 'branding', 'coordination'].includes(block) && !source) return block.startsWith('source:') ? refuse(404, 'Source not found')
       : refuse(400, 'Invalid settings: block')
     if (body.revision !== (server.revisions[block] ?? 0)) return refuse(409, 'Settings changed. Reload before saving.')
     let restarting = false
@@ -505,6 +507,7 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
     else if (block === 'models') server.settings = { ...server.settings, models: ModelsConfigSchema.parse(body.value) }
     else if (block === 'characters') server.settings = { ...server.settings, characters: CharactersConfigSchema.parse(body.value) }
     else if (block === 'branding') server.settings = { ...server.settings, branding: BrandingConfigSchema.parse(body.value) }
+    else if (block === 'coordination') server.settings = { ...server.settings, coordination: CoordinationConfigSchema.parse(body.value) }
     else if (source) {
       const { enabled, config: value } = SourceSave.parse(body.value)
       const config = source.schema.parse(value)
