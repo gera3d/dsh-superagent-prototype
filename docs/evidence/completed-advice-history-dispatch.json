@@ -174,5 +174,21 @@
     "rootCounterexample": "Delayed storage timestamp with same old source wrongly kept pending; committed source bytes match audit. Original real-row positive control passed. No live row modified.",
     "reviewReference": "docs/reviews/completed-advice-history-0a2ecf8-blocker.md",
     "continuation": "Supported headless retry_scope revision2 then prior-approved fix_now revision3 after r1 ended; same finding and original history preserved. Actual r3 request/header seq18/context19 uses Antigravity Gemini3.8Flash high/maxTokens65536. Internal inspection remains active; no corrected candidate yet."
+  },
+  "correctionR5": {
+    "at": "2026-11-09T19:24:33.123300+00:00",
+    "findingState": "running",
+    "revision": 5,
+    "job": {
+      "id": "finding:bf38fc9c-8273-4d61-9ae4-e98c45e51365:r5",
+      "ticketId": "0999d34805151c7ba36d207addcb42a0",
+      "assignmentId": "8138226126e8f8822530fa7fd23502d0"
+    },
+    "rejectedCandidateActualHead": "e58640ea17266a4e405e948fa822171cd4c9c490",
+    "workerSummaryClaimedHead": "e58640ed9536d55260840b206cbddfc7ce4fa50c",
+    "claimedHeadObjectExists": false,
+    "workerChecks": "162 tests/13suites, types/build passed; root production native new-human-to-projection positive control failed",
+    "rootReviewReference": "docs/reviews/completed-advice-history-e58640e-native-blocker.md",
+    "continuation": "Supported same-finding retry_scope revision4 then prior-approved fix_now revision5 after r3 ended. No new features/settings/routing/spend/access/retirement or live acceptance."
   }
 }
