@@ -1,0 +1,67 @@
+{
+  "candidateHead": "424c380dc0dcd7402331ed78df79f3cd2332cbe4",
+  "nativePositive": {
+    "case": "Real native claim/publish with actual later human source must survive history projection",
+    "claimSucceeded": true,
+    "nativePublishedStatus": "pending",
+    "projectedStatus": "pending",
+    "expected": "pending",
+    "passed": true,
+    "persistedHumanMarker": true,
+    "laterHumanEvent": {
+      "type": "user/message",
+      "kind": "user",
+      "time": 1794253240822
+    },
+    "resolutionAt": 1794253235822,
+    "sourceProof": {
+      "sessionId": "worker-ticket-reask",
+      "sourceMessageId": "msg-latency",
+      "sourceSeq": 4,
+      "sourceTurn": 2,
+      "draftRevision": "draft-latency"
+    },
+    "scope": "Isolated production native path; no live task, reply or row modified",
+    "candidateHead": "424c380dc0dcd7402331ed78df79f3cd2332cbe4",
+    "auditScriptSha256": "bb020e5eb560c3f2ac81e90accdfa24fb37b3164a799e8f7ede69ff23176cc0f"
+  },
+  "negativeControls": {
+    "candidateHead": "424c380dc0dcd7402331ed78df79f3cd2332cbe4",
+    "cases": [
+      {
+        "case": "Original actual closure",
+        "expected": "stale",
+        "actual": "stale",
+        "passed": true
+      },
+      {
+        "case": "Delayed capture without a new user",
+        "expected": "stale",
+        "actual": "stale",
+        "passed": true
+      },
+      {
+        "case": "Old real-user proof cannot be freshened by delayed capture or human flag",
+        "expected": "stale",
+        "actual": "stale",
+        "passed": true
+      },
+      {
+        "case": "Later source proof mismatched to item turn cannot revive it",
+        "expected": "stale",
+        "actual": "stale",
+        "passed": true
+      }
+    ],
+    "parentStorageUnchanged": true,
+    "liveStateChanged": false
+  },
+  "caption": {
+    "test": "docs/reviews/completed-advice-history-caption.audit.spec.ts",
+    "actualComponent": "src/client/decision-card.tsx",
+    "passed": false,
+    "actual": "data-state=pending with Historical recommendation caption when no onExecute supplied",
+    "expected": "Pending/staged/read-only preview must not be called history solely due to absent callback",
+    "liveUiOrStateChanged": false
+  }
+}
