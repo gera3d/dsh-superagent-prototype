@@ -1,0 +1,77 @@
+{
+  "at": "2026-11-09T01:03:52.965376+00:00",
+  "finding": {
+    "id": "51f309ca-d396-4983-a55d-ef4432a8572f",
+    "revision": 22,
+    "state": "running",
+    "job": {
+      "id": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r22",
+      "ticketId": "070c899c49d0ce401794d1e48ba6b1e0",
+      "assignmentId": "ce85d01803f356c57599124e79b06ada"
+    }
+  },
+  "ticket": {
+    "id": "070c899c49d0ce401794d1e48ba6b1e0",
+    "stage": "working",
+    "assignments": [
+      {
+        "id": "ce85d01803f356c57599124e79b06ada",
+        "state": "running",
+        "createdAt": "2026-11-09T01:03:35.483Z",
+        "startedAt": "2026-11-09T01:03:36.093Z",
+        "ref": "worker-070c899c49d0ce401794d1e48ba6b1e0"
+      }
+    ],
+    "usage": {
+      "sessionId": "worker-070c899c49d0ce401794d1e48ba6b1e0",
+      "routes": [],
+      "totals": {
+        "uncachedInputTokens": 0,
+        "outputTokens": 0,
+        "totalTokens": 0
+      },
+      "coverage": {
+        "attempts": 0,
+        "reported": 0,
+        "cacheRead": "unreported",
+        "cacheWrite": "unreported",
+        "attribution": "complete"
+      },
+      "cost": {
+        "kind": "unavailable",
+        "reason": "noRecordedPrice"
+      }
+    }
+  },
+  "settings": {
+    "value": {
+      "enabled": true
+    },
+    "revision": 1
+  },
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "rejectedCandidate": "5d7d55727466fc0efb10ce90c6f0b8db4c6a23ba",
+  "headlessActions": [
+    "retry_scope revision21->22",
+    "confirm fix_now revision22"
+  ],
+  "publication": false,
+  "acceptance": false,
+  "headlessNativeAcceptance": "Existing unlock request pending"
+}

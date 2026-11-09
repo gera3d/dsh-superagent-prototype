@@ -1,0 +1,25 @@
+{
+  "at": "2026-11-09T01:02:54.738850+00:00",
+  "candidate": "5d7d55727466fc0efb10ce90c6f0b8db4c6a23ba",
+  "previousRootTestsPassed": 8,
+  "newRootTestsFailed": 4,
+  "findings": [
+    "Old callback deletes newer unconsumed claim",
+    "Consumed marker symlink truncates external isolated file",
+    "Older canonical payload supersedes newer retained claim",
+    "Exact delivered snapshot accepted after bounded cache eviction"
+  ],
+  "deployed": false,
+  "liveFilesTouchedByTests": false,
+  "currentBeforeCorrection": {
+    "id": "51f309ca-d396-4983-a55d-ef4432a8572f",
+    "revision": 21,
+    "state": "blocked",
+    "job": {
+      "id": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r19",
+      "ticketId": "722e8011c430f6310fa5c796cf15fd58",
+      "assignmentId": "871b47601707679462f00915d3655add"
+    }
+  },
+  "nextOwner": "Harness original bounded correction; Codex independent review/release"
+}
