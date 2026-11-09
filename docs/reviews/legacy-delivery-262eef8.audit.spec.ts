@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { adviceContext } from '../src/app/advice-context.ts'
 import { DeliveryStore, deliveryFingerprint } from '../src/app/feature-delivery.ts'
 
 const id = 'auto-1aa9568a8df574db0cef146a58004c4b'
@@ -55,4 +56,15 @@ describe('independent exact legacy identity and missing-worker fences', () => {
       expect(after.nextAction).toBeUndefined()
     } finally { s.close() }
   })
+  it('fresh advisor context recognizes historical delivery without reopening an unbound release gate', () => {
+    const s = fixture()
+    try {
+      const d = reconcile(s)[0]!
+      const context = adviceContext(undefined, d)
+      expect(context).toMatch(/historical|delivered by later release/i)
+      expect(context).not.toContain('UNBOUND DELIVERY GATE:')
+      expect(context).not.toContain('this delivery is already verified and accepted')
+    } finally { s.close() }
+  })
+
 })
