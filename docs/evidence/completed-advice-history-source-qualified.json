@@ -1,0 +1,244 @@
+{
+  "stage": "independently reviewed and source-qualified; deployment/native acceptance pending",
+  "qualifiedCodeCommit": "3bec16c727a9a22648b5040085b13997b0ce5112",
+  "workerCandidate": "d3bd7e7771cd2d5c87e319a7a6f7db05c1131a7e",
+  "exactByteBinding": {
+    "workerHead": "d3bd7e7771cd2d5c87e319a7a6f7db05c1131a7e",
+    "files": [
+      {
+        "path": "src/app/decision-inbox-provider.ts",
+        "match": true,
+        "sha256": "9faec53407c9bd60c7858c0d7d53c6bdff29dea1d101feb792e0c4b81f5be687"
+      },
+      {
+        "path": "src/app/decision-inbox.ts",
+        "match": true,
+        "sha256": "48a44be513b9620b692e9eb525cd951da9ac5a5294e946b519a37683c36a71a4"
+      },
+      {
+        "path": "src/app/finding.ts",
+        "match": true,
+        "sha256": "02f1ba33e628ed20939d3ceffdb53c3c09ed7e8e47198506d2c62addf6ad0b4d"
+      },
+      {
+        "path": "src/client/decisions.tsx",
+        "match": true,
+        "sha256": "ef01de373426f7e01524e9614e78ba9f862a67ac4aa9e72d64d4083ea7be0739"
+      },
+      {
+        "path": "src/core/decision.ts",
+        "match": true,
+        "sha256": "11caa2afb3cd8d57754ed0d04c032d607a5d18319e31da4d353d53db8a8267ae"
+      },
+      {
+        "path": "src/core/publication-queue.ts",
+        "match": true,
+        "sha256": "bdec1c16bb687aa1687997d404de5d0d6e2ec8249edb00f2fbd6bdf6c6d04637"
+      },
+      {
+        "path": "tests/completed-advice-history.spec.ts",
+        "match": true,
+        "sha256": "5b2bd864e8d60932c930db0d540fdb7f6d8b980423d2af4ca6d7addc73f5e204"
+      },
+      {
+        "path": "tests/root-history-caption.audit.spec.ts",
+        "match": true,
+        "sha256": "d82bb1e0a080c780c5d751d03a81478cf785571b80718cfe1c42bd65d02d140e"
+      }
+    ]
+  },
+  "rootReleaseChecks": [
+    {
+      "step": "root-caption",
+      "exitCode": 0,
+      "log": "history-release-root-caption.log"
+    },
+    {
+      "step": "types",
+      "exitCode": 0,
+      "log": "history-release-types.log"
+    },
+    {
+      "step": "build",
+      "exitCode": 0,
+      "log": "history-release-build.log"
+    }
+  ],
+  "rootNativePositive": {
+    "case": "Real native claim/publish with actual later human source must survive history projection",
+    "claimSucceeded": true,
+    "nativePublishedStatus": "pending",
+    "projectedStatus": "pending",
+    "expected": "pending",
+    "passed": true,
+    "persistedHumanMarker": true,
+    "laterHumanEvent": {
+      "type": "user/message",
+      "kind": "user",
+      "time": 1794253240822
+    },
+    "resolutionAt": 1794253235822,
+    "sourceProof": {
+      "sessionId": "worker-ticket-reask",
+      "sourceMessageId": "msg-latency",
+      "sourceSeq": 4,
+      "sourceTurn": 2,
+      "draftRevision": "draft-latency"
+    },
+    "scope": "Isolated production native path; no live task, reply or row modified",
+    "candidateHead": "424c380dc0dcd7402331ed78df79f3cd2332cbe4",
+    "auditScriptSha256": "bb020e5eb560c3f2ac81e90accdfa24fb37b3164a799e8f7ede69ff23176cc0f"
+  },
+  "rootNegativeControls": {
+    "candidateHead": "424c380dc0dcd7402331ed78df79f3cd2332cbe4",
+    "cases": [
+      {
+        "case": "Original actual closure",
+        "expected": "stale",
+        "actual": "stale",
+        "passed": true
+      },
+      {
+        "case": "Delayed capture without a new user",
+        "expected": "stale",
+        "actual": "stale",
+        "passed": true
+      },
+      {
+        "case": "Old real-user proof cannot be freshened by delayed capture or human flag",
+        "expected": "stale",
+        "actual": "stale",
+        "passed": true
+      },
+      {
+        "case": "Later source proof mismatched to item turn cannot revive it",
+        "expected": "stale",
+        "actual": "stale",
+        "passed": true
+      }
+    ],
+    "parentStorageUnchanged": true,
+    "liveStateChanged": false
+  },
+  "workerFinalChecks": {
+    "candidate": "d3bd7e7771cd2d5c87e319a7a6f7db05c1131a7e",
+    "tests": 24,
+    "suites": 4,
+    "typesExit": 0,
+    "buildExit": 0,
+    "source": "current canonical r7 report and checkpoint logs"
+  },
+  "priorR5BackendChecks": {
+    "tests": 63,
+    "suites": 4,
+    "scope": "12 history plus51 related, source metadata unchanged by final UI-only correction"
+  },
+  "installedBaseAndRollback": {
+    "at": "2026-11-09T19:57:58.514459+00:00",
+    "stage": "qualified source and rollback prepared; not merged/deployed/native verified",
+    "sourceHead": "3bec16c727a9a22648b5040085b13997b0ce5112",
+    "workerHead": "d3bd7e7771cd2d5c87e319a7a6f7db05c1131a7e",
+    "releaseDirectory": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/history-qualified/backend",
+    "installedDirectory": "/Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent",
+    "backup": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/verified-batch/history-rollback-20261109T195758Z",
+    "files": [
+      {
+        "path": "src/app/decision-inbox-provider.ts",
+        "before": "757fb1c2bf881f2d6469ad85a69ff43715eba1d42323d08560e97e427a459946",
+        "after": "9faec53407c9bd60c7858c0d7d53c6bdff29dea1d101feb792e0c4b81f5be687"
+      },
+      {
+        "path": "src/app/decision-inbox.ts",
+        "before": "b0c8127b33bd40f1d46f2e5ba95d4076024fe8a0315ee2b318e18e69dd8186e3",
+        "after": "48a44be513b9620b692e9eb525cd951da9ac5a5294e946b519a37683c36a71a4"
+      },
+      {
+        "path": "src/app/finding.ts",
+        "before": "6d263c20021f1ce7837531fc229b622d1011335580dc1b2fb5b95afec43283a8",
+        "after": "02f1ba33e628ed20939d3ceffdb53c3c09ed7e8e47198506d2c62addf6ad0b4d"
+      },
+      {
+        "path": "src/client/decisions.tsx",
+        "before": "a48f5cf401f3af53c23d02803404c3e49c0668c9c438b4e98b9e22beb2b812df",
+        "after": "ef01de373426f7e01524e9614e78ba9f862a67ac4aa9e72d64d4083ea7be0739"
+      },
+      {
+        "path": "src/core/decision.ts",
+        "before": "f181fecc7972abb4cb1f5005dc9792b538cc39688c7b4ad803e4bce4c9585bb6",
+        "after": "11caa2afb3cd8d57754ed0d04c032d607a5d18319e31da4d353d53db8a8267ae"
+      },
+      {
+        "path": "src/core/publication-queue.ts",
+        "before": "94936c52e125945b5e4cf362eb235a65e4dcb199016bf4f79c2bc8bd3a6326a3",
+        "after": "bdec1c16bb687aa1687997d404de5d0d6e2ec8249edb00f2fbd6bdf6c6d04637"
+      }
+    ],
+    "assets": {
+      "lib/deployment-BTCh8dP2.d.ts": "505a7f812d3cb688a9f41cafdeceb186d9d1d2806625b4f574f07b283141a8fa",
+      "lib/client.js": "9c7ece88de424007487e5763e01ae030601cd9c60ae5984153a442f4ba368b53",
+      "lib/kind-DwhKDdHi.d.ts": "29be96a6ce59f357639d471c472ff9265e8830594a44403c66772ada45c00288",
+      "lib/decision-inbox-provider-canonical.d.ts": "d3968083677ecbf200428ead952171577d06faf8cba1127f8d85c88abeee389f",
+      "lib/model-BSxHOzxq.d.ts": "e4463219981fb520f87b75001088e828ba27e12ce14e6d595f0de2e37255e803",
+      "lib/github-pull-D0dzdKap.js": "1c57a002b8d21434ee38b7f3b843106cdb5ce2e8cc51fa9f0653cd650f630882",
+      "lib/policy-gHxknNlz.d.ts": "f1d7f53f9648a1e3e3af39c8928b33bb6dc6973c5153f8b093d6c8e36f7fb80c",
+      "lib/http-Cy64qXIc.js": "05d135f03e081377862499b87d7b0a912d0a432a0249a379b3f9280e5613d731",
+      "lib/publication-worker.js": "fe0a5445a7db8738b1124198cdbfd6cb0cf620caa7ee50b668e3468eef1e20d5",
+      "lib/decision-provider.d.ts": "6b5408ac5b6e6f1a049da951dcb2c09dd2169c3bf1cef8bd097ddad6d149c3c9",
+      "lib/index.js": "b4d00163f9ca853f5138ebd19ae0f1b8e925a2c41179c547bc74929d3f65fb21",
+      "lib/publication-ticket-BN5vSTgg.js": "f57990f7f56533cb828df83772b78d52134cbdacd546212d03f5de41899ab2a0",
+      "lib/decision-provider.js": "4aa554df7c60e03e6710cb27be66087871da386b56da3a1326b73a1773b3a488",
+      "lib/publication-context-O71ZABS0.js": "a9f7cbae94640f428f200a13edb3348e8028d11b7d48239c485e4591def3bc42",
+      "lib/decision-inbox-provider.js": "b5643af1f6d31461407edc3b1dbef34017eefb00b818f8523b0043a35841e0c7",
+      "lib/publication-operator.js": "2a42a58b4c389d1b80bfbd19112c67af3d0ba1e5f18842609a9c31fc9ef6b0b8",
+      "lib/lifecycle-publication-B8bI2Hvs.js": "fc44f0b542fbecf4144fe8b3aa416bea7ebd7ac9f5f794aef45e0b36a1e9c7d0",
+      "lib/feishu-watch.d.ts": "bb9d7dc0d7d6f75df76310ea8220d6db4bce8cb88df582ce49d0e6175c4c0564",
+      "lib/github-watch.d.ts": "6e2b7d9677a08f52bfd8ec3853a56d4a1f9a5ae2aff4c5864a29072f5ce4959d",
+      "lib/publication-operator.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+      "lib/feishu-CVHwY3e7.js": "2f998efe797be309fdc2d029ef3705bc7eaa05ddd190bda66e51184393766588",
+      "lib/publication-worker.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+      "lib/index.d.ts": "78e0eb338131ce82dd68f7a156420e12f6d31b9e4e9219b158e9ced6565ee67b",
+      "lib/decision-inbox-provider-live.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20",
+      "lib/feishu-watch.js": "0f94d1a0b3d166f3f558ef88db9d105d30fe5aa738ac73ad13cc37a8e745753a",
+      "lib/poll-YENBPt9-.js": "38eb3c0c3654f4c112e2ca574bb4c61e217ec7b6ea64f4a5ae1ba63001c215f5",
+      "lib/github-watch.js": "c194996f24b6bd9d5d9e98a5e4364dc4f04a30190a0818c0fd75acb51e5b2248",
+      "lib/decision-inbox-provider-canonical.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20"
+    },
+    "baseBuildInputs": {
+      "baseBuildInputCount": 210,
+      "mismatches": [],
+      "baseRef": "cf53f949d83328a66dd5a857c0ea0f8c84bb6ae8"
+    },
+    "checks": [
+      {
+        "step": "root-caption",
+        "exitCode": 0,
+        "log": "history-release-root-caption.log"
+      },
+      {
+        "step": "types",
+        "exitCode": 0,
+        "log": "history-release-types.log"
+      },
+      {
+        "step": "build",
+        "exitCode": 0,
+        "log": "history-release-build.log"
+      }
+    ],
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "settingsBeforeSha256": "91ce74da486fe3b471dd8c541e11508ec07fdc16d81a9857dce800acf0427036",
+    "rollbackRule": "Verify installed postimages first, restore only this source/lib backup and restart at safe idle. Preserve canonical DB history; online DB backup is evidence/recovery, not a routine rollback instruction.",
+    "nativeVerification": "Pending; preserve exact protected evidence/acceptance gates."
+  },
+  "limits": [
+    "No full historical suite rerun or universal recommendation/model guarantee.",
+    "Real native publication/projection tests are isolated production-path controls, not user messages or actions on live work.",
+    "Current tests do not manufacture a product decision or select/send a user recommendation. Existing explicit Send behavior retained.",
+    "No source/target proof supplied for old3 unbound deliveries; they remain excluded.",
+    "Previously failed r1/r3 semantics and r5 caption SSR failures preserved in linked review evidence."
+  ]
+}
