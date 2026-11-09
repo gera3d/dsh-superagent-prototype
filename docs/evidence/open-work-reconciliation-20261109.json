@@ -21,5 +21,32 @@
       "sha256": "30f616b34965d1951046286c97b9c81795adcf1921f5e26c619c81fc54568ca6",
       "matchesVerifiedDefectiveSource": true
     }
-  }
+  },
+  "legacyIssueCrossCheck": [
+    {
+      "issue": 182,
+      "state": "CLOSED",
+      "closedAt": "2026-11-07T02:25:50Z",
+      "title": "Concurrent finding dispatch"
+    },
+    {
+      "issue": 184,
+      "state": "CLOSED",
+      "closedAt": "2026-11-07T02:25:52Z",
+      "title": "Subscription conservation"
+    },
+    {
+      "issue": 188,
+      "state": "CLOSED",
+      "closedAt": "2026-11-07T02:25:53Z",
+      "title": "Operator evidence capture"
+    }
+  ],
+  "legacyFeatureRelease": {
+    "pr": 33,
+    "merge": "fb591843c3f9ff19965a49e45a4157ed195fc890",
+    "reference": "docs/project-history/2026-11-07-before-installed-verification.md",
+    "limit": "Historical completed-feature evidence; not permission to invent empty legacy delivery source/target bindings or accept them."
+  },
+  "requiredDecision": "User confirmation of the prepared cost-summary bounded implementation plan; prior accepted finding was verification only."
 }
