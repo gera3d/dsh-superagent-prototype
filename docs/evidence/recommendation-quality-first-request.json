@@ -1,0 +1,66 @@
+{
+  "observedAt": "2026-11-09T15:07:29.174206+00:00",
+  "findingId": "8d447429-65ee-4f5f-aa7b-354c0f349673",
+  "job": {
+    "id": "finding:8d447429-65ee-4f5f-aa7b-354c0f349673:r1",
+    "ticketId": "4371e4ede24a7c7b512f1312f5e89a97",
+    "assignmentId": "30f1cf79d7dd48020126ef6905296595"
+  },
+  "findingState": "running",
+  "ticketStage": "working",
+  "assignments": [
+    {
+      "id": "30f1cf79d7dd48020126ef6905296595",
+      "state": "running",
+      "createdAt": "2026-11-09T14:58:44.640Z",
+      "startedAt": "2026-11-09T14:58:47.193Z",
+      "ref": "worker-4371e4ede24a7c7b512f1312f5e89a97"
+    }
+  ],
+  "requestEvents": [
+    {
+      "type": "request/header",
+      "seq": 18,
+      "time": 1794236327629,
+      "config": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "high",
+        "maxTokens": 65536
+      }
+    },
+    {
+      "type": "request/context",
+      "seq": 19,
+      "time": 1794236327632,
+      "data": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "contextWindow": 1048576
+      }
+    }
+  ],
+  "latestSequencedEvent": 19,
+  "usage": {
+    "sessionId": "worker-4371e4ede24a7c7b512f1312f5e89a97",
+    "routes": [],
+    "totals": {
+      "uncachedInputTokens": 0,
+      "outputTokens": 0,
+      "totalTokens": 0
+    },
+    "coverage": {
+      "attempts": 0,
+      "reported": 0,
+      "cacheRead": "unreported",
+      "cacheWrite": "unreported",
+      "attribution": "complete"
+    },
+    "cost": {
+      "kind": "unavailable",
+      "reason": "noRecordedPrice"
+    }
+  },
+  "interpretation": "First request recorded on Antigravity Gemini3.8Flash; no response, error or durable report recorded by observation. This is pending, not proof of productive implementation, health, exhausted quota or a verified stall. No restart/retry/duplicate job/provider or settings change, tests, merge or deployment performed.",
+  "nextStage": "Preserve current assignment. On durable candidate/report, Codex independently reviews every alternative against saved current-state fixtures and advances missing checks, correction or authorized exact-head release. No historical card retirement."
+}
