@@ -114,17 +114,28 @@ export function DecisionsPage({ filter = 'pending' }: { filter?: 'pending' | 're
         {shownItems.map(item => item.finding || item.actionMode === 'finding_triage' || item.lifecycle || item.delivery || item.actionMode === 'feature_delivery' ? <SharedLifecycleCard key={item.id} item={item}
           onTicket={item.ticketId ? () => navigate({ page: 'execution', id: item.ticketId!.replace('#', '') }) : undefined} /> : <div key={item.id} style={{
           background: '#1c2128',
-          border: item.status === 'pending' ? '1px solid #30363d' : '1px solid #238636',
-          borderLeft: item.status === 'pending' ? '4px solid #f85149' : '4px solid #238636',
+          border: item.status === 'pending' ? '1px solid #30363d' : item.status === 'stale' ? '1px solid #30363d' : '1px solid #238636',
+          borderLeft: item.status === 'pending' ? '4px solid #f85149' : item.status === 'stale' ? '4px solid #8b949e' : '4px solid #238636',
           borderRadius: '8px',
           padding: '18px',
-          opacity: item.status === 'resolved' ? 0.75 : 1
+          opacity: item.status === 'pending' ? 1 : 0.75
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '14px', fontWeight: 600, color: '#f0f6fc' }}>
                 {item.ticketTitle}
               </span>
+              {item.parentFinding && <span style={{
+                background: item.parentFinding.state === 'resolved' ? 'rgba(35, 134, 54, 0.15)' : 'rgba(56, 139, 253, 0.15)',
+                color: item.parentFinding.state === 'resolved' ? '#3fb950' : '#58a6ff',
+                border: item.parentFinding.state === 'resolved' ? '1px solid rgba(35, 134, 54, 0.4)' : '1px solid rgba(56, 139, 253, 0.4)',
+                padding: '1px 6px',
+                borderRadius: '4px',
+                fontSize: '10px',
+                fontWeight: 700
+              }}>
+                {item.parentFinding.state === 'resolved' ? 'COMPLETED FINDING' : 'FINDING WORK'}
+              </span>}
               <span style={{
                 background: item.urgency === 'high' ? 'rgba(248, 81, 73, 0.15)' : 'rgba(210, 153, 34, 0.15)',
                 color: item.urgency === 'high' ? '#f85149' : '#d29922',

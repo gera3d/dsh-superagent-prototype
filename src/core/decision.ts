@@ -43,6 +43,14 @@ export interface DecisionEvaluationResult {
   provider: string
   latencyMs: number
 }
+export interface AuthoritativeUserSource {
+  kind: 'user'
+  time: number
+  seq: number
+  turn?: number
+  messageId?: string
+}
+
 export interface DecisionStaging {
   attemptId: string
   choiceId: string
@@ -69,6 +77,10 @@ export interface PendingDecisionItem {
   ticketId?: string
   sessionId?: string
   sourceMessageId?: string
+  /** Explicit human source confirmation. When true, proves this item originated from an authoritative human message. */
+  human?: boolean
+  /** Authoritative human source proof derived by the server from verified session events bound to this turn. */
+  userSource?: AuthoritativeUserSource
   ticketTitle: string
   trigger: string
   status: 'pending' | 'resolved' | 'stale'
@@ -82,6 +94,8 @@ export interface PendingDecisionItem {
   delivery?: Delivery
   /** Server-projected lifecycle state; never accepted as action authorization. */
   lifecycle?: { kind: 'stuck' | 'done'; assignmentId: string; prNumber?: number; docsOnly?: boolean; issueNumber?: number; issueUrl?: string; publication?: PublicationSnapshot; /** Recovery remains visible after the original ticket decision retires; only rollback may execute. */ recovery?: boolean; /** Exact approved own-merge fence remains current; server may offer safe refresh/resume. */ continuation?: boolean }
+  /** Authoritative linked finding snapshot when projected for finding-owned work. */
+  parentFinding?: { id: string; title: string; state: string; resolvedAt?: string }
   staleReason?: string
   draftResponse?: string
   staging?: DecisionStaging

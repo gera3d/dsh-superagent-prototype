@@ -3,7 +3,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { SessionEvent, SessionId } from '@deepseek-ai/dsh-session'
 import type { DatabaseSync } from 'node:sqlite'
 import { createHash, randomUUID } from 'node:crypto'
-import type { AdvisorDecision, DecisionEvaluationResult, DecisionOptionSet, DecisionStaging, PendingDecisionItem } from '../core/decision.ts'
+import type { AdvisorDecision, AuthoritativeUserSource, DecisionEvaluationResult, DecisionOptionSet, DecisionStaging, PendingDecisionItem } from '../core/decision.ts'
 import { normalizeChoices } from '../core/options.ts'
 import { ticketStage, latestReport, type Ticket } from '../core/index.ts'
 import { workerSessionId } from '../executor/dsh.ts'
@@ -138,6 +138,31 @@ function optionHistory(existing: PendingDecisionItem | undefined): DecisionOptio
     choices: existing.choices.map(choice => ({ ...choice })),
     ...(existing.hiddenOptions?.length ? { hiddenOptions: existing.hiddenOptions.map(choice => ({ ...choice })) } : {}),
     recommendation: structuredClone(existing.recommendation) }]
+}
+
+/** Derive authoritative user source proof from server session events bound to a specific turn. */
+export function deriveTurnUserSource(events?: readonly SessionEvent[], sourceTurn?: number, sourceSeq?: number): AuthoritativeUserSource | undefined {
+  if (!events || !events.length) return undefined
+  const endIdx = sourceSeq !== undefined ? events.findIndex(e => e.seq === sourceSeq) : -1
+  const searchSpace = endIdx >= 0 ? events.slice(0, endIdx) : events
+  const prevEnd = sourceTurn !== undefined
+    ? searchSpace.findLast(e => e.type === 'turn/end' && (e.data as any)?.turn !== undefined && (e.data as any).turn < sourceTurn)
+    : searchSpace.findLast(e => e.type === 'turn/end')
+  const minSeq = prevEnd ? prevEnd.seq : -1
+  const human = searchSpace.findLast(e =>
+    e.type === 'user/message'
+    && e.seq > minSeq
+    && (e.data as any)?.source?.kind === 'user'
+    && Number.isFinite(e.time)
+  )
+  if (!human) return undefined
+  return {
+    kind: 'user',
+    time: human.time,
+    seq: human.seq,
+    turn: sourceTurn,
+    messageId: (human.data as any)?.message?.id ?? (human.data as any)?.id,
+  }
 }
 
 /** SQLite-backed shared decisions with CAS staging, durable native submission proof and preserved resolution history. */
@@ -298,21 +323,25 @@ export class DecisionInbox {
     if (item?.status === 'pending' && !item.canonical && !item.staging) this.save({ ...item, advisor }, item)
   }
   /** Capture a user-visible completed task before advising it; empty choices explicitly mean not yet advised. */
-  ensureAdvisor(input: Omit<AdvisorDecision, 'options' | 'model'>): PendingDecisionItem {
+  ensureAdvisor(input: Omit<AdvisorDecision, 'options' | 'model'> & { human?: boolean; userSource?: AuthoritativeUserSource }, events?: readonly SessionEvent[]): PendingDecisionItem {
     const existing = this.findSource(input)
     if (existing) return existing
     const id = `chat-${createHash('sha256').update(`${input.sessionId}\0${input.sourceMessageId ?? `turn:${input.sourceTurn ?? input.key}`}`).digest('hex').slice(0, 32)}`
     const choices: PendingDecisionItem['choices'] = [], hiddenOptions: PendingDecisionItem['choices'] = []
+    const userSource = input.userSource ?? deriveTurnUserSource(events, input.sourceTurn, input.sourceSeq)
+    const human = input.human ?? (userSource !== undefined ? true : undefined)
     const item: PendingDecisionItem = { id, sessionId: input.sessionId, sourceMessageId: input.sourceMessageId,
       sourceTurn: input.sourceTurn, sourceSeq: input.sourceSeq, question: input.question, context: input.context.slice(-30000),
       ticketTitle: input.title ?? 'Conversation next steps', trigger: 'Task-specific next steps', status: 'pending', urgency: 'low',
       createdAt: input.createdAt, actionMode: 'stage_response', choices, ...(hiddenOptions.length ? { hiddenOptions } : {}),
-      recommendation, advisor: { status: 'pending', key: input.key } }
+      recommendation, advisor: { status: 'pending', key: input.key },
+      ...(human !== undefined ? { human } : {}),
+      ...(userSource ? { userSource } : {}) }
     this.save(item)
     return item
   }
   /** Publish the real advisor output as a new option-set revision, never overwrite or revive a closed item. */
-  publishAdvisor(input: AdvisorDecision): PendingDecisionItem {
+  publishAdvisor(input: AdvisorDecision, events?: readonly SessionEvent[]): PendingDecisionItem {
     const existing = this.findSource(input)
     if (existing && (existing.status !== 'pending' || existing.parentDecisionId || existing.canonical)) return existing
     try {
@@ -344,13 +373,17 @@ export class DecisionInbox {
     const { choices, hiddenOptions } = normalizeChoices(ordered)
     const recommendation: DecisionEvaluationResult = { recommendedValue: selected.id, confidence: 0, rationale: selected.why, distribution: [], provider: input.model, latencyMs: 0 }
     const id = existing?.id ?? `chat-${createHash('sha256').update(`${input.sessionId}\0${input.sourceMessageId ?? `turn:${input.sourceTurn ?? input.key}`}`).digest('hex').slice(0, 32)}`
+    const userSource = existing?.userSource ?? deriveTurnUserSource(events, input.sourceTurn, input.sourceSeq)
+    const human = existing?.human ?? (userSource !== undefined ? true : undefined)
     const item: PendingDecisionItem = { ...(existing ?? {}), id, sessionId: input.sessionId,
       sourceMessageId: input.sourceMessageId, sourceTurn: input.sourceTurn, sourceSeq: input.sourceSeq,
       ticketTitle: existing?.ticketTitle ?? input.title ?? 'Conversation next steps', trigger: 'Task-specific next steps',
       question: existing?.question ?? input.question, context: existing?.context ?? input.context.slice(-30000),
       createdAt: existing?.createdAt ?? input.createdAt, urgency: existing?.urgency ?? 'low', status: 'pending', actionMode: 'stage_response',
       choices, ...(hiddenOptions.length ? { hiddenOptions } : {}),
-      recommendation, advisor: { status: 'ready', model: input.model, key: input.key } }
+      recommendation, advisor: { status: 'ready', model: input.model, key: input.key },
+      ...(human !== undefined ? { human } : {}),
+      ...(userSource ? { userSource } : {}) }
     if (existing?.staging && (choicesFingerprint(existing) !== choicesFingerprint(item)
       || existing.sourceMessageId !== item.sourceMessageId || existing.sourceSeq !== item.sourceSeq || existing.sourceTurn !== item.sourceTurn)) throw new InboxError(409, 'Choices or source changed while a draft is staged; discard staging before reevaluating')
     const history = optionHistory(existing)
@@ -380,7 +413,7 @@ export class DecisionInbox {
     if (item && (item.status !== 'pending' || item.invalidation || item.parentDecisionId)) throw new InboxError(409, 'Canonical decision is staged, stale or closed')
     if (item && (item.sourceSeq !== input.sourceSeq || item.sourceTurn !== input.sourceTurn || item.sourceMessageId !== input.sourceMessageId)) throw new InboxError(409, 'Canonical source identity changed')
     if (item?.canonical && item.canonical.draftRevision !== input.draftRevision) throw new InboxError(409, 'Canonical draft revision changed')
-    if (!item?.staging && this.isSourceScopeResolved(input.sessionId, events)) {
+    if (!item?.staging && this.isSourceScopeResolved(input.sessionId, events, input.sourceTurn, input.sourceSeq)) {
       throw new InboxError(409, 'Scope is completed and resolved; pending advice cannot be claimed or published')
     }
     return item
@@ -407,10 +440,12 @@ export class DecisionInbox {
   }
   claimCanonical(input: CanonicalClaim, events: readonly SessionEvent[], now = Date.now()): CanonicalResult {
     let item = this.canonicalSource(input, events)
+    const userSource = item?.userSource ?? deriveTurnUserSource(events, input.sourceTurn, input.sourceSeq)
+    const human = item?.human ?? (userSource !== undefined ? true : undefined)
     if (!item) {
       const source = events.find(event => event.seq === input.sourceSeq)!
       const text = source.type === 'assistant/message' ? source.data.message.content.filter(part => part.type === 'text').map(part => part.text).join('\n') : ''
-      item = this.ensureAdvisor({ ...input, key: input.draftRevision, question: decisionQuestion(text) ?? 'Choose the next step for this thread', context: text, createdAt: source.time })
+      item = this.ensureAdvisor({ ...input, key: input.draftRevision, question: decisionQuestion(text) ?? 'Choose the next step for this thread', context: text, createdAt: source.time, ...(human !== undefined ? { human } : {}), ...(userSource ? { userSource } : {}) }, events)
     }
     if (item.staging) return { item, claimed: false }
     const state = item.canonical
@@ -418,7 +453,7 @@ export class DecisionInbox {
     if (state && state.leaseExpiresAt > now) return state.owner === input.owner
       ? { item, claimed: true, leaseToken: state.leaseToken, leaseExpiresAt: state.leaseExpiresAt } : { item, claimed: false }
     const canonical: NonNullable<PendingDecisionItem['canonical']> = { draftRevision: input.draftRevision, phase: state?.phase ?? 'pending', owner: input.owner, leaseToken: randomUUID(), leaseExpiresAt: now + 120000 }
-    const next = { ...item, ...(!state ? { choices: [], hiddenOptions: [], optionSets: optionHistory(item), recommendation } : {}), canonical, advisor: { ...item.advisor, status: canonical.phase === 'pending' ? 'generating' as const : 'ready' as const, key: input.draftRevision } }
+    const next = { ...item, ...(!state ? { choices: [], hiddenOptions: [], optionSets: optionHistory(item), recommendation } : {}), canonical, advisor: { ...item.advisor, status: canonical.phase === 'pending' ? 'generating' as const : 'ready' as const, key: input.draftRevision }, ...(human !== undefined ? { human } : {}), ...(userSource ? { userSource } : {}) }
     this.save(next, item)
     return { item: next, claimed: true, leaseToken: canonical.leaseToken, leaseExpiresAt: canonical.leaseExpiresAt }
   }
@@ -431,7 +466,7 @@ export class DecisionInbox {
   }
   publishCanonical(input: CanonicalPublish, events: readonly SessionEvent[]): CanonicalResult {
     const item = this.canonicalWriter(input, events)
-    if (!item?.staging && this.isSourceScopeResolved(input.sessionId, events)) {
+    if (!item?.staging && this.isSourceScopeResolved(input.sessionId, events, input.sourceTurn, input.sourceSeq)) {
       throw new InboxError(409, 'Scope is completed and resolved; pending advice cannot be claimed or published')
     }
     if (input.options.length < 2 || input.options.length > 4 || new Set(input.options.map(option => option.id)).size !== input.options.length
@@ -448,9 +483,13 @@ export class DecisionInbox {
       return { item }
     }
     const evaluation = { ...recommendation, recommendedValue: selected.id, rationale: selected.why, provider: input.model }
+    const userSource = item.userSource ?? deriveTurnUserSource(events, input.sourceTurn, input.sourceSeq)
+    const human = item.human ?? (userSource !== undefined ? true : undefined)
     const history = optionHistory(item)
     const next: PendingDecisionItem = { ...item, choices, recommendation: evaluation, canonical: { ...item.canonical!, phase: 'ready' }, advisor: { status: 'ready', model: input.model, key: input.draftRevision },
-      optionSets: [...history, { revision: Math.max(0, ...history.map(set => set.revision)) + 1, createdAt: Date.now(), key: input.draftRevision, model: input.model, choices: structuredClone(choices), recommendation: structuredClone(evaluation) }] }
+      optionSets: [...history, { revision: Math.max(0, ...history.map(set => set.revision)) + 1, createdAt: Date.now(), key: input.draftRevision, model: input.model, choices: structuredClone(choices), recommendation: structuredClone(evaluation) }],
+      ...(human !== undefined ? { human } : {}),
+      ...(userSource ? { userSource } : {}) }
     delete next.hiddenOptions
     this.save(next, item)
     return { item: next }
@@ -748,7 +787,7 @@ export class DecisionInbox {
     return { resolved: true, choiceId, execution: 'not_executed', draft: { ...(item.sessionId ? { sessionId: item.sessionId } : {}), text: item.draftResponse ?? choice.prompt ?? choice.label }, item: finalItem }
   }
   /** Authoritative completion check: completed findings with no newer user ask reject fresh advice. */
-  isSourceScopeResolved(sessionId: string, events: readonly SessionEvent[]): boolean {
+  isSourceScopeResolved(sessionId: string, events: readonly SessionEvent[], sourceTurn?: number, sourceSeq?: number): boolean {
     try {
       const ticketId = sessionId.replace(/^worker-/, '')
       if (tableExists(this.db, 'finding')) {
@@ -759,6 +798,13 @@ export class DecisionInbox {
         )
         if (resolved) {
           const resolvedAt = Date.parse(resolved.resolution?.at ?? resolved.updatedAt ?? resolved.createdAt) || 0
+          if (sourceTurn !== undefined || sourceSeq !== undefined) {
+            const turnUserSource = deriveTurnUserSource(events, sourceTurn, sourceSeq)
+            if (turnUserSource && Number.isFinite(turnUserSource.time) && turnUserSource.time > resolvedAt) {
+              return false
+            }
+            return true
+          }
           const hasNewerHumanRequest = events.some(e =>
             e.type === 'user/message'
             && (e.data as any)?.source?.kind === 'user'
@@ -911,10 +957,12 @@ export function captureAdvisorTask(inbox: DecisionInbox, sessionId: string, even
   const text = assistant.data.message.content.filter(part => part.type === 'text').map(part => part.text).join('\n').trim()
   if (text.length < 20) return
   if (isConversationCloseoutEvents(events, end.data.turn)) return inbox.retireClosedOut(sessionId, events)
-  if (inbox.isSourceScopeResolved(sessionId, events)) return
+  if (inbox.isSourceScopeResolved(sessionId, events, end.data.turn, assistant.seq)) return
+  const userSource = deriveTurnUserSource(events, end.data.turn, assistant.seq)
   inbox.ensureAdvisor({ sessionId, sourceMessageId: assistant.data.message.id, sourceTurn: end.data.turn, sourceSeq: assistant.seq,
     key: String(end.seq), question: decisionQuestion(text) ?? 'Choose the next step for this thread', context: text,
-    title: request.replace(/\s+/g, ' ').slice(0, 120), createdAt: end.time })
+    title: request.replace(/\s+/g, ' ').slice(0, 120), createdAt: end.time,
+    ...(userSource ? { human: true, userSource } : {}) }, events)
 }
 
 /** Read complete persisted history, never only the currently mounted page or a queued native echo. */
