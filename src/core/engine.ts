@@ -14,6 +14,7 @@ import { Tickets } from './tickets.ts'
 export interface FindingAssignment {
   jobId: string; findingId: string; title: string; scope: string; repository: string; text: string
   sourceIssue?: number; existingDeliveryId?: string
+  actorId?: string; actorSource?: string; human?: boolean; authoritySource?: string
 }
 
 export type { EngineOptions } from './part.ts'
@@ -21,6 +22,20 @@ export type { WorkerReport } from './assignments.ts'
 export type { Outcome } from './evals.ts'
 export type { ReceiveResult } from './intake.ts'
 export type { Reply, ReplyRequest } from './replies.ts'
+
+function findingAssignmentMatches(a: unknown, b: unknown): boolean {
+  if (!a || typeof a !== 'object' || !b || typeof b !== 'object') return false
+  const normalize = (value: object) => {
+    const record = value as Record<string, unknown>
+    const actorId = record.actorId ?? 'local-operator'
+    const human = record.human ?? (actorId === 'local-operator')
+    const actorSource = record.actorSource ?? (human ? 'local' : 'coordinator')
+    return Object.entries({ ...record, actorId, actorSource, human })
+      .filter(([, entry]) => entry !== undefined)
+      .sort(([left], [right]) => left.localeCompare(right))
+  }
+  return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b))
+}
 
 /**
  * Single transactional entry point for mutating Triggers, Threads, Decisions, Tickets, and Assignments.
@@ -57,30 +72,35 @@ export class Engine {
       const previous = this.repo.tickets.get(id)
       if (previous) {
         const original = this.repo.triggers.get(triggerId)
-        if (!original || JSON.stringify(original.meta.findingAssignment) !== JSON.stringify(input)) throw new Error('Finding job scope mismatch')
+        if (!original || !findingAssignmentMatches(original.meta.findingAssignment, input)) throw new Error('Finding job scope mismatch')
         return previous
       }
       const policy = this.options.policy()
       if (policy.paused) throw new Error('Finding dispatch is paused')
       const at = this.options.now?.() ?? new Date().toISOString()
       const ref = { source: 'finding', id: input.jobId }
-      const actor = { source: 'local', id: 'local-operator' }
-      const trigger: Trigger = { id: triggerId, source: 'finding', threads: [ref], actor, human: true, addressed: 'direct', at,
+      const actorId = input.actorId ?? 'local-operator'
+      const human = input.human ?? (actorId === 'local-operator')
+      const actorSource = input.actorSource ?? (human ? 'local' : 'coordinator')
+      const actor = { source: actorSource, id: actorId }
+      const trigger: Trigger = { id: triggerId, source: 'finding', threads: [ref], actor, human, addressed: 'direct', at,
         text: input.text, ...(input.sourceIssue ? { url: `https://github.com/${input.repository}/issues/${input.sourceIssue}` } : {}),
         meta: { repository: input.repository, findingId: input.findingId, findingJobId: input.jobId, findingAssignment: structuredClone(input),
           ...(input.existingDeliveryId ? { existingDeliveryId: input.existingDeliveryId } : {}) } }
       this.repo.triggers.save(trigger)
       this.repo.threads.save({ key: threadKey(ref), ref, createdAt: at, subscriptions: [], correlated: [], pending: [], meta: { findingJobId: input.jobId } })
       const mandate = { strength: 'explicit' as const, policyVersion: policy.version, actor, scope: input.scope,
-        basis: { via: 'addressed' as const, addressed: 'direct' as const, source: 'finding', sender: 'local-operator',
+        basis: { via: 'addressed' as const, addressed: 'direct' as const, source: 'finding', sender: actorId,
           scope: { repository: input.repository, findingId: input.findingId, jobId: input.jobId, bounded: true } } }
       const decisionId = key('finding-decision', input.jobId)
+      const auditSource = human ? 'local-operator-confirmed-finding' : 'coordinator-delegated-finding'
       this.repo.decisions.save({ id: decisionId, evalId: key('finding-confirmation', input.jobId), threadKey: threadKey(ref),
         triggerIds: [triggerId], policyVersion: policy.version, at, kind: 'accept', reason: [], strength: 'explicit', ticketId: id, mandate,
-        audit: { source: 'local-operator-confirmed-finding', findingId: input.findingId, jobId: input.jobId } })
+        audit: { source: auditSource, findingId: input.findingId, jobId: input.jobId, actor: actorId } })
       this.repo.triggers.saveDisposition(triggerId, { fanout: [id], decisionId, at })
+      const reason = human ? 'Local operator confirmed bounded finding' : `Delegated coordinator ${actorId} continued bounded finding`
       this.tickets.create(id, decisionId, mandate, { triggerIds: [triggerId], primary: triggerId },
-        { kind: 'accept', title: input.title, name: 'finding-task', scope: input.scope, reason: 'Local operator confirmed bounded finding',
+        { kind: 'accept', title: input.title, name: 'finding-task', scope: input.scope, reason,
           note: `Exactly one bounded finding assignment (${input.jobId}). Scope: ${input.scope}. No publication, merge, deployment, acceptance, or live-operation authority. Report evidence and stop at the scope boundary.` }, at)
       return this.repo.tickets.get(id)!
     })
