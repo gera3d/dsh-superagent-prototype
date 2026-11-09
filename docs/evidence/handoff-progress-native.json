@@ -111,8 +111,51 @@
     "HUD Needs you6 contains current review/advice, ordinary unresolved source and3 unbound gates; History188 retains old advice. Opened old card explicitly Superseded, history not execution authority; no execution choices.",
     "Actual Superagent Decisions Pending6 / History279. Settled screenshot shows History selected, gray prior-attempt card with No longer actionable. Accessibility tree is incomplete for History; visual verification used."
   ],
-  "postAcceptance": "pending",
-  "remaining": "Record final exact native evidence and use protected finding acceptance; then verify no source advice recreated.",
+  "postAcceptance": {
+    "at": "2026-11-09T21:38:51.841747+00:00",
+    "finding": {
+      "id": "bf38fc9c-8273-4d61-9ae4-e98c45e51365",
+      "revision": 17,
+      "state": "resolved",
+      "resolution": {
+        "outcome": "verified",
+        "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/handoff-progress-native.json",
+        "requirements": [
+          "Read current shared PROJECT_STATUS.md in gera3d/dsh-superagent-prototype on superagent-core, docs/evidence/recommendation-quality-native-verification.json and semantic-qualification.json, plus docs/023-obsolete-system-advice-retirement-draft.md as reference only. Inspect actual canonical source/finding/job projection and effective UI paths before changing. Never equate zero outer tool calls with no work.",
+          "Capture minimal current accepted-parent/pending-advice repro using existing actual chat-55991230 and accepted finding8d447429; preserve acceptance and records. Completed finding with no newer actual human request is history/non-actionable consistently in HUD/Decisions/source. No repeated verification prompt or new work is inferred from history.",
+          "Preserve meaningful pending work, fresh ordinary user choices, and genuine newer human request after acceptance. Confirm no unintended broad suppression. The3 unbound typed delivery gates remain visibly unresolved until source/target/requirements proof exists; do not bind, accept or publish them.",
+          "Do not delete, overwrite, bulk-dismiss or directly edit canonical SQLite choices/history. No implementation of the prior seven-card retirement proposal or new permissions/endpoints bypasses. A read-time derived view should leave original row identities/options/provenance intact; if no safe implementation fits, report exact blocker instead of inventing authority.",
+          "Advice must give concrete current next stage with correct owner, recognize completed review/tests/merge/deploy, ask user only for genuinely missing product choice or required native confirmation. Current coordinator handles routine review/release under standing approval; no need to make user relay or reconfirm steps the coordinator already owns. Scores only rank offered choices; inspect every option.",
+          "Preserve recommendation click-to-composer plus explicit Send; do not add auto-send, automatic Codex notification, agent authority, new queue or scheduler. Do not invent an approval or send/select a user conversation choice merely to demonstrate advancement.",
+          "Meaningful targeted regressions cover completed parent, old/prior attempts, later human request, unresolved evidence, unbound delivery exclusion, stable source/revision and ordinary positive control. Test real existing UI projection paths, not a mirror test. Sequential focused tests/types/build with actual results; reuse existing exact-head evidence without broad redundant full-suite reruns.",
+          "Use an isolated installed-compatible source candidate against current superagent-core (never moving main). Return exact base/head/diff/patch and durable structured report through existing real reporting path. Do not modify running install, merge, deploy, accept, change settings/routes/access/credentials/spend/capacity/schedules. Codex independently reviews, prepares rollback, releases at safe idle and native-verifies with existing protected gates.",
+          "Return clear coordinator-owned next action in the worker thread. Do not call implementation completion live acceptance. Record limitations and preserve original accepted quality finding/history. Candidate should be ready for same current coordinator to carry through authorized review and verification without asking Gera to reauthorize routine stages."
+        ],
+        "at": "2026-11-09T21:38:39.359Z",
+        "actor": "local-operator",
+        "jobId": "finding:bf38fc9c-8273-4d61-9ae4-e98c45e51365:r15"
+      },
+      "job": {
+        "id": "finding:bf38fc9c-8273-4d61-9ae4-e98c45e51365:r15",
+        "ticketId": "3e220ce7b0f23097b7aed55d325a8bf0",
+        "assignmentId": "7a1b9100bc7ec89930775a20b4b2cca2"
+      }
+    },
+    "pendingCount": 4,
+    "sourceStates": [
+      {
+        "id": "chat-ec986beeffcc1a6b74b7f9e2296329fa",
+        "status": "stale",
+        "staleReason": "Work completed: parent finding bf38fc9c-8273-4d61-9ae4-e98c45e51365 was verified and accepted at 2026-11-09T21:38:39.359Z. Retained as history, not execution authority."
+      },
+      {
+        "id": "chat-8d03e2f9c0974accaf5271bbf0e0e8c1",
+        "status": "stale",
+        "staleReason": "Progress verified was observed at codex/progress-handoff-release-20261109@06de7fdf5fdc (revision 10); this step is done. Remaining: Recorded verification complete for this exact source and target; no repeat implementation, merge or deployment. Any separate acceptance decision remains protected.. Earlier advice is retained as history, not authority."
+      }
+    ]
+  },
+  "remaining": "No remaining action for this bounded finding. Four unrelated unresolved records remain (ordinary source and3 unbound delivery gates), not certified user decisions.",
   "afterVerifiedReceipt": {
     "at": "2026-11-09T21:37:27.199684+00:00",
     "sourceCards": [
@@ -335,5 +378,36 @@
     ],
     "nativeObserved": "Same source now shows Coordinator records final acceptance and Inspect recorded verification evidence, explicitly no repeat checks/review/merge/deploy/verification. Prior deployed-state card retained stale with original choices; event digest unchanged."
   },
-  "coverage": "Source actual deployed->verified progress transition, HUD and Decisions actual history preservation, isolated real native/staging regressions. No user reply or choice fabricated."
+  "coverage": "Source actual deployed->verified progress transition, HUD and Decisions actual history preservation, isolated real native/staging regressions. No user reply or choice fabricated.",
+  "finalHealth": {
+    "postimagesChecked": 32,
+    "mismatches": [],
+    "settingsUnchanged": true,
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "paused": false,
+    "health": {
+      "runtime": "ready",
+      "relay": "ready",
+      "notice": "ready",
+      "launch": "ready",
+      "delivery": "ready",
+      "assessment": "ready",
+      "reply": "ready",
+      "evals": "ready",
+      "models": "ready",
+      "github": "ready"
+    }
+  },
+  "nativePostAcceptance": {
+    "freshReload": true,
+    "findingBadge": "Resolved",
+    "suggestedNextStepsPresent": false,
+    "userConversationChoicesSelected": 0,
+    "repliesSent": 0,
+    "observation": "Actual r15 source reloaded after protected acceptance; no Next steps container or offered recommendation. Prior recommendations remain history."
+  }
 }

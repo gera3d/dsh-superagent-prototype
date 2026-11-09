@@ -1,5 +1,31 @@
 # DeepSeek Harness project status
 
+Updated November 09, 2026, 1:40 PM PST. Owner: current Codex coordinator/reviewer. **This checkpoint describes the verified live stage. Dated records below the history divider preserve earlier attempts.**
+
+## Current verified checkpoint
+
+| Work | Actual current stage | Next owner / limit |
+|---|---|---|
+| Completed-card history and current handoff | **Reviewed, merged, deployed, native verified and protected acceptance complete.** Finding `bf38fc9c-8273-4d61-9ae4-e98c45e51365` resolved revision17 at `2026-11-09T21:38:39.359Z`. PR78 source head `06de7fdf5fdc434ebf01e174908801803f7eedd6`, merge `444dbea40917bdf9d64c122cb76b632fc3df1df2`, exact Harness candidate `878795220ae3712d71d6dfeb2093a53233e8e236`. | Complete for this bounded feature. No user action or repeated review/release work remains. Preserve all prior failed candidates/evidence and accepted parents. |
+| Earlier recommendation-quality repair | Accepted/resolved revision14; earlier PR76 remains intact. The prior17-option qualification and this real handoff are bounded observations. | No claim that every future model recommendation is correct. |
+| Earlier accepted fixes | Completion detection, Settings/context handoff, screen-independent coordination, allowance display and reporting bridge remain accepted scopes. | Direct Anthropic allowance unavailable; Cloudflare advice-only. No access or route changes. |
+| Cost-summary/publication investigations and old delivery gates | Investigations accepted for verification only; no new cost implementation repair or proven publication root cause. Three old typed gates remain unbound/unresolved. | Outside this completed repair; no bulk acceptance, binding, publication or new scope inferred. |
+
+Live Harness: **0 running,0 queued,max3; intake resumed; every runtime health component including GitHub ready.** Settings are unchanged from pre-release; OpenAI remains conserved. Implementation used the existing Antigravity subscription route and native scoring identified Anthropic. No new credential, permission, spend, routing, concurrency or schedule setting.
+
+## Verified behavior and evidence
+
+- Actual r15 source first recognized recorded deployment and offered **Codex: native live verification90%**, with conditional final acceptance10%. After personally verified live results were recorded through the existing hash-bound operator receipt CLI, the **same unchanged event digest** produced an immutable replacement: **Coordinator records final acceptance62% / Inspect recorded verification evidence38%**. Both explicitly excluded completed tests/review/merge/deploy/verification. No conversation choice selected or reply sent.
+- Protected native evidence form recorded the exact reviewed report; Codex selected that evidence, Verified outcome, acknowledged all bounded requirements and accepted through normal controls. Authoritative finding resolved at21:38:39Z. **Fresh source reload shows Resolved and no Next steps container.** Completed work does not reappear as pending advice in this verified thread.
+- HUD and actual Decisions history retain superseded records as gray/non-actionable history. Before acceptance: HUD Needs6/History188; Decisions Pending6/History279. After acceptance: shared pending projection **4**, consisting of the untouched ordinary source and3 unbound delivery gates. These are not4 new jobs or4 certified user decisions.
+- Worker79 focused backend tests/7 suites and33 companion checks pass; independent3-case production audit passes (merged-only truth, in-flight generation race, actual progress-observe reconciliation/replacement). Release typecheck/build pass. All211 source/prompt/config base inputs matched; installed4 source/28 built asset postimages match. Companion production code unchanged. No broad full-suite or CI-green claim.
+- Source PR77 history projection remains live. New progress-driven replacements preserve old choices and history through supported canonical paths; no seven-card raw storage retirement was performed. New human-request preservation and closed-scope guards remain covered by earlier qualified real-source controls.
+- [Source qualification](docs/evidence/handoff-progress-source-qualified.json), [installed postimages/rollback](docs/evidence/handoff-progress-installed.json), [actual native handoff and protected resolution](docs/evidence/handoff-progress-native.json), [final health](docs/evidence/handoff-progress-final-health.json). Rollback copy: `/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/verified-batch/handoff-rollback-20261109T213129Z`. Routine rollback restores narrow source/assets only; never overwrite later canonical history with a DB backup.
+
+## Historical progress and preserved evidence — not current state
+
+### Historical pre-release checkpoint — superseded by the verified checkpoint above
+
 Updated November 09, 2026, 1:15 PM PST. Owner: current Codex coordinator/reviewer. **Only this current checkpoint describes the live stage. Dated attempt logs below the history divider are historical.**
 
 ## Current verified checkpoint
@@ -30,7 +56,6 @@ Independent release review rejected R11 candidate `92660aa70120dfe655181ab4267e2
 
 R13 follow-through: worker78 backend tests/7suites,33 companion checks/types/build pass. Exact root stage/race tests now pass. [One actual progress-observe reconciliation blocker](docs/reviews/handoff-progress-ad9fdd3-blocker.md) remains: immediate inbox reconciliation invalidates old card, then canonical claim rejects stale before replacement. [Actual3-case result](docs/evidence/handoff-progress-ad9fdd3-root-audit.log), [r15 correction](docs/evidence/completed-advice-history-r15-correction.json). Codex withheld release and sent only this exact defect back, preserving corrected stage/race behavior. No new user approval, no competing implementation.
 
-## Historical progress and preserved evidence — not current state
 
 The following prior checkpoints preserve approvals, rejected candidates, real failures and corrections. Statements such as “unchanged source,” “working,” or earlier worker handles below describe their dated attempt only; they do not override the current checkpoint above.
 
