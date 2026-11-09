@@ -1,0 +1,25 @@
+{
+  "case": "Real native claim/publish with actual later human source must survive history projection",
+  "claimSucceeded": true,
+  "nativePublishedStatus": "pending",
+  "projectedStatus": "stale",
+  "expected": "pending",
+  "passed": false,
+  "persistedHumanMarker": null,
+  "laterHumanEvent": {
+    "type": "user/message",
+    "kind": "user",
+    "time": 1794252025432
+  },
+  "resolutionAt": 1794252020432,
+  "sourceProof": {
+    "sessionId": "worker-ticket-reask",
+    "sourceMessageId": "msg-latency",
+    "sourceSeq": 4,
+    "sourceTurn": 2,
+    "draftRevision": "draft-latency"
+  },
+  "scope": "Isolated production native path; no live task, reply or row modified",
+  "candidateHead": "e58640ea17266a4e405e948fa822171cd4c9c490",
+  "sourceSha256": "0adcea6dd3ad43d2a2bbe61e8f6342766790f1fcae1fa4329e613ed42b81ecea"
+}
