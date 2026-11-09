@@ -4,7 +4,7 @@
   "sourceHead": "98b53652bb4a7ae456f7741e8d6125c924428a75",
   "merge": "67573d27e01621433e4982f66518660c56e46d86",
   "findingId": "8157c834-c7a5-43c6-afdd-97cee8534c6b",
-  "stage": "deployed, actual completed-job native verified; final acceptance pending",
+  "stage": "installed and actual native verified; protected acceptance follows",
   "native": {
     "path": "Reload -> Superagent Search -> Show a trustworthy cost summary -> actual ended ticket",
     "ticketId": "85f05a35653102da234bed56549c26dd",
@@ -35,7 +35,7 @@
       "reply": "ready",
       "evals": "ready",
       "models": "ready",
-      "github": "starting"
+      "github": "ready"
     }
   },
   "isolatedEvidence": "docs/evidence/cost-summary-repair-source-qualified.json",
@@ -43,5 +43,145 @@
     "Edge-case accounting/reader/I-O controls are isolated production-method/API tests, not fabricated live worker sessions.",
     "No billing reconciliation, no invented monetary prices.",
     "Final protected acceptance and post-acceptance source check pending."
-  ]
+  ],
+  "deployedAdvice": [
+    {
+      "id": "chat-b4dfc9091783f46f629054368bda88d5",
+      "status": "pending",
+      "progressRevision": 11,
+      "sourceMessageId": "816222cc-2ed6-4d7f-8770-9b42b1359e17",
+      "sourceSeq": 20,
+      "sourceTurn": 1,
+      "choices": [
+        {
+          "id": "next-1",
+          "label": "Codex: native verify deployed feature",
+          "prompt": "Manual handoff to Codex (reviewer and release coordinator / root operator, under existing approval); no automated dispatch exists, so the operator must pass this on. Verify read-only against local-superagent@127.0.0.1:3082 that the running build is commit 98b53652bb4a (PR #79), not the worker's candidate f646235. Check the cost-summary behaviors against docs/evidence/cost-summary-repair-installed.json: late route attribution, same-step settlement versus real retry, equal-length rewrite freshness, no in-flight GET flush, no-data behavior, unavailable dollar prices shown as unavailable, and the coverage wording. Record what was observed. Do not restart, redeploy or change settings.",
+          "description": ""
+        },
+        {
+          "id": "next-2",
+          "label": "Codex: record final acceptance after proof",
+          "prompt": "Manual handoff to Codex (reviewer and release coordinator / root operator, under existing approval); no automated dispatch exists. Once native verification of the deployed target at commit 98b53652bb4a is recorded and matches docs/evidence/cost-summary-repair-installed.json, record final coordinator acceptance for finding 8157c834 and clear the 'review evidence' blocker. In the record, note that the worker's handoff cited head f646235 while the deployed head is 98b53652bb4a, and say which head the acceptance covers. If any check is missing or fails, do not accept. Return the finding to the worker with the specific failing behavior instead.",
+          "description": ""
+        }
+      ],
+      "recommendation": {
+        "recommendedValue": "next-1",
+        "confidence": 0.82,
+        "rationale": "The recorded facts say review, merge and deploy are complete (PR #79, commit 98b53652bb4a on local-superagent@127.0.0.1:3082), and the only remaining stage is native verification of the deployed feature. next-1 is that stage. Acceptance (next-2) is explicitly conditional on that proof being recorded, so it can't come first. The main tradeoff is that next-2 is the final outcome and would save a handoff, but accepting without recorded native observations would skip the proof the remaining stage requires. There is also a head mismatch: the worker's handoff cites f646235, while the deployed head is 98b53652bb4a. The verification should confirm the running build is the deployed head and check the behaviors against the evidence file. Assumptions: the evidence file at the recorded URL is accurate, and Codex has read-only access to the target. Neither is confirmed in the supplied context. No automated dispatch to Codex exists, so the operator must hand this off explicitly.",
+        "distribution": [
+          {
+            "id": "next-1",
+            "probability": 0.82
+          },
+          {
+            "id": "next-2",
+            "probability": 0.18
+          }
+        ],
+        "provider": "anthropic / claude-sonnet-5-5 (model-reported scores, not calibrated)",
+        "latencyMs": 4779
+      },
+      "staleReason": null
+    }
+  ],
+  "verifiedAdvice": [
+    {
+      "id": "chat-37ff3925188463e530226be5de3e1fa6",
+      "status": "pending",
+      "progressRevision": 12,
+      "sourceMessageId": "816222cc-2ed6-4d7f-8770-9b42b1359e17",
+      "sourceSeq": 20,
+      "sourceTurn": 1,
+      "choices": [
+        {
+          "id": "next-1",
+          "label": "Coordinator records final acceptance",
+          "prompt": "Manual handoff to the Codex reviewer and release coordinator / root operator (no automated dispatch exists; the user or operator relays this). Under existing authorization, record the final acceptance decision for finding 8157c834 on gera3d/dsh-superagent-prototype@codex/cost-summary-correctness-release-20261109, commit 98b53652bb4a (PR #79). Bind acceptance to that head only. The worker's carrier head f646235 is not the accepted head. Do not repeat tests, merge or deployment; those are already recorded as passed.",
+          "description": ""
+        },
+        {
+          "id": "next-2",
+          "label": "Inspect evidence and head binding first",
+          "prompt": "Manual handoff to the Codex coordinator / root operator. Before recording acceptance, read the recorded evidence at docs/evidence/cost-summary-repair-native.json on superagent-core. Confirm it names commit 98b53652bb4a and PR #79. Also note how worker candidate f646235 (sandbox carrier) maps to that head. This is a read-only check with no reruns. Then record accept or request-changes under existing authorization.",
+          "description": ""
+        },
+        {
+          "id": "next-3",
+          "label": "Request head-reconciliation note",
+          "prompt": "Manual handoff to the Codex coordinator. The worker report cites candidate f646235 and an R1 hash discrepancy (f99080a256df vs f99080a91e2d). The recorded verification is at 98b53652bb4a. Add a short note to the acceptance record stating which head is authoritative and that the older hashes are superseded. Make no code changes and run no new tests.",
+          "description": ""
+        }
+      ],
+      "recommendation": {
+        "recommendedValue": "next-2",
+        "confidence": 0.46,
+        "rationale": "Recorded facts: verification passed at dsh-superagent-prototype@98b53652bb4a (PR #79), with an evidence file link. The worker's final message instead cites carrier head f646235 in the sandbox repo and a hash discrepancy in R1 (f99080a256df vs f99080a91e2d), and nothing supplied maps f646235 to 98b53652bb4a. That mapping is unknown. Acceptance must bind to one exact head, so a read-only check that the evidence file names 98b53652bb4a and PR #79, and how f646235 relates to it, is a cheap precondition to the protected acceptance. This fits the Senior Developer advisor's insistence on verified diffs. It adds no reruns and stays within scope, and the same coordinator then records accept or request-changes in one step, so there is no extra handoff. Main tradeoff versus next-1: next-1 is the most direct path and would be right if the head binding were already confirmed, but it risks accepting a head whose relation to the worker's reported work is unestablished. next-3 only adds a note and presumes the authoritative head without first checking the evidence. Assumption: the coordinator has not yet confirmed the evidence file's contents. If it already has, next-1 becomes preferable. Handoff is manual to the Codex reviewer and release coordinator / root operator, since no automated notification route exists. The acceptance decision remains protected.",
+        "distribution": [
+          {
+            "id": "next-1",
+            "probability": 0.38
+          },
+          {
+            "id": "next-2",
+            "probability": 0.46
+          },
+          {
+            "id": "next-3",
+            "probability": 0.16
+          }
+        ],
+        "provider": "anthropic / claude-sonnet-5-5 (model-reported scores, not calibrated)",
+        "latencyMs": 6791
+      },
+      "staleReason": null
+    },
+    {
+      "id": "chat-b4dfc9091783f46f629054368bda88d5",
+      "status": "stale",
+      "progressRevision": 11,
+      "sourceMessageId": "816222cc-2ed6-4d7f-8770-9b42b1359e17",
+      "sourceSeq": 20,
+      "sourceTurn": 1,
+      "choices": [
+        {
+          "id": "next-1",
+          "label": "Codex: native verify deployed feature",
+          "prompt": "Manual handoff to Codex (reviewer and release coordinator / root operator, under existing approval); no automated dispatch exists, so the operator must pass this on. Verify read-only against local-superagent@127.0.0.1:3082 that the running build is commit 98b53652bb4a (PR #79), not the worker's candidate f646235. Check the cost-summary behaviors against docs/evidence/cost-summary-repair-installed.json: late route attribution, same-step settlement versus real retry, equal-length rewrite freshness, no in-flight GET flush, no-data behavior, unavailable dollar prices shown as unavailable, and the coverage wording. Record what was observed. Do not restart, redeploy or change settings.",
+          "description": ""
+        },
+        {
+          "id": "next-2",
+          "label": "Codex: record final acceptance after proof",
+          "prompt": "Manual handoff to Codex (reviewer and release coordinator / root operator, under existing approval); no automated dispatch exists. Once native verification of the deployed target at commit 98b53652bb4a is recorded and matches docs/evidence/cost-summary-repair-installed.json, record final coordinator acceptance for finding 8157c834 and clear the 'review evidence' blocker. In the record, note that the worker's handoff cited head f646235 while the deployed head is 98b53652bb4a, and say which head the acceptance covers. If any check is missing or fails, do not accept. Return the finding to the worker with the specific failing behavior instead.",
+          "description": ""
+        }
+      ],
+      "recommendation": {
+        "recommendedValue": "next-1",
+        "confidence": 0.82,
+        "rationale": "The recorded facts say review, merge and deploy are complete (PR #79, commit 98b53652bb4a on local-superagent@127.0.0.1:3082), and the only remaining stage is native verification of the deployed feature. next-1 is that stage. Acceptance (next-2) is explicitly conditional on that proof being recorded, so it can't come first. The main tradeoff is that next-2 is the final outcome and would save a handoff, but accepting without recorded native observations would skip the proof the remaining stage requires. There is also a head mismatch: the worker's handoff cites f646235, while the deployed head is 98b53652bb4a. The verification should confirm the running build is the deployed head and check the behaviors against the evidence file. Assumptions: the evidence file at the recorded URL is accurate, and Codex has read-only access to the target. Neither is confirmed in the supplied context. No automated dispatch to Codex exists, so the operator must hand this off explicitly.",
+        "distribution": [
+          {
+            "id": "next-1",
+            "probability": 0.82
+          },
+          {
+            "id": "next-2",
+            "probability": 0.18
+          }
+        ],
+        "provider": "anthropic / claude-sonnet-5-5 (model-reported scores, not calibrated)",
+        "latencyMs": 4779
+      },
+      "staleReason": "Recommendation superseded by progress revision 12 (verified): earlier advice is retained as history"
+    }
+  ],
+  "nativeAdviceObservations": [
+    "After deployed receipt, actual R3 source offered Codex: native verify deployed feature82%, final acceptance after proof18%. No completed tests/review/merge/deploy repeated.",
+    "After actual verification receipt and fresh reload, source offers only final coordinator acceptance38%, inspect recorded evidence/head binding46% recommended, or record head-reconciliation note16%. These are final protected evidence checks, no code reruns. No option selected or reply sent."
+  ],
+  "headReconciliation": "Authoritative deployed/reviewed head98b53652bb4a7ae456f7741e8d6125c924428a75 (PR79, merge67573d27e01621433e4982f66518660c56e46d86). Three runtime source files exactly match corrected Harnessf646235f10ca75b1003b38bfac291200e3324ff0. Root integration adds explicit existing Vite dependency/lock snapshot, fixture-output containment and one combined retry/cache control. Final42 integrated checks/types/build/frozen lock validation/capture qualify the integrated head. R1 reportedf99080a256df2e737d94e24ef575a7daee364f9b did not match actualf99080a91e2d734d40521cc9f0a37c3fb3f6d41e; that rejected attempt and discrepancy remain history and are not the accepted head.",
+  "updatedAt": "2026-11-09T22:39:36.345967+00:00"
 }
