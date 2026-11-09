@@ -1,0 +1,21 @@
+{
+  "at": "2026-11-09T00:46:32.867448+00:00",
+  "candidate": "2015ab10fba2b2d2cd2142f7be757ae82c7a01bb",
+  "previousRootAudits": {
+    "passed": 4,
+    "failed": 0
+  },
+  "newLifecycleAudits": {
+    "passed": 0,
+    "failed": 2
+  },
+  "findings": [
+    "Turn-wide consumed marker suppresses later progress-to-ready payload",
+    "Dangling claim symlink creates outside file and report accepted"
+  ],
+  "deployed": false,
+  "originalFinding": "51f309ca-d396-4983-a55d-ef4432a8572f",
+  "currentState": "blocked",
+  "currentRevision": 18,
+  "next": "Necessary original-finding correction through owner-approved headless path while Mac locked"
+}
