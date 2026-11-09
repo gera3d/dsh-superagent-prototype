@@ -1,0 +1,959 @@
+{
+  "at": "2026-11-09T02:40:43.262223+00:00",
+  "pendingCount": 11,
+  "rows": [
+    {
+      "decision": "chat-a71ba8a1a0abcfc469fd1bcb06174d0f",
+      "sessionId": "worker-7c017292cef5dee4d08138181ec47a40",
+      "ticket": "7c017292cef5dee4d08138181ec47a40",
+      "title": "Recommend the actual review handoff for completed finding work",
+      "stage": "ended",
+      "mandateScope": "Narrow shared advisor context correction for canonical finding-owned implementation jobs and native fallback. Keep this separate from explicit-closeout detector repair and unattended-coordination implementation. Reuse current authenticated APIs and existing job/finding records. Do not implement a fictional Codex dispatch bridge, new permissions, publication bypass, auto-send or change scope. Harness implements isolated candidate; Codex reviews and releases under existing user authorization.",
+      "mandateBasis": {
+        "via": "addressed",
+        "addressed": "direct",
+        "source": "finding",
+        "sender": "local-operator",
+        "scope": {
+          "repository": "gera3d/superagent-sandbox",
+          "findingId": "12779824-b82e-484d-9502-d2150ba58aa1",
+          "jobId": "finding:12779824-b82e-484d-9502-d2150ba58aa1:r12",
+          "bounded": true
+        }
+      },
+      "sourceThreads": [
+        {
+          "key": "finding:finding:12779824-b82e-484d-9502-d2150ba58aa1:r12",
+          "title": "Local operator confirmed bounded fix finding 12779824-b82e-484d-9502-d2150ba58aa"
+        }
+      ],
+      "report": {
+        "state": "waiting",
+        "summary": "The review handoff candidate is ready in isolated workspace directory **`finding-task-7c017292cef5`**, resolving the root evidence audit failure by tightening test-fact derivation and superseding stale ready evidence when newer reports indicate failure or pending tests.\n\n\ud83d\udfe2 **DONE**:\n- **Conservative Test-Fact Derivation**: Updated [`adviceContext`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/repo/src/app/advice-context.ts#L24-L62) to stop inferring completed testing from generic `state: 'evidence'` rows, worker `waiting` status, or ended tickets.\n- **Newer-Failure Precedence & Regressions**: Added chronological superseding where newer failure/pending signals override older ready evidence; verified root audit [`tests/root-advisor-evidence.audit.spec.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/repo/tests/root-advisor-evidence.audit.spec.ts) and added negative fixture regressions to [`tests/advice-context.spec.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/repo/tests/advice-context.spec.ts#L466-L553).\n- **Sequential Verification & Patches**: Candidate commit `303d531` passed all 11 test suites (98 tests), typecheck, and tsdown build with zero exit codes; generated patches in [`checkpoint/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/checkpoint).\n\n\u26a1 **DOING**:\n- Stopping at the scope boundary with zero merge, deployment, publication, or acceptance authority.\n\n\ud83c\udfaf **NEXT**:\n- Root coordinator audits [`checkpoint/NOTES.md`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/checkpoint/NOTES.md) and applies candidate patch [`checkpoint/01-backend-canonical-finding-advice.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/checkpoint/01-backend-canonical-finding-advice.patch) under authorized coordinator review procedure.",
+        "at": "2026-11-08T23:48:54.963Z"
+      },
+      "delivery": null,
+      "context": "The review handoff candidate is ready in isolated workspace directory **`finding-task-7c017292cef5`**, resolving the root evidence audit failure by tightening test-fact derivation and superseding stale ready evidence when newer reports indicate failure or pending tests.\n\n\ud83d\udfe2 **DONE**:\n- **Conservative Test-Fact Derivation**: Updated [`adviceContext`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/repo/src/app/advice-context.ts#L24-L62) to stop inferring completed testing from generic `state: 'evidence'` rows, worker `waiting` status, or ended tickets.\n- **Newer-Failure Precedence & Regressions**: Added chronological superseding where newer failure/pending signals override older ready evidence; verified root audit [`tests/root-advisor-evidence.audit.spec.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/repo/tests/root-advisor-evidence.audit.spec.ts) and added negative fixture regressions to [`tests/advice-context.spec.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/repo/tests/advice-context.spec.ts#L466-L553).\n- **Sequential Verification & Patches**: Candidate commit `303d531` passed all 11 test suites (98 tests), typecheck, and tsdown build with zero exit codes; generated patches in [`checkpoint/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/checkpoint).\n\n\u26a1 **DOING**:\n- Stopping at the scope boundary with zero merge, deployment, publication, or acceptance authority.\n\n\ud83c\udfaf **NEXT**:\n- Root coordinator audits [`checkpoint/NOTES.md`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/checkpoint/NOTES.md) and applies candidate patch [`checkpoint/01-backend-canonical-finding-advice.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/checkpoint/01-backend-canonical-finding-advice.patch) under authorized coordinator review procedure.\n",
+      "canonical": {
+        "phase": "scored",
+        "draftRevision": "ea16c64c5cedc05dc6e9e35caab9327b53bfb55f57b4f63702893214460a390a",
+        "leaseExpired": true
+      },
+      "advisor": {
+        "status": "ready",
+        "model": "Senior Developer",
+        "key": "ea16c64c5cedc05dc6e9e35caab9327b53bfb55f57b4f63702893214460a390a"
+      },
+      "staging": null,
+      "provenParent": {
+        "id": "12779824-b82e-484d-9502-d2150ba58aa1",
+        "state": "resolved",
+        "resolution": {
+          "outcome": "verified",
+          "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/advisor-paired-source-qualified.json",
+          "requirements": [
+            "Reproduce current helper/context for worker-cf2c9c8117f4870abc3dc067a903ab43: delivery null causes generic ordinary-conversation rule although task is canonical finding revision 4 with root review/release scope; preserve exact before evidence",
+            "Inspect src/app/http.ts contextFor and advice-context.ts plus native helper/fallback/ranking paths; derive bounded structured finding/job state and next owner from canonical records, never arbitrary prose or stale prior jobs",
+            "For current tested worker-reported candidate awaiting root review, recommend one concrete permitted stage toward actual coordinator review; do not default to user walkthrough, duplicate implementation/test runs, or unconditional accept/deploy",
+            "Distinguish recommendation text/prepared native reply from actual action capability: if no supported route can notify Codex, identify that missing handoff explicitly instead of implying clicking a prompt invokes Codex; do not tell implementation worker to independently review itself",
+            "Preserve normal chat behavior, incomplete/failed review cases, resolved findings, prior attempts, current revision/source guards, score/rank preservation and exact publication confirmations",
+            "Regression test finding-without-delivery, current versus prior assignment, resolved finding, ordinary chat and shared helper/fallback context; run targeted types/build/checks sequentially and return exact heads/patches",
+            "No running installation edits, merge, deployment, new credentials/access or accepted finding by worker; root handles exact-head review, regression evidence, deployment and native verification"
+          ],
+          "at": "2026-11-09T00:04:11.920Z",
+          "actor": "local-operator",
+          "jobId": "finding:12779824-b82e-484d-9502-d2150ba58aa1:r12"
+        }
+      },
+      "generatedAdviceContextNonempty": true,
+      "statusAfter": "pending",
+      "choicesRetained": [
+        {
+          "id": "next-1",
+          "label": "Hand off to Codex coordinator review"
+        },
+        {
+          "id": "next-2",
+          "label": "Audit saved evidence before review"
+        },
+        {
+          "id": "next-3",
+          "label": "Targeted diff scope check"
+        }
+      ],
+      "choiceSnapshotHash": "5aad9d597f46c2b71baf8b08a413b4dd96089a3aa9890274887b07ff91b2a865",
+      "disposition": "evidence-proven obsolete coordinator/system advice, not safely retired through available interface",
+      "reason": "Exact ticket mandate links to accepted canonical parent. Nonempty context excludes automatic generic-advice retirement; no current exact progress receipt/superseded-head link was recorded."
+    },
+    {
+      "decision": "chat-73ef3245326f1665e339f404def676f1",
+      "sessionId": "worker-e10f46849fff53974766d4e277bf75a4",
+      "ticket": "e10f46849fff53974766d4e277bf75a4",
+      "title": "Show Google and Anthropic remaining allowance beside chat",
+      "stage": "ended",
+      "mandateScope": "Implement a compact native account-allowance display using existing authenticated integrations and documented DeepSeek Harness UI extension slots. Start with Google and Anthropic only; do not replace provider bundles or change routes/accounts. Reuse installed dsh-agy-link quota plumbing and inspect community implementations before writing new readers. No new credentials, access, paid calls, background warmup or account migration. Return a tested isolated candidate for Codex review and release.",
+      "mandateBasis": {
+        "via": "addressed",
+        "addressed": "direct",
+        "source": "finding",
+        "sender": "local-operator",
+        "scope": {
+          "repository": "gera3d/superagent-sandbox",
+          "findingId": "f9335259-b51c-4e97-9750-3923b7e2138b",
+          "jobId": "finding:f9335259-b51c-4e97-9750-3923b7e2138b:r7",
+          "bounded": true
+        }
+      },
+      "sourceThreads": [
+        {
+          "key": "finding:finding:f9335259-b51c-4e97-9750-3923b7e2138b:r7",
+          "title": "Local operator confirmed bounded fix finding f9335259-b51c-4e97-9750-3923b7e2138"
+        }
+      ],
+      "report": {
+        "state": "waiting",
+        "summary": "Guarded Cordis sidebar registration against missing `ctx.inject` and passed all 26 allowance and client tests.\n\n- \ud83d\udfe2 **DONE**: Fixed `src/client/index.tsx` `ctx.inject` guard and verified 26 passing tests (`tests/account-allowance*.spec.*`, `tests/client.spec.tsx`).\n- \u26a1 **DOING**: Running TypeScript compilation check (`pnpm exec tsc --noEmit`).\n- \ud83c\udfaf **NEXT**: Execute `pnpm exec tsdown` bundle build once typecheck completes.\n\nResolved TypeScript interface conflict on `AllowanceClientContext` and waiting on typecheck.\n\n- \ud83d\udfe2 **DONE**: Removed conflicting optional `get?` override in [`src/client/account-allowance.tsx`](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/client/account-allowance.tsx#L22).\n- \u26a1 **DOING**: Running `pnpm exec tsc --noEmit` validation task.\n- \ud83c\udfaf **NEXT**: Execute build step (`pnpm exec tsdown`) upon clean compilation exit.\n\nRecorded focused vitest evidence run and waiting on clean typecheck log generation.\n\n- \ud83d\udfe2 **DONE**: Captured 26 passing tests in [`evidence/FINDING_F933_ALLOWANCE_FOCUSED.log`](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_FOCUSED.log).\n- \u26a1 **DOING**: Running `tsc --noEmit` to populate [`evidence/FINDING_F933_ALLOWANCE_TYPECHECK.log`](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_TYPECHECK.log).\n- \ud83c\udfaf **NEXT**: Generate build log (`tsdown`) and update postimage hashes once typecheck completes.\n\nTested isolated candidate branch **`candidate/account-allowance-e10f4684`** and sandbox evidence branch **`agent/finding-task-e10f46849fff`** pushed for Codex review and release.\n\n- \ud83d\udfe2 **DONE**:\n  - Fixed Cordis web boot activation crash by guarding dynamic service injection with `if (typeof ctx.inject === 'function') ctx.inject(['sidebarRightTabs'], ...)` in [`src/client/index.tsx`](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/client/index.tsx#L90) and [`src/client/account-allowance.tsx`](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/client/account-allowance.tsx#L382).\n  - Executed full test suite (26/26 tests passing in [`evidence/FINDING_F933_ALLOWANCE_FOCUSED.log`](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_FOCUSED.log)), clean typecheck in [`evidence/FINDING_F933_ALLOWANCE_TYPECHECK.log`](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_TYPECHECK.log), and bundle build in [`evidence/FINDING_F933_ALLOWANCE_BUILD.log`](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_BUILD.log).\n  - Published candidate commit `8bc916577c988afb02a97eb313d2198c8e47cd31`, patch [`patches/FINDING_F933_ACCOUNT_ALLOWANCE.patch`](file:///Users/gerayeremin/tmp-work/superagent-sandbox/patches/FINDING_F933_ACCOUNT_ALLOWANCE.patch), visual captures, and handoff report [`reports/FINDING_F933_ACCOUNT_ALLOWANCE_HANDOFF.md`](file:///Users/gerayeremin/tmp-work/superagent-sandbox/reports/FINDING_F933_ACCOUNT_ALLOWANCE_HANDOFF.md).\n- \u26a1 **DOING**:\n  - Halted at bounded scope boundary without live merge, publication, deployment, or service restart.\n- \ud83c\udfaf **NEXT**:\n  - Codex to review candidate branch **`candidate/account-allowance-e10f4684`** for integration into `superagent-core`.",
+        "at": "2026-11-08T22:09:43.605Z"
+      },
+      "delivery": null,
+      "context": "Guarded Cordis sidebar registration against missing `ctx.inject` and passed all 26 allowance and client tests.\n\n- \ud83d\udfe2 **DONE**: Fixed `src/client/index.tsx` `ctx.inject` guard and verified 26 passing tests (`tests/account-allowance*.spec.*`, `tests/client.spec.tsx`).\n- \u26a1 **DOING**: Running TypeScript compilation check (`pnpm exec tsc --noEmit`).\n- \ud83c\udfaf **NEXT**: Execute `pnpm exec tsdown` bundle build once typecheck completes.\n\nResolved TypeScript interface conflict on `AllowanceClientContext` and waiting on typecheck.\n\n- \ud83d\udfe2 **DONE**: Removed conflicting optional `get?` override in [`src/client/account-allowance.tsx`](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/client/account-allowance.tsx#L22).\n- \u26a1 **DOING**: Running `pnpm exec tsc --noEmit` validation task.\n- \ud83c\udfaf **NEXT**: Execute build step (`pnpm exec tsdown`) upon clean compilation exit.\n\nRecorded focused vitest evidence run and waiting on clean typecheck log generation.\n\n- \ud83d\udfe2 **DONE**: Captured 26 passing tests in [`evidence/FINDING_F933_ALLOWANCE_FOCUSED.log`](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_FOCUSED.log).\n- \u26a1 **DOING**: Running `tsc --noEmit` to populate [`evidence/FINDING_F933_ALLOWANCE_TYPECHECK.log`](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_TYPECHECK.log).\n- \ud83c\udfaf **NEXT**: Generate build log (`tsdown`) and update postimage hashes once typecheck completes.\n\nTested isolated candidate branch **`candidate/account-allowance-e10f4684`** and sandbox evidence branch **`agent/finding-task-e10f46849fff`** pushed for Codex review and release.\n\n- \ud83d\udfe2 **DONE**:\n  - Fixed Cordis web boot activation crash by guarding dynamic service injection with `if (typeof ctx.inject === 'function') ctx.inject(['sidebarRightTabs'], ...)` in [`src/client/index.tsx`](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/client/index.tsx#L90) and [`src/client/account-allowance.tsx`](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/client/account-allowance.tsx#L382).\n  - Executed full test suite (26/26 tests passing in [`evidence/FINDING_F933_ALLOWANCE_FOCUSED.log`](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_FOCUSED.log)), clean typecheck in [`evidence/FINDING_F933_ALLOWANCE_TYPECHECK.log`](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_TYPECHECK.log), and bundle build in [`evidence/FINDING_F933_ALLOWANCE_BUILD.log`](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_BUILD.log).\n  - Published candidate commit `8bc916577c988afb02a97eb313d2198c8e47cd31`, patch [`patches/FINDING_F933_ACCOUNT_ALLOWANCE.patch`](file:///Users/gerayeremin/tmp-work/superagent-sandbox/patches/FINDING_F933_ACCOUNT_ALLOWANCE.patch), visual captures, and handoff report [`reports/FINDING_F933_ACCOUNT_ALLOWANCE_HANDOFF.md`](file:///Users/gerayeremin/tmp-work/superagent-sandbox/reports/FINDING_F933_ACCOUNT_ALLOWANCE_HANDOFF.md).\n- \u26a1 **DOING**:\n  - Halted at bounded scope boundary without live merge, publication, deployment, or service restart.\n- \ud83c\udfaf **NEXT**:\n  - Codex to review candidate branch **`candidate/account-allowance-e10f4684`** for integration into `superagent-core`.\n",
+      "canonical": {
+        "phase": "scored",
+        "draftRevision": "f56aa88d7cdb8783391047e447563e8b7efeaeab1d75af98602cc902a44a91dc",
+        "leaseExpired": true
+      },
+      "advisor": {
+        "status": "ready",
+        "model": "deepseek-official/deepseek-flash",
+        "key": "f56aa88d7cdb8783391047e447563e8b7efeaeab1d75af98602cc902a44a91dc"
+      },
+      "staging": null,
+      "provenParent": {
+        "id": "f9335259-b51c-4e97-9750-3923b7e2138b",
+        "state": "resolved",
+        "resolution": {
+          "outcome": "verified",
+          "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/allowance-native-verification.json",
+          "requirements": [
+            "Inspect installed dsh-agy-link 0.4.100 quota interfaces and current Anthropic account integration; verify actual support instead of treating README claims as operational proof",
+            "Read primary upstream guidelines: deepseek-ai/deepseek-harness docs/subsystems/sidebar-right.md, packages/client/ui-sidebar/README.md; references V1ki/dsh-plugin-subscriptions and Lirunhua/dsh-model-meter are community examples, not official DeepSeek plugins",
+            "Reuse existing provider-owned quota/account reads through supported authenticated local interfaces; do not send credentials to a new destination or expose tokens to browser/logs/repo; if access unsupported, report one concrete blocker",
+            "Show Google and Anthropic account-level reported remaining allowance, distinct provider quota windows/reset times, last refresh, stale/unavailable and rate-limit states; never turn missing data into zero or fabricate global percentages",
+            "Compact host-styled display visible beside chat with expandable details, never cover conversation/composer; preserve responsive layouts, accessibility and current routing, conserve OpenAI execution",
+            "Bounded refresh/cache/backoff, share requests and avoid per-render polling; no LLM needed to fetch/display allowance and no model warmup",
+            "Meaningful unit/contract tests for provider payloads, missing fields/stale/errors and UI behavior; real before/after captures matching viewport/theme; sequential heavy checks; no live mutation by worker",
+            "Report exact base/head, actual test/types/build exits, source and integration compatibility, narrow patches and rollback considerations; Codex owns deployment/native verification"
+          ],
+          "at": "2026-11-08T22:42:14.601Z",
+          "actor": "local-operator",
+          "jobId": "finding:f9335259-b51c-4e97-9750-3923b7e2138b:r7"
+        }
+      },
+      "generatedAdviceContextNonempty": true,
+      "statusAfter": "pending",
+      "choicesRetained": [
+        {
+          "id": "opt-1",
+          "label": "Request Codex review of candidate"
+        },
+        {
+          "id": "opt-2",
+          "label": "Re-verify candidate from clean checkout"
+        },
+        {
+          "id": "opt-3",
+          "label": "Prepare source release candidate"
+        },
+        {
+          "id": "opt-4",
+          "label": "Confirm scope boundary in handoff"
+        }
+      ],
+      "choiceSnapshotHash": "53871dbe2f8800cdf8afea5a64553a02b5d9f769758f601a4e6ef7f684ff7757",
+      "disposition": "evidence-proven obsolete coordinator/system advice, not safely retired through available interface",
+      "reason": "Exact ticket mandate links to accepted canonical parent. Nonempty context excludes automatic generic-advice retirement; no current exact progress receipt/superseded-head link was recorded."
+    },
+    {
+      "decision": "chat-232dc268b70284e055005e01c8f9ee17",
+      "sessionId": "worker-4a0294860ae0175497227ed31645062e",
+      "ticket": "4a0294860ae0175497227ed31645062e",
+      "title": "Show Google and Anthropic remaining allowance beside chat",
+      "stage": "ended",
+      "mandateScope": "Implement a compact native account-allowance display using existing authenticated integrations and documented DeepSeek Harness UI extension slots. Start with Google and Anthropic only; do not replace provider bundles or change routes/accounts. Reuse installed dsh-agy-link quota plumbing and inspect community implementations before writing new readers. No new credentials, access, paid calls, background warmup or account migration. Return a tested isolated candidate for Codex review and release.",
+      "mandateBasis": {
+        "via": "addressed",
+        "addressed": "direct",
+        "source": "finding",
+        "sender": "local-operator",
+        "scope": {
+          "repository": "gera3d/superagent-sandbox",
+          "findingId": "f9335259-b51c-4e97-9750-3923b7e2138b",
+          "jobId": "finding:f9335259-b51c-4e97-9750-3923b7e2138b:r4",
+          "bounded": true
+        }
+      },
+      "sourceThreads": [
+        {
+          "key": "finding:finding:f9335259-b51c-4e97-9750-3923b7e2138b:r4",
+          "title": "Local operator confirmed bounded fix finding f9335259-b51c-4e97-9750-3923b7e2138"
+        }
+      ],
+      "report": {
+        "state": "waiting",
+        "summary": "Running `tsc --noEmit` to verify TypeScript types across **`dsh-superagent-prototype`**.\n\n\ud83d\udfe2 **DONE**:\n- Implemented explicit account and source provenance separating Google Antigravity, Antigravity Claude pool, and direct Anthropic.\n- Updated compact session header badge and Right Sidebar panel components with honest unavailable states and source tags.\n- Passed 18/18 focused unit and UI tests in **`tests/account-allowance.spec.ts`** and **`tests/account-allowance-ui.spec.tsx`**.\n\n\u26a1 **DOING**:\n- Awaiting completion of **`pnpm exec tsc --noEmit`** (`~15 seconds`).\n\n\ud83c\udfaf **NEXT**:\n- Run production bundle build (`tsdown`) and capture visual headless Chrome before/after screenshots once typecheck completes.\n\nChecking TypeScript types after adding missing `source` and `sourceLabel` fields to client fallback report.\n\n\ud83d\udfe2 **DONE**:\n- Resolved `fallback: AccountAllowanceReport` type definition in **`src/client/account-allowance.tsx`**.\n\n\u26a1 **DOING**:\n- Waiting for **`pnpm exec tsc --noEmit`** to complete (`~10 seconds`).\n\n\ud83c\udfaf **NEXT**:\n- Run production bundle build (`tsdown`) and capture visual headless Chrome before/after screenshots once typecheck exits cleanly.\n\nLogging `tsc --noEmit` clean exit into candidate evidence.\n\n\ud83d\udfe2 **DONE**:\n- Verified focused vitest suite passes (18/18 tests in 2.53s).\n- Verified scoped patch applies cleanly (`git apply --check`) onto upstream base `d33bd28e9016`.\n\n\u26a1 **DOING**:\n- Waiting for **`pnpm exec tsc --noEmit`** evidence capture to finish (`~10 seconds`).\n\n\ud83c\udfaf **NEXT**:\n- Record production bundle build log and postimage manifest into candidate artifacts.\n\nCompleted bounded finding candidate for compact native Google and\n Anthropic allowance display with explicit source provenance.\n\n\ud83d\udfe2 **DONE**:\n- Separated source and account identities across API, data contracts, and UI: Google Antigravity account (`gera3d@gmail.com`), Antigravity Claude model pool (`quotas.anthropic`), and direct Anthropic subscription (`status: 'unavailable'`).\n- Injected compact header badge into documented slot `conversation.session.header.actions` (`G 69% \u00b7 AC 100% \u00b7 A --`) and detailed right sidebar panel into `ctx.sidebarRightTabs` / `sidebar.right.pane.tab`.\n- Passed focused vitest suite (18/18 tests passed), clean `tsc --noEmit` (exit 0), production `tsdown` build (exit 0), clean patch apply check (`git apply --check` exit 0), and captured 1200\u00d7900 before/after Chrome screenshots.\n\n\u26a1 **DOING**:\n- Holding candidate at isolation boundary on candidate branch [**`candidate/account-allowance-4a029486`**](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype) (`920e28305d6eb41513960211f0431a4c2756984f`) and sandbox branch [**`agent/finding-task-4a0294860ae0`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox) (`9fa0a06`).\n\n\ud83c\udfaf **NEXT**:\n- Review candidate patch [**`patches/FINDING_F933_ACCOUNT_ALLOWANCE.patch`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/patches/FINDING_F933_ACCOUNT_ALLOWANCE.patch) for Codex merge and release into `superagent-core`.\n\n---\n\n### Verification & Artifact Summary\n\n| Artifact | Location | Status |\n| --- | --- | --- |\n| Scoped Source Patch | [**`patches/FINDING_F933_ACCOUNT_ALLOWANCE.patch`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/patches/FINDING_F933_ACCOUNT_ALLOWANCE.patch) | 12 files, +1790/\u22120 lines (sha256 `95ea834aa81f...`) |\n| Handoff Report | [**`reports/FINDING_F933_ACCOUNT_ALLOWANCE_HANDOFF.md`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/reports/FINDING_F933_ACCOUNT_ALLOWANCE_HANDOFF.md) | Documented source separation & regressions |\n| Focused Tests Log | [**`evidence/FINDING_F933_ALLOWANCE_FOCUSED.log`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_FOCUSED.log) | 2 files / 18 tests passed (exit 0) |\n| Typecheck Log | [**`evidence/FINDING_F933_ALLOWANCE_TYPECHECK.log`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_TYPECHECK.log) | 0 errors (exit 0) |\n| Bundle Build Log | [**`evidence/FINDING_F933_ALLOWANCE_BUILD.log`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_BUILD.log) | `tsdown` production build complete (exit 0) |\n| Postimage Manifest | [**`evidence/FINDING_F933_POSTIMAGES.txt`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_POSTIMAGES.txt) | 12 file blob SHAs & SHA-256 hashes |\n| Visual Baseline | [**`evidence/account-allowance-before.png`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/account-allowance-before.png) | 61,173 bytes (1200\u00d7900 dark theme) |\n| Visual Candidate | [**`evidence/account-allowance-after.png`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/account-allowance-after.png) | 130,279 bytes (compact badge + sidebar cards) |",
+        "at": "2026-11-08T21:25:52.232Z"
+      },
+      "delivery": null,
+      "context": "Running `tsc --noEmit` to verify TypeScript types across **`dsh-superagent-prototype`**.\n\n\ud83d\udfe2 **DONE**:\n- Implemented explicit account and source provenance separating Google Antigravity, Antigravity Claude pool, and direct Anthropic.\n- Updated compact session header badge and Right Sidebar panel components with honest unavailable states and source tags.\n- Passed 18/18 focused unit and UI tests in **`tests/account-allowance.spec.ts`** and **`tests/account-allowance-ui.spec.tsx`**.\n\n\u26a1 **DOING**:\n- Awaiting completion of **`pnpm exec tsc --noEmit`** (`~15 seconds`).\n\n\ud83c\udfaf **NEXT**:\n- Run production bundle build (`tsdown`) and capture visual headless Chrome before/after screenshots once typecheck completes.\n\nChecking TypeScript types after adding missing `source` and `sourceLabel` fields to client fallback report.\n\n\ud83d\udfe2 **DONE**:\n- Resolved `fallback: AccountAllowanceReport` type definition in **`src/client/account-allowance.tsx`**.\n\n\u26a1 **DOING**:\n- Waiting for **`pnpm exec tsc --noEmit`** to complete (`~10 seconds`).\n\n\ud83c\udfaf **NEXT**:\n- Run production bundle build (`tsdown`) and capture visual headless Chrome before/after screenshots once typecheck exits cleanly.\n\nLogging `tsc --noEmit` clean exit into candidate evidence.\n\n\ud83d\udfe2 **DONE**:\n- Verified focused vitest suite passes (18/18 tests in 2.53s).\n- Verified scoped patch applies cleanly (`git apply --check`) onto upstream base `d33bd28e9016`.\n\n\u26a1 **DOING**:\n- Waiting for **`pnpm exec tsc --noEmit`** evidence capture to finish (`~10 seconds`).\n\n\ud83c\udfaf **NEXT**:\n- Record production bundle build log and postimage manifest into candidate artifacts.\n\nCompleted bounded finding candidate for compact native Google and\n Anthropic allowance display with explicit source provenance.\n\n\ud83d\udfe2 **DONE**:\n- Separated source and account identities across API, data contracts, and UI: Google Antigravity account (`gera3d@gmail.com`), Antigravity Claude model pool (`quotas.anthropic`), and direct Anthropic subscription (`status: 'unavailable'`).\n- Injected compact header badge into documented slot `conversation.session.header.actions` (`G 69% \u00b7 AC 100% \u00b7 A --`) and detailed right sidebar panel into `ctx.sidebarRightTabs` / `sidebar.right.pane.tab`.\n- Passed focused vitest suite (18/18 tests passed), clean `tsc --noEmit` (exit 0), production `tsdown` build (exit 0), clean patch apply check (`git apply --check` exit 0), and captured 1200\u00d7900 before/after Chrome screenshots.\n\n\u26a1 **DOING**:\n- Holding candidate at isolation boundary on candidate branch [**`candidate/account-allowance-4a029486`**](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype) (`920e28305d6eb41513960211f0431a4c2756984f`) and sandbox branch [**`agent/finding-task-4a0294860ae0`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox) (`9fa0a06`).\n\n\ud83c\udfaf **NEXT**:\n- Review candidate patch [**`patches/FINDING_F933_ACCOUNT_ALLOWANCE.patch`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/patches/FINDING_F933_ACCOUNT_ALLOWANCE.patch) for Codex merge and release into `superagent-core`.\n\n---\n\n### Verification & Artifact Summary\n\n| Artifact | Location | Status |\n| --- | --- | --- |\n| Scoped Source Patch | [**`patches/FINDING_F933_ACCOUNT_ALLOWANCE.patch`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/patches/FINDING_F933_ACCOUNT_ALLOWANCE.patch) | 12 files, +1790/\u22120 lines (sha256 `95ea834aa81f...`) |\n| Handoff Report | [**`reports/FINDING_F933_ACCOUNT_ALLOWANCE_HANDOFF.md`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/reports/FINDING_F933_ACCOUNT_ALLOWANCE_HANDOFF.md) | Documented source separation & regressions |\n| Focused Tests Log | [**`evidence/FINDING_F933_ALLOWANCE_FOCUSED.log`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_FOCUSED.log) | 2 files / 18 tests passed (exit 0) |\n| Typecheck Log | [**`evidence/FINDING_F933_ALLOWANCE_TYPECHECK.log`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_TYPECHECK.log) | 0 errors (exit 0) |\n| Bundle Build Log | [**`evidence/FINDING_F933_ALLOWANCE_BUILD.log`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_ALLOWANCE_BUILD.log) | `tsdown` production build complete (exit 0) |\n| Postimage Manifest | [**`evidence/FINDING_F933_POSTIMAGES.txt`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/FINDING_F933_POSTIMAGES.txt) | 12 file blob SHAs & SHA-256 hashes |\n| Visual Baseline | [**`evidence/account-allowance-before.png`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/account-allowance-before.png) | 61,173 bytes (1200\u00d7900 dark theme) |\n| Visual Candidate | [**`evidence/account-allowance-after.png`**](file:///Users/gerayeremin/tmp-work/superagent-sandbox/evidence/account-allowance-after.png) | 130,279 bytes (compact badge + sidebar cards) |\n",
+      "canonical": {
+        "phase": "scored",
+        "draftRevision": "f4eb6f9ece2e92acf8ce09b61574450d5061471d74214f2ecab29d11b26edc10",
+        "leaseExpired": true
+      },
+      "advisor": {
+        "status": "ready",
+        "model": "Senior Developer",
+        "key": "f4eb6f9ece2e92acf8ce09b61574450d5061471d74214f2ecab29d11b26edc10"
+      },
+      "staging": null,
+      "provenParent": {
+        "id": "f9335259-b51c-4e97-9750-3923b7e2138b",
+        "state": "resolved",
+        "resolution": {
+          "outcome": "verified",
+          "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/allowance-native-verification.json",
+          "requirements": [
+            "Inspect installed dsh-agy-link 0.4.100 quota interfaces and current Anthropic account integration; verify actual support instead of treating README claims as operational proof",
+            "Read primary upstream guidelines: deepseek-ai/deepseek-harness docs/subsystems/sidebar-right.md, packages/client/ui-sidebar/README.md; references V1ki/dsh-plugin-subscriptions and Lirunhua/dsh-model-meter are community examples, not official DeepSeek plugins",
+            "Reuse existing provider-owned quota/account reads through supported authenticated local interfaces; do not send credentials to a new destination or expose tokens to browser/logs/repo; if access unsupported, report one concrete blocker",
+            "Show Google and Anthropic account-level reported remaining allowance, distinct provider quota windows/reset times, last refresh, stale/unavailable and rate-limit states; never turn missing data into zero or fabricate global percentages",
+            "Compact host-styled display visible beside chat with expandable details, never cover conversation/composer; preserve responsive layouts, accessibility and current routing, conserve OpenAI execution",
+            "Bounded refresh/cache/backoff, share requests and avoid per-render polling; no LLM needed to fetch/display allowance and no model warmup",
+            "Meaningful unit/contract tests for provider payloads, missing fields/stale/errors and UI behavior; real before/after captures matching viewport/theme; sequential heavy checks; no live mutation by worker",
+            "Report exact base/head, actual test/types/build exits, source and integration compatibility, narrow patches and rollback considerations; Codex owns deployment/native verification"
+          ],
+          "at": "2026-11-08T22:42:14.601Z",
+          "actor": "local-operator",
+          "jobId": "finding:f9335259-b51c-4e97-9750-3923b7e2138b:r7"
+        }
+      },
+      "generatedAdviceContextNonempty": true,
+      "statusAfter": "pending",
+      "choicesRetained": [
+        {
+          "id": "next-1",
+          "label": "Audit diff and evidence"
+        },
+        {
+          "id": "next-2",
+          "label": "Probe edge cases and errors"
+        },
+        {
+          "id": "next-3",
+          "label": "Prepare Codex review handoff"
+        }
+      ],
+      "choiceSnapshotHash": "c1be6d39d2bc5c672f33574432258735342b708c875981b172aafd9dd3bd91e6",
+      "disposition": "evidence-proven obsolete coordinator/system advice, not safely retired through available interface",
+      "reason": "Exact ticket mandate links to accepted canonical parent. Nonempty context excludes automatic generic-advice retirement; no current exact progress receipt/superseded-head link was recorded."
+    },
+    {
+      "decision": "chat-b6913f776e0ff17c81b5a644625f22eb",
+      "sessionId": "worker-e7d7391862548043bf9967ab1459dfda",
+      "ticket": "e7d7391862548043bf9967ab1459dfda",
+      "title": "Workers on antigravity cannot file ready reports",
+      "stage": "ended",
+      "mandateScope": "Executor tool exposure for the antigravity/Gemini route: orchestrator_report is declared for the Superagent worker executor but not exposed on that provider, so ready handoffs silently degrade to idle chat reports.",
+      "mandateBasis": {
+        "via": "addressed",
+        "addressed": "direct",
+        "source": "finding",
+        "sender": "local-operator",
+        "scope": {
+          "repository": "gera3d/superagent-sandbox",
+          "findingId": "51f309ca-d396-4983-a55d-ef4432a8572f",
+          "jobId": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r4",
+          "bounded": true
+        }
+      },
+      "sourceThreads": [
+        {
+          "key": "finding:finding:51f309ca-d396-4983-a55d-ef4432a8572f:r4",
+          "title": "Local operator confirmed bounded fix finding 51f309ca-d396-4983-a55d-ef4432a8572"
+        }
+      ],
+      "report": {
+        "state": "waiting",
+        "summary": "Completed bounded fix for finding `51f309ca-d396-4983-a55d-ef4432a8572f` (job `finding:51f309ca-d396-4983-a55d-ef4432a8572f:r4`) in isolated candidate repository [`repo/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/repo) with 65 passing tests across 5 test suites.\n\n\ud83d\udfe2 **DONE**:\n- **Strict Transport & Safe Ingestion**: Added [`orchestrator_report`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/repo/src/infra/environment.ts#L18) CLI in `workerBin` with ticket binding, and added [`findWorkerReportFile`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/repo/src/executor/dsh.ts#L931) validating regular files, canonical paths, size limits, and delayed consumption after engine recording.\n- **Root Audit & Adversarial Protection**: Blocked prose/quotes/emoji elevation to ready in [`extractReportFromText`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/repo/src/executor/dsh.ts#L1019) and verified 3/3 root checks pass in [`tests/root-report-provenance.audit.spec.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/repo/tests/root-report-provenance.audit.spec.ts#L6-L19).\n- **Race Guardrails & Artifacts**: Added pending/background/progress race handling in [`FindingRuntime.reconcile`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/repo/src/app/finding-runtime.ts#L112), committing candidate [`ca4a923`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/repo) and generating [`01-backend-antigravity-report-delivery.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/checkpoint/01-backend-antigravity-report-delivery.patch).\n\n\u26a1 **DOING**:\n- Stopping at scope boundary with live environments untouched.\n\n\ud83c\udfaf **NEXT**:\n- Root coordinator audits [`checkpoint/NOTES.md`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/checkpoint/NOTES.md) and applies candidate patch [`checkpoint/01-backend-antigravity-report-delivery.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/checkpoint/01-backend-antigravity-report-delivery.patch) under authorized release procedure.",
+        "at": "2026-11-08T19:45:16.460Z"
+      },
+      "delivery": null,
+      "context": "Completed bounded fix for finding `51f309ca-d396-4983-a55d-ef4432a8572f` (job `finding:51f309ca-d396-4983-a55d-ef4432a8572f:r4`) in isolated candidate repository [`repo/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/repo) with 65 passing tests across 5 test suites.\n\n\ud83d\udfe2 **DONE**:\n- **Strict Transport & Safe Ingestion**: Added [`orchestrator_report`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/repo/src/infra/environment.ts#L18) CLI in `workerBin` with ticket binding, and added [`findWorkerReportFile`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/repo/src/executor/dsh.ts#L931) validating regular files, canonical paths, size limits, and delayed consumption after engine recording.\n- **Root Audit & Adversarial Protection**: Blocked prose/quotes/emoji elevation to ready in [`extractReportFromText`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/repo/src/executor/dsh.ts#L1019) and verified 3/3 root checks pass in [`tests/root-report-provenance.audit.spec.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/repo/tests/root-report-provenance.audit.spec.ts#L6-L19).\n- **Race Guardrails & Artifacts**: Added pending/background/progress race handling in [`FindingRuntime.reconcile`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/repo/src/app/finding-runtime.ts#L112), committing candidate [`ca4a923`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/repo) and generating [`01-backend-antigravity-report-delivery.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/checkpoint/01-backend-antigravity-report-delivery.patch).\n\n\u26a1 **DOING**:\n- Stopping at scope boundary with live environments untouched.\n\n\ud83c\udfaf **NEXT**:\n- Root coordinator audits [`checkpoint/NOTES.md`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/checkpoint/NOTES.md) and applies candidate patch [`checkpoint/01-backend-antigravity-report-delivery.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e7d739186254/checkpoint/01-backend-antigravity-report-delivery.patch) under authorized release procedure.\n",
+      "canonical": {
+        "phase": "scored",
+        "draftRevision": "377453ff3da80e3d679d1f3c2722a0ce5829123f77b319a045d6708de50571b0",
+        "leaseExpired": true
+      },
+      "advisor": {
+        "status": "ready",
+        "model": "Senior Developer",
+        "key": "377453ff3da80e3d679d1f3c2722a0ce5829123f77b319a045d6708de50571b0"
+      },
+      "staging": null,
+      "provenParent": {
+        "id": "51f309ca-d396-4983-a55d-ef4432a8572f",
+        "state": "resolved",
+        "resolution": {
+          "outcome": "verified",
+          "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/reporting-real-gemini-verified.json",
+          "requirements": [
+            "Ready/blocked/failed report delivery must not depend on a provider that lacks the tool",
+            "A ticket whose worker ends without a recorded report must surface its evidence instead of sitting idle"
+          ],
+          "at": "2026-11-09T02:23:23.326Z",
+          "actor": "local-operator",
+          "jobId": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r31"
+        }
+      },
+      "generatedAdviceContextNonempty": true,
+      "statusAfter": "pending",
+      "choicesRetained": [
+        {
+          "id": "next-1",
+          "label": "Audit diff and rerun tests"
+        },
+        {
+          "id": "next-2",
+          "label": "Adversarial edge-case review"
+        },
+        {
+          "id": "next-3",
+          "label": "Review race handling in reconcile"
+        },
+        {
+          "id": "next-4",
+          "label": "Verify patch matches the commit"
+        }
+      ],
+      "choiceSnapshotHash": "682135e8feecc8e23de7f9ebd2d5f75c869f4ecf1610ac57ec244a8e0fa62268",
+      "disposition": "evidence-proven obsolete coordinator/system advice, not safely retired through available interface",
+      "reason": "Exact ticket mandate links to accepted canonical parent. Nonempty context excludes automatic generic-advice retirement; no current exact progress receipt/superseded-head link was recorded."
+    },
+    {
+      "decision": "chat-eb937970f942747759f30c87b8476336",
+      "sessionId": "worker-9c5b2ece23fdad8dac34df578f472f96",
+      "ticket": "9c5b2ece23fdad8dac34df578f472f96",
+      "title": "Recommend the actual review handoff for completed finding work",
+      "stage": "ended",
+      "mandateScope": "Narrow shared advisor context correction for canonical finding-owned implementation jobs and native fallback. Keep this separate from explicit-closeout detector repair and unattended-coordination implementation. Reuse current authenticated APIs and existing job/finding records. Do not implement a fictional Codex dispatch bridge, new permissions, publication bypass, auto-send or change scope. Harness implements isolated candidate; Codex reviews and releases under existing user authorization.",
+      "mandateBasis": {
+        "via": "addressed",
+        "addressed": "direct",
+        "source": "finding",
+        "sender": "local-operator",
+        "scope": {
+          "repository": "gera3d/superagent-sandbox",
+          "findingId": "12779824-b82e-484d-9502-d2150ba58aa1",
+          "jobId": "finding:12779824-b82e-484d-9502-d2150ba58aa1:r6",
+          "bounded": true
+        }
+      },
+      "sourceThreads": [
+        {
+          "key": "finding:finding:12779824-b82e-484d-9502-d2150ba58aa1:r6",
+          "title": "Local operator confirmed bounded fix finding 12779824-b82e-484d-9502-d2150ba58aa"
+        }
+      ],
+      "report": {
+        "state": "waiting",
+        "summary": "I have launched the TypeScript typecheck (`tsc --noEmit`) in the isolated repository and am awaiting its completion.\n\nBounded finding fix `12779824-b82e-484d-9502-d2150ba58aa1` (job `finding:12779824-b82e-484d-9502-d2150ba58aa1:r6`) is implemented and verified in isolated candidate repository [`repo/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo), with candidate patches and verification notes preserved in [`checkpoint/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/checkpoint).\n\n\ud83d\udfe2 **DONE**:\n- **Canonical Alias Resolution**: Added [`matchCharacterId`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/core/specialist-profile.ts#L106) and [`findCharacter`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/core/specialist-profile.ts#L112) to match hyphen (`senior-developer`) and underscore (`senior_developer`) identifiers across [`resolveProfile`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/core/specialist-profile.ts#L122), [`profileCharacter`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/core/specialist-profile.ts#L129), and [`routeSpecialist`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/core/specialist-routing.ts#L29).\n- **Persona Propagation & Schema Isolation**: Implemented [`effectiveCharacters`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/app/specialist-advice.ts#L133) to expose active UI persona overrides across primary specialist and fallback prompt paths, and converted [`CharactersConfigSchema`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/policy.ts#L204) defaults to factory functions preventing in-memory template mutation.\n- **Verification & Checkpoint**: Candidate commit [`b4d9ad3`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo) passed typecheck, build, and 89 tests across 9 test suites; candidate patches and audit records generated in [`checkpoint/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/checkpoint).\n\n\u26a1 **DOING**:\n- Stopping at the scope boundary with live environments untouched.\n\n\ud83c\udfaf **NEXT**:\n- Root coordinator audits [`checkpoint/NOTES.md`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/checkpoint/NOTES.md) and applies candidate patch [`checkpoint/01-backend-canonical-finding-advice.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/checkpoint/01-backend-canonical-finding-advice.patch) under authorized release procedure.",
+        "at": "2026-11-08T19:19:32.230Z"
+      },
+      "delivery": null,
+      "context": "I have launched the TypeScript typecheck (`tsc --noEmit`) in the isolated repository and am awaiting its completion.\n\nBounded finding fix `12779824-b82e-484d-9502-d2150ba58aa1` (job `finding:12779824-b82e-484d-9502-d2150ba58aa1:r6`) is implemented and verified in isolated candidate repository [`repo/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo), with candidate patches and verification notes preserved in [`checkpoint/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/checkpoint).\n\n\ud83d\udfe2 **DONE**:\n- **Canonical Alias Resolution**: Added [`matchCharacterId`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/core/specialist-profile.ts#L106) and [`findCharacter`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/core/specialist-profile.ts#L112) to match hyphen (`senior-developer`) and underscore (`senior_developer`) identifiers across [`resolveProfile`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/core/specialist-profile.ts#L122), [`profileCharacter`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/core/specialist-profile.ts#L129), and [`routeSpecialist`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/core/specialist-routing.ts#L29).\n- **Persona Propagation & Schema Isolation**: Implemented [`effectiveCharacters`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/app/specialist-advice.ts#L133) to expose active UI persona overrides across primary specialist and fallback prompt paths, and converted [`CharactersConfigSchema`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/policy.ts#L204) defaults to factory functions preventing in-memory template mutation.\n- **Verification & Checkpoint**: Candidate commit [`b4d9ad3`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo) passed typecheck, build, and 89 tests across 9 test suites; candidate patches and audit records generated in [`checkpoint/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/checkpoint).\n\n\u26a1 **DOING**:\n- Stopping at the scope boundary with live environments untouched.\n\n\ud83c\udfaf **NEXT**:\n- Root coordinator audits [`checkpoint/NOTES.md`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/checkpoint/NOTES.md) and applies candidate patch [`checkpoint/01-backend-canonical-finding-advice.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/checkpoint/01-backend-canonical-finding-advice.patch) under authorized release procedure.\n",
+      "canonical": {
+        "phase": "scored",
+        "draftRevision": "ef44a7f27037bcf37926f3ec642277b894199d48a51494be9cbfb93eb97a8a93",
+        "leaseExpired": true
+      },
+      "advisor": {
+        "status": "ready",
+        "model": "Senior Developer",
+        "key": "ef44a7f27037bcf37926f3ec642277b894199d48a51494be9cbfb93eb97a8a93"
+      },
+      "staging": null,
+      "provenParent": {
+        "id": "12779824-b82e-484d-9502-d2150ba58aa1",
+        "state": "resolved",
+        "resolution": {
+          "outcome": "verified",
+          "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/advisor-paired-source-qualified.json",
+          "requirements": [
+            "Reproduce current helper/context for worker-cf2c9c8117f4870abc3dc067a903ab43: delivery null causes generic ordinary-conversation rule although task is canonical finding revision 4 with root review/release scope; preserve exact before evidence",
+            "Inspect src/app/http.ts contextFor and advice-context.ts plus native helper/fallback/ranking paths; derive bounded structured finding/job state and next owner from canonical records, never arbitrary prose or stale prior jobs",
+            "For current tested worker-reported candidate awaiting root review, recommend one concrete permitted stage toward actual coordinator review; do not default to user walkthrough, duplicate implementation/test runs, or unconditional accept/deploy",
+            "Distinguish recommendation text/prepared native reply from actual action capability: if no supported route can notify Codex, identify that missing handoff explicitly instead of implying clicking a prompt invokes Codex; do not tell implementation worker to independently review itself",
+            "Preserve normal chat behavior, incomplete/failed review cases, resolved findings, prior attempts, current revision/source guards, score/rank preservation and exact publication confirmations",
+            "Regression test finding-without-delivery, current versus prior assignment, resolved finding, ordinary chat and shared helper/fallback context; run targeted types/build/checks sequentially and return exact heads/patches",
+            "No running installation edits, merge, deployment, new credentials/access or accepted finding by worker; root handles exact-head review, regression evidence, deployment and native verification"
+          ],
+          "at": "2026-11-09T00:04:11.920Z",
+          "actor": "local-operator",
+          "jobId": "finding:12779824-b82e-484d-9502-d2150ba58aa1:r12"
+        }
+      },
+      "generatedAdviceContextNonempty": true,
+      "statusAfter": "pending",
+      "choicesRetained": [
+        {
+          "id": "next-1",
+          "label": "Re-run checks, report real output"
+        },
+        {
+          "id": "next-2",
+          "label": "Audit diff against narrow scope"
+        },
+        {
+          "id": "next-3",
+          "label": "Verify tests cover the handoff behavior"
+        }
+      ],
+      "choiceSnapshotHash": "98cc0bf88399b1b981fa7f695cd4030a6ff5d7529fa3566e8d20446b439d8b84",
+      "disposition": "evidence-proven obsolete coordinator/system advice, not safely retired through available interface",
+      "reason": "Exact ticket mandate links to accepted canonical parent. Nonempty context excludes automatic generic-advice retirement; no current exact progress receipt/superseded-head link was recorded."
+    },
+    {
+      "decision": "chat-6f63c615b6048ded5cd2c534fe9540cf",
+      "sessionId": "worker-fd09fd8ae2c9f3619b81a8b353c14215",
+      "ticket": "fd09fd8ae2c9f3619b81a8b353c14215",
+      "title": "Investigate the publication confirmation that stopped before enqueue",
+      "stage": "ended",
+      "mandateScope": "Inspect current publication confirmation\u2192captureBinding\u2192enqueue path and retained redacted logs in an isolated copy. Reproduce a pre-effect enqueue failure and verify that UI explains retry/reconciliation and idempotency honestly. No real publish, grant, approval bypass, live source edits/restart or credential changes. Return cause or candid insufficient-evidence result plus bounded test/fix recommendation. Execution metadata correction only: this canonical finding replaces blocked finding cccbf29e-2ff3-439b-97f0-b4bcc9961937 which never created a worker because its dispatch repository differed from configured deployment. Use the configured sandbox as the execution carrier; the inspected code/evidence source remains gera3d/dsh-superagent-prototype. Preserve original scope and all historical evidence. No new source access or authority.",
+      "mandateBasis": {
+        "via": "addressed",
+        "addressed": "direct",
+        "source": "finding",
+        "sender": "local-operator",
+        "scope": {
+          "repository": "gera3d/superagent-sandbox",
+          "findingId": "a1707f3a-a020-4b8b-8374-50887c5e3265",
+          "jobId": "finding:a1707f3a-a020-4b8b-8374-50887c5e3265:r1",
+          "bounded": true
+        }
+      },
+      "sourceThreads": [
+        {
+          "key": "finding:finding:a1707f3a-a020-4b8b-8374-50887c5e3265:r1",
+          "title": "Local operator confirmed bounded verification finding a1707f3a-a020-4b8b-8374-50"
+        }
+      ],
+      "report": {
+        "state": "waiting",
+        "summary": "Bounded investigation for finding `a1707f3a-a020-4b8b-8374-50887c5e3265:r1` is complete. The detailed analysis is documented in the [finding-a1707-investigation.md](file:///Users/gerayeremin/.gemini/antigravity-cli/brain/03e4b776-6124-4e70-aaee-1b6941dc2dac/finding-a1707-investigation.md) artifact and in [FINDING_A1707_PRE_EFFECT_ENQUEUE_INVESTIGATION.md](file:///Users/gerayeremin/tmp-work/superagent-sandbox/reports/FINDING_A1707_PRE_EFFECT_ENQUEUE_INVESTIGATION.md).\n\n\ud83d\udfe2 **DONE**:\n- Inspected the full confirmation \u2192 [`captureBinding`](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/app/publication-context.ts#L27) \u2192 [`enqueue`](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/app/publication-worker.ts#L104) execution path.\n- Verified in [publication-state.json](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/publication-state.json) and [orchestrator.sqlite](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/orchestrator.sqlite) that confirmation `repair-46-headroom-1a45:7:publish:bcfec23ce4443aec` aborted in 66ms with zero grants and zero effects.\n- Reproduced the pre-effect failure and verified UI retry/reconciliation honesty in [reproduce-preeffect-enqueue.mjs](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-fd09fd8ae2c9/reproduce-preeffect-enqueue.mjs).\n\n\u26a1 **DOING**:\n- Reporting verified evidence and bounded recommendations at the scope boundary with zero live mutations or credential changes.\n\n\ud83c\udfaf **NEXT**:\n- Review the artifact report in [finding-a1707-investigation.md](file:///Users/gerayeremin/.gemini/antigravity-cli/brain/03e4b776-6124-4e70-aaee-1b6941dc2dac/finding-a1707-investigation.md) to approve or defer the proposed upstream diagnostic logging fix (`~2 minutes`).",
+        "at": "2026-11-08T19:16:35.462Z"
+      },
+      "delivery": null,
+      "context": "Bounded investigation for finding `a1707f3a-a020-4b8b-8374-50887c5e3265:r1` is complete. The detailed analysis is documented in the [finding-a1707-investigation.md](file:///Users/gerayeremin/.gemini/antigravity-cli/brain/03e4b776-6124-4e70-aaee-1b6941dc2dac/finding-a1707-investigation.md) artifact and in [FINDING_A1707_PRE_EFFECT_ENQUEUE_INVESTIGATION.md](file:///Users/gerayeremin/tmp-work/superagent-sandbox/reports/FINDING_A1707_PRE_EFFECT_ENQUEUE_INVESTIGATION.md).\n\n\ud83d\udfe2 **DONE**:\n- Inspected the full confirmation \u2192 [`captureBinding`](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/app/publication-context.ts#L27) \u2192 [`enqueue`](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/app/publication-worker.ts#L104) execution path.\n- Verified in [publication-state.json](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/publication-state.json) and [orchestrator.sqlite](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/orchestrator.sqlite) that confirmation `repair-46-headroom-1a45:7:publish:bcfec23ce4443aec` aborted in 66ms with zero grants and zero effects.\n- Reproduced the pre-effect failure and verified UI retry/reconciliation honesty in [reproduce-preeffect-enqueue.mjs](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-fd09fd8ae2c9/reproduce-preeffect-enqueue.mjs).\n\n\u26a1 **DOING**:\n- Reporting verified evidence and bounded recommendations at the scope boundary with zero live mutations or credential changes.\n\n\ud83c\udfaf **NEXT**:\n- Review the artifact report in [finding-a1707-investigation.md](file:///Users/gerayeremin/.gemini/antigravity-cli/brain/03e4b776-6124-4e70-aaee-1b6941dc2dac/finding-a1707-investigation.md) to approve or defer the proposed upstream diagnostic logging fix (`~2 minutes`).\n",
+      "canonical": {
+        "phase": "scored",
+        "draftRevision": "aca7a82fc5301107a0885c7a76e091dea99003901be7246575e1cecd160489e9",
+        "leaseExpired": true
+      },
+      "advisor": {
+        "status": "ready",
+        "model": "Senior Developer",
+        "key": "aca7a82fc5301107a0885c7a76e091dea99003901be7246575e1cecd160489e9"
+      },
+      "staging": null,
+      "provenParent": {
+        "id": "a1707f3a-a020-4b8b-8374-50887c5e3265",
+        "state": "resolved",
+        "resolution": {
+          "outcome": "verified",
+          "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/publication-independent-review.json",
+          "requirements": [
+            "Preserve original confirmation/request ID and distinction between zero effects and uncertain effects",
+            "Reproduce or explicitly mark insufficient evidence; never invent initial cause",
+            "Propose tested narrow handling retaining every approval/pin/manifest/idempotency safeguard; no live publication effects"
+          ],
+          "at": "2026-11-08T23:33:55.188Z",
+          "actor": "local-operator",
+          "jobId": "finding:a1707f3a-a020-4b8b-8374-50887c5e3265:r1"
+        }
+      },
+      "generatedAdviceContextNonempty": true,
+      "statusAfter": "pending",
+      "choicesRetained": [
+        {
+          "id": "next-1",
+          "label": "Audit report against evidence"
+        },
+        {
+          "id": "next-2",
+          "label": "Draft bounded test and fix plan"
+        },
+        {
+          "id": "next-3",
+          "label": "Run existing tests and typecheck"
+        }
+      ],
+      "choiceSnapshotHash": "299c1f34e3981e1e84512b92068fa1c7f42b21a2644edd33848349b665fb3400",
+      "disposition": "evidence-proven obsolete coordinator/system advice, not safely retired through available interface",
+      "reason": "Exact ticket mandate links to accepted canonical parent. Nonempty context excludes automatic generic-advice retirement; no current exact progress receipt/superseded-head link was recorded."
+    },
+    {
+      "decision": "chat-917a1a95b4ca62ade3ff9ab51f5f4511",
+      "sessionId": "worker-775c713393968c216c6cce864c65727a",
+      "ticket": "775c713393968c216c6cce864c65727a",
+      "title": "Verify cost-summary review findings against the current implementation",
+      "stage": "ended",
+      "mandateScope": "Verification only in one isolated current-source checkout. Reproduce/deduplicate all nine native findings from the immutable proof plus the earlier isolated preflight observations. Classify actual defects, false positives and historical-only issues. Report minimal repro/test evidence and a bounded repair recommendation. Do not modify live files, restart, deploy, change settings/keys/routes, reopen/message the accepted cost-summary job, or implement fixes without a subsequent confirmed bounded decision. Execution metadata correction only: this canonical finding replaces blocked finding 6162b441-a582-484c-9d49-b3bd12ea0175 which never created a worker because its dispatch repository differed from configured deployment. Use the configured sandbox as the execution carrier; the inspected code/evidence source remains gera3d/dsh-superagent-prototype. Preserve original scope and all historical evidence. No new source access or authority.",
+      "mandateBasis": {
+        "via": "addressed",
+        "addressed": "direct",
+        "source": "finding",
+        "sender": "local-operator",
+        "scope": {
+          "repository": "gera3d/superagent-sandbox",
+          "findingId": "1accfa18-853b-42e5-8a9b-f24375d50d3e",
+          "jobId": "finding:1accfa18-853b-42e5-8a9b-f24375d50d3e:r1",
+          "bounded": true
+        }
+      },
+      "sourceThreads": [
+        {
+          "key": "finding:finding:1accfa18-853b-42e5-8a9b-f24375d50d3e:r1",
+          "title": "Local operator confirmed bounded verification finding 1accfa18-853b-42e5-8a9b-f2"
+        }
+      ],
+      "report": {
+        "state": "waiting",
+        "summary": "The verification task for canonical finding `1accfa18-853b-42e5-8a9b-f24375d50d3e` is complete, and the full evidence report has been published to [COST_SUMMARY_VERIFICATION_REPORT.md](file:///Users/gerayeremin/.gemini/antigravity-cli/brain/84d62b7d-c8b9-4883-a658-0b5edbeb482c/COST_SUMMARY_VERIFICATION_REPORT.md).\n\n### State\n- `\ud83d\udfe2 DONE`: Reproduced and verified all 9 native findings and 2 preflight observations; published [REPORT.md](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-775c71339396/REPORT.md) and standalone test scripts in the worker workspace.\n- `\u26a1 DOING`: Resting at the scope boundary with zero mutations to live files, services, model routes, or historical accepted jobs.\n- `\ud83c\udfaf NEXT`: Await operator review of the verification evidence and confirmation of the next bounded decision.\n\n---\n\n### Verification Summary\n\n- **Findings Classification**: 5 core code defects confirmed, 2 test/fixture portability defects confirmed, 2 preflight observations confirmed, 0 false positives, and 4 sandbox patch findings classified as historical duplicates.\n- **Reproduction Proof**: Tested against current prototype head using isolated test suites [repro-cost-findings.mjs](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-775c71339396/repro-cost-findings.mjs) and [repro-advanced-findings.mjs](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-775c71339396/repro-advanced-findings.mjs).\n- **Bounded Repair Scope**: Minimal ~36-line repair across [src/app/job-usage.ts](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/app/job-usage.ts), [src/app/http.ts](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/app/http.ts), [src/client/job-usage.tsx](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/client/job-usage.tsx), and [tests/job-usage.spec.ts](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/tests/job-usage.spec.ts).\n\n---\n\n**Next Step**: Review the detailed findings in [COST_SUMMARY_VERIFICATION_REPORT.md](file:///Users/gerayeremin/.gemini/antigravity-cli/brain/84d62b7d-c8b9-4883-a658-0b5edbeb482c/COST_SUMMARY_VERIFICATION_REPORT.md) to decide on repair scheduling.",
+        "at": "2026-11-08T18:34:21.554Z"
+      },
+      "delivery": null,
+      "context": "The verification task for canonical finding `1accfa18-853b-42e5-8a9b-f24375d50d3e` is complete, and the full evidence report has been published to [COST_SUMMARY_VERIFICATION_REPORT.md](file:///Users/gerayeremin/.gemini/antigravity-cli/brain/84d62b7d-c8b9-4883-a658-0b5edbeb482c/COST_SUMMARY_VERIFICATION_REPORT.md).\n\n### State\n- `\ud83d\udfe2 DONE`: Reproduced and verified all 9 native findings and 2 preflight observations; published [REPORT.md](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-775c71339396/REPORT.md) and standalone test scripts in the worker workspace.\n- `\u26a1 DOING`: Resting at the scope boundary with zero mutations to live files, services, model routes, or historical accepted jobs.\n- `\ud83c\udfaf NEXT`: Await operator review of the verification evidence and confirmation of the next bounded decision.\n\n---\n\n### Verification Summary\n\n- **Findings Classification**: 5 core code defects confirmed, 2 test/fixture portability defects confirmed, 2 preflight observations confirmed, 0 false positives, and 4 sandbox patch findings classified as historical duplicates.\n- **Reproduction Proof**: Tested against current prototype head using isolated test suites [repro-cost-findings.mjs](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-775c71339396/repro-cost-findings.mjs) and [repro-advanced-findings.mjs](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-775c71339396/repro-advanced-findings.mjs).\n- **Bounded Repair Scope**: Minimal ~36-line repair across [src/app/job-usage.ts](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/app/job-usage.ts), [src/app/http.ts](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/app/http.ts), [src/client/job-usage.tsx](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/client/job-usage.tsx), and [tests/job-usage.spec.ts](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/tests/job-usage.spec.ts).\n\n---\n\n**Next Step**: Review the detailed findings in [COST_SUMMARY_VERIFICATION_REPORT.md](file:///Users/gerayeremin/.gemini/antigravity-cli/brain/84d62b7d-c8b9-4883-a658-0b5edbeb482c/COST_SUMMARY_VERIFICATION_REPORT.md) to decide on repair scheduling.\n",
+      "canonical": {
+        "phase": "scored",
+        "draftRevision": "3be81ee4a119d2b1b4403479615b884b56f108757482ae0427fa413922672910",
+        "leaseExpired": true
+      },
+      "advisor": {
+        "status": "ready",
+        "model": "Senior Developer",
+        "key": "3be81ee4a119d2b1b4403479615b884b56f108757482ae0427fa413922672910"
+      },
+      "staging": null,
+      "provenParent": {
+        "id": "1accfa18-853b-42e5-8a9b-f24375d50d3e",
+        "state": "resolved",
+        "resolution": {
+          "outcome": "verified",
+          "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/cost-verification-independent-review.json",
+          "requirements": [
+            "All nine native findings retained with exact historical bindings and deduplicated into testable cases",
+            "Check current code and reproduce alleged defects before classifying them as confirmed; preserve false-positive evidence",
+            "Include earlier recreated-log cache and coverage-wording observations without treating private preflight as native acceptance",
+            "Return one bounded repair recommendation with actual reproduction evidence; no live mutation or original-job reopen"
+          ],
+          "at": "2026-11-08T23:32:36.433Z",
+          "actor": "local-operator",
+          "jobId": "finding:1accfa18-853b-42e5-8a9b-f24375d50d3e:r1"
+        }
+      },
+      "generatedAdviceContextNonempty": true,
+      "statusAfter": "pending",
+      "choicesRetained": [
+        {
+          "id": "next-1",
+          "label": "Audit report and repro evidence"
+        },
+        {
+          "id": "next-2",
+          "label": "Draft bounded repair proposal"
+        },
+        {
+          "id": "next-3",
+          "label": "Run existing suite as baseline"
+        }
+      ],
+      "choiceSnapshotHash": "317f4a07eb1bbb28c3e04716f1412e28f47ec78c62de64b9687abf56c2ae5c87",
+      "disposition": "evidence-proven obsolete coordinator/system advice, not safely retired through available interface",
+      "reason": "Exact ticket mandate links to accepted canonical parent. Nonempty context excludes automatic generic-advice retirement; no current exact progress receipt/superseded-head link was recorded."
+    },
+    {
+      "decision": "delivery-auto-1aa9568a8df574db0cef146a58004c4b",
+      "sessionId": "worker-1aa9568a8df574db0cef146a58004c4b",
+      "ticket": "1aa9568a8df574db0cef146a58004c4b",
+      "title": "Add temporary subscription conservation and restore-priority settings",
+      "stage": "ended",
+      "mandateScope": "Add temporary subscription conservation and restore-priority settings",
+      "mandateBasis": {
+        "source": "github",
+        "scope": {
+          "number": 184,
+          "isPr": false,
+          "kind": "issue"
+        },
+        "row": "issues",
+        "sender": "gera3d",
+        "via": "addressed",
+        "addressed": "mention"
+      },
+      "sourceThreads": [
+        {
+          "key": "github:184",
+          "title": "#184 [superagent] Add temporary subscription conservation and restore-priority settings",
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/184"
+        },
+        {
+          "key": "github:185",
+          "title": "#185 Add temporary subscription conservation and restore-priority settings",
+          "url": "https://github.com/gera3d/superagent-sandbox/pull/185"
+        }
+      ],
+      "report": {
+        "state": "ready",
+        "summary": "Bounded subscription conservation/restore-priority slice is implemented and published for root review: PR #185 (https://github.com/gera3d/superagent-sandbox/pull/185) on branch agent/conserve-mode-1aa9568a8df5, adding patches/SUBSCRIPTION_ROUTING_CONTROLS.patch (650 lines, applies cleanly to exact base 9992decdacf43b93be04faf4858efbb2ed88a03a) and reports/SUBSCRIPTION_ROUTING_CONTROLS.md.\n\nChanges: models.conserve (default false) routes Executor/Ticket, Assessor/orchestrator, helper and configured-model ranker to openrouter/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial (ECONOMY_ROUTE, overridable via models.economyRoute) without escalating or falling back into parked subscriptions; per-provider available/exhausted/conserved marks with optional operator-entered ISO resetAt are excluded from default routes, escalation, helper fallback and the DeepSeek last-resort fallback; saved hierarchy, role routes and Source connections are never rewritten; native Models settings UI adds the switch, route fields, mark list, effective-route summary and skip reasons; models resource exposes a routing view. Availability remains separate from capability.\n\nVerification actually run: tests/subscription-conservation.spec.ts (new, 7 cases) plus role-models, model-fallback and panel-settings suites => 27 passed, 1 pre-existing unrelated panel-settings failure (its expected settings-tab list predates the existing Characters/Branding tabs). `tsc --noEmit` reported only two pre-existing errors for the absent sibling checkout ../dsh-next-steps; no changed-file errors. `tsdown` build completed green (26 files). Patch applies cleanly to a pristine worktree at the exact base.\n\nLimits/handoff: no live settings writes, installed-file edits, deployment, credentials, native visual verification or screenshots (prohibited for this worker; the ticket assigns native verification and broad integration to root). PR contains no Before/After visuals; root must complete native UI verification before merge. No follow-up jobs.",
+        "at": "2026-11-06T23:59:08.294Z"
+      },
+      "delivery": {
+        "id": "auto-1aa9568a8df574db0cef146a58004c4b",
+        "title": "Add temporary subscription conservation and restore-priority settings",
+        "owner": "worker:1aa9568a8df574db0cef146a58004c4b",
+        "bindings": {
+          "repository": "gera3d/superagent-sandbox",
+          "sourceIssue": 184,
+          "baseSha": "",
+          "headSha": "",
+          "refs": []
+        },
+        "requirements": [
+          "intake:acceptance-requirements-unconfirmed"
+        ],
+        "authorities": [],
+        "delegatedActions": [],
+        "followFixHeads": false,
+        "authorizedFixScopes": [],
+        "generation": 0,
+        "workers": [
+          "1aa9568a8df574db0cef146a58004c4b"
+        ],
+        "revision": 3,
+        "stage": "review",
+        "state": "blocked",
+        "scopeBinding": {
+          "reason": "Operator-confirmed delivery scope, target and acceptance requirements are missing",
+          "sourceTriggerId": "94e8322655e0271463212f4999519ab9"
+        },
+        "attempts": {
+          "review": 0,
+          "fix": 0,
+          "maxReview": 3,
+          "maxFix": 2
+        },
+        "evidence": [],
+        "audit": [
+          {
+            "at": "2026-11-06T23:49:39.824Z",
+            "event": "tracked-unbound:94e8322655e0271463212f4999519ab9",
+            "actor": "worker:1aa9568a8df574db0cef146a58004c4b"
+          }
+        ],
+        "blocker": "Operator-confirmed delivery scope, target and acceptance requirements are missing"
+      },
+      "context": "Operator-confirmed delivery scope, target and acceptance requirements are missing",
+      "canonical": null,
+      "advisor": null,
+      "staging": null,
+      "statusAfter": "pending",
+      "choicesRetained": [],
+      "choiceSnapshotHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "disposition": "untouched protected typed delivery gate; exact released-source/target evidence mapping unproved",
+      "reason": "Artifact PR/issue links are retained, but canonical bindings have empty base/head/refs, no evidence and no acceptance; cannot infer release authority or source equivalence from title or worker ready prose."
+    },
+    {
+      "decision": "delivery-auto-71dc25902ccec92c851634c58cf365f0",
+      "sessionId": "worker-71dc25902ccec92c851634c58cf365f0",
+      "ticket": "71dc25902ccec92c851634c58cf365f0",
+      "title": "Let operators record verified finding evidence through the native card",
+      "stage": "ended",
+      "mandateScope": "Let operators record verified finding evidence through the native card",
+      "mandateBasis": {
+        "source": "github",
+        "scope": {
+          "number": 188,
+          "isPr": false,
+          "kind": "issue"
+        },
+        "row": "issues",
+        "sender": "gera3d",
+        "via": "addressed",
+        "addressed": "mention"
+      },
+      "sourceThreads": [
+        {
+          "key": "github:188",
+          "title": "#188 [superagent] Let operators record verified finding evidence through the native card",
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/188"
+        },
+        {
+          "key": "github:189",
+          "title": "#189 Record operator-reviewed finding evidence through the native card",
+          "url": "https://github.com/gera3d/superagent-sandbox/pull/189"
+        }
+      ],
+      "report": {
+        "state": "ready",
+        "summary": "PR #189 (https://github.com/gera3d/superagent-sandbox/pull/189) is ready for review: one ticket-linked artifact PR on `agent/finding-evidence-card-71dc25902cce` with `patches/NATIVE_FINDING_EVIDENCE_UI.patch` (applies cleanly to a pristine worktree at exact base 9992dec) and `reports/NATIVE_FINDING_EVIDENCE_UI.md`.\n\nImplementation (`src/client/finding-card.tsx`, client-only; no server/schema/prompt changes): native \"Record operator-reviewed evidence\" form shown only for the same dispatched `running`/`blocked` finding with a current job. Fields: durable reference, verification results/limits, next decision, explicit \"I personally ran or inspected these results\" verified attestation. One explicit click POSTs `{revision, reference, evidence, nextDecision, verified}` to the existing protected `POST /findings/:id/evidence` with the same management headers as review/confirm; nothing is forged or bypassed and localApproval still comes from the browser same-origin envelope. Recording is observation only: no review/confirm/queue/merge/deploy/scope call. A 409 surfaces the server message plus refresh guidance, preserves the draft, disables submit until the authoritative revision advances and never auto-retries. Success says it did not accept the finding or delivery. The separate current-revision accept-evidence flow and exact full-requirements acknowledgment are untouched; only latest explicitly verified current-job evidence is selectable, matching the existing server rule; prior reports/history remain append-only and rendered.\n\nVerification actually run in the isolated clone (node_modules + sibling dsh-next-steps symlinked, no downloads): `tests/finding-card.spec.tsx` 25/25 passed (new tests: no record before explicit click, exact finding/revision payload, draft-preserving stale-409 recovery with exactly one request, observation vs acceptance separation, no form without a dispatched job/current state, protected payload carries no authority field); `tests/finding.spec.ts` + `tests/finding-consumers.spec.tsx` 28/28 passed; targeted `tests/runtime.spec.ts -t \"runs registered finding intake\"` passed, preserving the existing evidence 403-without-local-approval, stale-409 and 200 flow; `tsc --noEmit` exit 0. Full `tests/runtime.spec.ts`: 99 passed, 1 unrelated pre-existing failure at line 1082 asserting installed prompt text, identical at the base and untouched by this patch.\n\nLimitation: no before/after native screenshots, consistent with the ticket reserving installed native visual verification for root and PR #185 precedent; this is a reviewable patch artifact, not a live-verified UI, and no live acceptance is claimed. PR has no CI checks, no reviews and no bot rounds (0), no reviewers credited. No merge CLI is named in the delivery requirements, so a person merges PR #189; no auto-merge enabled.",
+        "at": "2026-11-07T00:08:56.518Z"
+      },
+      "delivery": {
+        "id": "auto-71dc25902ccec92c851634c58cf365f0",
+        "title": "Let operators record verified finding evidence through the native card",
+        "owner": "worker:71dc25902ccec92c851634c58cf365f0",
+        "bindings": {
+          "repository": "gera3d/superagent-sandbox",
+          "sourceIssue": 188,
+          "baseSha": "",
+          "headSha": "",
+          "refs": []
+        },
+        "requirements": [
+          "intake:acceptance-requirements-unconfirmed"
+        ],
+        "authorities": [],
+        "delegatedActions": [],
+        "followFixHeads": false,
+        "authorizedFixScopes": [],
+        "generation": 0,
+        "workers": [
+          "71dc25902ccec92c851634c58cf365f0"
+        ],
+        "revision": 3,
+        "stage": "review",
+        "state": "blocked",
+        "scopeBinding": {
+          "reason": "Operator-confirmed delivery scope, target and acceptance requirements are missing",
+          "sourceTriggerId": "3883194f9a7bf24ab5251d8e93a53c97"
+        },
+        "attempts": {
+          "review": 0,
+          "fix": 0,
+          "maxReview": 3,
+          "maxFix": 2
+        },
+        "evidence": [],
+        "audit": [
+          {
+            "at": "2026-11-07T00:01:17.955Z",
+            "event": "tracked-unbound:3883194f9a7bf24ab5251d8e93a53c97",
+            "actor": "worker:71dc25902ccec92c851634c58cf365f0"
+          }
+        ],
+        "blocker": "Operator-confirmed delivery scope, target and acceptance requirements are missing"
+      },
+      "context": "Operator-confirmed delivery scope, target and acceptance requirements are missing",
+      "canonical": null,
+      "advisor": null,
+      "staging": null,
+      "statusAfter": "pending",
+      "choicesRetained": [],
+      "choiceSnapshotHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "disposition": "untouched protected typed delivery gate; exact released-source/target evidence mapping unproved",
+      "reason": "Artifact PR/issue links are retained, but canonical bindings have empty base/head/refs, no evidence and no acceptance; cannot infer release authority or source equivalence from title or worker ready prose."
+    },
+    {
+      "decision": "delivery-auto-d65f3131a9ae77d9de524535e4a01a26",
+      "sessionId": "worker-d65f3131a9ae77d9de524535e4a01a26",
+      "ticket": "d65f3131a9ae77d9de524535e4a01a26",
+      "title": "Let independent confirmed findings use configured worker capacity",
+      "stage": "ended",
+      "mandateScope": "Let independent confirmed findings use configured worker capacity",
+      "mandateBasis": {
+        "source": "github",
+        "scope": {
+          "number": 182,
+          "isPr": false,
+          "kind": "issue"
+        },
+        "row": "issues",
+        "sender": "gera3d",
+        "via": "addressed",
+        "addressed": "mention"
+      },
+      "sourceThreads": [
+        {
+          "key": "github:182",
+          "title": "#182 [superagent] Let independent confirmed findings use configured worker capacity",
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/182"
+        },
+        {
+          "key": "github:186",
+          "title": "#186 Let independent confirmed findings use configured worker capacity",
+          "url": "https://github.com/gera3d/superagent-sandbox/pull/186"
+        }
+      ],
+      "report": {
+        "state": "ready",
+        "summary": "Ready for human review: PR #186 https://github.com/gera3d/superagent-sandbox/pull/186 (head agent/finding-concurrency-d65f3131a9ae, base main, author gera3d; files: patches/CONCURRENT_FINDING_DISPATCH.patch, reports/CONCURRENT_FINDING_DISPATCH.md; no CI checks configured; not merged/deployed/accepted).\n\nWhat changed (5 files, 191+/25-): FindingStore now counts dispatched jobs and nextQueued(capacity=1) admits only the lowest-seq queued finding while runningCount < capacity; markDispatched revalidates the same capacity inside its transaction and stays idempotent. FindingRuntime.dispatch() loops up to executor.maxWorkers minus slots held by genuinely busy ordinary tickets (new workerBusy dependency wired to executor.running), binding each job in the same Store.atomic as Engine.dispatchFinding and the delivery audit. The global \"all finding tickets quiescent\" gate became a per-finding priorWorkQuiescent gate, so reviewing/recovering one finding no longer serializes independent findings. Capacity is re-read inside each dispatch transaction; pause stops admission; reducing capacity never touches in-flight work. Default capacity 1 preserves the old serial behavior. Authority, bounded scope, repository match, native GitHub association and human review/acceptance are unchanged; native WorkerSlots still cap actual launches.\n\nVerification (actual): baseline worktree at 9992dec with only the new test file failed the capacity-three test with 1 running + 2 queued; patched tree: tests/finding.spec.ts 26/26 and tests/finding-runtime.spec.ts 19/19 (45/45), `tsc --noEmit` exit 0, `tsdown` build exit 0. Published patch hash matches the locally verified patch and `git apply --check` against pristine 9992dec succeeds. New tests cover three at capacity three, next-waiting, FIFO/idempotency under repeated wakes, pause + capacity reduction, cross-finding isolation from a blocked peer, and ordinary-ticket slot accounting. No bot review rounds occurred. Code directory: /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-concurrency-d65f3131a9ae/code. A person must merge; no auto-merge was enabled.",
+        "at": "2026-11-07T00:00:21.540Z"
+      },
+      "delivery": {
+        "id": "auto-d65f3131a9ae77d9de524535e4a01a26",
+        "title": "Let independent confirmed findings use configured worker capacity",
+        "owner": "worker:d65f3131a9ae77d9de524535e4a01a26",
+        "bindings": {
+          "repository": "gera3d/superagent-sandbox",
+          "sourceIssue": 182,
+          "baseSha": "",
+          "headSha": "",
+          "refs": []
+        },
+        "requirements": [
+          "intake:acceptance-requirements-unconfirmed"
+        ],
+        "authorities": [],
+        "delegatedActions": [],
+        "followFixHeads": false,
+        "authorizedFixScopes": [],
+        "generation": 0,
+        "workers": [
+          "d65f3131a9ae77d9de524535e4a01a26"
+        ],
+        "revision": 3,
+        "stage": "review",
+        "state": "blocked",
+        "scopeBinding": {
+          "reason": "Operator-confirmed delivery scope, target and acceptance requirements are missing",
+          "sourceTriggerId": "2c17c79704fc48254f6ac65c122a8436"
+        },
+        "attempts": {
+          "review": 0,
+          "fix": 0,
+          "maxReview": 3,
+          "maxFix": 2
+        },
+        "evidence": [],
+        "audit": [
+          {
+            "at": "2026-11-06T23:49:37.168Z",
+            "event": "tracked-unbound:2c17c79704fc48254f6ac65c122a8436",
+            "actor": "worker:d65f3131a9ae77d9de524535e4a01a26"
+          }
+        ],
+        "blocker": "Operator-confirmed delivery scope, target and acceptance requirements are missing"
+      },
+      "context": "Operator-confirmed delivery scope, target and acceptance requirements are missing",
+      "canonical": null,
+      "advisor": null,
+      "staging": null,
+      "statusAfter": "pending",
+      "choicesRetained": [],
+      "choiceSnapshotHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "disposition": "untouched protected typed delivery gate; exact released-source/target evidence mapping unproved",
+      "reason": "Artifact PR/issue links are retained, but canonical bindings have empty base/head/refs, no evidence and no acceptance; cannot infer release authority or source equivalence from title or worker ready prose."
+    }
+  ],
+  "excluded": [
+    {
+      "id": "chat-715d4bb2be0769a9aa7dbbe99f33c06d",
+      "sessionId": "session-7d897a3c-fe7a-4231-b7ff-dd7b48cc5141"
+    }
+  ],
+  "coverage": {
+    "pendingInspected": 11,
+    "projectRowsMapped": 10,
+    "obsoleteAdviceProven": 7,
+    "typedDeliveryGatesInspectedButUnproved": 3,
+    "ordinaryUserConversationExcluded": 1,
+    "retired": 0,
+    "choicesSelected": 0,
+    "repliesSent": 0,
+    "directDatabaseEdits": 0
+  },
+  "interfaceAudit": {
+    "inboxRefresh": "Normal GET decisions/inbox triggered existing supported reconciliation; all11 remain pending.",
+    "automaticRetirement": "reconcileInboxCurrency excludes generic advice with nonempty context; accepted delivery/exact progress linkage required by other paths.",
+    "directDismiss": "POST decisions/:id/dismiss calls Engine.evals.dismiss, which accepts only unavailable admission decisions, not these canonical chat rows. Not called.",
+    "compatibilityPut": "POST decisions/inbox -> DecisionInbox.put returns existing canonical row; cannot overwrite it to stale. Not called.",
+    "internalInvalidate": "DecisionInbox.invalidate/stale exist internally but no direct supported retirement HTTP/MCP action. Not invoked or reconstructed.",
+    "progressObservation": "POST progress/observe requires explicit native localApproval; no native progress entry control found in installed client source. progress-observe.ts directly writes SQLite and was not used under this pass explicit no-database-edit constraint.",
+    "resolveStageSubmission": "Would select or stage a user reply, not retirement; prohibited and not called."
+  },
+  "remainingOwner": "Fresh-chat coordinator records limitation; any new safe native/MCP retirement feature or protected delivery binding/acceptance requires separately authorized scope. No accepted parent reopen, new worker or user decision selected.",
+  "runtimeAfter": {
+    "setup": {
+      "machine": {
+        "stateDir": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent",
+        "promptMaxChars": 100000,
+        "admissionContextMaxPages": 10,
+        "admissionContextTimeoutMs": 15000
+      },
+      "problem": null,
+      "feishuProblem": null,
+      "accounts": {
+        "repository": "gera3d/superagent-sandbox",
+        "agent": "gera3d",
+        "feishu": null
+      }
+    },
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "masterId": "orchestrator-core",
+    "paused": false,
+    "health": {
+      "runtime": {
+        "state": "ready",
+        "detail": "Orchestrator is ready",
+        "at": "2026-11-09T02:08:53.449Z"
+      },
+      "relay": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:19:01.591Z"
+      },
+      "notice": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:19:01.592Z"
+      },
+      "launch": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:13:30.123Z"
+      },
+      "delivery": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.011Z"
+      },
+      "assessment": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.012Z"
+      },
+      "reply": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.012Z"
+      },
+      "evals": {
+        "state": "ready",
+        "detail": "No unavailable Eval in the last hour"
+      },
+      "models": {
+        "state": "ready",
+        "detail": "No managed Session is waiting on a model budget retry"
+      },
+      "github": {
+        "state": "ready",
+        "detail": "0 notifications; next poll \u2265 60s",
+        "at": "2026-11-09T02:34:29.646Z"
+      }
+    }
+  }
+}

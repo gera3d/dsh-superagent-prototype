@@ -1,6 +1,6 @@
 # DeepSeek Harness project status
 
-Updated November 08, 2026, 06:32 PM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
+Updated November 08, 2026, 06:41 PM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
 
 ## Current seven-track outcome
 
@@ -15,6 +15,16 @@ Updated November 08, 2026, 06:32 PM PST. Owner: Codex. Check this current sectio
 | Publication confirmation before enqueue | **Investigation independently completed and accepted**, not a repair. Actual production coordinator pre-effect/idempotency test passes; original66ms cause remains unproven. | Optional separately scoped diagnostic logging decision; preserve every publication approval and pin gate. |
 
 Intake is **resumed**, load **0 running,0 queued,max3**. All runtime health components, including GitHub, currently ready. Installed cumulative PR74+75 source head0fed9d3 and27 built assets match qualified release. Reporting original and linked verification now native verified/accepted. Headless/advisor/completion/allowance remain accepted; cost/publication remain accepted verification/investigation scopes only. No new repair scope, settings/routes/credentials/spending/limits/schedule changes. OpenAI conserved; headless enabled revision3.
+
+## Pending decision reconciliation — exact mapping complete, safe-retirement interface absent
+
+A bounded read-only audit covered all11 pending inbox rows:7 old system/coordinator advice rows,3 typed delivery gates, and1 ordinary user conversation excluded from this release cleanup. Exact ticket mandate basis proves the7 advice links: advisor `12779824-b82e-484d-9502-d2150ba58aa1` (workers7c017292 and9c5b2ece), allowance `f9335259-b51c-4e97-9750-3923b7e2138b` (workerse10f4684 and4a029486), reporting `51f309ca-d396-4983-a55d-ef4432a8572f` (workere7d73918), publication-investigation `a1707f3a-a020-4b8b-8374-50887c5e3265` (workerfd09fd8a), and cost-verification `1accfa18-853b-42e5-8a9b-f24375d50d3e` (worker775c7133). All those parents are resolved/verified. Old review/rerun/repair-proposal advice is obsolete for completed scope; cost repair/publication effects remain unapproved.
+
+**0 rows retired; no choices selected, replies sent, direct database edits, new workers, tests, source/deployment/settings/access changes or accepted findings reopened.** Normal supported inbox refresh leaves all11 pending. Existing automatic generic-advice retirement excludes these nonempty-context rows. Direct dismiss handles only unavailable admission decisions; compatibility ingestion cannot overwrite an existing canonical row. Internal invalidate/stale methods have no exposed direct retirement HTTP/MCP action. The protected progress-observation HTTP action requires native local approval, and no progress-entry control was found in the installed client source; the alternative CLI directly writes SQLite and was deliberately not used under this pass's no-database-edit instruction. No endpoint/approval workaround was invented. [Exact row/parent/choice coverage and interface limitation](docs/evidence/stale-advice-mapping.json).
+
+The3 typed delivery gates remain untouched: worker1aa9568a issue184/artifactPR185 (subscription conservation), worker71dc2590 issue188/artifactPR189 (native evidence form), and workerd65f3131 issue182/artifactPR186 (finding concurrency). Their canonical records still have empty base/head/refs, no acceptance evidence and unconfirmed requirements; retained artifact reports are insufficient to prove exact released-source/target binding. No retirement or publication authority inferred. Ordinary user decision `chat-715d4bb2be0769a9aa7dbbe99f33c06d` remains excluded and unchanged.
+
+Owner: fresh-chat coordinator retains the exact cleanup limitation. Safely changing these7 rows requires a supported retirement interface within separately authorized implementation scope; binding/accepting the3 old delivery records likewise requires exact source/target/requirement proof, not a bulk dismiss. No new task was queued. Current accepted release remains accepted;0running/0queued, unpaused, health including GitHub ready. The11 pending inbox rows are not11 executor jobs and must not be described as all actionable or all complete.
 
 ## Auxiliary review records reconciled; GitHub rate limit recovered naturally
 
