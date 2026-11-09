@@ -75,8 +75,8 @@ describe('independent exact legacy identity and missing-worker fences', () => {
       const context = deriveOptionQualityContext(adviceContext(undefined, d))
       expect(context.isDeliveryAccepted).toBe(false)
       const options = [
-        { id: 'review', label: 'Review patch and test evidence', prompt: 'Have Codex review the patch and rerun tests.', recommended: true },
-        { id: 'publish', label: 'Prepare deployment', prompt: 'Prepare and deploy the feature after review.' },
+        { id: 'review', label: 'Review patch and test evidence', prompt: 'Have Codex review the patch and rerun tests.', why: 'Repeat old review', recommended: true },
+        { id: 'publish', label: 'Prepare deployment', prompt: 'Prepare and deploy the feature after review.', why: 'Repeat old deployment', recommended: false },
       ]
       expect(filterQualityOptions(options, context)).toEqual([])
     } finally { s.close() }
