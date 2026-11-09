@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { deriveOptionQualityContext, filterQualityOptions } from '../src/app/option-quality.ts'
 import { adviceContext } from '../src/app/advice-context.ts'
 import { DeliveryStore, deliveryFingerprint } from '../src/app/feature-delivery.ts'
 
@@ -11,7 +12,7 @@ function fixture(repository = 'gera3d/superagent-sandbox') {
   store.compareAndSwap(d.id, 1, v => { v.stage = 'review'; v.state = 'blocked' })
   store.compareAndSwap(d.id, 2, () => {})
   store.db.exec('CREATE TABLE ticket(id TEXT PRIMARY KEY, value TEXT NOT NULL)')
-  store.db.prepare('INSERT INTO ticket VALUES (?, ?)').run(worker, JSON.stringify({ id: worker, ended: { by: 'executor', outcome: 'merged', at: '2026-11-07T02:25:52Z' }, assignments: [{ state: 'done' }] }))
+  store.db.prepare('INSERT INTO ticket VALUES (?, ?)').run(worker, JSON.stringify({ id: worker, ended: { by: 'executor', outcome: 'closed', at: '2026-11-07T02:22:10Z' }, origin: { triggerId: '94e8322655e0271463212f4999519ab9', triggerIds: ['94e8322655e0271463212f4999519ab9'] }, mandate: { strength: 'explicit', basis: { source: 'github', scope: { number: 184, isPr: false, kind: 'issue' }, row: 'issues' } }, assignments: [{ state: 'done' }] }))
   return store
 }
 const reconcile = (store: DeliveryStore) => {
@@ -64,6 +65,20 @@ describe('independent exact legacy identity and missing-worker fences', () => {
       expect(context).toMatch(/historical|delivered by later release/i)
       expect(context).not.toContain('UNBOUND DELIVERY GATE:')
       expect(context).not.toContain('this delivery is already verified and accepted')
+    } finally { s.close() }
+  })
+
+  it('shared option-quality filtering cannot regenerate release actions for reconciled historical scope', () => {
+    const s = fixture()
+    try {
+      const d = reconcile(s)[0]!
+      const context = deriveOptionQualityContext(adviceContext(undefined, d))
+      expect(context.isDeliveryAccepted).toBe(false)
+      const options = [
+        { id: 'review', label: 'Review patch and test evidence', prompt: 'Have Codex review the patch and rerun tests.', recommended: true },
+        { id: 'publish', label: 'Prepare deployment', prompt: 'Prepare and deploy the feature after review.' },
+      ]
+      expect(filterQualityOptions(options, context)).toEqual([])
     } finally { s.close() }
   })
 
