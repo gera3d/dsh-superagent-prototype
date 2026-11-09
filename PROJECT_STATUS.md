@@ -1,6 +1,6 @@
 # DeepSeek Harness project status
 
-Updated November 08, 2026, 06:41 PM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
+Updated November 09, 2026, 06:54 AM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
 
 ## Current seven-track outcome
 
@@ -14,7 +14,19 @@ Updated November 08, 2026, 06:41 PM PST. Owner: Codex. Check this current sectio
 | Cost-summary historical findings | **Verification independently completed and accepted**, not implementation repaired. Root reproduced and reconciled9 concerns with limits. | Prepare separately confirmed bounded cost repair scope; no duplicate accepted original job. No repair implementation queued this pass. |
 | Publication confirmation before enqueue | **Investigation independently completed and accepted**, not a repair. Actual production coordinator pre-effect/idempotency test passes; original66ms cause remains unproven. | Optional separately scoped diagnostic logging decision; preserve every publication approval and pin gate. |
 
-Intake is **resumed**, load **0 running,0 queued,max3**. All runtime health components, including GitHub, currently ready. Installed cumulative PR74+75 source head0fed9d3 and27 built assets match qualified release. Reporting original and linked verification now native verified/accepted. Headless/advisor/completion/allowance remain accepted; cost/publication remain accepted verification/investigation scopes only. No new repair scope, settings/routes/credentials/spending/limits/schedule changes. OpenAI conserved; headless enabled revision3.
+Intake is **resumed**, load **0 running,0 queued,max3**. All runtime health components, including GitHub, currently ready. Installed cumulative PR74+75 source head0fed9d3 and27 built assets match qualified release. Reporting original and linked verification now native verified/accepted. Headless/advisor/completion/allowance remain accepted; cost/publication remain accepted verification/investigation scopes only. Recommendation-quality correction is now user-approved below; prior deployed source remains unchanged. No settings/routes/credentials/spending/limits/schedule changes. OpenAI conserved; headless enabled revision3.
+
+## New user-approved priority — actual recommendation quality, not inbox cleanup
+
+Gera explicitly authorized implementation/review/release of a bounded recommendation-quality correction first. Prior advisor acceptance is preserved as bounded context/semantic-handoff proof, not a universal all-options guarantee. Direct read-only assessment inspected4 closure cards/11 alternatives plus2 older advisor cards/6 alternatives. Fresh top choices correctly recognize accepted work, but some alternatives drift into an unsolicited native-tool finding or unrelated blocked deliveries, and closure still becomes an unnecessary pending reply. [Exact saved examples and acceptance cases](docs/evidence/recommendation-quality-before.json); [quality assessment and precise prior coverage](docs/reviews/advisor-option-quality-2026-11-09.md).
+
+New quality stage is approved but not yet implemented/tested/reviewed/merged/deployed. Harness owns implementation; Codex owns independent exact-head review, rollback/release and native all-option verification. Before dispatch, captured actual choices and acceptance criteria; no recommendation generation or conversation reopening. New correction will be canonically linked to accepted advisor parent12779824 without rewriting accepted reporting/verification history. No settings/provider/credentials/spending/worker-capacity changes authorized. Historical-row retirement is not a substitute and does not block fixing fresh advice.
+
+Current live snapshot:15 pending decisions,0running/0queued, unpaused, all health ready. The original11 are7 old system advice,3 unbound delivery gates and1 ordinary conversation; four closure-advice cards surfaced when completed conversations were opened. Those four are not new executor jobs. No rows changed by this design/assessment.
+
+Secondary [seven-card retirement draft](docs/023-obsolete-system-advice-retirement-draft.md) is complete as documentation only: exact allowlist, existing pending->stale invalidation, native preview/confirmation, row/parent proof CAS including legacy absent revisions, atomic audit/idempotency and per-source recreation prevention. Proposed interfaces do not exist or run. Conditional effect15->8 only if all7 remain eligible and nothing else changes. Excludes the3 delivery gates, ordinary conversation and4 closure cards. No retirement implementation, deployment or decision-state changes authorized or performed.
+
+## Historical checkpoint — pending decision audit before quality authorization
 
 ## Pending decision reconciliation — exact mapping complete, safe-retirement interface absent
 

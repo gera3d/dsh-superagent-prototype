@@ -1,0 +1,510 @@
+{
+  "at": "2026-11-09T14:52:16.713305+00:00",
+  "authority": "User explicitly prioritized implementation of bounded recommendation quality repair; retirement remains draft only.",
+  "priorAdvisorFinding": {
+    "id": "12779824-b82e-484d-9502-d2150ba58aa1",
+    "scope": "Narrow shared advisor context correction for canonical finding-owned implementation jobs and native fallback. Keep this separate from explicit-closeout detector repair and unattended-coordination implementation. Reuse current authenticated APIs and existing job/finding records. Do not implement a fictional Codex dispatch bridge, new permissions, publication bypass, auto-send or change scope. Harness implements isolated candidate; Codex reviews and releases under existing user authorization.",
+    "requirements": [
+      "Reproduce current helper/context for worker-cf2c9c8117f4870abc3dc067a903ab43: delivery null causes generic ordinary-conversation rule although task is canonical finding revision 4 with root review/release scope; preserve exact before evidence",
+      "Inspect src/app/http.ts contextFor and advice-context.ts plus native helper/fallback/ranking paths; derive bounded structured finding/job state and next owner from canonical records, never arbitrary prose or stale prior jobs",
+      "For current tested worker-reported candidate awaiting root review, recommend one concrete permitted stage toward actual coordinator review; do not default to user walkthrough, duplicate implementation/test runs, or unconditional accept/deploy",
+      "Distinguish recommendation text/prepared native reply from actual action capability: if no supported route can notify Codex, identify that missing handoff explicitly instead of implying clicking a prompt invokes Codex; do not tell implementation worker to independently review itself",
+      "Preserve normal chat behavior, incomplete/failed review cases, resolved findings, prior attempts, current revision/source guards, score/rank preservation and exact publication confirmations",
+      "Regression test finding-without-delivery, current versus prior assignment, resolved finding, ordinary chat and shared helper/fallback context; run targeted types/build/checks sequentially and return exact heads/patches",
+      "No running installation edits, merge, deployment, new credentials/access or accepted finding by worker; root handles exact-head review, regression evidence, deployment and native verification"
+    ],
+    "state": "resolved",
+    "resolution": {
+      "outcome": "verified",
+      "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/advisor-paired-source-qualified.json",
+      "requirements": [
+        "Reproduce current helper/context for worker-cf2c9c8117f4870abc3dc067a903ab43: delivery null causes generic ordinary-conversation rule although task is canonical finding revision 4 with root review/release scope; preserve exact before evidence",
+        "Inspect src/app/http.ts contextFor and advice-context.ts plus native helper/fallback/ranking paths; derive bounded structured finding/job state and next owner from canonical records, never arbitrary prose or stale prior jobs",
+        "For current tested worker-reported candidate awaiting root review, recommend one concrete permitted stage toward actual coordinator review; do not default to user walkthrough, duplicate implementation/test runs, or unconditional accept/deploy",
+        "Distinguish recommendation text/prepared native reply from actual action capability: if no supported route can notify Codex, identify that missing handoff explicitly instead of implying clicking a prompt invokes Codex; do not tell implementation worker to independently review itself",
+        "Preserve normal chat behavior, incomplete/failed review cases, resolved findings, prior attempts, current revision/source guards, score/rank preservation and exact publication confirmations",
+        "Regression test finding-without-delivery, current versus prior assignment, resolved finding, ordinary chat and shared helper/fallback context; run targeted types/build/checks sequentially and return exact heads/patches",
+        "No running installation edits, merge, deployment, new credentials/access or accepted finding by worker; root handles exact-head review, regression evidence, deployment and native verification"
+      ],
+      "at": "2026-11-09T00:04:11.920Z",
+      "actor": "local-operator",
+      "jobId": "finding:12779824-b82e-484d-9502-d2150ba58aa1:r12"
+    }
+  },
+  "samples": [
+    {
+      "id": "chat-6557f8abbb8003c73cfefec683a5c4cd",
+      "sessionId": "worker-dba40835765de9fc076788032474e7de",
+      "status": "pending",
+      "sourceMessageId": "cd899292-559d-4093-9010-f356491c4ec1",
+      "sourceSeq": 20,
+      "sourceTurn": 1,
+      "actionMode": "stage_response",
+      "createdAt": 1794190741462,
+      "context": "Executed read-only verification of the installed reporting bridge on the Antigravity Gemini route and recorded a ready report via **`orchestrator_report`**.\n\n\ud83d\udfe2 **DONE**:\n- Verified installed CLI at **`/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/worker-bin/orchestrator_report`** (`-rwx------`, 2902 bytes).\n- Recorded `state=ready` via real installed **`orchestrator_report`** CLI with `ticket=dba40835765de9fc076788032474e7de`, `assignment=fcc0f8a8d0ae474cd94d5a0db26fcc72`, and `turn=1`.\n- Preserved strict read-only scope with zero code, test, build, settings, or PR changes.\n\n\u26a1 **DOING**:\n- Completed bounded verification run; standing by for coordinator slot inspection.\n\n\ud83c\udfaf **NEXT**:\n- Await Codex coordinator inspection of native ticket report and slot state.\n",
+      "question": "Choose the next step for this thread",
+      "choices": [
+        {
+          "id": "next-1",
+          "label": "Confirm completion, no further work",
+          "prompt": "The finding 06fd14af-5535-411d-936c-477bf2bd2cfa is recorded as verified and resolved (r5, local-operator). No further implementation, tests or review are needed for this scope. Stop here and take no new action unless given a new instruction.",
+          "description": ""
+        },
+        {
+          "id": "next-2",
+          "label": "Inspect recorded resolution evidence",
+          "prompt": "Read-only: review the recorded evidence for finding 06fd14af (r1 blocked, r3 fallback ready, r5 Gemini ready, verified reference reporting-real-gemini-verified.json) and summarize the history in a few lines. Do not re-run the CLI, tests or any verification, and do not reopen the finding.",
+          "description": ""
+        }
+      ],
+      "recommendation": {
+        "recommendedValue": "next-1",
+        "confidence": 0,
+        "rationale": "",
+        "distribution": [],
+        "provider": "Senior Developer",
+        "latencyMs": 0
+      }
+    },
+    {
+      "id": "chat-7d80df3b084ddfc8ba5f6bea9c655c7f",
+      "sessionId": "worker-487236ccdb874bd9db0e60288cc2470c",
+      "status": "pending",
+      "sourceMessageId": "4045eeca-1420-439c-a00e-a1d143098244",
+      "sourceSeq": 46,
+      "sourceTurn": 2,
+      "actionMode": "stage_response",
+      "createdAt": 1794190188778,
+      "context": "\ud83d\udfe2 **DONE:** I ran the installed `orchestrator_report` CLI and it recorded the report as `state=ready` (exit code 0).\n\n- **CLI check:** It is in `worker-bin` on PATH, at `/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/worker-bin/orchestrator_report`.\n- **Identity used:** My shell had no `DSH_SUPERAGENT_*` variables, so I exported the values from my system prompt. Ticket is `487236ccdb874bd9db0e60288cc2470c`, assignment `3bf9df79a01ed649a526e303bd2d7122`, turn `2`.\n- **Why turn 2:** Turn 1 failed because no Antigravity account was available (cooldown). The retry ran on the fallback model `claude-sonnet-5-5`, not the Gemini route, and the report says so.\n\nI changed no code, settings or accounts, and ran no tests, builds or PRs.\n\n\ud83c\udfaf **NEXT:** Codex can now inspect the request events, report file, native Engine report and slot state.",
+      "question": "Choose the next step for this thread",
+      "choices": [
+        {
+          "id": "next-1",
+          "label": "State completion; no further action",
+          "prompt": "The finding 06fd14af-5535-411d-936c-477bf2bd2cfa is recorded as verified and resolved (revision 7, local-operator, job r5). The r3 fallback report (claude-sonnet-5-5, not Gemini) and the failed r1 attempt stay in history only. Do not repeat the verification, rerun tests, or reopen without a new user instruction. Confirm in one sentence that this scope is closed.",
+          "description": ""
+        },
+        {
+          "id": "next-2",
+          "label": "Inspect recorded resolution evidence",
+          "prompt": "Read-only: using records.read, summarize the recorded resolution of finding 06fd14af-5535-411d-936c-477bf2bd2cfa. Cover the verified r5 report (ticket dba40835765de9fc076788032474e7de, assignment fcc0f8a8d0ae474cd94d5a0db26fcc72) and the evidence file reporting-real-gemini-verified.json. Note that r3 ran on a fallback model and r1 was blocked. Do not run new checks, claim new verification, or take any action. If a record is unavailable, say so.",
+          "description": ""
+        },
+        {
+          "id": "next-3",
+          "label": "Note r3 vs r5 provenance for the record",
+          "prompt": "Read-only: write a short provenance note distinguishing r1 (blocked), r3 (ready, fallback claude-sonnet-5-5 after Antigravity cooldown, so not a Gemini proof) and r5 (real Gemini, verified, resolved). Cite only recorded references. Do not propose acceptance, a rerun, or a new action, and do not invent verification results.",
+          "description": ""
+        }
+      ],
+      "recommendation": {
+        "recommendedValue": "next-1",
+        "confidence": 0,
+        "rationale": "",
+        "distribution": [],
+        "provider": "Senior Developer",
+        "latencyMs": 0
+      }
+    },
+    {
+      "id": "chat-f96fc47a6722410ddcb1c105e3a7fcf3",
+      "sessionId": "worker-b62c2f4207fd86b3cea3087aa71ec87a",
+      "status": "pending",
+      "sourceMessageId": "4a1cfc5b-bab2-41a8-96fb-ebd43f197712",
+      "sourceSeq": 270,
+      "sourceTurn": 3,
+      "actionMode": "stage_response",
+      "createdAt": 1794189787511,
+      "context": "I read the output of that job (bash-3e379a48592a4541) before the ticket ended. It was a leftover disk-wide search for `findWorkerReportFile`, and I'd already reported the work as ready.\n\n- **Fix:** commit `bdd4e07` on local branch `agent/finding-task-b62c2f4207fd`, in `work/finding-task-b62c2f4207fd/repo`. It stops a missing-report block from firing while an availability fallback is starting.\n- **Not done:** I opened no PR and published and deployed nothing. It still needs root review.\n- **Open limit:** the Gemini route still has no native `orchestrator_report` tool. A ready report there depends on the existing file-based transport from PR #74.\n\nNo jobs of mine are still running.",
+      "question": "Choose the next step for this thread",
+      "choices": [
+        {
+          "id": "next-1",
+          "label": "Confirm resolution, stop here",
+          "prompt": "The finding is recorded as verified and resolved (r31, evidence: reporting-real-gemini-verified.json). No further implementation, tests, or dispatch are needed for this scope. Please state completion plainly and take no further action unless I give a new instruction.",
+          "description": ""
+        },
+        {
+          "id": "next-2",
+          "label": "Inspect recorded resolution evidence",
+          "prompt": "Read-only: open the recorded verified evidence (docs/evidence/reporting-real-gemini-verified.json) and summarize what it shows about ready reports on the antigravity/Gemini route. Do not re-run tests, reopen the finding, or dispatch work. Flag only if the evidence appears to contradict the resolution.",
+          "description": ""
+        },
+        {
+          "id": "next-3",
+          "label": "Log the native-tool gap separately",
+          "prompt": "The Gemini route still lacks a native orchestrator_report tool and relies on the file-based transport from PR #74. Draft a short description for a new, separate finding covering that gap. Do not reopen 51f309ca or start implementation; I will decide whether to file it.",
+          "description": ""
+        }
+      ],
+      "recommendation": {
+        "recommendedValue": "next-1",
+        "confidence": 0.7,
+        "rationale": "The recorded facts show finding 51f309ca at revision 38 as resolved with outcome 'verified' (local-operator, 2026-11-09T02:23:23Z), backed by a verified report that links reporting-real-gemini-verified.json. Its nextDecision says no further implementation or worker dispatch is needed for this scope. The authoritative resolution overrides the older worker report, so the least-repeated-work outcome is to state completion plainly and stop. The main tradeoff is against next-3, which would capture the worker's noted open limit (no native orchestrator_report on Gemini, reliance on PR #74's file-based transport). That is a plausible follow-up, but it is outside the resolved scope and was not requested, and the verified evidence appears to accept the current transport. Next-2 would only re-read evidence that is already recorded as verified, so it adds little. Assumption: nothing in the supplied data contradicts the resolution. I did not see the evidence file's contents, so I can't confirm what it shows beyond its recorded verified status.",
+        "distribution": [
+          {
+            "id": "next-1",
+            "probability": 0.7
+          },
+          {
+            "id": "next-2",
+            "probability": 0.1
+          },
+          {
+            "id": "next-3",
+            "probability": 0.2
+          }
+        ],
+        "provider": "anthropic / claude-sonnet-5-5 (model-reported scores, not calibrated)",
+        "latencyMs": 5099
+      }
+    },
+    {
+      "id": "chat-94e77e2dc7bf4b94736ee247267c7e02",
+      "sessionId": "worker-92582a0a1a1bcff6cfa69a1b868d95dc",
+      "status": "pending",
+      "sourceMessageId": "31c1f541-1a17-45fa-8ff2-5473e0d8be29",
+      "sourceSeq": 42,
+      "sourceTurn": 2,
+      "actionMode": "stage_response",
+      "createdAt": 1794189365833,
+      "context": "I did not run the verification, and no report was filed. Both shell attempts failed with `Ticket ended; new work needs a new authorized ticket`.\n\nThe harness has closed this ticket (`92582a0a1a1bcff6cfa69a1b868d95dc`, assignment `0469615a5662df2e9d4488c269b0bb17`, turn 2). I haven't located `orchestrator_report` on PATH or in the state directory, and I haven't checked the identity variables from the shell.\n\nRunning the report CLI anyway would bypass the closed-ticket state, and the task bars faking a result. So I changed nothing, ran no report command, and sent no `ready` report. The earlier turn-1 failure came from the Antigravity accounts being in cooldown (earliest reset in 1007s). This ticket now needs to be reauthorized.\n\n\ud83c\udfaf **NEXT:** Open a new authorized ticket for finding `06fd14af-5535-411d-936c-477bf2bd2cfa` so the check can run with that ticket's own identity.",
+      "question": "Choose the next step for this thread",
+      "choices": [
+        {
+          "id": "next-1",
+          "label": "Confirm closure from recorded resolution",
+          "prompt": "Finding 06fd14af-5535-411d-936c-477bf2bd2cfa is already recorded as verified and resolved (r5, local-operator, 2026-11-09T02:22:30Z). Using records.read only, summarize the recorded history: r1 blocked (closed ticket, Antigravity cooldown), r3 ready (fallback), r5 ready on Gemini, then verified. State that no further work is needed. Do not rerun the CLI check, reopen the finding, or claim any new verification.",
+          "description": ""
+        },
+        {
+          "id": "next-2",
+          "label": "Mark r1 ticket as superseded history",
+          "prompt": "The r1 worker's suggestion to open a new authorized ticket for this finding is stale. r5 (ticket dba40835765de9fc076788032474e7de, assignment fcc0f8a8d0ae474cd94d5a0db26fcc72) was later verified and resolved. Write a short note that r1 (ticket 92582a0a1a1bcff6cfa69a1b868d95dc) is superseded, preserved only as history, and that no reauthorization or retry is required.",
+          "description": ""
+        },
+        {
+          "id": "next-3",
+          "label": "List blocked deliveries needing operator scope",
+          "prompt": "Using records.read only, list the recorded deliveries blocked on missing operator-confirmed scope, target and acceptance requirements: auto-1aa9568a, auto-71dc2590 and auto-d65f3131. For each, state exactly which input a person must supply. Do not start work, guess scope, or propose acceptance. This is separate from the resolved Gemini verification finding.",
+          "description": ""
+        }
+      ],
+      "recommendation": {
+        "recommendedValue": "next-1",
+        "confidence": 0.75,
+        "rationale": "The supplied record shows the finding is already verified and resolved (r5, local-operator, 2026-11-09T02:22:30Z), so the r1 worker's request for a new ticket is stale. Confirming closure from the recorded history ends the loop without a retry, reauthorization, or new verification run, which fits the goal of minimizing repeated work. The main tradeoff against next-2 is that next-2 only adds a superseded note for r1. That is a narrower, mostly redundant bookkeeping step that the closure summary already covers. next-3 concerns separate deliveries (auto-1aa9568a, auto-71dc2590, auto-d65f3131) that are not part of this finding, and I could not verify their status from the supplied context. The recommendation assumes the recorded resolution is authoritative, as the context states. If the operator specifically wants those blocked deliveries triaged, next-3 could be the better choice.",
+        "distribution": [
+          {
+            "id": "next-1",
+            "probability": 0.75
+          },
+          {
+            "id": "next-2",
+            "probability": 0.15
+          },
+          {
+            "id": "next-3",
+            "probability": 0.1
+          }
+        ],
+        "provider": "anthropic / claude-sonnet-5-5 (model-reported scores, not calibrated)",
+        "latencyMs": 5352
+      }
+    },
+    {
+      "id": "chat-a71ba8a1a0abcfc469fd1bcb06174d0f",
+      "sessionId": "worker-7c017292cef5dee4d08138181ec47a40",
+      "status": "pending",
+      "sourceMessageId": "b904eecb-c4e7-4fd8-bd97-2033af4ceab5",
+      "sourceSeq": 20,
+      "sourceTurn": 1,
+      "actionMode": "stage_response",
+      "createdAt": 1794181734928,
+      "context": "The review handoff candidate is ready in isolated workspace directory **`finding-task-7c017292cef5`**, resolving the root evidence audit failure by tightening test-fact derivation and superseding stale ready evidence when newer reports indicate failure or pending tests.\n\n\ud83d\udfe2 **DONE**:\n- **Conservative Test-Fact Derivation**: Updated [`adviceContext`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/repo/src/app/advice-context.ts#L24-L62) to stop inferring completed testing from generic `state: 'evidence'` rows, worker `waiting` status, or ended tickets.\n- **Newer-Failure Precedence & Regressions**: Added chronological superseding where newer failure/pending signals override older ready evidence; verified root audit [`tests/root-advisor-evidence.audit.spec.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/repo/tests/root-advisor-evidence.audit.spec.ts) and added negative fixture regressions to [`tests/advice-context.spec.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/repo/tests/advice-context.spec.ts#L466-L553).\n- **Sequential Verification & Patches**: Candidate commit `303d531` passed all 11 test suites (98 tests), typecheck, and tsdown build with zero exit codes; generated patches in [`checkpoint/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/checkpoint).\n\n\u26a1 **DOING**:\n- Stopping at the scope boundary with zero merge, deployment, publication, or acceptance authority.\n\n\ud83c\udfaf **NEXT**:\n- Root coordinator audits [`checkpoint/NOTES.md`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/checkpoint/NOTES.md) and applies candidate patch [`checkpoint/01-backend-canonical-finding-advice.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-7c017292cef5/checkpoint/01-backend-canonical-finding-advice.patch) under authorized coordinator review procedure.\n",
+      "question": "Choose the next step for this thread",
+      "choices": [
+        {
+          "id": "next-1",
+          "label": "Hand off to Codex coordinator review",
+          "prompt": "Operator: explicitly dispatch the isolated candidate to the Codex reviewer and release coordinator (root operator); no automated Codex notification route exists, so this handoff is manual. Review workspace finding-task-7c017292cef5, candidate commit 303d531, checkpoint/NOTES.md and checkpoint/01-backend-canonical-finding-advice.patch (the ticket report is ff2c549eeef9c883fa8064c997f3c225). Verify the exact head matches 303d531, inspect the diff in src/app/advice-context.ts against scope, and check the saved logs for the claimed 98 tests, typecheck and build. Rerun only checks that are missing or unverifiable. The worker's pass claims are unverified until the coordinator confirms them. Accept or reject under existing authorization.",
+          "description": ""
+        },
+        {
+          "id": "next-2",
+          "label": "Audit saved evidence before review",
+          "prompt": "Before coordinator review, inspect the saved logs and artifacts in checkpoint/ for candidate 303d531. Confirm they show the 11 suites and 98 tests, typecheck and build results, and that they were run on this exact head. Also confirm tests/root-advisor-evidence.audit.spec.ts and the new negative fixtures in tests/advice-context.spec.ts are included. Report any gaps as targeted missing checks, not a blanket full rerun. Do not merge or accept.",
+          "description": ""
+        },
+        {
+          "id": "next-3",
+          "label": "Targeted diff scope check",
+          "prompt": "Read-only: review the diff of candidate 303d531 against the finding scope. Confirm it touches only advice-context derivation and its tests, and adds no Codex dispatch bridge, permissions, auto-send or publication path. Check the edge cases: newer failure or pending evidence superseding older ready evidence, equal timestamps, missing timestamps, and ended tickets with no report. List any gaps for the coordinator. Do not modify code.",
+          "description": ""
+        }
+      ],
+      "recommendation": {
+        "recommendedValue": "next-1",
+        "confidence": 0.72,
+        "rationale": "The implementation worker has ended and the finding is blocked pending independent review and verification, so the next stage is a manual, explicit handoff from the operator to the Codex reviewer and release coordinator (root operator). No automated Codex notification route exists, so the operator must dispatch it. next-1 is the only option that moves the work to the recorded owner of review and release. Its prompt already tells the coordinator to check the exact head (303d531), inspect the diff for scope, verify the saved logs, and rerun only missing or unverifiable checks. That covers the audit (next-2) and scope check (next-3) inside the review itself and avoids an extra handoff. The tradeoff is that the coordinator takes on that verification work, and the worker's claims (98 tests, typecheck, build) are unverified until confirmed. Assumptions: the checkpoint artifacts and logs exist and are readable by the coordinator. Zero outer tool calls means nested-provider coverage is unknown, not that tests are absent. If the artifacts turn out to be missing or tied to a different head, next-2 would become the better first step. Nothing in the supplied context establishes that the claimed results were independently verified.",
+        "distribution": [
+          {
+            "id": "next-1",
+            "probability": 0.72
+          },
+          {
+            "id": "next-2",
+            "probability": 0.18
+          },
+          {
+            "id": "next-3",
+            "probability": 0.1
+          }
+        ],
+        "provider": "anthropic / claude-sonnet-5-5 (model-reported scores, not calibrated)",
+        "latencyMs": 4843
+      }
+    },
+    {
+      "id": "chat-eb937970f942747759f30c87b8476336",
+      "sessionId": "worker-9c5b2ece23fdad8dac34df578f472f96",
+      "status": "pending",
+      "sourceMessageId": "71397738-cd0e-4ae7-9852-71b6d45a1a6e",
+      "sourceSeq": 20,
+      "sourceTurn": 1,
+      "actionMode": "stage_response",
+      "createdAt": 1794165572191,
+      "context": "I have launched the TypeScript typecheck (`tsc --noEmit`) in the isolated repository and am awaiting its completion.\n\nBounded finding fix `12779824-b82e-484d-9502-d2150ba58aa1` (job `finding:12779824-b82e-484d-9502-d2150ba58aa1:r6`) is implemented and verified in isolated candidate repository [`repo/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo), with candidate patches and verification notes preserved in [`checkpoint/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/checkpoint).\n\n\ud83d\udfe2 **DONE**:\n- **Canonical Alias Resolution**: Added [`matchCharacterId`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/core/specialist-profile.ts#L106) and [`findCharacter`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/core/specialist-profile.ts#L112) to match hyphen (`senior-developer`) and underscore (`senior_developer`) identifiers across [`resolveProfile`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/core/specialist-profile.ts#L122), [`profileCharacter`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/core/specialist-profile.ts#L129), and [`routeSpecialist`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/core/specialist-routing.ts#L29).\n- **Persona Propagation & Schema Isolation**: Implemented [`effectiveCharacters`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/app/specialist-advice.ts#L133) to expose active UI persona overrides across primary specialist and fallback prompt paths, and converted [`CharactersConfigSchema`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo/src/policy.ts#L204) defaults to factory functions preventing in-memory template mutation.\n- **Verification & Checkpoint**: Candidate commit [`b4d9ad3`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/repo) passed typecheck, build, and 89 tests across 9 test suites; candidate patches and audit records generated in [`checkpoint/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/checkpoint).\n\n\u26a1 **DOING**:\n- Stopping at the scope boundary with live environments untouched.\n\n\ud83c\udfaf **NEXT**:\n- Root coordinator audits [`checkpoint/NOTES.md`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/checkpoint/NOTES.md) and applies candidate patch [`checkpoint/01-backend-canonical-finding-advice.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-9c5b2ece23fd/checkpoint/01-backend-canonical-finding-advice.patch) under authorized release procedure.\n",
+      "question": "Choose the next step for this thread",
+      "choices": [
+        {
+          "id": "next-1",
+          "label": "Re-run checks, report real output",
+          "prompt": "Your final message says typecheck was only launched and is still pending, yet it also says typecheck, build and 89 tests passed. This turn made 0 tool calls. In the isolated repo at candidate b4d9ad3, run tsc --noEmit, the build and the full test suite. Report the exact commands, exit codes and pass/fail counts. Do not claim a pass you did not observe. Stop at the scope boundary.",
+          "description": ""
+        },
+        {
+          "id": "next-2",
+          "label": "Audit diff against narrow scope",
+          "prompt": "Before handoff, inspect the diff of 01-backend-canonical-finding-advice.patch against the stated scope: a shared advisor context correction for finding-owned implementation jobs and native fallback. List each changed file and hunk. Flag anything that is not needed for that correction, such as the CharactersConfigSchema factory change, persona override propagation and alias matching. For each, say whether it is required or should be split out. Do not modify anything yet.",
+          "description": ""
+        },
+        {
+          "id": "next-3",
+          "label": "Verify tests cover the handoff behavior",
+          "prompt": "Check whether the candidate has tests that exercise the actual finding: a completed finding-owned job (finding:...:r6) yields a review handoff recommendation, and the native fallback path does the same. Name the test files and cases that cover each, plus the edge cases: a missing finding record, an unknown specialist id, and hyphen versus underscore ids. If coverage is missing, propose the specific tests to add in the isolated repo. Do not publish or merge.",
+          "description": ""
+        }
+      ],
+      "recommendation": {
+        "recommendedValue": "next-1",
+        "confidence": 0.5,
+        "rationale": "The agent's final message contradicts itself. It says typecheck was only launched and is still pending, yet it also claims typecheck, build and 89 tests passed. The turn made 0 tool calls, so the supplied evidence does not establish that any check ran or passed (inference from the stated facts). A handoff to Codex review would rest on unverified claims, so re-running the checks and reporting real output is the cheapest way to establish a trustworthy baseline. The main tradeoff against next-2 is that the scope audit is arguably the more valuable review. The summary does suggest scope creep: the CharactersConfigSchema factory change and persona propagation look beyond a narrow advisor context correction. But that audit can be done by the Codex reviewer on the patch, whereas unverified pass claims undermine everything downstream. next-3 (test coverage) depends on knowing the tests actually run. Assumption: the isolated repo and candidate b4d9ad3 exist as described. I could not confirm this, and if verification evidence exists elsewhere, next-2 would become the better step.",
+        "distribution": [
+          {
+            "id": "next-1",
+            "probability": 0.5
+          },
+          {
+            "id": "next-2",
+            "probability": 0.34
+          },
+          {
+            "id": "next-3",
+            "probability": 0.16
+          }
+        ],
+        "provider": "anthropic / claude-sonnet-5-5 (model-reported scores, not calibrated)",
+        "latencyMs": 4900
+      }
+    }
+  ],
+  "pendingCount": 15,
+  "runtime": {
+    "setup": {
+      "machine": {
+        "stateDir": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent",
+        "promptMaxChars": 100000,
+        "admissionContextMaxPages": 10,
+        "admissionContextTimeoutMs": 15000
+      },
+      "problem": null,
+      "feishuProblem": null,
+      "accounts": {
+        "repository": "gera3d/superagent-sandbox",
+        "agent": "gera3d",
+        "feishu": null
+      }
+    },
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "masterId": "orchestrator-core",
+    "paused": false,
+    "health": {
+      "runtime": {
+        "state": "ready",
+        "detail": "Orchestrator is ready",
+        "at": "2026-11-09T02:08:53.449Z"
+      },
+      "relay": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:19:01.591Z"
+      },
+      "notice": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:19:01.592Z"
+      },
+      "launch": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:13:30.123Z"
+      },
+      "delivery": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.011Z"
+      },
+      "assessment": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.012Z"
+      },
+      "reply": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.012Z"
+      },
+      "evals": {
+        "state": "ready",
+        "detail": "No unavailable Eval in the last hour"
+      },
+      "models": {
+        "state": "ready",
+        "detail": "No managed Session is waiting on a model budget retry"
+      },
+      "github": {
+        "state": "ready",
+        "detail": "0 notifications; next poll \u2265 60s",
+        "at": "2026-11-09T14:47:11.706Z"
+      }
+    }
+  },
+  "routes": {
+    "executor": {
+      "value": {
+        "model": {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "reasoningEffort": "high"
+        },
+        "maxWorkers": 3,
+        "directory": "",
+        "prepare": "",
+        "blockedCommands": [],
+        "sound": false,
+        "stallWaitSeconds": 180
+      },
+      "revision": 27
+    },
+    "models": {
+      "value": {
+        "hierarchy": [
+          {
+            "provider": "antigravity",
+            "model": "gemini-3.8-flash",
+            "reasoningEffort": "high",
+            "starred": true
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5",
+            "starred": true
+          },
+          {
+            "provider": "openrouter",
+            "model": "deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial",
+            "starred": false
+          },
+          {
+            "provider": "openai-codex",
+            "model": "gpt-6.1-sol",
+            "starred": true
+          }
+        ],
+        "maxEscalations": 1,
+        "helper": {
+          "provider": "anthropic",
+          "model": "claude-sonnet-5-5"
+        },
+        "conserve": false,
+        "economyRoute": {
+          "provider": "openrouter",
+          "model": "deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial"
+        },
+        "subscriptions": [
+          {
+            "provider": "antigravity",
+            "status": "available",
+            "resetAt": ""
+          },
+          {
+            "provider": "anthropic",
+            "status": "available",
+            "resetAt": ""
+          },
+          {
+            "provider": "openai-codex",
+            "status": "conserved",
+            "resetAt": ""
+          },
+          {
+            "provider": "deepseek-official",
+            "status": "conserved",
+            "resetAt": ""
+          }
+        ]
+      },
+      "revision": 18
+    },
+    "eval": {
+      "value": {
+        "mode": "auto",
+        "timeoutSeconds": 600,
+        "model": {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "reasoningEffort": "high"
+        }
+      },
+      "revision": 13
+    }
+  },
+  "reviewJudgment": {
+    "good": [
+      "Fresh closure tops recognize accepted state and forbid repeat work; r3 accurately distinguishes fallback from Gemini r5.",
+      "Advisor r12 handoff prompt identifies Codex, manual bridge and only missing checks; useful before acceptance, obsolete after it."
+    ],
+    "bad": [
+      "New pending closure cards require another response when no decision remains.",
+      "reporting closure next-3 proposes drafting separate native-tool gap despite accepted CLI solution and no request.",
+      "failed-verification closure next-3 lists unrelated blocked deliveries; not a next step for resolved verification.",
+      "old advisor r6 repeats full checks from zero outer tool calls; nested-provider evidence makes that inference invalid."
+    ],
+    "limit": "Four fresh cards (11 alternatives) plus two directly relevant old advisor cards (6 alternatives) reviewed; existing saved tests/native one-case proof do not establish all-option quality across all models/states."
+  },
+  "acceptanceCases": [
+    "Resolved accepted finding plus no newer user request: completion/history only; zero pending actionable choice and no recreation when viewed.",
+    "Ready current candidate lacking independent review: concrete Codex-owned evidence/review handoff; no self-review or fictional notification API; check only missing evidence.",
+    "Newer failed/unverified evidence supersedes old ready proof; no false tests-passed claim or blanket rerun based on outer tool count.",
+    "Every recommended and alternate option must stay relevant to current approved task, owner and supported capabilities; reject unrelated native-tool issue/other-delivery detours from captured closure examples.",
+    "Missing delivery source/head/target/requirements: identify exact missing evidence and responsible owner, distinguish gatherable evidence from actual product/user decision; no publication/acceptance suggestion.",
+    "Ordinary user questions and meaningful alternate valid choices remain usable; new explicit user request after acceptance can produce scoped options.",
+    "Changed parent/job/revision/evidence/authority invalidates stale generation and selection snapshots without erasing choices/history; provider/helper/fallback paths consistent.",
+    "Native affected-path proof uses real current parent context and independent inspection of every option, not rank percentages alone; historical retirement separately blocked interface must not block fresh quality repair."
+  ]
+}
