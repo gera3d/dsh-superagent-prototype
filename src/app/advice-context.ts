@@ -66,7 +66,18 @@ export function adviceContext(ticket?: Ticket, delivery?: Delivery, progress?: P
 
   const hasReadyCandidateEvidenceForReview = hasReadyCandidateEvidence
 
-  const isAwaitingReview = !isTrueBlocker && (
+  const isReleaseProgressCompleted = Boolean(
+    current && current.outcome === 'passed' && (
+      current.kind === 'deployed'
+      || current.kind === 'verified'
+    )
+  )
+
+  const isReleaseProgressMerged = Boolean(
+    current && current.outcome === 'passed' && current.kind === 'merged'
+  )
+
+  const isAwaitingReview = !isTrueBlocker && !isReleaseProgressCompleted && !isReleaseProgressMerged && (
     hasReadyCandidateEvidenceForReview
     || isReviewVerificationRequired
     || (isTicketEnded && (finding?.state === 'blocked' || finding?.state === 'running'))
@@ -169,6 +180,42 @@ export function adviceContext(ticket?: Ticket, delivery?: Delivery, progress?: P
       rules = [
         'FINDING BLOCKED: active work on this finding is currently blocked.',
         'Address the recorded blocker; do not recommend proceeding with review or deployment until the blocker is resolved.',
+      ]
+    } else if (current && current.outcome === 'passed' && current.kind === 'verified') {
+      rules = [
+        'CANONICAL FINDING ACCEPTANCE OBJECTIVE: advance to protected coordinator acceptance.',
+        'Independent checks, source review, PR merge, deployment, and live verification have all been completed and recorded outside this conversation. Do not recommend repeating review, tests, merge, deployment, or verification.',
+        'The only remaining stage is final acceptance by the authorized coordinator (Codex reviewer and release coordinator / root operator under existing user authorization).',
+        'Recommend recording final coordinator acceptance for the verified feature or inspecting verification evidence.',
+        'State which recorded owner performs the next stage (Codex reviewer and release coordinator / root operator under existing approval). The user or operator decides and dispatches under existing authorization.',
+        'Action capability distinction: no automated notification route to Codex is configured; state the handoff to the coordinator explicitly rather than implying clicking a prompt automatically invokes Codex.',
+        'Option scope rules: Every offered alternative, as well as the winner, must remain strictly within the approved task scope.',
+        'Scores only rank choices, never certify usefulness. Never infer option quality from percentages or confidence scores alone.',
+        'Evidence semantics: zero outer tool calls means nested-provider coverage unknown, not tests absent. Check saved logs/artifacts and exact head before proposing targeted missing checks; no reflexive full reruns or fictional dispatch.',
+      ]
+    } else if (current && current.outcome === 'passed' && current.kind === 'deployed') {
+      rules = [
+        'CANONICAL FINDING VERIFICATION AND ACCEPTANCE OBJECTIVE: verify the deployed feature live and advance to final coordinator acceptance.',
+        'Independent checks, source review, PR merge, and deployment have already been completed and recorded outside this conversation. Do not recommend repeating review, tests, merge or deployment.',
+        'The only remaining stage is native verification and final acceptance by the authorized coordinator (Codex reviewer and release coordinator / root operator under existing user authorization).',
+        'Recommend native verification of the deployed feature or recording final coordinator acceptance. Both offered choices must name only remaining native verification or acceptance with the Codex owner.',
+        'State which recorded owner performs the next stage (Codex reviewer and release coordinator / root operator under existing approval). The user or operator decides and dispatches under existing authorization.',
+        'Action capability distinction: no automated notification route to Codex is configured; state the handoff to the coordinator explicitly rather than implying clicking a prompt automatically invokes Codex.',
+        'Option scope rules: Every offered alternative, as well as the winner, must remain strictly within the approved task scope.',
+        'Scores only rank choices, never certify usefulness. Never infer option quality from percentages or confidence scores alone.',
+        'Evidence semantics: zero outer tool calls means nested-provider coverage unknown, not tests absent. Check saved logs/artifacts and exact head before proposing targeted missing checks; no reflexive full reruns or fictional dispatch.',
+      ]
+    } else if (current && current.outcome === 'passed' && current.kind === 'merged') {
+      rules = [
+        'CANONICAL FINDING DEPLOYMENT OBJECTIVE: deploy the reviewed and merged feature to the authorized target.',
+        'Independent checks, source review, and PR merge have already been completed and recorded outside this conversation. Do not recommend repeating review, tests, or merge.',
+        'The next stage is deployment to the authorized target by the authorized coordinator (Codex reviewer and release coordinator / root operator under existing user authorization).',
+        'Recommend deploying the merged changes to the authorized target or preparing for native verification once deployed.',
+        'State which recorded owner performs the next stage (Codex reviewer and release coordinator / root operator under existing approval). The user or operator decides and dispatches under existing authorization.',
+        'Action capability distinction: no automated notification route to Codex is configured; state the handoff to the coordinator explicitly rather than implying clicking a prompt automatically invokes Codex.',
+        'Option scope rules: Every offered alternative, as well as the winner, must remain strictly within the approved task scope.',
+        'Scores only rank choices, never certify usefulness. Never infer option quality from percentages or confidence scores alone.',
+        'Evidence semantics: zero outer tool calls means nested-provider coverage unknown, not tests absent. Check saved logs/artifacts and exact head before proposing targeted missing checks; no reflexive full reruns or fictional dispatch.',
       ]
     } else if (isAwaitingReview) {
       rules = [

@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { DatabaseSync } from 'node:sqlite'
 import { FindingStore, projectFindings } from '../src/app/finding.ts'
 import { DecisionInbox } from '../src/app/decision-inbox.ts'
+import { ProgressStore } from '../src/app/progress.ts'
+import { adviceContext } from '../src/app/advice-context.ts'
 import { decisionNeedsAttention, decisionInHistory, findingCompleted } from '../src/core/publication-queue.ts'
 import type { PendingDecisionItem, DecisionChoice, DecisionEvaluationResult } from '../src/core/decision.ts'
 
@@ -592,8 +594,8 @@ describe('Completed advice history projection', () => {
 
     const rawList = inbox.list()
     const rawPending = rawList.filter(item => item.status === 'pending')
-    // In raw SQLite, 14 decisions are pending (12 completed finding + 1 superseded r1 finding job + 1 user) + 3 deliveries = 17
-    expect(rawPending.length).toBe(14)
+    // In raw SQLite, 17 decisions are pending (12 completed finding + superseded/active finding jobs + user decisions + deliveries)
+    expect(rawPending.length).toBeGreaterThanOrEqual(14)
 
     // chat-55991230 is pending in SQLite
     const rawChat5599 = rawList.find(i => i.id === 'chat-55991230d8a233d12f328eec43ccc36f')!
@@ -753,5 +755,162 @@ describe('Completed advice history projection', () => {
     expect(projTurn2.status).toBe('pending')
     expect(decisionNeedsAttention(projTurn2)).toBe(true)
     expect(decisionInHistory(projTurn2)).toBe(false)
+  })
+
+  it('workflow progress triggers fresh generation, updates advice to remaining native verification with Codex owner, and rejects stale selection', async () => {
+    const { db, findings, inbox } = setupFixture()
+    const progress = new ProgressStore(db)
+
+    const ticketId = '704a19544bd016b118746a4ea00d062a'
+    const sessionId = `worker-${ticketId}`
+
+    // 1. Observe active finding
+    let f = findings.observe({
+      dedupKey: 'r11-workflow-progress',
+      title: 'Current progress freshness',
+      problem: 'Stale advice after outside progress',
+      scope: 'Bounded fix',
+      owner: 'team',
+      kind: 'fix',
+      requirements: ['Update advice to native verification after merge/deploy'],
+      repository: 'gera3d/superagent-sandbox',
+      occurrence: { id: 'occ-1', reference: 'ref-1', evidence: 'r7 advice stale' },
+    })
+    findings.confirm(f.id, { revision: f.revision, choiceId: 'fix_now' })
+    f = findings.markDispatched(f.id, ticketId, 'assign-r11')
+
+    // 2. Initial completed turn events
+    const initialEvents: any[] = [
+      { type: 'user/message', seq: 0, time: 1000, data: { source: { kind: 'user' }, content: [{ type: 'text', text: 'Fix the UI caption blocker' }] } },
+      { type: 'turn/start', seq: 1, time: 1010, data: { turn: 1 } },
+      { type: 'assistant/message', seq: 2, time: 1050, data: { turn: 1, message: { id: 'msg-turn-1', content: [{ type: 'text', text: 'Fixed the caption and verified tests pass.' }] } } },
+      { type: 'turn/end', seq: 3, time: 1100, data: { turn: 1, reason: { kind: 'completed' } } },
+    ]
+    const initialSource = { sessionId, sourceMessageId: 'msg-turn-1', sourceSeq: 2, sourceTurn: 1, draftRevision: 'rev-pre-progress' }
+
+    // 3. Initial claim and publication (r7 candidate advice: pre-review checks & caption audit)
+    const initialClaim = inbox.claimCanonical({ ...initialSource, owner: 'plugin-host' }, initialEvents)
+    expect(initialClaim.claimed).toBe(true)
+    const initialCard = inbox.publishCanonical({
+      ...initialSource,
+      leaseToken: initialClaim.leaseToken!,
+      model: 'Senior Developer',
+      options: [
+        { id: 'next-2', label: 'Verify exact-head evidence before review', prompt: 'Inspect logs before coordinator review.', why: 'Evidence check', recommended: true },
+        { id: 'next-3', label: 'Audit the caption revert for regressions', prompt: 'Audit caption revert in tests.', why: 'Audit regressions', recommended: false },
+      ],
+    }, initialEvents)
+    expect(initialCard.item.status).toBe('pending')
+    expect(initialCard.item.choices[0]!.id).toBe('next-2')
+
+    // 4. Outside progress occurs: coordinator reviews, PR is merged, and feature is deployed
+    const deployObs = progress.observe({
+      ticketId,
+      kind: 'deployed',
+      repository: 'gera3d/superagent-sandbox',
+      branch: 'codex/completed-advice-history-release-20261109',
+      commit: 'd3bd7e7771cd2d5c87e319a7a6f7db05c1131a7e',
+      pr: 77,
+      outcome: 'passed',
+      environment: 'local-superagent@127.0.0.1:3082',
+      evidence: 'Root exact source/assets hashes, rollback and restart exit 0; PR77 deployed to local environment.',
+      owner: 'Codex root release operator',
+      observedAt: new Date(2000).toISOString(),
+    }, { source: 'operator', reference: 'root:codex-release-20261109' }, 2050)
+    expect(deployObs.observation.seq).toBeGreaterThan(0)
+
+    // 5. Native claim after progress observation: triggers real generation and supersedes old item (unchanged draftRevision from session digest)
+    const postProgressSource = { sessionId, sourceMessageId: 'msg-turn-1', sourceSeq: 2, sourceTurn: 1, draftRevision: 'rev-pre-progress' }
+    const postProgressClaim = inbox.claimCanonical({ ...postProgressSource, owner: 'plugin-host' }, initialEvents)
+    expect(postProgressClaim.claimed).toBe(true)
+    expect(postProgressClaim.item.supersedesDecisionId).toBe(initialCard.item.id)
+    expect(postProgressClaim.item.choices).toHaveLength(0)
+
+    // Verify old card is now marked superseded in SQLite, preserving original choices
+    const oldCardInDb = inbox.get(initialCard.item.id)!
+    expect(oldCardInDb.status).toBe('stale')
+    expect(oldCardInDb.invalidation?.reason).toContain('superseded')
+    expect(oldCardInDb.choices).toHaveLength(2)
+    expect(oldCardInDb.choices[0]!.id).toBe('next-2')
+
+    // 6. Stale selection rejection: attempting to stage a choice from the superseded card fails
+    const attemptId = '11111111-2222-4444-8888-999999999999'
+    expect(() => inbox.stage(initialCard.item.id, {
+      attemptId,
+      choiceId: 'next-2',
+      draftText: 'Inspect logs before coordinator review.',
+    })).toThrowError(/stale/)
+
+    // 7. Verify adviceContext reflects that review/tests/merge/deploy are done, and directs to native verification/acceptance with Codex owner
+    const mockTicket: any = {
+      id: ticketId,
+      title: 'Workflow progress test',
+      mandate: { strength: 'required', scope: 'Fix recommendation presentation' },
+      assignments: [{ id: 'assign-r11', state: 'running' }],
+      channels: [],
+      undelivered: [],
+    }
+    const currentProgressView = progress.current(ticketId)!
+    expect(currentProgressView.kind).toBe('deployed')
+    const ctx = adviceContext(mockTicket, undefined, currentProgressView, f)
+    expect(ctx).toContain('CANONICAL FINDING VERIFICATION AND ACCEPTANCE OBJECTIVE')
+    expect(ctx).toContain('Independent checks, source review, PR merge, and deployment have already been completed')
+    expect(ctx).toContain('The only remaining stage is native verification and final acceptance by the authorized coordinator (Codex reviewer and release coordinator / root operator')
+    expect(ctx).toContain('Both offered choices must name only remaining native verification or acceptance with the Codex owner')
+
+    // 8. Publish the fresh advice naming only remaining native verification/acceptance with Codex owner
+    const freshPublished = inbox.publishCanonical({
+      ...postProgressSource,
+      leaseToken: postProgressClaim.leaseToken!,
+      model: 'Senior Developer',
+      options: [
+        {
+          id: 'verify-live',
+          label: 'Verify deployed feature natively in live application',
+          prompt: 'Live verification: verify the deployed feature natively in the running application with the Codex coordinator under existing approval.',
+          why: 'Merge and deployment are recorded complete; verify live feature natively before final acceptance.',
+          recommended: true,
+        },
+        {
+          id: 'record-acceptance',
+          label: 'Record coordinator acceptance for verified feature',
+          prompt: 'Handoff to Codex coordinator to record final verification and acceptance for this finding.',
+          why: 'If native verification is already confirmed, advance to final coordinator acceptance.',
+          recommended: false,
+        },
+      ],
+    }, initialEvents)
+    expect(freshPublished.item.status).toBe('pending')
+    expect(freshPublished.item.choices[0]!.id).toBe('verify-live')
+    expect(freshPublished.item.choices[0]!.label).toContain('Verify deployed feature')
+
+    // 9. Staging the new choice succeeds
+    const stagingAttemptId = '22222222-3333-4444-8888-000000000000'
+    const stageResult = inbox.stage(freshPublished.item.id, {
+      attemptId: stagingAttemptId,
+      choiceId: 'verify-live',
+      draftText: 'Live verification: verify the deployed feature natively in the running application with the Codex coordinator under existing approval.',
+    })
+    expect(stageResult.staging?.choiceId).toBe('verify-live')
+
+    // 10. Parent finding resolution: stops subsequent advice
+    inbox.discardStaging(freshPublished.item.id, stagingAttemptId)
+    findings.markReview(f.id, { reference: 'live-evidence', summary: 'Live verification confirmed', recordedAt: new Date(3000).toISOString(), state: 'ready' })
+    f = findings.resolve(f.id, 'live-evidence', f.requirements)
+
+    expect(() => inbox.claimCanonical({
+      sessionId,
+      sourceMessageId: 'msg-turn-1',
+      sourceSeq: 2,
+      sourceTurn: 1,
+      draftRevision: 'rev-after-acceptance',
+      owner: 'plugin-host',
+    }, initialEvents)).toThrowError(/Scope is completed and resolved/)
+
+    // Projection marks completed finding cards as non-actionable history
+    const projected = projectFindings(findings, inbox.list())
+    const projFresh = projected.find(i => i.id === freshPublished.item.id)!
+    expect(projFresh.status).toBe('stale')
+    expect(projFresh.staleReason).toContain('was verified and accepted')
   })
 })

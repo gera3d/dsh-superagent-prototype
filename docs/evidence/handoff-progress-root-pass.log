@@ -1,0 +1,11 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/handoff-qualified/backend-r15
+
+(node:8092) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  13:27:10
+   Duration  2.16s (transform 1.20s, setup 0ms, import 1.71s, tests 73ms, environment 0ms)
+

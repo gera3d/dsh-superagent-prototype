@@ -51,6 +51,13 @@ export interface AuthoritativeUserSource {
   messageId?: string
 }
 
+export interface InvalidationBinding {
+  kind: 'progress' | 'closeout' | 'human' | 'superseded' | 'sync'
+  ticketId?: string
+  revision?: number
+  progressKind?: string
+}
+
 export interface DecisionStaging {
   attemptId: string
   choiceId: string
@@ -97,6 +104,8 @@ export interface PendingDecisionItem {
   /** Authoritative linked finding snapshot when projected for finding-owned work. */
   parentFinding?: { id: string; title: string; state: string; resolvedAt?: string }
   staleReason?: string
+  /** Authoritative recorded workflow progress revision when this advice was generated. */
+  progressRevision?: number
   draftResponse?: string
   staging?: DecisionStaging
   /** Opt-in enforcement marker for rows explicitly staged through the native submission bridge. */
@@ -109,10 +118,10 @@ export interface PendingDecisionItem {
   submittedSeq?: number
   submissionId?: string
   /** Obsolescence never erases a previously resolved choice or submission history. */
-  invalidation?: { at: number; reason: string; sourceSeq?: number }
+  invalidation?: { at: number; reason: string; sourceSeq?: number; binding?: InvalidationBinding }
   advisor?: { status: 'pending' | 'generating' | 'ready' | 'error'; model?: string; error?: string; key?: string }
   /** Canonical producer state; independent from human decision resolution. */
-  canonical?: { draftRevision: string; phase: 'pending' | 'ready' | 'scored'; owner: string; leaseToken: string; leaseExpiresAt: number; error?: string }
+  canonical?: { draftRevision: string; phase: 'pending' | 'ready' | 'scored'; owner: string; leaseToken: string; leaseExpiresAt: number; error?: string; progressRevision?: number }
   urgency: 'high' | 'medium' | 'low'
   createdAt: number
   context: string

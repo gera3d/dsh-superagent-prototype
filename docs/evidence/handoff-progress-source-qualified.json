@@ -1,0 +1,47 @@
+{
+  "at": "2026-11-09T21:30:27.117512+00:00",
+  "stage": "independently qualified source; merge/deploy/native pending",
+  "findingId": "bf38fc9c-8273-4d61-9ae4-e98c45e51365",
+  "job": "finding:bf38fc9c-8273-4d61-9ae4-e98c45e51365:r15",
+  "ticketId": "3e220ce7b0f23097b7aed55d325a8bf0",
+  "assignmentId": "7a1b9100bc7ec89930775a20b4b2cca2",
+  "workerHead": "878795220ae3712d71d6dfeb2093a53233e8e236",
+  "releaseBase": "60e9cb134ca5fc4ff0632dbdfe8baf727b4a1909",
+  "checks": {
+    "workerFocused": {
+      "tests": 79,
+      "suites": 7,
+      "passed": true
+    },
+    "companionTests": 33,
+    "rootIndependent": {
+      "passed": 3,
+      "failed": 0
+    },
+    "releaseTypecheckExit": 0,
+    "releaseBuildExit": 0
+  },
+  "baseInputs": {
+    "baseInputs": 211,
+    "mismatches": []
+  },
+  "byteProof": {
+    "workerHead": "878795220ae3712d71d6dfeb2093a53233e8e236",
+    "files": [
+      "src/app/advice-context.ts",
+      "src/app/decision-inbox.ts",
+      "src/app/delivery-runtime.ts",
+      "src/core/decision.ts",
+      "tests/completed-advice-history.spec.ts",
+      "tests/root-handoff-review.audit.spec.ts"
+    ],
+    "preimageMismatches": [],
+    "postimageMismatches": []
+  },
+  "limits": [
+    "No broad full-suite rerun or CI success claimed.",
+    "Companion production code unchanged; additional host coverage is test-only.",
+    "Initial root test setup and release dependency-link/bin-path errors corrected; final checks above are actual successful reruns.",
+    "Native verification and protected final acceptance not yet completed."
+  ]
+}

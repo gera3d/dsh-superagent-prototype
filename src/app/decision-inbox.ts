@@ -3,7 +3,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { SessionEvent, SessionId } from '@deepseek-ai/dsh-session'
 import type { DatabaseSync } from 'node:sqlite'
 import { createHash, randomUUID } from 'node:crypto'
-import type { AdvisorDecision, AuthoritativeUserSource, DecisionEvaluationResult, DecisionOptionSet, DecisionStaging, PendingDecisionItem } from '../core/decision.ts'
+import type { AdvisorDecision, AuthoritativeUserSource, DecisionEvaluationResult, DecisionOptionSet, DecisionStaging, InvalidationBinding, PendingDecisionItem } from '../core/decision.ts'
 import { normalizeChoices } from '../core/options.ts'
 import { ticketStage, latestReport, type Ticket } from '../core/index.ts'
 import { workerSessionId } from '../executor/dsh.ts'
@@ -12,6 +12,7 @@ import { parseInlineAlternatives } from '../client/inline-alternatives.ts'
 import { isConversationCloseoutEvents, CONVERSATION_CLOSED_REASON, CONVERSATION_CLOSED_MESSAGE } from './conversation-closeout.ts'
 import { FindingStore } from './finding.ts'
 import { DeliveryStore } from './feature-delivery.ts'
+import { ProgressStore } from './progress.ts'
 import { workerTicket } from './delivery-currency.ts'
 import { auditOptionSet, deriveOptionQualityContext, type OptionQualityContext } from './option-quality.ts'
 
@@ -395,7 +396,7 @@ export class DecisionInbox {
     return item
   }
   /** Validate complete server-owned history before every producer mutation. */
-  private canonicalSource(input: CanonicalSource, events: readonly SessionEvent[]): PendingDecisionItem | undefined {
+  private canonicalSource(input: CanonicalSource, events: readonly SessionEvent[], allowDraftRevisionChange = false): PendingDecisionItem | undefined {
     const end = events.findLast(event => event.type === 'turn/end')
     const message = events.findLast(event => event.type === 'assistant/message')
     if (end?.type !== 'turn/end' || end.data.reason.kind !== 'completed' || end.data.turn !== input.sourceTurn
@@ -410,9 +411,22 @@ export class DecisionInbox {
       this.retireClosedOut(input.sessionId, events)
       throw new InboxError(409, CONVERSATION_CLOSED_MESSAGE)
     }
-    if (item && (item.status !== 'pending' || item.invalidation || item.parentDecisionId)) throw new InboxError(409, 'Canonical decision is staged, stale or closed')
+    const ticketId = workerTicket(input.sessionId)
+    const progress = tableExists(this.db, 'progress_observation') ? new ProgressStore(this.db).current(ticketId) : undefined
+    const isProgressReplacementEligible = Boolean(
+      allowDraftRevisionChange && item && !item.staging && !item.parentDecisionId && item.status !== 'resolved'
+      && (
+        item.invalidation?.binding?.kind === 'progress'
+        || (progress && (
+          (item.progressRevision !== undefined && item.progressRevision < progress.revision)
+          || (item.progressRevision === undefined && progress.changedAt >= item.createdAt)
+        ))
+      )
+      && !this.list().some(other => other.supersedesDecisionId === item.id)
+    )
+    if (item && !isProgressReplacementEligible && (item.status !== 'pending' || item.invalidation || item.parentDecisionId)) throw new InboxError(409, 'Canonical decision is staged, stale or closed')
     if (item && (item.sourceSeq !== input.sourceSeq || item.sourceTurn !== input.sourceTurn || item.sourceMessageId !== input.sourceMessageId)) throw new InboxError(409, 'Canonical source identity changed')
-    if (item?.canonical && item.canonical.draftRevision !== input.draftRevision) throw new InboxError(409, 'Canonical draft revision changed')
+    if (item?.canonical && item.canonical.draftRevision !== input.draftRevision && !allowDraftRevisionChange) throw new InboxError(409, 'Canonical draft revision changed')
     if (!item?.staging && this.isSourceScopeResolved(input.sessionId, events, input.sourceTurn, input.sourceSeq)) {
       throw new InboxError(409, 'Scope is completed and resolved; pending advice cannot be claimed or published')
     }
@@ -439,7 +453,58 @@ export class DecisionInbox {
     return { item }
   }
   claimCanonical(input: CanonicalClaim, events: readonly SessionEvent[], now = Date.now()): CanonicalResult {
-    let item = this.canonicalSource(input, events)
+    let item = this.canonicalSource(input, events, true)
+    const ticketId = workerTicket(input.sessionId)
+    const progress = tableExists(this.db, 'progress_observation') ? new ProgressStore(this.db).current(ticketId) : undefined
+    const isProgressStale = Boolean(
+      item && !item.staging && progress && (
+        item.invalidation?.binding?.kind === 'progress'
+        || (item.progressRevision !== undefined && item.progressRevision < progress.revision)
+        || (item.progressRevision === undefined && progress.changedAt > item.createdAt)
+        || item.status === 'stale'
+      ) && (['ready', 'scored', 'pending'].includes(item.canonical?.phase ?? '') || item.status === 'stale' || !item.canonical)
+    )
+    const isDraftRevisionChanged = Boolean(item && !item.staging && item.canonical && item.canonical.draftRevision !== input.draftRevision)
+
+    if (item && (isProgressStale || isDraftRevisionChanged)) {
+      const reason = isProgressStale
+        ? `Recommendation superseded by progress revision ${progress!.revision} (${progress!.kind}): earlier advice is retained as history`
+        : `Recommendation superseded by newer revision ${input.draftRevision}`
+      const id = `chat-${createHash('sha256').update(`${item.id}:${input.draftRevision}:${progress?.revision ?? ''}`).digest('hex').slice(0, 32)}`
+      this.invalidate(item, reason, undefined, Date.now(), progress ? { kind: 'progress', ticketId, revision: progress.revision, progressKind: progress.kind } : undefined)
+      const existingReplacement = this.get(id)
+      if (existingReplacement) {
+        item = existingReplacement
+      } else {
+        const userSource = item.userSource ?? deriveTurnUserSource(events, input.sourceTurn, input.sourceSeq)
+        const human = item.human ?? (userSource !== undefined ? true : undefined)
+        const nextItem: PendingDecisionItem = {
+          id,
+          supersedesDecisionId: item.id,
+          sessionId: item.sessionId,
+          sourceMessageId: item.sourceMessageId,
+          sourceSeq: item.sourceSeq,
+          sourceTurn: item.sourceTurn,
+          ticketTitle: item.ticketTitle,
+          trigger: 'Updated next steps',
+          status: 'pending',
+          urgency: item.urgency,
+          createdAt: Math.max(Date.now(), item.createdAt + 1),
+          actionMode: 'stage_response',
+          question: item.question,
+          context: item.context,
+          choices: [],
+          recommendation: { ...recommendation },
+          advisor: { status: 'pending', key: input.draftRevision },
+          ...(progress?.revision ? { progressRevision: progress.revision } : {}),
+          ...(human !== undefined ? { human } : {}),
+          ...(userSource ? { userSource } : {})
+        }
+        this.save(nextItem)
+        item = nextItem
+      }
+    }
+
     const userSource = item?.userSource ?? deriveTurnUserSource(events, input.sourceTurn, input.sourceSeq)
     const human = item?.human ?? (userSource !== undefined ? true : undefined)
     if (!item) {
@@ -452,8 +517,23 @@ export class DecisionInbox {
     if (state && (state.phase === 'scored' || state.phase === 'ready' && input.purpose !== 'score')) return { item, claimed: false }
     if (state && state.leaseExpiresAt > now) return state.owner === input.owner
       ? { item, claimed: true, leaseToken: state.leaseToken, leaseExpiresAt: state.leaseExpiresAt } : { item, claimed: false }
-    const canonical: NonNullable<PendingDecisionItem['canonical']> = { draftRevision: input.draftRevision, phase: state?.phase ?? 'pending', owner: input.owner, leaseToken: randomUUID(), leaseExpiresAt: now + 120000 }
-    const next = { ...item, ...(!state ? { choices: [], hiddenOptions: [], optionSets: optionHistory(item), recommendation } : {}), canonical, advisor: { ...item.advisor, status: canonical.phase === 'pending' ? 'generating' as const : 'ready' as const, key: input.draftRevision }, ...(human !== undefined ? { human } : {}), ...(userSource ? { userSource } : {}) }
+    const canonical: NonNullable<PendingDecisionItem['canonical']> = {
+      draftRevision: input.draftRevision,
+      phase: state?.phase ?? 'pending',
+      owner: input.owner,
+      leaseToken: randomUUID(),
+      leaseExpiresAt: now + 120000,
+      ...(progress?.revision !== undefined ? { progressRevision: progress.revision } : {})
+    }
+    const next = {
+      ...item,
+      ...(!state ? { choices: [], hiddenOptions: [], optionSets: optionHistory(item), recommendation } : {}),
+      canonical,
+      advisor: { ...item.advisor, status: canonical.phase === 'pending' ? 'generating' as const : 'ready' as const, key: input.draftRevision },
+      ...(progress?.revision !== undefined ? { progressRevision: progress.revision } : {}),
+      ...(human !== undefined ? { human } : {}),
+      ...(userSource ? { userSource } : {})
+    }
     this.save(next, item)
     return { item: next, claimed: true, leaseToken: canonical.leaseToken, leaseExpiresAt: canonical.leaseExpiresAt }
   }
@@ -462,6 +542,12 @@ export class DecisionInbox {
     if (item?.staging) throw new InboxError(409, 'Canonical decision is staged; publication is locked')
     if (!item?.canonical || item.canonical.leaseToken !== input.leaseToken) throw new InboxError(409, 'Canonical publication lease changed')
     if (item.canonical.leaseExpiresAt <= Date.now()) throw new InboxError(409, 'Canonical publication lease expired')
+    const ticketId = workerTicket(input.sessionId)
+    const currentProgress = tableExists(this.db, 'progress_observation') ? new ProgressStore(this.db).current(ticketId) : undefined
+    const leaseProgressRevision = item.canonical.progressRevision ?? item.progressRevision
+    if ((leaseProgressRevision ?? 0) !== (currentProgress?.revision ?? 0)) {
+      throw new InboxError(409, 'Workflow progress changed during generation; publication lease is stale')
+    }
     return item
   }
   publishCanonical(input: CanonicalPublish, events: readonly SessionEvent[]): CanonicalResult {
@@ -486,8 +572,10 @@ export class DecisionInbox {
     const userSource = item.userSource ?? deriveTurnUserSource(events, input.sourceTurn, input.sourceSeq)
     const human = item.human ?? (userSource !== undefined ? true : undefined)
     const history = optionHistory(item)
+    const leaseProgressRevision = item.canonical?.progressRevision ?? item.progressRevision
     const next: PendingDecisionItem = { ...item, choices, recommendation: evaluation, canonical: { ...item.canonical!, phase: 'ready' }, advisor: { status: 'ready', model: input.model, key: input.draftRevision },
       optionSets: [...history, { revision: Math.max(0, ...history.map(set => set.revision)) + 1, createdAt: Date.now(), key: input.draftRevision, model: input.model, choices: structuredClone(choices), recommendation: structuredClone(evaluation) }],
+      ...(leaseProgressRevision !== undefined ? { progressRevision: leaseProgressRevision } : (item.progressRevision !== undefined ? { progressRevision: item.progressRevision } : {})),
       ...(human !== undefined ? { human } : {}),
       ...(userSource ? { userSource } : {}) }
     delete next.hiddenOptions
@@ -566,18 +654,41 @@ export class DecisionInbox {
       this.invalidate(item, CONVERSATION_CLOSED_REASON, end.seq, end.time)
     }
   }
-  invalidate(item: PendingDecisionItem, reason: string, sourceSeq?: number, at = Date.now()): void {
+  invalidate(item: PendingDecisionItem, reason: string, sourceSeq?: number, at = Date.now(), binding?: InvalidationBinding): void {
     if (item.status === 'stale' || item.invalidation) return
-    this.save({ ...item, ...(item.status === 'pending' ? { status: 'stale' as const, staleReason: reason } : {}), invalidation: { at, reason, ...(sourceSeq === undefined ? {} : { sourceSeq }) } }, item)
+    this.save({ ...item, ...(item.status === 'pending' ? { status: 'stale' as const, staleReason: reason } : {}), invalidation: { at, reason, ...(sourceSeq === undefined ? {} : { sourceSeq }), ...(binding ? { binding } : {}) } }, item)
   }
   stale(sessionId: string, reason: string): void {
     for (const item of this.list()) if (item.sessionId === sessionId) this.invalidate(item, reason)
+  }
+  private checkProgressStaleness(item: PendingDecisionItem, choiceId?: string): void {
+    if (!item.sessionId || !tableExists(this.db, 'progress_observation')) return
+    const ticketId = workerTicket(item.sessionId)
+    const progress = new ProgressStore(this.db).current(ticketId)
+    if (!progress) return
+    const isNewerProgress = (item.progressRevision !== undefined && item.progressRevision < progress.revision)
+      || (item.progressRevision === undefined && progress.changedAt > item.createdAt)
+    if (!isNewerProgress) return
+    const rank = { branch_pushed: 1, pr_opened: 2, checks: progress.outcome === 'passed' ? 3 : 2, review: progress.outcome && progress.outcome !== 'passed' ? 3 : 4, merged: 5, deployed: 6, verified: 7 }[progress.kind]
+    const choice = choiceId ? item.choices.find(c => c.id === choiceId) : item.choices.find(c => c.id === item.recommendation.recommendedValue)
+    const label = choice?.label ?? ''
+    const prompt = choice?.prompt ?? ''
+    const text = `${label} ${prompt}`
+    const isCompleted = (rank >= 4 && (/\b(?:review|audit|checks?|ci|evidence before review|caption audit)\b/i.test(text) && !/\b(?:live verification|deployed|acceptance)\b/i.test(text)))
+      || (rank >= 5 && /\b(?:merge|pr|pull request)\b/i.test(text))
+      || (rank >= 6 && (/\b(?:deploy|publish|installed)\b/i.test(text) || (!/\b(?:acceptance|verified)\b/i.test(text) && rank >= 6)))
+      || (progress.kind === 'deployed' || progress.kind === 'verified')
+    if (isCompleted || item.supersedesDecisionId) {
+      this.invalidate(item, `Progress ${progress.kind} was observed at ${progress.branch}@${progress.commit.slice(0, 12)} (revision ${progress.revision}); this step is done. Remaining: ${progress.remaining}. Earlier advice is retained as history, not authority.`, undefined, Date.now(), { kind: 'progress', ticketId, revision: progress.revision, progressKind: progress.kind })
+      throw new InboxError(409, 'Decision is stale due to completed progress; no staging is allowed')
+    }
   }
   stage(id: string, request: StageDecisionRequest): DecisionStagingResult {
     const item = this.get(id)
     if (!item) throw new InboxError(404, 'Decision not found')
     if (item.lifecycle) throw new InboxError(409, 'Use the explicit lifecycle action endpoint')
     if (item.status !== 'pending' || item.invalidation) throw new InboxError(409, 'Decision is stale or closed; no staging is allowed')
+    this.checkProgressStaleness(item, request.choiceId)
     if (!item.sessionId || !item.sourceMessageId || item.sourceSeq === undefined) throw new InboxError(409, 'A current native source identity and sequence are required for linked submission')
     if (!item.choices.some(choice => choice.id === request.choiceId)) throw new InboxError(400, 'Unknown decision choice')
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(request.attemptId) || !request.draftText) throw new InboxError(400, 'A UUID staging attempt and complete draft text are required')

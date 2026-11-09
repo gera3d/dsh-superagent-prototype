@@ -1,0 +1,5 @@
+# Progress-aware native recommendation handoff
+
+Records of review, merge, deployment and verification now supersede stale recommendations on the same durable source. New advice is generated from current workflow progress; old choices remain in history. Merged, deployed and verified stages stay distinct. A progress change during generation rejects the older lease, and normal progress-observe inbox reconciliation permits an immutable replacement without reopening completed parents. Stale choices cannot stage work.
+
+Qualified exact Harness head8787952;79 focused worker tests,33 companion checks,3 independent production-path regressions, release typecheck and build pass. No companion production change, provider/credential/settings change, auto-send or new dispatch authority. Source/build postimages must be installed at safe idle after narrow backup, then verified in actual source/HUD/Decisions and accepted only through native protected evidence review. Routine rollback restores backed-up narrow source/assets, never a DB over later canonical history.
