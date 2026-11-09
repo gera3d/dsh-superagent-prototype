@@ -1,0 +1,231 @@
+{
+  "observedAt": "2026-11-09T15:53:27.260930+00:00",
+  "finding": {
+    "dedupKey": "current-scope-all-option-advisor-quality-v1",
+    "title": "Make every Senior Developer option current, useful and within the approved task",
+    "problem": "User explicitly prioritizes actual recommendation quality before retirement. Fresh closure cards correctly recommend stopping but alternatives propose an unrequested native-tool-gap finding or unrelated deliveries, and accepted tasks still create pending confirmation replies. Earlier advisor context repair is accepted but did not prove all-option usefulness. Preserve accepted parent12779824-b82e-484d-9502-d2150ba58aa1 and reporting51f309ca-d396-4983-a55d-ef4432a8572f / verification06fd14af-5535-411d-936c-477bf2bd2cfa history.",
+    "scope": "Implement the user-approved bounded quality/lifecycle correction in isolated backend/plugin workspace, against current superagent-core and installed compatibility. First read docs/evidence/recommendation-quality-before.json and docs/reviews/advisor-option-quality-2026-11-09.md from /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/launch-retry-release (also on GitHub superagent-core at574e783). Four actual closure cards IDs6557f8ab,7d80df3b,f96fc47a,94e77e2d plus older advisor a71ba8a1/eb937970 are exact fixtures. Evaluate EVERY recommended/alternate choice against current parent/ticket/assignment/turn/evidence/approval, relevance, correct next owner and supported action. Resolve existing Settings/helper/native fallback/ranking/capture paths coherently; do not edit only a persona prompt. For accepted work with no newer user request, expose truthful completion/history without another pending choice or recreation on view. Preserve ordinary user conversations, legitimate unresolved choices and explicit new requests after acceptance. Ready-unreviewed work needs useful permitted coordinator-owned review/evidence action, not walkthrough/self-review, fiction about notification API, blanket reruns or unconditional publish. Unbound delivery advice identifies exact missing source/head/target/requirements and responsible evidence-gatherer or genuine user decision; no authority inference. Retain prior parent acceptance/history and stale/source/CAS/native publication/submission guards. Do not suppress all recommendations or merely reduce counts. No seven-card retirement implementation, broad dismissal, user alternative selection, conversation replies, new feature, privilege, credential/provider/route/worker-limit/spending/schedule change or live source edits. Harness implements candidate and targeted meaningful regression checks; Codex owns independent review and authorized exact-head release/native verification.",
+    "owner": "Harness implementation worker; Codex independent recommendation-quality reviewer and release owner",
+    "kind": "fix",
+    "requirements": [
+      "Capture/reproduce the exact bad saved options before changes; inspect actual effective Settings persona/helper/fallback/ranking and canonical advice paths, actual tool capability and original accepted criteria. Preserve original evidence; do not treat zero outer tool calls as no internal work.",
+      "Every offered alternate as well as winner must be current-state/evidence grounded, relevant, distinct and within approved task with correct owner/capability; actual native-tool-gap and unrelated-delivery closure alternatives must not pass as useful next actions. Scores only rank choices, never certify usefulness.",
+      "Accepted parent with no newer human request produces completion/history and no pending actionable advice; repeat view/capture does not recreate meaningless choices. Current-source user questions and authorized new requests after acceptance still work; do not hide meaningful choices or suppress all recommendations.",
+      "Ready but unreviewed current candidate gives actual coordinator-owned supported review/evidence stage and only missing checks; newer failed/unverified evidence supersedes older ready; failed/prior attempts use current accepted resolution rather than stale retry advice. No false test/acceptance claim or fictional Codex dispatch.",
+      "Missing source/target/acceptance evidence for typed delivery gates gets exact missing inputs with owner, distinguishing discoverable evidence from true product/user choice; retain all native approval/publication gates and do not bind/accept/dismiss those deliveries.",
+      "Meaningful isolated regressions cover each saved bad example, all alternatives, ordinary conversation, genuine user choices, newly authorized work, changed parent/job/source/revision/authority, unresolved evidence and active work. Reuse prior tests without broad redundant reruns; sequential types/build/focused checks with actual commands/results.",
+      "Fresh advice consistency across helper and native fallback/capture, preserve current historical option sets/revisions/choices and staged/native submission proofs; do not bypass the separate lack of a safe historical retirement API. New-quality fix must stand without implementing retirement.",
+      "Return exact paired heads/bases/patches, actual targeted tests/types/build evidence and limits, durable report through available real reporting path, and proposed native all-option acceptance cases. No live edit/merge/deploy/accept by implementation worker; Codex handles authorized release after independent exact-head review."
+    ],
+    "repository": "gera3d/superagent-sandbox",
+    "id": "8d447429-65ee-4f5f-aa7b-354c0f349673",
+    "occurrences": [
+      {
+        "id": "user-prioritizes-recommendation-quality-20261109",
+        "reference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/recommendation-quality-before.json",
+        "evidence": "Explicit implementation authorization: fix better recommendations first. Direct read of6 saved cards17alternatives shows fresh closure top choices state-aware but unrelated alternatives and redundant pending confirmations. Original accepted advisor requirements and saved native/test coverage are captured. Live15 pending (seven old system,three typed gates,one ordinary,four closure);0running0queued. Prior accepted scopes remain accepted. Retirement draft is secondary design only, not implementation.",
+        "at": "2026-11-09T14:55:30.963Z"
+      },
+      {
+        "id": "root-quality-fad9dfe-rejected-20261109",
+        "reference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/reviews/advisor-quality-fad9dfe-blockers.md",
+        "evidence": "Independent exact-head review rejects fad9dfee080e08110c849b6c886e778fd169c999. Actual read-only Node reproductions: explicit user-requested new native-tool issue falsely rejected; safe do-not-repeat/reopen falsely rejected; truthful no-automatic-dispatch explanation rejected and replaced with unrelated targeted tests. Source adds broad historical retirement despite explicit exclusion, leaves invalid selectable alternatives while changing scores, and uses synthetic fixtures instead of full17saved choices. Required bounded correction and reproduction details at review URL. No deployment/acceptance. Preserve first candidate and all failed test logs. Continue same repair after active worker packages report; no duplicate concurrent assignment.",
+        "at": "2026-11-09T15:25:28.735Z"
+      },
+      {
+        "id": "root-quality-r3-fourfail-20261109",
+        "reference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/reviews/advisor-quality-5a07283-blockers.md",
+        "evidence": "Reject exact r3 candidate5a07283a23e7b449000bf76fddeefc00a0731672. Isolated executable four-case root audit4failed/4: native canonical claim/publish recreates accepted-source pending card despite capture suppression; explicitly prohibited scope keyword grants permission; Do not change settings masks repeat/reopen command; real current-schema newer failed report ignored and false tests-passed accepted. Root audit source+output and full correction instructions at linked review, copy tests unchanged and preserve positive controls. Fix fresh producer authoritative shared lifecycle/evidence/intent, real FACTS schema, all-option publication semantics; no historical retirement, fabricated choices/scores, weakened tests or live deployment. Preserve r1/r3 history; only resume after current productive packaging ends, same bounded repair.",
+        "at": "2026-11-09T15:51:10.725Z"
+      }
+    ],
+    "revision": 5,
+    "state": "running",
+    "choices": [
+      {
+        "id": "fix_now",
+        "kind": "fix_now",
+        "label": "Fix now"
+      },
+      {
+        "id": "queue_next",
+        "kind": "queue_next",
+        "label": "Queue next"
+      },
+      {
+        "id": "defer",
+        "kind": "defer",
+        "label": "Defer"
+      }
+    ],
+    "reports": [
+      {
+        "reference": "ticket/4371e4ede24a7c7b512f1312f5e89a97/report/30f1cf79d7dd48020126ef6905296595",
+        "evidence": "Remediated Senior Developer option quality and lifecycle invariants (#8d44:r1): enforce option quality, task scope relevance, correct owner/capability, and truthful state across helper, native fallback, character evaluator, and decision ranker. Invalidate completed/resolved scopes without creating redundant pending confirmations. All 12 targeted suites (107 tests) pass; tsc typecheck clean (0 errors); tsdown production build passes with 0 errors.",
+        "at": "2026-11-09T15:26:52.578Z",
+        "nextDecision": "Review the linked evidence and explicitly accept or request further work.",
+        "jobId": "finding:8d447429-65ee-4f5f-aa7b-354c0f349673:r1",
+        "state": "ready",
+        "summaryTruncated": false,
+        "originalLength": 450,
+        "reportSummarySha256": "460dd9eddfbfd464bf38e73023cc27fd0ac3731e21f9b1329043a6bfed1c3318"
+      },
+      {
+        "reference": "ticket/ff9d482f3aedf1252f94bee6ed484997/report/430d6b6c105aa4c387e5ea774b228e79",
+        "evidence": "Remediated Senior Developer option quality and lifecycle invariants (#8d44:r3): evaluate every recommended and alternate option against current evidence, task scope relevance, correct owner, and permitted capability without bulk historical retirement. Resolved review blockers (fad9dfe): honored taskScope for authorized native-tool gap issue, recognized safe negations/prohibitions, respected truthful capability denials without inventing fake test runs, and preserved all 7 historical pending rows intact. All 12 test suites (118 tests) pass; tsc typecheck clean (0 errors); tsdown production build passes with 0 errors.",
+        "at": "2026-11-09T15:50:57.681Z",
+        "nextDecision": "Review the linked evidence and explicitly accept or request further work.",
+        "jobId": "finding:8d447429-65ee-4f5f-aa7b-354c0f349673:r3",
+        "state": "ready",
+        "summaryTruncated": false,
+        "originalLength": 622,
+        "reportSummarySha256": "6d86cb194f1026c206fce3e9dab945ec9cbc887b60038cf9a7acb093a355f5ef"
+      }
+    ],
+    "audit": [
+      {
+        "event": "observed",
+        "actor": "external:observer",
+        "source": "external",
+        "reference": "orchestrator-http:observation-only",
+        "at": "2026-11-09T14:55:30.963Z",
+        "detail": "user-prioritizes-recommendation-quality-20261109"
+      },
+      {
+        "event": "recommendation_recorded",
+        "actor": "model:antigravity / gemini-3.8-flash",
+        "at": "2026-11-09T14:55:49.361Z",
+        "detail": "antigravity / gemini-3.8-flash"
+      },
+      {
+        "event": "confirmed",
+        "actor": "local-operator",
+        "at": "2026-11-09T14:58:44.589Z",
+        "detail": "fix_now"
+      },
+      {
+        "event": "dispatched",
+        "actor": "local-operator",
+        "at": "2026-11-09T14:58:44.643Z",
+        "detail": "4371e4ede24a7c7b512f1312f5e89a97/30f1cf79d7dd48020126ef6905296595"
+      },
+      {
+        "event": "observed",
+        "actor": "external:observer",
+        "at": "2026-11-09T15:25:28.735Z",
+        "detail": "root-quality-fad9dfe-rejected-20261109",
+        "source": "external",
+        "reference": "orchestrator-http:observation-only"
+      },
+      {
+        "event": "review_required",
+        "actor": "worker:4371e4ede24a7c7b512f1312f5e89a97",
+        "at": "2026-11-09T15:26:53.596Z",
+        "detail": "ready"
+      },
+      {
+        "event": "reviewed",
+        "actor": "codex-coordinator",
+        "at": "2026-11-09T15:27:13.825Z",
+        "detail": "{\"revision\":2,\"decision\":\"retry_scope\"}"
+      },
+      {
+        "event": "confirmed",
+        "actor": "codex-coordinator",
+        "at": "2026-11-09T15:27:25.056Z",
+        "detail": "fix_now"
+      },
+      {
+        "event": "dispatched",
+        "actor": "codex-coordinator",
+        "at": "2026-11-09T15:27:28.955Z",
+        "detail": "ff9d482f3aedf1252f94bee6ed484997/430d6b6c105aa4c387e5ea774b228e79"
+      },
+      {
+        "event": "review_required",
+        "actor": "worker:ff9d482f3aedf1252f94bee6ed484997",
+        "at": "2026-11-09T15:50:58.131Z",
+        "detail": "ready"
+      },
+      {
+        "event": "observed",
+        "actor": "external:observer",
+        "at": "2026-11-09T15:51:10.725Z",
+        "detail": "root-quality-r3-fourfail-20261109",
+        "source": "external",
+        "reference": "orchestrator-http:observation-only"
+      },
+      {
+        "event": "reviewed",
+        "actor": "codex-coordinator",
+        "at": "2026-11-09T15:51:24.930Z",
+        "detail": "{\"revision\":4,\"decision\":\"retry_scope\"}"
+      },
+      {
+        "event": "confirmed",
+        "actor": "codex-coordinator",
+        "at": "2026-11-09T15:51:25.515Z",
+        "detail": "fix_now"
+      },
+      {
+        "event": "dispatched",
+        "actor": "codex-coordinator",
+        "at": "2026-11-09T15:51:40.920Z",
+        "detail": "850c9391f4117319917c8b2bde11aa2a/210a79b62e819705c86433deddda0393"
+      }
+    ],
+    "createdAt": "2026-11-09T14:55:30.963Z",
+    "updatedAt": "2026-11-09T15:51:40.920Z",
+    "priorJobs": [
+      {
+        "id": "finding:8d447429-65ee-4f5f-aa7b-354c0f349673:r1",
+        "ticketId": "4371e4ede24a7c7b512f1312f5e89a97",
+        "assignmentId": "30f1cf79d7dd48020126ef6905296595"
+      },
+      {
+        "id": "finding:8d447429-65ee-4f5f-aa7b-354c0f349673:r3",
+        "ticketId": "ff9d482f3aedf1252f94bee6ed484997",
+        "assignmentId": "430d6b6c105aa4c387e5ea774b228e79"
+      }
+    ],
+    "confirmation": {
+      "revision": 5,
+      "choiceId": "fix_now",
+      "actor": "codex-coordinator",
+      "at": "2026-11-09T15:51:25.514Z"
+    },
+    "job": {
+      "id": "finding:8d447429-65ee-4f5f-aa7b-354c0f349673:r5",
+      "ticketId": "850c9391f4117319917c8b2bde11aa2a",
+      "assignmentId": "210a79b62e819705c86433deddda0393"
+    }
+  },
+  "ticket": {
+    "id": "850c9391f4117319917c8b2bde11aa2a",
+    "stage": "working",
+    "assignments": [
+      {
+        "id": "210a79b62e819705c86433deddda0393",
+        "state": "running",
+        "createdAt": "2026-11-09T15:51:40.917Z",
+        "startedAt": "2026-11-09T15:51:41.679Z",
+        "ref": "worker-850c9391f4117319917c8b2bde11aa2a"
+      }
+    ],
+    "summary": ""
+  },
+  "rejectedHead": "5a07283a23e7b449000bf76fddeefc00a0731672",
+  "rootAudit": {
+    "tests": 4,
+    "failed": 4,
+    "log": "root-quality-r3-audit.log",
+    "source": "root-quality-r3.audit.spec.ts"
+  },
+  "routeObservation": {
+    "provider": "antigravity",
+    "model": "gemini-3.8-flash",
+    "conversationId": "12e1921b-a6f0-48ed-a577-c9ba6138d992",
+    "trajectoryId": "64dbbf16-4bd9-4213-82a4-6cd8dd787163"
+  },
+  "limits": "No release; independent substantive failure, worker118pass is not acceptance. r1/r3 ended before r5 dispatch. No user choices/history retired."
+}
