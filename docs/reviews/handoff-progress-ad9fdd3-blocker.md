@@ -1,0 +1,9 @@
+# R13 exact-head integration review — one remaining blocker
+
+Candidate `ad9fdd3` fixes both R11 root failures (merged/deployed confusion and in-flight progress race). Keep those fixes. Root 3-case production audit now **2pass/1fail**.
+
+Actual HTTP `POST progress/observe` in src/app/http.ts355 calls `reconcileInboxCurrency` immediately after recording progress. That invalidates the old ready card. The next normal plugin canonical claim, same durable source/event digest, fails in `canonicalSource` with `Canonical decision is staged, stale or closed`, before the replacement logic can run. Result: old advice is hidden, but no useful replacement gets generated. Passing an invented new revision or calling claim before reconciliation does not exercise this normal route.
+
+Copy docs/reviews/handoff-progress-ad9fdd3.audit.spec.ts into tests/root-handoff-review.audit.spec.ts. It uses actual ProgressStore, FindingStore, DecisionInbox and DeliveryStore/reconcileInboxCurrency, not a mirror. Keep first two tests green, fix only safe progress-invalidation -> immutable replacement -> actual helper refresh path. Do not broadly reopen stale/closed/staged/resolved/other-source choices or bypass leases/acceptance. Preserve prior history and new human proof. Use a server-owned reason/identity binding for replacement, not arbitrary prose authority.
+
+The required real plugin host test with mocked backend/helper is still not evidenced; the companion checkpoint patch is empty at review. Test unchanged native event digest, normal progress observation + reconciliation order, new helper call and actual remaining-stage options. Reuse current r13 workspace and candidate, skip historical discovery and broad suites. No live edits or deploy. Codex releases after independent exact-head/native proof; no new user decision is needed.

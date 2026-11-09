@@ -1,0 +1,25 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/handoff-qualified/backend-r13
+
+(node:3641) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/root-handoff-review.audit.spec.ts (3 tests | 1 failed) 82ms
+   × actual progress-observe inbox reconciliation still permits fresh native claim with unchanged event digest 27ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/root-handoff-review.audit.spec.ts > actual progress-observe inbox reconciliation still permits fresh native claim with unchanged event digest
+Error: Canonical decision is staged, stale or closed
+ ❯ DecisionInbox.canonicalSource src/app/decision-inbox.ts:414:98
+
+ ❯ DecisionInbox.claimCanonical src/app/decision-inbox.ts:443:21
+ ❯ tests/root-handoff-review.audit.spec.ts:30:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  13:12:28
+   Duration  2.85s (transform 1.66s, setup 0ms, import 2.30s, tests 82ms, environment 0ms)
+
