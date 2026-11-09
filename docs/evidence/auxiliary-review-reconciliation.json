@@ -1,0 +1,607 @@
+{
+  "findingsBefore": [
+    {
+      "dedupKey": "independent-review-12779824-b82e-484d-9502-d2150ba58aa1-candidate-20261108",
+      "title": "Independently review the existing advisor handoff candidate",
+      "problem": "Independent qualification needed for retained approved candidate. This is a linked read-only review assignment, not a replacement feature/intake or duplicate implementation. Parent finding 12779824-b82e-484d-9502-d2150ba58aa1. /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/repo backend313301d83cd4571eb757ed3b4d0e69c59702a2f5 and sibling dsh-next-steps plugin5255d57; checkpoint/NOTES.md and paired patches. Root95 backend tests passed.",
+      "scope": "Independent verification of existing parent finding 12779824-b82e-484d-9502-d2150ba58aa1. Review actual Settings primary/fallback persona path and nested-provider evidence semantics; canonical current/prior job identity and actual next owner. Test ended evidence-review versus real implementation blockers, newer failed report versus old ready report, waiting/progress evidence that does not prove testing complete, disabled specialist. No arbitrary prose or any evidence row may assert tests complete. No fictional Codex dispatch. No implementation, live source changes, merge/deploy/publish/accept, credentials, routing, access, privilege activation or spending change. Codex owns final review/release.",
+      "owner": "Independent Harness reviewer; Codex final review/release",
+      "kind": "verification",
+      "requirements": [
+        "Inspect exact candidate heads, patches, saved logs and installed compatibility. Existing test claims are reports until inspected; zero outer tool calls does not measure nested-provider activity.",
+        "Do not repeat full suites/builds without a specific missing check. Narrow isolated adversarial tests allowed. Do not modify implementation or installed code; do not revive original ended mandate.",
+        "Return durable report with exact heads/base, file/line findings, actual checks versus claims, pass/correction/authority verdict, limits and Codex next stage. Preserve original candidate and history; report real tool availability without pretending orchestrator_report ran.",
+        "Review actual Settings primary/fallback persona path and nested-provider evidence semantics; canonical current/prior job identity and actual next owner. Test ended evidence-review versus real implementation blockers, newer failed report versus old ready report, waiting/progress evidence that does not prove testing complete, disabled specialist. No arbitrary prose or any evidence row may assert tests complete. No fictional Codex dispatch."
+      ],
+      "repository": "gera3d/superagent-sandbox",
+      "id": "73a95659-851a-420f-ada3-6f5535d33616",
+      "occurrences": [
+        {
+          "id": "approved-independent-review-20261108",
+          "reference": "finding/12779824-b82e-484d-9502-d2150ba58aa1",
+          "evidence": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/repo backend313301d83cd4571eb757ed3b4d0e69c59702a2f5 and sibling dsh-next-steps plugin5255d57; checkpoint/NOTES.md and paired patches. Root95 backend tests passed.",
+          "at": "2026-11-08T23:25:01.233Z"
+        }
+      ],
+      "revision": 5,
+      "state": "blocked",
+      "choices": [
+        {
+          "id": "fix_now",
+          "kind": "fix_now",
+          "label": "Run verification"
+        },
+        {
+          "id": "queue_next",
+          "kind": "queue_next",
+          "label": "Queue next"
+        },
+        {
+          "id": "defer",
+          "kind": "defer",
+          "label": "Defer"
+        }
+      ],
+      "reports": [
+        {
+          "reference": "ticket/9ed144edd3de2aaa5a83421cb65449ce/report/75185c655b8eea14745db892daed656d",
+          "evidence": "Native review/correction is in progress; previous ready evidence is not current. Independent verification of candidate parent finding [`12779824-b82e-484d-9502-d2150ba58aa1`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/checkpoint/NOTES.md) confirms the advisor handoff changes pass all qualification criteria without defects.\n\n\ud83d\udfe2 **DONE**:\n- **Candidate Head & Patch Verification**: Verified [`313301d`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/repo) (base `c42a251`) and [`5255d57`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/dsh-next-steps) (base `c3ea991`). Candidate patches [`01-backend-canonical-finding-advice.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/checkpoint/01-backend-canonical-finding-advice.patch) and [`02-next-steps-plugin-canonical-finding-fallback.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/checkpoint/02-next-steps-plugin-canonical-finding-fallback.patch) match working trees byte-for-byte.\n- **Audited Semantics & Personas**: Confirmed [`advice-context.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/repo/src/app/advice-context.ts#L20-L36) distinguishes ended evidence reviews from true compile blockers, while [`settings.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/repo/src/app/settings.ts#L347-L407) and [`suggest.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/dsh-next-steps/src/suggest.ts#L146) harmonize personas and classify zero outer tool calls as unknown nested coverage.\n- **Sequential Checks & Boundary Adherence**: Executed targeted vitest suites (32 tests passed across backend and audit specs) and plugin tests (27 passed) with zero failures. Verified disabled specialists refuse cleanly in [`specialist-advice.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/repo/src/app/specialist-advice.ts#L91-L93) and live environments remain completely untouched.\n\n\u26a1 **DOING**:\n- Stopping at the bounded scope boundary (`finding:73a95659-851a-420f-ada3-6f5535d33616:r1`) with candidate qualified and zero live modifications.\n\n\ud83c\udfaf **NEXT**:\n- Root coordinator audits verified candidate patches in [`checkpoint/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/checkpoint) and coordinates final release under existing user authorization.",
+          "at": "2026-11-08T23:32:54.701Z",
+          "nextDecision": "Await fresh current-job evidence after the newer human/CI input or work progress.",
+          "jobId": "finding:73a95659-851a-420f-ada3-6f5535d33616:r1",
+          "state": "evidence",
+          "currencyToken": "a544eaeb38ec7edcdfa2fa98b6a3577bc3938cbb764220bbcbccc536ac4aa52b",
+          "summaryTruncated": false,
+          "originalLength": 2988,
+          "reportSummarySha256": "4a0c3d2cdfa8ece3fd7906cc0482bd268bf96b4e9b3f963738f54f56f4f1dd0d"
+        },
+        {
+          "reference": "ticket/9ed144edd3de2aaa5a83421cb65449ce/report/75185c655b8eea14745db892daed656d",
+          "evidence": "Independent verification of candidate parent finding [`12779824-b82e-484d-9502-d2150ba58aa1`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/checkpoint/NOTES.md) confirms the advisor handoff changes pass all qualification criteria without defects.\n\n\ud83d\udfe2 **DONE**:\n- **Candidate Head & Patch Verification**: Verified [`313301d`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/repo) (base `c42a251`) and [`5255d57`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/dsh-next-steps) (base `c3ea991`). Candidate patches [`01-backend-canonical-finding-advice.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/checkpoint/01-backend-canonical-finding-advice.patch) and [`02-next-steps-plugin-canonical-finding-fallback.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/checkpoint/02-next-steps-plugin-canonical-finding-fallback.patch) match working trees byte-for-byte.\n- **Audited Semantics & Personas**: Confirmed [`advice-context.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/repo/src/app/advice-context.ts#L20-L36) distinguishes ended evidence reviews from true compile blockers, while [`settings.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/repo/src/app/settings.ts#L347-L407) and [`suggest.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/dsh-next-steps/src/suggest.ts#L146) harmonize personas and classify zero outer tool calls as unknown nested coverage.\n- **Sequential Checks & Boundary Adherence**: Executed targeted vitest suites (32 tests passed across backend and audit specs) and plugin tests (27 passed) with zero failures. Verified disabled specialists refuse cleanly in [`specialist-advice.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/repo/src/app/specialist-advice.ts#L91-L93) and live environments remain completely untouched.\n\n\u26a1 **DOING**:\n- Stopping at the bounded scope boundary (`finding:73a95659-851a-420f-ada3-6f5535d33616:r1`) with candidate qualified and zero live modifications.\n\n\ud83c\udfaf **NEXT**:\n- Root coordinator audits verified candidate patches in [`checkpoint/`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-b9707b242b05/checkpoint) and coordinates final release under existing user authorization.",
+          "at": "2026-11-08T23:32:54.701Z",
+          "nextDecision": "Inspect the blocked work report and decide the next bounded recovery step.",
+          "jobId": "finding:73a95659-851a-420f-ada3-6f5535d33616:r1",
+          "state": "blocked",
+          "summaryTruncated": false,
+          "originalLength": 2907,
+          "reportSummarySha256": "4a66e4c6ede57a16688fdbc90c842412dfbff37c1a977b2a02c5223ed97df4b4"
+        }
+      ],
+      "audit": [
+        {
+          "event": "observed",
+          "actor": "external:observer",
+          "source": "external",
+          "reference": "orchestrator-http:observation-only",
+          "at": "2026-11-08T23:25:01.233Z",
+          "detail": "approved-independent-review-20261108"
+        },
+        {
+          "event": "recommendation_recorded",
+          "actor": "model:antigravity / gemini-3.8-flash",
+          "at": "2026-11-08T23:25:22.829Z",
+          "detail": "antigravity / gemini-3.8-flash"
+        },
+        {
+          "event": "confirmed",
+          "actor": "local-operator",
+          "at": "2026-11-08T23:25:44.300Z",
+          "detail": "fix_now"
+        },
+        {
+          "event": "dispatched",
+          "actor": "local-operator",
+          "at": "2026-11-08T23:25:48.793Z",
+          "detail": "9ed144edd3de2aaa5a83421cb65449ce/75185c655b8eea14745db892daed656d"
+        },
+        {
+          "event": "working_evidence",
+          "actor": "finding-runtime",
+          "at": "2026-11-08T23:32:56.635Z",
+          "detail": "ticket/9ed144edd3de2aaa5a83421cb65449ce/report/75185c655b8eea14745db892daed656d"
+        },
+        {
+          "event": "blocked",
+          "actor": "finding-runtime",
+          "at": "2026-11-08T23:35:46.410Z",
+          "detail": "Assignment ended without a qualifying report; review/verification required: ticket/9ed144edd3de2aaa5a83421cb65449ce/report/75185c655b8eea14745db892daed656d. End, idle or merge is not resolution."
+        },
+        {
+          "event": "review_required",
+          "actor": "worker:9ed144edd3de2aaa5a83421cb65449ce",
+          "at": "2026-11-09T01:51:51.053Z",
+          "detail": "blocked"
+        },
+        {
+          "event": "blocked",
+          "actor": "finding-runtime",
+          "at": "2026-11-09T01:58:24.354Z",
+          "detail": "Assignment ended without a qualifying report; review/verification required: ticket/9ed144edd3de2aaa5a83421cb65449ce/report/75185c655b8eea14745db892daed656d. End, idle or merge is not resolution."
+        }
+      ],
+      "createdAt": "2026-11-08T23:25:01.233Z",
+      "updatedAt": "2026-11-09T01:58:24.354Z",
+      "recommendation": {
+        "choiceId": "fix_now",
+        "rationale": "Parent finding 12779824 completed its implementation with candidate backend 313301d8 and plugin 5255d57 passing initial unit checks. Running verification now initiates the required independent read-only qualification of Settings persona propagation, nested-provider evidence semantics, and canonical handoffs in isolation without source mutations, assuming worker capacity is available.",
+        "provider": "antigravity / gemini-3.8-flash",
+        "recordedAt": "2026-11-08T23:25:22.826Z",
+        "revision": 1
+      },
+      "confirmation": {
+        "revision": 1,
+        "choiceId": "fix_now",
+        "actor": "local-operator",
+        "at": "2026-11-08T23:25:44.300Z"
+      },
+      "job": {
+        "id": "finding:73a95659-851a-420f-ada3-6f5535d33616:r1",
+        "ticketId": "9ed144edd3de2aaa5a83421cb65449ce",
+        "assignmentId": "75185c655b8eea14745db892daed656d"
+      },
+      "blocker": "Assignment ended without a qualifying report; review/verification required: ticket/9ed144edd3de2aaa5a83421cb65449ce/report/75185c655b8eea14745db892daed656d. End, idle or merge is not resolution."
+    },
+    {
+      "dedupKey": "independent-review-51f309ca-d396-4983-a55d-ef4432a8572f-candidate-20261108",
+      "title": "Independently review the existing worker reporting transport",
+      "problem": "Independent qualification needed for retained approved candidate. This is a linked read-only review assignment, not a replacement feature/intake or duplicate implementation. Parent finding 51f309ca-d396-4983-a55d-ef4432a8572f. /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-e131264007b7/repo candidate2041d78 and checkpoint/01-backend-antigravity-report-delivery.patch; prior root adversarial cases retained.",
+      "scope": "Independent verification of existing parent finding 51f309ca-d396-4983-a55d-ef4432a8572f. Review actual producer and production consumer identity/currency. Does production supply mandatory current ticket+assignment+turn/nonce, not only optional test parameters? Check stale/replay/missing fields/same-assignment later turns, pending/background/progress queue races, symlink/TOCTOU/size safety, consume timing after durable successful engine report. No prose-to-ready or automatic acceptance. No implementation, live source changes, merge/deploy/publish/accept, credentials, routing, access, privilege activation or spending change. Codex owns final review/release.",
+      "owner": "Independent Harness reviewer; Codex final review/release",
+      "kind": "verification",
+      "requirements": [
+        "Inspect exact candidate heads, patches, saved logs and installed compatibility. Existing test claims are reports until inspected; zero outer tool calls does not measure nested-provider activity.",
+        "Do not repeat full suites/builds without a specific missing check. Narrow isolated adversarial tests allowed. Do not modify implementation or installed code; do not revive original ended mandate.",
+        "Return durable report with exact heads/base, file/line findings, actual checks versus claims, pass/correction/authority verdict, limits and Codex next stage. Preserve original candidate and history; report real tool availability without pretending orchestrator_report ran.",
+        "Review actual producer and production consumer identity/currency. Does production supply mandatory current ticket+assignment+turn/nonce, not only optional test parameters? Check stale/replay/missing fields/same-assignment later turns, pending/background/progress queue races, symlink/TOCTOU/size safety, consume timing after durable successful engine report. No prose-to-ready or automatic acceptance."
+      ],
+      "repository": "gera3d/superagent-sandbox",
+      "id": "868c2b60-06cb-4777-b1c6-426cde787ba1",
+      "occurrences": [
+        {
+          "id": "approved-independent-review-20261108",
+          "reference": "finding/51f309ca-d396-4983-a55d-ef4432a8572f",
+          "evidence": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-e131264007b7/repo candidate2041d78 and checkpoint/01-backend-antigravity-report-delivery.patch; prior root adversarial cases retained.",
+          "at": "2026-11-08T23:25:01.299Z"
+        }
+      ],
+      "revision": 5,
+      "state": "blocked",
+      "choices": [
+        {
+          "id": "fix_now",
+          "kind": "fix_now",
+          "label": "Run verification"
+        },
+        {
+          "id": "queue_next",
+          "kind": "queue_next",
+          "label": "Queue next"
+        },
+        {
+          "id": "defer",
+          "kind": "defer",
+          "label": "Defer"
+        }
+      ],
+      "reports": [
+        {
+          "reference": "ticket/97be81bc28e55d8a7d6c50ac36f334bd/report/b4d0c513b999f9ccdb1ff3407257d2eb",
+          "evidence": "Native review/correction is in progress; previous ready evidence is not current. Independent review for finding **`868c2b60-06cb-4777-b1c6-426cde787ba1`** (parent **`51f309ca-d396-4983-a55d-ef4432a8572f`**) is completed with a **CONDITIONAL PASS / CORRECTION REQUIRED** verdict for Codex release.\n\n\ud83d\udfe2 **DONE**:\n- Verified candidate [`2041d78`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e131264007b7/repo) and patch [`01-backend-antigravity-report-delivery.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e131264007b7/checkpoint/01-backend-antigravity-report-delivery.patch) across 6 test suites (69 passing tests, 0 failed).\n- Confirmed strict symlink containment, 256 KB file size limits, delayed consumption after atomic commit, and the hard ban on prose-to-ready elevation in [`src/executor/dsh.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e131264007b7/repo/src/executor/dsh.ts#L1081-L1115).\n- Identified runtime currency gap: production consumer [`src/executor/dsh.ts:869-873`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e131264007b7/repo/src/executor/dsh.ts#L869-L873) and producer [`src/app/execution-environment.ts:48-53`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e131264007b7/repo/src/app/execution-environment.ts#L48-L53) supply mandatory ticket and assignment IDs, but omit `turn` and `nonce`.\n\n\u26a1 **DOING**:\n- Preserved durable verification report in [`REPORT.md`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-97be81bc28e5/REPORT.md) and stopped at the scope boundary without mutating source code, deploying, or activating privileges.\n\n\ud83c\udfaf **NEXT**:\n- Forward findings to Codex for release decision on whether to accept candidate [`2041d78`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e131264007b7/repo) as-is or require explicit producer/consumer `turn` binding before release.",
+          "at": "2026-11-08T23:31:18.896Z",
+          "nextDecision": "Await fresh current-job evidence after the newer human/CI input or work progress.",
+          "jobId": "finding:868c2b60-06cb-4777-b1c6-426cde787ba1:r1",
+          "state": "evidence",
+          "currencyToken": "56d5015f821377bbf1844c246e2cbc0397152127d724fe0f82c3fcc04fdcd9d0",
+          "summaryTruncated": false,
+          "originalLength": 2270,
+          "reportSummarySha256": "b087496a8bf4e1072522fb85f3b0aa2e92b2d7c702a19561e5ddbbab9a20b8eb"
+        },
+        {
+          "reference": "ticket/97be81bc28e55d8a7d6c50ac36f334bd/report/b4d0c513b999f9ccdb1ff3407257d2eb",
+          "evidence": "Independent review for finding **`868c2b60-06cb-4777-b1c6-426cde787ba1`** (parent **`51f309ca-d396-4983-a55d-ef4432a8572f`**) is completed with a **CONDITIONAL PASS / CORRECTION REQUIRED** verdict for Codex release.\n\n\ud83d\udfe2 **DONE**:\n- Verified candidate [`2041d78`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e131264007b7/repo) and patch [`01-backend-antigravity-report-delivery.patch`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e131264007b7/checkpoint/01-backend-antigravity-report-delivery.patch) across 6 test suites (69 passing tests, 0 failed).\n- Confirmed strict symlink containment, 256 KB file size limits, delayed consumption after atomic commit, and the hard ban on prose-to-ready elevation in [`src/executor/dsh.ts`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e131264007b7/repo/src/executor/dsh.ts#L1081-L1115).\n- Identified runtime currency gap: production consumer [`src/executor/dsh.ts:869-873`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e131264007b7/repo/src/executor/dsh.ts#L869-L873) and producer [`src/app/execution-environment.ts:48-53`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e131264007b7/repo/src/app/execution-environment.ts#L48-L53) supply mandatory ticket and assignment IDs, but omit `turn` and `nonce`.\n\n\u26a1 **DOING**:\n- Preserved durable verification report in [`REPORT.md`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-97be81bc28e5/REPORT.md) and stopped at the scope boundary without mutating source code, deploying, or activating privileges.\n\n\ud83c\udfaf **NEXT**:\n- Forward findings to Codex for release decision on whether to accept candidate [`2041d78`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-e131264007b7/repo) as-is or require explicit producer/consumer `turn` binding before release.",
+          "at": "2026-11-08T23:31:18.896Z",
+          "nextDecision": "Inspect the blocked work report and decide the next bounded recovery step.",
+          "jobId": "finding:868c2b60-06cb-4777-b1c6-426cde787ba1:r1",
+          "state": "blocked",
+          "summaryTruncated": false,
+          "originalLength": 2189,
+          "reportSummarySha256": "215389eac89031ebfb48ffc8816e7faec8f63f84a31f789598abdefa4ba9e7cb"
+        }
+      ],
+      "audit": [
+        {
+          "event": "observed",
+          "actor": "external:observer",
+          "source": "external",
+          "reference": "orchestrator-http:observation-only",
+          "at": "2026-11-08T23:25:01.299Z",
+          "detail": "approved-independent-review-20261108"
+        },
+        {
+          "event": "recommendation_recorded",
+          "actor": "model:antigravity / gemini-3.8-flash",
+          "at": "2026-11-08T23:25:35.739Z",
+          "detail": "antigravity / gemini-3.8-flash"
+        },
+        {
+          "event": "confirmed",
+          "actor": "local-operator",
+          "at": "2026-11-08T23:26:03.568Z",
+          "detail": "fix_now"
+        },
+        {
+          "event": "dispatched",
+          "actor": "local-operator",
+          "at": "2026-11-08T23:26:03.694Z",
+          "detail": "97be81bc28e55d8a7d6c50ac36f334bd/b4d0c513b999f9ccdb1ff3407257d2eb"
+        },
+        {
+          "event": "working_evidence",
+          "actor": "finding-runtime",
+          "at": "2026-11-08T23:31:20.283Z",
+          "detail": "ticket/97be81bc28e55d8a7d6c50ac36f334bd/report/b4d0c513b999f9ccdb1ff3407257d2eb"
+        },
+        {
+          "event": "blocked",
+          "actor": "finding-runtime",
+          "at": "2026-11-08T23:35:46.412Z",
+          "detail": "Assignment ended without a qualifying report; review/verification required: ticket/97be81bc28e55d8a7d6c50ac36f334bd/report/b4d0c513b999f9ccdb1ff3407257d2eb. End, idle or merge is not resolution."
+        },
+        {
+          "event": "review_required",
+          "actor": "worker:97be81bc28e55d8a7d6c50ac36f334bd",
+          "at": "2026-11-09T01:51:51.056Z",
+          "detail": "blocked"
+        },
+        {
+          "event": "blocked",
+          "actor": "finding-runtime",
+          "at": "2026-11-09T01:58:24.356Z",
+          "detail": "Assignment ended without a qualifying report; review/verification required: ticket/97be81bc28e55d8a7d6c50ac36f334bd/report/b4d0c513b999f9ccdb1ff3407257d2eb. End, idle or merge is not resolution."
+        }
+      ],
+      "createdAt": "2026-11-08T23:25:01.299Z",
+      "updatedAt": "2026-11-09T01:58:24.356Z",
+      "recommendation": {
+        "choiceId": "queue_next",
+        "rationale": "Parent finding 51f309ca produced candidate 2041d78 with patch 01-backend-antigravity-report-delivery to resolve report delivery and currency gaps. With the companion advisor handoff verification scheduled to run, queueing next sequences this review immediately behind it, ensuring focused adversarial checks on ticket/assignment/turn currency and symlink safety without worker contention.",
+        "provider": "antigravity / gemini-3.8-flash",
+        "recordedAt": "2026-11-08T23:25:35.737Z",
+        "revision": 1
+      },
+      "confirmation": {
+        "revision": 1,
+        "choiceId": "fix_now",
+        "actor": "local-operator",
+        "at": "2026-11-08T23:26:03.567Z"
+      },
+      "job": {
+        "id": "finding:868c2b60-06cb-4777-b1c6-426cde787ba1:r1",
+        "ticketId": "97be81bc28e55d8a7d6c50ac36f334bd",
+        "assignmentId": "b4d0c513b999f9ccdb1ff3407257d2eb"
+      },
+      "blocker": "Assignment ended without a qualifying report; review/verification required: ticket/97be81bc28e55d8a7d6c50ac36f334bd/report/b4d0c513b999f9ccdb1ff3407257d2eb. End, idle or merge is not resolution."
+    }
+  ],
+  "runtime": {
+    "setup": {
+      "machine": {
+        "stateDir": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent",
+        "promptMaxChars": 100000,
+        "admissionContextMaxPages": 10,
+        "admissionContextTimeoutMs": 15000
+      },
+      "problem": null,
+      "feishuProblem": null,
+      "accounts": {
+        "repository": "gera3d/superagent-sandbox",
+        "agent": "gera3d",
+        "feishu": null
+      }
+    },
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "masterId": "orchestrator-core",
+    "paused": false,
+    "health": {
+      "runtime": {
+        "state": "ready",
+        "detail": "Orchestrator is ready",
+        "at": "2026-11-09T02:08:53.449Z"
+      },
+      "relay": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:19:01.591Z"
+      },
+      "notice": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:19:01.592Z"
+      },
+      "launch": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:13:30.123Z"
+      },
+      "delivery": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.011Z"
+      },
+      "assessment": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.012Z"
+      },
+      "reply": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.012Z"
+      },
+      "evals": {
+        "state": "ready",
+        "detail": "No unavailable Eval in the last hour"
+      },
+      "models": {
+        "state": "ready",
+        "detail": "No managed Session is waiting on a model budget retry"
+      },
+      "github": {
+        "state": "error",
+        "detail": "4 consecutive failed polls; last: Error: gh: API rate limit exceeded for user ID 512583. If you reach out to GitHub Support for help, please include the request ID E907:3AC522:17EC121:1A66396:6AF12F14 and timestamp 2026-11-09 02:25:25 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (HTTP 403)",
+        "code": "pollFailures",
+        "values": {
+          "count": "4",
+          "error": "Error: gh: API rate limit exceeded for user ID 512583. If you reach out to GitHub Support for help, please include the request ID E907:3AC522:17EC121:1A66396:6AF12F14 and timestamp 2026-11-09 02:25:25 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (HTTP 403)"
+        }
+      }
+    }
+  },
+  "at": "2026-11-09T02:29:38.631919+00:00",
+  "dispositions": [
+    {
+      "id": "73a95659-851a-420f-ada3-6f5535d33616",
+      "parent": "12779824-b82e-484d-9502-d2150ba58aa1",
+      "state": "deferred",
+      "revision": 5,
+      "reason": "Advisor reviewer passed candidate313301d/5255d57, but root subsequently reproduced an unverified-evidence plus Build failed / Tests pending counterexample. Its blanket no-defects verdict was not accepted. Parent corrections were independently reviewed, merged/deployed and protected native accepted; earlier read-only review report is consumed/superseded history, not source acceptance.",
+      "job": {
+        "id": "finding:73a95659-851a-420f-ada3-6f5535d33616:r1",
+        "ticketId": "9ed144edd3de2aaa5a83421cb65449ce",
+        "assignmentId": "75185c655b8eea14745db892daed656d"
+      },
+      "auditLast": {
+        "event": "reviewed",
+        "actor": "codex-coordinator",
+        "at": "2026-11-09T02:29:38.028Z",
+        "detail": "{\"revision\":5,\"decision\":\"defer\"}"
+      }
+    },
+    {
+      "id": "868c2b60-06cb-4777-b1c6-426cde787ba1",
+      "parent": "51f309ca-d396-4983-a55d-ef4432a8572f",
+      "state": "deferred",
+      "revision": 5,
+      "reason": "Reporting reviewer2041d78 correctly required production turn/nonce binding. Root consumed the retained69-check correction-required report, then found additional claim/replay/crash/fallback issues in subsequent versions. Parent cumulative PR74+75 was independently qualified and actual fallback/Gemini native accepted. This old advisory report is consumed/superseded history; it does not qualify old2041d78 or certify all original review coverage.",
+      "job": {
+        "id": "finding:868c2b60-06cb-4777-b1c6-426cde787ba1:r1",
+        "ticketId": "97be81bc28e55d8a7d6c50ac36f334bd",
+        "assignmentId": "b4d0c513b999f9ccdb1ff3407257d2eb"
+      },
+      "auditLast": {
+        "event": "reviewed",
+        "actor": "codex-coordinator",
+        "at": "2026-11-09T02:29:38.597Z",
+        "detail": "{\"revision\":5,\"decision\":\"defer\"}"
+      }
+    }
+  ],
+  "runtimeAfter": {
+    "setup": {
+      "machine": {
+        "stateDir": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent",
+        "promptMaxChars": 100000,
+        "admissionContextMaxPages": 10,
+        "admissionContextTimeoutMs": 15000
+      },
+      "problem": null,
+      "feishuProblem": null,
+      "accounts": {
+        "repository": "gera3d/superagent-sandbox",
+        "agent": "gera3d",
+        "feishu": null
+      }
+    },
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "masterId": "orchestrator-core",
+    "paused": false,
+    "health": {
+      "runtime": {
+        "state": "ready",
+        "detail": "Orchestrator is ready",
+        "at": "2026-11-09T02:08:53.449Z"
+      },
+      "relay": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:19:01.591Z"
+      },
+      "notice": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:19:01.592Z"
+      },
+      "launch": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:13:30.123Z"
+      },
+      "delivery": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.011Z"
+      },
+      "assessment": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.012Z"
+      },
+      "reply": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.012Z"
+      },
+      "evals": {
+        "state": "ready",
+        "detail": "No unavailable Eval in the last hour"
+      },
+      "models": {
+        "state": "ready",
+        "detail": "No managed Session is waiting on a model budget retry"
+      },
+      "github": {
+        "state": "error",
+        "detail": "4 consecutive failed polls; last: Error: gh: API rate limit exceeded for user ID 512583. If you reach out to GitHub Support for help, please include the request ID E907:3AC522:17EC121:1A66396:6AF12F14 and timestamp 2026-11-09 02:25:25 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (HTTP 403)",
+        "code": "pollFailures",
+        "values": {
+          "count": "4",
+          "error": "Error: gh: API rate limit exceeded for user ID 512583. If you reach out to GitHub Support for help, please include the request ID E907:3AC522:17EC121:1A66396:6AF12F14 and timestamp 2026-11-09 02:25:25 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (HTTP 403)"
+        }
+      }
+    }
+  },
+  "runtimeAfterNaturalPollWait": {
+    "setup": {
+      "machine": {
+        "stateDir": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent",
+        "promptMaxChars": 100000,
+        "admissionContextMaxPages": 10,
+        "admissionContextTimeoutMs": 15000
+      },
+      "problem": null,
+      "feishuProblem": null,
+      "accounts": {
+        "repository": "gera3d/superagent-sandbox",
+        "agent": "gera3d",
+        "feishu": null
+      }
+    },
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "masterId": "orchestrator-core",
+    "paused": false,
+    "health": {
+      "runtime": {
+        "state": "ready",
+        "detail": "Orchestrator is ready",
+        "at": "2026-11-09T02:08:53.449Z"
+      },
+      "relay": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:19:01.591Z"
+      },
+      "notice": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:19:01.592Z"
+      },
+      "launch": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:13:30.123Z"
+      },
+      "delivery": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.011Z"
+      },
+      "assessment": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.012Z"
+      },
+      "reply": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T02:08:50.012Z"
+      },
+      "evals": {
+        "state": "ready",
+        "detail": "No unavailable Eval in the last hour"
+      },
+      "models": {
+        "state": "ready",
+        "detail": "No managed Session is waiting on a model budget retry"
+      },
+      "github": {
+        "state": "ready",
+        "detail": "0 notifications; next poll \u2265 60s",
+        "at": "2026-11-09T02:27:18.031Z"
+      }
+    }
+  },
+  "finalDispositions": [
+    {
+      "id": "73a95659-851a-420f-ada3-6f5535d33616",
+      "state": "deferred",
+      "revision": 5,
+      "job": {
+        "id": "finding:73a95659-851a-420f-ada3-6f5535d33616:r1",
+        "ticketId": "9ed144edd3de2aaa5a83421cb65449ce",
+        "assignmentId": "75185c655b8eea14745db892daed656d"
+      },
+      "auditLast": {
+        "event": "reviewed",
+        "actor": "codex-coordinator",
+        "at": "2026-11-09T02:29:38.028Z",
+        "detail": "{\"revision\":5,\"decision\":\"defer\"}"
+      }
+    },
+    {
+      "id": "868c2b60-06cb-4777-b1c6-426cde787ba1",
+      "state": "deferred",
+      "revision": 5,
+      "job": {
+        "id": "finding:868c2b60-06cb-4777-b1c6-426cde787ba1:r1",
+        "ticketId": "97be81bc28e55d8a7d6c50ac36f334bd",
+        "assignmentId": "b4d0c513b999f9ccdb1ff3407257d2eb"
+      },
+      "auditLast": {
+        "event": "reviewed",
+        "actor": "codex-coordinator",
+        "at": "2026-11-09T02:29:38.597Z",
+        "detail": "{\"revision\":5,\"decision\":\"defer\"}"
+      }
+    },
+    {
+      "id": "d0d6aa3c-0934-42c1-8716-130fd6bd4122",
+      "state": "deferred",
+      "revision": 3,
+      "job": {
+        "id": "finding:d0d6aa3c-0934-42c1-8716-130fd6bd4122:r1",
+        "ticketId": "62f6b9bd3c7db92ca7955dbf5adf6a81",
+        "assignmentId": "790df61c23bb18197b04d47ff4aaf127"
+      },
+      "auditLast": {
+        "event": "reviewed",
+        "actor": "codex-coordinator",
+        "at": "2026-11-09T00:30:12.431Z",
+        "detail": "{\"revision\":3,\"decision\":\"defer\"}"
+      }
+    }
+  ],
+  "githubRecoveryEvidence": "github-rate-limit-recovery.json",
+  "noAcceptedParentReopened": true
+}

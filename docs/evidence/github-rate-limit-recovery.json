@@ -1,0 +1,43 @@
+{
+  "at": "2026-11-09T02:31:36.805276+00:00",
+  "sameConfiguredCli": "/Users/gerayeremin/.npm-global/bin/gh-agent",
+  "existingAccountIdentity": "same configured CLI; no reauthentication/token/account/transport change",
+  "observedFailure": {
+    "state": "error",
+    "detail": "4 consecutive failed polls; last: Error: gh: API rate limit exceeded for user ID 512583. If you reach out to GitHub Support for help, please include the request ID E907:3AC522:17EC121:1A66396:6AF12F14 and timestamp 2026-11-09 02:25:25 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (HTTP 403)",
+    "code": "pollFailures",
+    "values": {
+      "count": "4",
+      "error": "Error: gh: API rate limit exceeded for user ID 512583. If you reach out to GitHub Support for help, please include the request ID E907:3AC522:17EC121:1A66396:6AF12F14 and timestamp 2026-11-09 02:25:25 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (HTTP 403)"
+    }
+  },
+  "quotaRead": {
+    "status": "HTTP200",
+    "date": "Mon, 09 Nov 2026 02:28:51 GMT",
+    "requestId": "EAB4:2CF84:19094B9:1B83F61:6AF12FE2",
+    "core": {
+      "limit": 5000,
+      "used": 187,
+      "remaining": 4813,
+      "reset": 1794194827
+    },
+    "coreResetUtc": "2026-11-09T03:27:07+00:00",
+    "retryAfter": null,
+    "rateResource": "core"
+  },
+  "existingPolling": {
+    "minimumSeconds": 60,
+    "forcedPoll": false,
+    "backoffOrTimerChanged": false,
+    "quotaQueries": 1,
+    "note": "Health remained error while existing successful poll round completed; did not infer recovery from quota endpoint alone."
+  },
+  "observedRecovery": {
+    "state": "ready",
+    "detail": "0 notifications; next poll \u2265 60s",
+    "at": "2026-11-09T02:27:18.031Z"
+  },
+  "recoveryCheckAt": "2026-11-09T02:31:07.659520Z",
+  "remainingGate": null,
+  "nextOwner": "Existing hourly coordinator checks live health once on its next normal pass; respect any new rate/reset/Retry-After evidence, no credential workaround."
+}

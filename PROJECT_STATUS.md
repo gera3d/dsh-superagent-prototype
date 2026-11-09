@@ -1,6 +1,6 @@
 # DeepSeek Harness project status
 
-Updated November 08, 2026, 06:24 PM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
+Updated November 08, 2026, 06:32 PM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
 
 ## Current seven-track outcome
 
@@ -15,6 +15,14 @@ Updated November 08, 2026, 06:24 PM PST. Owner: Codex. Check this current sectio
 | Publication confirmation before enqueue | **Investigation independently completed and accepted**, not a repair. Actual production coordinator pre-effect/idempotency test passes; original66ms cause remains unproven. | Optional separately scoped diagnostic logging decision; preserve every publication approval and pin gate. |
 
 Intake is **resumed**, load **0 running,0 queued,max3**. All runtime health components, including GitHub, currently ready. Installed cumulative PR74+75 source head0fed9d3 and27 built assets match qualified release. Reporting original and linked verification now native verified/accepted. Headless/advisor/completion/allowance remain accepted; cost/publication remain accepted verification/investigation scopes only. No new repair scope, settings/routes/credentials/spending/limits/schedule changes. OpenAI conserved; headless enabled revision3.
+
+## Auxiliary review records reconciled; GitHub rate limit recovered naturally
+
+Two delegated read-only review records have terminal **deferred advisory-history** dispositions, preserving original requirements, reports, jobs and critical limits: advisor reviewer `73a95659-851a-420f-ada3-6f5535d33616` revision5 and reporting reviewer `868c2b60-06cb-4777-b1c6-426cde787ba1` revision5. Their reports were consumed by root and superseded by accepted parent corrections; **neither old source candidate was accepted**. The advisor reviewer claimed a defect-free pass, but root subsequently reproduced the unverified-evidence/failed-tests counterexample; that false pass remains recorded. Reporting reviewer correctly required missing production turn binding, while later root review identified further claim/replay/crash/fallback defects. Headless companion review `d0d6aa3c-0934-42c1-8716-130fd6bd4122` remains deferred revision3. No workers, tests or accepted parent findings were reopened. [Canonical terminal advisory dispositions](docs/evidence/auxiliary-review-reconciliation.json).
+
+The6:24PM all-ready observation was valid then; GitHub later reported4 failed polls with an actual HTTP403 API-rate-limit error at `2026-11-09T02:25:25Z` (6:25PM PST), request `E907:3AC522:17EC121:1A66396:6AF12F14`. This was **not treated as authentication failure**. One read-only quota query through the same configured gh-agent CLI returned HTTP200 at02:28:51Z, core4813/5000 remaining, core reset03:27:07Z (7:27PM PST), no Retry-After header. A healthy quota response alone was not called recovered Harness transport. After leaving its existing polling loop untouched, live Harness health was observed **GitHub ready** at02:31:07Z; reported successful poll timestamp02:27:18.031Z. No forced polls, cooldown clearing, reauthentication, account/transport substitution, credentials, permission, spending, timer or schedule changes. [Exact rate-limit and recovery proof](docs/evidence/github-rate-limit-recovery.json).
+
+Current result:0running/0queued, unpaused; all runtime components including GitHub ready. No remaining required action for these two auxiliary records or the recovered limit, and all accepted parent scopes remain accepted. Existing hourly coordinator remains the owner of the next normal live-health check; if a new limit appears, respect its actual reset/backoff/Retry-After rather than guessing or bypassing it. Optional future cost repairs/account-reader extensions remain outside completed scope.
 
 ## Reporting repair complete — exact native acceptance recorded
 
