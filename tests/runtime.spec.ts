@@ -1488,6 +1488,10 @@ it('keeps the report of a blocked, failed or ready worker whose turn ends, and r
 it('relays the status-request hint when a worker\'s turn ends with no text and no report', async () => {
   const { ticket, sessionId } = await acceptedTicket()
   const agent = agents.get(sessionId)! as { status: string }
+  // A real terminal turn has claimed its queued launch input; the fixture does
+  // not run an agent loop, so consume that input before simulating terminal idle.
+  const inbox = (agent as unknown as { inbox: { nextTurn: unknown[]; nextStep: unknown[] } }).inbox
+  inbox.nextTurn.splice(0); inbox.nextStep.splice(0)
   agent.status = 'idle'
   ;(runtime as unknown as { ctx: Context }).ctx.emit('agent/status', { agent, status: 'idle' } as never)
   await vi.waitFor(() => expect(runtime.store.tickets.get(ticket.id)!.assignments.at(-1)!.report).toMatchObject({ state: 'waiting' }))
