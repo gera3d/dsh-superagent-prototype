@@ -1,6 +1,6 @@
 # DeepSeek Harness project status
 
-Updated November 08, 2026, 06:10 PM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
+Updated November 08, 2026, 06:11 PM PST. Owner: Codex. Check this current section and live evidence before claiming completion. Older checkpoints below are history, not current state.
 
 ## Current seven-track outcome
 
@@ -14,7 +14,13 @@ Updated November 08, 2026, 06:10 PM PST. Owner: Codex. Check this current sectio
 | Cost-summary historical findings | **Verification independently completed and accepted**, not implementation repaired. Root reproduced and reconciled9 concerns with limits. | Prepare separately confirmed bounded cost repair scope; no duplicate accepted original job. No repair implementation queued this pass. |
 | Publication confirmation before enqueue | **Investigation independently completed and accepted**, not a repair. Actual production coordinator pre-effect/idempotency test passes; original66ms cause remains unproven. | Optional separately scoped diagnostic logging decision; preserve every publication approval and pin gate. |
 
-Intake is **resumed**, live load **1 running,0 queued,max3**, original reporting correction r31. Runtime services ready; GitHub starting after rollback restart, not yet reported ready. Headless coordination is native verified/accepted, enabled revision3 under existing owner approval. Reporting r25 returned and PR74 was deployed then rolled back after actual fallback race; r31 is the same original-scope correction, not accepted. Codex owns qualification/release. No new routes, credentials, spending, worker limits or automation changes. OpenAI remains conserved.
+Intake is **resumed**, live load **0 running,0 queued,max3** after real fallback verification ended ready. Runtime services ready; GitHub starting after rollback restart, not yet reported ready. Headless coordination is native verified/accepted, enabled revision3 under existing owner approval. Reporting r25 returned and PR74 was deployed then rolled back after actual fallback race; r31 is the same original-scope correction, not accepted. Codex owns qualification/release. No new routes, credentials, spending, worker limits or automation changes. OpenAI remains conserved.
+
+## Actual installed fallback handoff verified; Gemini-specific reset wait
+
+The same linked verification r3 completed on existing Sonnet fallback after real Gemini cooldown188s. Worker shell inherited no identity variables and correctly exported exact actual system-prompt ticket/assignment/turn2, then invoked the installed `orchestrator_report` CLI exactly once, exit0. Native report became ready and ticket ended; recomputed worker snapshot hash matches assignment/report hash `7b08f7756cf1a1a2` and the single consumed marker. Canonical review transition count1; native report timestamp remained stable after completion and capacity0running/0queued. [Actual fallback proof](docs/evidence/reporting-real-fallback-verified.json).
+
+This establishes real fallback continuity/installed report ingestion, **not Gemini-specific success**. No acceptance yet. Actual quota snapshot reports Google reset `2026-11-09T02:12:43Z`; Codex is waiting for that specific eligibility change before one Gemini handoff through this existing verification finding. No repeated unchanged failure, route change or cooldown clearing. PR75 cumulative source remains installed; all previously accepted scopes preserved.
 
 ## Reporting fallback correction qualified and deployed; real transition verification active
 

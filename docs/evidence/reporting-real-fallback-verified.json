@@ -1,0 +1,66 @@
+{
+  "at": "2026-11-09T02:11:11.968762+00:00",
+  "scope": "actual default-route Google-cooldown to Sonnet fallback reporting proof; NOT Gemini success",
+  "parentFinding": "51f309ca-d396-4983-a55d-ef4432a8572f",
+  "verificationFinding": "06fd14af-5535-411d-936c-477bf2bd2cfa",
+  "job": {
+    "id": "finding:06fd14af-5535-411d-936c-477bf2bd2cfa:r3",
+    "ticketId": "487236ccdb874bd9db0e60288cc2470c",
+    "assignmentId": "3bf9df79a01ed649a526e303bd2d7122"
+  },
+  "sourcePr": 75,
+  "head": "0fed9d3d2f5f092d68af41115d16218a6187eb36",
+  "merge": "5a30bf5ddf4ccb2ac3c74a64cc29d084b5f3817d",
+  "actualGoogleAttempt": {
+    "turn": 1,
+    "model": "gemini-3.8-flash",
+    "error": "AGY_ERROR all Google accounts in cooldown, earliest reset188seconds"
+  },
+  "actualSuccessfulRoute": {
+    "turn": 2,
+    "provider": "anthropic",
+    "model": "claude-sonnet-5-5"
+  },
+  "actualCliCommands": 1,
+  "cliExit": 0,
+  "shellInheritedIdentity": "empty; worker exported exact actual system-prompt values",
+  "workerProducedReport": {
+    "state": "ready",
+    "summary": "Read-only verification finding:06fd14af-5535-411d-936c-477bf2bd2cfa:r3 complete: installed orchestrator_report CLI found at worker-bin on PATH (/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/worker-bin/orchestrator_report, -rwx------, 2902 bytes). Reported via the real CLI with ticket=487236ccdb874bd9db0e60288cc2470c assignment=3bf9df79a01ed649a526e303bd2d7122 turn=2. Note: turn 1 failed on model unavailability (Antigravity cooldown) and this is turn 2 on fallback model claude-sonnet-5-5. No code/settings changes, no tests, no PR.",
+    "ticket_id": "487236ccdb874bd9db0e60288cc2470c",
+    "assignment_id": "3bf9df79a01ed649a526e303bd2d7122",
+    "turn_id": "2",
+    "at": "2026-11-09T02:09:45.005Z"
+  },
+  "nativeAssignment": {
+    "id": "3bf9df79a01ed649a526e303bd2d7122",
+    "state": "ended",
+    "createdAt": "2026-11-09T02:09:33.155Z",
+    "startedAt": "2026-11-09T02:09:35.009Z",
+    "idleAt": "2026-11-09T02:09:48.790Z",
+    "report": {
+      "state": "ready",
+      "summary": "Read-only verification finding:06fd14af-5535-411d-936c-477bf2bd2cfa:r3 complete: installed orchestrator_report CLI found at worker-bin on PATH (/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/worker-bin/orchestrator_report, -rwx------, 2902 bytes). Reported via the real CLI with ticket=487236ccdb874bd9db0e60288cc2470c assignment=3bf9df79a01ed649a526e303bd2d7122 turn=2. Note: turn 1 failed on model unavailability (Antigravity cooldown) and this is turn 2 on fallback model claude-sonnet-5-5. No code/settings changes, no tests, no PR.",
+      "at": "2026-11-09T02:09:48.794Z",
+      "hash": "7b08f7756cf1a1a2"
+    },
+    "endedAt": "2026-11-09T02:09:48.794Z",
+    "deliveredReportHash": "7b08f7756cf1a1a2",
+    "ref": "worker-487236ccdb874bd9db0e60288cc2470c"
+  },
+  "snapshotHashVerified": "7b08f7756cf1a1a2",
+  "consumedMarker": {
+    "at": 1794190185005,
+    "state": "ready",
+    "hash": "7b08f7756cf1a1a2"
+  },
+  "reviewTransitionCount": 1,
+  "nativeStableAfterCompletion": true,
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "nativeAccepted": false,
+  "remaining": "Wait for actual Google reset/eligibility change at02:12:43Z then one Gemini-specific current-turn CLI handoff; protected acceptance only after that proof."
+}
