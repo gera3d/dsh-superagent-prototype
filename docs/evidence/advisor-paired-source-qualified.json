@@ -1,0 +1,51 @@
+{
+  "at": "2026-11-08T23:59:11.047607+00:00",
+  "backendHead": "2f852dfd2c44789858b5a023af13d298f069a8bb",
+  "backendMerge": "ada8bcc8ec10984e426220c9fc5b887968331708",
+  "backendPR": 71,
+  "pluginHead": "254c9ea23804842b84f291b422f2d2f581824739",
+  "pluginMerge": "18146d7bb5d59f2575405ad9781a2629f6006173",
+  "pluginPR": 21,
+  "tests": {
+    "backendIntegrated": 103,
+    "finalRootAudits": 4,
+    "pluginUnit": 35,
+    "pluginRealBackendContract": 17,
+    "types": 0,
+    "build": 0
+  },
+  "deployed": true,
+  "nativeVerified": true,
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "headlessStage": "idle",
+  "reportingCandidate": "bdc23f0",
+  "reportingState": "Returned, independent review pending",
+  "limitations": [
+    "No automatic Codex dispatch bridge",
+    "Readiness does not certify test completion",
+    "First contract run lacked backend source path; explicit integrated path rerun passed",
+    "No restart during productive headless work"
+  ],
+  "accepted": false,
+  "nativeEvidence": {
+    "thread": "worker-7c017292cef5dee4d08138181ec47a40",
+    "recommended": "Hand off to Codex coordinator review",
+    "scores": [
+      72,
+      18,
+      10
+    ],
+    "evaluator": "anthropic / claude-sonnet-5-5",
+    "manualBridgeExplicit": true,
+    "replySent": false,
+    "contextCanonicalFinding": true,
+    "configuredPersona": "Senior Developer",
+    "falseTestingClaim": false,
+    "allowanceHeaderPreserved": true
+  },
+  "next": "Codex native evidence selection/requirements acknowledgment and bounded acceptance; independent review of reporting and headless returned candidates."
+}
