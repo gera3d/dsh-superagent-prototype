@@ -1,0 +1,124 @@
+[
+  {
+    "case": "ordinary-current-request",
+    "request": {
+      "summary": "Explain caching options.",
+      "latestTurn": "## Original goal (first human message)\nExplain caching options.\n\n## Latest human message\nPlease draft a new issue for the native-tool gap; do not file or send it. This is a test draft with unverified details, so use placeholders rather than inventing evidence.\n\n## What the agent did this turn (0 tool calls; turn ended: completed)\n- No files or issues changed.\n\n## Agent's final message to the human\nI can prepare that requested unsent draft for review."
+    },
+    "at": "2026-11-09T17:11:08.561900+00:00",
+    "status": 200,
+    "response": {
+      "options": [
+        {
+          "id": "next-1",
+          "label": "Draft unsent issue with placeholders",
+          "prompt": "Draft the native-tool gap issue as text only in your reply. Do not file, send, or create it anywhere. Use clearly marked placeholders such as [TOOL_NAME], [EXPECTED_BEHAVIOR], [OBSERVED_BEHAVIOR], [REPRO_STEPS], [ENVIRONMENT], [EVIDENCE_LINK] for every unverified detail. Include sections: Summary, Impact, Expected vs Actual, Repro, Acceptance Criteria, Open Questions. State at the top that it is an unverified test draft.",
+          "recommended": true
+        },
+        {
+          "id": "next-2",
+          "label": "List missing inputs first",
+          "prompt": "Before drafting, list the specific details needed for a credible native-tool gap issue (tool name, expected behavior, observed behavior, repro steps, environment, evidence) and who should supply each. Do not invent any values and do not file anything. Then offer to produce the placeholder-based draft once I confirm.",
+          "recommended": false
+        },
+        {
+          "id": "next-3",
+          "label": "Draft with testable acceptance criteria",
+          "prompt": "Draft the unsent native-tool gap issue with placeholders for all unverified facts, focusing on testable acceptance criteria: [TEST_CASE_1], [EDGE_CASE], [ERROR_HANDLING_EXPECTATION], and a regression-check section. Mark it as an unfiled test draft, invent no evidence, and do not file or send it.",
+          "recommended": false
+        }
+      ],
+      "specialist": {
+        "profileId": "senior-developer",
+        "basis": "keyword",
+        "unavailable": []
+      }
+    },
+    "seconds": 5.18
+  },
+  {
+    "case": "review-handoff-fixture",
+    "request": {
+      "summary": "Fixture for the approved recommendation-quality acceptance test; do not execute any action.",
+      "latestTurn": "## Original goal (first human message)\nTest useful Senior Developer review handoff advice, without executing it.\n\n## Latest human message\nIn this test fixture, a Harness implementation worker has returned a candidate and saved test logs. Codex is the independent reviewer and release owner under existing approval. There is no API that automatically notifies Codex. Give the next useful prompts toward independent review, preserving missing-check and publication gates.\n\n## Agent's final message to the human\nCandidate is ready for independent review. Saved logs exist but have not been independently inspected. A worker cannot review or deploy its own patch. No branch merge, deployment or native acceptance has occurred in this fixture."
+    },
+    "at": "2026-11-09T17:11:13.741655+00:00",
+    "status": 200,
+    "response": {
+      "options": [
+        {
+          "id": "next-1",
+          "label": "Draft Codex review handoff",
+          "prompt": "Draft a manual handoff note for Codex (coordinator/release owner) to independently review the returned candidate. State plainly there is no automated dispatch API, so a human must relay it. Include: candidate diff location, saved test log paths, and the request that Codex inspect the diff against project rules and read the logs itself rather than trust the worker's summary. Note that nothing has been merged, deployed, or accepted.",
+          "recommended": true
+        },
+        {
+          "id": "next-2",
+          "label": "List missing checks for Codex",
+          "prompt": "Produce a short list of checks Codex should still run or confirm before any acceptance: rerun the automated test suite and typecheck on the candidate, verify the saved logs match the candidate revision, review edge cases and error handling in the diff, and check regression risk. Mark each as UNKNOWN until Codex records a result. Do not claim any check has passed.",
+          "recommended": false
+        },
+        {
+          "id": "next-3",
+          "label": "Write publication gate statement",
+          "prompt": "Write a concise gate statement for the handoff: publication, merge, and deployment remain blocked until Codex records an independent review verdict and release approval. The worker must not self-review or publish. If revisions are requested, the worker returns corrective changes with fresh test logs for re-review. Do not suggest any publication step.",
+          "recommended": false
+        }
+      ],
+      "specialist": {
+        "profileId": "senior-developer",
+        "basis": "keyword",
+        "unavailable": []
+      }
+    },
+    "seconds": 7.59
+  },
+  {
+    "case": "installed-next-stage",
+    "request": {
+      "summary": "Test advice after outside actions; no action is executed by this tool-free request.",
+      "latestTurn": "## Original goal (first human message)\nFinish the approved recommendation-quality repair.\n\n## Latest human message\nSource PR76 was independently reviewed, passed138 focused tests plus types/build, merged, installed with rollback prepared, and the service restarted. Backend runtime is ready. Codex still owns fresh generated-option checks and native UI verification; the Mac is locked and unlock was requested. Do not ask for another source review or merge. State the remaining useful permitted step, without claiming UI verification or acceptance already passed.\n\n## Agent's final message to the human\nInstalled checked code and restarted. Native UI verification and protected finding acceptance remain pending; no reply choice has been sent."
+    },
+    "at": "2026-11-09T17:11:21.333558+00:00",
+    "error": "HTTP Error 500: Internal Server Error",
+    "body": "{\"error\":\"Helper suggestion unavailable\"}",
+    "seconds": 5.01
+  },
+  {
+    "case": "installed-next-stage-single-recheck",
+    "request": {
+      "summary": "Test advice after outside actions; no action is executed by this tool-free request.",
+      "latestTurn": "## Original goal (first human message)\nFinish the approved recommendation-quality repair.\n\n## Latest human message\nSource PR76 was independently reviewed, passed138 focused tests plus types/build, merged, installed with rollback prepared, and the service restarted. Backend runtime is ready. Codex still owns fresh generated-option checks and native UI verification; the Mac is locked and unlock was requested. Do not ask for another source review or merge. State the remaining useful permitted step, without claiming UI verification or acceptance already passed.\n\n## Agent's final message to the human\nInstalled checked code and restarted. Native UI verification and protected finding acceptance remain pending; no reply choice has been sent."
+    },
+    "at": "2026-11-09T17:13:31.189289+00:00",
+    "status": 200,
+    "response": {
+      "options": [
+        {
+          "id": "next-1",
+          "label": "Wait for unlock, then Codex verifies",
+          "prompt": "Do not request another source review or merge. Once the Mac is unlocked by the human, Codex (coordinator) should run the fresh generated-option checks against the installed PR76 runtime and then the native UI verification. Record the observed results plainly. Do not claim UI verification or acceptance until those checks have actually run. Do not send any reply choice.",
+          "recommended": true
+        },
+        {
+          "id": "next-2",
+          "label": "Prepare Codex verification checklist",
+          "prompt": "While the Mac stays locked, prepare a concise checklist for Codex's pending checks: (1) generate fresh options and confirm recommendation quality against the repaired criteria, (2) native UI walk-through of the option display, (3) confirm the rollback path is still intact. Mark every item as NOT YET RUN. This is a manual handoff to Codex, since there is no automated dispatch API. Do not re-review or merge the source.",
+          "recommended": false
+        },
+        {
+          "id": "next-3",
+          "label": "Report blocked state and missing input",
+          "prompt": "State plainly that the remaining step is blocked on the human unlocking the Mac. Name the owner of each pending item: the human for unlock, Codex for the generated-option checks and native UI verification, and the protected finding owner for acceptance. Do not claim any of them has passed, do not restart anything, and do not send any reply choice.",
+          "recommended": false
+        }
+      ],
+      "specialist": {
+        "profileId": "senior-developer",
+        "basis": "keyword",
+        "unavailable": []
+      }
+    },
+    "seconds": 7.1
+  }
+]

@@ -1,0 +1,119 @@
+{
+  "at": "2026-11-09T17:14:44.990783+00:00",
+  "pr": 76,
+  "sourceHead": "4b5851791863628d711f014fd8c63b95db6507b9",
+  "merge": "30aee3a7db1729c026e6027347f80f889d24e0fd",
+  "workerHead": "c3bb10125b9d5d3682f82ab4958ca665d1adf14f",
+  "checks": {
+    "tests": 138,
+    "suites": 16,
+    "types": 0,
+    "build": 0
+  },
+  "installedSourcePostimages": 6,
+  "installedAssetPostimages": 28,
+  "baseBuildInputsMatched": 205,
+  "settingsBlocksUnchanged": true,
+  "liveState": {
+    "setup": {
+      "machine": {
+        "stateDir": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent",
+        "promptMaxChars": 100000,
+        "admissionContextMaxPages": 10,
+        "admissionContextTimeoutMs": 15000
+      },
+      "problem": null,
+      "feishuProblem": null,
+      "accounts": {
+        "repository": "gera3d/superagent-sandbox",
+        "agent": "gera3d",
+        "feishu": null
+      }
+    },
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "masterId": "orchestrator-core",
+    "paused": false,
+    "health": {
+      "runtime": {
+        "state": "ready",
+        "detail": "Orchestrator is ready",
+        "at": "2026-11-09T17:09:01.640Z"
+      },
+      "relay": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T17:08:59.495Z"
+      },
+      "notice": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T17:13:31.019Z"
+      },
+      "launch": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T17:08:59.495Z"
+      },
+      "delivery": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T17:08:59.495Z"
+      },
+      "assessment": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T17:08:59.496Z"
+      },
+      "reply": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T17:08:59.496Z"
+      },
+      "evals": {
+        "state": "ready",
+        "detail": "No unavailable Eval in the last hour"
+      },
+      "models": {
+        "state": "ready",
+        "detail": "No managed Session is waiting on a model budget retry"
+      },
+      "github": {
+        "state": "ready",
+        "detail": "0 notifications; next poll \u2265 60s",
+        "at": "2026-11-09T17:09:01.651Z"
+      }
+    }
+  },
+  "pendingDecisions": 16,
+  "canonicalFinding": {
+    "id": "8d447429-65ee-4f5f-aa7b-354c0f349673",
+    "state": "blocked",
+    "revision": 12,
+    "job": {
+      "id": "finding:8d447429-65ee-4f5f-aa7b-354c0f349673:r11",
+      "ticketId": "f2e857feb68baca2469103dc91d7a507",
+      "assignmentId": "1ee8f030b311aa2b470ab37e618b94e7"
+    }
+  },
+  "backendModelCasesFile": "quality-live-model-cases.json",
+  "backendModelCaseAssessment": {
+    "ordinary-current-request": "All3generated options concern requested unsent draft/missing facts/testable acceptance, no fabricated evidence or filing. Top is direct requested draft.",
+    "review-handoff-fixture": "All3relate to manual independent Codex handoff, checks or gate statement; no fictitious dispatch or self-review. Alternatives less direct than top; generic suite wording not a certification to run every historical test.",
+    "installed-next-stage": "First response invalid JSON; safe response-parse diagnostic, no hidden scores or sent replies. Single recheck returned3relevant owner-aware pending-native steps, no duplicate merge/review or false verification."
+  },
+  "nativeUI": {
+    "verified": false,
+    "blocker": "Mac locked; manual unlock requested, no reply received yet",
+    "protectedAcceptance": "Not performed; native gates retained"
+  },
+  "limits": [
+    "Model generation assessed on3bounded helper scenarios, one fixture; not browser all-option acceptance or universal semantic quality guarantee.",
+    "Heuristic guards remain bounded; representative newly generated UI review still required.",
+    "No historical seven-card retirement, user choice selection, new model route/credential/spending/limit settings.",
+    "Canonical finding remains blocked awaiting protected evidence/native review; no completed acceptance inferred from source merge or healthy runtime."
+  ]
+}

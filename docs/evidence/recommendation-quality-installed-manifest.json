@@ -1,0 +1,89 @@
+{
+  "at": "2026-11-09T17:07:12.335065+00:00",
+  "state": "installed-awaiting-live-verification",
+  "releaseHead": "4b5851791863628d711f014fd8c63b95db6507b9",
+  "workerHead": "c3bb10125b9d5d3682f82ab4958ca665d1adf14f",
+  "releaseDirectory": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/quality-qualified/backend",
+  "backup": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/verified-batch/quality-rollback-20261109T170712Z",
+  "files": [
+    {
+      "path": "src/app/advice-context.ts",
+      "before": "4c2add7c753586e3c855155bdd04fed453110b697ae5b299ddc963ab5ff18c13",
+      "after": "d05c9ad32e8a88c71a422bde0bf60ae56fb04620685c3452e98b5e7a5a3b4d5f"
+    },
+    {
+      "path": "src/app/character-evaluator.ts",
+      "before": "9d4e67aeb594b90602d781cd4456da503334f00cf0fc4bc29669df0c2cbf7092",
+      "after": "56eff3f1a04af17997bb2871167c1c4a36e82f2b26627f6c281300a4ddb1a259"
+    },
+    {
+      "path": "src/app/decision-inbox.ts",
+      "before": "8b5b11fa6aa5b75537738942fc33b3838cdce6bee4089378b13776b9673918cc",
+      "after": "b0c8127b33bd40f1d46f2e5ba95d4076024fe8a0315ee2b318e18e69dd8186e3"
+    },
+    {
+      "path": "src/app/decision-ranker.ts",
+      "before": "57087627e3605f93577744cd6f980fde0ff67c40fed26d6dfb570653ffb300eb",
+      "after": "37e18c9258c7b124f9a0f10993a6fee4fb222bf2a454f3c6bc131c1f399e26d8"
+    },
+    {
+      "path": "src/app/option-quality.ts",
+      "before": null,
+      "after": "6c7317b97cf85d2f6aa249984a6d2bd87ae0a2196c7d3807c7c141692d87d883"
+    },
+    {
+      "path": "src/app/routes/helper.ts",
+      "before": "08f33a5aff933766850fde7b26ad72635a5948a710d802d139905ce5ac432eac",
+      "after": "1f759cb76f7fac5531fdbf1aa9dcc25507ddfe908013ceb1d3c583abde783882"
+    }
+  ],
+  "assets": {
+    "lib/deployment-BTCh8dP2.d.ts": "505a7f812d3cb688a9f41cafdeceb186d9d1d2806625b4f574f07b283141a8fa",
+    "lib/client.js": "013887f7d2f9b6ff4aea155f30d4867dff9e2305597296378f443c927af1af38",
+    "lib/decision-inbox-provider-canonical.d.ts": "8e48a2dce02233c3ed8ff81ce0e6647199321fa14667ce496e8213cf99088436",
+    "lib/model-BSxHOzxq.d.ts": "e4463219981fb520f87b75001088e828ba27e12ce14e6d595f0de2e37255e803",
+    "lib/lifecycle-publication-DU9kiEya.js": "8e01596a98420cf591d0779fe67650b0f6d1c59826d3981c215af5a31e24a9e0",
+    "lib/github-pull-D0dzdKap.js": "1c57a002b8d21434ee38b7f3b843106cdb5ce2e8cc51fa9f0653cd650f630882",
+    "lib/http-evUV_mqI.js": "cfa7b661f493e1669e830ab91865ca2373e377b833b508549f1e914be6bf744e",
+    "lib/publication-ticket-2bApSJWA.js": "d913534f7ad9cadb00d54aa549e49381d808ec1112339ad9d66088f1d587c2be",
+    "lib/policy-BQs9IVsX.d.ts": "69b95159dd32fb515d140c27f4c8ad7083b4978f9ca549f08edc43adf5b7e442",
+    "lib/publication-worker.js": "a7788df0c9c7a8a2e1eba342f7bffc72ba189ea03ad1971325eb5f85cb1c24d5",
+    "lib/decision-provider.d.ts": "6b5408ac5b6e6f1a049da951dcb2c09dd2169c3bf1cef8bd097ddad6d149c3c9",
+    "lib/index.js": "205da7ea888bc5fe2412d46d4caada3f5a8757d6ba6f602a1fbd04ce2907e976",
+    "lib/decision-provider.js": "c3836ebabf56936a2c0d7562d8ec3251044dd62e7481027d3aa9124c58ce21dc",
+    "lib/decision-inbox-provider.js": "489c6f66f338093246cfa88718f19958d42127d152c0a64c0535cbf0e43d1127",
+    "lib/publication-operator.js": "eef71c0b0312bde5b57db54a310ae8c6fb4f86700fe2687d2dd2276b346f1fb3",
+    "lib/feishu-watch.d.ts": "0c573960d9e87b1a3e68d0b40a145d3d4282a5d46722f5030c376f109a115ea1",
+    "lib/github-watch.d.ts": "b62b01f95d6dbef17349ae1d5e098da5062be90e2d368afb3b0927bb8124e5cb",
+    "lib/publication-operator.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+    "lib/feishu-CVHwY3e7.js": "2f998efe797be309fdc2d029ef3705bc7eaa05ddd190bda66e51184393766588",
+    "lib/kind-Bl9OsSNa.d.ts": "adaa5d1ee98bc120f72acfb56430d131e058aff5563be214020a682ede066f32",
+    "lib/publication-worker.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+    "lib/index.d.ts": "78e0eb338131ce82dd68f7a156420e12f6d31b9e4e9219b158e9ced6565ee67b",
+    "lib/decision-inbox-provider-live.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20",
+    "lib/feishu-watch.js": "0f94d1a0b3d166f3f558ef88db9d105d30fe5aa738ac73ad13cc37a8e745753a",
+    "lib/poll-YENBPt9-.js": "38eb3c0c3654f4c112e2ca574bb4c61e217ec7b6ea64f4a5ae1ba63001c215f5",
+    "lib/github-watch.js": "c194996f24b6bd9d5d9e98a5e4364dc4f04a30190a0818c0fd75acb51e5b2248",
+    "lib/decision-inbox-provider-canonical.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20",
+    "lib/publication-context-CnQeRe-7.js": "d608207e13d9a52325c5cfad0e73a7defcc26b4a2883a17d70281f6f9625720f"
+  },
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "checks": {
+    "tests": 138,
+    "suites": 16,
+    "types": 0,
+    "build": 0
+  },
+  "rollbackRule": "Restore narrow source/lib only after checking postimages; preserve canonical DB/history. Online DB backup is forensic, not permission to discard later evidence.",
+  "nativeVerification": "Mac locked; unlock requested. No acceptance yet.",
+  "installedAt": "2026-11-09T17:08:48.946918+00:00",
+  "merge": "30aee3a7db1729c026e6027347f80f889d24e0fd",
+  "pr": 76,
+  "baseBuildInputsMatched": 205,
+  "settingsBeforeSha256": "83891a6e9c62df769bb242bdd266b6d3f4b534cf3df62414baad9ab63cbe4bca",
+  "restartExit": 0
+}
