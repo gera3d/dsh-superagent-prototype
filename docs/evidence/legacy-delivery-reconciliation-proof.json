@@ -33,7 +33,13 @@
       "originalRevision": 3,
       "artifactPR": 185,
       "artifactDisposition": "Closed as superseded by corrected combined source release; do not apply independently.",
-      "featureVerified": "Saved conservation controls present; current normal hierarchy and provider marks retained; seven routing policy cases included in60tests."
+      "featureVerified": "Saved conservation controls present; current normal hierarchy and provider marks retained; seven routing policy cases included in60tests.",
+      "artifactCurrentState": {
+        "state": "closed",
+        "merged": false,
+        "head": "0cbcb014315e96cfb85a6841629196598ebeb87b",
+        "base": "80019c30dfd0ec2f856c8f59dbbbf58401e2d3f0"
+      }
     },
     {
       "deliveryId": "auto-71dc25902ccec92c851634c58cf365f0",
@@ -55,7 +61,13 @@
       "originalRevision": 3,
       "artifactPR": 189,
       "artifactDisposition": "Closed as superseded by corrected combined source release; do not apply independently.",
-      "featureVerified": "Actual protected evidence/acceptance flow personally completed immediately before this task; current form/source matching verified."
+      "featureVerified": "Actual protected evidence/acceptance flow personally completed immediately before this task; current form/source matching verified.",
+      "artifactCurrentState": {
+        "state": "closed",
+        "merged": false,
+        "head": "840e17e2d5e8a271871e6fa2cd64803a9f742d11",
+        "base": "80019c30dfd0ec2f856c8f59dbbbf58401e2d3f0"
+      }
     },
     {
       "deliveryId": "auto-d65f3131a9ae77d9de524535e4a01a26",
@@ -77,7 +89,13 @@
       "originalRevision": 3,
       "artifactPR": 186,
       "artifactDisposition": "Closed as superseded by corrected combined source release; do not apply independently.",
-      "featureVerified": "Capacity3 in actual settings and original ended identity retained; FIFO/capacity/quiescence production store regression cases included in60tests."
+      "featureVerified": "Capacity3 in actual settings and original ended identity retained; FIFO/capacity/quiescence production store regression cases included in60tests.",
+      "artifactCurrentState": {
+        "state": "closed",
+        "merged": false,
+        "head": "c50ce8edc348e1f767a445d4bab3fbb5fe391592",
+        "base": "80019c30dfd0ec2f856c8f59dbbbf58401e2d3f0"
+      }
     }
   ],
   "currentChecks": {
@@ -113,6 +131,12 @@
         "path": "src/app/role-models.ts",
         "qualifiedSha256": "7d876f8d57947b21e2d94da4864460a38dccd1fe4f1262a2257353d2c5d7b8f0",
         "installedSha256": "7d876f8d57947b21e2d94da4864460a38dccd1fe4f1262a2257353d2c5d7b8f0",
+        "same": true
+      },
+      {
+        "path": "src/model-routing.ts",
+        "qualifiedSha256": "a19b6b540beafde5af80578b908358e3c5dc11d3536dee2f1e494e1a1d7b2f36",
+        "installedSha256": "a19b6b540beafde5af80578b908358e3c5dc11d3536dee2f1e494e1a1d7b2f36",
         "same": true
       }
     ],
