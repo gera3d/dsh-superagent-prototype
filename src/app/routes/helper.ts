@@ -6,6 +6,7 @@ import { DEFAULT_SENIOR_DEVELOPER_CHARACTER, type CharacterConfig } from '../../
 import type { RoleModel, Settings } from '../../policy.ts'
 import { constrainedRoute, helperRoute, isModelUnavailable, unavailableFallbackStep } from '../role-models.ts'
 import { effectiveAdvisorCharacter } from '../settings.ts'
+import { deriveOptionQualityContext, filterQualityOptions } from '../option-quality.ts'
 
 export const HELPER_BODY_MAX_BYTES = 64 * 1024
 // Shared across the ladder, including configuration and response validation.
@@ -75,6 +76,7 @@ export function helperSystemPrompt(character: CharacterConfig): string {
     'Financial spending, destructive deletion, secrets, sending as the person and genuinely undecided choices require explicit human confirmation. Never suggest bypassing it.',
     'Never suggest harness restarts, process termination, live plugin updates or persistent environment/settings changes. Reference credentials by environment variable name only, never expose key values.',
     'Prefer two or three useful alternatives. Keep each prompt concise (roughly 300–700 characters); do not paste the handoff report into it.',
+    'Option quality rules: Every offered alternative, as well as the recommended winner, must remain strictly relevant to the approved task and evidence-grounded. Do not suggest unsolicited task detours (such as opening separate findings for native tool gaps or listing unrelated deliveries unless explicitly requested or authorized in user task scope). If candidate is awaiting coordinator review, propose coordinator-owned (Codex / root operator) review with only missing checks, state manual handoff honestly (no automated dispatch API), and never propose worker self-review. If delivery is unbound, identify exact missing inputs and responsible owner, and never suggest publication. If finding is resolved, state completion plainly with no repeat runs.',
     'Return ONLY JSON with a REQUIRED zero-based recommended index: {"recommended":0,"options":[{"id":"next-1","label":"Short action","prompt":"Concrete prompt for the worker"},{"id":"next-2","label":"Alternative action","prompt":"Concrete alternative"}]}. Include 2–4 options and exactly one in-range recommended index. No scores or markdown.',
   ].join('\n')
 }
@@ -107,6 +109,29 @@ async function callHelper(ctx: Context, route: RoleModel, digest: HelperDigest, 
   } catch (error) { throw new HelperFailure(stage, error) }
 }
 
+/** Extract conversational objective from digest turns or summary for ordinary quality derivation. */
+export function extractUserObjectiveFromDigest(digest: HelperDigest): string | undefined {
+  if (digest.latestTurn) {
+    // 1. Prefer "## Latest human message" from real builtDigest sections, stop at next section header (##)
+    const latestHumanMatch = digest.latestTurn.match(/(?:^|\n)##\s*Latest human message\s*\n([\s\S]*?)(?=(?:\n##\s*|$))/i)
+    if (latestHumanMatch && latestHumanMatch[1]?.trim()) {
+      return latestHumanMatch[1].trim()
+    }
+    // 2. If absent (first-turn actual digest), check for "## Original goal (first human message)"
+    const originalGoalMatch = digest.latestTurn.match(/(?:^|\n)##\s*Original goal \(first human message\)\s*\n([\s\S]*?)(?=(?:\n##\s*|$))/i)
+    if (originalGoalMatch && originalGoalMatch[1]?.trim()) {
+      return originalGoalMatch[1].trim()
+    }
+    // 3. Retain supported simple User:/Assistant: inputs as compatibility
+    const userMatch = digest.latestTurn.match(/(?:^|\n)User:\s*([\s\S]*?)(?=(?:\nAssistant:|$))/i)
+    if (userMatch && userMatch[1]?.trim()) {
+      return userMatch[1].trim()
+    }
+  }
+  // 4. Old summary only as a last fallback
+  return digest.summary?.trim() || digest.latestTurn?.trim()
+}
+
 /** A specialist's system prompt and inherited role route; the SAME tool-free call and ladder run either way. */
 export interface HelperSpecialist { system: string; route: RoleModel | null }
 
@@ -114,7 +139,20 @@ export interface HelperSpecialist { system: string; route: RoleModel | null }
 export async function suggestHelper(ctx: Context, input: HelperDigest, settings: Settings, workflowContext?: string, specialist?: HelperSpecialist, persona?: CharacterConfig): Promise<HelperSuggestions> {
   const digest = HelperDigestSchema.parse(input)
   const character = persona ?? effectiveAdvisorCharacter(settings)
-  const system = (specialist?.system ?? helperSystemPrompt(character)) + (workflowContext ? '\nShared workflow context:\n' + workflowContext : '')
+  const userObjective = extractUserObjectiveFromDigest(digest)
+  const baseContext = deriveOptionQualityContext(workflowContext)
+  const qualityContext = baseContext.taskScope
+    ? baseContext
+    : deriveOptionQualityContext(workflowContext, userObjective ? {
+        taskScope: userObjective,
+        taskTitle: userObjective.slice(0, 120),
+      } : {})
+  const conversationalContext = !baseContext.taskScope && userObjective
+    ? `\nBounded conversational context:\nUser objective: ${userObjective}`
+    : ''
+  const system = (specialist?.system ?? helperSystemPrompt(character))
+    + (workflowContext ? '\nShared workflow context:\n' + workflowContext : '')
+    + conversationalContext
   const selected = constrainedRoute(settings, (specialist?.route ?? helperRoute(settings))
     ?? (ctx.get('agentDefaultModel') as { currentSelection(): RoleModel } | undefined)?.currentSelection())
   if (!selected?.provider || !selected.model) {
@@ -129,7 +167,16 @@ export async function suggestHelper(ctx: Context, input: HelperDigest, settings:
   try {
     for (let attempt = 0; ; attempt++) {
       tried.push(current)
-      try { return await callHelper(ctx, current, digest, system, signal) }
+      try {
+        const raw = await callHelper(ctx, current, digest, system, signal)
+        const filtered = filterQualityOptions(raw.options as any, qualityContext).map(opt => ({
+          id: opt.id,
+          label: opt.label,
+          prompt: opt.prompt,
+          recommended: Boolean(opt.recommended),
+        }))
+        return { options: filtered }
+      }
       catch (error) {
         const finish = error instanceof HelperFailure && error.original && typeof error.original === 'object' && 'helperFinishKind' in error.original ? error.original.helperFinishKind : undefined
         const diagnostic = {

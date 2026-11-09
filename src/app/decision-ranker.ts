@@ -7,9 +7,10 @@
  * `confidence` as the reported confidence. No tools, no streaming, and no call unless settings name a
  * driver and an environment variable that currently holds a key.
  */
-import { decisionRequestProblem, evaluateDecision, type DecisionEvaluationRequest, type DecisionEvaluationResult, type DecisionModelCall } from '../core/decision.ts'
+import { decisionRequestProblem, evaluateDecision, type DecisionChoice, type DecisionEvaluationRequest, type DecisionEvaluationResult, type DecisionModelCall } from '../core/decision.ts'
 import type { Settings } from '../policy.ts'
 import { isModelUnavailable } from './role-models.ts'
+import { auditOptionSet, deriveOptionQualityContext } from './option-quality.ts'
 
 export const DECISIONS_QUESTION_NAME = 'next_action'
 export const DEFAULT_DECISIONS_ENDPOINT = 'https://api.openai.com/v1/chat/completions'
@@ -224,6 +225,59 @@ export async function callDecisionsApi(request: DecisionEvaluationRequest, setti
   return parseDecisionsResponse(JSON.parse(text), request, settings.provider, model, Date.now() - start)
 }
 
+export function enforceDecisionQuality(
+  result: DecisionEvaluationResult,
+  request: DecisionEvaluationRequest,
+  audit: ReturnType<typeof auditOptionSet>,
+): DecisionEvaluationResult {
+  if (audit.valid) return result
+
+  if (audit.validChoices.length === 0) {
+    return {
+      recommendedValue: '',
+      confidence: 0,
+      rationale: `All candidate choices failed option quality evaluation: ${audit.issues.map(i => i.message).join(' ')}. Scores only rank choices, never certify usefulness.`,
+      distribution: [],
+      provider: 'unranked',
+      latencyMs: result.latencyMs,
+    }
+  }
+
+  // Filter distribution to only valid choices
+  const validIds = new Set(audit.validChoices.map(c => c.id))
+  const cleanDist = result.distribution.filter(d => validIds.has(d.id))
+  const sum = cleanDist.reduce((a, b) => a + b.probability, 0)
+  const normalized = sum > 0
+    ? cleanDist.map(d => ({ id: d.id, probability: Number((d.probability / sum).toFixed(4)) }))
+    : cleanDist
+
+  const isRecommendedValid = validIds.has(result.recommendedValue)
+  if (isRecommendedValid) {
+    return {
+      ...result,
+      distribution: normalized,
+      rationale: `${result.rationale} [Option quality notice: Some offered alternatives were rejected as out-of-scope detours or invalid owner assignments. Scores only rank choices, never certify usefulness.]`,
+    }
+  }
+
+  // Top pick was invalid; reassign to highest-probability valid choice without fabricating probability 1
+  const bestValidChoice = (normalized.length > 0
+    ? audit.validChoices.find(c => c.id === normalized[0]!.id)
+    : undefined) ?? audit.validChoices[0]!
+
+  const invalidChoice = audit.invalidChoices.find(c => c.id === result.recommendedValue)
+  const issue = audit.issues.find(i => i.optionId === result.recommendedValue)
+  const newConfidence = normalized.find(d => d.id === bestValidChoice.id)?.probability ?? 0
+
+  return {
+    ...result,
+    recommendedValue: bestValidChoice.id,
+    confidence: newConfidence,
+    distribution: normalized,
+    rationale: `Ranker top pick "${invalidChoice?.label ?? result.recommendedValue}" was rejected by quality guard: ${issue?.message ?? 'outside approved task'}. Reassigned to in-scope alternative "${bestValidChoice.label}". Scores only rank choices, never certify usefulness.`,
+  }
+}
+
 /**
  * Rank with the configured Decisions model, then the existing configured-model evaluator, then unranked.
  * The unranked result keeps generator order, reports confidence 0 and an empty distribution, and names
@@ -234,32 +288,65 @@ export async function evaluateDecisionWithFallback(request: DecisionEvaluationRe
   const problem = decisionRequestProblem(request)
   if (problem) return { recommendedValue: '', confidence: 0, rationale: problem, distribution: [],
     provider: 'Recommendation unavailable', latencyMs: Date.now() - start }
+
+  const qualityContext = deriveOptionQualityContext(request.context)
+  const audit = auditOptionSet(request.choices, qualityContext)
+
+  if (audit.validChoices.length === 0) {
+    return {
+      recommendedValue: '',
+      confidence: 0,
+      rationale: `All candidate choices failed option quality evaluation: ${audit.issues.map(i => i.message).join(' ')}. Scores only rank choices, never certify usefulness.`,
+      distribution: [],
+      provider: 'unranked',
+      latencyMs: Date.now() - start,
+    }
+  }
+
+  if (audit.validChoices.length === 1) {
+    const single = audit.validChoices[0]!
+    return {
+      recommendedValue: single.id,
+      confidence: 0,
+      rationale: `Only one valid in-scope option remains: "${single.label}". Invalid alternatives were rejected by quality guard: ${audit.issues.map(i => i.message).join(' ')}. Scores only rank choices, never certify usefulness.`,
+      distribution: [],
+      provider: 'unranked',
+      latencyMs: Date.now() - start,
+    }
+  }
+
+  // Clean request with only valid choices so model ranks only selectable options
+  const cleanRequest: DecisionEvaluationRequest = audit.invalidChoices.length > 0
+    ? { ...request, choices: audit.validChoices as DecisionChoice[] }
+    : request
+
   const settings = options.decisions
-  const provider = selectedProvider(request, settings)
+  const provider = selectedProvider(cleanRequest, settings)
   if ((provider === 'openai-luna' || provider === 'typesafe-jev') && settings) {
     const apiKey = resolveApiKey(settings, options.env ?? process.env)
     const endpoint = resolveEndpoint(provider, settings)
     if (apiKey && endpoint) {
       try {
-        return await callDecisionsApi(request, { ...settings, provider }, { apiKey, endpoint,
+        const raw = await callDecisionsApi(cleanRequest, { ...settings, provider }, { apiKey, endpoint,
           ...(options.fetch ? { fetch: options.fetch } : {}) })
+        return enforceDecisionQuality(raw, request, audit)
       } catch { /* A configured driver that fails falls through to the evaluator, then to unranked. */ }
     }
   }
   if (options.call) {
     try {
-      const result = await evaluateDecision({ ...request, provider: 'auto' }, options.call)
-      if (result.recommendedValue) return result
+      const result = await evaluateDecision({ ...cleanRequest, provider: 'auto' }, options.call)
+      if (result.recommendedValue) return enforceDecisionQuality(result, request, audit)
     } catch (error) {
       if (isModelUnavailable(error) && options.fallbackCalls) {
         for (const [routeKey, fallbackCall] of options.fallbackCalls.entries()) {
           try {
-            const fallbackResult = await evaluateDecision({ ...request, provider: 'auto' }, fallbackCall)
+            const fallbackResult = await evaluateDecision({ ...cleanRequest, provider: 'auto' }, fallbackCall)
             if (fallbackResult.recommendedValue) {
-              return {
+              return enforceDecisionQuality({
                 ...fallbackResult,
                 provider: `${fallbackResult.provider} (fallback: ${routeKey})`,
-              }
+              }, request, audit)
             }
           } catch (nextError) {
             if (!isModelUnavailable(nextError)) break
