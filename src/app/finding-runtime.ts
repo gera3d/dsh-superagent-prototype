@@ -117,7 +117,9 @@ export class FindingRuntime {
         const report = assignment.report
         const pending = ticket.inputs.filter(input => input.kind === 'trigger' && !input.context
           && (ticket.undelivered.includes(input.id) || input.readAt === null || !!report && input.at > report.at))
-        const resumedWork = !ticket.ended && report && (['progress', 'waiting'].includes(report.state)
+        const busy = this.deps.workerBusy?.(ticket) ?? false
+        const resumedWork = !ticket.ended && report && (report.state === 'progress'
+          || (report.state === 'waiting' && (busy || pending.length > 0))
           || report.state === 'ready' && (pending.length > 0 || !!assignment.deliveredAt && assignment.deliveredAt >= report.at))
         if (resumedWork) {
           const token = createHash('sha256').update(JSON.stringify({ report, deliveredAt: assignment.deliveredAt,
@@ -128,6 +130,13 @@ export class FindingRuntime {
         } else if (report && ['ready', 'blocked', 'failed', 'dropped'].includes(report.state)) {
           this.store.markReview(finding.id, { reference: `ticket/${ticket.id}/report/${assignment.id}`, summary: report.summary,
             recordedAt: report.at, state: report.state as 'ready' | 'blocked' | 'failed' | 'dropped' })
+        } else if (report && report.state === 'waiting' && !busy && pending.length === 0) {
+          this.store.markReview(finding.id, { reference: `ticket/${ticket.id}/report/${assignment.id}`,
+            summary: report.summary || 'Worker turn ended without a recorded status report; evidence review required.',
+            recordedAt: report.at, state: 'blocked' })
+          if (!ticket.ended) {
+            this.deps.engine.stopTicket(ticket.id, 'Bounded finding assignment worker turn ended in waiting; evidence review required.')
+          }
         } else if (ticket.ended || assignment.state === 'ended') {
           this.store.markBlocked(finding.id, `Assignment ended without a qualifying report; review/verification required: ticket/${ticket.id}/report/${assignment.id}. End, idle or merge is not resolution.`)
         }

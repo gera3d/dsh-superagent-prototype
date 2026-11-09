@@ -2,10 +2,12 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { SessionId } from '@deepseek-ai/dsh-session'
 import type { Agent } from '@deepseek-ai/dsh-agent'
+import { closeSync, constants, existsSync, fstatSync, lstatSync, openSync, readSync, readFileSync, realpathSync, readdirSync, unlinkSync, writeSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { mkdir, rmdir, stat } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { key, latestAssignment, latestReport, liveTicket, runningAssignment, threadKey, waitsForPerson } from '../core/index.ts'
-import type { AssessmentOutcome, Assignment, EngineForExecutor, Escalation, Execution, Executor, Mandate, PolicyEffect, Ticket, TicketInput,
+import type { AssessmentOutcome, Assignment, EngineForExecutor, Escalation, Execution, Executor, Mandate, PolicyEffect, ReportState, Ticket, TicketInput,
   Trigger } from '../core/index.ts'
 import type { Machine } from '../deployment.ts'
 import { runAsWorker, verifyDirectory } from '../infra/environment.ts'
@@ -92,7 +94,7 @@ export interface ExecutorHost {
   /** Whether processing is paused, which holds launches and input deliveries. */
   paused(): boolean
   /** Execution environment variables for `ticket`, passed to its workspace prepare command. */
-  environment(ticket: Ticket): Variable[]
+  environment(ticket: Ticket, turn?: number | string): Variable[]
   sourceLink(trigger: Trigger, signal?: AbortSignal): Promise<{ source_url?: string; source_url_read?: string }>
   /** Stored Trigger of the message `trigger` replies to, when it replies to one. */
   repliedTo(trigger: Trigger): Trigger | undefined
@@ -858,6 +860,101 @@ export class DshExecutor implements Executor {
     const text = last?.type === 'assistant/message'
       ? last.data.message.content.filter(block => block.type === 'text').map(block => block.text).join('\n').trim() : ''
     const said = [text, stopped].filter(Boolean).join('\n\n')
+
+    // 1. Ingest workspace report file (e.g. from orchestrator_report CLI shim or bound file transport)
+    const dir = ticket.execution?.directory
+    const currentAssignment = runningAssignment(current) || idle
+    const since = currentAssignment.report?.at ? Date.parse(currentAssignment.report.at)
+      : (currentAssignment.deliveredAt ? Date.parse(currentAssignment.deliveredAt)
+      : (currentAssignment.startedAt ? Date.parse(currentAssignment.startedAt) : Date.parse(currentAssignment.createdAt)))
+    const currentTurn = currentTurnOf(agent, currentAssignment)
+    const fileReport = dir ? findWorkerReportFile(dir, {
+      id: ticket.id,
+      assignmentId: idle.id,
+      turn: currentTurn,
+      since: isNaN(since) ? undefined : since,
+    }) : undefined
+    if (fileReport) {
+      let updated: Ticket | undefined
+      let alreadyCommitted = false
+      this.host.store.atomic(() => {
+        const currentTicket = this.host.store.tickets.get(ticket.id)
+        if (!currentTicket) return
+        const activeAssignment = runningAssignment(currentTicket) || latestAssignment(currentTicket)
+        if (!activeAssignment || activeAssignment.id !== fileReport.assignment_id) return
+        const liveTurn = currentTurnOf(agent, activeAssignment)
+        if (liveTurn === undefined || liveTurn === null || String(liveTurn).trim() === '') return
+        if (fileReport.turn_id === undefined || fileReport.turn_id === null || String(fileReport.turn_id).trim() === '') return
+        if (String(fileReport.turn_id).trim() !== String(liveTurn).trim()) return
+
+        const existingReport = activeAssignment.report
+        const existingHash = (activeAssignment as any).deliveredReportHash ?? (existingReport as any)?.hash
+        // Only this exact durable snapshot was delivered. Identical progress
+        // text at a later timestamp is a distinct, legitimate update.
+        if (existingHash && fileReport.snapshotHash && existingHash === fileReport.snapshotHash) {
+          alreadyCommitted = true
+          return
+        }
+
+        updated = this.host.engine.report(ticket.id, {
+          state: fileReport.state,
+          summary: fileReport.summary,
+          ...(fileReport.human_action !== undefined ? { question: fileReport.human_action } : {}),
+          ...(fileReport.question_for_trigger_id ? { askedBy: fileReport.question_for_trigger_id } : {}),
+          ...(fileReport.reply_to_trigger_id ? { answers: fileReport.reply_to_trigger_id } : {}),
+        })
+        if (updated) {
+          const freshTicket = this.host.store.tickets.get(ticket.id)
+          if (freshTicket) {
+            const freshAssignment = runningAssignment(freshTicket) || latestAssignment(freshTicket)
+            if (freshAssignment && fileReport.snapshotHash) {
+              (freshAssignment as any).deliveredReportHash = fileReport.snapshotHash
+              if (freshAssignment.report) (freshAssignment.report as any).hash = fileReport.snapshotHash
+              this.host.store.tickets.save(freshTicket)
+            }
+          }
+          this.relay(resultRelay(updated, fileReport.state, fileReport.summary))
+        }
+      })
+      if (alreadyCommitted) {
+        fileReport.consume?.()
+        return
+      }
+      if (updated) {
+        fileReport.consume?.()
+        if (fileReport.state !== 'progress') {
+          this.handOff(ticket.id, agent)
+        }
+      }
+      return
+    }
+
+    // 2. Extract structured report from assistant message text (only for blocked/failed/dropped, never ready)
+    const extracted = extractReportFromText(said)
+    if (extracted && extracted.state !== 'progress') {
+      let updated: Ticket | undefined
+      this.host.store.atomic(() => {
+        updated = this.host.engine.report(ticket.id, { state: extracted.state, summary: extracted.summary })
+        if (updated) this.relay(resultRelay(updated, extracted.state, extracted.summary))
+      })
+      this.handOff(ticket.id, agent)
+      return
+    }
+
+    // 3. A finding ticket whose worker turn ended without a report must surface evidence instead of sitting idle
+    const isFinding = current.mandate?.basis?.source === 'finding'
+    if (isFinding) {
+      const summary = said || latestReport(current)?.summary || 'Finding worker turn ended without a recorded status report.'
+      let updated: Ticket | undefined
+      this.host.store.atomic(() => {
+        updated = this.host.engine.report(ticket.id, { state: 'blocked', summary })
+        if (updated) this.relay(resultRelay(updated, 'blocked', summary))
+      })
+      this.handOff(ticket.id, agent)
+      return
+    }
+
+    // 4. Default fallback for ordinary tickets
     this.host.store.atomic(() => {
       const before = latestReport(current)?.summary ?? ''
       const updated = this.host.engine.report(ticket.id, { state: 'waiting', summary: said || before })
@@ -868,4 +965,548 @@ export class DshExecutor implements Executor {
       }
     })
   }
+}
+
+export interface FileReport {
+  state: ReportState
+  summary: string
+  human_action?: string | null
+  question_for_trigger_id?: string
+  pr_number?: number | null
+  reply_to_trigger_id?: string
+  ticket_id?: string
+  assignment_id?: string
+  turn_id?: string | number
+  at?: string | number
+  snapshotHash?: string
+  path?: string
+  consume?: () => void
+}
+
+export interface ReportContext {
+  id?: string
+  assignmentId?: string
+  turn?: string | number
+  nonce?: string
+  since?: number
+}
+
+const MAX_CONSUMED_CACHE = 256
+const consumedReports = new Map<string, number>()
+const markerContentCache = new Map<string, { at: number; ready: boolean; mtimeMs: number }>()
+
+function recordConsumed(key: string): void {
+  if (consumedReports.size >= MAX_CONSUMED_CACHE) {
+    const oldest = consumedReports.keys().next().value
+    if (oldest !== undefined) consumedReports.delete(oldest)
+  }
+  consumedReports.set(key, Date.now())
+}
+
+export function consumedKey(dir: string, ticketId: string, assignmentId: string, turn: string | number, snapshotHash?: string): string {
+  return `${dir}:${ticketId}:${assignmentId}:${turn}${snapshotHash ? `:${snapshotHash}` : ''}`
+}
+
+export function reportSnapshotHash(report: { state: string; summary: string; at: string | number; pr_number?: number; human_action?: string; question_for_trigger_id?: string; reply_to_trigger_id?: string }): string {
+  const norm = {
+    state: report.state,
+    summary: report.summary.trim(),
+    at: String(report.at).trim(),
+    pr_number: report.pr_number ?? null,
+    human_action: report.human_action ?? null,
+    question_for_trigger_id: report.question_for_trigger_id ?? null,
+    reply_to_trigger_id: report.reply_to_trigger_id ?? null,
+  }
+  return createHash('sha256').update(JSON.stringify(norm)).digest('hex').slice(0, 16)
+}
+
+function readSafeReportFile(filePath: string, realDir: string): { content: string; uid: number } | undefined {
+  let lstat
+  try {
+    lstat = lstatSync(filePath)
+  } catch {
+    return undefined
+  }
+  if (!lstat.isFile() || lstat.isSymbolicLink()) return undefined
+  if (typeof process.getuid === 'function' && lstat.uid !== process.getuid()) return undefined
+  if (lstat.size <= 0 || lstat.size > 256 * 1024) return undefined
+
+  try {
+    const realFile = realpathSync(filePath)
+    const dirPrefix = realDir.endsWith('/') ? realDir : realDir + '/'
+    if (!realFile.startsWith(dirPrefix) && realFile !== realDir) return undefined
+  } catch {
+    return undefined
+  }
+
+  let fd: number | undefined
+  try {
+    fd = openSync(filePath, constants.O_RDONLY | (constants.O_NOFOLLOW || 0))
+    const st = fstatSync(fd)
+    if (!st.isFile() || (typeof process.getuid === 'function' && st.uid !== process.getuid())) {
+      closeSync(fd)
+      return undefined
+    }
+    if (st.size <= 0 || st.size > 256 * 1024) {
+      closeSync(fd)
+      return undefined
+    }
+    const buf = Buffer.alloc(st.size)
+    let totalRead = 0
+    while (totalRead < st.size) {
+      const bytes = readSync(fd, buf, totalRead, st.size - totalRead, totalRead)
+      if (bytes === 0) break
+      totalRead += bytes
+    }
+    closeSync(fd)
+    fd = undefined
+    if (totalRead !== st.size) return undefined
+    return { content: buf.toString('utf8', 0, totalRead), uid: st.uid }
+  } catch {
+    if (fd !== undefined) {
+      try { closeSync(fd) } catch {}
+    }
+    return undefined
+  }
+}
+
+function writeSafeMarker(markerPath: string, realDir: string, data: string): boolean {
+  try {
+    let lst
+    try { lst = lstatSync(markerPath) } catch {}
+    if (lst) {
+      if (lst.isSymbolicLink()) return false
+      if (!lst.isFile()) return false
+      if (typeof process.getuid === 'function' && lst.uid !== process.getuid()) return false
+      return true
+    }
+    let fd: number | undefined
+    try {
+      fd = openSync(markerPath, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW || 0), 0o600)
+      const st = fstatSync(fd)
+      if (!st.isFile() || (typeof process.getuid === 'function' && st.uid !== process.getuid())) {
+        closeSync(fd)
+        fd = undefined
+        try { unlinkSync(markerPath) } catch {}
+        return false
+      }
+      const bytes = Buffer.from(data, 'utf8')
+      let written = 0
+      while (written < bytes.length) {
+        const n = writeSync(fd, bytes, written, bytes.length - written, written)
+        if (n === 0) break
+        written += n
+      }
+      closeSync(fd)
+      fd = undefined
+      if (written !== bytes.length) {
+        try { unlinkSync(markerPath) } catch {}
+        return false
+      }
+      const real = realpathSync(markerPath)
+      const dirPrefix = realDir.endsWith('/') ? realDir : realDir + '/'
+      if (!real.startsWith(dirPrefix) && real !== realDir) {
+        try { unlinkSync(markerPath) } catch {}
+        return false
+      }
+      return true
+    } catch {
+      if (fd !== undefined) {
+        try { closeSync(fd) } catch {}
+      }
+      return false
+    }
+  } catch {
+    return false
+  }
+}
+
+function writeSafeClaimSnapshot(claimPath: string, realDir: string, content: string): boolean {
+  let claimFd: number | undefined
+  try {
+    let lst
+    try { lst = lstatSync(claimPath) } catch {}
+    if (lst) {
+      if (lst.isSymbolicLink() || !lst.isFile()) return false
+      if (typeof process.getuid === 'function' && lst.uid !== process.getuid()) return false
+      return true
+    }
+    claimFd = openSync(claimPath, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW || 0), 0o600)
+    const stClaim = fstatSync(claimFd)
+    if (!stClaim.isFile() || (typeof process.getuid === 'function' && stClaim.uid !== process.getuid())) {
+      closeSync(claimFd)
+      claimFd = undefined
+      try { unlinkSync(claimPath) } catch {}
+      return false
+    }
+    const bytes = Buffer.from(content, 'utf8')
+    let written = 0
+    while (written < bytes.length) {
+      const n = writeSync(claimFd, bytes, written, bytes.length - written, written)
+      if (n === 0) break
+      written += n
+    }
+    closeSync(claimFd)
+    claimFd = undefined
+    if (written !== bytes.length) {
+      try { unlinkSync(claimPath) } catch {}
+      return false
+    }
+    const realClaim = realpathSync(claimPath)
+    const dirPrefix = realDir.endsWith('/') ? realDir : realDir + '/'
+    if (!realClaim.startsWith(dirPrefix) && realClaim !== realDir) {
+      try { unlinkSync(claimPath) } catch {}
+      return false
+    }
+    return true
+  } catch {
+    if (claimFd !== undefined) {
+      try { closeSync(claimFd) } catch {}
+    }
+    return false
+  }
+}
+
+export function findWorkerReportFile(
+  dir: string,
+  context?: ReportContext
+): (FileReport & { consume: () => void }) | undefined {
+  if (!dir) return undefined
+  // Explicit current ticket, assignment, and turn binding required on consumer
+  if (!context?.id || !context?.assignmentId) return undefined
+  const contextId = context.id
+  const contextAssignmentId = context.assignmentId
+  const contextSince = context.since
+
+  // Strict nonempty turn check on consumer context: fail closed if turn is missing or empty
+  const rawContextTurn = context.turn ?? context.nonce
+  if (rawContextTurn === undefined || rawContextTurn === null) return undefined
+  const contextTurn = String(rawContextTurn).trim()
+  if (!contextTurn) return undefined
+
+  let realDir: string
+  try {
+    realDir = realpathSync(dir)
+  } catch {
+    return undefined
+  }
+  const dirPrefix = realDir.endsWith('/') ? realDir : realDir + '/'
+
+  const legacyClaimPath = join(dir, `.dsh-report.claim.${contextId}.${contextAssignmentId}.${contextTurn}.json`)
+  try {
+    const st = lstatSync(legacyClaimPath)
+    if (st.isSymbolicLink() || (typeof process.getuid === 'function' && st.uid !== process.getuid())) {
+      return undefined
+    }
+  } catch {}
+
+  const claimPrefix = `.dsh-report.claim.${contextId}.${contextAssignmentId}.${contextTurn}`
+  const markerPrefix = `.dsh-report.consumed.${contextId}.${contextAssignmentId}.${contextTurn}.`
+
+  // Validate directory entries for symlink or wrong-UID attacks
+  let dirEntries: string[]
+  try {
+    dirEntries = readdirSync(dir)
+  } catch {
+    return undefined
+  }
+
+  for (const entry of dirEntries) {
+    if (entry.startsWith(claimPrefix)) {
+      const full = join(dir, entry)
+      try {
+        const st = lstatSync(full)
+        if (st.isSymbolicLink() || (typeof process.getuid === 'function' && st.uid !== process.getuid())) {
+          return undefined
+        }
+      } catch {
+        return undefined
+      }
+    }
+  }
+
+  const consumedHashes = new Set<string>()
+  let latestConsumedAtMs = 0
+  let readyConsumed = false
+
+  for (const entry of dirEntries) {
+    if (entry.startsWith(markerPrefix)) {
+      const full = join(dir, entry)
+      try {
+        const st = lstatSync(full)
+        if (!st.isSymbolicLink() && st.isFile() && (typeof process.getuid === 'function' ? st.uid === process.getuid() : true)) {
+          const hash = entry.slice(markerPrefix.length)
+          if (hash) consumedHashes.add(hash)
+          if (st.size > 0 && st.size <= 4096) {
+            const cached = markerContentCache.get(full)
+            if (cached && cached.mtimeMs === st.mtimeMs) {
+              latestConsumedAtMs = Math.max(latestConsumedAtMs, cached.at)
+              if (cached.ready) readyConsumed = true
+            } else {
+              const mRead = readSafeReportFile(full, realDir)
+              if (mRead) {
+                try {
+                  const parsed = JSON.parse(mRead.content)
+                  if (parsed && typeof parsed === 'object') {
+                    const at = typeof parsed.at === 'number' ? parsed.at : 0
+                    const ready = parsed.state === 'ready'
+                    if (markerContentCache.size >= MAX_CONSUMED_CACHE && !markerContentCache.has(full)) {
+                      const oldest = markerContentCache.keys().next().value
+                      if (oldest !== undefined) markerContentCache.delete(oldest)
+                    }
+                    markerContentCache.set(full, { at, ready, mtimeMs: st.mtimeMs })
+                    if (at) latestConsumedAtMs = Math.max(latestConsumedAtMs, at)
+                    if (ready) readyConsumed = true
+                  }
+                } catch {}
+              }
+            }
+          }
+        }
+      } catch {}
+    }
+  }
+
+  function validatePayload(content: string, filePath?: string) {
+    let parsed: any
+    try {
+      parsed = JSON.parse(content)
+    } catch {
+      return undefined
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return undefined
+    }
+
+    const { state, summary, human_action, question_for_trigger_id, pr_number, reply_to_trigger_id, ticket_id, assignment_id, turn_id, turn, nonce, at } = parsed
+
+    if (!['progress', 'ready', 'blocked', 'failed', 'dropped'].includes(state)) {
+      return undefined
+    }
+    if (typeof summary !== 'string' || !summary.trim()) {
+      return undefined
+    }
+
+    if (!ticket_id || typeof ticket_id !== 'string') return undefined
+    if (!assignment_id || typeof assignment_id !== 'string') return undefined
+    if (!at || (typeof at !== 'string' && typeof at !== 'number')) return undefined
+
+    if (ticket_id !== contextId) return undefined
+    if (assignment_id !== contextAssignmentId) return undefined
+
+    const rawReportTurn = turn_id ?? turn ?? nonce
+    if (rawReportTurn === undefined || rawReportTurn === null) return undefined
+    const reportTurn = String(rawReportTurn).trim()
+    if (!reportTurn || reportTurn !== contextTurn) {
+      return undefined
+    }
+
+    const atMs = typeof at === 'number' ? at : Date.parse(at)
+    if (isNaN(atMs)) return undefined
+
+    if (contextSince !== undefined && atMs < contextSince - 5000) {
+      return undefined
+    }
+
+    const now = Date.now()
+    if (atMs < now - 7 * 24 * 60 * 60 * 1000 || atMs > now + 10 * 60 * 1000) {
+      return undefined
+    }
+
+    if (pr_number !== undefined && pr_number !== null) {
+      if (typeof pr_number !== 'number' || !Number.isInteger(pr_number) || pr_number <= 0) return undefined
+    }
+    if (human_action !== undefined && human_action !== null) {
+      if (typeof human_action !== 'string' || !human_action.trim()) return undefined
+    }
+    if (question_for_trigger_id !== undefined && (typeof question_for_trigger_id !== 'string' || !question_for_trigger_id.trim())) {
+      return undefined
+    }
+    if (reply_to_trigger_id !== undefined && (typeof reply_to_trigger_id !== 'string' || !reply_to_trigger_id.trim())) {
+      return undefined
+    }
+
+    const snapshotHash = reportSnapshotHash({ state, summary, at, pr_number, human_action, question_for_trigger_id, reply_to_trigger_id })
+
+    return {
+      state: state as ReportState,
+      summary: summary.trim(),
+      human_action,
+      question_for_trigger_id,
+      pr_number,
+      reply_to_trigger_id,
+      ticket_id,
+      assignment_id,
+      turn_id: reportTurn,
+      at,
+      snapshotHash,
+      atMs,
+      content,
+      filePath,
+      isClaim: Boolean(filePath),
+    }
+  }
+
+  const canonicalReportPath = join(dir, '.dsh-report.json')
+  const canonRead = readSafeReportFile(canonicalReportPath, realDir)
+  let canonValid = canonRead ? validatePayload(canonRead.content) : undefined
+
+  const availableClaims: NonNullable<ReturnType<typeof validatePayload>>[] = []
+  for (const entry of dirEntries) {
+    if (entry.startsWith(claimPrefix) && entry.endsWith('.json')) {
+      const full = join(dir, entry)
+      const claimRead = readSafeReportFile(full, realDir)
+      if (claimRead) {
+        const parsedClaim = validatePayload(claimRead.content, full)
+        if (parsedClaim) availableClaims.push(parsedClaim)
+      }
+    }
+  }
+
+  function isAcceptable(cand: NonNullable<ReturnType<typeof validatePayload>>): boolean {
+    const exactKey = consumedKey(dir, contextId, contextAssignmentId, contextTurn, cand.snapshotHash)
+    if (consumedReports.has(exactKey) || consumedHashes.has(cand.snapshotHash)) {
+      return false
+    }
+    const markerPath = join(dir, `.dsh-report.consumed.${contextId}.${contextAssignmentId}.${contextTurn}.${cand.snapshotHash}`)
+    try {
+      if (existsSync(markerPath)) {
+        const st = lstatSync(markerPath)
+        if (!st.isSymbolicLink() && st.isFile()) return false
+      }
+    } catch {}
+
+    if (latestConsumedAtMs > 0 && cand.atMs < latestConsumedAtMs) {
+      return false
+    }
+    if (readyConsumed && cand.state !== 'ready') {
+      return false
+    }
+    if (contextSince !== undefined && cand.atMs < contextSince - 5000) {
+      return false
+    }
+    return true
+  }
+
+  if (canonValid && !isAcceptable(canonValid)) {
+    canonValid = undefined
+  }
+  const filteredClaims = availableClaims.filter(isAcceptable)
+
+  if (!canonValid && filteredClaims.length === 0) {
+    return undefined
+  }
+
+  const candidates = [canonValid, ...filteredClaims].filter(Boolean) as NonNullable<ReturnType<typeof validatePayload>>[]
+  const hasReady = candidates.some(c => c.state === 'ready')
+  const validCandidates = hasReady ? candidates.filter(c => c.state === 'ready') : candidates
+  validCandidates.sort((a, b) => {
+    if (a.atMs !== b.atMs) return b.atMs - a.atMs
+    if (a.isClaim && !b.isClaim) return -1
+    if (b.isClaim && !a.isClaim) return 1
+    return 0
+  })
+
+  const chosen = validCandidates[0]
+  if (!chosen) {
+    return undefined
+  }
+  let claimPath: string
+  if (!chosen.isClaim) {
+    claimPath = join(dir, `.dsh-report.claim.${contextId}.${contextAssignmentId}.${contextTurn}.${chosen.snapshotHash}.json`)
+    if (!writeSafeClaimSnapshot(claimPath, realDir, chosen.content)) {
+      return undefined
+    }
+  } else {
+    claimPath = chosen.filePath!
+  }
+
+  const exactKey = consumedKey(dir, contextId, contextAssignmentId, contextTurn, chosen.snapshotHash)
+  const markerPath = join(dir, `.dsh-report.consumed.${contextId}.${contextAssignmentId}.${contextTurn}.${chosen.snapshotHash}`)
+
+  const result: FileReport & { consume: () => void } = {
+    state: chosen.state,
+    summary: chosen.summary,
+    ...(chosen.human_action !== undefined ? { human_action: chosen.human_action } : {}),
+    ...(chosen.question_for_trigger_id ? { question_for_trigger_id: chosen.question_for_trigger_id } : {}),
+    ...(chosen.pr_number !== undefined ? { pr_number: chosen.pr_number } : {}),
+    ...(chosen.reply_to_trigger_id ? { reply_to_trigger_id: chosen.reply_to_trigger_id } : {}),
+    ticket_id: chosen.ticket_id,
+    assignment_id: chosen.assignment_id,
+    turn_id: chosen.turn_id,
+    at: chosen.at,
+    snapshotHash: chosen.snapshotHash,
+    path: claimPath,
+    consume: () => {
+      try {
+        recordConsumed(exactKey)
+        const markerData = JSON.stringify({ at: chosen.atMs, state: chosen.state, hash: chosen.snapshotHash })
+        writeSafeMarker(markerPath, realDir, markerData)
+        try {
+          const st = lstatSync(claimPath)
+          if (!st.isSymbolicLink() && st.isFile() && (typeof process.getuid !== 'function' || st.uid === process.getuid())) {
+            unlinkSync(claimPath)
+          }
+        } catch {}
+      } catch {}
+    },
+  }
+  return result
+}
+
+export function currentTurnOf(agent?: Agent | null, assignment?: Assignment | null): number | string | undefined {
+  if (agent && 'session' in agent) {
+    const session = (agent as Agent).session
+    if (session && typeof session.snapshotEvents === 'function') {
+      try {
+        const events = session.snapshotEvents()
+        if (Array.isArray(events) && events.length > 0) {
+          for (let i = events.length - 1; i >= 0; i--) {
+            const e = events[i] as any
+            if (!e) continue
+            if (e.type === 'turn/start' && typeof e.data?.turn === 'number') return e.data.turn
+            if (e.type === 'assistant/message' && typeof e.data?.turn === 'number') return e.data.turn
+            if (e.type === 'step/start' && typeof e.data?.turn === 'number') return e.data.turn
+          }
+        }
+      } catch {}
+    }
+  }
+  return undefined
+}
+
+export function extractReportFromText(text: string): { state: ReportState; summary: string } | undefined {
+  if (!text || typeof text !== 'string') return undefined
+  const trimmed = text.trim()
+  if (!trimmed) return undefined
+
+  // Strict adversarial rule: NEVER promote text/chat messages, quotes, or prose to "ready".
+  // Ready handoffs require explicit native tool calls or the bound file transport (.dsh-report.json).
+  let jsonStr: string | undefined
+  if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    jsonStr = trimmed
+  } else {
+    // Only accept fenced code blocks if the ENTIRE message is the code block with NO conversational prose around it
+    const blockMatch = trimmed.match(/^```(?:json)?\s*(\{[\s\S]*?\})\s*```$/)
+    if (blockMatch) {
+      jsonStr = blockMatch[1]
+    }
+  }
+
+  if (!jsonStr) return undefined
+
+  try {
+    const parsed = JSON.parse(jsonStr)
+    if (!parsed || typeof parsed !== 'object') return undefined
+    const { state, summary } = parsed
+    if (state === 'ready') {
+      // Chat prose/JSON cannot file ready reports; only bound tool or file transport is authorized.
+      return undefined
+    }
+    if (['blocked', 'failed', 'dropped', 'progress'].includes(state) && typeof summary === 'string' && summary.trim().length > 0) {
+      return { state: state as ReportState, summary: summary.trim() }
+    }
+  } catch {}
+
+  return undefined
 }
