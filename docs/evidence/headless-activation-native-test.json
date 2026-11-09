@@ -1,0 +1,307 @@
+{
+  "at": "2026-11-09T00:29:46.634270+00:00",
+  "humanApproval": {
+    "sourceChat": "01a1bd74-4349-7fd3-bd92-5ee39f297f4e",
+    "response": "Yeah, go for it.",
+    "scope": "Enable reviewed local same-UID capability and one bounded locked-screen verification; no new scope, credentials, spend, acceptance/publication bypass"
+  },
+  "beforeSettings": {
+    "value": {
+      "enabled": false
+    },
+    "revision": 0
+  },
+  "afterSettings": {
+    "value": {
+      "enabled": true
+    },
+    "revision": 1
+  },
+  "beforeFinding": {
+    "dedupKey": "independent-review-a338ad44-893d-4ebf-b8ff-aa0c3067e384-candidate-20261108",
+    "title": "Independently assess the existing headless coordination authority boundary",
+    "problem": "Independent qualification needed for retained approved candidate. This is a linked read-only review assignment, not a replacement feature/intake or duplicate implementation. Parent finding a338ad44-893d-4ebf-b8ff-aa0c3067e384. Existing source candidatec37b52eee64e796b83a6b15bb101593264d73dd8; report /Users/gerayeremin/tmp-work/superagent-sandbox/reports/FINDING_A338_HEADLESS_COORDINATION_HANDOFF.md; patch /Users/gerayeremin/tmp-work/superagent-sandbox/patches/FINDING_A338_HEADLESS_COORDINATION.patch SHA2563f46c7e2f53d7ffecddd1f23e2a39283b17e3601b50b87399076e967d2e2c7d7.",
+    "scope": "Independent verification of existing parent finding a338ad44-893d-4ebf-b8ff-aa0c3067e384. Security/authority review only. Inspect0600/sameUID files, symlink/path/race/replay/freshness, current finding/revision/previous exact approval binding, allowed actions, authentication and default-off behavior. Specify any new delegation authority and exact owner confirmation required. Do not activate it or infer blanket release approval grants new access. No implementation, live source changes, merge/deploy/publish/accept, credentials, routing, access, privilege activation or spending change. Codex owns final review/release.",
+    "owner": "Independent Harness reviewer; Codex final review/release",
+    "kind": "verification",
+    "requirements": [
+      "Inspect exact candidate heads, patches, saved logs and installed compatibility. Existing test claims are reports until inspected; zero outer tool calls does not measure nested-provider activity.",
+      "Do not repeat full suites/builds without a specific missing check. Narrow isolated adversarial tests allowed. Do not modify implementation or installed code; do not revive original ended mandate.",
+      "Return durable report with exact heads/base, file/line findings, actual checks versus claims, pass/correction/authority verdict, limits and Codex next stage. Preserve original candidate and history; report real tool availability without pretending orchestrator_report ran.",
+      "Security/authority review only. Inspect0600/sameUID files, symlink/path/race/replay/freshness, current finding/revision/previous exact approval binding, allowed actions, authentication and default-off behavior. Specify any new delegation authority and exact owner confirmation required. Do not activate it or infer blanket release approval grants new access."
+    ],
+    "repository": "gera3d/superagent-sandbox",
+    "id": "d0d6aa3c-0934-42c1-8716-130fd6bd4122",
+    "occurrences": [
+      {
+        "id": "approved-independent-review-20261108",
+        "reference": "finding/a338ad44-893d-4ebf-b8ff-aa0c3067e384",
+        "evidence": "Existing source candidatec37b52eee64e796b83a6b15bb101593264d73dd8; report /Users/gerayeremin/tmp-work/superagent-sandbox/reports/FINDING_A338_HEADLESS_COORDINATION_HANDOFF.md; patch /Users/gerayeremin/tmp-work/superagent-sandbox/patches/FINDING_A338_HEADLESS_COORDINATION.patch SHA2563f46c7e2f53d7ffecddd1f23e2a39283b17e3601b50b87399076e967d2e2c7d7.",
+        "at": "2026-11-08T23:25:01.306Z"
+      }
+    ],
+    "revision": 3,
+    "state": "blocked",
+    "choices": [
+      {
+        "id": "fix_now",
+        "kind": "fix_now",
+        "label": "Run verification"
+      },
+      {
+        "id": "queue_next",
+        "kind": "queue_next",
+        "label": "Queue next"
+      },
+      {
+        "id": "defer",
+        "kind": "defer",
+        "label": "Defer"
+      }
+    ],
+    "reports": [
+      {
+        "reference": "ticket/62f6b9bd3c7db92ca7955dbf5adf6a81/report/790df61c23bb18197b04d47ff4aaf127",
+        "evidence": "Native review/correction is in progress; previous ready evidence is not current. Completed independent security assessment of parent finding `a338ad44-893d-4ebf-b8ff-aa0c3067e384` (candidate **`c37b52eee64e`**, patch **`3f46c7e2f53d`**), returning verdict **CORRECTION REQUIRED PRIOR TO ACTIVATION**.\n\n\ud83d\udfe2 **DONE**:\n* Inspected candidate heads, base commit **`d33bd28e9016`**, patch SHA-256, test logs, and live environment isolation.\n* Identified 3 critical authority defects: default-on HTTP mounting in [`src/app/http.ts:397`](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/app/http.ts#L397), unvalidated URL route parameter `:id`, and a TOCTOU double-open in [`src/app/finding-coordination.ts:113`](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/app/finding-coordination.ts#L113).\n* Generated durable assessment reports in **[`FINDING_D0D6_HEADLESS_COORDINATION_ASSESSMENT.md`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-62f6b9bd3c7d/FINDING_D0D6_HEADLESS_COORDINATION_ASSESSMENT.md)** and artifact storage.\n\n\u26a1 **DOING**:\n* Halted at scope boundary with zero merge, deployment, live code change, or privilege activation.\n\n\ud83c\udfaf **NEXT**:\n* Hand off findings to **Codex** to require default-off configuration gating and explicit owner confirmation before any candidate activation.",
+        "at": "2026-11-08T23:32:15.908Z",
+        "nextDecision": "Await fresh current-job evidence after the newer human/CI input or work progress.",
+        "jobId": "finding:d0d6aa3c-0934-42c1-8716-130fd6bd4122:r1",
+        "state": "evidence",
+        "currencyToken": "5b203fff4f6e00de242c30afaa49fff51ac6ef2bd57c11ea1394bec74f0b0df0",
+        "summaryTruncated": false,
+        "originalLength": 1381,
+        "reportSummarySha256": "ded9ef9b71bccf2389309ec574d532775d8165642834ebd2df6786922ad64049"
+      }
+    ],
+    "audit": [
+      {
+        "event": "observed",
+        "actor": "external:observer",
+        "source": "external",
+        "reference": "orchestrator-http:observation-only",
+        "at": "2026-11-08T23:25:01.306Z",
+        "detail": "approved-independent-review-20261108"
+      },
+      {
+        "event": "recommendation_recorded",
+        "actor": "model:antigravity / gemini-3.8-flash",
+        "at": "2026-11-08T23:25:48.749Z",
+        "detail": "antigravity / gemini-3.8-flash"
+      },
+      {
+        "event": "confirmed",
+        "actor": "local-operator",
+        "at": "2026-11-08T23:26:22.064Z",
+        "detail": "fix_now"
+      },
+      {
+        "event": "dispatched",
+        "actor": "local-operator",
+        "at": "2026-11-08T23:26:22.107Z",
+        "detail": "62f6b9bd3c7db92ca7955dbf5adf6a81/790df61c23bb18197b04d47ff4aaf127"
+      },
+      {
+        "event": "working_evidence",
+        "actor": "finding-runtime",
+        "at": "2026-11-08T23:32:17.015Z",
+        "detail": "ticket/62f6b9bd3c7db92ca7955dbf5adf6a81/report/790df61c23bb18197b04d47ff4aaf127"
+      },
+      {
+        "event": "blocked",
+        "actor": "finding-runtime",
+        "at": "2026-11-08T23:35:46.415Z",
+        "detail": "Assignment ended without a qualifying report; review/verification required: ticket/62f6b9bd3c7db92ca7955dbf5adf6a81/report/790df61c23bb18197b04d47ff4aaf127. End, idle or merge is not resolution."
+      }
+    ],
+    "createdAt": "2026-11-08T23:25:01.306Z",
+    "updatedAt": "2026-11-08T23:35:46.415Z",
+    "recommendation": {
+      "choiceId": "queue_next",
+      "rationale": "Parent finding a338ad44 produced candidate c37b52ee to support headless coordination for approved work. With earlier independent qualification assignments active in the pipeline, queueing next sequences this authority review behind them, ensuring focused isolated scrutiny of 0600 file permissions, replay guards, and default-off boundaries without capacity contention.",
+      "provider": "antigravity / gemini-3.8-flash",
+      "recordedAt": "2026-11-08T23:25:48.749Z",
+      "revision": 1
+    },
+    "confirmation": {
+      "revision": 1,
+      "choiceId": "fix_now",
+      "actor": "local-operator",
+      "at": "2026-11-08T23:26:22.063Z"
+    },
+    "job": {
+      "id": "finding:d0d6aa3c-0934-42c1-8716-130fd6bd4122:r1",
+      "ticketId": "62f6b9bd3c7db92ca7955dbf5adf6a81",
+      "assignmentId": "790df61c23bb18197b04d47ff4aaf127"
+    },
+    "blocker": "Assignment ended without a qualifying report; review/verification required: ticket/62f6b9bd3c7db92ca7955dbf5adf6a81/report/790df61c23bb18197b04d47ff4aaf127. End, idle or merge is not resolution."
+  },
+  "plannedAction": "defer completed independent security review mandate as historical after final coordinator review, preserving report and original approval; no worker dispatch/publication/acceptance",
+  "lockedVerified": true,
+  "lockEvidence": "CUA getState after native ctrl+super+q reported: The Mac is locked and automatic unlock could not unlock it; apps inventory empty.",
+  "action": {
+    "transport": "installed supported finding-coordinate.ts CLI",
+    "exit": 0,
+    "kind": "defer completed superseded independent review",
+    "actor": "codex-coordinator",
+    "beforeRevision": 3,
+    "afterRevision": 3,
+    "beforeState": "blocked",
+    "afterState": "deferred",
+    "jobPreserved": true,
+    "accepted": false,
+    "dispatch": false,
+    "publication": false
+  },
+  "afterFinding": {
+    "dedupKey": "independent-review-a338ad44-893d-4ebf-b8ff-aa0c3067e384-candidate-20261108",
+    "title": "Independently assess the existing headless coordination authority boundary",
+    "problem": "Independent qualification needed for retained approved candidate. This is a linked read-only review assignment, not a replacement feature/intake or duplicate implementation. Parent finding a338ad44-893d-4ebf-b8ff-aa0c3067e384. Existing source candidatec37b52eee64e796b83a6b15bb101593264d73dd8; report /Users/gerayeremin/tmp-work/superagent-sandbox/reports/FINDING_A338_HEADLESS_COORDINATION_HANDOFF.md; patch /Users/gerayeremin/tmp-work/superagent-sandbox/patches/FINDING_A338_HEADLESS_COORDINATION.patch SHA2563f46c7e2f53d7ffecddd1f23e2a39283b17e3601b50b87399076e967d2e2c7d7.",
+    "scope": "Independent verification of existing parent finding a338ad44-893d-4ebf-b8ff-aa0c3067e384. Security/authority review only. Inspect0600/sameUID files, symlink/path/race/replay/freshness, current finding/revision/previous exact approval binding, allowed actions, authentication and default-off behavior. Specify any new delegation authority and exact owner confirmation required. Do not activate it or infer blanket release approval grants new access. No implementation, live source changes, merge/deploy/publish/accept, credentials, routing, access, privilege activation or spending change. Codex owns final review/release.",
+    "owner": "Independent Harness reviewer; Codex final review/release",
+    "kind": "verification",
+    "requirements": [
+      "Inspect exact candidate heads, patches, saved logs and installed compatibility. Existing test claims are reports until inspected; zero outer tool calls does not measure nested-provider activity.",
+      "Do not repeat full suites/builds without a specific missing check. Narrow isolated adversarial tests allowed. Do not modify implementation or installed code; do not revive original ended mandate.",
+      "Return durable report with exact heads/base, file/line findings, actual checks versus claims, pass/correction/authority verdict, limits and Codex next stage. Preserve original candidate and history; report real tool availability without pretending orchestrator_report ran.",
+      "Security/authority review only. Inspect0600/sameUID files, symlink/path/race/replay/freshness, current finding/revision/previous exact approval binding, allowed actions, authentication and default-off behavior. Specify any new delegation authority and exact owner confirmation required. Do not activate it or infer blanket release approval grants new access."
+    ],
+    "repository": "gera3d/superagent-sandbox",
+    "id": "d0d6aa3c-0934-42c1-8716-130fd6bd4122",
+    "occurrences": [
+      {
+        "id": "approved-independent-review-20261108",
+        "reference": "finding/a338ad44-893d-4ebf-b8ff-aa0c3067e384",
+        "evidence": "Existing source candidatec37b52eee64e796b83a6b15bb101593264d73dd8; report /Users/gerayeremin/tmp-work/superagent-sandbox/reports/FINDING_A338_HEADLESS_COORDINATION_HANDOFF.md; patch /Users/gerayeremin/tmp-work/superagent-sandbox/patches/FINDING_A338_HEADLESS_COORDINATION.patch SHA2563f46c7e2f53d7ffecddd1f23e2a39283b17e3601b50b87399076e967d2e2c7d7.",
+        "at": "2026-11-08T23:25:01.306Z"
+      }
+    ],
+    "revision": 3,
+    "state": "deferred",
+    "choices": [
+      {
+        "id": "fix_now",
+        "kind": "fix_now",
+        "label": "Run verification"
+      },
+      {
+        "id": "queue_next",
+        "kind": "queue_next",
+        "label": "Queue next"
+      },
+      {
+        "id": "defer",
+        "kind": "defer",
+        "label": "Defer"
+      }
+    ],
+    "reports": [
+      {
+        "reference": "ticket/62f6b9bd3c7db92ca7955dbf5adf6a81/report/790df61c23bb18197b04d47ff4aaf127",
+        "evidence": "Native review/correction is in progress; previous ready evidence is not current. Completed independent security assessment of parent finding `a338ad44-893d-4ebf-b8ff-aa0c3067e384` (candidate **`c37b52eee64e`**, patch **`3f46c7e2f53d`**), returning verdict **CORRECTION REQUIRED PRIOR TO ACTIVATION**.\n\n\ud83d\udfe2 **DONE**:\n* Inspected candidate heads, base commit **`d33bd28e9016`**, patch SHA-256, test logs, and live environment isolation.\n* Identified 3 critical authority defects: default-on HTTP mounting in [`src/app/http.ts:397`](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/app/http.ts#L397), unvalidated URL route parameter `:id`, and a TOCTOU double-open in [`src/app/finding-coordination.ts:113`](file:///Users/gerayeremin/tmp-work/dsh-superagent-prototype/src/app/finding-coordination.ts#L113).\n* Generated durable assessment reports in **[`FINDING_D0D6_HEADLESS_COORDINATION_ASSESSMENT.md`](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/work/finding-task-62f6b9bd3c7d/FINDING_D0D6_HEADLESS_COORDINATION_ASSESSMENT.md)** and artifact storage.\n\n\u26a1 **DOING**:\n* Halted at scope boundary with zero merge, deployment, live code change, or privilege activation.\n\n\ud83c\udfaf **NEXT**:\n* Hand off findings to **Codex** to require default-off configuration gating and explicit owner confirmation before any candidate activation.",
+        "at": "2026-11-08T23:32:15.908Z",
+        "nextDecision": "Await fresh current-job evidence after the newer human/CI input or work progress.",
+        "jobId": "finding:d0d6aa3c-0934-42c1-8716-130fd6bd4122:r1",
+        "state": "evidence",
+        "currencyToken": "5b203fff4f6e00de242c30afaa49fff51ac6ef2bd57c11ea1394bec74f0b0df0",
+        "summaryTruncated": false,
+        "originalLength": 1381,
+        "reportSummarySha256": "ded9ef9b71bccf2389309ec574d532775d8165642834ebd2df6786922ad64049"
+      }
+    ],
+    "audit": [
+      {
+        "event": "observed",
+        "actor": "external:observer",
+        "source": "external",
+        "reference": "orchestrator-http:observation-only",
+        "at": "2026-11-08T23:25:01.306Z",
+        "detail": "approved-independent-review-20261108"
+      },
+      {
+        "event": "recommendation_recorded",
+        "actor": "model:antigravity / gemini-3.8-flash",
+        "at": "2026-11-08T23:25:48.749Z",
+        "detail": "antigravity / gemini-3.8-flash"
+      },
+      {
+        "event": "confirmed",
+        "actor": "local-operator",
+        "at": "2026-11-08T23:26:22.064Z",
+        "detail": "fix_now"
+      },
+      {
+        "event": "dispatched",
+        "actor": "local-operator",
+        "at": "2026-11-08T23:26:22.107Z",
+        "detail": "62f6b9bd3c7db92ca7955dbf5adf6a81/790df61c23bb18197b04d47ff4aaf127"
+      },
+      {
+        "event": "working_evidence",
+        "actor": "finding-runtime",
+        "at": "2026-11-08T23:32:17.015Z",
+        "detail": "ticket/62f6b9bd3c7db92ca7955dbf5adf6a81/report/790df61c23bb18197b04d47ff4aaf127"
+      },
+      {
+        "event": "blocked",
+        "actor": "finding-runtime",
+        "at": "2026-11-08T23:35:46.415Z",
+        "detail": "Assignment ended without a qualifying report; review/verification required: ticket/62f6b9bd3c7db92ca7955dbf5adf6a81/report/790df61c23bb18197b04d47ff4aaf127. End, idle or merge is not resolution."
+      },
+      {
+        "event": "reviewed",
+        "actor": "codex-coordinator",
+        "at": "2026-11-09T00:30:12.431Z",
+        "detail": "{\"revision\":3,\"decision\":\"defer\"}"
+      }
+    ],
+    "createdAt": "2026-11-08T23:25:01.306Z",
+    "updatedAt": "2026-11-09T00:30:12.432Z",
+    "recommendation": {
+      "choiceId": "queue_next",
+      "rationale": "Parent finding a338ad44 produced candidate c37b52ee to support headless coordination for approved work. With earlier independent qualification assignments active in the pipeline, queueing next sequences this authority review behind them, ensuring focused isolated scrutiny of 0600 file permissions, replay guards, and default-off boundaries without capacity contention.",
+      "provider": "antigravity / gemini-3.8-flash",
+      "recordedAt": "2026-11-08T23:25:48.749Z",
+      "revision": 1
+    },
+    "confirmation": {
+      "revision": 1,
+      "choiceId": "fix_now",
+      "actor": "local-operator",
+      "at": "2026-11-08T23:26:22.063Z"
+    },
+    "job": {
+      "id": "finding:d0d6aa3c-0934-42c1-8716-130fd6bd4122:r1",
+      "ticketId": "62f6b9bd3c7db92ca7955dbf5adf6a81",
+      "assignmentId": "790df61c23bb18197b04d47ff4aaf127"
+    }
+  },
+  "settings": {
+    "value": {
+      "enabled": true
+    },
+    "revision": 1
+  },
+  "reporting": "working",
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "nativeFinalObservationPending": true,
+  "protectedAcceptanceRefusal": {
+    "status": 403,
+    "body": "{\"error\":\"Explicit local operator evidence review required\"}"
+  },
+  "replayRefusal": {
+    "status": 409,
+    "detail": "(node:34997) ExperimentalWarning: Transform Types is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\nCoordination transport rejected (409): {\"error\":\"Only findings awaiting decision or blocked may be deferred\"}"
+  },
+  "limit": "One real locked-screen defer action on completed independent-review record, not a live retry/redispatch or general autonomy test."
+}
