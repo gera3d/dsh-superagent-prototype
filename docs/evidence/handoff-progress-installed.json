@@ -1,0 +1,63 @@
+{
+  "at": "2026-11-09T21:31:29.766184+00:00",
+  "sourcePR": 78,
+  "sourceHead": "06de7fdf5fdc434ebf01e174908801803f7eedd6",
+  "merge": "444dbea40917bdf9d64c122cb76b632fc3df1df2",
+  "workerHead": "878795220ae3712d71d6dfeb2093a53233e8e236",
+  "backup": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/verified-batch/handoff-rollback-20261109T213129Z",
+  "files": [
+    {
+      "path": "src/app/advice-context.ts",
+      "before": "d05c9ad32e8a88c71a422bde0bf60ae56fb04620685c3452e98b5e7a5a3b4d5f",
+      "after": "7bc8010efbb71bcd787f3c4421c296c2a6a64fc5db19213fad61628ebfae93c0"
+    },
+    {
+      "path": "src/app/decision-inbox.ts",
+      "before": "48a44be513b9620b692e9eb525cd951da9ac5a5294e946b519a37683c36a71a4",
+      "after": "712ef992d3ba730ab7f0a22eac7558a0b591fc28c911e98a55dba2b8a1842514"
+    },
+    {
+      "path": "src/app/delivery-runtime.ts",
+      "before": "58be2c52cdd8a6b3043be44dba0e081710dfa3812ef13d02257d5e53226e69f0",
+      "after": "8c621d584de1a99975c83c326ddab029fab46a31d84297992c86651ee1aa43cc"
+    },
+    {
+      "path": "src/core/decision.ts",
+      "before": "11caa2afb3cd8d57754ed0d04c032d607a5d18319e31da4d353d53db8a8267ae",
+      "after": "3ff281db4ee101bfceb8c17b05ff56b56679d5c3578bbd1edf5b4b07dd4dc8c1"
+    }
+  ],
+  "assets": {
+    "lib/deployment-BTCh8dP2.d.ts": "505a7f812d3cb688a9f41cafdeceb186d9d1d2806625b4f574f07b283141a8fa",
+    "lib/client.js": "9c7ece88de424007487e5763e01ae030601cd9c60ae5984153a442f4ba368b53",
+    "lib/http-B2zpaYuT.js": "94c1bf361fd57eb90535b931d9939b371ea47d29c5cd6c62c7eae37ab1feceac",
+    "lib/decision-inbox-provider-canonical.d.ts": "bd668848a1e460540358d3cfe4508aa09703e557991da47ac6bd8e2491490c4f",
+    "lib/model-BSxHOzxq.d.ts": "e4463219981fb520f87b75001088e828ba27e12ce14e6d595f0de2e37255e803",
+    "lib/github-pull-D0dzdKap.js": "1c57a002b8d21434ee38b7f3b843106cdb5ce2e8cc51fa9f0653cd650f630882",
+    "lib/policy-BPcc5tmR.d.ts": "84dffae02941d306854afabcd377bb0b18d4e5daca2527830b8d8622d32be0c2",
+    "lib/publication-worker.js": "83e0d5792c8adff7897e924cfc4088e7e1d9ea32a618f568dc0e6d3075fd3ad8",
+    "lib/decision-provider.d.ts": "6b5408ac5b6e6f1a049da951dcb2c09dd2169c3bf1cef8bd097ddad6d149c3c9",
+    "lib/index.js": "066ee79efa50854a01fd8cc9e3e3a560764051e035cd5c8e07ee9fda2b0e0dc3",
+    "lib/decision-provider.js": "d703900f3ec7aec3980d0a8cbc3ede4fa129f28cb01a6be2f8824082ee12a896",
+    "lib/kind-oOFNJjew.d.ts": "7d1d9a086103f4cf69f18a277fa9675943203a8ee5b1674555e5459e58bae4c3",
+    "lib/decision-inbox-provider.js": "726a4ee67d8948ebf2a1f054a61f5252b7ea025ca4cac7c7997c7abed3405b4f",
+    "lib/publication-operator.js": "127ddbb5044560f5fa7e11a30a51b325eabc4494ee37b3c77a0089ff9c0492b7",
+    "lib/publication-ticket-Drn4fLJp.js": "a0ea1cc496c14dee5b941c95b0d5e94ba9b948d72f81242d360d720619b6805d",
+    "lib/feishu-watch.d.ts": "9a46fb3c1a38944e537ccf24b0efa274e5763586c516bf0ea3541197c3afb440",
+    "lib/github-watch.d.ts": "97c2e3e24c73dbec1771ad64adfa43d6a0cb1d6fd9be6b6cd4561b21ee2996a8",
+    "lib/publication-operator.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+    "lib/feishu-CVHwY3e7.js": "2f998efe797be309fdc2d029ef3705bc7eaa05ddd190bda66e51184393766588",
+    "lib/lifecycle-publication-C-DAA-0v.js": "f87b138d2ea6e70f8682d530a7b34f471d003ebba151a966c60b27f91a5ebb6a",
+    "lib/publication-context-mx4J0Je-.js": "54f677911bfbfb960b2ab0c04c2b608c542cf49b22e5700e15c9153036ec3f4c",
+    "lib/publication-worker.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+    "lib/index.d.ts": "78e0eb338131ce82dd68f7a156420e12f6d31b9e4e9219b158e9ced6565ee67b",
+    "lib/decision-inbox-provider-live.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20",
+    "lib/feishu-watch.js": "0f94d1a0b3d166f3f558ef88db9d105d30fe5aa738ac73ad13cc37a8e745753a",
+    "lib/poll-YENBPt9-.js": "38eb3c0c3654f4c112e2ca574bb4c61e217ec7b6ea64f4a5ae1ba63001c215f5",
+    "lib/github-watch.js": "c194996f24b6bd9d5d9e98a5e4364dc4f04a30190a0818c0fd75acb51e5b2248",
+    "lib/decision-inbox-provider-canonical.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20"
+  },
+  "stage": "merged, installed and restarted; actual-thread verification pending",
+  "restartExitCode": 0,
+  "settingsUnchanged": true
+}
