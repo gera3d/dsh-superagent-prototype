@@ -1,0 +1,47 @@
+{
+  "at": "2026-11-09T22:37:02.489195+00:00",
+  "sourcePR": 79,
+  "sourceHead": "98b53652bb4a7ae456f7741e8d6125c924428a75",
+  "merge": "67573d27e01621433e4982f66518660c56e46d86",
+  "findingId": "8157c834-c7a5-43c6-afdd-97cee8534c6b",
+  "stage": "deployed, actual completed-job native verified; final acceptance pending",
+  "native": {
+    "path": "Reload -> Superagent Search -> Show a trustworthy cost summary -> actual ended ticket",
+    "ticketId": "85f05a35653102da234bed56549c26dd",
+    "observed": "Job usage, actual openrouter Flash1017 route, input16647438 output171983 cacheRead37342976, Covers all424 settled attempts; other sessions excluded, partial cache-field coverage and cost unavailable/no recorded price",
+    "actualScreenshotObserved": true,
+    "screenshotExported": false,
+    "userOptionsOrRepliesSent": 0
+  },
+  "postimages": {
+    "count": 34,
+    "mismatches": []
+  },
+  "settingsUnchanged": true,
+  "runtime": {
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "paused": false,
+    "health": {
+      "runtime": "ready",
+      "relay": "ready",
+      "notice": "ready",
+      "launch": "ready",
+      "delivery": "ready",
+      "assessment": "ready",
+      "reply": "ready",
+      "evals": "ready",
+      "models": "ready",
+      "github": "starting"
+    }
+  },
+  "isolatedEvidence": "docs/evidence/cost-summary-repair-source-qualified.json",
+  "limits": [
+    "Edge-case accounting/reader/I-O controls are isolated production-method/API tests, not fabricated live worker sessions.",
+    "No billing reconciliation, no invented monetary prices.",
+    "Final protected acceptance and post-acceptance source check pending."
+  ]
+}
