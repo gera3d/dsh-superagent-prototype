@@ -1,0 +1,17 @@
+{
+  "at": "2026-11-09T01:08:22.805824+00:00",
+  "candidate": "9add229d92dd7958174475653597ed564a200a5f",
+  "test": "actual Store/Engine/FindingRuntime delegated retry integration",
+  "passed": 0,
+  "failed": 1,
+  "observed": {
+    "confirmActor": "codex-coordinator",
+    "dispatchActor": "local-operator",
+    "mandateActor": "local-operator",
+    "triggerActor": "local-operator",
+    "human": true
+  },
+  "required": "actual delegated actor and nonhuman trigger with separately bound prior native approval; native flow preserved; no actor impersonation",
+  "liveNativeAcceptance": false,
+  "next": "Original headless finding bounded isolated correction"
+}

@@ -1,0 +1,45 @@
+{
+  "at": "2026-11-09T01:08:49.204877+00:00",
+  "reason": "Safety rollback after independent actual authority-provenance failure; original activation approval explicitly required disabling on verification failure. No new privilege/settings scope. Already-confirmed original repair workers remain intact.",
+  "before": {
+    "value": {
+      "enabled": true
+    },
+    "revision": 1
+  },
+  "after": {
+    "value": {
+      "enabled": false
+    },
+    "revision": 2
+  },
+  "items": [
+    {
+      "id": "a338ad44-893d-4ebf-b8ff-aa0c3067e384",
+      "state": "running",
+      "revision": 11,
+      "job": {
+        "id": "finding:a338ad44-893d-4ebf-b8ff-aa0c3067e384:r11",
+        "ticketId": "ab61b68101518ed0664c67c17c124bdd",
+        "assignmentId": "11f623213bd73913c3cb78c3d158e435"
+      },
+      "ticketStage": "working"
+    },
+    {
+      "id": "51f309ca-d396-4983-a55d-ef4432a8572f",
+      "state": "running",
+      "revision": 22,
+      "job": {
+        "id": "finding:51f309ca-d396-4983-a55d-ef4432a8572f:r22",
+        "ticketId": "070c899c49d0ce401794d1e48ba6b1e0",
+        "assignmentId": "ce85d01803f356c57599124e79b06ada"
+      },
+      "ticketStage": "working"
+    }
+  ],
+  "load": {
+    "running": 2,
+    "queued": 0,
+    "maxWorkers": 3
+  }
+}
