@@ -1,0 +1,24 @@
+{
+  "observedAt": "2026-11-09T20:24:32.446324+00:00",
+  "findingId": "bf38fc9c-8273-4d61-9ae4-e98c45e51365",
+  "sourcePR": 77,
+  "merge": "f93766cedd1c8c7fcec3e7892ed3d5ed359be921",
+  "observations": [
+    "Reloaded installed application: Workstream HUD Needs you 6, Working 0; completed finding-owned advice absent from attention.",
+    "HUD history retains completed and superseded attempts; opened accepted quality card explicitly says retained as history, not execution authority, with no executable choices.",
+    "Superagent Decisions Pending 6 / History 277; actual screenshot confirms gray historical superseded card and no actionable choices. AX-only History rendering is incomplete, not evidence of a crash.",
+    "Current r7 source renders two scored choices, 60 and 40 percent, Anthropic evaluator. Initial unavailable presentation subsequently cleared. No choice selected or sent."
+  ],
+  "limits": [
+    "Current r7 choices still suggest already completed exact-head review and caption audit after operator evidence recorded release progress. This is a current-state recommendation refresh gap, not a fresh semantic qualification pass.",
+    "Native later-human preservation is covered by isolated actual claim/publication positive and four negative/identity checks; no live user selection was manufactured.",
+    "Ordinary unresolved conversation and three unbound delivery gates remain; not certified as four genuine new user decisions.",
+    "Acceptance and post-acceptance source/no-recreation check pending."
+  ],
+  "changesExcluded": [
+    "No raw row retirement or deletion",
+    "No provider, settings, credentials, spend or concurrency change",
+    "No conversation reply sent",
+    "No typed gate accepted or bound"
+  ]
+}
