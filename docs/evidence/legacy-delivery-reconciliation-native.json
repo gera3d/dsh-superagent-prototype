@@ -1,6 +1,6 @@
 {
   "at": "2026-11-09T23:29:52.471637+00:00",
-  "stage": "live exact receipts applied; native verification and protected repair acceptance pending",
+  "stage": "live receipts applied and native verified; protected repair acceptance follows",
   "findingId": "60b19ba2-1ff6-4f95-af39-098829779103",
   "sourcePR": 80,
   "sourceHead": "90c0eb5f41e5d2461173297d0477cd189bf0cc4b",
@@ -108,7 +108,35 @@
     "restartExit": 3
   },
   "native": {
-    "verified": false,
-    "reason": "Actual browser checks follow installation and exact receipts."
-  }
+    "verified": true,
+    "at": "2026-11-09T23:35:02.863280+00:00",
+    "actualOriginalThreads": [
+      {
+        "issue": 184,
+        "title": "Add temporary subscription conservation and restore-priority settings",
+        "deliveryCaption": "Delivered by later release",
+        "detailHint": "Completed history",
+        "nextStepsContainerPresent": false
+      },
+      {
+        "issue": 188,
+        "title": "Let operators record verified finding evidence through the native card",
+        "deliveryCaption": "Delivered by later release",
+        "detailHint": "Completed history",
+        "nextStepsContainerPresent": false
+      },
+      {
+        "issue": 182,
+        "title": "Let independent confirmed findings use configured worker capacity",
+        "deliveryCaption": "Delivered by later release",
+        "detailHint": "Completed history",
+        "nextStepsContainerPresent": false
+      }
+    ],
+    "hud": "Needs you1 contains only untouched ordinary conversation; Working1 is coordinator repair awaiting final evidence. Historical subscription card retains PR33/full merged SHA/closed issue184 and explicitly says not typed delivery acceptance.",
+    "decisions": "Loaded Pending3 contains untouched ordinary conversation plus reconciliation repair guidance/finding. None of the original three delivery records is pending. History288 retains records.",
+    "replyOrChoiceSent": false,
+    "screenshotsExported": false
+  },
+  "exactLiveReplayIdempotent": true
 }
