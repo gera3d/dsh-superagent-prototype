@@ -1,0 +1,67 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/legacy-delivery-reconciliation/release
+
+(node:40967) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/root-legacy.audit.spec.ts (5 tests | 4 failed) 42ms
+     × does not hide a same-ID issue from another source repository 26ms
+     × requires the actual original ended worker, not absence of a ticket row 3ms
+     × fails closed on malformed worker data rather than swallowing it 6ms
+     × cannot hide an additional active linked worker 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/root-legacy.audit.spec.ts > independent exact legacy identity and missing-worker fences > does not hide a same-ID issue from another source repository
+AssertionError: expected [Function] to throw an error
+ ❯ tests/root-legacy.audit.spec.ts:23:38
+     21|   it('does not hide a same-ID issue from another source repository', (…
+     22|     const s = fixture('other/repository')
+     23|     try { expect(() => reconcile(s)).toThrow(); expect(s.get(id)?.hist…
+       |                                      ^
+     24|   })
+     25|   it('requires the actual original ended worker, not absence of a tick…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/root-legacy.audit.spec.ts > independent exact legacy identity and missing-worker fences > requires the actual original ended worker, not absence of a ticket row
+AssertionError: expected [Function] to throw an error
+ ❯ tests/root-legacy.audit.spec.ts:27:38
+     25|   it('requires the actual original ended worker, not absence of a tick…
+     26|     const s = fixture(); s.db.prepare('DELETE FROM ticket WHERE id=?')…
+     27|     try { expect(() => reconcile(s)).toThrow(); expect(s.get(id)?.hist…
+       |                                      ^
+     28|   })
+     29|   it('fails closed on malformed worker data rather than swallowing it'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/root-legacy.audit.spec.ts > independent exact legacy identity and missing-worker fences > fails closed on malformed worker data rather than swallowing it
+AssertionError: expected [Function] to throw an error
+ ❯ tests/root-legacy.audit.spec.ts:31:38
+     29|   it('fails closed on malformed worker data rather than swallowing it'…
+     30|     const s = fixture(); s.db.prepare('UPDATE ticket SET value=? WHERE…
+     31|     try { expect(() => reconcile(s)).toThrow(); expect(s.get(id)?.hist…
+       |                                      ^
+     32|   })
+     33|   it('cannot hide an additional active linked worker', () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/root-legacy.audit.spec.ts > independent exact legacy identity and missing-worker fences > cannot hide an additional active linked worker
+AssertionError: expected [Function] to throw an error
+ ❯ tests/root-legacy.audit.spec.ts:41:38
+     39|     s.db.prepare('UPDATE feature_delivery SET revision=3,value=? WHERE…
+     40|     s.db.prepare('INSERT INTO ticket VALUES (?,?)').run(extra, JSON.st…
+     41|     try { expect(() => reconcile(s)).toThrow(); expect(s.get(id)?.hist…
+       |                                      ^
+     42|   })
+     43|   it('preserves original missing bindings and history for a genuine en…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  15:05:18
+   Duration  329ms (transform 65ms, setup 0ms, import 86ms, tests 42ms, environment 0ms)
+
