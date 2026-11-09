@@ -1,0 +1,295 @@
+{
+  "at": "2026-11-09T19:57:58.514459+00:00",
+  "stage": "merged and installed postimages; restart/native checks pending",
+  "sourceHead": "3bec16c727a9a22648b5040085b13997b0ce5112",
+  "workerHead": "d3bd7e7771cd2d5c87e319a7a6f7db05c1131a7e",
+  "releaseDirectory": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/history-qualified/backend",
+  "installedDirectory": "/Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent",
+  "backup": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/verified-batch/history-rollback-20261109T195758Z",
+  "files": [
+    {
+      "path": "src/app/decision-inbox-provider.ts",
+      "before": "757fb1c2bf881f2d6469ad85a69ff43715eba1d42323d08560e97e427a459946",
+      "after": "9faec53407c9bd60c7858c0d7d53c6bdff29dea1d101feb792e0c4b81f5be687"
+    },
+    {
+      "path": "src/app/decision-inbox.ts",
+      "before": "b0c8127b33bd40f1d46f2e5ba95d4076024fe8a0315ee2b318e18e69dd8186e3",
+      "after": "48a44be513b9620b692e9eb525cd951da9ac5a5294e946b519a37683c36a71a4"
+    },
+    {
+      "path": "src/app/finding.ts",
+      "before": "6d263c20021f1ce7837531fc229b622d1011335580dc1b2fb5b95afec43283a8",
+      "after": "02f1ba33e628ed20939d3ceffdb53c3c09ed7e8e47198506d2c62addf6ad0b4d"
+    },
+    {
+      "path": "src/client/decisions.tsx",
+      "before": "a48f5cf401f3af53c23d02803404c3e49c0668c9c438b4e98b9e22beb2b812df",
+      "after": "ef01de373426f7e01524e9614e78ba9f862a67ac4aa9e72d64d4083ea7be0739"
+    },
+    {
+      "path": "src/core/decision.ts",
+      "before": "f181fecc7972abb4cb1f5005dc9792b538cc39688c7b4ad803e4bce4c9585bb6",
+      "after": "11caa2afb3cd8d57754ed0d04c032d607a5d18319e31da4d353d53db8a8267ae"
+    },
+    {
+      "path": "src/core/publication-queue.ts",
+      "before": "94936c52e125945b5e4cf362eb235a65e4dcb199016bf4f79c2bc8bd3a6326a3",
+      "after": "bdec1c16bb687aa1687997d404de5d0d6e2ec8249edb00f2fbd6bdf6c6d04637"
+    }
+  ],
+  "assets": {
+    "lib/deployment-BTCh8dP2.d.ts": "505a7f812d3cb688a9f41cafdeceb186d9d1d2806625b4f574f07b283141a8fa",
+    "lib/client.js": "9c7ece88de424007487e5763e01ae030601cd9c60ae5984153a442f4ba368b53",
+    "lib/kind-DwhKDdHi.d.ts": "29be96a6ce59f357639d471c472ff9265e8830594a44403c66772ada45c00288",
+    "lib/decision-inbox-provider-canonical.d.ts": "d3968083677ecbf200428ead952171577d06faf8cba1127f8d85c88abeee389f",
+    "lib/model-BSxHOzxq.d.ts": "e4463219981fb520f87b75001088e828ba27e12ce14e6d595f0de2e37255e803",
+    "lib/github-pull-D0dzdKap.js": "1c57a002b8d21434ee38b7f3b843106cdb5ce2e8cc51fa9f0653cd650f630882",
+    "lib/policy-gHxknNlz.d.ts": "f1d7f53f9648a1e3e3af39c8928b33bb6dc6973c5153f8b093d6c8e36f7fb80c",
+    "lib/http-Cy64qXIc.js": "05d135f03e081377862499b87d7b0a912d0a432a0249a379b3f9280e5613d731",
+    "lib/publication-worker.js": "fe0a5445a7db8738b1124198cdbfd6cb0cf620caa7ee50b668e3468eef1e20d5",
+    "lib/decision-provider.d.ts": "6b5408ac5b6e6f1a049da951dcb2c09dd2169c3bf1cef8bd097ddad6d149c3c9",
+    "lib/index.js": "b4d00163f9ca853f5138ebd19ae0f1b8e925a2c41179c547bc74929d3f65fb21",
+    "lib/publication-ticket-BN5vSTgg.js": "f57990f7f56533cb828df83772b78d52134cbdacd546212d03f5de41899ab2a0",
+    "lib/decision-provider.js": "4aa554df7c60e03e6710cb27be66087871da386b56da3a1326b73a1773b3a488",
+    "lib/publication-context-O71ZABS0.js": "a9f7cbae94640f428f200a13edb3348e8028d11b7d48239c485e4591def3bc42",
+    "lib/decision-inbox-provider.js": "b5643af1f6d31461407edc3b1dbef34017eefb00b818f8523b0043a35841e0c7",
+    "lib/publication-operator.js": "2a42a58b4c389d1b80bfbd19112c67af3d0ba1e5f18842609a9c31fc9ef6b0b8",
+    "lib/lifecycle-publication-B8bI2Hvs.js": "fc44f0b542fbecf4144fe8b3aa416bea7ebd7ac9f5f794aef45e0b36a1e9c7d0",
+    "lib/feishu-watch.d.ts": "bb9d7dc0d7d6f75df76310ea8220d6db4bce8cb88df582ce49d0e6175c4c0564",
+    "lib/github-watch.d.ts": "6e2b7d9677a08f52bfd8ec3853a56d4a1f9a5ae2aff4c5864a29072f5ce4959d",
+    "lib/publication-operator.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+    "lib/feishu-CVHwY3e7.js": "2f998efe797be309fdc2d029ef3705bc7eaa05ddd190bda66e51184393766588",
+    "lib/publication-worker.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+    "lib/index.d.ts": "78e0eb338131ce82dd68f7a156420e12f6d31b9e4e9219b158e9ced6565ee67b",
+    "lib/decision-inbox-provider-live.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20",
+    "lib/feishu-watch.js": "0f94d1a0b3d166f3f558ef88db9d105d30fe5aa738ac73ad13cc37a8e745753a",
+    "lib/poll-YENBPt9-.js": "38eb3c0c3654f4c112e2ca574bb4c61e217ec7b6ea64f4a5ae1ba63001c215f5",
+    "lib/github-watch.js": "c194996f24b6bd9d5d9e98a5e4364dc4f04a30190a0818c0fd75acb51e5b2248",
+    "lib/decision-inbox-provider-canonical.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20"
+  },
+  "baseBuildInputs": {
+    "baseBuildInputCount": 210,
+    "mismatches": [],
+    "baseRef": "cf53f949d83328a66dd5a857c0ea0f8c84bb6ae8"
+  },
+  "checks": [
+    {
+      "step": "root-caption",
+      "exitCode": 0,
+      "log": "history-release-root-caption.log"
+    },
+    {
+      "step": "types",
+      "exitCode": 0,
+      "log": "history-release-types.log"
+    },
+    {
+      "step": "build",
+      "exitCode": 0,
+      "log": "history-release-build.log"
+    }
+  ],
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "settingsBeforeSha256": "91ce74da486fe3b471dd8c541e11508ec07fdc16d81a9857dce800acf0427036",
+  "rollbackRule": "Verify installed postimages first, restore only this source/lib backup and restart at safe idle. Preserve canonical DB history; online DB backup is evidence/recovery, not a routine rollback instruction.",
+  "nativeVerification": "Pending; preserve exact protected evidence/acceptance gates.",
+  "storedPendingBefore": {
+    "chat-715d4bb2be0769a9aa7dbbe99f33c06d": {
+      "status": "pending",
+      "choices": "f4e6f8967954350f72de13cf3dadb99f9f610181d5985c424cdebb6b64940491",
+      "optionSets": "b92de004c17574049580320bc1746c2bca1ea0b94362feed1c0eb099a5035d25",
+      "source": {
+        "sessionId": "session-7d897a3c-fe7a-4231-b7ff-dd7b48cc5141",
+        "sourceMessageId": "dd6046f7-4011-478e-8dee-74c1c014375c",
+        "sourceTurn": 3,
+        "sourceSeq": 38
+      }
+    },
+    "chat-917a1a95b4ca62ade3ff9ab51f5f4511": {
+      "status": "pending",
+      "choices": "317f4a07eb1bbb28c3e04716f1412e28f47ec78c62de64b9687abf56c2ae5c87",
+      "optionSets": "ac36fe9eba2f81783202f16381fbd7efaaed277e500bd72b433e5cf4f8493332",
+      "source": {
+        "sessionId": "worker-775c713393968c216c6cce864c65727a",
+        "sourceMessageId": "8877b3ff-9974-4582-9c9c-c6dd13375239",
+        "sourceTurn": 3,
+        "sourceSeq": 37
+      }
+    },
+    "chat-b6913f776e0ff17c81b5a644625f22eb": {
+      "status": "pending",
+      "choices": "682135e8feecc8e23de7f9ebd2d5f75c869f4ecf1610ac57ec244a8e0fa62268",
+      "optionSets": "ce21b2c8a037dc4d53f392dfc613f4b64616aa0441e8603bfc7076a7757cdd60",
+      "source": {
+        "sessionId": "worker-e7d7391862548043bf9967ab1459dfda",
+        "sourceMessageId": "1dc2b1eb-3c13-4881-bbfc-7d2f58f62f9e",
+        "sourceTurn": 1,
+        "sourceSeq": 20
+      }
+    },
+    "chat-eb937970f942747759f30c87b8476336": {
+      "status": "pending",
+      "choices": "98cc0bf88399b1b981fa7f695cd4030a6ff5d7529fa3566e8d20446b439d8b84",
+      "optionSets": "423ee651be7ba8d0ac42a1d94da956109ba226532888241db7cf35edf3fdede1",
+      "source": {
+        "sessionId": "worker-9c5b2ece23fdad8dac34df578f472f96",
+        "sourceMessageId": "71397738-cd0e-4ae7-9852-71b6d45a1a6e",
+        "sourceTurn": 1,
+        "sourceSeq": 20
+      }
+    },
+    "chat-6f63c615b6048ded5cd2c534fe9540cf": {
+      "status": "pending",
+      "choices": "299c1f34e3981e1e84512b92068fa1c7f42b21a2644edd33848349b665fb3400",
+      "optionSets": "caf2a1ac1d7ebe72044251f7119fe9592c5837d1b8683be037778e9374921805",
+      "source": {
+        "sessionId": "worker-fd09fd8ae2c9f3619b81a8b353c14215",
+        "sourceMessageId": "01c46bac-1ad6-482d-8f67-1f453ec63784",
+        "sourceTurn": 1,
+        "sourceSeq": 20
+      }
+    },
+    "chat-73ef3245326f1665e339f404def676f1": {
+      "status": "pending",
+      "choices": "53871dbe2f8800cdf8afea5a64553a02b5d9f769758f601a4e6ef7f684ff7757",
+      "optionSets": "b887a333e4074ef712edab873dc170c7526ad6023d4588b8289888fd4edba916",
+      "source": {
+        "sessionId": "worker-e10f46849fff53974766d4e277bf75a4",
+        "sourceMessageId": "3649d5e8-ddb5-4e96-b99e-5ba399107d30",
+        "sourceTurn": 1,
+        "sourceSeq": 20
+      }
+    },
+    "chat-232dc268b70284e055005e01c8f9ee17": {
+      "status": "pending",
+      "choices": "c1be6d39d2bc5c672f33574432258735342b708c875981b172aafd9dd3bd91e6",
+      "optionSets": "4afb4328fc403459f2dd5d70dc949ca99a9d2f3bc980d53774f4c2dbc8e6165d",
+      "source": {
+        "sessionId": "worker-4a0294860ae0175497227ed31645062e",
+        "sourceMessageId": "f03e6e0c-acd7-427b-a4a8-e9d939f2a1d5",
+        "sourceTurn": 1,
+        "sourceSeq": 20
+      }
+    },
+    "chat-a71ba8a1a0abcfc469fd1bcb06174d0f": {
+      "status": "pending",
+      "choices": "5aad9d597f46c2b71baf8b08a413b4dd96089a3aa9890274887b07ff91b2a865",
+      "optionSets": "a1234160538284c6748e6704e939427fd6600a5af0b5667708b410d523c56b8a",
+      "source": {
+        "sessionId": "worker-7c017292cef5dee4d08138181ec47a40",
+        "sourceMessageId": "b904eecb-c4e7-4fd8-bd97-2033af4ceab5",
+        "sourceTurn": 1,
+        "sourceSeq": 20
+      }
+    },
+    "chat-6557f8abbb8003c73cfefec683a5c4cd": {
+      "status": "pending",
+      "choices": "0e3ba76b5dc1dcb9899b1708512409a777d8fc529b58453cd8e3a9ff607c7025",
+      "optionSets": "ca5463beed90ab5939a16c527a8bb15f77bd1477624dfba9b9d3fd0bc38333d4",
+      "source": {
+        "sessionId": "worker-dba40835765de9fc076788032474e7de",
+        "sourceMessageId": "cd899292-559d-4093-9010-f356491c4ec1",
+        "sourceTurn": 1,
+        "sourceSeq": 20
+      }
+    },
+    "chat-7d80df3b084ddfc8ba5f6bea9c655c7f": {
+      "status": "pending",
+      "choices": "a8ed5188dc56bd5dbe31d15e23684585d300b41ec31974736ea939178823fa44",
+      "optionSets": "77adf0009ed1f1698d0ff9abf40aff1aa45ec957432de98bc312fcead43b18c6",
+      "source": {
+        "sessionId": "worker-487236ccdb874bd9db0e60288cc2470c",
+        "sourceMessageId": "4045eeca-1420-439c-a00e-a1d143098244",
+        "sourceTurn": 2,
+        "sourceSeq": 46
+      }
+    },
+    "chat-f96fc47a6722410ddcb1c105e3a7fcf3": {
+      "status": "pending",
+      "choices": "0b7ba812b48c5bcd2c02cbfb6d339e78ef850e5254f568aa9db58a48d8061daa",
+      "optionSets": "08dfa2116041bfc7f8dc34b3bbac77bdedadc9e5467faf4b1f313ebff403ed74",
+      "source": {
+        "sessionId": "worker-b62c2f4207fd86b3cea3087aa71ec87a",
+        "sourceMessageId": "4a1cfc5b-bab2-41a8-96fb-ebd43f197712",
+        "sourceTurn": 3,
+        "sourceSeq": 270
+      }
+    },
+    "chat-94e77e2dc7bf4b94736ee247267c7e02": {
+      "status": "pending",
+      "choices": "b82d37c8af894ac0f06d2b2e4c5b6667a65fcc10f721745bfbd0c4cb13e7d3bc",
+      "optionSets": "44215f8a36da6f46db73a716e33b55d8b804a30b5505dada26ef2e3c7c00dcfb",
+      "source": {
+        "sessionId": "worker-92582a0a1a1bcff6cfa69a1b868d95dc",
+        "sourceMessageId": "31c1f541-1a17-45fa-8ff2-5473e0d8be29",
+        "sourceTurn": 2,
+        "sourceSeq": 42
+      }
+    },
+    "chat-55991230d8a233d12f328eec43ccc36f": {
+      "status": "pending",
+      "choices": "dfbdf49ae91b2dfa35160458efa3c263ab5762d752d84bb7184b5911a39b7670",
+      "optionSets": "1f51ba62bbaf266ee6ce8cfaad5880fdd715a1107da92d91d141e629b4249d6d",
+      "source": {
+        "sessionId": "worker-f2e857feb68baca2469103dc91d7a507",
+        "sourceMessageId": "4d655039-ca17-440d-be08-ee6673d3da53",
+        "sourceTurn": 1,
+        "sourceSeq": 20
+      }
+    },
+    "chat-b872dcaa6220a03fb702c9f41bc759ca": {
+      "status": "pending",
+      "choices": "fdb7c411de9ce6e8ed19e82974a36fc2296666dc8d008a23783f2e7b315e4305",
+      "optionSets": "96fe66e73ccaedd83067def3ab349c216537c44d8794e69491e64fc5a30b7790",
+      "source": {
+        "sessionId": "worker-45a016728f1113d932c6b396449c8adb",
+        "sourceMessageId": "f179f309-ede8-4553-9039-f17587acaf45",
+        "sourceTurn": 1,
+        "sourceSeq": 20
+      }
+    },
+    "chat-3ebbd216fa2305d21319574559ef0622": {
+      "status": "pending",
+      "choices": "f71cb046bdb041a2396044a90198bf896ee330529b71f8717342ce4b4e1f947d",
+      "optionSets": "a23399e68cf2601cbbcb01a40d6884a8b768bcd5b3bee512de931c8afff5ef86",
+      "source": {
+        "sessionId": "worker-704a19544bd016b118746a4ea00d062a",
+        "sourceMessageId": "5b2fae91-e8f9-413e-b32a-cecb8b76da2a",
+        "sourceTurn": 1,
+        "sourceSeq": 20
+      }
+    },
+    "chat-fd442df327a4ebac40bf2585e616c4d9": {
+      "status": "pending",
+      "choices": "f144432a292f5efc80b0ca7ea3acec2d2acf857b4c41c0de047b4f785d2f5575",
+      "optionSets": "8623dd296e1a86b53e449a328cc5bc1f585da2b131477197e6bae5b5a8543efd",
+      "source": {
+        "sessionId": "worker-0999d34805151c7ba36d207addcb42a0",
+        "sourceMessageId": "a37912e3-8382-49bb-862b-503aeb179d1b",
+        "sourceTurn": 1,
+        "sourceSeq": 20
+      }
+    },
+    "chat-23336618adaf66c827ac99ad4b60408a": {
+      "status": "pending",
+      "choices": "bd131061342d4a4d3bd5da3d7df676b5719cf091332a6aa8efd1704759cb5ef7",
+      "optionSets": "aeba1aa8e219e8cbe7f10493c92de19d0a93f5d3a8c63b9d80fba0282c6ae8b7",
+      "source": {
+        "sessionId": "worker-64986fd6bbad003dccda789f43035579",
+        "sourceMessageId": "07cf26ca-3dca-4e32-81ac-f8cde7bd2e08",
+        "sourceTurn": 1,
+        "sourceSeq": 20
+      }
+    }
+  },
+  "sourcePrHead": "5dba8b99c1918b61ca8e823a1ebda96d9be1575c",
+  "merge": "f93766cedd1c8c7fcec3e7892ed3d5ed359be921",
+  "pr": 77,
+  "installedAt": "2026-11-09T20:05:47.219960+00:00",
+  "assetOverlay": "Preserved unreferenced old chunk files for open browser compatibility; all28 new built asset hashes verified."
+}

@@ -1,0 +1,155 @@
+{
+  "at": "2026-11-09T20:10:22.649146+00:00",
+  "stage": "merged, installed, restarted and backend verified; native UI/acceptance pending",
+  "sourcePr": 77,
+  "sourceHead": "5dba8b99c1918b61ca8e823a1ebda96d9be1575c",
+  "merge": "f93766cedd1c8c7fcec3e7892ed3d5ed359be921",
+  "workerHead": "d3bd7e7771cd2d5c87e319a7a6f7db05c1131a7e",
+  "restartExit": 0,
+  "sourcePostimages": 6,
+  "assetPostimages": 28,
+  "baseInputCount": 210,
+  "settingsBlocksUnchanged": true,
+  "storedPendingRowsCompared": 17,
+  "changedStoredPendingRows": [],
+  "projectedPending": [
+    {
+      "id": "chat-3ebbd216fa2305d21319574559ef0622",
+      "title": "Conversation next steps",
+      "actionMode": "stage_response"
+    },
+    {
+      "id": "chat-715d4bb2be0769a9aa7dbbe99f33c06d",
+      "title": "Explain rollback in exactly five words. Do not use tools or start work.",
+      "actionMode": "stage_response"
+    },
+    {
+      "id": "delivery-auto-1aa9568a8df574db0cef146a58004c4b",
+      "title": "Add temporary subscription conservation and restore-priority settings",
+      "actionMode": "feature_delivery"
+    },
+    {
+      "id": "delivery-auto-71dc25902ccec92c851634c58cf365f0",
+      "title": "Let operators record verified finding evidence through the native card",
+      "actionMode": "feature_delivery"
+    },
+    {
+      "id": "delivery-auto-d65f3131a9ae77d9de524535e4a01a26",
+      "title": "Let independent confirmed findings use configured worker capacity",
+      "actionMode": "feature_delivery"
+    },
+    {
+      "id": "finding-bf38fc9c-8273-4d61-9ae4-e98c45e51365",
+      "title": "Show completed recommendation cards as history and prove the real handoff",
+      "actionMode": "finding_triage"
+    }
+  ],
+  "ordinaryDecision": {
+    "id": "chat-715d4bb2be0769a9aa7dbbe99f33c06d",
+    "status": "pending"
+  },
+  "unboundDeliveries": [
+    {
+      "id": "delivery-auto-1aa9568a8df574db0cef146a58004c4b",
+      "status": "pending",
+      "deliveryState": "blocked"
+    },
+    {
+      "id": "delivery-auto-71dc25902ccec92c851634c58cf365f0",
+      "status": "pending",
+      "deliveryState": "blocked"
+    },
+    {
+      "id": "delivery-auto-d65f3131a9ae77d9de524535e4a01a26",
+      "status": "pending",
+      "deliveryState": "blocked"
+    }
+  ],
+  "currentFinding": {
+    "id": "bf38fc9c-8273-4d61-9ae4-e98c45e51365",
+    "state": "blocked",
+    "revision": 8,
+    "job": {
+      "id": "finding:bf38fc9c-8273-4d61-9ae4-e98c45e51365:r7",
+      "ticketId": "704a19544bd016b118746a4ea00d062a",
+      "assignmentId": "977d1ad4a3af3deffc7346948296937c"
+    }
+  },
+  "liveState": {
+    "setup": {
+      "machine": {
+        "stateDir": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent",
+        "promptMaxChars": 100000,
+        "admissionContextMaxPages": 10,
+        "admissionContextTimeoutMs": 15000
+      },
+      "problem": null,
+      "feishuProblem": null,
+      "accounts": {
+        "repository": "gera3d/superagent-sandbox",
+        "agent": "gera3d",
+        "feishu": null
+      }
+    },
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "masterId": "orchestrator-core",
+    "paused": false,
+    "health": {
+      "runtime": {
+        "state": "ready",
+        "detail": "Orchestrator is ready",
+        "at": "2026-11-09T20:06:16.116Z"
+      },
+      "relay": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T20:06:12.510Z"
+      },
+      "notice": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T20:08:19.163Z"
+      },
+      "launch": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T20:06:12.511Z"
+      },
+      "delivery": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T20:06:12.511Z"
+      },
+      "assessment": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T20:06:12.511Z"
+      },
+      "reply": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-09T20:06:12.511Z"
+      },
+      "evals": {
+        "state": "ready",
+        "detail": "No unavailable Eval in the last hour"
+      },
+      "models": {
+        "state": "ready",
+        "detail": "No managed Session is waiting on a model budget retry"
+      },
+      "github": {
+        "state": "ready",
+        "detail": "0 notifications; next poll \u2265 60s",
+        "at": "2026-11-09T20:06:16.139Z"
+      }
+    }
+  },
+  "nativeUI": "Pending, browser changed during preliminary protected review entry; no partial evidence saved or finding accepted.",
+  "limits": "No real user choice or reply sent, no bulk retirement, no source/target binding, no model/settings/access/spend changes. Isolated native tests are not live new-user-request proof.",
+  "intakeResumed": true
+}
