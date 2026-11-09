@@ -135,5 +135,29 @@
   },
   "extraCodexChat": "Created then user changed direction; model failed before execution, stop sent and chat archived. No competitor Harness assignment created.",
   "owner": "Current original Codex chat coordinates/reviews/releases; Harness owns new isolated implementation.",
-  "limits": "Assigned/running is not implementation or live acceptance. Prior quality finding remains accepted. No new provider/settings/credentials/spend/capacity/schedule change or historical retirement."
+  "limits": "Assigned/running is not implementation or live acceptance. Prior quality finding remains accepted. No new provider/settings/credentials/spend/capacity/schedule change or historical retirement.",
+  "progress": {
+    "at": "2026-11-09T18:48:14.833841+00:00",
+    "request": {
+      "seq": 18,
+      "contextSeq": 19,
+      "provider": "antigravity",
+      "model": "gemini-3.8-flash",
+      "maxTokens": 65536
+    },
+    "nested": {
+      "log": "cli-20261109_103348.log",
+      "conversation": "756b699f-f190-4285-94c0-8f63e73dbc54",
+      "observedSteps": 250,
+      "latestObservedOutputStep": 244
+    },
+    "isolatedCheckout": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-45a016728f11/repo",
+    "baselineOnly": {
+      "suite": "tests/completed-advice.spec.ts",
+      "passed": 12,
+      "failed": 0,
+      "scope": "existing baseline tests, not candidate verification"
+    },
+    "candidate": "No modified source/candidate or durable report observed at this checkpoint. Productive internal inspection, not diagnosed stall; leave active worker alone."
+  }
 }
