@@ -1,6 +1,6 @@
 # Independent review: completed-advice history candidate
 
-Candidate `0a2ecf87ca266a3c3bd7216a317b75e823d8dd5d` is not approved for deployment. Worker reports163 targeted checks across15 suites, types and build passing; original failed fixture runs remain preserved. Root has not repeated that bundle.
+Candidate `0a2ecf87ca266a3c3bd7216a317b75e823d8dd5d` is not approved for deployment. Final worker bundle reports159 targeted checks across13 suites, types and build passing (earlier163/15 run also preserved); original failed fixture runs remain preserved. Root has not repeated that bundle.
 
 ## Blocker: card creation time is not proof of a later human request
 
