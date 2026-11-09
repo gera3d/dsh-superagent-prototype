@@ -4,7 +4,7 @@
   "sourceHead": "98b53652bb4a7ae456f7741e8d6125c924428a75",
   "merge": "67573d27e01621433e4982f66518660c56e46d86",
   "findingId": "8157c834-c7a5-43c6-afdd-97cee8534c6b",
-  "stage": "installed and actual native verified; protected acceptance follows",
+  "stage": "reviewed, merged, deployed, native verified and protected acceptance complete",
   "native": {
     "path": "Reload -> Superagent Search -> Show a trustworthy cost summary -> actual ended ticket",
     "ticketId": "85f05a35653102da234bed56549c26dd",
@@ -41,8 +41,7 @@
   "isolatedEvidence": "docs/evidence/cost-summary-repair-source-qualified.json",
   "limits": [
     "Edge-case accounting/reader/I-O controls are isolated production-method/API tests, not fabricated live worker sessions.",
-    "No billing reconciliation, no invented monetary prices.",
-    "Final protected acceptance and post-acceptance source check pending."
+    "No billing reconciliation, no invented monetary prices."
   ],
   "deployedAdvice": [
     {
@@ -183,5 +182,23 @@
     "After actual verification receipt and fresh reload, source offers only final coordinator acceptance38%, inspect recorded evidence/head binding46% recommended, or record head-reconciliation note16%. These are final protected evidence checks, no code reruns. No option selected or reply sent."
   ],
   "headReconciliation": "Authoritative deployed/reviewed head98b53652bb4a7ae456f7741e8d6125c924428a75 (PR79, merge67573d27e01621433e4982f66518660c56e46d86). Three runtime source files exactly match corrected Harnessf646235f10ca75b1003b38bfac291200e3324ff0. Root integration adds explicit existing Vite dependency/lock snapshot, fixture-output containment and one combined retry/cache control. Final42 integrated checks/types/build/frozen lock validation/capture qualify the integrated head. R1 reportedf99080a256df2e737d94e24ef575a7daee364f9b did not match actualf99080a91e2d734d40521cc9f0a37c3fb3f6d41e; that rejected attempt and discrepancy remain history and are not the accepted head.",
-  "updatedAt": "2026-11-09T22:39:36.345967+00:00"
+  "updatedAt": "2026-11-09T22:43:54.216977+00:00",
+  "acceptance": {
+    "state": "resolved",
+    "revision": 5,
+    "at": "2026-11-09T22:42:49.567Z",
+    "path": "Native verified operator evidence; selected exact evidence URL, Verified outcome, requirements acknowledgment, Accept reviewed finding evidence",
+    "jobId": "finding:8157c834-c7a5-43c6-afdd-97cee8534c6b:r3"
+  },
+  "postAcceptanceNative": {
+    "freshSourceReload": true,
+    "findingCaption": "Resolved",
+    "nextStepsContainerPresent": false,
+    "suggestedActionsPresent": false,
+    "replySent": false
+  },
+  "pendingProjection": {
+    "count": 4,
+    "meaning": "Untouched ordinary conversation and three unbound legacy delivery gates; not four new jobs or certified user decisions"
+  }
 }
