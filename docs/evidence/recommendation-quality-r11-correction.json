@@ -1,0 +1,26 @@
+{
+  "at": "2026-11-09T16:53:35.686970+00:00",
+  "findingId": "8d447429-65ee-4f5f-aa7b-354c0f349673",
+  "revision": 11,
+  "state": "running",
+  "jobId": "finding:8d447429-65ee-4f5f-aa7b-354c0f349673:r11",
+  "ticketId": "f2e857feb68baca2469103dc91d7a507",
+  "assignmentId": "1ee8f030b311aa2b470ab37e618b94e7",
+  "rejectedHead": "eb3d9cb24acb2005f4ba5bd8928f8fc87d1f5b6e",
+  "rootTests": {
+    "source": "root-quality-real-digest.audit.spec.ts",
+    "log": "root-quality-real-digest-audit.log",
+    "failed": 2,
+    "total": 2
+  },
+  "canonicalReview": "retry_scope revision10 then same prior-approved fix_now revision11 by codex-coordinator after r9 ticket ended; source reference advisor-quality-eb3d9cb-real-digest-blocker.md",
+  "providerEvent": {
+    "provider": "antigravity",
+    "model": "gemini-3.8-flash",
+    "conversationId": "d72ddb7e-4f81-48ef-8f73-585eb1e7b5bd",
+    "trajectoryId": "c6b61397-5666-47b4-b15b-c49deb79f23c",
+    "log": "cli-20261109_085212.log"
+  },
+  "nextOwnerStage": "Harness finishes narrow real-digest/current-objective fix; Codex independently reviews exact result then relevant checks, rollback/release/native newly generated all-option proof.",
+  "limits": "No merge, deploy, acceptance, changed routes/settings/spend or historical retirement. Six original repair attempts remain canonical history; all known failures preserved."
+}
