@@ -1,0 +1,110 @@
+{
+  "at": "2026-11-09T02:21:20.070296+00:00",
+  "parentFinding": "51f309ca-d396-4983-a55d-ef4432a8572f",
+  "verificationFinding": "06fd14af-5535-411d-936c-477bf2bd2cfa",
+  "job": {
+    "id": "finding:06fd14af-5535-411d-936c-477bf2bd2cfa:r5",
+    "ticketId": "dba40835765de9fc076788032474e7de",
+    "assignmentId": "fcc0f8a8d0ae474cd94d5a0db26fcc72"
+  },
+  "sourcePr": 75,
+  "sourceHead": "0fed9d3d2f5f092d68af41115d16218a6187eb36",
+  "merge": "5a30bf5ddf4ccb2ac3c74a64cc29d084b5f3817d",
+  "includesPr74": true,
+  "actualProvider": "antigravity",
+  "model": "gemini-3.8-flash",
+  "requestAttempts": 1,
+  "turn": 1,
+  "fallbackUsed": false,
+  "actualNestedCommand": {
+    "name": "run_command",
+    "args": {
+      "CommandLine": "\"cd \\\"/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-dba40835765d\\\" && \\\\\\nexport DSH_SUPERAGENT_DIR=\\\"/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-dba40835765d\\\" && \\\\\\nexport DSH_SUPERAGENT_TICKET=\\\"dba40835765de9fc076788032474e7de\\\" && \\\\\\nexport DSH_SUPERAGENT_ASSIGNMENT=\\\"fcc0f8a8d0ae474cd94d5a0db26fcc72\\\" && \\\\\\nexport DSH_SUPERAGENT_TURN=\\\"1\\\" && \\\\\\n\\\"/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/worker-bin/orchestrator_report\\\" \\\\\\n  --state ready \\\\\\n  --ticket dba40835765de9fc076788032474e7de \\\\\\n  --assignment fcc0f8a8d0ae474cd94d5a0db26fcc72 \\\\\\n  --turn 1 \\\\\\n  --summary \\\"Read-only verification finding:06fd14af-5535-411d-936c-477bf2bd2cfa:r5 complete on Antigravity Gemini route: installed orchestrator_report CLI verified at /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/worker-bin/orchestrator_report (-rwx------, 2902 bytes). Executed real installed CLI with ticket=dba40835765de9fc076788032474e7de assignment=fcc0f8a8d0ae474cd94d5a0db26fcc72 turn=1. Directly executed on Gemini 3.8 Flash without fallback. No code/settings changes, no tests or builds run, no PRs opened or published.\\\"\"",
+      "WaitMsBeforeAsync": "5000",
+      "toolSummary": "\"Execute orchestrator_report ready command\""
+    }
+  },
+  "actualCommandReceipt": "Command exited with code 0.\n\nCommand output:\nReport recorded for delivery: state=ready\n",
+  "workerProducedReport": {
+    "state": "ready",
+    "summary": "Read-only verification finding:06fd14af-5535-411d-936c-477bf2bd2cfa:r5 complete on Antigravity Gemini route: installed orchestrator_report CLI verified at /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/worker-bin/orchestrator_report (-rwx------, 2902 bytes). Executed real installed CLI with ticket=dba40835765de9fc076788032474e7de assignment=fcc0f8a8d0ae474cd94d5a0db26fcc72 turn=1. Directly executed on Gemini 3.8 Flash without fallback. No code/settings changes, no tests or builds run, no PRs opened or published.",
+    "ticket_id": "dba40835765de9fc076788032474e7de",
+    "assignment_id": "fcc0f8a8d0ae474cd94d5a0db26fcc72",
+    "turn_id": "1",
+    "at": "2026-11-09T02:18:50.319Z"
+  },
+  "nativeAssignment": {
+    "id": "fcc0f8a8d0ae474cd94d5a0db26fcc72",
+    "state": "ended",
+    "createdAt": "2026-11-09T02:13:29.325Z",
+    "startedAt": "2026-11-09T02:13:30.093Z",
+    "idleAt": "2026-11-09T02:19:01.475Z",
+    "report": {
+      "state": "ready",
+      "summary": "Read-only verification finding:06fd14af-5535-411d-936c-477bf2bd2cfa:r5 complete on Antigravity Gemini route: installed orchestrator_report CLI verified at /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/worker-bin/orchestrator_report (-rwx------, 2902 bytes). Executed real installed CLI with ticket=dba40835765de9fc076788032474e7de assignment=fcc0f8a8d0ae474cd94d5a0db26fcc72 turn=1. Directly executed on Gemini 3.8 Flash without fallback. No code/settings changes, no tests or builds run, no PRs opened or published.",
+      "at": "2026-11-09T02:19:01.484Z",
+      "hash": "6d13ee1628191fdd"
+    },
+    "endedAt": "2026-11-09T02:19:01.484Z",
+    "deliveredReportHash": "6d13ee1628191fdd",
+    "ref": "worker-dba40835765de9fc076788032474e7de"
+  },
+  "usage": {
+    "sessionId": "worker-dba40835765de9fc076788032474e7de",
+    "routes": [
+      {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "attempts": 1,
+        "uncachedInputTokens": 2579,
+        "outputTokens": 813,
+        "cacheReadTokens": 89358,
+        "totalTokens": 92750
+      }
+    ],
+    "totals": {
+      "uncachedInputTokens": 2579,
+      "outputTokens": 813,
+      "totalTokens": 92750,
+      "cacheReadTokens": 89358
+    },
+    "coverage": {
+      "attempts": 1,
+      "reported": 1,
+      "cacheRead": "exact",
+      "cacheWrite": "unreported",
+      "attribution": "complete"
+    },
+    "cost": {
+      "kind": "unavailable",
+      "reason": "noRecordedPrice"
+    }
+  },
+  "hashVerified": "6d13ee1628191fdd",
+  "consumedMarker": {
+    "at": 1794190730319,
+    "state": "ready",
+    "hash": "6d13ee1628191fdd"
+  },
+  "reviewTransitionCount": 1,
+  "nativeReportStableAt": "2026-11-09T02:19:01.484Z",
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "qualification": {
+    "affectedTests": 193,
+    "suites": 13,
+    "types": 0,
+    "build": 0,
+    "realFallbackProof": "reporting-real-fallback-verified.json"
+  },
+  "limits": [
+    "Native provider tool absence remains; supported installed CLI bridge is verified.",
+    "One finite Gemini worker proof; elapsed about331seconds, not latency/throughput guarantee.",
+    "Nested AGY tool receipt independently inspected; outer response aggregates internal work.",
+    "Crash/replay regressions use controlled durable-boundary fault injection, not physical power loss."
+  ],
+  "nativeAcceptance": false
+}
