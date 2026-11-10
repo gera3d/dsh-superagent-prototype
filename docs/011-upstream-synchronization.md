@@ -1,111 +1,65 @@
-# 011 Upstream Synchronization & Feature Tracking Strategy
+# 011 Upstream Synchronization
 
-This document establishes the Git topology, synchronization protocols, and branch lifecycle management to ensure `dsh-superagent` seamlessly pulls new upstream features from `deepseek-ai/dsh-superagent-prototype` while preserving all local innovations and operator capabilities.
+How this fork (`gera3d/dsh-superagent-prototype`, branch `superagent-core`) tracks the upstream research prototype (`deepseek-ai/dsh-superagent-prototype`).
 
----
+## 1. State of the two repositories
 
-## 1. Repository Topology & Remote Architecture
+Verified 2026-11-10:
+
+- Upstream has a single commit on `main` (`8c32a9d`, from 2026-10-31) and no releases.
+- **The fork shares no Git history with upstream.** `git merge-base superagent-core upstream/main` finds nothing. A merge or rebase of `upstream/main` into the fork therefore cannot work: a rebase would replay the fork's whole history onto an unrelated root, and a merge needs `--allow-unrelated-histories` and conflicts in nearly every file.
+- The fork's `main` is not a pristine upstream mirror. It holds only the merge of PR #1 (`superagent-core`). Do not fast-forward it from upstream.
+- `superagent-core` is the only active branch. All work lands on it by pull request.
 
 ```
-                       [Upstream: deepseek-ai/dsh-superagent-prototype]
-                                        │
-                                        │ git fetch upstream
-                                        ▼
-                      [Local Remote Ref: upstream/main]
-                                        │
-                         ┌──────────────┴──────────────┐
-                         │ rebase / cherry-pick / merge │
-                         ▼                             ▼
-   [Local: main (tracking upstream)]     [Local: superagent-core (active features)]
-                                                       │
-                                                       │ git push origin
-                                                       ▼
-                                   [Origin: gera3d/dsh-superagent-prototype]
+upstream: deepseek-ai/dsh-superagent-prototype  (main: 8c32a9d)
+              │  git fetch upstream   (read only, no shared history)
+              ▼
+   review the upstream tree, port what is wanted by hand
+              │
+              ▼
+origin: gera3d/dsh-superagent-prototype  superagent-core  ← pull requests, CI (pnpm check)
 ```
 
-### Remotes Configuration
-- **`upstream`**: `https://github.com/deepseek-ai/dsh-superagent-prototype.git` (Official research prototype maintained by DeepSeek Harness team).
-- **`origin`**: `https://github.com/gera3d/dsh-superagent-prototype.git` (Gera's personal fork hosting active feature branches).
+## 2. Checking for upstream changes
 
-### Active Branch: `superagent-core`
-All custom enhancements live on `superagent-core`. The `main` branch tracks pristine `upstream/main` as a clean rebase reference.
+```bash
+scripts/sync-upstream.sh --check
+```
 
----
+The script adds the `upstream` remote if needed, fetches it, and compares `upstream/main` with the **last reviewed upstream commit** recorded below. It changes no branch. With no change it prints that upstream is unchanged.
 
-## 2. Feature Modularity Matrix
+To inspect by hand:
 
-To prevent merge conflicts when upstream code changes, all custom capabilities are designed with strict structural modularity:
-
-| Capability | Isolation Strategy | Files Owned | Upstream Touchpoints |
-|---|---|---|---|
-| **OS Computer Use** | Standalone scripts + MCP daemon | `scripts/macos-input-helper*`<br>`scripts/dsh-computer-use-mcp.cjs`<br>`skills/dsh-superagent-computer-use/`<br>`docs/010-os-computer-use.md` | Non-intrusive (plugs via profile patch) |
-| **OAuth Login CLI** | Standalone Node CLI | `scripts/dsh-login.cjs` | Zero upstream collision |
-| **Visual Activity Indicator** | Spec + Client component slot | `docs/009-visual-activity-indicator.md`<br>`src/client/activity.tsx` | Cordis slot registration |
-| **ADHD Progress Streaming** | Prompts & Skill layer | `skills/dsh-superagent-adhd/` | Skill registry |
-| **Chrome & Composio MCP** | Profile patch + Skills | `skills/dsh-superagent-chrome/`<br>`skills/dsh-superagent-composio/` | Profile patch |
-| **Darwin Helper Recognition** | Daemon supervisor fix | `scripts/dsh-superagent` | Darwin process check |
-
----
-
-## 3. Step-by-Step Upstream Sync Protocol
-
-### Step 1: Fetch Upstream State
 ```bash
 git fetch upstream
+git log --oneline upstream/main          # all upstream commits; the list is short
+git diff superagent-core upstream/main -- <path>   # a two-tree diff works without shared history
 ```
 
-### Step 2: Inspect Incoming Upstream Changes
-Before applying changes, review what upstream added or modified:
-```bash
-# View list of new upstream commits
-git log --oneline superagent-core..upstream/main
+## 3. Porting an upstream change
 
-# Review full diff of incoming changes
-git diff superagent-core...upstream/main
-```
+1. Create a branch from `superagent-core`.
+2. Read the upstream commit (`git show <sha>`), then apply the wanted parts by hand or with `git diff superagent-core upstream/main -- <paths> | git apply -3`. Never copy upstream files over local ones wholesale: `superagent-core` has local innovations in most files.
+3. Run `pnpm check` (typecheck, tests, build) on Node 24.
+4. Open a pull request to `superagent-core`, let CI pass, merge.
+5. Update the last reviewed commit below in the same pull request.
 
-### Step 3: Fast-Forward Local `main`
-Keep local `main` synchronized with upstream:
-```bash
-git checkout main
-git merge --ff-only upstream/main
-git push origin main
-```
+Last reviewed upstream commit: `8c32a9dc5d72c033816c6a8110b37f40cf94fba4` (2026-11-10, nothing to port; the fork already contains the feature set).
 
-### Step 4: Rebase `superagent-core` onto Updated `main`
-Rebasing replays custom features cleanly on top of the latest upstream commits:
-```bash
-git checkout superagent-core
-git rebase main
-```
+## 4. Local capabilities and where they live
 
-### Step 5: Validate Test Suite & Build
-After rebasing or merging, verify that the entire test suite and build pipeline pass:
-```bash
-pnpm check
-```
-*(Runs `tsc --noEmit`, `vitest run`, and `tsdown`)*.
+Keep local work in files upstream does not touch where possible, so a port stays a read-and-copy task.
 
-### Step 6: Push to Fork
-```bash
-git push origin superagent-core --force-with-lease
-```
+| Capability | Files owned |
+|---|---|
+| OS computer use | `scripts/macos-input-helper*`, `scripts/dsh-computer-use-mcp.cjs`, `skills/dsh-superagent-computer-use/`, `docs/010-os-computer-use.md` |
+| OAuth login CLI | `scripts/dsh-login.cjs` |
+| Visual activity indicator | `docs/009-visual-activity-indicator.md`, `src/client/activity.tsx` |
+| ADHD progress streaming | `skills/dsh-superagent-adhd/` |
+| Chrome and Composio MCP | `skills/dsh-superagent-chrome/`, `skills/dsh-superagent-composio/` |
+| Service supervision | `scripts/dsh-superagent` |
 
----
+## 5. Superagent Sandbox pull requests
 
-## 4. Automated Sync Helper Script: `scripts/sync-upstream.sh`
-
-An automated synchronization script is provided at `scripts/sync-upstream.sh` with the following modes:
-
-- **`./scripts/sync-upstream.sh --check`**: Inspects upstream without modifying any branches; prints incoming commits and changed files.
-- **`./scripts/sync-upstream.sh --rebase`**: Automatically fetches, fast-forwards `main`, rebases `superagent-core`, runs `pnpm check`, and reports results.
-- **`./scripts/sync-upstream.sh --merge`**: Merges `upstream/main` into `superagent-core` if a merge commit workflow is preferred over rebase.
-
----
-
-## 5. Superagent Sandbox PR Integration
-
-Work executed autonomously by worker sessions against `gera3d/superagent-sandbox`:
-- Tickets create dedicated feature branches (`agent/<ticket-slug>`).
-- Pull requests are opened automatically against `main` of `superagent-sandbox`.
-- Once merged, the capabilities (guides, scripts, configurations) become permanent fixtures of the sandbox repository.
+Worker sessions act on `gera3d/superagent-sandbox`: each ticket gets a branch `agent/<ticket-slug>`, and its pull request opens against that repository's `main`. Merged work stays in the sandbox repository.
