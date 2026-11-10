@@ -33,8 +33,9 @@ function fixture(followFixHeads = true) {
   })
   const commands = { gh, withSignal: vi.fn(function () { return commands }) } as unknown as Commands
   const ctx = { llm: { resolveCallConfig: resolve, stream }, agents: { get: vi.fn(() => ({ session: { snapshotEvents: () => events } })) }, get: vi.fn() } as unknown as Context
-  const deliver = vi.fn()
-  const engine = new Engine({ repo: store, executor: { deliver, start: vi.fn(), stop: vi.fn() }, now: () => '2026-11-06T00:00:01.000Z' } as unknown as EngineOptions)
+  const deliver = vi.fn(), start = vi.fn()
+  let policy = { version: 'p2', paused: false, revalidate: (_mandate: unknown) => true }
+  const engine = new Engine({ repo: store, executor: { deliver, start, stop: vi.fn() }, policy: () => policy, now: () => '2026-11-06T00:00:01.000Z' } as unknown as EngineOptions)
   const note = vi.spyOn(engine, 'note')
   const deps: DeliveryCapabilityDependencies = { ctx, store, commands, engine, lifetime: new AbortController().signal }
   const caps = createDeliveryCapabilities(deps)
@@ -52,7 +53,7 @@ function fixture(followFixHeads = true) {
     events.push({ type: 'user/message', time: Date.parse('2026-11-06T00:00:02.000Z'), data: { id: messageId(key(input.id)), source: { kind: 'dsh-superagent' } } })
     t.assignments[0]!.report = { state: 'ready', summary: 'Corrected under original mandate', at }; store.tickets.save(t)
   }
-  return { caps, deps, lease, worker, fixLease, consumeAndReady, note, deliver, events, stream, resolve, gh, setHead: (v: string) => { head = v }, setVerdict: (v: unknown) => { verdict = v } }
+  return { caps, deps, lease, worker, fixLease, consumeAndReady, note, deliver, start, setPolicy: (v: Partial<typeof policy>) => { policy = { ...policy, ...v } }, events, stream, resolve, gh, setHead: (v: string) => { head = v }, setVerdict: (v: unknown) => { verdict = v } }
 }
 
 it('invokes the configured executor independently with no tools and persists exact review evidence, never publication approval', async () => {
@@ -165,11 +166,99 @@ it('rolls Engine.note back with its fix outbox record on transaction failure', a
   store.db.exec("CREATE TRIGGER reject_fix BEFORE INSERT ON delivery_capability_fix BEGIN SELECT RAISE(ABORT, 'outbox failure'); END")
   expect((await h.caps.fix!.execute(l)).blocker).toContain('outbox failure'); expect(store.tickets.get('original')!.inputs).toEqual([])
 })
-it('never reopens ended workers or broadcasts a correction to ambiguous active owners', async () => {
-  const h = fixture(); const t = h.worker(); t.ended = { by: 'executor', outcome: 'completed', at: '2026-11-06T00:00:00.000Z' }; store.tickets.save(t); const l = await h.fixLease()
-  expect((await h.caps.fix!.execute(l)).blocker).toContain('never reopened'); expect(h.note).not.toHaveBeenCalled()
-  delete t.ended; store.tickets.save(t); h.worker('second'); const d = deliveries.get('feature')!; deliveries.compareAndSwap(d.id, d.revision, v => { v.workers.push('second') })
-  expect((await h.caps.fix!.execute(l)).blocker).toContain('Ambiguous correction owner'); expect(h.note).not.toHaveBeenCalled()
+it('never broadcasts a correction to ambiguous active owners', async () => {
+  const h = fixture(); h.worker(); h.worker('second'); const l = await h.fixLease(); const d = deliveries.get('feature')!; deliveries.compareAndSwap(d.id, d.revision, v => { v.workers.push('second') })
+  expect((await h.caps.fix!.execute(l)).blocker).toContain('Ambiguous correction owner'); expect(h.note).not.toHaveBeenCalled(); expect(h.start).not.toHaveBeenCalled()
+})
+const endWorker = (id = 'original', ended: Ticket['ended'] = { by: 'executor', outcome: 'completed', at: '2026-11-06T00:00:00.000Z' }) => { const t = store.tickets.get(id)!; t.ended = ended; store.tickets.save(t); return t }
+const successors = () => store.tickets.list().filter(t => store.triggers.get(t.origin.triggerId)?.meta.correctionOf !== undefined)
+const SUCCESSOR_READY = '2026-11-06T00:00:05.000Z'
+function successorReady(at = SUCCESSOR_READY) {
+  const t = successors()[0]!; t.assignments[0]!.state = 'ended'; t.assignments[0]!.report = { state: 'ready', summary: 'Corrected under original scope', at }
+  t.ended = { by: 'executor', outcome: 'completed', at }; store.tickets.save(t); return t
+}
+it('routes a failed review to one new bounded successor when the original worker has ended, retaining ended history and original scope', async () => {
+  const h = fixture(); const original = endWorker(h.worker().id); const frozen = JSON.stringify(store.tickets.get('original'))
+  const l = await h.fixLease(); const result = await h.caps.fix!.execute(l)
+  expect(result).toEqual({ outcome: 'pending', nextRetryAt: expect.any(Number) })
+  expect(h.note).not.toHaveBeenCalled(); expect(h.start).toHaveBeenCalledTimes(1)
+  expect(JSON.stringify(store.tickets.get('original'))).toBe(frozen)
+  expect(store.tickets.get('original')!.ended).toEqual(original.ended)
+  const [next, ...rest] = successors(); expect(rest).toEqual([])
+  expect(next!.mandate).toEqual({ ...original.mandate, policyVersion: 'p2' }); expect(next!.assignments).toHaveLength(1)
+  const trigger = store.triggers.get(next!.origin.triggerId)!
+  expect(trigger.text).toContain(HEAD); expect(trigger.text).toContain('Preserve authorization fence before mutation.'); expect(trigger.text).toContain('untrusted data')
+  expect(trigger.text).toContain('No publication, merge, deployment, acceptance or live-operation authority')
+  expect(trigger.meta).toMatchObject({ correctionOf: 'original', deliveryId: 'feature', correctionAssignment: { originalTicketId: 'original', generation: 0, reviewReference: expect.stringContaining('sqlite:delivery_capability_review/') } })
+  expect(deliveries.get('feature')!.workers).toEqual(['original'])
+})
+it('proves rejection, successor correction, new ready evidence and independent re-review without publication or acceptance', async () => {
+  const h = fixture(); h.worker(); endWorker(); const l = await h.fixLease()
+  expect((await h.caps.fix!.execute(l)).outcome).toBe('pending')
+  expect((await h.caps.fix!.reconcile!(l)).outcome).toBe('pending')
+  successorReady(); h.setHead(NEW)
+  const fixed = await h.caps.fix!.reconcile!(l); expect(fixed.outcome).toBe('passed'); expect(fixed.updatedBindings).toMatchObject({ headSha: NEW })
+  expect(fixed.evidence![0]!.reference).toContain(`#ticket/${successors()[0]!.id}/report/`)
+  deliveries.complete(l, fixed)
+  let d = deliveries.get('feature')!; expect(d).toMatchObject({ stage: 'review', generation: 1 }); expect(d.nextAction!.kind).toBe('review')
+  h.setVerdict({ verdict: 'passed', findings: [], rationale: 'The corrected head preserves the fence.' })
+  const rl = h.lease(); const review = await h.caps.review!.execute(rl); expect(review.outcome).toBe('passed'); expect(review.evidence![0]!.bindings.headSha).toBe(NEW)
+  deliveries.complete(rl, review); d = deliveries.get('feature')!
+  expect(d.state).not.toBe('accepted'); expect(d.stage).not.toBe('accepted'); expect(d.nextAction!.kind).not.toBe('accept')
+  expect(d.evidence.filter(e => e.kind === 'acceptance' || e.kind === 'publication')).toEqual([])
+})
+it('dispatches exactly one successor across duplicate execution, restart and reconciliation', async () => {
+  const h = fixture(); h.worker(); endWorker(); const l = await h.fixLease()
+  const results = await Promise.all([h.caps.fix!.execute(l), h.caps.fix!.execute(l)])
+  expect(results).toEqual([{ outcome: 'pending', nextRetryAt: expect.any(Number) }, { outcome: 'pending', nextRetryAt: expect.any(Number) }])
+  const restarted = createDeliveryCapabilities(h.deps)
+  expect((await restarted.fix!.execute(l)).outcome).toBe('pending'); expect((await restarted.fix!.reconcile!(l)).outcome).toBe('pending')
+  expect(successors()).toHaveLength(1); expect(h.start).toHaveBeenCalledTimes(1); expect(h.note).not.toHaveBeenCalled()
+  successorReady(); h.setHead(NEW)
+  expect((await restarted.fix!.reconcile!(l)).outcome).toBe('passed'); expect((await h.caps.fix!.execute(l)).outcome).toBe('passed'); expect(successors()).toHaveLength(1)
+})
+it('refuses stale or mismatched heads, review evidence and replayed scope before or after a successor exists', async () => {
+  const h = fixture(); h.worker(); endWorker(); const l = await h.fixLease()
+  h.setHead(NEW); expect((await h.caps.fix!.execute(l)).blocker).toContain('Stale head fence'); expect(successors()).toEqual([]); expect(h.start).not.toHaveBeenCalled()
+  h.setHead(HEAD); expect((await h.caps.fix!.execute({ ...l, bindings: { ...l.bindings, headSha: NEW } })).blocker).toContain('Missing pinned base SHA'); expect(successors()).toEqual([])
+  expect((await h.caps.fix!.execute({ ...l, bindings: { ...l.bindings, sourceIssue: 168 } })).blocker).toContain('exact bound independent findings'); expect(successors()).toEqual([])
+  expect((await h.caps.fix!.execute(l)).outcome).toBe('pending'); expect(successors()).toHaveLength(1)
+  expect((await h.caps.fix!.reconcile!({ ...l, action: { ...l.action, fingerprint: 'different-scope' } })).blocker).toContain('idempotency scope mismatch'); expect(successors()).toHaveLength(1)
+  const store2 = h.deps.engine
+  expect(() => store2.dispatchCorrection({ jobId: `correction-${l.id}`, originalTicketId: 'original', deliveryId: 'feature', title: 'x', text: 'x', reviewReference: 'r', generation: 1, bindingsFingerprint: 'other' })).toThrow('Correction job scope mismatch')
+  expect(successors()).toHaveLength(1)
+})
+it('blocks ambiguous, open, stopped or revoked ownership without creating a successor', async () => {
+  const link = (id: string) => { const d = deliveries.get('feature')!; deliveries.compareAndSwap(d.id, d.revision, v => { v.workers.push(id) }) }
+  let h = fixture(); h.worker(); endWorker(); h.worker('second'); endWorker('second'); link('second'); let l = await h.fixLease()
+  expect((await h.caps.fix!.execute(l)).blocker).toContain('multiple original implementation workers'); expect(successors()).toEqual([])
+  store.close(); store = new Store(join(directory, 'db2.sqlite')); deliveries = new DeliveryStore(store.db)
+  h = fixture(); h.worker(); endWorker(); const open = h.worker('open'); open.assignments[0]!.state = 'pending'; store.tickets.save(open); link('open'); l = await h.fixLease()
+  expect((await h.caps.fix!.execute(l)).blocker).toContain('open but not running'); expect(successors()).toEqual([])
+  store.close(); store = new Store(join(directory, 'db3.sqlite')); deliveries = new DeliveryStore(store.db)
+  h = fixture(); h.worker(); endWorker('original', { by: 'human', outcome: 'stopped', at: '2026-11-06T00:00:00.000Z' }); l = await h.fixLease()
+  expect((await h.caps.fix!.execute(l)).blocker).toContain('stopped by a person'); expect(successors()).toEqual([]); expect(store.tickets.get('original')!.ended!.by).toBe('human')
+  store.close(); store = new Store(join(directory, 'db4.sqlite')); deliveries = new DeliveryStore(store.db)
+  h = fixture(); h.worker(); endWorker('original', { by: 'executor', outcome: 'dropped', at: '2026-11-06T00:00:00.000Z' }); l = await h.fixLease()
+  expect((await h.caps.fix!.execute(l)).blocker).toContain('no correction authority is inherited'); expect(successors()).toEqual([])
+  store.close(); store = new Store(join(directory, 'db5.sqlite')); deliveries = new DeliveryStore(store.db)
+  h = fixture(); h.worker(); endWorker(); l = await h.fixLease(); h.setPolicy({ revalidate: () => false })
+  expect((await h.caps.fix!.execute(l)).blocker).toContain('correction authority is missing'); expect(successors()).toEqual([])
+  h.setPolicy({ revalidate: () => true, paused: true }); expect((await h.caps.fix!.execute(l)).blocker).toContain('paused'); expect(successors()).toEqual([])
+  h.setPolicy({ paused: false }); expect((await h.caps.fix!.execute(l)).outcome).toBe('pending'); expect(successors()).toHaveLength(1)
+})
+it('keeps missing-authority outcomes explicit: a blocked, stopped or interrupted successor never becomes corrected evidence', async () => {
+  for (const [name, finish] of [
+    ['blocked', (t: Ticket) => { t.assignments[0]!.report = { state: 'blocked', summary: 'Needs authority outside the original scope', at: SUCCESSOR_READY }; t.ended = { by: 'executor', outcome: 'dropped', at: SUCCESSOR_READY } }],
+    ['stopped', (t: Ticket) => { t.ended = { by: 'human', outcome: 'stopped', at: SUCCESSOR_READY } }],
+  ] as const) {
+    store.close(); store = new Store(join(directory, `${name}.sqlite`)); deliveries = new DeliveryStore(store.db)
+    const h = fixture(); h.worker(); endWorker(); const l = await h.fixLease(); await h.caps.fix!.execute(l)
+    const t = successors()[0]!; finish(t); store.tickets.save(t)
+    const result = await h.caps.fix!.reconcile!(l)
+    expect(result.outcome).toBe('uncertain'); expect(result.evidence).toBeUndefined(); expect(result.blocker).toContain(name === 'blocked' ? 'reported blocked' : 'stopped by a person')
+    expect(successors()).toHaveLength(1); expect(deliveries.get('feature')!.stage).toBe('review')
+  }
 })
 it('rebinds changed correction heads only within recorded follow-fix scope, clearing old artifact', async () => {
   const h = fixture(); h.worker(); const l = await h.fixLease(); await h.caps.fix!.execute(l); h.consumeAndReady(); h.setHead(NEW)
