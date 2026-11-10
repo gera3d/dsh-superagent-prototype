@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "pins": {
+    "repository": "gera3d/dsh-superagent-prototype",
+    "prNumber": 96,
+    "headSha": "dd8072688b068c2b4fe4ee9600c62c4e3a8c1722",
+    "patchSha256": "f09b1da6692743423fd668eab83498cf02b106e957eac258be99d8fc2fb0fca8"
+  },
+  "author": "worker-c22796a56c57b96f120a42ec4db17cdd",
+  "reviewer": {
+    "name": "harness-independent-review",
+    "role": "independent"
+  },
+  "review": {
+    "verdict": "approved",
+    "completedAt": "2026-11-10T12:46:51.828Z",
+    "report": {
+      "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/task-releases/auto-c22796a56c57b96f120a42ec4db17cdd-dd8072688b06-BiXBuT/independent-review.json",
+      "sha256": "e6377635ab1161ee98f3296b567f2d2ed8c076825599b05b91ce3ba08a2a8c86"
+    }
+  },
+  "checks": [
+    {
+      "name": "pnpm typecheck",
+      "exitCode": 0,
+      "completedAt": "2026-11-10T12:47:46.063115Z",
+      "report": {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/task-releases/auto-c22796a56c57b96f120a42ec4db17cdd-dd8072688b06-BiXBuT/evidence/typecheck.log",
+        "sha256": "8366207267355d3e3d5bf3bf6e8c94c5f93f6078c34f08973fa2b38cdda6cc92"
+      }
+    },
+    {
+      "name": "pnpm exec vitest run (targeted: tests/delivery-capabilities.spec.ts, tests/finding-release-package.spec.ts)",
+      "exitCode": 0,
+      "completedAt": "2026-11-10T12:48:43.894343Z",
+      "report": {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/task-releases/auto-c22796a56c57b96f120a42ec4db17cdd-dd8072688b06-BiXBuT/evidence/tests.log",
+        "sha256": "c1db99f148370a8375174a168dea21cef5f2a8952c9bce9b0443db44dd2ae9a8"
+      }
+    },
+    {
+      "name": "pnpm build",
+      "exitCode": 0,
+      "completedAt": "2026-11-10T12:48:53.455006Z",
+      "report": {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/task-releases/auto-c22796a56c57b96f120a42ec4db17cdd-dd8072688b06-BiXBuT/evidence/build.log",
+        "sha256": "67d700afa4773d586d86bdfe0dafdd0e82ba9d5f29c0e09bbe00cdd7515857ac"
+      }
+    }
+  ],
+  "limitations": [
+    "Targeted checks only: tests/delivery-capabilities.spec.ts, tests/finding-release-package.spec.ts"
+  ]
+}

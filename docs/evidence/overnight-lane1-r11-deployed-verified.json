@@ -1,0 +1,332 @@
+{
+  "observedAt": "2026-11-10T12:56:47.652563+00:00",
+  "findingId": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+  "jobId": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r11",
+  "ticketId": "c22796a56c57b96f120a42ec4db17cdd",
+  "assignmentId": "73ee3ed17d4e4ec88b75f61e228aa1c1",
+  "sourcePr": 96,
+  "reviewedHead": "dd8072688b068c2b4fe4ee9600c62c4e3a8c1722",
+  "mergeCommit": "7d6d4927628b6ae62fc78fdb5c2c057249c5ff61",
+  "patchSha256": "f09b1da6692743423fd668eab83498cf02b106e957eac258be99d8fc2fb0fca8",
+  "completeNativeReviewPayloadBytes": 98183,
+  "existingReviewLimitBytes": 100000,
+  "publication": {
+    "id": "4f856fae-a492-4874-86bf-9a477d572d62",
+    "status": "published",
+    "conversationId": "delivery:auto-c22796a56c57b96f120a42ec4db17cdd:decision:delivery-phase:auto-c22796a56c57b96f120a42ec4db17cdd",
+    "updatedAt": "2026-11-10T12:52:16.126Z",
+    "outcomes": [
+      {
+        "stage": "merge",
+        "operationId": "4f856fae-a492-4874-86bf-9a477d572d62:merge",
+        "status": "succeeded",
+        "startedAt": "2026-11-10T12:50:15.130Z",
+        "detail": "merge completed for pinned head dd8072688b068c2b4fe4ee9600c62c4e3a8c1722",
+        "finishedAt": "2026-11-10T12:50:20.853Z"
+      },
+      {
+        "stage": "apply",
+        "operationId": "4f856fae-a492-4874-86bf-9a477d572d62:apply",
+        "status": "succeeded",
+        "startedAt": "2026-11-10T12:50:22.871Z",
+        "detail": "apply completed for pinned head dd8072688b068c2b4fe4ee9600c62c4e3a8c1722",
+        "finishedAt": "2026-11-10T12:50:24.841Z"
+      },
+      {
+        "stage": "build",
+        "operationId": "4f856fae-a492-4874-86bf-9a477d572d62:build",
+        "status": "succeeded",
+        "startedAt": "2026-11-10T12:50:26.726Z",
+        "detail": "build completed for pinned head dd8072688b068c2b4fe4ee9600c62c4e3a8c1722",
+        "finishedAt": "2026-11-10T12:51:36.172Z"
+      },
+      {
+        "stage": "restart",
+        "operationId": "4f856fae-a492-4874-86bf-9a477d572d62:restart",
+        "status": "succeeded",
+        "startedAt": "2026-11-10T12:51:38.327Z",
+        "detail": "restart completed for pinned head dd8072688b068c2b4fe4ee9600c62c4e3a8c1722",
+        "finishedAt": "2026-11-10T12:52:11.989Z"
+      },
+      {
+        "stage": "verify",
+        "operationId": "4f856fae-a492-4874-86bf-9a477d572d62:verify",
+        "status": "succeeded",
+        "startedAt": "2026-11-10T12:52:14.410Z",
+        "detail": "verify completed for pinned head dd8072688b068c2b4fe4ee9600c62c4e3a8c1722; configured HTTP release verification only, browser acceptance not performed",
+        "finishedAt": "2026-11-10T12:52:16.069Z"
+      }
+    ],
+    "protectedNativeApproval": {
+      "at": "2026-11-10T12:50:12.320Z",
+      "event": "worker_queued",
+      "detail": "Explicit approval durably handed to a detached coordinator; host performs no publication operations",
+      "requestId": "auto-c22796a56c57b96f120a42ec4db17cdd:6:publish:34d91c4f4a317351",
+      "actorId": "local-operator",
+      "authorityKind": "human_click"
+    }
+  },
+  "rollback": {
+    "ledgerPath": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/task-releases/auto-c22796a56c57b96f120a42ec4db17cdd-dd8072688b06-BiXBuT/release/publication-ledgers/4f856fae-a492-4874-86bf-9a477d572d62/ledger.json",
+    "stages": {
+      "apply": "succeeded",
+      "build": "succeeded",
+      "restart": "succeeded",
+      "verify": "succeeded"
+    },
+    "sourcePreimages": [
+      {
+        "path": "src/app/delivery-capabilities.ts",
+        "before": {
+          "mode": 420,
+          "sha256": "48c935f61a996a1272b427304eb32fcd5845ab4e05dfb98787f9d9c1e67648c7"
+        },
+        "backupPresent": true,
+        "backupSha256": "48c935f61a996a1272b427304eb32fcd5845ab4e05dfb98787f9d9c1e67648c7"
+      },
+      {
+        "path": "src/app/delivery-phase.ts",
+        "before": {
+          "mode": 420,
+          "sha256": "53b28a0f31b0bb04347e56f2be3e6f1c097eb3a2351cd42cd5c2cb80f10d0e47"
+        },
+        "backupPresent": true,
+        "backupSha256": "53b28a0f31b0bb04347e56f2be3e6f1c097eb3a2351cd42cd5c2cb80f10d0e47"
+      },
+      {
+        "path": "src/app/delivery-runtime.ts",
+        "before": {
+          "mode": 420,
+          "sha256": "8881a6d45277399920e52d475c1da4440273c296b398528c0040f9b01b22e6cf"
+        },
+        "backupPresent": true,
+        "backupSha256": "8881a6d45277399920e52d475c1da4440273c296b398528c0040f9b01b22e6cf"
+      },
+      {
+        "path": "src/app/feature-delivery.ts",
+        "before": {
+          "mode": 420,
+          "sha256": "4996e8230ec64516ef1e87ecd7201a46e331e43c62c93abceac51c6f5346458e"
+        },
+        "backupPresent": true,
+        "backupSha256": "4996e8230ec64516ef1e87ecd7201a46e331e43c62c93abceac51c6f5346458e"
+      },
+      {
+        "path": "src/app/finding-release.ts",
+        "before": {
+          "mode": 420,
+          "sha256": "7eff7367cf009e5989b63f866fdea996e1afbf2d60c6a91f2b4ab815db0f3d92"
+        },
+        "backupPresent": true,
+        "backupSha256": "7eff7367cf009e5989b63f866fdea996e1afbf2d60c6a91f2b4ab815db0f3d92"
+      },
+      {
+        "path": "src/app/runtime.ts",
+        "before": {
+          "mode": 420,
+          "sha256": "5b6e4bdd260f5f7ac574aa68264f87ce5a82aa91af04a26fdf71149ed2ffc853"
+        },
+        "backupPresent": true,
+        "backupSha256": "5b6e4bdd260f5f7ac574aa68264f87ce5a82aa91af04a26fdf71149ed2ffc853"
+      },
+      {
+        "path": "src/core/engine.ts",
+        "before": {
+          "mode": 420,
+          "sha256": "6f4f5e67b5730480d7e913949451c44864123cdd9743047ec8186be06a6c5c20"
+        },
+        "backupPresent": true,
+        "backupSha256": "6f4f5e67b5730480d7e913949451c44864123cdd9743047ec8186be06a6c5c20"
+      },
+      {
+        "path": "tests/delivery-capabilities.spec.ts",
+        "before": {
+          "mode": 420,
+          "sha256": "a966950364c62e52a6c279ff0998a091fb9225c596ebcb4e4befa6155e5282bb"
+        },
+        "backupPresent": true,
+        "backupSha256": "a966950364c62e52a6c279ff0998a091fb9225c596ebcb4e4befa6155e5282bb"
+      },
+      {
+        "path": "tests/finding-release-package.spec.ts",
+        "before": {
+          "mode": 420,
+          "sha256": "0262c0be94b0c81b1704d8b292d922fe7eb91f6995d82198bff4de0abc7857c4"
+        },
+        "backupPresent": true,
+        "backupSha256": "0262c0be94b0c81b1704d8b292d922fe7eb91f6995d82198bff4de0abc7857c4"
+      },
+      {
+        "path": "tests/fixtures/release-package.ts",
+        "before": null,
+        "backupPresent": false,
+        "backupSha256": null
+      }
+    ],
+    "note": "Existing apply protocol fsyncs rollback preimages and ledger before mutation; rollback restores original files then rebuilds/restarts. No rollback performed."
+  },
+  "sourcePostimages": [
+    {
+      "path": "src/app/delivery-capabilities.ts",
+      "sha256": "13b757f416e59d9d33767889786b181b5f6d43643f6a29d1658206f033ad2b52",
+      "installedMatches": true
+    },
+    {
+      "path": "src/app/delivery-phase.ts",
+      "sha256": "89f99e5d502c1e8178252cd1fa19ab22b37cd55824b08c440835957ed013fb11",
+      "installedMatches": true
+    },
+    {
+      "path": "src/app/delivery-runtime.ts",
+      "sha256": "5da7ac149905656df2eb97cd9ea42f0a10fea4e105e3a917abc347cf9983187a",
+      "installedMatches": true
+    },
+    {
+      "path": "src/app/feature-delivery.ts",
+      "sha256": "3cf1dda7c117204aeeceab2ad66e5f2049aa98ffdfd0635449a6eb6a84dd92a7",
+      "installedMatches": true
+    },
+    {
+      "path": "src/app/finding-release.ts",
+      "sha256": "27996fee272bc92fbabd465532c34492d1373570976fbd5cf4ee3be299300bf3",
+      "installedMatches": true
+    },
+    {
+      "path": "src/app/runtime.ts",
+      "sha256": "1bd3570862ef2290500fad51be3f06f7bd8abeae914fb582782da64318b98014",
+      "installedMatches": true
+    },
+    {
+      "path": "src/core/engine.ts",
+      "sha256": "554f137e6abb9e4dd16f9ee0639de3d291b62235921c36bb8de28f748cb9ed80",
+      "installedMatches": true
+    },
+    {
+      "path": "tests/delivery-capabilities.spec.ts",
+      "sha256": "cd16913d8a211408212a545e224e0e79f9561be4e36ce4e42bcbeb49c47ea28b",
+      "installedMatches": true
+    },
+    {
+      "path": "tests/finding-release-package.spec.ts",
+      "sha256": "c27ce1ea8a09eba47ae506d695ee70f6891e10f25a481670f384891f60fa4522",
+      "installedMatches": true
+    },
+    {
+      "path": "tests/fixtures/release-package.ts",
+      "sha256": "9a42c8fc2344a048ac47a0d766c42bdff9d89fa25458eec11fd7a3982102bd40",
+      "installedMatches": true
+    }
+  ],
+  "builtAssets": {
+    "lib/client.js": "c6b275b5e588a2c68112199058f58a2b298c955cc87d7aff773fd49b2624a2f2",
+    "lib/decision-inbox-provider-canonical.d.ts": "4d5265f6182536f12e1afcde0ff63abcaa7151ae7f5409c54d03a76ce8656b01",
+    "lib/decision-inbox-provider-canonical.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20",
+    "lib/decision-inbox-provider-live.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20",
+    "lib/decision-inbox-provider.js": "95c14266b4d4fde37608890ae30efa812fb3c1834ab1deb75efdd55e9682e340",
+    "lib/decision-provider.d.ts": "6b5408ac5b6e6f1a049da951dcb2c09dd2169c3bf1cef8bd097ddad6d149c3c9",
+    "lib/decision-provider.js": "a18c29c4a32d72e89697b7ab07197361ef7eab96004754a4534cafac7dcd16a0",
+    "lib/delivery-phase-DytNr5WE.js": "f31f88e3ca76bf934e1875c7fb9c270e7ec320ca1d4e752c6053f79612ecc910",
+    "lib/deployment-BTCh8dP2.d.ts": "505a7f812d3cb688a9f41cafdeceb186d9d1d2806625b4f574f07b283141a8fa",
+    "lib/feishu-CJOhQs_w.js": "dbd7953ca19694f8766461ac60b6594192bb75a853683366cb38d88457d6192e",
+    "lib/feishu-watch.d.ts": "6a819db2b0f74386dc727a57165e41bea186fab39e59d5d12536f36a1d204fe0",
+    "lib/feishu-watch.js": "92c2b031e32b171c71cb5b17099f9b67be13fdadc7e0c64dc290a42f48a70698",
+    "lib/github-pull-CmauzyiE.js": "f28fb62488da4543c7479df27ac2230c624319cb78298f011bb7b1c4c6406c6f",
+    "lib/github-watch.d.ts": "e54f02580821ad233e2faa76ccfac03f15ce660414de4ce1d4acda5074f83a7f",
+    "lib/github-watch.js": "aa6b6e07500d988d9414c4f254ea218787364f544341fced9eb0b14b6fb0d315",
+    "lib/http-CBZxkbu3.js": "60565999821df1a6a195bacffcccfa62e4b527e7328283487d259a4a41e75ed4",
+    "lib/index.d.ts": "96e27c55626e668e7969480ebac77c4df7abfd906fe44d7c12256c9dea9a4a2a",
+    "lib/index.js": "6c6d24499386fae0a6e7de7057dd5e6a874a92ae726995d8e584f2b41624b224",
+    "lib/kind-CuT4cckX.d.ts": "21730e76d32d08302fbf37790967013a546c695e64da2669f344772993e1ae27",
+    "lib/model-BSxHOzxq.d.ts": "e4463219981fb520f87b75001088e828ba27e12ce14e6d595f0de2e37255e803",
+    "lib/policy-Bvlfi1qW.d.ts": "a73a64730783041df9137ea15d2b82de76128b6edb8ad83de60036e3466df370",
+    "lib/poll-uqttHWnO.js": "36814a623f7b2abba1abc63a224e9b88f6c25256107f2b73089d4b63d9dc2811",
+    "lib/publication-context-C6CgflKa.js": "d6a2fa0473e2541352d4da914e024f4a0ccc06b4173f881b33d045593aa073cc",
+    "lib/publication-operator.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+    "lib/publication-operator.js": "549daeafd400fa76a4cbf2b9f43c79208277e3e9b6b91825eed8ea00c79d1cf7",
+    "lib/publication-ticket-CM-Y71vO.js": "23ae7e49740011776e384593780b1db538f3c5af0887d323339419c860a8061b",
+    "lib/publication-worker.d.ts": "f4c5cf9bb78e85f15dc27180260637cf24b2a24bc39e0788783a3accc4dde614",
+    "lib/publication-worker.js": "39c5f7e42bc05fae7b5b9369c8d6d58a8ad910a8ded9670024058889aa76bc0a"
+  },
+  "qualifiedChecks": [
+    {
+      "name": "pnpm typecheck",
+      "exitCode": 0,
+      "completedAt": "2026-11-10T12:47:46.063115Z",
+      "report": {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/task-releases/auto-c22796a56c57b96f120a42ec4db17cdd-dd8072688b06-BiXBuT/evidence/typecheck.log",
+        "sha256": "8366207267355d3e3d5bf3bf6e8c94c5f93f6078c34f08973fa2b38cdda6cc92"
+      }
+    },
+    {
+      "name": "pnpm exec vitest run (targeted: tests/delivery-capabilities.spec.ts, tests/finding-release-package.spec.ts)",
+      "exitCode": 0,
+      "completedAt": "2026-11-10T12:48:43.894343Z",
+      "report": {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/task-releases/auto-c22796a56c57b96f120a42ec4db17cdd-dd8072688b06-BiXBuT/evidence/tests.log",
+        "sha256": "c1db99f148370a8375174a168dea21cef5f2a8952c9bce9b0443db44dd2ae9a8"
+      }
+    },
+    {
+      "name": "pnpm build",
+      "exitCode": 0,
+      "completedAt": "2026-11-10T12:48:53.455006Z",
+      "report": {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/task-releases/auto-c22796a56c57b96f120a42ec4db17cdd-dd8072688b06-BiXBuT/evidence/build.log",
+        "sha256": "67d700afa4773d586d86bdfe0dafdd0e82ba9d5f29c0e09bbe00cdd7515857ac"
+      }
+    }
+  ],
+  "installedTargetTests": "Detached publication build runs existing targeted capability/package specs in actual installed checkout after guarded apply; all publication build/restart/HTTPverify stages succeeded. Earlier qualifier58tests/type/build independently inspected. No broad-suite claim.",
+  "nativeObservation": "After restart/reload opened actual latest worker/source thread. It displays exact narrowing head dd807268, preserved Google failure/fallback history, current delivery requiring operator live evidence with no acceptance offered until evidence. Compact cards and composer available. No suggestion selected, reply sent or synthetic live correction dispatched.",
+  "requirementEvidence": [
+    {
+      "index": 0,
+      "coverage": "Exact failed-review/head/generation binding: inspected installed source and targeted integration regressions including stale/foreign evidence refusal; production10source/test postimages match qualified head."
+    },
+    {
+      "index": 1,
+      "coverage": "Ended-original immutable successor and max3 queue/cooldown tests inspected and passed on exact source; actual native independent-review and protected publication paths used current ended r11 job, original history retained."
+    },
+    {
+      "index": 2,
+      "coverage": "Actual FeatureDeliveryRuntime controlled integration exercises failed review -> bounded successor -> fresh ready -> independent re-review -> corrected git package; real source-thread path review/check/package/Publish/deploy/HTTPverify completed. No newly induced live failed-review correction/worker run claimed."
+    },
+    {
+      "index": 3,
+      "coverage": "Controlled restart/idempotency/stale/stopped/ambiguous and no publication/acceptance tests pass; actual service restart/native reload and protected gate observed. No physical crash injected or general reliability guarantee."
+    },
+    {
+      "index": 4,
+      "coverage": "Exact isolated head dd807268, complete98183-byte reviewer payload, native Sonnet independent pass,58targeted tests/types/build and actual installed postimages/runtime observed."
+    },
+    {
+      "index": 5,
+      "coverage": "Read current executor/models/coordination revisions43/18/3 and OpenAI conserved; max3 unchanged. Actual r11 Google unavailable -> Sonnet request events preserved. No provider/account/reserve/cooldown/credential/capacity changes or forced Google retry."
+    }
+  ],
+  "settingsRevisions": {
+    "executor": 43,
+    "models": 18,
+    "coordination": 3
+  },
+  "openaiStatus": "conserved",
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "acceptance": "NOT YET ACCEPTED at report creation; separate protected operator evidence and acceptance remain. This report supports bounded requirements with explicitly controlled/installed/native coverage, not proof of unattended correction in a newly induced live failed-review job.",
+  "history": "Original r1/r3/r5/r7/r9/r11 reports, PR94/95 and rejected deliveries preserved; coordinator manual recovery and native clicks recorded, not an unattended-success claim."
+}

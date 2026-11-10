@@ -1,0 +1,16 @@
+{
+  "observedAt": "2026-11-10T12:46:23.824286+00:00",
+  "findingId": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+  "jobId": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r11",
+  "ticketId": "c22796a56c57b96f120a42ec4db17cdd",
+  "assignmentId": "73ee3ed17d4e4ec88b75f61e228aa1c1",
+  "reviewedHead": "dd8072688b068c2b4fe4ee9600c62c4e3a8c1722",
+  "parent": "4afd1af043cd1b57d992e259e683144de0daea7e",
+  "implementationBase": "75f091510d71624b98d4f3b63956909d4799a84f",
+  "patchSha256": "f09b1da6692743423fd668eab83498cf02b106e957eac258be99d8fc2fb0fca8",
+  "reviewVerdict": "Passes requested artifact narrowing: exactly PROJECT_STATUS.md restored to implementation base, every other file byte-identical to reviewed/tested r9. Existing source/test checks apply; no duplicate tests performed. Actual native review/payload/qualification must still pass.",
+  "artifactStaging": "Worker changed isolated origin from trusted local source to GitHub URL; coordinator restored isolated workspace origin to the unchanged trusted profile checkout path. No source/head/file bytes or global profile/credentials/settings changed.",
+  "nativeAction": "Actual current finding Review,test&prepare release control clicked for revision12; preparing at observation. No first approval fabricated, publication or acceptance clicked.",
+  "inheritedChecks": "R7exact53capabilitytests/typecheck and R9exact5package tests; root build at same production src92672fc. No broad-suite, live-correction executor, Google or general reliability claim.",
+  "history": "r1 rejected/r3max-tokens/r5native proof-gap failure/r7unfinished finalization/r9payload100986 blocker/PR94+95 preserved."
+}
