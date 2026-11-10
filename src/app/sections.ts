@@ -59,6 +59,7 @@ export type KnownMember = (member: Member) => boolean
 const key = (member: Member) => `${member.kind}:${member.id}`
 const lower = (name: string) => name.trim().toLowerCase()
 
+/** Persists a project's named sections and which tickets and threads belong to each, and builds the overview from them. */
 export class SectionStore {
   constructor(readonly db: DatabaseSync, private readonly now: () => string = () => new Date().toISOString()) {
     db.exec(`CREATE TABLE IF NOT EXISTS section(id TEXT PRIMARY KEY, project TEXT NOT NULL, position INTEGER NOT NULL, value TEXT NOT NULL);
