@@ -21,6 +21,8 @@ import { loadLifecyclePublication } from './publication-context.ts'
 import type { LifecyclePublication } from './lifecycle-publication.ts'
 import { FeatureDeliveryRuntime } from './delivery-runtime.ts'
 import { FindingRuntime } from './finding-runtime.ts'
+import { FindingRelease, busyPublication, loadReleaseProfile } from './finding-release.ts'
+import { FilePublicationPersistence } from './publication-persistence.ts'
 import { DeliveryStore, type DeliveryCapabilityAdapters } from './feature-delivery.ts'
 import { createDeliveryCapabilities, recommendDeliveryAction } from './delivery-capabilities.ts'
 import { deliveryPublicationCapabilities } from './delivery-publication.ts'
@@ -75,6 +77,7 @@ export class Runtime extends Service implements SourceHost {
   readonly publication?: LifecyclePublication
   readonly deliveries: FeatureDeliveryRuntime
   readonly findings: FindingRuntime
+  readonly release: FindingRelease
   readonly sessions: Sessions
   readonly settings: Settings
   readonly executor: DshExecutor
@@ -193,6 +196,8 @@ export class Runtime extends Service implements SourceHost {
       })
       this.findings = new FindingRuntime({ ...deliveryDeps, repository: () => setup.deployment.repository,
         isQuiescent: ticket => this.executor.quiescent(ticket), workerBusy: ticket => this.executor.running(ticket) })
+      this.release = new FindingRelease({ stateDir: machine.stateDir, profile: () => loadReleaseProfile(machine.stateDir), store: this.deliveries.store,
+        ticket: id => store.tickets.get(id), publicationBusy: () => busyPublication(() => new FilePublicationPersistence(join(machine.stateDir, 'publication-state.json')).peek()) })
       // Update the `evals` health entry on every pass if an evaluation failed as unavailable within the last hour.
       const evals = board.claim('evals', { state: 'ready', detail: 'No unavailable Eval in the last hour' })
       const evaluateDue = () => {
@@ -264,8 +269,8 @@ export class Runtime extends Service implements SourceHost {
   }
   private httpHost(): HttpHost {
     const runtime = this
-    const { store, commands, publication, deliveries, findings, sources, prompts, sessions, settings, engine, executor, health, machine, masterId, ready, sourceLinks, setup, passes } = this
-    return { store, commands, publication, deliveries, findings, sources, prompts, sessions, settings, engine, executor, usage: this.usage, health, machine, masterId, ready, sourceLinks,
+    const { store, commands, publication, deliveries, findings, release, sources, prompts, sessions, settings, engine, executor, health, machine, masterId, ready, sourceLinks, setup, passes } = this
+    return { store, commands, publication, deliveries, findings, release, sources, prompts, sessions, settings, engine, executor, usage: this.usage, health, machine, masterId, ready, sourceLinks,
       get deployment() { return setup.deployment },
       get setupProblem() { return setup.problem }, get feishuProblem() { return setup.feishuProblem },
       configured: () => setup.configured(), links: () => runtime.links(), ticketEnvironment: ticket => runtime.ticketEnvironment(ticket),
