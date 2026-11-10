@@ -1,6 +1,6 @@
 # DeepSeek Harness project status
 
-## Current overnight batch — explicitly authorized November 9, 2026, 11:43 PM PST
+## Current overnight batch — explicitly authorized November 9, 2026
 
 Gera instructed Codex chat `01a1c46a-41e7-7f33-a459-7b621a70e97e`: give all six proposed assignments to Harness, start the first three and queue the rest, keep OpenAI conserved and the 5% Google reserve, and advance only as far as existing approval gates allow. All six exact bounded findings were observed through MCP and individually confirmed through the actual native finding controls. No first-approval bypass, generic decision selection or canonical database edit was used.
 
