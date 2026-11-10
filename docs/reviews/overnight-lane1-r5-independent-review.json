@@ -1,0 +1,43 @@
+{
+  "observedAt": "2026-11-10T10:51:24.423827+00:00",
+  "findingId": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+  "jobId": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r5",
+  "ticketId": "849d516855dd66638b825aea19a2ff18",
+  "assignmentId": "f55d688a7df4a92898f79fe433ce36cc",
+  "reviewedHead": "92672fcf2a1ea69c3f223404c5e259226a80bbc2",
+  "implementationBase": "75f091510d71624b98d4f3b63956909d4799a84f",
+  "patchSha256": "aa4948382f81f70c7ba0eeff87ce908a35cbce3322d0010e8926c1dfa58fb7f5",
+  "verdict": "Coordinator review passes the previously failing corrected-head phase and real git-derived packager boundary; native Harness independent review/release qualification remains a separate active stage.",
+  "independentCheck": {
+    "command": "pnpm --config.verify-deps-before-run=false exec vitest run tests/delivery-capabilities.spec.ts -t 'root audit'",
+    "result": "1 passed / 51 skipped",
+    "coverage": "Actual Store, Engine, correction capabilities, failed review, new ready report, re-review, adoption, phaseFacts, git candidate and FindingRelease.packageRelease with real pinned prepare.py/record-evidence.py. Git/GitHub review-base facts, pnpm check executor and restart use deterministic isolated package fixtures. Original ticket byte-identical; exact successor-head manifest generated; no publication/acceptance."
+  },
+  "build": {
+    "command": "pnpm --config.verify-deps-before-run=false build",
+    "result": "exit0; Build complete",
+    "location": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-849d516855dd/code"
+  },
+  "workerEvidenceInspected": {
+    "typecheck": "tsc2.log exit0",
+    "focused": "focused2.log 8files/136tests pass; not repeated by root",
+    "claimLimits": "No broad suite/native crash/real successor executor success or live acceptance inferred."
+  },
+  "artifactStaging": {
+    "originalCode": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-849d516855dd/code",
+    "trustedProfileSubdirectory": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-849d516855dd/work",
+    "action": "Cloned existing trusted operator source into required work/ subdirectory, fetched exact immutable candidate and detached checkout. Origin remains trusted operator checkout; candidate bytes/head preserved. Original code unchanged; no profile, credential or permission edits."
+  },
+  "nativeReleasePreparation": {
+    "control": "Review, test & prepare release",
+    "findingRevision": 6,
+    "sourcePr": 94,
+    "sourcePrUrl": "https://github.com/gera3d/dsh-superagent-prototype/pull/94",
+    "deliveryId": "auto-849d516855dd66638b825aea19a2ff18",
+    "baseAtPreparation": "3b26af2703a6fe48e84c5350374dad6bad3a3b2e",
+    "auditReference": "orchestrator-http:release:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:6:f51061f8fdbc9fa0c4aa7b5936b119d9695aea5f2939ec5bf699549c5c664e0f"
+  },
+  "limits": "No merge, install, restart, publication or acceptance this pass. R1 rejection and r3 max-token failure remain history. Other five lanes not independently reviewed. OpenAI conservation, max3 and 5%Google reserve unchanged. Native review result, exact package/pins, protected publication, rollback and native acceptance remain required before live completion.",
+  "nativeReviewOutcome": "changes_required: runtime-ordering and existing-capacity proof gaps, not a demonstrated live defect",
+  "nativeReviewEvidence": "../evidence/overnight-lane1-r5-native-review.json"
+}

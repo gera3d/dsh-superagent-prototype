@@ -1,0 +1,33 @@
+{
+  "observedAt": "2026-11-10T10:52:23.730106+00:00",
+  "deliveryId": "auto-849d516855dd66638b825aea19a2ff18",
+  "reviewId": "auto-849d516855dd66638b825aea19a2ff18:3:review:723dd91a6c238c0f",
+  "head": "92672fcf2a1ea69c3f223404c5e259226a80bbc2",
+  "provider": "anthropic / claude-sonnet-5-5",
+  "verdict": {
+    "verdict": "failed",
+    "findings": [
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 94,
+        "headSha": "92672fcf2a1ea69c3f223404c5e259226a80bbc2",
+        "path": "src/app/delivery-runtime.ts",
+        "line": 255,
+        "severity": "medium",
+        "message": "Adoption of the correction successor happens only inside prepareQualified. FindingRelease.packageRelease derives its artifact from effectiveRelease(release), which ignores a successor that has not been adopted yet. The diff does not show whether packageRelease runs before or after adoption. If packaging runs first, it would build checks and a manifest for the stale original head instead of the corrected re-reviewed head. Every new test calls rel.adoptCorrection() by hand and none goes through FeatureDeliveryRuntime. The required end-to-end proof (rejection, correction, new ready evidence, independent re-review, release phase) is therefore not exercised through the real runtime ordering. Add a runtime-level test, or move adoption ahead of packaging."
+      },
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 94,
+        "headSha": "92672fcf2a1ea69c3f223404c5e259226a80bbc2",
+        "path": "src/core/engine.ts",
+        "line": 135,
+        "severity": "medium",
+        "message": "dispatchCorrection saves the trigger, thread and decision and then calls this.tickets.create directly. The ticket is created and started immediately from the delivery capability, so it may skip the normal intake admission path. The requirements say the existing max3 concurrency, cooldowns and routes must stay unchanged, and that the successor must be 'safely admitted'. Only policy.paused and policy.revalidate are checked here, and no test covers concurrency or cooldown. A correction could therefore start a fourth concurrent worker or ignore a cooldown. Route it through the same admission and capacity checks as other dispatches, or add tests that prove those limits still hold."
+      }
+    ],
+    "rationale": "Batch 1/1 gera3d/dsh-superagent-prototype#94@92672fcf2a1e: The design is generally careful. Ended tickets stay immutable. The correction job is keyed so replay returns the same successor. Ownership ambiguity, person-stopped workers, revoked mandates and paused policy all fail closed. The release lineage is append-only and its provenance is re-validated on every phase read. No publication or acceptance authority is granted. Two gaps remain. Adoption is wired only into prepareQualified and the tests never run the real runtime ordering with packageRelease. The new dispatch path also has no demonstrated max3 or cooldown enforcement. Both are needed to meet the stated requirements, so the review fails pending those fixes or proof. I executed no tests."
+  },
+  "coordinatorAssessment": "Both are qualification proof gaps, not demonstrated runtime violations. Source prepareQualified visibly calls adoption before phaseFacts/packageRelease, and normal capacity may be enforced downstream. Required bounded follow-up is integrated runtime/admission proof, changing implementation only if an actual failure is reproduced. Root isolated git-derived package test passes but manually invokes adoption and therefore does not close the runtime ordering test gap.",
+  "installedCorrectionBlocker": "Current installed predecessor adapter cannot correct an ended worker: Correction handoff blocked: No active original implementation worker; ended workers are never reopened. Preserve this failed delivery and use supported same-finding coordination, never reopen or fabricate ready evidence."
+}

@@ -1,0 +1,56 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-849d516855dd/code
+
+(node:3883) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:3884) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/finding-release.spec.ts (11 tests) 47481ms
+   ✓ prepares the exact committed artifact: PR, per-PR manifest and bound delivery lineage, without publishing  3441ms
+   ✓ is idempotent for the same lineage and replaces/archives the previous manifest  3292ms
+   ✓ rejects concurrent duplicate clicks while one is running  3111ms
+   ✓ refuses stale revision, foreign/superseded job, unready or prose report, human-ended ticket and busy publication  1127ms
+   ✓ names a missing worker commit, dirty tree, foreign clone and absent profile concretely, with no GitHub mutation  5443ms
+   ✓ refuses to reuse an open PR at another head and a tampered pinned script  6384ms
+   ✓ fetches only the fixed trusted branch when evidence advanced after the worker cloned  4383ms
+   ✓ refreshes only a parked read-only review to the current target from the same protected finding action  10443ms
+   ✓ rejects target refresh without exact local authority or when it changes the artifact  3185ms
+   ✓ pins the PR review base when a newer branch tip differs, without inventing a target refresh  6647ms
+(node:8752) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/delivery-capabilities.spec.ts (51 tests) 2486ms
+(node:8867) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:8867) ExperimentalWarning: Transform Types is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:8867) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:8867) ExperimentalWarning: Transform Types is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:8867) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ tests/feature-delivery.spec.ts (36 tests) 1932ms
+   ✓ arbitrates actual simultaneous worker-process aggregate revisions once only  485ms
+ ✓ tests/finding-release-package.spec.ts (5 tests) 54886ms
+   ✓ packages the reviewed head: real targeted check evidence, exact manifest, no publication  13737ms
+   ✓ blocks with a concrete owner when no spec changed, checks fail, review missing, head moved, or publication busy  20594ms
+   ✓ rejects a foreign review even when the visible evidence says passed  814ms
+   ✓ preserves failed attempt logs and refuses a cross-process packaging lock  11712ms
+   ✓ rechecks canonical finding currency after checks and never installs a stale package  8025ms
+(node:8887) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:8889) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/delivery-phase.spec.ts (6 tests) 72ms
+(node:8894) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/delivery-publication-scope.spec.ts (7 tests) 157ms
+ ✓ tests/delivery-runtime.spec.ts (12 tests) 767ms
+(node:8902) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/delivery-publication.spec.ts (8 tests) 91ms
+
+ Test Files  8 passed (8)
+      Tests  136 passed (136)
+   Start at  01:49:47
+   Duration  59.26s (transform 2.24s, setup 0ms, import 5.67s, tests 107.87s, environment 2ms)
+
+vitest-exit 0
