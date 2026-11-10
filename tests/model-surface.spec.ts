@@ -210,7 +210,11 @@ async function drive(host: Host) {
     : rule.id === 'copy' ? { ...rule, instruction: `${rule.instruction} Keep the wording short.` } : rule)
   await runtime.settings.save('policy', { ...policy, rules }, runtime.store.blockRevision('policy'), 'panel')
   // Worker b's turn ends: it is idle, as DSH says when it emits the event.
-  host.agents.get(workerB)!.status = 'idle'
+  const endedWorker = host.agents.get(workerB)!
+  endedWorker.status = 'idle'
+  // Its turn consumed what had queued for it.
+  const { inbox } = endedWorker as unknown as { inbox: { nextTurn: unknown[]; nextStep: unknown[] } }
+  inbox.nextTurn.length = 0; inbox.nextStep.length = 0
   host.ctx.emit('agent/status', { agent: host.agents.get(workerB), status: 'idle' } as never)
   await vi.waitFor(() => expect(latestAssignment(runtime.store.tickets.get(b)!)?.report?.state).toBe('waiting'))
   runtime.engine.requestStatus(b)

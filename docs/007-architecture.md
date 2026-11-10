@@ -473,6 +473,13 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/branding-mark.tsx`, `branding-settings.tsx` | Brand mark occupant replacing the DeepSeek logo, and branding settings |
 | `src/client/characters.tsx` | Characters settings section and decision cards |
 | `src/client/client.css`, `css.d.ts` | The panel's stylesheet, loaded as text |
+| `src/app/account-allowance.ts` | Account allowance reader for Google and Anthropic subscriptions managed by installed dsh-agy-link |
+| `src/app/conversation-closeout.ts` | Conversation close-out detection. Distinguishes an explicit user close-out from unresolved approved work. |
+| `src/app/delivery-phase.ts` | Typed canonical release-phase owner for finding-origin deliveries. |
+| `src/app/finding-coordination.ts` | Narrow supported headless coordination path for existing explicitly approved bounded work. |
+| `src/app/finding-release.ts` | Thread-native review/test/release preparation for a finding job's committed artifact. |
+| `src/app/option-quality.ts` | Bounded Option Quality Evaluation & Lifecycle Verification. |
+| `src/client/account-allowance.tsx` | Compact native account allowance display for Google and Anthropic subscriptions beside chat. |
 
 `src/sources/github.ts` and `src/sources/feishu.ts` are also the entries of the two Source plugins, built by `tsdown.config.ts` and exported in `package.json` as `./github-watch` and `./feishu-watch`. The bundle's `cordis.patch.yml` inserts the three plugins, with Feishu disabled.
 
@@ -595,6 +602,24 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/job-usage-panel.spec.tsx` | The visible completed-job usage summary: actual routes and token buckets, partial coverage, and unavailable versus estimated cost |
 | `tests/class-docs.spec.ts` | Every class in `src` has a JSDoc block before it |
 | `tests/docs.spec.ts` | Numbered documents link only to earlier ones, every local link resolves, no document has merge conflict markers, and this document's tables list every module and every test |
+| `tests/account-allowance-ui.spec.tsx` | AllowanceHeaderBadge |
+| `tests/account-allowance.spec.ts` | parseAccountAllowance |
+| `tests/advisor-option-quality.spec.ts` | Senior Developer Option Quality & Lifecycle Invariants |
+| `tests/completed-advice-history.spec.ts` | Completed advice history projection |
+| `tests/delivery-phase.spec.ts` | delivery phase |
+| `tests/executor-fallback-idle-ordering.spec.ts` | availability fallback versus missing-report finalization |
+| `tests/executor-r3-coordinator-trigger.spec.ts` | R3 reproduction: worker report with coordinator non-human trigger does not stick |
+| `tests/executor-report-fallback.spec.ts` | findWorkerReportFile |
+| `tests/finding-coordination.spec.ts` | headless coordination for already-approved bounded work |
+| `tests/finding-release-package.spec.ts` | finding release package |
+| `tests/finding-release.spec.ts` | finding release |
+| `tests/github-quota.spec.ts` | github quota |
+| `tests/legacy-delivery-card.spec.tsx` | legacy delivery card |
+| `tests/legacy-delivery-reconciliation.spec.ts` | Legacy delivery historical completion reconciliation |
+| `tests/live-attestation-coverage.spec.ts` | live attestation coverage |
+| `tests/root-finding-release-real-quota.spec.ts` | root finding release real quota |
+| `tests/thread-native-release-lifecycle.spec.ts` | Thread-native review, test, and release handoff lifecycle |
+| `tests/root-advisor-evidence.audit.spec.ts`, `root-advisor-review.audit.spec.ts`, `root-cost-review.audit.spec.ts`, `root-handoff-review.audit.spec.ts`, `root-headless-approval.audit.spec.ts`, `root-headless-legacy-native.audit.spec.ts`, `root-headless-provenance.audit.spec.ts`, `root-history-association.audit.spec.ts`, `root-history-caption.audit.spec.ts`, `root-independent-headless-provenance.audit.spec.ts`, `root-legacy-quality.audit.spec.ts`, `root-legacy.audit.spec.ts`, `root-native-evidence.audit.spec.ts`, `root-opaque-requirement.audit.spec.ts`, `root-quality-r3.audit.spec.ts`, `root-quality-r5-publish.audit.spec.ts`, `root-quality-r7-ordinary.audit.spec.ts`, `root-quality-real-digest.audit.spec.ts`, `root-report-claim-identity.audit.spec.ts`, `root-report-claim-lifecycle.audit.spec.ts`, `root-report-currency.audit.spec.ts`, `root-report-identity.audit.spec.ts`, `root-report-production-lifecycle.audit.spec.ts`, `root-report-provenance.audit.spec.ts`, `root-report-turn-race.audit.spec.ts`, `root-report-unbound.audit.spec.ts`, `root-unbound-thread-handoff.audit.spec.ts` | Independent root-level audit specs for the advisor, handoff, history, legacy, quality, report and native-evidence scopes; each pins one reviewed behavior |
 
 `tests/fixtures/` holds what several tests share: `host.ts`, a simulated DeepSeek Harness host; `panel-server.ts` and `panel.tsx`, the fake management API and the panel around a page; `deployment.ts`, a resolved deployment; `git.ts`, the environment of every git the tests start, which names no repository; and `async.ts`.
 

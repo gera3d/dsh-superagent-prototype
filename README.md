@@ -46,7 +46,7 @@ This server change is independent of the stall guard and does not change live se
 
 ## Development
 
-`pnpm check` runs the typecheck, the tests and the build.
+`pnpm check` runs the typecheck, the tests and the build. Run it on Node 24 or newer: the jsdom specs import `node:sqlite`, which Vite only recognises as a builtin there. The specs that exercise the `dsh-next-steps` plugin run only when that repository is checked out next to this one.
 
 ## License
 

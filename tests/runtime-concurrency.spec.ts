@@ -24,7 +24,7 @@ function holdSession(sessionId: string, gate: Promise<void>) {
 /** The turn of a Session's agent ends, and DSH says so. */
 const idle = (sessionId: string) => {
   const agent = h.agents.get(sessionId)!
-  agent.status = 'idle'
+  agent.status = 'idle'; agent.inbox.nextTurn.length = 0; agent.inbox.nextStep.length = 0
   h.ctx.emit('agent/status', { agent, status: 'idle' } as never)
 }
 
@@ -129,13 +129,13 @@ it('wakes an idle worker for a bot\'s Input only when a worker slot is free, and
   const settings = h.runtime.store.settings()
   h.runtime.store.saveSettings({ ...settings, executor: { ...settings.executor, maxWorkers: 1 } })
   const one = await h.acceptedTicket(feishu('1', '@bot 修一'))
-  h.agents.get(one.sessionId)!.status = 'idle'
+  { const a = h.agents.get(one.sessionId)!; a.status = 'idle'; a.inbox.nextTurn.length = 0; a.inbox.nextStep.length = 0 }
   const two = await h.acceptedTicket(feishu('5', '@bot 修二'))
   expect(h.agents.get(two.sessionId)!.status).toBe('running')
   h.runtime.receive(botMessage()); await h.runtime.idle()
   // Ticket two's worker takes the only slot, so ticket one's Input waits.
   expect(h.runtime.store.tickets.get(one.ticket.id)!.undelivered).toHaveLength(1)
-  h.agents.get(two.sessionId)!.status = 'idle'
+  { const a = h.agents.get(two.sessionId)!; a.status = 'idle'; a.inbox.nextTurn.length = 0; a.inbox.nextStep.length = 0 }
   h.agents.delete(one.sessionId)
   vi.useFakeTimers({ toFake: ['Date'], now: Date.now() + 6000 })
   try { await h.runtime.pump(); await h.runtime.idle() } finally { vi.useRealTimers() }
@@ -147,7 +147,7 @@ it('wakes an idle worker for a person\'s message at once, in the slot kept beyon
   const settings = h.runtime.store.settings()
   h.runtime.store.saveSettings({ ...settings, executor: { ...settings.executor, maxWorkers: 1 } })
   const one = await h.acceptedTicket(feishu('1', '@bot 修一'))
-  h.agents.get(one.sessionId)!.status = 'idle'
+  { const a = h.agents.get(one.sessionId)!; a.status = 'idle'; a.inbox.nextTurn.length = 0; a.inbox.nextStep.length = 0 }
   const two = await h.acceptedTicket(feishu('5', '@bot 修二'))
   expect(h.agents.get(two.sessionId)!.status).toBe('running')
   h.runtime.receive(feishu('2', '一的补充', { mentions: [], root_id: 'om_1', sender_id: 'ou_guest' })); await h.runtime.idle()
@@ -159,7 +159,7 @@ it('counts a launch under way against maxWorkers, so a bot\'s Input for an idle 
   const settings = h.runtime.store.settings()
   h.runtime.store.saveSettings({ ...settings, executor: { ...settings.executor, maxWorkers: 1, prepare: 'make worktree' } })
   const one = await h.acceptedTicket(feishu('1', '@bot 修一'))
-  h.agents.get(one.sessionId)!.status = 'idle'
+  { const a = h.agents.get(one.sessionId)!; a.status = 'idle'; a.inbox.nextTurn.length = 0; a.inbox.nextStep.length = 0 }
   // Ticket two's launch holds the only slot while its prepare command runs, before its worker's Session does.
   const prepare = deferred()
   h.hooks.prepare = prepare.promise
@@ -178,7 +178,7 @@ it('counts a launch under way against maxWorkers, so a bot\'s Input for an idle 
 
 it('records on the ticket that its worker Session could not be created again', async () => {
   const one = await h.acceptedTicket(feishu('1', '@bot 修一'))
-  h.agents.get(one.sessionId)!.status = 'idle'
+  { const a = h.agents.get(one.sessionId)!; a.status = 'idle'; a.inbox.nextTurn.length = 0; a.inbox.nextStep.length = 0 }
   h.agents.delete(one.sessionId)
   h.controller.resolveAgent.mockImplementation(async (id: string) => {
     if (id === one.sessionId) throw new Error('The Session store is offline')
@@ -220,7 +220,7 @@ describe('a worker that goes on after a passing failure', () => {
     try { fail(); fail(); fail(); await vi.advanceTimersByTimeAsync(60_000) } finally { vi.useRealTimers() }
     expect(told(one.sessionId)).toHaveLength(3)
     // Once the resumed turn ends normally, a later passing failure starts a new retry count rather than counting as the fourth in a row.
-    agent.status = 'idle'
+    agent.status = 'idle'; agent.inbox.nextTurn.length = 0; agent.inbox.nextStep.length = 0
     h.ctx.emit('agent/status', { agent, status: 'idle' } as never)
     await vi.waitFor(() => expect(latestAssignment(ticket())?.report?.state).toBe('waiting'))
     fail()
@@ -230,7 +230,7 @@ describe('a worker that goes on after a passing failure', () => {
   it('waits while processing is paused, and goes on once it resumes', async () => {
     const one = await h.acceptedTicket(feishu('1', '@bot 修一'))
     const agent = h.agents.get(one.sessionId)!
-    agent.status = 'idle'
+    agent.status = 'idle'; agent.inbox.nextTurn.length = 0; agent.inbox.nextStep.length = 0
     await h.runtime.settings.pause(true, 'panel')
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     try {
@@ -698,7 +698,7 @@ describe('what a worker read', () => {
     // The process dies: the worker's agent is not loaded when the restart runs, and its inbox, which holds the message,
     // persists for the launch that loads it.
     const agent = h.agents.get(one.sessionId)!
-    h.agents.delete(one.sessionId); agent.status = 'idle'
+    h.agents.delete(one.sessionId); agent.status = 'idle'; agent.inbox.nextTurn.length = 0; agent.inbox.nextStep.length = 0
     h.controller.resolveAgent.mockImplementation(async (id: string) => { if (id === one.sessionId) h.agents.set(id, agent); return h.resolveDefault(id) })
     const waiting: string[][] = [], launch = agent.followup.getMockImplementation()!
     agent.followup.mockImplementation(message => { waiting.push([...agent.inbox.nextTurn, ...agent.inbox.nextStep].map(item => item.id)); launch(message) })
@@ -767,7 +767,7 @@ it('reports nothing for a worker whose turn ends while it waits out the backoff 
   const agent = h.agents.get(one.sessionId)!
   const relayed = h.relays(h.runtime.masterId).length
   h.ctx.emit('agent/error', { agent, turn: 1, step: 1, error: Object.assign(new Error('Service Unavailable'), { status: 503 }) } as never)
-  agent.status = 'idle'
+  agent.status = 'idle'; agent.inbox.nextTurn.length = 0; agent.inbox.nextStep.length = 0
   h.ctx.emit('agent/status', { agent, status: 'idle' } as never)
   await h.runtime.idle()
   await new Promise(resolve => setTimeout(resolve, 20))
@@ -779,7 +779,7 @@ it('wakes an idle worker for a status request in the slot kept for a person, whi
   h.runtime.store.saveSettings({ ...settings, executor: { ...settings.executor, maxWorkers: 1 } })
   const one = await h.acceptedTicket(feishu('1', '@bot 修一'))
   // Its worker ended its turn without a report, so it waits.
-  h.agents.get(one.sessionId)!.status = 'idle'
+  { const a = h.agents.get(one.sessionId)!; a.status = 'idle'; a.inbox.nextTurn.length = 0; a.inbox.nextStep.length = 0 }
   h.ctx.emit('agent/status', { agent: h.agents.get(one.sessionId), status: 'idle' } as never)
   await vi.waitFor(() => expect(latestAssignment(h.runtime.store.tickets.get(one.ticket.id)!)?.report?.state).toBe('waiting'))
   const two = await h.acceptedTicket(feishu('5', '@bot 修二'))
@@ -805,7 +805,7 @@ it('reports a worker waiting when its turn ends after a person answered its bloc
   h.runtime.receive(feishu('2', '蓝色', { mentions: [], root_id: 'om_1' })); await h.runtime.idle()
   const ticket = () => h.runtime.store.tickets.get(one.ticket.id)!
   expect(waitsForPerson(ticket())).toBe(false)
-  h.agents.get(one.sessionId)!.status = 'idle'
+  { const a = h.agents.get(one.sessionId)!; a.status = 'idle'; a.inbox.nextTurn.length = 0; a.inbox.nextStep.length = 0 }
   h.ctx.emit('agent/status', { agent: h.agents.get(one.sessionId), status: 'idle' } as never)
   await vi.waitFor(() => expect(latestAssignment(ticket())?.report?.state).toBe('waiting'))
 })
