@@ -380,6 +380,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/app/tools/main.ts` | The main Session's tools |
 | `src/app/tools/executor.ts` | An Executor Session's tools |
 | `src/app/tools/composio.ts` | Nested Composio result unwrapping, batch result preservation, failure classification, and non-retryable connection error routing |
+| `src/app/tool-output.ts` | Bounds oversized shell and search output in a worker's model context while keeping the complete text in a durable file |
 | `src/app/http.ts` | The `/orchestrator/api` routes: the same-origin check, request limits and one status per kind of failure |
 | `src/app/routes/helper.ts` | Compact Senior Developer suggestion schemas, tool-free drafting and bounded availability fallback through the shared model ladder |
 | `src/app/advice-context.ts` | Bounded recorded release goal, ownership, evidence and permission context shared by drafting, fallback and ranking. |
@@ -508,6 +509,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/quiet-notifications.spec.ts` | Notification quiet mode and sound settings |
 | `tests/stage.spec.ts` | The Ticket stages, row by row |
 | `tests/policy.spec.ts` | Source scope, the gate, the admission table, Mandate revalidation, the Policy version, settings migrations and assessment outcomes |
+| `tests/tool-output.spec.ts` | Oversized shell and search output bounded in the worker's model context with the complete text kept in a durable file |
 | `tests/registry.spec.ts` | `SourceRegistry`: instances, validation, Policy parts, Channels and Thread context |
 | `tests/sources.spec.ts` | The Feishu and GitHub Sources on a `SourceContext`: translation, polls and read positions, the pull request rules, health |
 | `tests/commands.spec.ts` | CLI calls as the deployment's accounts, the Channels' answers, and repository-scoped GitHub calls |
