@@ -1,0 +1,465 @@
+{
+  "observedAt": "2026-11-10T05:52:58.397107+00:00",
+  "native": {
+    "sourceThread": "86635beac41a7b1cb43ddace32aab11d",
+    "refreshedAdvice": "Senior Developer recommends: Accept verified delivery",
+    "actionPerformed": "Confirm: Accept verified delivery",
+    "result": "Delivery Accepted; no repeated Next steps shown",
+    "parentFindingAcceptance": "next action, not yet claimed"
+  },
+  "delivery": {
+    "id": "auto-86635beac41a7b1cb43ddace32aab11d",
+    "title": "Advance review, tests and protected release from the task thread",
+    "owner": "worker:86635beac41a7b1cb43ddace32aab11d",
+    "bindings": {
+      "repository": "gera3d/dsh-superagent-prototype",
+      "sourceIssue": 86,
+      "baseSha": "2599d37dbc29ce701c4e74c5bda0d3832f71398d",
+      "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+      "environment": "installed local Harness superagent",
+      "refs": [
+        {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "pr": 86,
+          "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+          "baseSha": "2599d37dbc29ce701c4e74c5bda0d3832f71398d"
+        }
+      ]
+    },
+    "requirements": [
+      "Read current PROJECT_STATUS and existing delivery/publication/reporting implementation before code. Reproduce actual stuck R3 report using preserved isolated copy only: ticket bf248fd506a78622b524e25caad6a570 assignment055a91d055409049be132ab2b2c89e82. Matching .dsh-report.json and claim exist but no consumed marker. Trace Engine.report answers/person trigger rejection and current turn logic. Do not reopen accepted original job or weaken ticket/assignment/turn/path/timestamp/hash protections, or infer ready from prose.",
+      "Provide compact native actionable review/test/preparation handoff in task thread, bound to exact current artifact/job/revision and recorded authorization. Selecting its action must schedule real existing Harness work and show running/blocked/ready results; a staged prompt or suggestion naming Codex is not a handoff. Reuse delivery coordinator durable outbox/idempotency and existing model routes; no fake notification to another chat.",
+      "Within same approved project scope, connect review/test evidence to exact release preparation. Reuse fixed trusted publication scripts/manifest and supported source PR workflow. No model-supplied arbitrary command execution, arbitrary new target/permissions, auto publication, fabricated pin/test/native evidence or accepting worker prose. If required profile data is absent, expose concrete bounded in-thread preparation with next owner; do not silently pretend automatic execution.",
+      "Preserve protected exact local publish confirmation in thread and retain stale revision/head/patch/scope rejection, duplicate-click safety, durable restart recovery, same original job lineage and rollback. Live checks must honestly distinguish HTTP/build evidence from actual browser acceptance. User must be able to inspect live feature and record genuine acceptance in that same thread without returning to Codex.",
+      "Test full lifecycle at production coordinator/API/native card boundary: ready report -> independent review -> corrections if needed -> targeted tests -> exact release preparation -> native publish confirmation -> actual apply/build/restart/verification -> explicit actual live acceptance -> history/no obsolete next steps. Include negative cases stale/replayed action, changed head/evidence, missing approval/manifest, failed check/rollback, cancelled/ended job and no re-review of completed stages. Preserve prior history/legacy fixtures.",
+      "Commit candidate and test evidence with exact base/head and cumulative patch. Run focused meaningful regression tests, types and build serially. Report what real live test remains for Codex; no broad green or automatic native verification claims. Use bound orchestrator_report transport; if ready commit fails record actual error, never state consumed merely from local file."
+    ],
+    "authorities": [
+      "local-operator"
+    ],
+    "delegatedActions": [
+      "review",
+      "fix",
+      "verify"
+    ],
+    "followFixHeads": false,
+    "authorizedFixScopes": [],
+    "generation": 2,
+    "workers": [
+      "86635beac41a7b1cb43ddace32aab11d"
+    ],
+    "revision": 21,
+    "stage": "accepted",
+    "state": "accepted",
+    "attempts": {
+      "review": 3,
+      "fix": 0,
+      "maxReview": 3,
+      "maxFix": 2
+    },
+    "evidence": [
+      {
+        "id": "implementation:f52e27ae644242eee2e4698e0d107c40f999a80a59db7ced092c3d4510f79cba",
+        "kind": "implementation",
+        "bindings": {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "sourceIssue": 86,
+          "baseSha": "2599d37dbc29ce701c4e74c5bda0d3832f71398d",
+          "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+          "environment": "installed local Harness superagent",
+          "refs": [
+            {
+              "repository": "gera3d/dsh-superagent-prototype",
+              "pr": 86,
+              "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+              "baseSha": "2599d37dbc29ce701c4e74c5bda0d3832f71398d"
+            }
+          ]
+        },
+        "recordedAt": "2026-11-10T04:22:17.526Z",
+        "reference": "ticket/86635beac41a7b1cb43ddace32aab11d/report/387889e30fde71e5ed3d09ed9bc21f4c",
+        "outcome": "passed",
+        "generation": 0
+      },
+      {
+        "id": "implementation:f52e27ae644242eee2e4698e0d107c40f999a80a59db7ced092c3d4510f79cba:target:83d80c8aa6af17cb99127a74bc12d850d9fb4d12",
+        "kind": "implementation",
+        "bindings": {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "sourceIssue": 86,
+          "baseSha": "83d80c8aa6af17cb99127a74bc12d850d9fb4d12",
+          "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+          "environment": "installed local Harness superagent",
+          "refs": [
+            {
+              "repository": "gera3d/dsh-superagent-prototype",
+              "pr": 86,
+              "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+              "baseSha": "83d80c8aa6af17cb99127a74bc12d850d9fb4d12"
+            }
+          ]
+        },
+        "recordedAt": "2026-11-10T04:22:17.526Z",
+        "reference": "ticket/86635beac41a7b1cb43ddace32aab11d/report/387889e30fde71e5ed3d09ed9bc21f4c#target-refresh:83d80c8aa6af17cb99127a74bc12d850d9fb4d12",
+        "outcome": "passed",
+        "generation": 1
+      },
+      {
+        "id": "implementation:f52e27ae644242eee2e4698e0d107c40f999a80a59db7ced092c3d4510f79cba:target:83d80c8aa6af17cb99127a74bc12d850d9fb4d12:target:2599d37dbc29ce701c4e74c5bda0d3832f71398d",
+        "kind": "implementation",
+        "bindings": {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "sourceIssue": 86,
+          "baseSha": "2599d37dbc29ce701c4e74c5bda0d3832f71398d",
+          "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+          "environment": "installed local Harness superagent",
+          "refs": [
+            {
+              "repository": "gera3d/dsh-superagent-prototype",
+              "pr": 86,
+              "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+              "baseSha": "2599d37dbc29ce701c4e74c5bda0d3832f71398d"
+            }
+          ]
+        },
+        "recordedAt": "2026-11-10T04:22:17.526Z",
+        "reference": "ticket/86635beac41a7b1cb43ddace32aab11d/report/387889e30fde71e5ed3d09ed9bc21f4c#target-refresh:83d80c8aa6af17cb99127a74bc12d850d9fb4d12#target-refresh:2599d37dbc29ce701c4e74c5bda0d3832f71398d",
+        "outcome": "passed",
+        "generation": 2
+      },
+      {
+        "id": "independent-review:auto-86635beac41a7b1cb43ddace32aab11d:9:review:41eee39f0ec86c7a",
+        "kind": "review",
+        "bindings": {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "sourceIssue": 86,
+          "baseSha": "2599d37dbc29ce701c4e74c5bda0d3832f71398d",
+          "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+          "environment": "installed local Harness superagent",
+          "refs": [
+            {
+              "repository": "gera3d/dsh-superagent-prototype",
+              "pr": 86,
+              "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+              "baseSha": "2599d37dbc29ce701c4e74c5bda0d3832f71398d"
+            }
+          ]
+        },
+        "recordedAt": "2026-11-10T05:24:17.865Z",
+        "reference": "sqlite:delivery_capability_review/auto-86635beac41a7b1cb43ddace32aab11d%3A9%3Areview%3A41eee39f0ec86c7a",
+        "outcome": "passed",
+        "generation": 2
+      },
+      {
+        "id": "publication:cfa9cf8c-1844-40bf-935f-0bcfd60649ae:2026-11-10T05:28:30.327Z:publication",
+        "kind": "publication",
+        "bindings": {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "sourceIssue": 86,
+          "baseSha": "2599d37dbc29ce701c4e74c5bda0d3832f71398d",
+          "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+          "environment": "installed local Harness superagent",
+          "refs": [
+            {
+              "repository": "gera3d/dsh-superagent-prototype",
+              "pr": 86,
+              "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+              "baseSha": "2599d37dbc29ce701c4e74c5bda0d3832f71398d"
+            }
+          ]
+        },
+        "recordedAt": "2026-11-10T05:28:30.327Z",
+        "reference": "publication:cfa9cf8c-1844-40bf-935f-0bcfd60649ae",
+        "outcome": "passed",
+        "generation": 2
+      },
+      {
+        "id": "publication:cfa9cf8c-1844-40bf-935f-0bcfd60649ae:2026-11-10T05:28:30.327Z:verification",
+        "kind": "verification",
+        "bindings": {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "sourceIssue": 86,
+          "baseSha": "2599d37dbc29ce701c4e74c5bda0d3832f71398d",
+          "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+          "environment": "installed local Harness superagent",
+          "refs": [
+            {
+              "repository": "gera3d/dsh-superagent-prototype",
+              "pr": 86,
+              "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+              "baseSha": "2599d37dbc29ce701c4e74c5bda0d3832f71398d"
+            }
+          ]
+        },
+        "recordedAt": "2026-11-10T05:28:30.260Z",
+        "reference": "publication:cfa9cf8c-1844-40bf-935f-0bcfd60649ae#verify:verify completed for pinned head 41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef; configured HTTP release verification only, browser acceptance not performed",
+        "outcome": "passed",
+        "generation": 2
+      },
+      {
+        "id": "operator-live:auto-86635beac41a7b1cb43ddace32aab11d:18:d084afb6da593d8f",
+        "kind": "verification",
+        "bindings": {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "sourceIssue": 86,
+          "baseSha": "2599d37dbc29ce701c4e74c5bda0d3832f71398d",
+          "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+          "environment": "installed local Harness superagent",
+          "refs": [
+            {
+              "repository": "gera3d/dsh-superagent-prototype",
+              "pr": 86,
+              "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+              "baseSha": "2599d37dbc29ce701c4e74c5bda0d3832f71398d"
+            }
+          ]
+        },
+        "recordedAt": "2026-11-10T05:43:23.059Z",
+        "reference": "https://github.com/gera3d/dsh-superagent-prototype/blob/aeda00a5697ee8366a9561325600e3f1c9198e0e/docs/reviews/thread-handoff-actual-native-flow.md",
+        "outcome": "passed",
+        "requirements": [
+          "Read current PROJECT_STATUS and existing delivery/publication/reporting implementation before code. Reproduce actual stuck R3 report using preserved isolated copy only: ticket bf248fd506a78622b524e25caad6a570 assignment055a91d055409049be132ab2b2c89e82. Matching .dsh-report.json and claim exist but no consumed marker. Trace Engine.report answers/person trigger rejection and current turn logic. Do not reopen accepted original job or weaken ticket/assignment/turn/path/timestamp/hash protections, or infer ready from prose.",
+          "Provide compact native actionable review/test/preparation handoff in task thread, bound to exact current artifact/job/revision and recorded authorization. Selecting its action must schedule real existing Harness work and show running/blocked/ready results; a staged prompt or suggestion naming Codex is not a handoff. Reuse delivery coordinator durable outbox/idempotency and existing model routes; no fake notification to another chat.",
+          "Within same approved project scope, connect review/test evidence to exact release preparation. Reuse fixed trusted publication scripts/manifest and supported source PR workflow. No model-supplied arbitrary command execution, arbitrary new target/permissions, auto publication, fabricated pin/test/native evidence or accepting worker prose. If required profile data is absent, expose concrete bounded in-thread preparation with next owner; do not silently pretend automatic execution.",
+          "Preserve protected exact local publish confirmation in thread and retain stale revision/head/patch/scope rejection, duplicate-click safety, durable restart recovery, same original job lineage and rollback. Live checks must honestly distinguish HTTP/build evidence from actual browser acceptance. User must be able to inspect live feature and record genuine acceptance in that same thread without returning to Codex.",
+          "Test full lifecycle at production coordinator/API/native card boundary: ready report -> independent review -> corrections if needed -> targeted tests -> exact release preparation -> native publish confirmation -> actual apply/build/restart/verification -> explicit actual live acceptance -> history/no obsolete next steps. Include negative cases stale/replayed action, changed head/evidence, missing approval/manifest, failed check/rollback, cancelled/ended job and no re-review of completed stages. Preserve prior history/legacy fixtures.",
+          "Commit candidate and test evidence with exact base/head and cumulative patch. Run focused meaningful regression tests, types and build serially. Report what real live test remains for Codex; no broad green or automatic native verification claims. Use bound orchestrator_report transport; if ready commit fails record actual error, never state consumed merely from local file."
+        ],
+        "generation": 2
+      }
+    ],
+    "audit": [
+      {
+        "at": "2026-11-10T04:35:23.216Z",
+        "event": "tracked-unbound:ac18518bce45449c3e1e99d6fd6ee52a",
+        "actor": "worker:86635beac41a7b1cb43ddace32aab11d"
+      },
+      {
+        "at": "2026-11-10T04:35:23.220Z",
+        "event": "scope-bound:local_operator:orchestrator-http:release:45251448-f4b9-41aa-8886-86ade8950b11:18:1fb2f5394ab99856c3147cd169f2de634a8b965d85c997eb1a213e4a1e79ecd3",
+        "actor": "local-operator"
+      },
+      {
+        "at": "2026-11-10T04:35:23.227Z",
+        "event": "implementation-evidence-recorded",
+        "actor": "worker:86635beac41a7b1cb43ddace32aab11d"
+      },
+      {
+        "at": "2026-11-10T04:35:23.232Z",
+        "event": "confirmed:review:delegation:intake:auto-86635beac41a7b1cb43ddace32aab11d:review",
+        "actor": "local-operator",
+        "actionId": "auto-86635beac41a7b1cb43ddace32aab11d:3:review:60691096cdefaa36"
+      },
+      {
+        "at": "2026-11-10T04:35:25.724Z",
+        "event": "completed:review:uncertain",
+        "actor": "runtime-delivery",
+        "actionId": "auto-86635beac41a7b1cb43ddace32aab11d:3:review:60691096cdefaa36"
+      },
+      {
+        "at": "2026-11-10T05:09:49.788Z",
+        "actor": "local-operator",
+        "event": "target-refresh:2599d37dbc29ce701c4e74c5bda0d3832f71398d:83d80c8aa6af17cb99127a74bc12d850d9fb4d12:orchestrator-http:release:45251448-f4b9-41aa-8886-86ade8950b11:18:prior-blocker:Independent review blocked: review model response incomplete (finish reason: error); no partial result accepted:superseded-read-only:auto-86635beac41a7b1cb43ddace32aab11d:3:review:60691096cdefaa36",
+        "authorization": {
+          "actor": "local-operator",
+          "source": "local_operator",
+          "reference": "orchestrator-http:release:45251448-f4b9-41aa-8886-86ade8950b11:18",
+          "scope": "407e52cdcf9760f972cfcd9d0b830caa7ebe408b2587129218a78e2d90e9aed4"
+        }
+      },
+      {
+        "at": "2026-11-10T05:09:49.795Z",
+        "event": "confirmed:review:delegation:intake:auto-86635beac41a7b1cb43ddace32aab11d:review",
+        "actor": "local-operator",
+        "actionId": "auto-86635beac41a7b1cb43ddace32aab11d:6:review:5d9eff0ba3330b75"
+      },
+      {
+        "at": "2026-11-10T05:09:50.560Z",
+        "event": "completed:review:uncertain",
+        "actor": "runtime-delivery",
+        "actionId": "auto-86635beac41a7b1cb43ddace32aab11d:6:review:5d9eff0ba3330b75"
+      },
+      {
+        "at": "2026-11-10T05:24:04.048Z",
+        "actor": "local-operator",
+        "event": "target-refresh:83d80c8aa6af17cb99127a74bc12d850d9fb4d12:2599d37dbc29ce701c4e74c5bda0d3832f71398d:orchestrator-http:release:45251448-f4b9-41aa-8886-86ade8950b11:18:prior-blocker:Independent review blocked: Stale base fence: gera3d/dsh-superagent-prototype#86:superseded-read-only:auto-86635beac41a7b1cb43ddace32aab11d:6:review:5d9eff0ba3330b75",
+        "authorization": {
+          "actor": "local-operator",
+          "source": "local_operator",
+          "reference": "orchestrator-http:release:45251448-f4b9-41aa-8886-86ade8950b11:18",
+          "scope": "85c023435a6dc883ea6216409ad3ee7202da84bc91175d913d5e471ab01ff394"
+        }
+      },
+      {
+        "at": "2026-11-10T05:24:04.056Z",
+        "event": "confirmed:review:delegation:intake:auto-86635beac41a7b1cb43ddace32aab11d:review",
+        "actor": "local-operator",
+        "actionId": "auto-86635beac41a7b1cb43ddace32aab11d:9:review:41eee39f0ec86c7a"
+      },
+      {
+        "at": "2026-11-10T05:24:17.867Z",
+        "event": "completed:review:passed",
+        "actor": "runtime-delivery",
+        "actionId": "auto-86635beac41a7b1cb43ddace32aab11d:9:review:41eee39f0ec86c7a"
+      },
+      {
+        "at": "2026-11-10T05:25:36.978Z",
+        "event": "prepared-existing-pinned-manifest",
+        "actor": "delivery-runtime"
+      },
+      {
+        "at": "2026-11-10T05:27:12.144Z",
+        "event": "confirmed:publish:local_operator:orchestrator-http:auto-86635beac41a7b1cb43ddace32aab11d:12:auto-86635beac41a7b1cb43ddace32aab11d:12:publish:de9a1a07c954b323",
+        "actor": "local-operator",
+        "actionId": "auto-86635beac41a7b1cb43ddace32aab11d:12:publish:de9a1a07c954b323"
+      },
+      {
+        "at": "2026-11-10T05:27:12.310Z",
+        "event": "completed:publish:pending",
+        "actor": "runtime-delivery",
+        "actionId": "auto-86635beac41a7b1cb43ddace32aab11d:12:publish:de9a1a07c954b323"
+      },
+      {
+        "at": "2026-11-10T05:28:22.165Z",
+        "event": "reconciled:publish:pending",
+        "actor": "runtime-delivery",
+        "actionId": "auto-86635beac41a7b1cb43ddace32aab11d:12:publish:de9a1a07c954b323"
+      },
+      {
+        "at": "2026-11-10T05:29:23.942Z",
+        "event": "reconciled:publish:passed",
+        "actor": "runtime-delivery",
+        "actionId": "auto-86635beac41a7b1cb43ddace32aab11d:12:publish:de9a1a07c954b323"
+      },
+      {
+        "at": "2026-11-10T05:29:23.966Z",
+        "event": "confirmed:verify:delegation:intake:auto-86635beac41a7b1cb43ddace32aab11d:verify",
+        "actor": "local-operator",
+        "actionId": "auto-86635beac41a7b1cb43ddace32aab11d:16:verify:8bc71c5229badb4e"
+      },
+      {
+        "at": "2026-11-10T05:29:23.981Z",
+        "event": "completed:verify:passed",
+        "actor": "runtime-delivery",
+        "actionId": "auto-86635beac41a7b1cb43ddace32aab11d:16:verify:8bc71c5229badb4e"
+      },
+      {
+        "at": "2026-11-10T05:43:23.059Z",
+        "actor": "local-operator",
+        "event": "operator-evidence:c109498d94a8997103c6ec47f9ee725531953ff2be8765c1a98d5004112ed72c:orchestrator-http:live:auto-86635beac41a7b1cb43ddace32aab11d:18"
+      },
+      {
+        "at": "2026-11-10T05:51:54.347Z",
+        "actor": "delivery-coordinator",
+        "event": "recommendation-context-upgrade:{\"disposition\":\"hold\",\"actionId\":\"auto-86635beac41a7b1cb43ddace32aab11d:19:accept:6e613a2715f83e02\",\"fingerprint\":\"6e613a2715f83e02319d64b12bf7f4f0ced3233c12773bd0fe2a5d7e2b4cef70\",\"rationale\":\"Hold: do not recommend accepting yet. The stage owner is recorded operator authority (local-operator), and the delivery owner is worker:86635beac41a7b1cb43ddace32aab11d. proofState is not-required for this accept stage, so there is no publish-pin gate. The base 2599d37d, head 41bae0ab and PR #86 bindings are consistent across the implementation, review, publication and verification evidence. What is supported: the independent review passed at the exact head and patch hash; typecheck, build and the targeted tests/delivery-card.spec.tsx run were recorded as passed; publication was recorded as passed. Gaps: (1) The publication verification evidence says 'configured HTTP release verification only, browser acceptance not performed', and the review lists a limitation of targeted checks only. (2) The only live-acceptance evidence is operator-live at revision 18, whose reference is a repo markdown doc (thread-handoff-actual-native-flow.md) at commit aeda00a. That commit is neither the pinned head nor a recorded operator confirmation, so I cannot distinguish genuine browser acceptance by the operator from worker-authored prose. (3) Nothing supplied shows the required lifecycle and negative-case tests (stale or replayed action, changed head, missing manifest, rollback, cancelled job), the R3 stuck-report reproduction, or the orchestrator_report commit result. I make no claim that any of these ran. Missing evidence: a verifiable operator acceptance record tied to the exact head, plus coverage for those cases. This advice grants no approval; only the exact recorded operator confirmation can accept.\",\"provider\":\"anthropic / claude-sonnet-5-5\",\"recordedAt\":\"2026-11-10T05:43:42.239Z\",\"kind\":\"accept\"}"
+      },
+      {
+        "at": "2026-11-10T05:52:34.253Z",
+        "event": "confirmed:accept:local_operator:orchestrator-http:auto-86635beac41a7b1cb43ddace32aab11d:20:auto-86635beac41a7b1cb43ddace32aab11d:20:accept:6e613a2715f83e02",
+        "actor": "local-operator",
+        "actionId": "auto-86635beac41a7b1cb43ddace32aab11d:20:accept:6e613a2715f83e02"
+      }
+    ],
+    "delegatedScope": "556d1c80266bbe46fcc5b6302d709b75e9024ce2f3045a1e22283d182dc15679",
+    "release": {
+      "findingId": "45251448-f4b9-41aa-8886-86ade8950b11",
+      "findingRevision": 18,
+      "jobId": "finding:45251448-f4b9-41aa-8886-86ade8950b11:r17",
+      "ticketId": "86635beac41a7b1cb43ddace32aab11d",
+      "assignmentId": "387889e30fde71e5ed3d09ed9bc21f4c",
+      "branch": "agent/finding-task-86635beac41a",
+      "prNumber": 86,
+      "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+      "patchSha256": "23a04741687f4b9b91c01e0b7612171a55059e0e9c7f1f7e2666a0a7793f4861",
+      "preparedAt": "2026-11-10T04:35:23.217Z"
+    },
+    "preparedPublication": {
+      "id": "cfa9cf8c-1844-40bf-935f-0bcfd60649ae",
+      "ticketId": "86635beac41a7b1cb43ddace32aab11d",
+      "decisionId": "delivery-phase:auto-86635beac41a7b1cb43ddace32aab11d",
+      "repository": "gera3d/dsh-superagent-prototype",
+      "pr": 86,
+      "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+      "patchSha256": "23a04741687f4b9b91c01e0b7612171a55059e0e9c7f1f7e2666a0a7793f4861",
+      "environment": "installed local Harness superagent",
+      "preparedAt": "2026-11-10T05:25:36.978Z",
+      "scopeSha256": "47a11fc4f4841af3985085145ca8d2d3c7f800dff05c7c73e7c49e994f9957f4",
+      "components": [
+        "dsh-superagent"
+      ],
+      "effects": [
+        "Apply the exact reviewed project patch to the installed dsh-superagent; build with existing dependencies, restart the managed superagent service and verify exact source postimages plus the bound delivery HTTP identity."
+      ],
+      "refs": [
+        {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "pr": 86,
+          "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+          "baseSha": "2599d37dbc29ce701c4e74c5bda0d3832f71398d"
+        }
+      ],
+      "proof": {
+        "observedAt": "2026-11-10T05:25:38.931Z",
+        "status": {
+          "checks": "passed",
+          "review": "approved"
+        },
+        "verified": true,
+        "reviewer": "harness-independent-review",
+        "reportSha256": "019b3ce3733c67f3c833fb9429054d88ba3d23709bc8c7f6cc3356a022ae3e11",
+        "reviewExcerpt": "{\n  \"reviewer\": \"harness-independent-review\",\n  \"evidence\": \"sqlite:delivery_capability_review/auto-86635beac41a7b1cb43ddace32aab11d%3A9%3Areview%3A41eee39f0ec86c7a\",\n  \"recordedAt\": \"2026-11-10T05:24:17.865Z\",\n  \"repository\": \"gera3d/dsh-superagent-prototype\",\n  \"headSha\": \"41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef\",\n  \"patchSha256\": \"23a04741687f4b9b91c01e0b7612171a55059e0e9c7f1f7e2666a0a7793f4861\",\n  \"verdict\": {\n    \"verdict\": \"passed\",\n    \"findings\": [],\n    \"rationale\": \"Batch 1/1 gera3d/dsh-superagent-prototype#86@41bae0ab0297: The diff is a small UI change. While the release package is",
+        "checks": [
+          {
+            "name": "pnpm typecheck",
+            "completedAt": "2026-11-10T05:25:15.378180Z",
+            "reportSha256": "8366207267355d3e3d5bf3bf6e8c94c5f93f6078c34f08973fa2b38cdda6cc92",
+            "excerpt": "$ tsc --noEmit\n"
+          },
+          {
+            "name": "pnpm exec vitest run (targeted: tests/delivery-card.spec.tsx)",
+            "completedAt": "2026-11-10T05:25:21.903870Z",
+            "reportSha256": "b60d7b12f2fbf781a620e32dda7090e35a7a34f79f0083abfdb9b5c5edd6a87f",
+            "excerpt": "\n RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/task-releases/auto-86635beac41a7b1cb43ddace32aab11d-41bae0ab0297-w8rdbL/review-worktree\n\nst"
+          },
+          {
+            "name": "pnpm build",
+            "completedAt": "2026-11-10T05:25:33.010141Z",
+            "reportSha256": "de63bf52f64deccba77f58db842212e95de1a00901b216e059caf04456053c80",
+            "excerpt": "$ tsdown\n\u2139 tsdown v0.22.14 powered by rolldown v1.2.7\n\u2139 config file: /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/task-releases/auto-86635beac41a7b1cb"
+          }
+        ],
+        "limitations": [
+          "Targeted checks only: tests/delivery-card.spec.tsx"
+        ],
+        "counts": {
+          "checks": 3,
+          "limitations": 1
+        }
+      }
+    },
+    "acceptance": {
+      "evidenceIds": [
+        "implementation:f52e27ae644242eee2e4698e0d107c40f999a80a59db7ced092c3d4510f79cba",
+        "implementation:f52e27ae644242eee2e4698e0d107c40f999a80a59db7ced092c3d4510f79cba:target:83d80c8aa6af17cb99127a74bc12d850d9fb4d12",
+        "implementation:f52e27ae644242eee2e4698e0d107c40f999a80a59db7ced092c3d4510f79cba:target:83d80c8aa6af17cb99127a74bc12d850d9fb4d12:target:2599d37dbc29ce701c4e74c5bda0d3832f71398d",
+        "independent-review:auto-86635beac41a7b1cb43ddace32aab11d:9:review:41eee39f0ec86c7a",
+        "publication:cfa9cf8c-1844-40bf-935f-0bcfd60649ae:2026-11-10T05:28:30.327Z:publication",
+        "publication:cfa9cf8c-1844-40bf-935f-0bcfd60649ae:2026-11-10T05:28:30.327Z:verification",
+        "operator-live:auto-86635beac41a7b1cb43ddace32aab11d:18:d084afb6da593d8f"
+      ],
+      "fingerprint": "6e613a2715f83e02319d64b12bf7f4f0ced3233c12773bd0fe2a5d7e2b4cef70",
+      "at": "2026-11-10T05:52:34.253Z",
+      "actor": "local-operator"
+    }
+  },
+  "parentFindingBeforeAcceptance": {
+    "id": "45251448-f4b9-41aa-8886-86ade8950b11",
+    "revision": 18,
+    "state": "blocked",
+    "job": {
+      "id": "finding:45251448-f4b9-41aa-8886-86ade8950b11:r17",
+      "ticketId": "86635beac41a7b1cb43ddace32aab11d",
+      "assignmentId": "387889e30fde71e5ed3d09ed9bc21f4c"
+    }
+  }
+}
