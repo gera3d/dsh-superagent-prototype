@@ -1,0 +1,190 @@
+{
+  "observedAt": "2026-11-10T08:53:15.570103+00:00",
+  "batch": [
+    {
+      "priority": 1,
+      "findingId": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+      "revision": 3,
+      "state": "running",
+      "job": {
+        "id": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r3",
+        "ticketId": "bfa376e3fc52c5fc1d59aa92a5dd7797",
+        "assignmentId": "06af9694edd6dd70ffb10c4536bc89dc"
+      },
+      "currentJobReportCount": 0,
+      "historicalReportCount": 1,
+      "currentJobReportReferences": []
+    },
+    {
+      "priority": 2,
+      "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r1",
+        "ticketId": "81f39e075967b209bb2da33cdeebb9ea",
+        "assignmentId": "b7a29614de084f5006202e2253aecc3f"
+      },
+      "currentJobReportCount": 1,
+      "historicalReportCount": 0,
+      "currentJobReportReferences": [
+        "ticket/81f39e075967b209bb2da33cdeebb9ea/report/b7a29614de084f5006202e2253aecc3f"
+      ]
+    },
+    {
+      "priority": 3,
+      "findingId": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r1",
+        "ticketId": "97dc3af26b0375da5a5d9637272f81dd",
+        "assignmentId": "a4dfdfc44526a097f67a1cdeaf0c5367"
+      },
+      "currentJobReportCount": 1,
+      "historicalReportCount": 0,
+      "currentJobReportReferences": [
+        "ticket/97dc3af26b0375da5a5d9637272f81dd/report/a4dfdfc44526a097f67a1cdeaf0c5367"
+      ]
+    },
+    {
+      "priority": 4,
+      "findingId": "fbd4db89-0485-4e9d-a805-cac220390100",
+      "revision": 3,
+      "state": "blocked",
+      "job": {
+        "id": "finding:fbd4db89-0485-4e9d-a805-cac220390100:r1",
+        "ticketId": "ee96b8e87953f8a1debf4c809dc51a58",
+        "assignmentId": "e7c3e3b506bbeb36ee576236d76a6227"
+      },
+      "currentJobReportCount": 2,
+      "historicalReportCount": 0,
+      "currentJobReportReferences": [
+        "ticket/ee96b8e87953f8a1debf4c809dc51a58/report/e7c3e3b506bbeb36ee576236d76a6227",
+        "ticket/ee96b8e87953f8a1debf4c809dc51a58/report/e7c3e3b506bbeb36ee576236d76a6227"
+      ]
+    },
+    {
+      "priority": 5,
+      "findingId": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r1",
+        "ticketId": "476e0cde1673d0d3278933f87ace6d8f",
+        "assignmentId": "aa513ffbcf8e4f75dceaa9b895132a1e"
+      },
+      "currentJobReportCount": 1,
+      "historicalReportCount": 0,
+      "currentJobReportReferences": [
+        "ticket/476e0cde1673d0d3278933f87ace6d8f/report/aa513ffbcf8e4f75dceaa9b895132a1e"
+      ]
+    },
+    {
+      "priority": 6,
+      "findingId": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:60a99ec9-4328-41c1-93cc-dbbe6569e234:r1",
+        "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+        "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7"
+      },
+      "currentJobReportCount": 1,
+      "historicalReportCount": 0,
+      "currentJobReportReferences": [
+        "ticket/ecc57b7b6ef827705bb7ebe881718a88/report/cfd1d36113d7f3cd3fc2c8d7f639edd7"
+      ]
+    }
+  ],
+  "action": "Priority1 independent exact-head review reproduced the actual corrected-head release-phase blocker and sent same-finding bounded correction through supported MCP retry_scope/confirm.",
+  "review": "overnight-lane1-independent-review.json",
+  "currentCorrection": {
+    "ticketId": "bfa376e3fc52c5fc1d59aa92a5dd7797",
+    "assignmentId": "06af9694edd6dd70ffb10c4536bc89dc",
+    "routes": [
+      {
+        "type": "model/selection",
+        "time": 1794300662458,
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash"
+      },
+      {
+        "type": "request/context",
+        "time": 1794300663126,
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash"
+      },
+      {
+        "type": "model/selection",
+        "time": 1794300663178,
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      },
+      {
+        "type": "request/context",
+        "time": 1794300663392,
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      }
+    ],
+    "ended": null,
+    "ticketStage": "working",
+    "assignmentState": "running",
+    "currentJobReportCount": 0,
+    "providerFallbackReceipt": [
+      {
+        "at": "2026-11-10T08:51:03.173Z",
+        "text": "Fell back to available ladder model (anthropic/claude-sonnet-5-5): LlmError: All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown) (earliest reset in 13305s). Add an account, ."
+      }
+    ]
+  },
+  "otherReviewLimits": "Priorities2/5 ended without structured reports; saved work still needs inspection/recovery, no inference that no code exists. Priorities3/4 source PR92/93 match worker heads, but not independently qualified. Priority6 doc proposal preserved, no closures/actions taken.",
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "paused": false,
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "settingsRevisions": {
+    "executor": 43,
+    "models": 18,
+    "coordination": 3
+  },
+  "OpenAI": "conserved; no observed worker route used OpenAI",
+  "googleReserveAdapterUnchanged": true,
+  "googleFinding": {
+    "state": "blocked",
+    "revision": 4,
+    "job": {
+      "id": "finding:f526782b-1443-4342-b811-3cba5188f455:r3",
+      "ticketId": "26b9ea4d4f5d3728e5eed7c89fa5b6dc",
+      "assignmentId": "c7b90960e755e5ceb6a4323295fe64e0"
+    }
+  },
+  "predecessorHandoffFinding": {
+    "state": "resolved",
+    "revision": 19
+  },
+  "pendingDecisionCoverage": {
+    "count": 9,
+    "ordinaryCount": 2,
+    "choicesSelected": 0
+  },
+  "effects": "No merges, live source edits, deployments, restarts, publication, acceptance, issue closure, taxonomy changes or schedule changes this pass.",
+  "nextOwner": "Harness executes only the priority1 correction; Codex reviews its revised artifact and owns the remaining review/recovery backlog in subsequent bounded passes.",
+  "reconciledAt": "2026-11-10T08:57:02.669016+00:00",
+  "recordPublication": "Checkpoint-only reconciliation; original priority1 r1 ready report is historical, not a current r3 result."
+}
