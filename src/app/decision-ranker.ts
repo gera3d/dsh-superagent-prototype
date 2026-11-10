@@ -98,6 +98,32 @@ export function decisionsRequest(request: DecisionEvaluationRequest, model: stri
   }
 }
 
+/** True for OpenRouter's Decisions API, which takes `state` and a keyed `questions` map instead of `input` and a question list. */
+export const isOpenRouterDecisionsEndpoint = (endpoint: string): boolean => endpoint.includes('/api/alpha/decisions')
+
+/** Request body for OpenRouter's Decisions API (`POST /api/alpha/decisions`): one `choice` question whose criteria are the option ids. */
+export function openRouterDecisionsRequest(request: DecisionEvaluationRequest, model: string) {
+  return {
+    model,
+    state: [
+      'Thread digest and latest agent turn:',
+      request.context.slice(-24_000),
+      '',
+      `Decision question: ${request.question.slice(0, 4_000)}`,
+    ].join('\n').slice(0, DECISIONS_INPUT_LIMIT),
+    questions: {
+      [DECISIONS_QUESTION_NAME]: {
+        type: 'choice' as const,
+        instructions: `${DECISIONS_INSTRUCTIONS}\nGoal: ${request.question.slice(0, 2_000)}`,
+        criteria: Object.fromEntries(request.choices.map(choice => [
+          choice.id,
+          (choice.description ? `${choice.label} — ${choice.description}` : choice.label).slice(0, 4_000),
+        ])),
+      },
+    },
+  }
+}
+
 /** Request body for OpenAI /v1/chat/completions structured decision ranking. */
 export function chatCompletionsDecisionsRequest(request: DecisionEvaluationRequest, model: string) {
   return {
@@ -148,6 +174,7 @@ export function parseDecisionsResponse(payload: unknown, request: DecisionEvalua
   // Accept the documented top-level shape and a single result/output/data wrapper some gateways use.
   const body = root && ('choice' in root || 'probabilities' in root) ? root
     : root && Array.isArray(root.answers) && isRecord(root.answers[0]) ? root.answers[0]
+    : root && isRecord(root.answers) && isRecord(root.answers[DECISIONS_QUESTION_NAME]) ? root.answers[DECISIONS_QUESTION_NAME]
     : root && isRecord(root.result) ? root.result
     : root && isRecord(root.output) ? root.output
     : root && isRecord(root.data) ? root.data : undefined
@@ -212,7 +239,9 @@ export async function callDecisionsApi(request: DecisionEvaluationRequest, setti
   const isChat = options.endpoint.includes('/chat/completions')
   const reqBody = isChat
     ? chatCompletionsDecisionsRequest(request, model)
-    : decisionsRequest(request, model)
+    : isOpenRouterDecisionsEndpoint(options.endpoint)
+      ? openRouterDecisionsRequest(request, model)
+      : decisionsRequest(request, model)
   const response = await send(options.endpoint, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${options.apiKey}` },
