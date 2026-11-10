@@ -552,3 +552,23 @@ it('supersedes older ready evidence when a newer report indicates build failure 
   expect(context).toContain('CANONICAL FINDING REVIEW OBJECTIVE: advance candidate evidence to actual coordinator review and release verification.')
   expect(context).toContain('candidate evidence is awaiting independent review and release by the authorized coordinator')
 })
+it('names the configured native finding control instead of a manual Codex handoff, without granting publish', () => {
+  const t = { ...ticket, id: 'current', ended: { by: 'executor', outcome: 'ready' }, assignments: [{ id: 'a', state: 'ended', report: { state: 'ready', at: '2026-11-10T00:00:00Z', summary: 'Candidate ready' } }] } as unknown as Ticket
+  const f = { id: 'f', revision: 2, state: 'blocked', title: 'Feature', scope: 'Existing feature', owner: 'Harness', kind: 'fix', requirements: ['works'], repository: 'org/source', job: { id: 'j', ticketId: 'current', assignmentId: 'a' }, reports: [{ jobId: 'j', state: 'ready', at: '2026-11-10T00:00:00Z', reference: 'ticket/current/report/a', evidence: 'candidate', nextDecision: 'review' }] } as unknown as import('../src/app/finding.ts').Finding
+  const context = adviceContext(t, undefined, undefined, f, undefined, { findingRelease: true })
+  expect(context).toContain('NATIVE FINDING RELEASE OBJECTIVE')
+  expect(context).toContain('Review, test & prepare release')
+  expect(context).toContain('"nativeFindingRelease":true')
+  expect(context).toContain('Publishing and final live acceptance remain separate exact native confirmations')
+  expect(context).not.toContain('Action capability distinction: no automated notification route to Codex is configured')
+  expect(adviceContext(t, undefined, undefined, f)).not.toContain('NATIVE FINDING RELEASE OBJECTIVE')
+  expect(adviceContext(t, undefined, undefined, { ...f, state: 'resolved' }, undefined, { findingRelease: true })).not.toContain('NATIVE FINDING RELEASE OBJECTIVE')
+})
+it('uses recorded delivery controls and ownership after native release handoff', () => {
+  const d = { ...delivery, scopeBinding: undefined, release: { findingId: 'f', ticketId: 't' }, state: 'blocked', reconciliation: { label: 'Reconcile recorded handoff', revision: 3 } } as unknown as Delivery
+  const context = adviceContext(ticket, d)
+  expect(context).toContain('NATIVE DELIVERY RELEASE OBJECTIVE')
+  expect(context).toContain('no user direction or duplicate job is needed')
+  expect(context).toContain('"label":"Reconcile recorded handoff"')
+  expect(context).not.toContain('requesting root / coordinator review')
+})

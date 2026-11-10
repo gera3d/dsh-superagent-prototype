@@ -90,6 +90,7 @@ const inside = (parent: string, child: string) => child === parent || child.star
 export class FindingRelease {
   private readonly inflight = new Map<string, Promise<unknown>>()
   constructor(private readonly deps: ReleaseDeps) {}
+  configured(): boolean { try { return !!this.deps.profile()?.preset } catch { return false } }
   private exec(): PublicationExecutor { return this.deps.exec ?? executePublicationCommand }
   private async run(profile: ReleaseProfile, exe: string, args: string[], cwd: string, input?: string, extra: { timeoutMs?: number; env?: Record<string, string>; signal?: AbortSignal } = {}): Promise<string> {
     return this.exec()({ executable: exe, args, cwd, timeoutMs: extra.timeoutMs ?? profile.timeoutMs, ...(input ? { input } : {}), ...(extra.env ? { env: extra.env } : {}), ...(extra.signal ? { signal: extra.signal } : {}) })
@@ -241,7 +242,8 @@ export class FindingRelease {
     if (!record || record.verdict?.verdict !== 'passed' || !record.lease || record.lease.id !== reviewId || record.lease.deliveryId !== delivery.id || record.lease.action.kind !== 'review' || record.bindingFingerprint !== fp || deliveryFingerprint(record.lease.bindings) !== fp || record.fingerprint !== deliveryFingerprint({ action: record.lease.action, bindings: record.lease.bindings, deliveryId: delivery.id })) throw blocked('independent review', 'Harness independent review', 'The durable review verdict for the exact head is missing.')
     // 2. Exact artifact re-derived from git; a changed head or patch invalidates the package.
     const c = await this.candidate(ticket, profile)
-    if (c.headSha !== release.headSha || c.patchSha256 !== release.patchSha256 || c.headSha !== delivery.bindings.headSha || c.baseSha !== delivery.bindings.baseSha) throw new DeliveryConflict('The worker artifact changed after review; head or patch no longer matches the reviewed release')
+    if (c.baseSha !== delivery.bindings.baseSha) throw new DeliveryConflict('Target base changed after review. Use Review, test & prepare release in this thread to refresh its pins and review the same artifact. Nothing was published.')
+    if (c.headSha !== release.headSha || c.patchSha256 !== release.patchSha256 || c.headSha !== delivery.bindings.headSha) throw new DeliveryConflict('The worker artifact changed after review; head or patch no longer matches the reviewed release')
     const R = profile.source.repository
     const conflict = this.deps.publicationBusy()
     if (conflict) throw new DeliveryConflict(`A publication is in flight (${conflict}); the shared release manifest cannot be replaced until it settles`)
@@ -338,8 +340,9 @@ export class FindingRelease {
     const deliveryId = `auto-${ticket.id}`
     const prior = store.get(deliveryId)
     if (prior && !prior.scopeBinding) {
-      if (prior.release?.findingId === finding.id && prior.release.jobId === job.id) return prior
-      throw new DeliveryConflict('This ticket already has a delivery bound to another scope; open it from its own thread')
+      if (prior.release?.findingId === finding.id && prior.release.jobId === job.id) {
+        if (!['review', 'ready_to_publish'].includes(prior.stage) || prior.state !== 'blocked' || prior.preparedPublication) return prior
+      } else throw new DeliveryConflict('This ticket already has a delivery bound to another scope; open it from its own thread')
     }
     const profile = this.deps.profile()
     if (!profile) throw new ReleaseBlocked([{ field: 'release profile', owner: 'project release profile (one-time trusted setup)', detail: `No trusted release profile. Create ${PROFILE_FIELDS}.` }])
@@ -348,6 +351,12 @@ export class FindingRelease {
     if (busy) throw new DeliveryConflict(`A publication is in flight (${busy}); the shared release manifest cannot be replaced until it settles`)
     const c = await this.candidate(ticket, profile)
     const pr = await this.sourcePr(profile, c, finding)
+    if (prior && !prior.scopeBinding) {
+      if (prior.release!.headSha !== c.headSha || prior.release!.patchSha256 !== c.patchSha256 || prior.release!.prNumber !== pr) throw new DeliveryConflict('Changed artifact requires its own current ready report; target refresh cannot replace it')
+      if (prior.bindings.baseSha === c.baseSha) return prior
+      const bindings = { ...structuredClone(prior.bindings), baseSha: c.baseSha, refs: prior.bindings.refs?.map(ref => ({ ...ref, baseSha: c.baseSha })) }
+      return store.refreshReleaseTarget(prior.id, prior.revision, bindings, { actor: 'local-operator', source: 'local_operator', reference, scope: deliveryFingerprint({ deliveryId: prior.id, revision: prior.revision, bindings }) })
+    }
     if (!profile.preset) this.writeManifest(profile, c, pr)
     const tracked = prior ?? store.trackUnbound({ ticketId: ticket.id, title: finding.title, owner: `worker:${ticket.id}`, repository: profile.source.repository, sourceIssue: 0, triggerId: ticket.origin.triggerId })
     const input: DeliveryCreate = { id: deliveryId, title: finding.title, owner: tracked.owner,

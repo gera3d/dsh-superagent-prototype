@@ -114,6 +114,15 @@ function retireSupersededProgress(inbox: DecisionInbox, progress: ProgressStore,
 export function reconcileInboxCurrency(inbox: DecisionInbox, deliveries: DeliveryStore, publication?: LifecyclePublication, findings?: FindingStore, progress?: ProgressStore): void {
   const original = inbox.list()
   const recorded = deliveries.list()
+  // The protected native handoff supersedes older generated directions, even when their saved context is nonempty.
+  // Preserve later human turns and every unrelated conversation; never select or send a suggested option.
+  for (const item of original) {
+    if (item.status !== 'pending' || !item.advisor?.key || !item.sessionId || !item.id.startsWith('chat-')
+      || item.question !== 'Choose the next step for this thread' || item.staging || !Number.isFinite(item.createdAt)) continue
+    const owner = recorded.find(d => d.release && d.release.ticketId === workerTicket(item.sessionId!)
+      && item.createdAt <= Date.parse(d.release.preparedAt))
+    if (owner) inbox.invalidate(item, `Native release handoff ${owner.id} owns the next stage. Earlier generated directions are history; use the current delivery control.`)
+  }
   // An accepted delivery is authoritative completion, unlike a worker report, merged PR or resolved finding.
   // Retire only advice from before acceptance. Later user conversations and newly active work remain usable.
   for (const item of original) {

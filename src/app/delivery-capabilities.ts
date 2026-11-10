@@ -81,6 +81,10 @@ async function modelJSONAttempt(deps: DeliveryCapabilityDependencies, system: st
         if (text.length > budget.maxResponseChars) throw new Error(`${budget.label} model response exceeded ${budget.maxResponseChars}-character bound; no partial result accepted`)
       }
       if (chunk.type === 'finish') {
+        // Like the native helper, preserve in-band availability classification. Never expose raw provider error text.
+        if (chunk.reason.kind === 'error' && isModelUnavailable(Object.assign(new Error(chunk.reason.failure.message), chunk.reason.failure))) {
+          throw Object.assign(new Error(`${budget.label} provider is unavailable; no partial result accepted`), { code: 'UNAVAILABLE' })
+        }
         if (chunk.reason.kind !== 'stop') throw new Error(`${budget.label} model response incomplete (finish reason: ${chunk.reason.kind}); no partial result accepted`)
         finished = true
       }

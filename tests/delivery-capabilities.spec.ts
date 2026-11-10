@@ -538,3 +538,25 @@ it('uses the authorized availability ladder for review while conserving OpenAI',
   expect(result.outcome).toBe('passed')
   expect((h.resolve.mock.calls as unknown as [{ provider: string }][]).map(c => c[0].provider)).toEqual(['configured', 'anthropic'])
 })
+it('falls back on an in-band availability failure and discards all partial verdict text', async () => {
+  const h = fixture()
+  store.saveSettings({ models: { hierarchy: [{ provider: 'configured', model: 'executor', starred: true }, { provider: 'openai-codex', model: 'reserved', starred: true }, { provider: 'anthropic', model: 'sonnet', starred: true }], subscriptions: [{ provider: 'openai-codex', status: 'conserved' }] } })
+  h.stream.mockImplementationOnce(async function* () {
+    yield { type: 'text-delta', text: '{"verdict":"failed","findings":[' }
+    yield { type: 'finish', reason: { kind: 'error', failure: { message: 'quota exhausted private provider diagnostic', status: 429 } } }
+  })
+  h.resolve.mockResolvedValueOnce({ provider: 'configured', model: 'executor' }).mockResolvedValueOnce({ provider: 'anthropic', model: 'sonnet' })
+  const result = await h.caps.review!.execute(h.lease())
+  expect(result.outcome).toBe('passed')
+  expect((h.resolve.mock.calls as unknown as [{ provider: string }][]).map(c => c[0].provider)).toEqual(['configured', 'anthropic'])
+  expect(JSON.stringify(result)).not.toContain('private provider diagnostic')
+})
+it('does not turn an ordinary in-band error into availability escalation or expose its text', async () => {
+  const h = fixture()
+  h.stream.mockImplementationOnce(async function* () { yield { type: 'finish', reason: { kind: 'error', failure: { message: 'private unexpected provider detail', status: 400 } } } })
+  const result = await h.caps.review!.execute(h.lease())
+  expect(result.outcome).toBe('uncertain')
+  expect(result.blocker).toContain('finish reason: error')
+  expect(result.blocker).not.toContain('private unexpected')
+  expect(h.resolve).toHaveBeenCalledTimes(1)
+})

@@ -305,7 +305,7 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
       || runtime.findings.store.list().find(f => f.job?.ticketId === ticket.id || f.priorJobs?.some(pj => pj.ticketId === ticket.id) || f.sessionId === sessionId)
     ) : (sessionId && runtime.findings?.store ? runtime.findings.store.list().find(f => f.sessionId === sessionId) : undefined)
     const persona = effectiveAdvisorCharacter(store.settings())
-    return adviceContext(ticket, proof && delivery && prepared ? { ...delivery, preparedPublication: { ...prepared, proof } } : delivery, ticket ? progress().current(ticket.id) : undefined, finding, persona)
+    return adviceContext(ticket, proof && delivery && prepared ? { ...delivery, preparedPublication: { ...prepared, proof } } : delivery, ticket ? progress().current(ticket.id) : undefined, finding, persona, { findingRelease: runtime.release?.configured?.() ?? false })
   }
   return {
     'GET state': () => stateView(runtime),
