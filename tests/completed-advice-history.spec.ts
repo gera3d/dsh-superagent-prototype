@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { afterEach, describe, expect, it } from 'vitest'
 import { DatabaseSync } from 'node:sqlite'
 import { FindingStore, projectFindings } from '../src/app/finding.ts'
@@ -584,8 +585,9 @@ describe('Completed advice history projection', () => {
     expect(decisionInHistory(projectedCard)).toBe(false)
   })
 
-  it('correctly projects live orchestrator.sqlite decisions: 12 completed cards become history, leaving 4 pending without mutating storage', () => {
-    const liveDbPath = '/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/orchestrator.sqlite'
+  // Reads the operator's real database; only meaningful on the machine that has it.
+  const liveDbPath = process.env.DSH_LIVE_ORCHESTRATOR_DB ?? '/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/orchestrator.sqlite'
+  it.skipIf(!existsSync(liveDbPath))('correctly projects live orchestrator.sqlite decisions: 12 completed cards become history, leaving 4 pending without mutating storage', () => {
     const db = new DatabaseSync(liveDbPath, { readOnly: true })
     dbs.push(db)
 

@@ -58,6 +58,7 @@ export const PRESET_FIELDS = 'release-profile.json: preset.{pythonPath,pnpmPath,
 /** Exact profile field names an operator must set; shown in-thread when absent. */
 export const PROFILE_FIELDS = 'release-profile.json: source.{repository,baseBranch,checkoutPath,remoteUrl}, ghPath, gitPath, cwd, patchDir, environment, components, effects, scripts.{apply,build,restart,verify,rollback}'
 
+/** Raised when a release cannot proceed; carries the blocking reason as a delivery conflict. */
 export class ReleaseBlocked extends DeliveryConflict {
   constructor(readonly missing: { field: string; owner: string; detail: string }[]) { super(`Release preparation cannot start: ${missing.map(m => `${m.field}: ${m.detail}`).join(' | ')}`) }
 }

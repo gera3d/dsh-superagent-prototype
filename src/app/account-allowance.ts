@@ -297,6 +297,7 @@ export function parseAccountAllowance(rawJson: string, now: number = Date.now())
   }
 }
 
+/** Reads the current subscription allowance of an account through the configured provider adapters. */
 export class AccountAllowanceReader {
   private cache: { report: AccountAllowanceReport; cachedAt: number } | undefined
   private inFlight: Promise<AccountAllowanceReport> | undefined

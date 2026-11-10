@@ -19,6 +19,13 @@
     ],
     "jsx": "react-jsx"
   },
+  "exclude": [
+    "node_modules",
+    "lib",
+    "tests/canonical-next-steps.spec.ts",
+    "tests/specialist-integration.spec.ts",
+    "tests/inline-decision.spec.tsx"
+  ],
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",

@@ -107,6 +107,7 @@ export function getOperatorExecutionApproval(finding: Finding): OperatorExecutio
   return approval
 }
 
+/** Durable store of findings: intake, observation provenance, advice, triage, review and revision-bound evidence. */
 export class FindingStore {
   private depth = 0
   constructor(readonly db: DatabaseSync) {

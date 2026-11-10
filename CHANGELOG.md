@@ -4,6 +4,28 @@ This changelog tracks all custom features, architectural enhancements, and upstr
 
 ---
 
+## Unreleased — 2026-11-10
+
+### Added
+- **Thread-native review/test/release handoff**: a finding's source thread can schedule independent review, targeted tests, release preparation and protected publication; evidence and final acceptance stay separate protected steps (PR86, PR89, PR90).
+- **Legacy delivery reconciliation**: historical deliveries completed by a later release are shown as completed history, with original pins and evidence preserved (PR80).
+- **Completed-advice history**: finished recommendation cards move to history and no longer appear as pending decisions (PR77, PR78).
+- **Cost-summary correctness**: completed-job usage summaries attribute actual routes and token buckets and report unavailable cost honestly (PR79).
+- **GitHub API quota handling**: GitHub polling stops on a quota response and resumes at the server-provided deadline (PR82).
+- **MCP approved-retry transport** for the headless coordination service (PR91).
+- **Independent-review recovery** when the implementation worker has ended (PR96).
+- CI workflow running `pnpm check` on Node 24.
+
+### Fixed
+- Tests no longer depend on a sibling `dsh-next-steps` checkout or on the operator's live database; the plugin-dependent specs run only when the plugin repository is checked out next to this one.
+- Worker prompt is back under its length limit; architecture tables, class documentation and a document link are consistent again.
+- Test fixtures drain the simulated agent inbox when a worker turn ends, as DSH does.
+
+### Notes
+- Tests require Node 24 or newer (`node:sqlite` in the jsdom specs). Production code is unchanged by this entry's fixes.
+- `package.json` version aligned with the changelog (0.2.0).
+
+
 ## Cursor activity UI — 2026-11-03
 
 - Repo-owned native overlay replaces the untracked sibling prototype.
