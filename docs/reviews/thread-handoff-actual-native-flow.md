@@ -16,3 +16,7 @@ The original r17 thread has now driven PR86 through independent Sonnet review, s
 ## Limits
 
 This is a bounded real-thread qualification, not proof that every future model answer or task will succeed. A code-review failure for an ended implementation owner still requires explicit bounded correction, and Google first-response integration is not certified by this Sonnet run. Ordinary recommendation clicks still stage a reply; the actual typed native release controls perform the release work. No new account, permissions, credentials, routes or spending were added.
+
+## Final native form blocker discovered before acceptance
+
+The real evidence click returned400 Invalid settings for requirement0 and4. The live form correctly sent their exact saved text, but the HTTP route allowed only500 characters while Finding intake permits16,384. No evidence or acceptance was recorded by the rejected request. A narrow schema alignment retains the64KiB request envelope, exact requirement-subset matching, revision/local-browser authority, HTTPS provenance and separate protected acceptance. The new production-HTTP regression failed with that exact400 before the change, then passed at16,384 characters; unknown requirements,17k text, missing local authority and stale replay still reject.64 related HTTP/handoff/delivery tests pass; final types/build and guarded installation are pending at this checkpoint.
