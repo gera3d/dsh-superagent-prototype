@@ -15,8 +15,8 @@ function listener(directory: string | undefined) {
   let handler: Handler | undefined
   const dispose = installOutputBound({ ctx: { on: (_event: string, fn: Handler) => { handler = fn; return () => {} } } } as never, () => directory)
   expect(typeof dispose).toBe('function')
-  return (name: string, text: string, decision: unknown = { kind: 'accept' }, blocks?: unknown[]) => handler!({ name, callId: 'call_1:x' },
-    { isError: false, content: blocks ?? [{ type: 'text', text }] }, async () => decision)
+  return (name: string, text: string, decision: unknown = { kind: 'accept' }, blocks?: unknown[], isError = false) => handler!({ name, callId: 'call_1:x' },
+    { isError, content: blocks ?? [{ type: 'text', text }] }, async () => decision)
 }
 const numbered = (count: number, width = 20) => Array.from({ length: count }, (_, i) => `line ${i + 1} ${'x'.repeat(width)}`).join('\n')
 
@@ -61,7 +61,7 @@ it('saves the complete text and replaces only an oversized bounded tool result',
   const dir = temp(), run = listener(dir), text = `${numbered(1500)}\n[exit code: 0]`
   const decision = await run('bash', text)
   const [file] = readdirSync(join(dir, OUTPUT_DIRECTORY))
-  expect(file).toBe(outputFileName('call_1:x', 'bash'))
+  expect(file).toBe(outputFileName({ callId: 'call_1:x', tool: 'bash' }, text))
   expect(readFileSync(join(dir, OUTPUT_DIRECTORY, file!), 'utf8')).toBe(text)
   expect(decision.kind).toBe('accept')
   expect(decision.content![0]!.text).toContain(join(dir, OUTPUT_DIRECTORY, file!))
@@ -74,6 +74,9 @@ it('saves the complete text and replaces only an oversized bounded tool result',
   expect(await run('bash', text, blocked)).toBe(blocked)
   const image = [{ type: 'text', text }, { type: 'image', path: '/i.png' }]
   expect(await run('bash', text, { kind: 'accept' }, image)).toEqual({ kind: 'accept' })
+  expect(readdirSync(join(dir, OUTPUT_DIRECTORY))).toHaveLength(1)
+  // A result that reports an error is never bounded, nor saved.
+  expect(await run('bash', text, { kind: 'accept' }, undefined, true)).toEqual({ kind: 'accept' })
   expect(readdirSync(join(dir, OUTPUT_DIRECTORY))).toHaveLength(1)
 })
 
@@ -93,4 +96,29 @@ it('leaves the original output visible when the full text cannot be saved or has
 
 it('bounds shell, job and search output only', () => {
   expect([...BOUNDED_TOOLS].sort()).toEqual(['bash', 'glob', 'grep', 'job_list', 'job_output', 'pwsh'])
+})
+
+it('keeps the limits and the end of the text for any mix of long lines, wide characters and long pointers', () => {
+  let seed = 7
+  const next = () => (seed = (seed * 48271) % 2147483647) / 2147483647
+  const pick = <T>(items: T[]) => items[Math.floor(next() * items.length)]!
+  for (let round = 0; round < 400; round++) {
+    const unit = pick(['x', '错', '😀', 'ab '])
+    const body = Array.from({ length: pick([2, 60, 99, 100, 101, 400]) }, () => unit.repeat(Math.floor(next() ** 3 * pick([5, 80, 400, 6000]))))
+    const status = pick(['[exit code: 0]', '[status: failed, exit code: 137]', `${'x'.repeat(500)} [exit code: 1]`])
+    const text = `${body.join('\n')}\n${status}`, pointer = `/${'p'.repeat(pick([10, 200, 900]))}.txt`
+    const bounded = boundOutput(text, pointer)
+    if (text.split('\n').length <= OUTPUT_LINES && bytes(text) <= OUTPUT_BYTES) { expect(bounded).toBe(text); continue }
+    expect(bytes(bounded)).toBeLessThanOrEqual(OUTPUT_BYTES)
+    expect(bounded.split('\n').length).toBeLessThanOrEqual(OUTPUT_LINES)
+    expect(bounded).toContain(pointer)
+    expect(bounded.endsWith(status.slice(-100))).toBe(true)
+    expect(bounded).not.toMatch(/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/)
+  }
+})
+
+it('keeps the status that ends one very long last line', () => {
+  const bounded = boundOutput(`${numbered(300)}\n${'z'.repeat(9000)} [status: completed, exit code: 4]`, '/f')
+  expect(bytes(bounded)).toBeLessThanOrEqual(OUTPUT_BYTES)
+  expect(bounded.endsWith('[status: completed, exit code: 4]')).toBe(true)
 })
