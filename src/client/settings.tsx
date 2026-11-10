@@ -2,6 +2,7 @@
 import type { StateView } from './api.ts'
 import { CharactersSettings } from './characters.tsx'
 import { DeploymentPage, type DeploymentForm } from './deployment.tsx'
+import { DecisionsSettings } from './decisions-settings.tsx'
 import { EvalSettings } from './eval.tsx'
 import { ExecutionSettings } from './execution.tsx'
 import { PromptsPage } from './prompts.tsx'
@@ -23,6 +24,7 @@ export function SettingsPage({ group, query, state, deploymentForm }: {
       case 'execution': return <SettingsProvider><ExecutionSettings /></SettingsProvider>
       case 'characters': return <SettingsProvider><CharactersSettings /></SettingsProvider>
       case 'prompts': return <PromptsPage />
+      case 'decisions': return <SettingsProvider><DecisionsSettings /></SettingsProvider>
       case 'branding': return <SettingsProvider><BrandingSettings /></SettingsProvider>
       case 'deployment': return <DeploymentPage setup={state.setup} form={deploymentForm} />
     }
