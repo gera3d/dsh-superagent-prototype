@@ -1,0 +1,223 @@
+{
+  "observedAt": "2026-11-10T13:04:08.605084+00:00",
+  "stage": "Reviewed, native qualified, merged, deployed, installed/native verified and separately protected-accepted for bounded priority1.",
+  "batch": [
+    {
+      "priority": 1,
+      "findingId": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+      "revision": 13,
+      "state": "resolved",
+      "job": {
+        "id": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r11",
+        "ticketId": "c22796a56c57b96f120a42ec4db17cdd",
+        "assignmentId": "73ee3ed17d4e4ec88b75f61e228aa1c1"
+      }
+    },
+    {
+      "priority": 2,
+      "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r1",
+        "ticketId": "81f39e075967b209bb2da33cdeebb9ea",
+        "assignmentId": "b7a29614de084f5006202e2253aecc3f"
+      }
+    },
+    {
+      "priority": 3,
+      "findingId": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r1",
+        "ticketId": "97dc3af26b0375da5a5d9637272f81dd",
+        "assignmentId": "a4dfdfc44526a097f67a1cdeaf0c5367"
+      }
+    },
+    {
+      "priority": 4,
+      "findingId": "fbd4db89-0485-4e9d-a805-cac220390100",
+      "revision": 3,
+      "state": "blocked",
+      "job": {
+        "id": "finding:fbd4db89-0485-4e9d-a805-cac220390100:r1",
+        "ticketId": "ee96b8e87953f8a1debf4c809dc51a58",
+        "assignmentId": "e7c3e3b506bbeb36ee576236d76a6227"
+      }
+    },
+    {
+      "priority": 5,
+      "findingId": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r1",
+        "ticketId": "476e0cde1673d0d3278933f87ace6d8f",
+        "assignmentId": "aa513ffbcf8e4f75dceaa9b895132a1e"
+      }
+    },
+    {
+      "priority": 6,
+      "findingId": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:60a99ec9-4328-41c1-93cc-dbbe6569e234:r1",
+        "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+        "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7"
+      }
+    }
+  ],
+  "sourcePr": 96,
+  "reviewedHead": "dd8072688b068c2b4fe4ee9600c62c4e3a8c1722",
+  "mergeCommit": "7d6d4927628b6ae62fc78fdb5c2c057249c5ff61",
+  "patchSha256": "f09b1da6692743423fd668eab83498cf02b106e957eac258be99d8fc2fb0fca8",
+  "delivery": {
+    "id": "auto-c22796a56c57b96f120a42ec4db17cdd",
+    "revision": 15,
+    "state": "accepted",
+    "stage": "accepted",
+    "release": {
+      "findingId": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+      "findingRevision": 12,
+      "jobId": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r11",
+      "ticketId": "c22796a56c57b96f120a42ec4db17cdd",
+      "assignmentId": "73ee3ed17d4e4ec88b75f61e228aa1c1",
+      "branch": "agent/finding-task-c22796a56c57",
+      "prNumber": 96,
+      "headSha": "dd8072688b068c2b4fe4ee9600c62c4e3a8c1722",
+      "patchSha256": "f09b1da6692743423fd668eab83498cf02b106e957eac258be99d8fc2fb0fca8",
+      "preparedAt": "2026-11-10T12:45:57.308Z"
+    },
+    "acceptance": {
+      "evidenceIds": [
+        "implementation:ec5934698d28b6eb37f785f36fa349f6bb74c6900ae61cf02160dcd96f9269df",
+        "independent-review:auto-c22796a56c57b96f120a42ec4db17cdd:3:review:040556c3d93b3f75",
+        "publication:4f856fae-a492-4874-86bf-9a477d572d62:2026-11-10T12:52:16.126Z:publication",
+        "publication:4f856fae-a492-4874-86bf-9a477d572d62:2026-11-10T12:52:16.126Z:verification",
+        "operator-live:auto-c22796a56c57b96f120a42ec4db17cdd:13:719e83ff3efc235d"
+      ],
+      "fingerprint": "d2e915876ad33f577f250219a709295270abd92cee4beae888c03a1f92347c1f",
+      "at": "2026-11-10T12:58:31.395Z",
+      "actor": "local-operator"
+    },
+    "nextAction": null
+  },
+  "finding": {
+    "id": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+    "revision": 13,
+    "state": "resolved",
+    "job": {
+      "id": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r11",
+      "ticketId": "c22796a56c57b96f120a42ec4db17cdd",
+      "assignmentId": "73ee3ed17d4e4ec88b75f61e228aa1c1"
+    },
+    "resolution": {
+      "outcome": "verified",
+      "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/c2cf18f/docs/evidence/overnight-lane1-r11-deployed-verified.json",
+      "requirements": [
+        "Bind correction to exact current failed independent-review evidence, original approved scope, delivery generation and source heads.",
+        "Route correction to one safely admitted new bounded assignment when original worker has ended; do not reopen ended workers or alter user-stopped mandates.",
+        "Prove rejection -> correction -> new ready evidence -> independent re-review; preserve explicit missing-authority blockers.",
+        "Cover restart, duplicate dispatch, stale review/head/generation, ambiguous ownership and no publication/acceptance bypass.",
+        "Return an isolated reviewable implementation and focused meaningful integration checks; preserve current working handoff.",
+        "Keep OpenAI conserved and the5%Google reserve, existing max3/cooldowns/routes and every protected approval gate unchanged."
+      ],
+      "at": "2026-11-10T13:01:34.667Z",
+      "actor": "local-operator",
+      "jobId": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r11"
+    }
+  },
+  "findingFinalAudit": [
+    {
+      "event": "review_required",
+      "actor": "worker:c22796a56c57b96f120a42ec4db17cdd",
+      "at": "2026-11-10T11:57:41.318Z",
+      "detail": "ready"
+    },
+    {
+      "event": "evidence_reported",
+      "actor": "local-operator",
+      "at": "2026-11-10T13:00:23.587Z",
+      "detail": "https://github.com/gera3d/dsh-superagent-prototype/blob/c2cf18f/docs/evidence/overnight-lane1-r11-deployed-verified.json"
+    },
+    {
+      "event": "requirements_verified",
+      "actor": "local-operator",
+      "at": "2026-11-10T13:01:34.667Z",
+      "detail": "https://github.com/gera3d/dsh-superagent-prototype/blob/c2cf18f/docs/evidence/overnight-lane1-r11-deployed-verified.json"
+    },
+    {
+      "event": "reviewed",
+      "actor": "local-operator",
+      "at": "2026-11-10T13:01:34.668Z",
+      "detail": "{\"revision\":13,\"decision\":\"accept_evidence\",\"evidenceReference\":\"https://github.com/gera3d/dsh-superagent-prototype/blob/c2cf18f/docs/evidence/overnight-lane1-r11-deployed-verified.json\",\"requirements\":[\"Bind correction to exact current failed independent-review evidence, original approved scope, delivery generation and source heads.\",\"Route correction to one safely admitted new bounded assignment when original worker has ended; do not reopen ended workers or alter user-stopped mandates.\",\"Prove rejection -> correction -> new ready evidence -> independent re-review; preserve explicit missing-authority blockers.\",\"Cover restart, duplicate dispatch, stale review/head/generation, ambiguous ownership and no publication/acceptance bypass.\",\"Return an isolated reviewable implementation and focused meaningful integration checks; preserve current working handoff.\",\"Keep OpenAI conserved and the5%Google reserve, existing max3/cooldowns/routes and every protected approval gate unchanged.\"],\"outcome\":\"verified\"}"
+    }
+  ],
+  "operatorEvidence": [
+    {
+      "id": "operator-live:auto-c22796a56c57b96f120a42ec4db17cdd:13:719e83ff3efc235d",
+      "kind": "verification",
+      "outcome": "passed",
+      "reference": "https://github.com/gera3d/dsh-superagent-prototype/blob/c2cf18f/docs/evidence/overnight-lane1-r11-deployed-verified.json",
+      "recordedAt": "2026-11-10T12:57:52.523Z",
+      "coveredRequirements": null,
+      "bindings": {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "sourceIssue": 96,
+        "baseSha": "73f8e14225bbc12bb47e38fe897c625260cbfa50",
+        "headSha": "dd8072688b068c2b4fe4ee9600c62c4e3a8c1722",
+        "environment": "installed local Harness superagent",
+        "refs": [
+          {
+            "repository": "gera3d/dsh-superagent-prototype",
+            "pr": 96,
+            "headSha": "dd8072688b068c2b4fe4ee9600c62c4e3a8c1722",
+            "baseSha": "73f8e14225bbc12bb47e38fe897c625260cbfa50"
+          }
+        ]
+      }
+    }
+  ],
+  "nativeFinalObservation": "Actual source thread after server-confirmed separate acceptance shows Delivery Accepted / Finding Resolved. No Suggested next steps container or repeat confirmation. Original worker report/prose and failed attempts preserved as history.",
+  "localNativeScreenshot": {
+    "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/coordinator/lane1-r11-native-accepted.png",
+    "sha256": "d510482b4a3a874c60d2cf9d0219b00776842a8e37af2cede0facdf9195fe737"
+  },
+  "deploymentEvidence": "overnight-lane1-r11-deployed-verified.json at immutable report commit c2cf18f;10installed source/test postimages,28built assets, rollback preimages,5successful publication stages, actual source-thread controls.",
+  "qualifiedChecks": "58targeted capability/package tests +types+build from native exact-task qualifier; installed publication build/targeted checks also passed. No broad-suite claim.",
+  "scopeLimits": "Native review/test/package/protected Publish/deploy/operator evidence/Accept flow was exercised in actual source thread. Correction-specific rejection/successor/re-review/replay/stale/capacity behaviors were verified in controlled production-runtime integration fixtures on qualified and installed source, not by newly inducing a live failed-review worker. Coordinator staging/recovery and native clicks are recorded, not unattended-success proof. Only priority1 accepted; remaining5 not accepted/deployed by this pass. Prior PR94/95 rejected deliveries/jobs/history unchanged. No ordinary choice, issueclosure, taxonomy change or stored advice retirement.",
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "paused": false,
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "settingsRevisions": {
+    "executor": 43,
+    "models": 18,
+    "coordination": 3
+  },
+  "openaiStatus": "conserved",
+  "providerAndAuthority": "OpenAI conserved, max3 and Google5%reserve unchanged. No credentials/accounts/routes/settings/capacity/spending/schedule change or forced Google qualification. Google qualification remains separate and unqualified. Genuine exact native controls were used; no direct DB writes or fabricated header confirmations.",
+  "pendingDecisionMetadata": {
+    "returnedItems": 679,
+    "pendingItems": 10,
+    "choicesSelected": 0,
+    "coverage": "Metadata count only; no recommendation or user option selected. Returned endpoint includes history; not all returned items are pending."
+  },
+  "nextOwner": "Codex independent review of ready context-efficiency candidate PR92/head9a16934 next; then remaining sections review, Composio/diagnostics saved-work recovery and historical-map external-evidence audit. Existing approved scope remains; no new user reauthorization needed for those routine stages."
+}
