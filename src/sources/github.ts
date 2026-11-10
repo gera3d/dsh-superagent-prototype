@@ -162,7 +162,8 @@ const newRound = (signal?: AbortSignal): Round => ({ started: new Date().toISOSt
   failures: [], dropped: [], abandoned: [], tally: { skipped: 0 } })
 /** Remembers the first quota response of a round so the poller can cool down instead of retrying at the normal pace. */
 const limited = (round: Round, error: unknown): void => { if (error instanceof CliError && error.rate) round.rate ??= error.rate }
-const stopped = (ctx: SourceContext, round: Round): boolean => !!round.signal?.aborted || !ctx.config(SOURCE)
+/** A quota response is account-wide, so it also stops the round: further reads would only fail, and unadvanced cursors retry after the cooldown. */
+const stopped = (ctx: SourceContext, round: Round): boolean => !!round.signal?.aborted || !ctx.config(SOURCE) || !!round.rate
 export interface Retry { since: string; pr: boolean; failedAt?: string; attempts?: number }
 const RETRY_WINDOW_MS = 24 * 3600_000
 /** True when GitHub returns HTTP 410 (Gone); HTTP 404 is retried because it can indicate revoked access to a private repository. */
@@ -194,7 +195,7 @@ async function pollRepository(ctx: SourceContext, round: Round): Promise<void> {
     if (stopped(ctx, round)) return
     if (!stream.observed(config)) { ctx.state.set(KV.github.stream(stream.id), undefined); continue }
     try { await readStream(ctx, round, stream.id, stream.path, config) }
-    catch (error) { if (!stopped(ctx, round)) { round.failures.push(`${stream.id}: ${String(error)}`); limited(round, error) } }
+    catch (error) { limited(round, error); if (!stopped(ctx, round)) round.failures.push(`${stream.id}: ${String(error)}`) }
   }
   // When CI observation is turned off, clear the failure baseline but preserve the revision counter so future triggers have unique IDs.
   if (!config.observeCi) {
@@ -203,7 +204,7 @@ async function pollRepository(ctx: SourceContext, round: Round): Promise<void> {
     return
   }
   try { await pollBranchCi(ctx, round) }
-  catch (error) { if (!stopped(ctx, round)) { round.failures.push(`default branch CI: ${String(error)}`); limited(round, error) } }
+  catch (error) { limited(round, error); if (!stopped(ctx, round)) round.failures.push(`default branch CI: ${String(error)}`) }
 }
 /**
  * Polls one repository-wide event stream (oldest first) since its cursor and steps the cursor to five seconds before the
@@ -291,12 +292,13 @@ async function pollBranchCi(ctx: SourceContext, round: Round): Promise<void> {
 export async function pollRound(ctx: SourceContext, signal?: AbortSignal): Promise<number> {
   const round = newRound(signal)
   const notified = await pollNotifications(ctx, round).then(value => ({ value }), (error: unknown) => ({ error }))
-  await pollRepository(ctx, round)
+  if (!(('error' in notified) && (limited(round, notified.error), round.rate))) await pollRepository(ctx, round)
   await pollTicketPulls(ctx, signal, round)
   await pollThreads(ctx, signal, round)
   if ('error' in notified) { limited(round, notified.error); throw notified.error }
   const { count, interval } = notified.value
   if (signal?.aborted) return interval
+  if (round.rate) throw new CliError('GitHub rate limit reached', undefined, undefined, round.rate)
   if (round.failures.length) throw new CliError(`${round.failures.length} GitHub reads failed: ${round.failures.slice(0, 3).join('; ')}`, undefined, undefined, round.rate)
   const named = (numbers: number[]) => [...new Set(numbers)].sort((a, b) => a - b).map(number => `#${number}`).join(', ')
   const dropped = (round.dropped.length ? `; deleted on GitHub: ${named(round.dropped)}` : '')
@@ -421,7 +423,7 @@ export async function pollTicketPulls(ctx: SourceContext, signal?: AbortSignal, 
     try {
       const pr = await pull(ctx, round, number)
       if (pr.state !== 'closed' && !pr.merged) await pollChecks(ctx, round, number, pr)
-    } catch (error) { if (!stopped(ctx, round)) failed(ctx, round, number, error) }
+    } catch (error) { limited(round, error); if (!stopped(ctx, round)) failed(ctx, round, number, error) }
   }
 }
 /** Polls a PR's CI checks; only changes after the first baseline observation become Triggers. */
@@ -444,6 +446,7 @@ export async function pollThreads(ctx: SourceContext, signal?: AbortSignal, roun
   await pollEach(ctx, SOURCE, () => stopped(ctx, round), async thread => {
     try { await pollThread(ctx, round, thread) }
     catch (error) {
+      limited(round, error)
       if (stopped(ctx, round)) throw error
       if (deleted(error)) round.dropped.push(Number(thread.ref.id)); else round.failures.push(`${thread.key}: ${String(error)}`)
       throw error
