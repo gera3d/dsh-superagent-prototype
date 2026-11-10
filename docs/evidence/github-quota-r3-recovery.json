@@ -1,0 +1,24 @@
+{
+  "recordedAt": "2026-11-10T02:54:07.885569+00:00",
+  "findingId": "f1e35ba6-697e-4f1c-8502-329c16112ac8",
+  "revision": 3,
+  "state": "running",
+  "ticketId": "eaf4c1a3eb9c8867f24c372d9738626d",
+  "assignmentId": "62ea2e21c7408c026ecf16a05f7a52c4",
+  "previous": {
+    "ticketId": "9f9ecf860d2fcce280725e318c0d9dd9",
+    "stopReason": "max-tokens",
+    "candidate": null,
+    "nativeRoute": "anthropic/claude-sonnet-5-5",
+    "report": "Finding worker turn ended without a recorded status report."
+  },
+  "action": "supported retry_scope revision2, confirm fix_now revision3 under existing native approval",
+  "scope": "bounded existing quota repair; no paid purchase/new auth/live load test",
+  "deployed": false,
+  "routeForNewAttemptVerified": false,
+  "references": [
+    "https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api",
+    "https://docs.github.com/en/rest/using-the-rest-api/best-practices-for-using-the-rest-api",
+    "https://docs.github.com/en/rest/activity/notifications"
+  ]
+}
