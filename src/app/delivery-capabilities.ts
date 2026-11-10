@@ -8,6 +8,7 @@ import { key } from '../core/ids.ts'
 import type { Commands } from '../infra/commands.ts'
 import { messageId } from './delivery.ts'
 import { DeliveryStore, deliveryFingerprint, type Delivery, type DeliveryAction, type DeliveryCapabilityAdapters, type DeliveryLease, type DeliveryResult } from './feature-delivery.ts'
+import { protectedLiveEvidenceFacts } from './delivery-evidence.ts'
 import { preparedPublicationFacts } from './publication-proof.ts'
 import { defaultRoute, helperRoute, isModelUnavailable, unavailableFallbackStep } from './role-models.ts'
 import type { Store } from './store.ts'
@@ -337,10 +338,11 @@ export async function recommendDeliveryAction(delivery: Delivery, action: Delive
     'Distinguish the source candidate revision, artifact PR revisions and the target/installed postimage; a pinned ref is not automatically the source revision.',
     'proofState is computed server-side for this offered stage: only verified-exact-pin-observation means the recorded observation covers the offered pins. Anything else on a publish action (missing, proof-not-recorded, observation-unverified, pins-mismatch) is hold or an explicit unknown, and the protected gates still recheck before effects.',
     'Name stageOwner and the delivery owner in the rationale. When the offered action is publish and the recorded observation is verified for the exact offered pins without a dominating blocker, take the handoff to the authorized release operator rather than requesting repeated candidate-preparation permission or PR-body work; a missing, unverified, stale or mismatched observation, or a genuine blocker, must remain hold or an explicit unknown.',
+    'protectedOperatorLiveEvidence is server-computed from exact current-binding evidence plus its matching protected local-operator audit receipt, never from a worker ID or prose alone. It records live verification, not final acceptance. Its HTTPS report may be a later documentation commit; that URL commit need not equal the candidate head because the stored evidence bindings carry the exact candidate. For an eligible accept action with complete current protected operator coverage and no blocker, recommend the separate exact acceptance confirmation rather than demanding that acceptance already have happened. Do not infer additional tests ran, reject an actually failed or incomplete verification, or equate automated HTTP verification with operator coverage.',
     'Advice never grants approval, publication, execution, or acceptance authority; the exact recorded operator confirmation remains the only approval. Never claim unobserved tools or tests ran. When bounded lists are shorter than their totals, state how many entries were omitted.',
   ].join(' '), { title: delivery.title, requirements: delivery.requirements, action, owner: delivery.owner, stageOwner: stageOwner(delivery, action.kind),
     authorities: delivery.authorities.slice(0, 5), delegatedActions: (delivery.delegatedActions ?? []).slice(0, 5), bindings: delivery.bindings, stage: delivery.stage,
-    blocker: delivery.blocker, proofState: proofState(delivery, action), preparedPublication: preparedPublicationFacts(delivery.preparedPublication), evidence: delivery.evidence.slice(-20) }, ADVICE_BUDGET)
+    blocker: delivery.blocker, protectedOperatorLiveEvidence: protectedLiveEvidenceFacts(delivery), proofState: proofState(delivery, action), preparedPublication: preparedPublicationFacts(delivery.preparedPublication), evidence: delivery.evidence.slice(-20) }, ADVICE_BUDGET)
   const value = z.object({ disposition: z.enum(['take', 'hold']), actionId: z.literal(action.id), fingerprint: z.literal(action.fingerprint), rationale: z.string().min(1).max(4000) }).strict().parse(reply.value)
   return { ...value, provider: reply.provider, recordedAt: new Date().toISOString(), kind: action.kind }
 }
