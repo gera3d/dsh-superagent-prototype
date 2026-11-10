@@ -1,0 +1,58 @@
+$ tsdown
+ℹ tsdown v0.22.14 powered by rolldown v1.2.7
+ℹ config file: /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/base-fetch/tsdown.config.ts 
+ℹ entry: src/app/publication-worker-entry.ts, src/app/publication-operator-entry.ts, src/index.ts, src/sources/github.ts, src/sources/feishu.ts, src/app/decision-provider.ts, src/app/decision-inbox-provider.ts, src/app/decision-inbox-provider.ts, src/app/decision-inbox-provider.ts
+ℹ target: es2024
+ℹ tsconfig: tsconfig.json
+ℹ [client] entry: src/client/index.tsx
+ℹ [client] target: node22.19.0
+ℹ [client] tsconfig: tsconfig.json
+ℹ Build start
+
+ WARN  We recommend using the ESM format instead of CommonJS.
+The ESM format is compatible with modern platforms and runtimes, and most new libraries are now distributed only in ESM format.
+Learn more at https://nodejs.org/en/learn/modules/publishing-a-package#how-did-we-get-here
+
+ℹ Cleaning 28 files
+ℹ [client] [CJS] lib/client.js  725.72 kB │ gzip: 168.93 kB
+ℹ [client] [CJS] 1 files, total: 725.72 kB
+✔ [client] Build complete in 8162ms
+ℹ [ESM] lib/index.js                                357.92 kB │ gzip:  99.31 kB
+ℹ [ESM] lib/github-watch.js                          35.53 kB │ gzip:  11.46 kB
+ℹ [ESM] lib/publication-operator.js                  11.11 kB │ gzip:   3.59 kB
+ℹ [ESM] lib/decision-inbox-provider.js                9.71 kB │ gzip:   3.47 kB
+ℹ [ESM] lib/decision-provider.js                      1.87 kB │ gzip:   0.91 kB
+ℹ [ESM] lib/publication-worker.js                     1.52 kB │ gzip:   0.75 kB
+ℹ [ESM] lib/feishu-watch.js                           0.60 kB │ gzip:   0.29 kB
+ℹ [ESM] lib/decision-inbox-provider-canonical.js      0.16 kB │ gzip:   0.11 kB
+ℹ [ESM] lib/decision-inbox-provider-live.js           0.16 kB │ gzip:   0.11 kB
+ℹ [ESM] lib/delivery-phase-B0nJW6_R.js              459.54 kB │ gzip: 123.66 kB
+ℹ [ESM] lib/http-DkfNpQdT.js                        264.91 kB │ gzip:  70.96 kB
+ℹ [ESM] lib/feishu-CJOhQs_w.js                       48.32 kB │ gzip:  14.58 kB
+ℹ [ESM] lib/poll-uqttHWnO.js                         44.21 kB │ gzip:  15.69 kB
+ℹ [ESM] lib/publication-ticket-DZOAIWj3.js           37.94 kB │ gzip:  11.07 kB
+ℹ [ESM] lib/github-pull-CmauzyiE.js                  25.97 kB │ gzip:   8.44 kB
+ℹ [ESM] lib/publication-context-B9aiasus.js           3.86 kB │ gzip:   1.46 kB
+ℹ [ESM] lib/index.d.ts                               30.51 kB │ gzip:   9.35 kB
+ℹ [ESM] lib/decision-inbox-provider-canonical.d.ts    7.95 kB │ gzip:   2.53 kB
+ℹ [ESM] lib/feishu-watch.d.ts                         5.98 kB │ gzip:   2.00 kB
+ℹ [ESM] lib/github-watch.d.ts                         0.39 kB │ gzip:   0.22 kB
+ℹ [ESM] lib/decision-provider.d.ts                    0.20 kB │ gzip:   0.17 kB
+ℹ [ESM] lib/publication-operator.d.ts                 0.01 kB │ gzip:   0.03 kB
+ℹ [ESM] lib/publication-worker.d.ts                   0.01 kB │ gzip:   0.03 kB
+ℹ [ESM] lib/kind-Crz9XMnX.d.ts                       45.84 kB │ gzip:   9.52 kB
+ℹ [ESM] lib/policy--Kpcvh9J.d.ts                     24.84 kB │ gzip:   6.59 kB
+ℹ [ESM] lib/model-BSxHOzxq.d.ts                      21.52 kB │ gzip:   7.17 kB
+ℹ [ESM] lib/deployment-BTCh8dP2.d.ts                  9.29 kB │ gzip:   3.14 kB
+ℹ [ESM] 27 files, total: 1.45 MB
+[33m[PLUGIN_TIMINGS] [0mPlugin hooks ran for 10.3s of this 10.5s build (98%).
+The slowest hooks, timed inside each callback (the wait before a callback starts is excluded, the time it awaits is included):
+  - rolldown-plugin-dts:generate load (85%, 9.0s, 65 calls)
+Additional hook time came from the hooks below and from hooks under 1s.
+3 hooks are listed without a time. Their calls overlapped, so the time inside one call includes work from other calls. To find their cost, profile the build with `node --cpu-prof`:
+  - tsdown:deps resolveId (187 calls)
+  - rolldown-plugin-dts:resolver resolveId (408 calls)
+  - rolldown-plugin-dts:fake-js transform (65 calls)
+See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
+
+✔ Build complete in 10812ms
