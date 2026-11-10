@@ -82,7 +82,7 @@ export class FindingRelease {
     if (!assignment || !root) throw new ReleaseBlocked([{ field: 'worker artifact', owner: `worker-${ticket.id}`, detail: 'The job ticket has no recorded assignment or workspace directory.' }])
     const base = realpathSync(root)
     const options: { parent: string; dir: string }[] = []
-    for (const parent of [base, ...profile.source.artifactRoots.map(r => { try { return realpathSync(r) } catch { return '' } }).filter(Boolean).map(r => r)]) {
+    for (const parent of [base, ...(profile.source.artifactRoots ?? []).map(r => { try { return realpathSync(r) } catch { return '' } }).filter(Boolean).map(r => r)]) {
       const sub = parent === base ? profile.source.workspaceSubdir : ticket.id
       try { options.push({ parent, dir: realpathSync(join(parent, sub)) }) } catch { /* try next */ }
     }
