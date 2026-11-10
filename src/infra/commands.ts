@@ -29,11 +29,11 @@ export function rateLimit(stdout: unknown, stderr = ''): RateLimit | undefined {
   if (remaining === 0) return { kind: 'primary', ...reset !== undefined ? { resetAt: reset * 1000 } : {} }
   return undefined
 }
-/** Seconds to wait before polling again: until the primary reset or `retry-after` (60 s when unstated), plus up to 10 s of jitter, bounded to 24 h. */
+/** Seconds to wait before polling again: until the primary reset or `retry-after` (60 s when unstated), plus up to 10 s of jitter, with long waits split into bounded sleeps by the poll loop. */
 export function cooldownSeconds(rate: RateLimit, now = Date.now(), random = Math.random()): number {
   const wait = rate.kind === 'primary' && rate.resetAt !== undefined ? (rate.resetAt - now) / 1000 : rate.retryAfter ?? 60
-  // The server's own deadline is never shortened (only capped at a day); no request goes out before it.
-  return Math.min(86_400, Math.max(1, Math.ceil(wait)) + Math.ceil(random * 10))
+  // Preserve the full server deadline; the poll loop chunks long sleeps instead of truncating it.
+  return Math.max(1, Math.ceil(wait)) + Math.ceil(random * 10)
 }
 /** Extracts a sanitized error from a failed subprocess without echoing argv, which may contain message text. */
 export function commandError(error: unknown, program = 'command'): Error {

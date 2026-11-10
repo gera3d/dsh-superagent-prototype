@@ -1486,3 +1486,35 @@ describe('github quota stops the round', () => {
     }
   })
 })
+
+it('root quota watch: respects the full server deadline then recovers without restart',async()=>{
+ vi.useFakeTimers(); vi.setSystemTime(new Date('2026-11-10T03:00:00Z'))
+ const random=vi.spyOn(Math,'random').mockReturnValue(0)
+ const board=new HealthBoard()
+ const settings=SettingsSchema.parse({sources:{github:{enabled:true,config:{}}}})
+ const sources=new SourceRegistry(()=>settings,board);healthOf.set(sources,board)
+ const value=host({sources});const disposers:(()=>unknown)[]=[];let calls=0
+ const run=vi.spyOn(Commands.prototype,'run').mockImplementation(async()=>{
+  calls++
+  if(calls===1)throw commandError({code:1,stderr:'gh: secondary rate limit (HTTP 429)',stdout:['HTTP/2.0 429 Too Many Requests','Retry-After: 7200','','{}'].join(String.fromCharCode(13,10))})
+  return ['HTTP/2.0 200 OK','X-Poll-Interval: 60','','[]'].join(String.fromCharCode(13,10))
+ })
+ try{
+  applyGithub({orchestrator:value,effect:(f:()=>()=>unknown)=>{disposers.push(f())}} as never)
+  await vi.advanceTimersByTimeAsync(0)
+  expect(calls).toBe(1)
+  expect(value.health.github).toMatchObject({state:'paused',code:'rateLimited'})
+  await vi.advanceTimersByTimeAsync(7199999)
+  expect(calls).toBe(1)
+  await vi.advanceTimersByTimeAsync(1)
+  expect(calls).toBe(2)
+  expect(value.health.github).toMatchObject({state:'ready'})
+ }finally{for(const d of disposers)await d();value.store.close();run.mockRestore();random.mockRestore();vi.useRealTimers()}
+})
+
+it('root quota: last observed stream quota prevents default-branch CI reads',async()=>{
+ const h=host();h.store.saveSettings({...h.store.settings(),sources:{...h.store.settings().sources,github:{enabled:true,config:{observeComments:true,observeCi:true}}}})
+ const limited=commandError({code:1,stderr:'gh: API rate limit exceeded (HTTP 403)',stdout:['HTTP/2.0 403 Forbidden','X-Ratelimit-Remaining: 0','X-Ratelimit-Reset: 1794285000','','{}'].join(String.fromCharCode(13,10))})
+ const reads=github(h,{notifications:[],'issues/comments':[],'pulls/comments':limited,'':{default_branch:'main'},'commits/main':{sha:'abc'}})
+ try{await expect(pollRound(h)).rejects.toThrow();expect(reads).toHaveLength(3);expect(reads).not.toContain('')}finally{h.store.close()}
+})

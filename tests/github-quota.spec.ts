@@ -14,7 +14,7 @@ it('classifies secondary limits from 429 and retry-after, capped and jittered', 
   expect(rateLimit('HTTP/2.0 403 Forbidden\nRetry-After: 30\n\n{}')).toMatchObject({ kind: 'secondary' })
   expect(cooldownSeconds({ kind: 'secondary', retryAfter: 120 }, 0, 0.5)).toBe(125)
   expect(cooldownSeconds({ kind: 'secondary' }, 0, 0)).toBe(60)
-  expect(cooldownSeconds({ kind: 'primary', resetAt: 1e15 }, 0, 1)).toBe(86400)
+  expect(cooldownSeconds({ kind: 'secondary', retryAfter: 172800 }, 0, 0)).toBe(172800)
 })
 it('does not treat permission, auth, 304 or 5xx failures as quota', () => {
   expect(rateLimit('HTTP/2.0 403 Forbidden\nX-Ratelimit-Remaining: 4000\n\n{}', 'gh: forbidden (HTTP 403)')).toBeUndefined()

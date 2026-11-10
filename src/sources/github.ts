@@ -149,7 +149,13 @@ async function watch(ctx: SourceContext, signal: AbortSignal): Promise<void> {
         if (!signal.aborted && failed) ctx.report('github', failed)
       }
     }
-    await pause(Math.max(cooling, interval, ctx.config<GithubConfig>(SOURCE)?.pollSeconds ?? 60) * 1000, signal)
+    let remainingWaitMs = Math.max(cooling, interval, ctx.config<GithubConfig>(SOURCE)?.pollSeconds ?? 60) * 1000
+    // Chunk long waits without shortening the server deadline or overflowing a native timeout.
+    while (!signal.aborted && remainingWaitMs > 0) {
+      const chunkMs = Math.min(3_600_000, remainingWaitMs)
+      await pause(chunkMs, signal)
+      remainingWaitMs -= chunkMs
+    }
     cooling = 0
   }
 }
@@ -197,6 +203,7 @@ async function pollRepository(ctx: SourceContext, round: Round): Promise<void> {
     try { await readStream(ctx, round, stream.id, stream.path, config) }
     catch (error) { limited(round, error); if (!stopped(ctx, round)) round.failures.push(`${stream.id}: ${String(error)}`) }
   }
+  if (stopped(ctx, round)) return
   // When CI observation is turned off, clear the failure baseline but preserve the revision counter so future triggers have unique IDs.
   if (!config.observeCi) {
     const seen = ctx.state.get(KV.github.branchCi)

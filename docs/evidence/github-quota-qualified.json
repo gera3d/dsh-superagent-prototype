@@ -1,0 +1,34 @@
+{
+  "at": "2026-11-10T03:16:34.002233+00:00",
+  "harnessCandidate": "ac177c081cebb0a35901d39d678b7af915eeb8d8",
+  "sourceBase": "5fc387a",
+  "tests": {
+    "focused": 97,
+    "suites": 3,
+    "typecheck": "passed",
+    "build": "passed",
+    "fullSuite": "not claimed"
+  },
+  "integrationCorrections": [
+    "Preserve full server Retry-After/reset deadline in bounded hour-long sleeps",
+    "Stop last repository stream quota before default-branch CI reads",
+    "Production-plugin fake-clock exact two-hour deadline and ready recovery",
+    "Measured request-count documentation"
+  ],
+  "sourcePostimages": {
+    "src/infra/commands.ts": "2c9a6e3f3c4b8e310c30a27927d71df3f88b6472c97a5180a931899442ff4d16",
+    "src/sources/github.ts": "ec1b874cd456be7f29a0174957c8fbc9b5e58a34c1644aa74b1d6bad0f652414",
+    "src/sources/host.ts": "9d62884c5711ceecd1b21e9ddb4211eea5ac4361d62672129718eb2dc88a3d3b",
+    "src/client/locales.ts": "dd869d3eef00ad58280002f12ce20c827012fc1150a1c6525c6912aa3a60b60f"
+  },
+  "deployed": false,
+  "nativeVerified": false,
+  "automaticThreadHandoffPassed": false,
+  "limits": [
+    "No real account exhaustion/load test",
+    "No attribution of all user budget consumption to Harness",
+    "Existing conditional ETags/poll interval reused",
+    "Mutable publication facts never cached",
+    "Existing connection only; no new App/keys/purchase"
+  ]
+}
