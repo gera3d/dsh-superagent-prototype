@@ -297,6 +297,36 @@ export class DeliveryStore {
       d.audit.push({ at: new Date().toISOString(), event: `scope-bound:${authority.source}:${authority.reference}:${authority.scope}`, actor: authority.actor })
     }, false, true)
   }
+  /** Protected same-artifact target refresh after a READ-ONLY review stall. Keeps every old lease and evidence row. */
+  refreshReleaseTarget(id: string, revision: number, bindings: DeliveryBindings, authority: DeliveryConfirmationAuthority): Delivery {
+    return this.atomic(() => {
+      const before = this.get(id)
+      if (!before || before.revision !== revision || !before.release || before.scopeBinding || before.historicalCompletion
+        || !['review', 'ready_to_publish'].includes(before.stage) || before.state !== 'blocked' || before.bindings.refs?.length !== 1 || before.preparedPublication || before.acceptance
+        || before.attempts.review >= before.attempts.maxReview) throw new DeliveryConflict('Only a parked pre-publication review can refresh its target')
+      if (authority.source !== 'local_operator' || !before.authorities.includes(authority.actor) || !authority.reference
+        || authority.scope !== deliveryFingerprint({ deliveryId: id, revision, bindings })) throw new DeliveryConflict('Target refresh requires exact local operator confirmation')
+      const normalized = { ...bindings, baseSha: before.bindings.baseSha,
+        refs: bindings.refs?.map((ref, i) => ({ ...ref, baseSha: before.bindings.refs?.[i]?.baseSha })) }
+      if (!/^[a-f0-9]{40}$/.test(bindings.baseSha) || bindings.baseSha === before.bindings.baseSha
+        || !bindingMatches(normalized, before.bindings) || bindings.refs?.some(ref => ref.baseSha !== bindings.baseSha)) throw new DeliveryConflict('Target refresh may change only the same artifact target base')
+      const rows = this.db.prepare("SELECT id,value,status FROM feature_delivery_outbox WHERE delivery_id=? AND status IN ('pending','leased','blocked')").all(id)
+      if ((!rows.length && (before.stage !== 'ready_to_publish' || !before.preparation)) || rows.some(row => row.status !== 'blocked' || JSON.parse(String(row.value)).action?.kind !== 'review')) throw new DeliveryConflict('Only parked read-only reviews can be superseded; reconcile mutation handoffs separately')
+      const implementation = before.evidence.findLast(e => e.kind === 'implementation' && e.outcome === 'passed'
+        && (e.generation ?? 0) === before.generation && bindingMatches(e.bindings, before.bindings))
+      if (!implementation) throw new DeliveryConflict('Exact original implementation evidence is missing')
+      const updated = this.update(id, revision, d => {
+        d.bindings = structuredClone(bindings); d.generation++
+        d.delegatedScope = deliveryFingerprint({ bindings: d.bindings, requirements: d.requirements })
+        d.evidence.push({ ...structuredClone(implementation), id: `${implementation.id}:target:${bindings.baseSha}`, bindings: structuredClone(bindings), generation: d.generation,
+          reference: `${implementation.reference}#target-refresh:${bindings.baseSha}` })
+        d.stage = 'review'; d.state = 'awaiting_decision'; delete d.blocker; delete d.preparation; delete d.recommendation; delete d.recommendationError
+        d.audit.push({ at: new Date().toISOString(), actor: authority.actor, event: `target-refresh:${before.bindings.baseSha}:${bindings.baseSha}:${authority.reference}:prior-blocker:${(before.blocker ?? '').slice(0, 500)}:superseded-read-only:${rows.map(row => row.id).join(',')}`, authorization: authority })
+      }, false, true)
+      for (const row of rows) this.db.prepare("UPDATE feature_delivery_outbox SET status='superseded',token=NULL,worker=NULL WHERE id=? AND status='blocked'").run(String(row.id))
+      return this.get(updated.id)!
+    })
+  }
   compareAndSwap(id: string, revision: number, mutate: (delivery: Delivery) => void): Delivery {
     return this.update(id, revision, mutate)
   }

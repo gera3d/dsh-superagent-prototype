@@ -1,0 +1,19 @@
+{
+  "findingId": "45251448-f4b9-41aa-8886-86ade8950b11",
+  "findingRevision": 18,
+  "ticketId": "86635beac41a7b1cb43ddace32aab11d",
+  "assignmentId": "387889e30fde71e5ed3d09ed9bc21f4c",
+  "candidateHead": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+  "nativeAction": "Review, test & prepare release",
+  "sourcePR": 86,
+  "deliveryId": "auto-86635beac41a7b1cb43ddace32aab11d",
+  "releaseRecordedAt": "2026-11-10T04:35:23.217Z",
+  "observedStage": "review",
+  "observedState": "blocked",
+  "blocker": "Independent review blocked: review model response incomplete (finish reason: error); no partial result accepted",
+  "automaticallyOpenedPR": true,
+  "manuallyAuthoredPerTaskManifest": false,
+  "published": false,
+  "accepted": false,
+  "qualification": "First real native attempt stopped at independent review; preserved failure, not a full-flow pass."
+}

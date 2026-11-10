@@ -7,7 +7,7 @@ import { preparedPublicationFacts } from './publication-proof.ts'
 import type { ProgressView } from './progress.ts'
 
 const clip = (value: string | undefined, limit: number) => value?.slice(0, limit)
-export function adviceContext(ticket?: Ticket, delivery?: Delivery, progress?: ProgressView, finding?: Finding, persona?: CharacterConfig): string {
+export function adviceContext(ticket?: Ticket, delivery?: Delivery, progress?: ProgressView, finding?: Finding, persona?: CharacterConfig, capabilities?: { findingRelease: boolean }): string {
   const completed = delivery?.state === 'accepted' && !!delivery.acceptance
   // Progress observed for work the accepted delivery already covers is history, not a current release step.
   const current = completed && progress && delivery!.acceptance && progress.observedAt <= Date.parse(delivery!.acceptance.at) ? undefined : progress
@@ -85,7 +85,10 @@ export function adviceContext(ticket?: Ticket, delivery?: Delivery, progress?: P
 
   const ticketUsage = (ticket as { usage?: { routes?: { provider?: string; model?: string }[]; coverage?: unknown } } | undefined)?.usage
 
+  const nativeFindingRelease = !!capabilities?.findingRelease && isCurrentFindingJob && !findingCompleted && !isPriorFindingJob
+    && finding?.state === 'blocked' && latestJobReport?.state === 'ready' && !isReleaseProgressCompleted && !isReleaseProgressMerged
   const facts = {
+    capabilities: { nativeFindingRelease, deliveryPhase: !!delivery?.release },
     progress: current ? { stage: current.kind, outcome: current.outcome, repository: clip(current.repository, 200), branch: clip(current.branch, 200), commit: current.commit, baseSha: current.baseSha,
       pr: current.pr, environment: current.environment, owner: clip(current.owner, 120), remaining: clip(current.remaining, 200), observedAt: new Date(current.observedAt).toISOString(), revision: current.revision,
       evidence: clip(current.evidence, 300), provenance: current.provenance, supersededCommits: current.supersededCommits.slice(-4), authority: current.authority } : null,
@@ -111,6 +114,7 @@ export function adviceContext(ticket?: Ticket, delivery?: Delivery, progress?: P
       requirements: delivery.requirements.slice(0, 8).map(r => clip(r, 160)),
       offeredAction: !delivery.historicalCompletion && !delivery.scopeBinding && delivery.state === 'awaiting_decision' && delivery.nextAction?.revision === delivery.revision
         ? { kind: delivery.nextAction.kind, label: clip(delivery.nextAction.label, 200), revision: delivery.nextAction.revision } : null,
+      recovery: delivery.reconciliation ? { label: clip(delivery.reconciliation.label, 200), revision: delivery.reconciliation.revision } : null,
       preparedPublication: preparedPublicationFacts(delivery.preparedPublication),
       evidence: delivery.evidence.slice(-8).map(e => ({ kind: e.kind, outcome: e.outcome, headSha: clip(e.bindings.headSha, 80), at: clip(e.recordedAt, 40) })),
       accepted: completed, completion: completed ? { acceptedAt: delivery.acceptance!.at, actor: clip(delivery.acceptance!.actor, 120), noFurtherReleaseAction: true }
@@ -259,6 +263,19 @@ export function adviceContext(ticket?: Ticket, delivery?: Delivery, progress?: P
   } else {
     rules = ['OBJECTIVE: advance the user\'s stated overall goal in the next meaningful authorized step; do not impose a release workflow on an ordinary conversation.']
   }
+
+  if (nativeFindingRelease && !delivery) rules = [
+    'NATIVE FINDING RELEASE OBJECTIVE: use the existing “Review, test & prepare release” control in this thread for the exact current candidate.',
+    'That protected native control really opens/reuses the source PR, starts independent Harness review, runs the missing exact-head checks and prepares the pinned release. This is configured Harness execution, not automatic dispatch to Codex. An ordinary suggested text reply still only fills the composer.',
+    'Recommend the named native control; do not ask for another worker, manual Codex handoff, a patch walkthrough, or repeated checks just because the implementation worker ended. The Harness checks saved evidence and executes its actual checks. Missing profile/check/review facts remain explicit blockers.',
+    'Publishing and final live acceptance remain separate exact native confirmations. Never imply that either has happened from a ready report.',
+  ]
+  if (delivery?.release && !completed && !delivery.historicalCompletion && !findingCompleted && !isPriorFindingJob) rules = [
+    'NATIVE DELIVERY RELEASE OBJECTIVE: follow this thread’s existing canonical delivery control and current recorded stage.',
+    'Harness owns delegated independent review, exact-head checks and package preparation. While they run, no user direction or duplicate job is needed. Name only a recorded eligible action or recovery control; if blocked, state its actual blocker without inventing a new API.',
+    'Do not ask for manual Codex dispatch, worker self-review, a patch walkthrough or completed checks. Use the exact native publish confirmation only once preparation proves the current artifact and target. After actual automated verification, request only genuine live requirement evidence and final acceptance; keep HTTP facts separate from native coverage.',
+    'An ordinary suggestion stages text; it does not press the native control or grant publication/acceptance. Accepted work is history, with no repeated stages.',
+  ]
 
   if (persona) {
     rules.unshift(`ADVISOR POLICY: You are ${persona.name}, specialized in ${persona.specialty}. ${persona.brief}`)

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, it as base } from 'vitest'
 const it = (n: string, f: () => unknown) => base(n, f, 60000)
-import { DeliveryStore } from '../src/app/feature-delivery.ts'
+import { DeliveryStore, deliveryFingerprint } from '../src/app/feature-delivery.ts'
 import { FindingRelease, ReleaseBlocked, busyPublication, loadReleaseProfile, type ReleaseProfile } from '../src/app/finding-release.ts'
 import { executePublicationCommand, loadPublicationRunner, type PublicationExecutor } from '../src/infra/publication-runner.ts'
 import type { Finding } from '../src/app/finding.ts'
@@ -145,4 +145,57 @@ it('fetches only the fixed trusted branch when evidence advanced after the worke
   expect(candidate.patch.toString()).not.toContain('evidence.txt')
   expect(sh(f.work, 'rev-parse', 'HEAD')).toBe(before)
   expect(sh(f.work, 'status', '--porcelain')).toBe('')
+})
+it('refreshes only a parked read-only review to the current target from the same protected finding action', async () => {
+  const f = fixture()
+  let d = await f.release.prepare(f.finding, { revision: 3 }, 'initial-native-click')
+  d = f.store.recordImplementation(d.id, d.revision, { id: 'authentic-ready', kind: 'implementation', outcome: 'passed', bindings: d.bindings, recordedAt: '2026-01-01T00:00:00Z', reference: 'ticket/t1/report/a1' })
+  f.store.confirm(d.id, { revision: d.revision, actionId: d.nextAction!.id }, 'local-operator')
+  const lease = f.store.claim('reviewer')!
+  d = f.store.complete(lease, { outcome: 'uncertain', blocker: 'provider unavailable' })
+  const oldValue = String(f.store.db.prepare('SELECT value FROM feature_delivery_outbox WHERE id=?').get(lease.id)!.value)
+  const oldEvidence = structuredClone(d.evidence), attempts = structuredClone(d.attempts)
+  writeFileSync(join(f.profile.source.checkoutPath, 'evidence.txt'), 'coordinator release update\n')
+  sh(f.profile.source.checkoutPath, 'add', '.'); sh(f.profile.source.checkoutPath, 'commit', '-qm', 'record release')
+  const target = sh(f.profile.source.checkoutPath, 'rev-parse', 'HEAD')
+  d = await f.release.prepare(f.finding, { revision: 3 }, 'native-refresh-click')
+  expect(d.bindings.baseSha).toBe(target)
+  expect(d.stage).toBe('review'); expect(d.state).toBe('awaiting_decision'); expect(d.nextAction?.kind).toBe('review')
+  expect(d.generation).toBe(1); expect(d.attempts).toEqual(attempts)
+  expect(d.evidence.slice(0, oldEvidence.length)).toEqual(oldEvidence)
+  const row = f.store.db.prepare('SELECT value,status FROM feature_delivery_outbox WHERE id=?').get(lease.id)!
+  expect(row.status).toBe('superseded'); expect(row.value).toBe(oldValue)
+  expect(d.release?.ticketId).toBe('t1'); expect(d.workers).toEqual(['t1'])
+  expect(f.calls.filter(x => x === 'push')).toHaveLength(1)
+  expect(f.calls.filter(x => x === 'gh pr create')).toHaveLength(1)
+  // A target moving after a passed review also needs a fresh review, not a per-task coordinator repair.
+  f.store.confirm(d.id, { revision: d.revision, actionId: d.nextAction!.id }, 'local-operator')
+  const passedLease = f.store.claim('reviewer2')!
+  d = f.store.complete(passedLease, { outcome: 'passed', evidence: [{ id: 'fixture-review', kind: 'review', outcome: 'passed', bindings: d.bindings, recordedAt: '2026-01-01T00:00:00Z', reference: 'fixture independent review' }] })
+  d = f.store.compareAndSwap(d.id, d.revision, x => { x.preparation = { fingerprint: x.nextAction!.fingerprint, message: 'Target base moved', attempts: 1 }; x.state = 'blocked'; x.blocker = 'Target base moved' })
+  writeFileSync(join(f.profile.source.checkoutPath, 'evidence.txt'), 'later coordinator evidence\n')
+  sh(f.profile.source.checkoutPath, 'commit', '-qam', 'record later stage')
+  d = await f.release.prepare(f.finding, { revision: 3 }, 'native-second-refresh')
+  expect(d.generation).toBe(2); expect(d.stage).toBe('review'); expect(d.attempts.review).toBe(2)
+  expect(d.preparedPublication).toBeUndefined(); expect(d.preparation).toBeUndefined()
+})
+it('rejects target refresh without exact local authority or when it changes the artifact', async () => {
+  const f = fixture()
+  let d = await f.release.prepare(f.finding, { revision: 3 }, 'initial')
+  d = f.store.recordImplementation(d.id, d.revision, { id: 'ready', kind: 'implementation', outcome: 'passed', bindings: d.bindings, recordedAt: '2026-01-01T00:00:00Z', reference: 'ticket/t1/report/a1' })
+  f.store.confirm(d.id, { revision: d.revision, actionId: d.nextAction!.id }, 'local-operator')
+  d = f.store.complete(f.store.claim('r')!, { outcome: 'uncertain', blocker: 'provider unavailable' })
+  const bindings = { ...d.bindings, baseSha: 'f'.repeat(40), refs: d.bindings.refs!.map(ref => ({ ...ref, baseSha: 'f'.repeat(40) })) }
+  const authority = { actor: 'local-operator', source: 'local_operator' as const, reference: 'native', scope: deliveryFingerprint({ deliveryId: d.id, revision: d.revision, bindings }) }
+  expect(() => f.store.refreshReleaseTarget(d.id, d.revision, bindings, { ...authority, source: 'delegation' })).toThrow(/local operator/)
+  const changed = { ...bindings, headSha: 'e'.repeat(40) }
+  expect(() => f.store.refreshReleaseTarget(d.id, d.revision, changed, { ...authority, scope: deliveryFingerprint({ deliveryId: d.id, revision: d.revision, bindings: changed }) })).toThrow(/only the same artifact/)
+  const row = f.store.db.prepare("SELECT id,value FROM feature_delivery_outbox WHERE delivery_id=? AND status='blocked'").get(d.id)!
+  const payload = JSON.parse(String(row.value)); payload.action.kind = 'fix'
+  f.store.db.prepare('UPDATE feature_delivery_outbox SET value=? WHERE id=?').run(JSON.stringify(payload), String(row.id))
+  expect(() => f.store.refreshReleaseTarget(d.id, d.revision, bindings, authority)).toThrow(/mutation handoffs separately/)
+  f.store.db.prepare('UPDATE feature_delivery_outbox SET value=? WHERE id=?').run(String(row.value), String(row.id))
+  f.store.resume(d.id, d.revision, 'local-operator')
+  const running = f.store.get(d.id)!
+  expect(() => f.store.refreshReleaseTarget(running.id, running.revision, bindings, authority)).toThrow(/parked pre-publication/)
 })

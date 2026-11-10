@@ -96,7 +96,7 @@ export function deriveOptionQualityContext(
     ?? (facts?.delivery?.completion?.historical === true && facts?.delivery?.completion?.noFurtherReleaseAction === true)
 
   const isReadyUnreviewed = overrides.isReadyUnreviewed
-    ?? (/\bCANONICAL FINDING REVIEW OBJECTIVE\b/i.test(text)
+    ?? (facts?.capabilities?.nativeFindingRelease === true || /\bCANONICAL FINDING REVIEW OBJECTIVE\b/i.test(text)
       || /\bThe implementation worker has reported a candidate ready for independent review\b/i.test(text)
       || /\bThe review handoff candidate is ready\b/i.test(text)
       || /\bawaiting independent review\b/i.test(text))
