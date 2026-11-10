@@ -162,6 +162,13 @@ export class FindingRelease {
     return number
   }
 
+  /** GitHub's PR review-base observation may differ from the current branch tip. Pin the actual PR fact. */
+  private async reviewBase(profile: ReleaseProfile, pr: number): Promise<string> {
+    const base = (await this.run(profile, profile.ghPath, ['api', `repos/${profile.source.repository}/pulls/${pr}`, '--jq', '.base.sha'], profile.cwd)).trim()
+    if (!sha.test(base)) throw new DeliveryConflict('GitHub did not return an exact PR review base')
+    return base
+  }
+
   /** Legacy static profile: the shared manifest is written at click time from fixed per-profile scripts. */
   private writeManifest(profile: ReleaseProfile, c: ReleaseCandidate, pr: number): PublicationRunnerConfig {
     const scripts = profile.scripts
@@ -242,7 +249,7 @@ export class FindingRelease {
     if (!record || record.verdict?.verdict !== 'passed' || !record.lease || record.lease.id !== reviewId || record.lease.deliveryId !== delivery.id || record.lease.action.kind !== 'review' || record.bindingFingerprint !== fp || deliveryFingerprint(record.lease.bindings) !== fp || record.fingerprint !== deliveryFingerprint({ action: record.lease.action, bindings: record.lease.bindings, deliveryId: delivery.id })) throw blocked('independent review', 'Harness independent review', 'The durable review verdict for the exact head is missing.')
     // 2. Exact artifact re-derived from git; a changed head or patch invalidates the package.
     const c = await this.candidate(ticket, profile)
-    if (c.baseSha !== delivery.bindings.baseSha) throw new DeliveryConflict('Target base changed after review. Use Review, test & prepare release in this thread to refresh its pins and review the same artifact. Nothing was published.')
+    if (await this.reviewBase(profile, release.prNumber) !== delivery.bindings.baseSha) throw new DeliveryConflict('Target base changed after review. Use Review, test & prepare release in this thread to refresh its pins and review the same artifact. Nothing was published.')
     if (c.headSha !== release.headSha || c.patchSha256 !== release.patchSha256 || c.headSha !== delivery.bindings.headSha) throw new DeliveryConflict('The worker artifact changed after review; head or patch no longer matches the reviewed release')
     const R = profile.source.repository
     const conflict = this.deps.publicationBusy()
@@ -301,7 +308,7 @@ export class FindingRelease {
     const generated = JSON.parse(readFileSync(manifestPath, 'utf8')) as PublicationRunnerConfig & { pins: { repository: string; prNumber: number; headSha: string; patchSha256: string } }
     if (generated.pins.repository !== R || generated.pins.prNumber !== release.prNumber || generated.pins.headSha !== release.headSha || generated.pins.patchSha256 !== release.patchSha256) throw new DeliveryConflict('Generated release package does not match the reviewed head and patch')
     const config: PublicationRunnerConfig = { ...generated, ghPath: profile.ghPath,
-      deliveryScope: { environment: delivery.bindings.environment ?? profile.environment, refs: [{ repository: R, pr: release.prNumber, headSha: c.headSha, baseSha: c.baseSha }], components: profile.components, effects: profile.effects },
+      deliveryScope: { environment: delivery.bindings.environment ?? profile.environment, refs: [{ repository: R, pr: release.prNumber, headSha: c.headSha, baseSha: delivery.bindings.baseSha }], components: profile.components, effects: profile.effects },
       ...(profile.localEvidenceMaxAgeMs ? { localEvidenceMaxAgeMs: profile.localEvidenceMaxAgeMs } : {}) }
     createPublicationRunner(config, async () => '')
     current()
@@ -349,8 +356,9 @@ export class FindingRelease {
     // With a per-task preset the click only records the exact artifact/PR lineage; the shared manifest is generated after independent review.
     const busy = profile.preset ? undefined : this.deps.publicationBusy()
     if (busy) throw new DeliveryConflict(`A publication is in flight (${busy}); the shared release manifest cannot be replaced until it settles`)
-    const c = await this.candidate(ticket, profile)
-    const pr = await this.sourcePr(profile, c, finding)
+    const artifact = await this.candidate(ticket, profile)
+    const pr = await this.sourcePr(profile, artifact, finding)
+    const c = { ...artifact, baseSha: await this.reviewBase(profile, pr) }
     if (prior && !prior.scopeBinding) {
       if (prior.release!.headSha !== c.headSha || prior.release!.patchSha256 !== c.patchSha256 || prior.release!.prNumber !== pr) throw new DeliveryConflict('Changed artifact requires its own current ready report; target refresh cannot replace it')
       if (prior.bindings.baseSha === c.baseSha) return prior

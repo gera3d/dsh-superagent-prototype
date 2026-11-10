@@ -9,7 +9,7 @@ import type { Commands } from '../infra/commands.ts'
 import { messageId } from './delivery.ts'
 import { DeliveryStore, deliveryFingerprint, type Delivery, type DeliveryAction, type DeliveryCapabilityAdapters, type DeliveryLease, type DeliveryResult } from './feature-delivery.ts'
 import { preparedPublicationFacts } from './publication-proof.ts'
-import { defaultRoute, isModelUnavailable, unavailableFallbackStep } from './role-models.ts'
+import { defaultRoute, helperRoute, isModelUnavailable, unavailableFallbackStep } from './role-models.ts'
 import type { Store } from './store.ts'
 
 export interface DeliveryCapabilityDependencies {
@@ -102,7 +102,8 @@ async function modelJSONAttempt(deps: DeliveryCapabilityDependencies, system: st
 
 /** Same configured availability ladder as native workers; a code/schema review failure is never availability. */
 async function modelJSON(deps: DeliveryCapabilityDependencies, system: string, data: unknown, budget: ModelBudget, signal?: AbortSignal): Promise<{ value: unknown; provider: string }> {
-  const route = defaultRoute(deps.store.settings(), 'executor')
+  const routing = deps.store.settings()
+  const route = (routing.models.helper ? helperRoute(routing) : defaultRoute(routing, 'executor'))
     ?? (deps.ctx.get('agentDefaultModel') as { currentSelection(): { provider: string; model: string; reasoningEffort?: string } } | undefined)?.currentSelection()
   if (!route?.provider || !route.model) throw new Error('Missing capability: configured executor model')
   const settings = deps.store.settings()

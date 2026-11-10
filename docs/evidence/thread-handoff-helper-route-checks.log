@@ -1,0 +1,11 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/pr-base
+
+(node:8910) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  2 passed (2)
+      Tests  59 passed (59)
+   Start at  21:17:04
+   Duration  4.18s (transform 1.78s, setup 0ms, import 2.77s, tests 1.93s, environment 0ms)
+
