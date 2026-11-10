@@ -1,0 +1,11 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/github-quota-repair/release
+
+(node:43193) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  3 passed (3)
+      Tests  75 passed (75)
+   Start at  19:24:59
+   Duration  30.39s (transform 1.32s, setup 0ms, import 2.16s, tests 41.85s, environment 3ms)
+

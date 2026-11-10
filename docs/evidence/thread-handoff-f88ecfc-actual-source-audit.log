@@ -1,0 +1,27 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/qualification-r9
+
+(node:41237) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/root-finding-release-real-quota.spec.ts (8 tests | 1 failed | 7 skipped) 2229ms
+   × root real quota finding: preparation preserves its actual bounded requirements 2227ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/root-finding-release-real-quota.spec.ts > root real quota finding: preparation preserves its actual bounded requirements
+AssertionError: promise rejected "Error: Finding requirements are not a bou…" instead of resolving
+ ❯ tests/root-finding-release-real-quota.spec.ts:134:77
+
+
+Caused by: Error: Finding requirements are not a bounded distinct list of acceptance criteria
+ ❯ FindingRelease.prepareNow src/app/finding-release.ts:189:188
+ ❯ tests/root-finding-release-real-quota.spec.ts:134:2
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  19:19:19
+   Duration  2.61s (transform 99ms, setup 0ms, import 182ms, tests 2.23s, environment 0ms)
+
