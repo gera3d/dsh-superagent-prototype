@@ -1,5 +1,30 @@
 # DeepSeek Harness project status
 
+## Current overnight batch — explicitly authorized November 9, 2026, 11:43 PM PST
+
+Gera instructed Codex chat `01a1c46a-41e7-7f33-a459-7b621a70e97e`: give all six proposed assignments to Harness, start the first three and queue the rest, keep OpenAI conserved and the 5% Google reserve, and advance only as far as existing approval gates allow. All six exact bounded findings were observed through MCP and individually confirmed through the actual native finding controls. No first-approval bypass, generic decision selection or canonical database edit was used.
+
+Verified November 9 at 11:53 PM PST: **3 actual worker tickets running, 3 additional canonical findings durably queued FIFO, maxWorkers 3, intake enabled; all 10 health components ready.** The executor's ticket queue reads 0 because the remaining three findings do not yet have worker tickets; do not confuse that with an empty finding queue.
+
+| Priority | Bounded assignment | Canonical finding | Initial state / worker ticket |
+|---|---|---|---|
+| 1 | Recover independent-review rejection after implementation worker ended | `dd8d3ab1-7941-43f2-b498-4a82a27c9bb2` | running r1 / `23e2930f2e20a79b9b7a6b08277adf29` |
+| 2 | Finish actual production integration of Composio action-failure handling | `c844ce8f-7c80-407c-a237-9dd53d62f3c3` | running r1 / `81f39e075967b209bb2da33cdeebb9ea` |
+| 3 | Measure and reduce worker prompt/tool-output waste | `e1dfd442-bb88-409e-bef0-b2db569dca79` | running r1 / `97dc3af26b0375da5a5d9637272f81dd` |
+| 4 | First integrated project-sections increment | `fbd4db89-0485-4e9d-a805-cac220390100` | queued r1; no ticket yet |
+| 5 | Sanitized publication phase/failure diagnostics | `f1d6590a-5aff-4b9a-9440-65033a5c250f` | queued r1; no ticket yet |
+| 6 | Evidence-backed project-status / historical-backlog reconciliation | `60a99ec9-4328-41c1-93cc-dbbe6569e234` | queued r1; no ticket yet |
+
+**Execution / next owner:** Harness owns isolated implementation and targeted checks, returning native reports and immutable code/evidence pins. The existing Codex coordinator remains the single independent-review/shared-release owner under the existing standing routine; do not start a competing scheduler/coordinator. Prioritize returned review/release work to free capacity truthfully, then let the remaining canonical FIFO queue admit normally. Never accept an unverified finding just to free a slot. All six are new bounded scopes; leave accepted predecessor repairs resolved.
+
+The existing coordinator should take these six through demonstrated blocker corrections, independent review, relevant exact-head checks and release preparation as permitted by the existing authority. Publication, merge/deployment, native live verification and acceptance remain distinct stages with existing protected controls; workers cannot merge, edit live installs, restart, publish or accept. Return any genuine remaining protected approval as a concrete prepared result. Work-map lane proposes administrative closures only; it must not close issues, retire stored advice, choose conversation options, reopen old jobs or dispatch extra work. Sections lane must not reorganize actual projects to test its UI or invent taxonomy approval.
+
+**Provider proof:** all three actual session request/context sequences selected Google, received provider unavailability and moved to existing Anthropic Sonnet 5.5; no OpenAI worker request was selected. Executor revision43, models revision18 and coordination revision3 match the pre-batch baseline. OpenAI subscription status remains conserved; max3 and routes unchanged. Installed Google adapter SHA256 still matches the previously verified <=5% weekly floor. No reserve/cooldown/account/credential/settings/schedule change and no forced Google qualification retry. Google finding `f526782b-1443-4342-b811-3cba5188f455` remains separate, blocked and unqualified until genuine eligibility returns.
+
+Durable local batch packet and evidence: [assignment specifications](/Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/assignments.json), [native confirmation/job receipts](/Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/confirmed-batch.json), [actual provider events and reserve adapter proof](/Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/provider-proof.json). On GitHub these absolute paths identify operator-local artifacts, not repository-hosted evidence. The full bounded scopes/requirements also live in their canonical finding records.
+
+### Earlier checkpoints below — history except unreplaced evidence and authority
+
 Updated November 09, 2026, 11:19 PM PST. Owner: current Codex coordinator/reviewer. **Active work and verified checkpoints below distinguish release stages.**
 
 ## Active approved work
