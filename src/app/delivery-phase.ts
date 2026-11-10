@@ -11,7 +11,7 @@
 import { DatabaseSync } from 'node:sqlite'
 import type { Ticket } from '../core/index.ts'
 import type { PendingDecisionItem } from '../core/decision.ts'
-import type { Delivery } from './feature-delivery.ts'
+import { deliveryFingerprint, type Delivery } from './feature-delivery.ts'
 import type { Finding } from './finding.ts'
 import type { PublicationSnapshot } from './publication.ts'
 
@@ -28,6 +28,8 @@ export interface PublicationPhaseFence {
   repository: string
   headSha: string
   patchSha256: string
+  sourceFingerprint: string
+  scopeFingerprint: string
   publication?: { id: string; repository: string; headSha: string; patchSha256: string }
 }
 
@@ -61,14 +63,30 @@ export function phaseFacts(db: DatabaseSync, deliveryId: string): Facts | string
   if (delivery.historicalCompletion || ['cancelled', 'abandoned'].includes(delivery.state)) return `Delivery is ${delivery.historicalCompletion ? 'historical' : delivery.state}`
   const finding = row<Finding>(db, 'SELECT value FROM finding WHERE id=?', release.findingId)
   if (!finding) return 'Source finding no longer exists'
-  if (['resolved', 'deferred'].includes(finding.state)) return `Source finding is ${finding.state}`
+  if (finding.state !== 'blocked') return `Source finding is ${finding.state}`
+  if (finding.revision !== release.findingRevision) return 'Source finding revision changed'
   if (finding.job?.id !== release.jobId || finding.job.ticketId?.replace(/^worker-/, '') !== release.ticketId || finding.job.assignmentId !== release.assignmentId) return 'Source finding job changed or was superseded'
   const ticket = row<Ticket>(db, 'SELECT value FROM ticket WHERE id=?', release.ticketId)
   if (!ticket || ticket.assignments.at(-1)?.id !== release.assignmentId) return 'Job ticket has a newer or different assignment'
   if (ticket.ended?.by === 'human') return 'Job was ended by a person'
+  if (ticket.assignments.at(-1)?.report?.state !== 'ready') return 'Implementation report is no longer ready'
+  if (finding.reports.filter(r => r.jobId === release.jobId).at(-1)?.state !== 'ready') return 'Current finding report is no longer ready'
   if (delivery.bindings.headSha !== release.headSha || !delivery.bindings.refs?.some(r => r.repository === delivery.bindings.repository && r.pr === release.prNumber && r.headSha === release.headSha)) return 'Delivery bindings no longer match the released head'
   return { delivery, finding, ticket }
 }
+
+
+// Freeze the exact reviewed source and scope, while allowing publication outcomes and expected stage bookkeeping to advance.
+const sourceFingerprint = (f: Facts): string => deliveryFingerprint({ findingRevision: f.finding.revision, job: f.finding.job,
+  report: f.finding.reports.filter(r => r.jobId === f.delivery.release!.jobId).at(-1),
+  assignment: f.ticket.assignments.at(-1), ended: f.ticket.ended })
+const scopeFingerprint = (d: Delivery): string => deliveryFingerprint({ bindings: d.bindings, requirements: d.requirements,
+  generation: d.generation, release: d.release, authorities: d.authorities, delegatedScope: d.delegatedScope,
+  evidence: d.evidence.filter(e => e.kind === 'implementation' || e.kind === 'review'),
+  prepared: d.preparedPublication && { id: d.preparedPublication.id, ticketId: d.preparedPublication.ticketId,
+    decisionId: d.preparedPublication.decisionId, repository: d.preparedPublication.repository, pr: d.preparedPublication.pr,
+    headSha: d.preparedPublication.headSha, patchSha256: d.preparedPublication.patchSha256,
+    environment: d.preparedPublication.environment, scopeSha256: d.preparedPublication.scopeSha256 } })
 
 const matches = (f: Facts, p: Pick<PublicationSnapshot, 'ticketId' | 'conversationId' | 'repository' | 'prNumber' | 'headSha' | 'patchSha256'>): boolean => {
   const r = f.delivery.release!
@@ -87,6 +105,7 @@ export function capturePhaseFence(db: DatabaseSync, p: PublicationSnapshot): Pub
   const r = facts.delivery.release!
   return { version: 1, kind: 'delivery-phase', deliveryId: facts.delivery.id, findingId: r.findingId, jobId: r.jobId, ticketId: r.ticketId, assignmentId: r.assignmentId,
     conversationId: p.conversationId, prNumber: r.prNumber, repository: p.repository, headSha: r.headSha, patchSha256: r.patchSha256,
+    sourceFingerprint: sourceFingerprint(facts), scopeFingerprint: scopeFingerprint(facts.delivery),
     publication: { id: p.id, repository: p.repository, headSha: p.headSha, patchSha256: p.patchSha256 } }
 }
 
@@ -100,6 +119,9 @@ export function phaseCurrent(db: DatabaseSync, fence: PublicationPhaseFence, p: 
     if (fence.version !== 1 || fence.kind !== 'delivery-phase' || phaseConversation(fence.deliveryId) !== fence.conversationId) return false
     const facts = phaseFacts(db, fence.deliveryId)
     if (typeof facts === 'string' || !matches(facts, p)) return false
+    if (fence.sourceFingerprint !== sourceFingerprint(facts) || fence.scopeFingerprint !== scopeFingerprint(facts.delivery)) return false
+    const prepared = facts.delivery.preparedPublication
+    if (!prepared || prepared.id !== p.id || prepared.headSha !== p.headSha || prepared.patchSha256 !== p.patchSha256) return false
     const r = facts.delivery.release!
     if (fence.findingId !== r.findingId || fence.jobId !== r.jobId || fence.ticketId !== r.ticketId || fence.assignmentId !== r.assignmentId || fence.prNumber !== r.prNumber
       || fence.headSha !== r.headSha || fence.patchSha256 !== r.patchSha256 || fence.repository !== p.repository || p.conversationId !== fence.conversationId) return false

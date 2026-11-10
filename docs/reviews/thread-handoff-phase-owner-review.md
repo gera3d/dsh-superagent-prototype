@@ -1,0 +1,7 @@
+# Typed release-phase owner integration review
+
+Harness checkpoint12e06faacfc5ee0778221c8b65c979be2bf6a7fa is a partial owner implementation, not a released/full-flow feature. Independent audit:4 failures/2 passes. Captured publication confirmation incorrectly survived target changes, source revision changes, a later blocked report in the same assignment, and removal of its prepared publication. Nothing from the checkpoint installed.
+
+Scoped coordinator correction snapshots the exact source/report/assignment plus all reviewed bindings, requirements, generation, source lineage, authorities, implementation/review evidence and prepared publication identity. It requires the current canonical ready report and source revision and verifies the prepared publication still exists at validation. Publication outcome bookkeeping can advance without invalidating the immutable scope; changed scope/report/authority cannot. Positive fixture now has an actual structured ready report/revision rather than just an assignment ID.
+
+After correction:58 focused checks/eight related suites pass (legacy publication owner/worker/operator guards retained), and unfiltered typecheck exits0 after linking the existing companion dependency. Build and native end-to-end proof remain pending the per-task packaging stage. This does not grant model publication or accept a finding/delivery. Final protected native publish/live-evidence/acceptance remain separate.

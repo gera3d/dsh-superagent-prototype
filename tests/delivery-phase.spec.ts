@@ -9,8 +9,8 @@ function setup() {
   const db = new DatabaseSync(':memory:')
   const store = new DeliveryStore(db)
   db.exec('CREATE TABLE ticket(id TEXT PRIMARY KEY, value TEXT); CREATE TABLE finding(id TEXT PRIMARY KEY, dedup_key TEXT, value TEXT)')
-  const ticket = { id: 't1', assignments: [{ id: 'a1', state: 'ended' }], ended: { by: 'executor', outcome: 'done', at: 'x' } }
-  const finding = { id: 'f1', state: 'blocked', job: { id: 'j1', ticketId: 'worker-t1', assignmentId: 'a1' } }
+  const ticket = { id: 't1', assignments: [{ id: 'a1', state: 'ended', report: { state: 'ready', summary: 'Committed bounded patch', at: '2026-11-10T00:00:00Z' } }], ended: { by: 'executor', outcome: 'done', at: 'x' } }
+  const finding = { id: 'f1', revision: 1, state: 'blocked', reports: [{jobId:'j1',state:'ready',reference:'ticket/t1/report/a1',evidence:'Committed bounded patch',at:'2026-11-10T00:00:00Z'}], job: { id: 'j1', ticketId: 'worker-t1', assignmentId: 'a1' } }
   const put = (t: string, v: { id: string; [k: string]: unknown }) => db.prepare(`INSERT OR REPLACE INTO ${t}(id,value) VALUES(?,?)`).run(v.id, JSON.stringify(v))
   put('ticket', ticket); put('finding', finding)
   const t = store.trackUnbound({ ticketId: 't1', title: 'T', owner: 'o', repository: 'org/p', sourceIssue: 0, triggerId: 'tr' })
@@ -39,4 +39,25 @@ it('fails closed on resolved/superseded finding, new assignment, human end, fore
   expect(phaseCurrent(s.db, fence, { ...s.pub, headSha: 'd'.repeat(40) })).toBe(false)
   expect(phaseCurrent(s.db, fence, { ...s.pub, conversationId: 'delivery:x:decision:delivery-phase:x' })).toBe(false)
   expect(() => capturePhaseFence(s.db, { ...s.pub, id: 'other' })).toThrow()
+})
+
+it('root phase: changing target invalidates a captured publication fence',()=>{
+ const s=setup(),f=capturePhaseFence(s.db,s.pub),d=s.store.get('auto-t1')!
+ s.store.compareAndSwap(d.id,d.revision,x=>{x.bindings.environment='different-target'})
+ expect(phaseCurrent(s.db,f,s.pub)).toBe(false)
+})
+it('root phase: a new blocked report in the same assignment invalidates publication',()=>{
+ const s=setup(),f=capturePhaseFence(s.db,s.pub)
+ s.put('ticket',{...s.ticket,assignments:[{id:'a1',state:'ended',report:{state:'blocked',summary:'Tests failed',at:'2026-11-10T00:00:00Z'}}]})
+ expect(phaseCurrent(s.db,f,s.pub)).toBe(false)
+})
+it('root phase: a changed source revision invalidates captured confirmation',()=>{
+ const s=setup(),f=capturePhaseFence(s.db,s.pub)
+ s.put('finding',{...s.finding,revision:2})
+ expect(phaseCurrent(s.db,f,s.pub)).toBe(false)
+})
+it('root phase: removing or replacing the prepared publication invalidates the worker',()=>{
+ const s=setup(),f=capturePhaseFence(s.db,s.pub),d=s.store.get('auto-t1')!
+ s.store.compareAndSwap(d.id,d.revision,x=>{delete x.preparedPublication})
+ expect(phaseCurrent(s.db,f,s.pub)).toBe(false)
 })

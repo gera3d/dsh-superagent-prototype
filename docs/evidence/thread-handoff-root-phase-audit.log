@@ -1,0 +1,95 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/qualification-r13
+
+(node:61548) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/root-delivery-phase-fences.spec.ts (6 tests | 4 failed) 42ms
+   × root phase: changing target invalidates a captured publication fence 8ms
+   × root phase: a new blocked report in the same assignment invalidates publication 4ms
+   × root phase: a changed source revision invalidates captured confirmation 2ms
+   × root phase: removing or replacing the prepared publication invalidates the worker 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/root-delivery-phase-fences.spec.ts > root phase: changing target invalidates a captured publication fence
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/root-delivery-phase-fences.spec.ts:47:37
+     45|  const s=setup(),f=capturePhaseFence(s.db,s.pub),d=s.store.get('auto-t…
+     46|  s.store.compareAndSwap(d.id,d.revision,x=>{x.bindings.environment='di…
+     47|  expect(phaseCurrent(s.db,f,s.pub)).toBe(false)
+       |                                     ^
+     48| })
+     49| it('root phase: a new blocked report in the same assignment invalidate…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/root-delivery-phase-fences.spec.ts > root phase: a new blocked report in the same assignment invalidates publication
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/root-delivery-phase-fences.spec.ts:52:37
+     50|  const s=setup(),f=capturePhaseFence(s.db,s.pub)
+     51|  s.put('ticket',{...s.ticket,assignments:[{id:'a1',state:'ended',repor…
+     52|  expect(phaseCurrent(s.db,f,s.pub)).toBe(false)
+       |                                     ^
+     53| })
+     54| it('root phase: a changed source revision invalidates captured confirm…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/root-delivery-phase-fences.spec.ts > root phase: a changed source revision invalidates captured confirmation
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/root-delivery-phase-fences.spec.ts:57:37
+     55|  const s=setup(),f=capturePhaseFence(s.db,s.pub)
+     56|  s.put('finding',{...s.finding,revision:2})
+     57|  expect(phaseCurrent(s.db,f,s.pub)).toBe(false)
+       |                                     ^
+     58| })
+     59| it('root phase: removing or replacing the prepared publication invalid…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/root-delivery-phase-fences.spec.ts > root phase: removing or replacing the prepared publication invalidates the worker
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/root-delivery-phase-fences.spec.ts:62:37
+     60|  const s=setup(),f=capturePhaseFence(s.db,s.pub),d=s.store.get('auto-t…
+     61|  s.store.compareAndSwap(d.id,d.revision,x=>{delete x.preparedPublicati…
+     62|  expect(phaseCurrent(s.db,f,s.pub)).toBe(false)
+       |                                     ^
+     63| })
+     64|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  19:42:29
+   Duration  336ms (transform 72ms, setup 0ms, import 95ms, tests 42ms, environment 0ms)
+
