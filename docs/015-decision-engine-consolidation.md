@@ -40,6 +40,8 @@ So there are **two producers and three card UIs on one record**. The two produce
 Jev is TypeSafe AI's System One model (early access since Sept 15, 2026). It returns typed decisions with calibrated probabilities, not prose. That makes it a good **ranker and auto-run gate**, and a poor generator: it cannot write options or explain itself. TypeSafe's own numbers put it near mid-tier LLM accuracy (~68%), so treat it as vendor-reported.
 In this repo Jev is **not integrated**: `provider: 'typesafe-jev'` is rejected as "not implemented", and commit `544c90a` removed earlier *simulated* Jev output. The endpoint details in doc 012 were not verified against TypeSafe's docs. The "Make Progress (Jev-Pilot)" toggle (commit `10d5b63`) was UI only and no auto-resolution code exists today.
 
+**Update:** `provider: 'typesafe-jev'` now works through OpenRouter. Set `endpoint` to `https://openrouter.ai/api/alpha/decisions`, `model` to `typesafe/jev-1.13` (or `~typesafe/jev-latest`) and `apiKeyEnv` to the name of the environment variable holding the OpenRouter key. For that endpoint the ranker sends `state` plus a keyed `questions` map (`type: choice`, option ids as `criteria`) and reads `answers.next_action.{choice,confidence,probabilities}`. Output tokens are free, input is about $0.042 per million tokens, and the context is 32K tokens. Any other endpoint keeps the original request shape. Failures still fall back to the configured evaluator, then to unranked.
+
 ## 2. Target design
 
 **One engine, in superagent.** Everything else is a view.

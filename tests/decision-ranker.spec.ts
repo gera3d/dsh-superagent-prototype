@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest'
 import type { DecisionEvaluationRequest, DecisionModelCall } from '../src/core/decision.ts'
-import { chatCompletionsDecisionsRequest, decisionsRequest, evaluateDecisionWithFallback, parseDecisionsResponse } from '../src/app/decision-ranker.ts'
+import { callDecisionsApi, chatCompletionsDecisionsRequest, decisionsRequest, evaluateDecisionWithFallback, openRouterDecisionsRequest, parseDecisionsResponse } from '../src/app/decision-ranker.ts'
 import { isModelUnavailable } from '../src/app/role-models.ts'
 import { SettingsSchema } from '../src/policy.ts'
 
@@ -299,4 +299,35 @@ it('does NOT fall back to DeepSeek flash when model call fails for non-availabil
   expect(result.recommendedValue).toBe('')
   expect(result.provider).toBe('unranked')
   expect(call).toHaveBeenCalledOnce()
+})
+
+it('maps the options to an OpenRouter Decisions API choice question keyed by option id', () => {
+  const body = openRouterDecisionsRequest(request, 'typesafe/jev-1.13')
+  expect(body.model).toBe('typesafe/jev-1.13')
+  expect(body.state).toContain(request.context)
+  expect(body.questions.next_action.type).toBe('choice')
+  expect(body.questions.next_action.criteria).toEqual({
+    deploy: 'Deploy now — Ship the tested change.',
+    review: 'Review first — Have another person inspect it.',
+  })
+  expect(body.questions.next_action.instructions).toContain('untrusted data')
+})
+
+it('parses the OpenRouter answers map and posts to the OpenRouter endpoint with the bearer key', async () => {
+  const seen: { url?: string, body?: any, auth?: string } = {}
+  const fakeFetch = (async (url: string, init: any) => {
+    seen.url = url; seen.body = JSON.parse(init.body); seen.auth = init.headers.authorization
+    return new Response(JSON.stringify({ id: 'gen-dec-1', provider: 'TypeSafe', answers: { next_action: {
+      type: 'choice', choice: 'review', confidence: 0.81, probabilities: { deploy: 0.19, review: 0.81 },
+    } }, usage: { input_tokens: 10, output_tokens: 0, cost: 0 } }))
+  }) as unknown as typeof fetch
+  const result = await callDecisionsApi(request, { ...settings({ provider: 'typesafe-jev', model: 'typesafe/jev-1.13' }), provider: 'typesafe-jev' } as never,
+    { apiKey: 'k', endpoint: 'https://openrouter.ai/api/alpha/decisions', fetch: fakeFetch })
+  expect(seen.url).toBe('https://openrouter.ai/api/alpha/decisions')
+  expect(seen.auth).toBe('Bearer k')
+  expect(seen.body.questions.next_action.criteria.review).toContain('Review first')
+  expect(result.recommendedValue).toBe('review')
+  expect(result.confidence).toBe(0.81)
+  expect(result.distribution).toEqual([{ id: 'deploy', probability: 0.19 }, { id: 'review', probability: 0.81 }])
+  expect(result.provider).toContain('TypeSafe Jev Decisions API / typesafe/jev-1.13')
 })
