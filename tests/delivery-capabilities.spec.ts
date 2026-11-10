@@ -14,13 +14,20 @@ import type { Ticket } from '../src/core/model.ts'
 import { key } from '../src/core/ids.ts'
 import { messageId } from '../src/app/delivery.ts'
 import type { Commands } from '../src/infra/commands.ts'
+import { FeatureDeliveryRuntime } from '../src/app/delivery-runtime.ts'
+import type { LifecyclePublication } from '../src/app/lifecycle-publication.ts'
+import { loadPublicationRunner } from '../src/infra/publication-runner.ts'
+import { Effects } from '../src/app/effects.ts'
+import { HealthBoard } from '../src/infra/health.ts'
+import { DshExecutor, workerSessionId, type ExecutorHost } from '../src/executor/dsh.ts'
+import { fixture as releasePackageFixture } from './fixtures/release-package.ts'
 
-const HEAD = 'a'.repeat(40), BASE = 'b'.repeat(40), NEW = 'c'.repeat(40)
+const HEAD = 'a'.repeat(40); let BASE = 'b'.repeat(40), NEW = 'c'.repeat(40)
 const bindings: DeliveryBindings = { repository: 'org/repo', sourceIssue: 167, baseSha: BASE, headSha: HEAD, refs: [{ repository: 'org/repo', pr: 17, headSha: HEAD }], artifact: 'old-artifact' }
 let directory: string, store: Store, deliveries: DeliveryStore
 beforeEach(() => { directory = mkdtempSync(join(tmpdir(), 'delivery-capabilities-')); store = new Store(join(directory, 'db.sqlite')); deliveries = new DeliveryStore(store.db) })
 afterEach(() => { vi.restoreAllMocks(); store.close(); rmSync(directory, { recursive: true, force: true }) })
-function fixture(followFixHeads = true) {
+function fixture(followFixHeads = true, nativeExecutor?: unknown) {
   store.saveSettings({ executor: { model: { provider: 'configured', model: 'executor' } } })
   let verdict: unknown = { verdict: 'passed', findings: [], rationale: 'The bounded code satisfies the intake; this is not publication approval.' }
   let head = HEAD
@@ -37,7 +44,7 @@ function fixture(followFixHeads = true) {
   const ctx = { llm: { resolveCallConfig: resolve, stream }, agents: { get: vi.fn(() => ({ session: { snapshotEvents: () => events } })) }, get: vi.fn() } as unknown as Context
   const deliver = vi.fn(), start = vi.fn()
   let policy = { version: 'p2', paused: false, revalidate: (_mandate: unknown) => true }
-  const engine = new Engine({ repo: store, executor: { deliver, start, stop: vi.fn() }, policy: () => policy, now: () => '2026-11-06T00:00:01.000Z' } as unknown as EngineOptions)
+  const engine = new Engine({ repo: store, executor: nativeExecutor ?? { deliver, start, stop: vi.fn() }, policy: () => policy, now: () => '2026-11-06T00:00:01.000Z' } as unknown as EngineOptions)
   const note = vi.spyOn(engine, 'note')
   const deps: DeliveryCapabilityDependencies = { ctx, store, commands, engine, lifetime: new AbortController().signal }
   const caps = createDeliveryCapabilities(deps)
@@ -734,4 +741,91 @@ it('fails the protected phase closed when an adopted successor, its failed revie
   tamper(r => { r.successors![0]!.fixLeaseId = 'forged-lease' }); expect(phaseFacts(store.db, 'feature')).toContain('Corrected implementation evidence'); restore()
   expect(failedId).toBeTruthy(); expect(typeof phaseFacts(store.db, 'feature')).not.toBe('string')
   store.db.prepare('DELETE FROM delivery_capability_fix').run(); expect(phaseFacts(store.db, 'feature')).toContain('Durable correction handoff')
+})
+
+it('drives the actual FeatureDeliveryRuntime pass: adoption precedes the phase fence and the real packageRelease, which packages only the re-reviewed successor head', async () => {
+  const f = releasePackageFixture(); const saved = structuredClone(bindings)
+  BASE = f.base; NEW = f.head; bindings.baseSha = BASE; bindings.environment = 'local harness'; bindings.refs = [{ repository: 'org/repo', pr: 17, headSha: HEAD, baseSha: BASE }]
+  try {
+    const { h } = await correctedToReleasePhase()
+    const successor = successors()[0]!; successor.execution = f.ticket.execution; store.tickets.save(successor)
+    f.deps.profile()!.source.repository = 'org/repo'
+    const rel = new FindingRelease({ ...f.deps, store: deliveries, ticket: id => store.tickets.get(id), validateCurrent: d => { const facts = phaseFacts(store.db, d.id); if (typeof facts === 'string') throw new Error(facts) } })
+    const adopt = vi.spyOn(rel, 'adoptCorrection'), pack = vi.spyOn(rel, 'packageRelease')
+    const runner = () => loadPublicationRunner(join(f.state, 'publication-runner.json'))!
+    const prepare = vi.fn(async () => ({ status: 'prepared', id: 'manifest-1', updatedAt: '2026-11-06T00:02:00.000Z', evidence: [] }))
+    const publication = { pinsFor: (r: string, p: number) => runner().pinsFor(r, p), scopeFor: (r: string, p: number) => runner().scopeFor(r, p), service: { prepare } } as unknown as LifecyclePublication
+    const frozen = JSON.stringify(store.tickets.get('original')); const before = deliveries.get('feature')!
+    expect(before).toMatchObject({ stage: 'ready_to_publish', state: 'awaiting_decision', generation: 1 }); expect(h.start).toHaveBeenCalledTimes(1)
+    // Without adoption wired the stale original lineage is the only artifact: the pass fails closed before any packaging or publication.
+    const unwired = new FeatureDeliveryRuntime(store, {}, { publication, packageRelease: (d, s) => rel.packageRelease(d, s) })
+    await unwired.request()
+    expect(pack).not.toHaveBeenCalled(); expect(prepare).not.toHaveBeenCalled()
+    expect(deliveries.get('feature')).toMatchObject({ state: 'blocked', blocker: expect.stringContaining('Release phase is not current') }); expect(deliveries.get('feature')!.release!.successors).toBeUndefined()
+    deliveries.compareAndSwap('feature', deliveries.get('feature')!.revision, d => { delete d.preparation; delete d.blocker; d.state = 'awaiting_decision' })
+    // The real wiring: one bounded pass adopts, validates the fence, then packages the exact successor head from git.
+    const runtime = new FeatureDeliveryRuntime(store, {}, { publication, adoptCorrection: (d, s) => adopt.getMockImplementation() ? rel.adoptCorrection(d, s) : rel.adoptCorrection(d, s), packageRelease: (d, s) => rel.packageRelease(d, s) })
+    await runtime.request()
+    expect(adopt).toHaveBeenCalledTimes(1); expect(pack).toHaveBeenCalledTimes(1)
+    expect(adopt.mock.invocationCallOrder[0]!).toBeLessThan(pack.mock.invocationCallOrder[0]!)
+    const packaged = pack.mock.calls[0]![0]; expect(effectiveRelease(packaged.release!)).toMatchObject({ headSha: f.head, ticketId: successor.id })
+    expect(packaged.release!.successors).toHaveLength(1); expect(packaged.release).toMatchObject({ ticketId: 'original', headSha: HEAD })
+    expect(runner().pinsFor('org/repo', 17)).toMatchObject({ headSha: f.head })
+    const after = deliveries.get('feature')!
+    expect(after.preparedPublication).toMatchObject({ headSha: f.head, pr: 17 }); expect(after.stage).toBe('ready_to_publish')
+    expect(after.evidence.filter(e => e.kind === 'acceptance' || e.kind === 'publication')).toEqual([]); expect(after.state).not.toBe('accepted')
+    expect(JSON.stringify(store.tickets.get('original'))).toBe(frozen)
+    // Restart / duplicate pass: nothing is adopted, packaged or prepared a second time.
+    await new FeatureDeliveryRuntime(store, {}, { publication, adoptCorrection: (d, s) => rel.adoptCorrection(d, s), packageRelease: (d, s) => rel.packageRelease(d, s) }).request()
+    expect(adopt).toHaveBeenCalledTimes(1); expect(pack).toHaveBeenCalledTimes(1); expect(prepare).toHaveBeenCalledTimes(1); expect(deliveries.get('feature')!.release!.successors).toHaveLength(1)
+  } finally { BASE = 'b'.repeat(40); NEW = 'c'.repeat(40); for (const k of Object.keys(bindings)) delete (bindings as unknown as Record<string, unknown>)[k]; Object.assign(bindings, saved) }
+}, 120000)
+
+/** A real Effects queue and DshExecutor over the same Store, with `occupied` workers whose turn is running, and the model-routing fallback exercised. */
+function nativeExecutor(maxWorkers: number, occupied: number) {
+  const agents = new Map<string, { status: string }>()
+  for (let i = 0; i < occupied; i++) {
+    const id = `occupant-${i}`
+    store.tickets.save({ id, title: id, decisionId: 'd', mandate: { strength: 'explicit', policyVersion: 'p1', basis: { via: 'listed' }, actor: { source: 'github', id: 'alice' }, scope: 'unrelated work' }, channels: [], assignments: [{ id: `${id}-a`, state: 'running', createdAt: '2026-11-06T00:00:00.000Z' }], inputs: [], undelivered: [], origin: { triggerId: `${id}-t`, triggerIds: [`${id}-t`] }, createdAt: '2026-11-06T00:00:00.000Z', updatedAt: '2026-11-06T00:00:00.000Z' } as Ticket)
+    agents.set(workerSessionId(id), { status: 'running' })
+  }
+  const ensure = vi.fn(async () => { throw new Error('All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown)') })
+  const effects = new Effects(store, new HealthBoard())
+  const executor = new DshExecutor({ store, effects, context: { agents: { get: (id: string) => agents.get(id) }, get: () => undefined }, sessions: { ensure, selectModel: vi.fn(), prompt: vi.fn(), relay: vi.fn(), holds: () => false },
+    health: new HealthBoard().claim('worker'), machine: { stateDir: directory }, lifetime: new AbortController().signal, closing: () => false, paused: () => false, environment: () => [] } as unknown as ExecutorHost)
+  /** Settings are read live; apply after the delivery fixture, which seeds its own executor route. */
+  const configure = () => store.saveSettings({ executor: { model: { provider: 'antigravity', model: 'gemini-3.8-flash' }, maxWorkers },
+    models: { hierarchy: [{ provider: 'antigravity', model: 'gemini-3.8-flash', starred: true }, { provider: 'anthropic', model: 'claude-sonnet-5-5', starred: true }] } })
+  return { effects, executor, agents, ensure, configure }
+}
+it('queues the correction successor through the existing launch effect: three occupied slots never admit a fourth worker, and a provider cooldown still falls back by the existing routes', async () => {
+  const native = nativeExecutor(3, 3)
+  const h = fixture(true, native.executor); native.configure(); h.worker(); endWorker()
+  const l = await h.fixLease(); expect((await h.caps.fix!.execute(l)).outcome).toBe('pending')
+  const successor = successors()[0]!; expect(successor.assignments).toHaveLength(1)
+  const launch = (native.executor as unknown as { launch: (t: Ticket, a: unknown) => Promise<void> }); const launched = vi.spyOn(launch, 'launch').mockResolvedValue(undefined)
+  const queued = () => store.db.prepare("SELECT key, value FROM effect WHERE kind='launch'").all()
+  // Durably queued exactly once; all three configured slots are held by unrelated running workers, so nothing starts.
+  expect(queued().map(r => JSON.parse(String(r.value)))).toEqual([{ ticketId: successor.id, assignmentId: successor.assignments[0]!.id }])
+  native.effects.start(); await native.effects.idle()
+  expect(launched).not.toHaveBeenCalled(); expect(native.ensure).not.toHaveBeenCalled(); expect(native.executor.activeCount()).toBe(3); expect(queued()).toHaveLength(1)
+  expect((await h.caps.fix!.execute(l)).outcome).toBe('pending'); expect(successors()).toHaveLength(1); expect(queued()).toHaveLength(1)
+  // The queued correction is not a fourth executor, and it does not appear as occupying a slot before it starts.
+  expect(store.tickets.open().filter(t => native.executor.running(t))).toHaveLength(3)
+  // A slot frees: the very same queued launch runs once (not duplicated), within capacity.
+  native.agents.set(workerSessionId('occupant-0'), { status: 'idle' })
+  const row = store.tickets.get('occupant-0')!; row.assignments[0]!.state = 'ended'; store.tickets.save(row)
+  native.effects.kick(); await native.effects.idle()
+  expect(launched).toHaveBeenCalledTimes(1); expect(launched.mock.calls[0]![0]).toMatchObject({ id: successor.id }); expect(queued()).toHaveLength(0)
+  expect(store.tickets.get('original')!.ended).toBeDefined()
+  launched.mockRestore()
+  // Provider cooldown on the first route: the successor takes the existing next ladder route and records the step; it is neither forced onto the cooled route nor retried by the correction path.
+  successor.execution = { name: 'correction', directory, text: 'bounded', assignment: 'bounded' } as Ticket['execution']; store.tickets.save(successor)
+  await expect(launch.launch(store.tickets.get(successor.id)!, store.tickets.get(successor.id)!.assignments[0]!)).rejects.toBeTruthy()
+  expect(native.ensure).toHaveBeenCalledTimes(2)
+  const routes = native.ensure.mock.calls.map(c => (c as unknown as unknown[])[4] as { provider: string; model: string })
+  expect(routes[0]).toMatchObject({ provider: 'antigravity', model: 'gemini-3.8-flash' }); expect(routes[1]).toMatchObject({ provider: 'anthropic', model: 'claude-sonnet-5-5' })
+  expect(store.tickets.get(successor.id)!.inputs.some(i => i.kind === 'note')).toBe(true)
+  expect(store.tickets.get(successor.id)!.mandate).toMatchObject({ scope: 'original implementation only' })
+  await native.effects.drain()
 })
