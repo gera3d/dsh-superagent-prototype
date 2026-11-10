@@ -224,3 +224,26 @@ it('retires only generated directions predating the native handoff, preserving l
   expect(() => inbox.stage(old.id, { choiceId: 'a', attemptId: 'old', draftText: 'Request Codex review' })).toThrow('stale')
   await runtime.stop()
 })
+
+it('refreshes old acceptance advice once after protected provenance is available and retains the old advice in audit', async () => {
+  const { recordLiveAttestation } = await import('../src/app/delivery-evidence.ts')
+  const recommend = vi.fn(async (_d: Delivery, action: DeliveryAction) => ({ disposition: 'take' as const, actionId: action.id, fingerprint: action.fingerprint, kind: action.kind, rationale: 'Recorded operator live verification is complete; offer the separate protected acceptance.', provider: 'test', recordedAt: at }))
+  const { runtime, intake } = fixture({}, { recommend })
+  const created = intake('provenance-refresh', [])
+  const verifying = runtime.store.compareAndSwap(created.id, created.revision, d => {
+    d.stage = 'verifying'; d.state = 'awaiting_decision'
+    for (const kind of ['publication', 'verification'] as const) d.evidence.push({ id: kind, kind, bindings: d.bindings, recordedAt: at, reference: 'publication:test', outcome: 'passed', generation: 0 })
+  })
+  const recorded = recordLiveAttestation(runtime.store, created.id, { revision: verifying.revision, requirements: created.requirements, reference: 'https://example.test/live-evidence' }, 'operator')
+  const action = recorded.nextAction!
+  runtime.store.setRecommendation(created.id, recorded.revision, { disposition: 'hold', actionId: action.id, fingerprint: action.fingerprint, kind: 'accept', rationale: 'Legacy context omitted the operator receipt.', provider: 'old', recordedAt: at })
+  try {
+    await runtime.request()
+    const updated = runtime.store.get(created.id)!
+    expect(updated.recommendation).toMatchObject({ disposition: 'take', operatorEvidenceContextVersion: 1 })
+    expect(updated.audit.some(a => a.event.includes('Legacy context omitted the operator receipt.'))).toBe(true)
+    expect(updated.evidence).toEqual(recorded.evidence)
+    expect(updated.acceptance).toBeUndefined()
+    await runtime.request(); expect(recommend).toHaveBeenCalledTimes(1)
+  } finally { await runtime.stop() }
+})
