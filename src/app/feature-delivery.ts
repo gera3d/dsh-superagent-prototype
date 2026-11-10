@@ -65,6 +65,25 @@ export const LEGACY_RECONCILIATION_MAP: Readonly<Record<string, { sourceIssue: n
     triggerId: '2c17c79704fc48254f6ac65c122a8436',
   },
 }
+/**
+ * A trusted, provenance-checked corrected artifact adopted into a finding-origin release after a failed independent review was
+ * corrected by a new bounded successor ticket. Append-only: the original release fields and every earlier successor stay immutable history.
+ */
+export interface ReleaseSuccessor {
+  /** The bounded correction job (stable key of the successor ticket) and its ticket/assignment. */
+  jobId: string; ticketId: string; assignmentId: string; originalTicketId: string
+  /** The exact failed review evidence this correction answers, the fix lease that carried it, and the generation the corrected evidence belongs to. */
+  failedReviewEvidenceId: string; failedReviewReference: string; fixLeaseId: string; generation: number
+  /** The head the failed review judged, and the corrected head/patch derived from the successor's committed git facts. */
+  fromHeadSha: string; headSha: string; patchSha256: string; prNumber: number; reportAt: string; adoptedAt: string
+}
+export interface DeliveryRelease { findingId: string; findingRevision: number; jobId: string; ticketId: string; assignmentId: string; branch: string; prNumber: number; headSha: string; patchSha256: string; preparedAt: string; successors?: ReleaseSuccessor[] }
+/** The release artifact currently authoritative for this delivery: the latest adopted successor, else the original release. */
+export function effectiveRelease(release: DeliveryRelease): { ticketId: string; assignmentId: string; jobId: string; headSha: string; patchSha256: string; prNumber: number; generation?: number; successor?: ReleaseSuccessor } {
+  const successor = release.successors?.at(-1)
+  return successor ? { ticketId: successor.ticketId, assignmentId: successor.assignmentId, jobId: successor.jobId, headSha: successor.headSha, patchSha256: successor.patchSha256, prNumber: successor.prNumber, generation: successor.generation, successor }
+    : { ticketId: release.ticketId, assignmentId: release.assignmentId, jobId: release.jobId, headSha: release.headSha, patchSha256: release.patchSha256, prNumber: release.prNumber }
+}
 export interface Delivery {
   id: string; title: string; revision: number; stage: DeliveryStage; state: DeliveryState; owner: string
   /** Read-only native ownership projection; never persisted as an execution grant. */
@@ -72,7 +91,7 @@ export interface Delivery {
   /** Read-only projection for an unbound delivery: what the one-click release handoff would bind, or what is missing. */
   handoff?: import('./delivery-handoff.ts').DeliveryHandoff
   /** Exact finding lineage when the delivery was prepared from a finding job's committed artifact; history, never an authority. */
-  release?: { findingId: string; findingRevision: number; jobId: string; ticketId: string; assignmentId: string; branch: string; prNumber: number; headSha: string; patchSha256: string; preparedAt: string }
+  release?: DeliveryRelease
   /** Derived: automated verification passed but these intake requirements still lack explicit operator evidence. */
   awaitingOperatorEvidence?: string[]
   nextAction?: DeliveryAction; blocker?: string; scopeBinding?: DeliveryScopeBinding; bindings: DeliveryBindings; requirements: string[]
@@ -340,6 +359,10 @@ export class DeliveryStore {
       delete d.reconciliation
       if (d.bindings.refs && new Set(d.bindings.refs.map(r => `${r.repository}:${r.pr}`)).size !== d.bindings.refs.length) throw new DeliveryConflict('Duplicate delivery reference identities')
       if (d.id !== id || (!allowScopeBind && (stable(d.scopeBinding) !== stable(before.scopeBinding) || stable(d.authorities) !== stable(before.authorities) || stable(d.delegatedActions) !== stable(before.delegatedActions) || d.delegatedScope !== before.delegatedScope || d.followFixHeads !== before.followFixHeads || stable(d.requirements) !== stable(before.requirements) || d.owner !== before.owner || (before.scopeBinding && !bindingMatches(d.bindings, before.bindings))))) throw new DeliveryConflict('Immutable intake changed')
+      if (before.release && (!d.release || stable({ ...d.release, successors: undefined }) !== stable({ ...before.release, successors: undefined })
+        || (before.release.successors ?? []).some((x, i) => stable(d.release!.successors?.[i]) !== stable(x))
+        || (d.release.successors ?? []).some((x, i, all) => x.fromHeadSha !== (i ? all[i - 1]!.headSha : d.release!.headSha) || x.generation <= (i ? all[i - 1]!.generation : 0))
+        || (d.release.successors?.length ?? 0) > (before.release.successors?.length ?? 0) + 1)) throw new DeliveryConflict('Release lineage is append-only history')
       if (before.state === 'running' && !allowFixRebind && !allowScopeBind && (!bindingMatches(d.bindings, before.bindings) || stable(d.preparedPublication) !== stable(before.preparedPublication))) throw new DeliveryConflict('In-flight scope and prepared publication are immutable')
       if (before.evidence.some(e => !d.evidence.some(next => next.id === e.id && stable(next) === stable(e))) || stable(d.audit.slice(0, before.audit.length)) !== stable(before.audit)) throw new DeliveryConflict('Evidence and audit history are append-only')
       if ((!allowScopeBind && (d.attempts.maxReview !== before.attempts.maxReview || d.attempts.maxFix !== before.attempts.maxFix || d.attempts.review < before.attempts.review || d.attempts.fix < before.attempts.fix)) || d.generation < before.generation || d.generation > before.generation + 1) throw new DeliveryConflict('Retry budgets and generations cannot be reset')

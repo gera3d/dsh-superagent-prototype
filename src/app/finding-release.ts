@@ -13,7 +13,8 @@ import { isAbsolute, join, sep } from 'node:path'
 import { z } from 'zod'
 import type { Ticket } from '../core/model.ts'
 import { createPublicationRunner, executePublicationCommand, type PublicationExecutor, type PublicationRunnerConfig } from '../infra/publication-runner.ts'
-import { DeliveryConflict, deliveryFingerprint, type Delivery, type DeliveryCreate, type DeliveryStore } from './feature-delivery.ts'
+import { DeliveryConflict, deliveryFingerprint, effectiveRelease, type Delivery, type DeliveryCreate, type DeliveryRelease, type DeliveryStore, type ReleaseSuccessor } from './feature-delivery.ts'
+import { successorFacts } from './delivery-phase.ts'
 import type { Finding } from './finding.ts'
 
 const absolute = z.string().refine(isAbsolute, 'Expected absolute path')
@@ -202,6 +203,51 @@ export class FindingRelease {
   }
 
   /**
+   * Adopt the trusted corrected artifact of a durable same-delivery correction handoff into the release lineage, before the phase
+   * fence is evaluated. Nothing is rewritten: the original release fields, ended job, ready evidence and failed review stay
+   * immutable; a provenance-checked successor record is appended. Idempotent; any ambiguity, stale head/generation, person-stopped
+   * successor or foreign handoff fails closed. Grants no publication, merge, deployment or acceptance authority.
+   */
+  async adoptCorrection(delivery: Delivery, signal?: AbortSignal): Promise<Delivery> {
+    const release = delivery.release
+    if (!release) return delivery
+    const current = effectiveRelease(release)
+    if (delivery.bindings.headSha === current.headSha) return delivery
+    if (delivery.stage !== 'ready_to_publish' || delivery.state !== 'awaiting_decision' || delivery.preparedPublication || delivery.historicalCompletion) throw new DeliveryConflict('A corrected head can only be adopted by a delivery that passed re-review and has no prepared publication')
+    const profile = this.deps.profile()
+    if (!profile) throw new ReleaseBlocked([{ field: 'release profile', owner: 'project release profile (one-time trusted setup)', detail: 'No trusted release profile.' }])
+    const handoffs = this.deps.store.db.prepare('SELECT id,value FROM delivery_capability_fix').all().flatMap(r => {
+      const h = JSON.parse(String(r.value)) as { deliveryId?: string; worker?: string; assignment?: string; review?: string; result?: { outcome?: string; updatedBindings?: Delivery['bindings'] }; successor?: { originalWorker?: string; jobId?: string } }
+      return h.deliveryId === delivery.id && h.successor && h.result?.outcome === 'passed' && h.result.updatedBindings?.headSha === delivery.bindings.headSha ? [{ leaseId: String(r.id), ...h }] : []
+    })
+    if (handoffs.length !== 1) throw new DeliveryConflict(handoffs.length ? 'Ambiguous correction ownership: multiple successor handoffs produced this head' : 'No durable successor correction handoff produced the delivery head; the head is not adopted')
+    const h = handoffs[0]!
+    if ((release.successors ?? []).some(x => x.jobId === h.successor!.jobId)) throw new DeliveryConflict('This correction successor was already adopted for a different head')
+    const successor = this.deps.ticket(h.worker!)
+    const assignment = successor?.assignments.at(-1)
+    if (!successor || !assignment || assignment.id !== h.assignment || assignment.report?.state !== 'ready') throw new DeliveryConflict('The correction successor has no current ready report')
+    if (successor.ended?.by === 'human' || successor.ended?.outcome === 'stopped') throw new DeliveryConflict('The correction successor was stopped by a person; its mandate is not reopened or inherited')
+    const failed = delivery.evidence.findLast(e => e.kind === 'review' && e.outcome === 'failed' && e.reference === h.review && (e.generation ?? 0) === delivery.generation - 1)
+    if (!failed) throw new DeliveryConflict('The failed independent review this correction answers is not recorded for the previous generation')
+    // Trusted git facts of the successor's own committed artifact, never its prose.
+    const c = await this.candidate(successor, profile)
+    signal?.throwIfAborted()
+    if (c.headSha !== delivery.bindings.headSha) throw new DeliveryConflict('The successor artifact head does not match the independently re-reviewed head')
+    if (await this.reviewBase(profile, current.prNumber) !== delivery.bindings.baseSha) throw new DeliveryConflict('Target base changed after review; refresh is required before adopting the correction')
+    const record: ReleaseSuccessor = { jobId: h.successor!.jobId!, ticketId: successor.id, assignmentId: assignment.id, originalTicketId: release.ticketId, failedReviewEvidenceId: failed.id, failedReviewReference: failed.reference,
+      fixLeaseId: h.leaseId, generation: delivery.generation, fromHeadSha: current.headSha, headSha: c.headSha, patchSha256: c.patchSha256, prNumber: current.prNumber, reportAt: assignment.report.at, adoptedAt: (this.deps.now ?? (() => new Date().toISOString()))() }
+    const db = this.deps.store.db
+    return this.deps.store.compareAndSwap(delivery.id, delivery.revision, d => {
+      if (d.bindings.headSha !== delivery.bindings.headSha || d.generation !== delivery.generation || d.stage !== 'ready_to_publish' || d.preparedPublication || effectiveRelease(d.release!).headSha !== current.headSha) throw new DeliveryConflict('Delivery changed while adopting the correction')
+      d.release!.successors = [...(d.release!.successors ?? []), record]
+      const index = d.release!.successors.length - 1
+      const checked = successorFacts(db, d, d.release!.successors[index]!, index)
+      if (typeof checked === 'string') throw new DeliveryConflict(`Correction successor failed provenance validation: ${checked}`)
+      d.audit.push({ at: record.adoptedAt, event: `correction-successor-adopted:${record.jobId}:${record.fromHeadSha}->${record.headSha}:patch ${record.patchSha256}`, actor: 'delivery-release' })
+    })
+  }
+
+  /**
    * Stage B: after the independent review passed for this exact delivery, build the per-task release package. Everything is derived
    * from stored facts and git/GitHub state: the changed spec files select targeted checks, the durable review verdict becomes the
    * independent attestation, and a fixed pinned prepare script writes the exact manifest. Idempotent; stale head/patch is refused.
@@ -211,7 +257,10 @@ export class FindingRelease {
     const profile = this.deps.profile(), preset = profile?.preset
     if (!release) throw new DeliveryConflict('Delivery has no release lineage')
     if (!profile || !preset) throw new ReleaseBlocked([{ field: 'release preset', owner: 'project release profile (one-time trusted setup)', detail: `No per-task release preset. Add ${PRESET_FIELDS}.` }])
-    const ticket = this.deps.ticket(release.ticketId)
+    // The artifact under release is the original job's, or the latest adopted (provenance-checked) correction successor's; the stored original stays untouched.
+    const current = effectiveRelease(release)
+    const effective: DeliveryRelease = { ...release, ticketId: current.ticketId, assignmentId: current.assignmentId, jobId: current.jobId, headSha: current.headSha, patchSha256: current.patchSha256, prNumber: current.prNumber }
+    const ticket = this.deps.ticket(effective.ticketId)
     if (!ticket) throw new DeliveryConflict('The release job ticket is missing')
     const run = <K>(key: string, work: () => Promise<K>) => { const prior = this.inflight.get(key); if (prior) return prior as Promise<K>; const p = work().finally(() => this.inflight.delete(key)); this.inflight.set(key, p); return p }
     return run(`package:${delivery.id}`, async () => {
@@ -221,8 +270,8 @@ export class FindingRelease {
         if ((error as NodeJS.ErrnoException).code === 'EEXIST') throw new DeliveryConflict('Release packaging is owned by another or interrupted attempt; reconcile release-package.lock before retrying')
         throw error
       }
-      writeFileSync(join(lock, 'owner.json'), JSON.stringify({ deliveryId: delivery.id, head: release.headSha, pid: process.pid, at: new Date().toISOString() }), { mode: 0o600 })
-      try { await this.packageOnce(delivery, release, profile, preset, ticket, signal) } finally { rmSync(lock, { recursive: true }) }
+      writeFileSync(join(lock, 'owner.json'), JSON.stringify({ deliveryId: delivery.id, head: effective.headSha, pid: process.pid, at: new Date().toISOString() }), { mode: 0o600 })
+      try { await this.packageOnce(delivery, effective, profile, preset, ticket, signal) } finally { rmSync(lock, { recursive: true }) }
     })
   }
   private async packageOnce(delivery: Delivery, release: NonNullable<Delivery['release']>, profile: ReleaseProfile, preset: ReleasePreset, ticket: Ticket, signal?: AbortSignal): Promise<void> {

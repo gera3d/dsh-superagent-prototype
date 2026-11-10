@@ -11,7 +11,8 @@
 import { DatabaseSync } from 'node:sqlite'
 import type { Ticket } from '../core/index.ts'
 import type { PendingDecisionItem } from '../core/decision.ts'
-import { deliveryFingerprint, type Delivery } from './feature-delivery.ts'
+import { key } from '../core/ids.ts'
+import { deliveryFingerprint, effectiveRelease, type Delivery, type ReleaseSuccessor } from './feature-delivery.ts'
 import type { Finding } from './finding.ts'
 import type { PublicationSnapshot } from './publication.ts'
 
@@ -30,6 +31,8 @@ export interface PublicationPhaseFence {
   patchSha256: string
   sourceFingerprint: string
   scopeFingerprint: string
+  /** Present only when the released artifact is a provenance-checked correction successor of a failed independent review. */
+  successor?: { jobId: string; ticketId: string; assignmentId: string; sourceFingerprint: string }
   publication?: { id: string; repository: string; headSha: string; patchSha256: string }
 }
 
@@ -50,10 +53,39 @@ export function deliveryPhaseItem(delivery: Delivery): PendingDecisionItem | und
     lifecycle: { kind: 'done', assignmentId: release.assignmentId, prNumber: release.prNumber }, choices: [] } as unknown as PendingDecisionItem
 }
 
-type Facts = { delivery: Delivery; finding: Finding; ticket: Ticket }
+type Facts = { delivery: Delivery; finding: Finding; ticket: Ticket; successor?: { ticket: Ticket; record: ReleaseSuccessor } }
 function row<T>(db: DatabaseSync, sql: string, id: string): T | undefined {
   const r = db.prepare(sql).get(id)
   return r ? JSON.parse(String(r.value)) as T : undefined
+}
+/**
+ * The adopted correction successor must be exactly what the durable correction handoff created: the stable successor ticket of a
+ * bounded job whose trigger names this delivery, the ticket it succeeds and the failed review it answers, with an authentic ready
+ * report and a passed implementation evidence row bound to the corrected head at the successor's generation. Fails closed.
+ */
+export function successorFacts(db: DatabaseSync, delivery: Delivery, record: ReleaseSuccessor, index: number): { ticket: Ticket; record: ReleaseSuccessor } | string {
+  const release = delivery.release!, chain = release.successors!
+  const previous = index ? chain[index - 1]! : undefined
+  // Every correction names the one original implementation ticket as its ended predecessor; earlier successors are lineage, not roots.
+  const predecessor = release.ticketId
+  if (record.ticketId !== key('correction-ticket', record.jobId) || record.originalTicketId !== predecessor || record.prNumber !== release.prNumber) return 'Correction successor does not match its bounded job or predecessor'
+  if (record.fromHeadSha !== (previous?.headSha ?? release.headSha) || record.generation <= (previous?.generation ?? 0)) return 'Correction successor does not continue the released lineage'
+  const ticket = row<Ticket>(db, 'SELECT value FROM ticket WHERE id=?', record.ticketId)
+  if (!ticket || ticket.origin.triggerId !== key('correction-trigger', record.jobId)) return 'Correction successor ticket is missing or was not created by its bounded correction job'
+  const trigger = row<{ meta?: { correctionAssignment?: { jobId?: string; deliveryId?: string; originalTicketId?: string; reviewReference?: string; generation?: number } } }>(db, 'SELECT value FROM trigger WHERE id=?', key('correction-trigger', record.jobId))
+  const bound = trigger?.meta?.correctionAssignment
+  if (!bound || bound.jobId !== record.jobId || bound.deliveryId !== delivery.id || bound.originalTicketId !== predecessor || bound.reviewReference !== record.failedReviewReference || bound.generation !== record.generation - 1) return 'Correction job is not bound to this delivery, predecessor and failed review'
+  if (ticket.ended?.by === 'human' || ticket.ended?.outcome === 'stopped') return 'Correction successor was ended by a person'
+  const assignment = ticket.assignments.at(-1)
+  if (!assignment || assignment.id !== record.assignmentId || assignment.report?.state !== 'ready' || assignment.report.at !== record.reportAt) return 'Correction successor has a newer or different assignment or no ready report'
+  const failed = delivery.evidence.find(e => e.id === record.failedReviewEvidenceId)
+  if (!failed || failed.kind !== 'review' || failed.outcome !== 'failed' || failed.reference !== record.failedReviewReference || (failed.generation ?? 0) !== record.generation - 1 || failed.bindings.headSha !== record.fromHeadSha) return 'Failed independent review evidence for this correction is missing or does not judge the predecessor head'
+  const fixEvidence = delivery.evidence.find(e => e.id === `correction-report:${record.fixLeaseId}`)
+  if (!fixEvidence || fixEvidence.kind !== 'implementation' || fixEvidence.outcome !== 'passed' || (fixEvidence.generation ?? 0) !== record.generation || fixEvidence.bindings.headSha !== record.headSha
+    || !fixEvidence.reference.endsWith(`#ticket/${record.ticketId}/report/${record.assignmentId}`)) return 'Corrected implementation evidence does not match the adopted successor head'
+  const handoff = row<{ deliveryId?: string; worker?: string; successor?: { originalWorker?: string; jobId?: string } }>(db, 'SELECT value FROM delivery_capability_fix WHERE id=?', record.fixLeaseId)
+  if (!handoff || handoff.deliveryId !== delivery.id || handoff.worker !== record.ticketId || handoff.successor?.jobId !== record.jobId || handoff.successor.originalWorker !== predecessor) return 'Durable correction handoff does not match the adopted successor'
+  return { ticket, record }
 }
 /** Stored canonical facts, or the reason the phase is not current. Pure reads. */
 export function phaseFacts(db: DatabaseSync, deliveryId: string): Facts | string {
@@ -71,15 +103,26 @@ export function phaseFacts(db: DatabaseSync, deliveryId: string): Facts | string
   if (ticket.ended?.by === 'human') return 'Job was ended by a person'
   if (ticket.assignments.at(-1)?.report?.state !== 'ready') return 'Implementation report is no longer ready'
   if (finding.reports.filter(r => r.jobId === release.jobId).at(-1)?.state !== 'ready') return 'Current finding report is no longer ready'
-  if (delivery.bindings.headSha !== release.headSha || !delivery.bindings.refs?.some(r => r.repository === delivery.bindings.repository && r.pr === release.prNumber && r.headSha === release.headSha)) return 'Delivery bindings no longer match the released head'
-  return { delivery, finding, ticket }
+  const current = effectiveRelease(release)
+  let successor: Facts['successor']
+  if (release.successors?.length) {
+    for (const [index, record] of release.successors.entries()) {
+      const checked = successorFacts(db, delivery, record, index)
+      if (typeof checked === 'string') return checked
+      if (index === release.successors.length - 1) successor = checked
+    }
+    if (delivery.generation !== current.generation) return 'Delivery generation no longer matches the adopted correction'
+  }
+  if (delivery.bindings.headSha !== current.headSha || !delivery.bindings.refs?.some(r => r.repository === delivery.bindings.repository && r.pr === current.prNumber && r.headSha === current.headSha)) return 'Delivery bindings no longer match the released head'
+  return { delivery, finding, ticket, ...(successor ? { successor } : {}) }
 }
 
 
 // Freeze the exact reviewed source and scope, while allowing publication outcomes and expected stage bookkeeping to advance.
 const sourceFingerprint = (f: Facts): string => deliveryFingerprint({ findingRevision: f.finding.revision, job: f.finding.job,
   report: f.finding.reports.filter(r => r.jobId === f.delivery.release!.jobId).at(-1),
-  assignment: f.ticket.assignments.at(-1), ended: f.ticket.ended })
+  assignment: f.ticket.assignments.at(-1), ended: f.ticket.ended,
+  ...(f.successor ? { successor: { record: f.successor.record, assignment: f.successor.ticket.assignments.at(-1), ended: f.successor.ticket.ended } } : {}) })
 const scopeFingerprint = (d: Delivery): string => deliveryFingerprint({ bindings: d.bindings, requirements: d.requirements,
   generation: d.generation, release: d.release, authorities: d.authorities, delegatedScope: d.delegatedScope,
   evidence: d.evidence.filter(e => e.kind === 'implementation' || e.kind === 'review'),
@@ -89,9 +132,9 @@ const scopeFingerprint = (d: Delivery): string => deliveryFingerprint({ bindings
     environment: d.preparedPublication.environment, scopeSha256: d.preparedPublication.scopeSha256 } })
 
 const matches = (f: Facts, p: Pick<PublicationSnapshot, 'ticketId' | 'conversationId' | 'repository' | 'prNumber' | 'headSha' | 'patchSha256'>): boolean => {
-  const r = f.delivery.release!
-  return p.ticketId === r.ticketId && p.conversationId === phaseConversation(f.delivery.id) && p.prNumber === r.prNumber
-    && p.headSha === r.headSha && p.patchSha256 === r.patchSha256 && p.repository === f.delivery.bindings.repository
+  const r = f.delivery.release!, c = effectiveRelease(r)
+  return p.ticketId === r.ticketId && p.conversationId === phaseConversation(f.delivery.id) && p.prNumber === c.prNumber
+    && p.headSha === c.headSha && p.patchSha256 === c.patchSha256 && p.repository === f.delivery.bindings.repository
 }
 
 /** Capture the exact fence for a publication; throws when the phase is not current or the publication is not this delivery's. */
@@ -102,9 +145,10 @@ export function capturePhaseFence(db: DatabaseSync, p: PublicationSnapshot): Pub
   if (!matches(facts, p)) throw new Error('Release phase does not match the exact publication')
   const prepared = facts.delivery.preparedPublication
   if (!prepared || prepared.id !== p.id || prepared.headSha !== p.headSha || prepared.patchSha256 !== p.patchSha256) throw new Error('Release phase has no matching prepared publication')
-  const r = facts.delivery.release!
+  const r = facts.delivery.release!, c = effectiveRelease(r)
   return { version: 1, kind: 'delivery-phase', deliveryId: facts.delivery.id, findingId: r.findingId, jobId: r.jobId, ticketId: r.ticketId, assignmentId: r.assignmentId,
-    conversationId: p.conversationId, prNumber: r.prNumber, repository: p.repository, headSha: r.headSha, patchSha256: r.patchSha256,
+    conversationId: p.conversationId, prNumber: c.prNumber, repository: p.repository, headSha: c.headSha, patchSha256: c.patchSha256,
+    ...(c.successor ? { successor: { jobId: c.successor.jobId, ticketId: c.successor.ticketId, assignmentId: c.successor.assignmentId, sourceFingerprint: deliveryFingerprint(c.successor) } } : {}),
     sourceFingerprint: sourceFingerprint(facts), scopeFingerprint: scopeFingerprint(facts.delivery),
     publication: { id: p.id, repository: p.repository, headSha: p.headSha, patchSha256: p.patchSha256 } }
 }
@@ -122,9 +166,11 @@ export function phaseCurrent(db: DatabaseSync, fence: PublicationPhaseFence, p: 
     if (fence.sourceFingerprint !== sourceFingerprint(facts) || fence.scopeFingerprint !== scopeFingerprint(facts.delivery)) return false
     const prepared = facts.delivery.preparedPublication
     if (!prepared || prepared.id !== p.id || prepared.headSha !== p.headSha || prepared.patchSha256 !== p.patchSha256) return false
-    const r = facts.delivery.release!
-    if (fence.findingId !== r.findingId || fence.jobId !== r.jobId || fence.ticketId !== r.ticketId || fence.assignmentId !== r.assignmentId || fence.prNumber !== r.prNumber
-      || fence.headSha !== r.headSha || fence.patchSha256 !== r.patchSha256 || fence.repository !== p.repository || p.conversationId !== fence.conversationId) return false
+    const r = facts.delivery.release!, c = effectiveRelease(r)
+    const fs = fence.successor
+    if (!!fs !== !!c.successor || (fs && c.successor && (fs.jobId !== c.successor.jobId || fs.ticketId !== c.successor.ticketId || fs.assignmentId !== c.successor.assignmentId || fs.sourceFingerprint !== deliveryFingerprint(c.successor)))) return false
+    if (fence.findingId !== r.findingId || fence.jobId !== r.jobId || fence.ticketId !== r.ticketId || fence.assignmentId !== r.assignmentId || fence.prNumber !== c.prNumber
+      || fence.headSha !== c.headSha || fence.patchSha256 !== c.patchSha256 || fence.repository !== p.repository || p.conversationId !== fence.conversationId) return false
     return !fence.publication || (fence.publication.id === p.id && fence.publication.repository === p.repository && fence.publication.headSha === p.headSha && fence.publication.patchSha256 === p.patchSha256)
   } catch { return false }
 }

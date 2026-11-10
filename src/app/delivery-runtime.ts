@@ -169,6 +169,8 @@ export interface DeliveryRuntimeOptions {
   publication?: LifecyclePublication
   /** Builds the exact per-task release package (checks + manifest) after independent review; throws a blocker otherwise. */
   packageRelease?: (delivery: Delivery, signal: AbortSignal) => Promise<void>
+  /** Adopts a provenance-checked correction successor into the release lineage before the phase fence is read; returns the updated delivery. */
+  adoptCorrection?: (delivery: Delivery, signal: AbortSignal) => Promise<Delivery>
   recommend?: (delivery: Delivery, action: DeliveryAction) => Promise<NonNullable<Delivery['recommendation']>>
 }
 
@@ -247,10 +249,12 @@ export class FeatureDeliveryRuntime {
       }
     }
   }
-  private async prepareQualified(delivery: Delivery): Promise<void> {
+  private async prepareQualified(input: Delivery): Promise<void> {
+    let delivery = input
     if (delivery.stage !== 'ready_to_publish' || delivery.state !== 'awaiting_decision' || delivery.preparedPublication) return
     const publication = this.options.publication
     if (!publication || !delivery.bindings.environment) throw new Error('No configured protected publication capability or explicit deployment target.')
+    if (delivery.release && this.options.adoptCorrection) delivery = await this.abortable(this.options.adoptCorrection(delivery, this.signal))
     const phase = delivery.release ? deliveryPhaseItem(delivery) : undefined
     if (delivery.release) {
       const facts = phaseFacts(this.store.db, delivery.id)

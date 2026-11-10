@@ -4,7 +4,9 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { Context } from '@deepseek-ai/cordis'
 import { createDeliveryCapabilities, recommendDeliveryAction, type DeliveryCapabilityDependencies } from '../src/app/delivery-capabilities.ts'
-import { DeliveryStore, type DeliveryBindings, type DeliveryLease } from '../src/app/feature-delivery.ts'
+import { DeliveryStore, effectiveRelease, type DeliveryBindings, type DeliveryLease } from '../src/app/feature-delivery.ts'
+import { FindingRelease } from '../src/app/finding-release.ts'
+import { phaseFacts } from '../src/app/delivery-phase.ts'
 import { Store } from '../src/app/store.ts'
 import { Engine } from '../src/core/engine.ts'
 import type { EngineOptions } from '../src/core/part.ts'
@@ -668,4 +670,68 @@ it('explains the separate final acceptance step without trusting worker-looking 
   const request = h.stream.mock.calls[0]![0] as { messages: unknown[] }
   expect(JSON.stringify(request)).toContain('protectedOperatorLiveEvidence')
   expect(deliveries.get(d.id)!.acceptance).toBeUndefined()
+})
+
+// Release lineage: the corrected successor artifact is adopted before the protected phase, never rewriting the ended original.
+async function correctedToReleasePhase(opts: { endOriginal?: boolean } = {}) {
+  const h = fixture(); h.worker(); if (opts.endOriginal !== false) endWorker()
+  store.db.exec('CREATE TABLE IF NOT EXISTS finding (id TEXT PRIMARY KEY, dedup_key TEXT NOT NULL UNIQUE, value TEXT NOT NULL)')
+  const finding = { id: 'f1', revision: 1, state: 'blocked', reports: [{ jobId: 'j1', state: 'ready', reference: 'ticket/original/report/a1', evidence: 'ready', at: '2026-11-06T00:00:00.000Z' }], job: { id: 'j1', ticketId: 'worker-original', assignmentId: 'a1' } }
+  store.db.prepare('INSERT INTO finding VALUES(?,?,?)').run('f1', 'k', JSON.stringify(finding))
+  const d0 = deliveries.get('feature')!
+  deliveries.compareAndSwap(d0.id, d0.revision, v => { v.release = { findingId: 'f1', findingRevision: 1, jobId: 'j1', ticketId: 'original', assignmentId: 'a1', branch: 'agent/x', prNumber: 17, headSha: HEAD, patchSha256: 'p'.repeat(64), preparedAt: '' } })
+  const l = await h.fixLease(); await h.caps.fix!.execute(l); successorReady(); h.setHead(NEW)
+  deliveries.complete(l, await h.caps.fix!.reconcile!(l))
+  h.setVerdict({ verdict: 'passed', findings: [], rationale: 'The corrected head preserves the fence.' })
+  const rl = h.lease(); deliveries.complete(rl, await h.caps.review!.execute(rl))
+  const base = { candidate: vi.fn(async () => ({ headSha: NEW, patchSha256: 'q'.repeat(64) })), reviewBase: vi.fn(async () => BASE) }
+  const rel = new FindingRelease({ stateDir: directory, profile: () => ({}) as never, store: deliveries, ticket: id => store.tickets.get(id), publicationBusy: () => undefined, now: () => '2026-11-06T00:01:00.000Z' })
+  Object.assign(rel, base)
+  return { h, rel, base, finding }
+}
+it('adopts the re-reviewed successor artifact into the release lineage while the ended original stays immutable', async () => {
+  const { rel, base } = await correctedToReleasePhase()
+  const before = deliveries.get('feature')!; expect(before).toMatchObject({ stage: 'ready_to_publish', generation: 1 })
+  expect(phaseFacts(store.db, 'feature')).toContain('Delivery bindings no longer match the released head')
+  const frozen = JSON.stringify(store.tickets.get('original')), original = { ...before.release! }
+  const adopted = await rel.adoptCorrection(before)
+  expect(adopted.release!.successors).toHaveLength(1)
+  expect(adopted.release).toMatchObject({ ticketId: 'original', jobId: 'j1', headSha: HEAD, patchSha256: 'p'.repeat(64) }); expect({ ...adopted.release!, successors: undefined }).toEqual({ ...original, successors: undefined })
+  expect(effectiveRelease(adopted.release!)).toMatchObject({ ticketId: successors()[0]!.id, headSha: NEW, patchSha256: 'q'.repeat(64), generation: 1 })
+  expect(JSON.stringify(store.tickets.get('original'))).toBe(frozen)
+  const facts = phaseFacts(store.db, 'feature'); expect(typeof facts).not.toBe('string')
+  const again = await rel.adoptCorrection(deliveries.get('feature')!); expect(again.release!.successors).toHaveLength(1); expect(base.candidate).toHaveBeenCalledTimes(1)
+  expect(adopted.evidence.filter(e => e.kind === 'acceptance' || e.kind === 'publication')).toEqual([]); expect(adopted.preparedPublication).toBeUndefined()
+})
+it('refuses to adopt a stale, foreign, ambiguous or person-stopped correction and never invents release authority', async () => {
+  const { rel, base } = await correctedToReleasePhase(); const d = deliveries.get('feature')!
+  base.candidate.mockResolvedValueOnce({ headSha: HEAD, patchSha256: 'q'.repeat(64) }); await expect(rel.adoptCorrection(d)).rejects.toThrow('does not match the independently re-reviewed head')
+  base.reviewBase.mockResolvedValueOnce('e'.repeat(40)); await expect(rel.adoptCorrection(d)).rejects.toThrow('Target base changed')
+  const t = successors()[0]!; t.ended = { by: 'human', outcome: 'stopped', at: SUCCESSOR_READY }; store.tickets.save(t); await expect(rel.adoptCorrection(d)).rejects.toThrow('stopped by a person')
+  t.ended = { by: 'executor', outcome: 'completed', at: SUCCESSOR_READY }; t.assignments[0]!.report = { state: 'blocked', summary: 'needs authority', at: SUCCESSOR_READY }; store.tickets.save(t)
+  await expect(rel.adoptCorrection(d)).rejects.toThrow('no current ready report')
+  t.assignments[0]!.report = { state: 'ready', summary: 'Corrected under original scope', at: SUCCESSOR_READY }; store.tickets.save(t)
+  const row = store.db.prepare('SELECT id,value FROM delivery_capability_fix').get()!; const dup = JSON.parse(String(row.value))
+  store.db.prepare('INSERT INTO delivery_capability_fix VALUES(?,?,?)').run('other-lease', 'x', JSON.stringify(dup)); await expect(rel.adoptCorrection(d)).rejects.toThrow('Ambiguous correction ownership')
+  store.db.prepare('DELETE FROM delivery_capability_fix WHERE id=?').run('other-lease'); store.db.prepare('DELETE FROM delivery_capability_fix').run(); await expect(rel.adoptCorrection(d)).rejects.toThrow('No durable successor correction handoff')
+  expect(deliveries.get('feature')!.release!.successors).toBeUndefined()
+})
+it('fails the protected phase closed when an adopted successor, its failed review, handoff or generation is later altered', async () => {
+  const { rel } = await correctedToReleasePhase(); await rel.adoptCorrection(deliveries.get('feature')!)
+  expect(typeof phaseFacts(store.db, 'feature')).not.toBe('string')
+  const t = successors()[0]!, saved = JSON.stringify(t)
+  t.ended = { by: 'human', outcome: 'stopped', at: SUCCESSOR_READY }; store.tickets.save(t); expect(phaseFacts(store.db, 'feature')).toBe('Correction successor was ended by a person')
+  store.tickets.save(JSON.parse(saved)); expect(typeof phaseFacts(store.db, 'feature')).not.toBe('string')
+  // The store refuses to rewrite lineage; a forged row written around it must still fail the read-only phase gate.
+  const tamper = (edit: (r: NonNullable<ReturnType<DeliveryStore['get']>>['release'] & object) => void) => {
+    const row = store.db.prepare('SELECT value FROM feature_delivery WHERE id=?').get('feature')!; const v = JSON.parse(String(row.value)); edit(v.release); store.db.prepare('UPDATE feature_delivery SET value=? WHERE id=?').run(JSON.stringify(v), 'feature')
+  }
+  const good = JSON.stringify(deliveries.get('feature')!.release!.successors![0]), restore = () => tamper(r => { r.successors![0] = JSON.parse(good) })
+  const failedId = deliveries.get('feature')!.evidence.find(e => e.kind === 'review' && e.outcome === 'failed')!.id
+  tamper(r => { r.successors![0]!.originalTicketId = 'forged' }); expect(phaseFacts(store.db, 'feature')).toContain('does not match its bounded job'); restore()
+  tamper(r => { r.successors![0]!.failedReviewEvidenceId = 'missing' }); expect(phaseFacts(store.db, 'feature')).toContain('Failed independent review evidence'); restore()
+  tamper(r => { r.successors![0]!.generation = 5 }); expect(phaseFacts(store.db, 'feature')).toContain('Correction job is not bound'); restore()
+  tamper(r => { r.successors![0]!.fixLeaseId = 'forged-lease' }); expect(phaseFacts(store.db, 'feature')).toContain('Corrected implementation evidence'); restore()
+  expect(failedId).toBeTruthy(); expect(typeof phaseFacts(store.db, 'feature')).not.toBe('string')
+  store.db.prepare('DELETE FROM delivery_capability_fix').run(); expect(phaseFacts(store.db, 'feature')).toContain('Durable correction handoff')
 })
