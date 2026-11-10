@@ -560,3 +560,13 @@ it('does not turn an ordinary in-band error into availability escalation or expo
   expect(result.blocker).not.toContain('private unexpected')
   expect(h.resolve).toHaveBeenCalledTimes(1)
 })
+
+it('honors the explicit helper route for independent review without changing routine worker routing', async () => {
+  const h = fixture()
+  store.saveSettings({ ...store.settings(), models: { ...store.settings().models, helper: { provider: 'anthropic', model: 'sonnet' } } })
+  h.resolve.mockResolvedValueOnce({ provider: 'anthropic', model: 'sonnet' })
+  const result = await h.caps.review!.execute(h.lease())
+  expect(result.outcome).toBe('passed')
+  expect(h.resolve).toHaveBeenCalledWith({ provider: 'anthropic', model: 'sonnet' }, expect.any(AbortSignal))
+  expect(store.settings().executor.model).toEqual({ provider: 'configured', model: 'executor' })
+})

@@ -32,11 +32,11 @@ function fixture(opts: { commit?: boolean; ready?: boolean } = {}) {
   const finding = { id: 'f1', revision: 3, title: 'Fix thing', requirements: ['works live'], job: { id: 'job1', ticketId: 'worker-t1', assignmentId: 'a1' }, state: 'blocked',
     reports: [{ jobId: 'job1', state: 'ready', reference: 'r', evidence: 'e', nextDecision: 'n', at: '' }] } as unknown as Finding
   const calls: string[] = []
-  let pr = 0; let open = false
+  let pr = 0; let open = false; let prBase = sh(source, 'rev-parse', 'HEAD')
   const exec: PublicationExecutor = async c => {
     if (c.executable === profile.ghPath) {
       calls.push(`gh ${c.args.slice(0, 2).join(' ')}`)
-      if (c.args[0] === 'api') return sh(source, 'rev-parse', 'HEAD')
+      if (c.args[0] === 'api') return c.args[1]!.includes('/pulls/') ? prBase : sh(source, 'rev-parse', 'HEAD')
       if (c.args[1] === 'list') return JSON.stringify(open ? [{ number: pr, headRefOid: sh(work, 'rev-parse', 'HEAD'), baseRefName: 'main' }] : [])
       if (c.args[1] === 'create') { pr = 7; open = true; return 'https://github.com/org/proj/pull/7\n' }
     }
@@ -46,13 +46,13 @@ function fixture(opts: { commit?: boolean; ready?: boolean } = {}) {
   const store = new DeliveryStore(':memory:')
   let busy: string | undefined
   const release = new FindingRelease({ stateDir: state, profile: () => profile, store, ticket: id => id === 't1' ? ticket : undefined, publicationBusy: () => busy, exec, now: () => '2026-01-01T00:00:00Z' })
-  return { root, state, work, profile, ticket, finding, release, store, calls, setBusy: (v?: string) => { busy = v } }
+  return { root, state, work, profile, ticket, finding, release, store, calls, setBusy: (v?: string) => { busy = v }, setPrBase: (v: string) => { prBase = v } }
 }
 
 it('prepares the exact committed artifact: PR, per-PR manifest and bound delivery lineage, without publishing', async () => {
   const f = fixture()
   const delivery = await f.release.prepare(f.finding, { revision: 3 }, 'ref')
-  expect(f.calls).toEqual(['gh api repos/org/proj/branches/main', 'gh pr list', 'push', 'gh pr create', 'gh pr list'])
+  expect(f.calls).toEqual(['gh api repos/org/proj/branches/main', 'gh pr list', 'push', 'gh pr create', 'gh pr list', 'gh api repos/org/proj/pulls/7'])
   const head = sh(f.work, 'rev-parse', 'HEAD')
   expect(delivery).toMatchObject({ id: 'auto-t1', stage: 'implementation', release: { findingId: 'f1', jobId: 'job1', ticketId: 't1', prNumber: 7, headSha: head }, delegatedActions: ['review', 'fix', 'verify'], authorities: ['local-operator'], requirements: ['works live'] })
   expect(delivery.scopeBinding).toBeUndefined()
