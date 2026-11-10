@@ -1,0 +1,30 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/github-quota-repair/release
+
+(node:38781) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/sources.spec.ts (75 tests | 1 failed | 74 skipped) 91ms
+   × root quota: last observed stream quota prevents default-branch CI reads 89ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/sources.spec.ts > root quota: last observed stream quota prevents default-branch CI reads
+AssertionError: expected [ …(4) ] to have a length of 3 but got 4
+
+- Expected
++ Received
+
+- 3
++ 4
+
+ ❯ tests/sources.spec.ts:1519:65
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 74 skipped (75)
+   Start at  19:14:12
+   Duration  4.39s (transform 2.51s, setup 0ms, import 3.26s, tests 91ms, environment 0ms)
+

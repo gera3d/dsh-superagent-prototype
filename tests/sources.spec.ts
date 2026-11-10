@@ -13,7 +13,7 @@ import { pollThreads as pollGithubThreads } from '../src/sources/github.ts'
 import { SourceRegistry } from '../src/sources/registry.ts'
 import { cursorAt, POLL_HORIZON_MS } from '../src/sources/poll.ts'
 import { Store } from '../src/app/store.ts'
-import { Commands, commandError } from '../src/infra/commands.ts'
+import { Commands, commandError, type CliError } from '../src/infra/commands.ts'
 import { HealthBoard } from '../src/infra/health.ts'
 import { testDeployment } from './fixtures/deployment.ts'
 import { SettingsSchema, settingsPolicy } from '../src/policy.ts'
@@ -1448,4 +1448,73 @@ describe('observing the GitHub repository', () => {
     expect(h.receive.mock.calls[0]![0].text).toContain('Read github/commits/bbb2222/checks for every check.')
     h.store.close()
   })
+})
+
+describe('github quota stops the round', () => {
+  const crlf = (...lines: string[]) => lines.join('\r\n')
+  const quota = () => commandError({ code: 1, stderr: 'gh: API rate limit exceeded (HTTP 403)', stdout: crlf('HTTP/2.0 403 Forbidden', 'X-Ratelimit-Remaining: 0', 'X-Ratelimit-Reset: 1794285000', '', '{}') })
+  const setup = () => {
+    const h = host()
+    h.store.saveSettings({ ...h.store.settings(), sources: { ...h.store.settings().sources, github: { enabled: true, config: { observeIssues: true, observeComments: true } } } })
+    return h
+  }
+  it('makes one request after a notifications quota response and reports the rate', async () => {
+    const h = setup(); const seen: string[] = []
+    vi.spyOn(h.commands, 'run').mockImplementation(async (_p, args) => { seen.push(args[1]!); throw quota() })
+    try {
+      const error = await pollRound(h).catch((e: unknown) => e)
+      expect(seen).toHaveLength(1)
+      expect((error as CliError).rate).toEqual({ kind: 'primary', resetAt: 1794285000000 })
+    } finally { h.store.close() }
+  })
+  it('stops after a quota response mid-round but keeps independent reads going on ordinary 403', async () => {
+    for (const [error, expected] of [[quota(), 2], [commandError({ code: 1, stderr: 'gh: Forbidden (HTTP 403)', stdout: crlf('HTTP/2.0 403 Forbidden', 'X-Ratelimit-Remaining: 4000', '', '{}') }), 4]] as const) {
+      const h = setup(); const seen: string[] = []; let n = 0
+      vi.spyOn(h.commands, 'run').mockImplementation(async (_p, args) => {
+        seen.push(args[1]!)
+        if (++n === 1) return crlf('HTTP/2.0 200 OK', 'X-Poll-Interval: 60', '', '[]')
+        throw error
+      })
+      try {
+        const caught = await pollRound(h).catch((e: unknown) => e)
+        expect(caught).toBeInstanceOf(Error)
+        expect((caught as CliError).rate !== undefined).toBe(expected === 2)
+        expect(seen.length).toBeGreaterThanOrEqual(2)
+        if (expected === 2) expect(seen).toHaveLength(2)
+        else expect(seen.length).toBeGreaterThan(2)
+      } finally { h.store.close() }
+    }
+  })
+})
+
+it('root quota watch: respects the full server deadline then recovers without restart',async()=>{
+ vi.useFakeTimers(); vi.setSystemTime(new Date('2026-11-10T03:00:00Z'))
+ const random=vi.spyOn(Math,'random').mockReturnValue(0)
+ const board=new HealthBoard()
+ const settings=SettingsSchema.parse({sources:{github:{enabled:true,config:{}}}})
+ const sources=new SourceRegistry(()=>settings,board);healthOf.set(sources,board)
+ const value=host({sources});const disposers:(()=>unknown)[]=[];let calls=0
+ const run=vi.spyOn(Commands.prototype,'run').mockImplementation(async()=>{
+  calls++
+  if(calls===1)throw commandError({code:1,stderr:'gh: secondary rate limit (HTTP 429)',stdout:['HTTP/2.0 429 Too Many Requests','Retry-After: 7200','','{}'].join(String.fromCharCode(13,10))})
+  return ['HTTP/2.0 200 OK','X-Poll-Interval: 60','','[]'].join(String.fromCharCode(13,10))
+ })
+ try{
+  applyGithub({orchestrator:value,effect:(f:()=>()=>unknown)=>{disposers.push(f())}} as never)
+  await vi.advanceTimersByTimeAsync(0)
+  expect(calls).toBe(1)
+  expect(value.health.github).toMatchObject({state:'paused',code:'rateLimited'})
+  await vi.advanceTimersByTimeAsync(7199999)
+  expect(calls).toBe(1)
+  await vi.advanceTimersByTimeAsync(1)
+  expect(calls).toBe(2)
+  expect(value.health.github).toMatchObject({state:'ready'})
+ }finally{for(const d of disposers)await d();value.store.close();run.mockRestore();random.mockRestore();vi.useRealTimers()}
+})
+
+it('root quota: last observed stream quota prevents default-branch CI reads',async()=>{
+ const h=host();h.store.saveSettings({...h.store.settings(),sources:{...h.store.settings().sources,github:{enabled:true,config:{observeComments:true,observeCi:true}}}})
+ const limited=commandError({code:1,stderr:'gh: API rate limit exceeded (HTTP 403)',stdout:['HTTP/2.0 403 Forbidden','X-Ratelimit-Remaining: 0','X-Ratelimit-Reset: 1794285000','','{}'].join(String.fromCharCode(13,10))})
+ const reads=github(h,{notifications:[],'issues/comments':[],'pulls/comments':limited,'':{default_branch:'main'},'commits/main':{sha:'abc'}})
+ try{await expect(pollRound(h)).rejects.toThrow();expect(reads).toHaveLength(3);expect(reads).not.toContain('')}finally{h.store.close()}
 })

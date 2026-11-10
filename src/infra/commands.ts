@@ -12,7 +12,28 @@ const TIMEOUT_MS = 90_000
  * Source channels and pollers inspect its code to distinguish deleted conversations from retryable failures.
  */
 export class CliError extends Error {
-  constructor(message: string, readonly code?: number, readonly exitCode?: number) { super(message) }
+  constructor(message: string, readonly code?: number, readonly exitCode?: number, readonly rate?: RateLimit) { super(message) }
+}
+/** Sanitized GitHub quota facts from a failed response: `primary` when the hourly allowance is spent, `secondary` for abuse limits and HTTP 429. */
+export interface RateLimit { kind: 'primary' | 'secondary'; resetAt?: number; retryAfter?: number }
+/** Reads only status, `x-ratelimit-remaining/reset` and `retry-after` from `gh api --include` output; a 403/429 without those quota signals is not a rate limit. */
+export function rateLimit(stdout: unknown, stderr = ''): RateLimit | undefined {
+  if (typeof stdout !== 'string') return undefined
+  const split = stdout.search(/\r?\n\r?\n/)
+  const headers = split < 0 ? stdout : stdout.slice(0, split)
+  const status = Number(/^HTTP\/\S+\s+(\d{3})/m.exec(headers)?.[1] ?? /\bHTTP (\d{3})\b/.exec(stderr)?.[1])
+  if (status !== 403 && status !== 429) return undefined
+  const num = (name: string) => { const value = new RegExp(`^${name}:\\s*(\\d+)`, 'im').exec(headers)?.[1]; return value === undefined ? undefined : Number(value) }
+  const retryAfter = num('retry-after'), remaining = num('x-ratelimit-remaining'), reset = num('x-ratelimit-reset')
+  if (status === 429 || retryAfter !== undefined || /secondary rate limit/i.test(stdout + stderr)) return { kind: 'secondary', ...retryAfter !== undefined ? { retryAfter } : {}, ...reset !== undefined ? { resetAt: reset * 1000 } : {} }
+  if (remaining === 0) return { kind: 'primary', ...reset !== undefined ? { resetAt: reset * 1000 } : {} }
+  return undefined
+}
+/** Seconds to wait before polling again: until the primary reset or `retry-after` (60 s when unstated), plus up to 10 s of jitter, with long waits split into bounded sleeps by the poll loop. */
+export function cooldownSeconds(rate: RateLimit, now = Date.now(), random = Math.random()): number {
+  const wait = rate.kind === 'primary' && rate.resetAt !== undefined ? (rate.resetAt - now) / 1000 : rate.retryAfter ?? 60
+  // Preserve the full server deadline; the poll loop chunks long sleeps instead of truncating it.
+  return Math.max(1, Math.ceil(wait)) + Math.ceil(random * 10)
 }
 /** Extracts a sanitized error from a failed subprocess without echoing argv, which may contain message text. */
 export function commandError(error: unknown, program = 'command'): Error {
@@ -26,7 +47,7 @@ export function commandError(error: unknown, program = 'command'): Error {
     const code = parsed?.error?.code
     if (parsed?.error?.message) return new CliError(`${parsed.error.message}${code ? ` (${code})` : ''}`, code, exitCode)
     // `gh` exits non-zero on HTTP errors (such as `gh: Not Found (HTTP 404)`) and on `gh: HTTP 304`, which ETag polling relies on.
-    if (stderr) return new CliError(stderr.slice(0, 2000), Number(/\bHTTP (\d{3})\b/.exec(stderr)?.[1]) || undefined, exitCode)
+    if (stderr) return new CliError(stderr.slice(0, 2000), Number(/\bHTTP (\d{3})\b/.exec(stderr)?.[1]) || undefined, exitCode, rateLimit('stdout' in error ? error.stdout : undefined, stderr))
   }
   return new CliError(`${basename(program)} ${ended(error)}`, undefined, exitCode)
 }
