@@ -453,3 +453,6 @@ a.dt-btn, a.dt-btn:hover { text-decoration: none; }
 .dt-allowance-inline-popover { position: absolute; top: calc(100% + 4px); right: 0; z-index: 100; min-width: 320px; max-width: 380px; }
 .dt-allowance-popover-backdrop { position: fixed; inset: 0; z-index: 99; }
 .dt-allowance-popover-content { position: relative; z-index: 101; background: #161b22; border: 1px solid var(--dsw-alias-border-l2, #30363d); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); }
+.dt-section-glyph { display: inline-flex; align-items: center; justify-content: center; width: 24px; font-size: 18px; line-height: 24px; }
+.dt-move { width: auto; max-width: 260px; margin: 0 0 8px 12px; }
+.dt-task { display: flex; flex-direction: column; align-items: flex-start; }

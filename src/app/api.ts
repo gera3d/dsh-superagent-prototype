@@ -16,6 +16,8 @@ import type { SettingsView } from './views/settings.ts'
 import type { SourceStatusView } from './views/sources.ts'
 import type { DecisionListView, SearchView, ThreadDetailView, ThreadListView } from './views/threads.ts'
 import type { TicketListView } from './views/tickets.ts'
+import type { SectionsOverviewView } from './views/sections.ts'
+import type { Member, Proposal, SectionDraft, SectionIcon, makeBetterPreview, pressForwardPreview } from './sections.ts'
 
 export const TICKET_FILTERS = ['open', 'person', 'working', 'idle', 'ended'] as const
 export const THREAD_FILTERS = ['subscribed', 'evaluating', 'recent', 'all'] as const
@@ -90,6 +92,15 @@ export interface Api {
   'GET models': { response: ModelCatalog }
   'GET prompts': { query?: { revision?: number; offset?: number }; response: PromptsView }
   'PUT prompts': { body: { config: PromptConfig; baseRevision: number }; response: { revision: number; context_delivery: Delivery } }
+  'GET sections': { query: { project: string }; response: SectionsOverviewView }
+  'POST sections/propose': { body: { project: string; sections: SectionDraft[] }; response: { proposal: Proposal } }
+  'POST sections/approve': { body: { project: string; proposalId: string }; response: SectionsOverviewView }
+  'POST sections/reject': { body: { project: string; proposalId: string }; response: SectionsOverviewView }
+  'POST sections/move': { body: { project: string; member: Member; to: string | null }; response: SectionsOverviewView }
+  'POST sections/:id/update': { body: { name?: string; icon?: SectionIcon; goal?: string }; response: SectionsOverviewView }
+  'POST sections/:id/base-thread': { body: { sessionId: string | null }; response: SectionsOverviewView }
+  'POST sections/:id/press-forward': { response: ReturnType<typeof pressForwardPreview> }
+  'POST sections/:id/make-better': { body: { instruction: string }; response: ReturnType<typeof makeBetterPreview> }
   'POST prompts/preview': { body: PromptConfig; response: ReturnType<Prompts['preview']> }
 }
 type Path<K> = K extends `${string} ${infer P}` ? P : never

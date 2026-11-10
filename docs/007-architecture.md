@@ -401,6 +401,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/infra/publication-runner.ts` | Hash-pinned phase scripts, GitHub/local evidence and settled subprocess execution |
 | `src/app/decision-inbox.ts` | Durable SQLite decision queue, completed-turn recovery, explicit question/offer capture, source deduplication and stale detection; staging stays pending and only a bound durable native submission confirms resolution, without executing work |
 | `src/app/progress.ts` | Durable revisioned observations of release steps completed outside a worker (branch pushed, PR opened, checks, review) with exact source identity, evidence, provenance, owner and remaining stage; folds to current progress; carries no authority |
+| `src/app/sections.ts` | Project sections: operator-approved named groups of existing Tickets and Sessions with a fixed icon and an optional base-thread relation; one-time taxonomy approval, validated moves, preview-only steering; carries no authority (`docs/024`) |
 | `src/app/specialist-advice.ts` | Profile-routed advice over the existing canonical decision record (claim, tool-free advice, publish, attribution); no new store or job |
 | `src/app/decision-inbox-provider.ts` | Independently loaded inbox routes and capture lifecycle; shares the existing database without restarting the orchestrator |
 | `src/app/api.ts` | `Api`, every route with its parameters, query, body and response, and the filters of the lists; it imports only types, so the panel bundles it |
@@ -411,6 +412,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/app/views/sources.ts` | The Source status: each Source instance's state, its last day's counts, and what it filtered and dropped in that day |
 | `src/app/views/settings.ts` | The settings page's view: each block with its revision, each Source's settings with its kind's form, and the execution environment |
 | `src/app/views/overview.ts` | The overview: Tickets that need a person, problems, the last day's flow and the Executor's load |
+| `src/app/views/sections.ts` | The Sections overview: sections with icon, task stages and progress, the pending proposal and unassigned live Tickets |
 | `src/executor/dsh.ts` | The DshExecutor, `WorkerSlots`, `ticketExecution`, `inputMessage` and `mandateInstructions` |
 | `src/executor/background.ts` | A worker's background work in DeepSeek Harness, the shell jobs its Session owns (`ctx.jobs`) and its subagents (`ctx.subagents`): `runningJobs`, `untilQuiet`, `killJobs`, `collectJobs`, `stopSubagents`, `stopBackground`, `until`, and `cancelled`, the workers whose turn a stop of their subagents cancelled |
 | `src/infra/commands.ts` | `Commands`, the CLI transport: `run`; `api` and `pages`, limited to the configured repository and validated; `lark` as the bot; `git`. `CliError` carries the code a command's output reports, such as a GitHub HTTP status, and a command that prints nothing fails with how it ended, never with its arguments; `validItems` skips and counts the malformed items of a list |
@@ -443,6 +445,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/api.ts` | Calls and polls of the management API, typed by `src/app/api.ts`, and the Decision filters of the Eval status |
 | `src/client/route.ts` | The tabs, the settings groups, the typed routes that `parseRoute` reads, and the route memory with the settings group opened last |
 | `src/client/overview.tsx` | The overview |
+| `src/client/sections.tsx` | The Sections tab: project overview, a section's base-thread page, proposal approval and preview-only steering |
 | `src/client/source.tsx`, `trigger.tsx`, `eval.tsx`, `execution.tsx` | One file per stage: its status, and its settings where it has some |
 | `src/client/lifecycle-card.tsx` | Actual review/check evidence, phase/coordinator outcomes, bound approval and recovery controls |
 | `src/client/publication-cards.tsx` | Shared privileged renderer service and conversation dock; never stages a chat response |
@@ -493,6 +496,8 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/finding-card.spec.tsx` | Canonical advice, typed triage/review, stale/duplicate controls, deferred history and explicit report truncation |
 | `tests/finding-consumers.spec.tsx` | Real dock association for no-origin dispatched findings, mounted conversation switching and generic inline suppression |
 | `tests/progress.spec.ts` | Outside progress observations: stage folding, duplicate/out-of-order reports, changed heads, stale advice retirement with history, completed/new-scope isolation, the pushed Sonnet branch fixture |
+| `tests/sections.spec.ts` | Sections store and HTTP: persistence across reopen, one-time approval, invalid membership, validated moves, operator-only changes, preview-only steering |
+| `tests/sections-panel.spec.tsx` | The Sections tab on fixture data: route, empty state, proposal confirmation, overview, base-thread navigation, steering preview |
 | `tests/finding-advice.spec.ts` | Persisted finding-owned generic advisor retirement before lookup/staging; genuine questions and native staged submissions retained |
 | `tests/finding-observe-cli.spec.ts` | Observation-only CLI loopback transport and argument/origin/authority fences without spoofed approval headers |
 | `tests/feature-delivery.spec.ts` | Durable transitions, CAS concurrency, restart/lease cancellation, scoped approvals, finite retries, backfill and acceptance |

@@ -12,6 +12,8 @@ import { OverviewPage } from './overview.tsx'
 import { PanelProvider, usePanel, usePanelData } from './provider.tsx'
 import { HOME, TABS, initialLocation, lastSettingsGroup, remember, routeLabel, settingsRoute, type Location, type Route,
   type Tab } from './route.ts'
+import { SectionsPage } from './sections.tsx'
+import type { DotContext } from './dot-chat.tsx'
 import { SettingsPage } from './settings.tsx'
 import { SourceStatus } from './source.tsx'
 import { actorName, errorText, reasonLabel, valueLabel, type T, readableMarkers } from './text.ts'
@@ -24,6 +26,8 @@ export interface AppProps {
   t: T; openSession: (sessionId: string) => Promise<void>
   deploymentForm: DeploymentForm
   dotChat?: ReactNode
+  /** Read-only project and thread catalog used to pick a project and base thread for Sections. */
+  projectContext?: () => Promise<DotContext>
 }
 
 function Glossary({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -140,7 +144,7 @@ function Header({ masterId }: { masterId: string | undefined }) {
   </header>
 }
 
-function Pages({ route, openTab, deploymentForm, dotChat }: { route: Route; openTab: (tab: Tab) => void; deploymentForm: DeploymentForm; dotChat?: ReactNode }) {
+function Pages({ route, openTab, deploymentForm, dotChat, projectContext }: { route: Route; openTab: (tab: Tab) => void; deploymentForm: DeploymentForm; dotChat?: ReactNode; projectContext?: () => Promise<DotContext> }) {
   const [dotVisited, setDotVisited] = useState(route.page === 'dot')
   useEffect(() => { if (route.page === 'dot') setDotVisited(true) }, [route.page])
   const { t } = usePanel()
@@ -159,6 +163,7 @@ function Pages({ route, openTab, deploymentForm, dotChat }: { route: Route; open
         paused={!!state?.paused} />
       case 'execution': return route.id !== undefined ? <TicketPage key={route.id} id={route.id} />
         : state ? <ExecutionStatus filter={route.query?.filter ?? 'open'} state={state} reload={reload} /> : waiting
+      case 'sections': return <SectionsPage project={route.query?.project} section={route.query?.section} getContext={projectContext} />
       case 'decisions': return <DecisionsPage filter={route.query?.filter} />
       case 'settings': return state ? <SettingsPage key={state.masterId} group={route.query.group} query={route.query} state={state}
         deploymentForm={deploymentForm} /> : waiting
@@ -179,7 +184,7 @@ function Pages({ route, openTab, deploymentForm, dotChat }: { route: Route; open
 }
 
 /** Root panel component managing route history and shared panel state. */
-export function App({ t, openSession, deploymentForm, dotChat }: AppProps) {
+export function App({ t, openSession, deploymentForm, dotChat, projectContext }: AppProps) {
   const [location, setLocation] = useState(initialLocation)
   useEffect(() => { remember(location) }, [location])
   // Preserve the last opened settings group across navigation so the Settings tab reopens at it.
@@ -192,6 +197,6 @@ export function App({ t, openSession, deploymentForm, dotChat }: AppProps) {
   const openTab = useCallback((tab: Tab) => move(current => ({ stack: [], route: tab === 'settings'
     ? settingsRoute(lastSettingsGroup(current)) : { page: tab, id: undefined } })), [move])
   return <PanelProvider t={t} openSession={openSession} navigate={navigate} back={back} backLabel={routeLabel(t, location.stack.at(-1) ?? HOME)}>
-    <Pages route={location.route} openTab={openTab} deploymentForm={deploymentForm} dotChat={dotChat} />
+    <Pages route={location.route} openTab={openTab} deploymentForm={deploymentForm} dotChat={dotChat} projectContext={projectContext} />
   </PanelProvider>
 }

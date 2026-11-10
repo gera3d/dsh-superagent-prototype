@@ -91,6 +91,8 @@ export interface PanelServer {
   prompts: PromptsView
   tickets: { open: TicketRow[]; ended: TicketRow[] }; ticketDetails: Record<string, TicketPageView>
   threads: ThreadRow[]
+  /** Sections overview served for every project; null serves the empty `none` structure. */
+  sections: ApiResponse<'GET sections'> | null
   threadPages: (key: string, query: { before?: string; around?: string }) => ThreadPageView | undefined
   person: TicketRow[]; search: Pick<ApiResponse<'GET search'>, 'items' | 'threads'>; history: HistoryView
   requests: { path: string; method: string; body?: unknown }[]
@@ -252,7 +254,7 @@ function initial(): PanelServer {
     en: 'Feishu message' } }
   const defaults = { revision: 0, previousRevision: null, savedAt: '', source: 'defaults' }
   return {
-    health: {}, down: false, pending: 0, opened: [], requests: [], misuse: [], queued: new Set(), dropped: [], failing: [],
+    sections: null, health: {}, down: false, pending: 0, opened: [], requests: [], misuse: [], queued: new Set(), dropped: [], failing: [],
     setup: { machine: MACHINE, problem: null, feishuProblem: null,
       accounts: { repository: 'acme/widgets', agent: 'agent-bot', feishu: { appId: 'cli_bot', brand: 'feishu', botId: 'ou_bot',
         name: 'Widgets Bot' } } },
@@ -423,6 +425,18 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
   'POST decisions/canonical/publish': { body: true, answer: () => refuse(500, 'Canonical fixture transport unavailable') },
   'POST decisions/canonical/score': { body: true, answer: () => refuse(500, 'Canonical fixture transport unavailable') },
   'POST decisions/canonical/fail': { body: true, answer: () => refuse(500, 'Canonical fixture transport unavailable') },
+  'GET sections': { query: ['project'], answer: ({ query }) => server.sections ?? { project: query.project ?? '', structure: 'none', sections: [],
+    totals: { total: 0, working: 0, person: 0, idle: 0, ended: 0, unknown: 0, percent: 0 }, unassigned: { total: 0, items: [] } } },
+  'POST sections/propose': { body: true, answer: () => refuse(409, 'No fixture section proposal is authorized') },
+  'POST sections/approve': { body: true, answer: () => refuse(409, 'No fixture section approval is authorized') },
+  'POST sections/reject': { body: true, answer: () => refuse(409, 'No fixture section rejection is authorized') },
+  'POST sections/move': { body: true, answer: () => refuse(409, 'No fixture section move is authorized') },
+  'POST sections/:id/update': { body: true, answer: () => refuse(409, 'No fixture section update is authorized') },
+  'POST sections/:id/base-thread': { body: true, answer: () => refuse(409, 'No fixture base-thread change is authorized') },
+  'POST sections/:id/press-forward': { answer: ({ params }) => ({ action: 'press-forward' as const, state: 'preview' as const,
+    execution_authorized: false as const, section: params.id, retryable: [], waitingOnPerson: [], running: 0, note: 'Preview only fixture.' }) },
+  'POST sections/:id/make-better': { body: true, answer: ({ params, body }) => ({ action: 'make-better' as const, state: 'preview' as const,
+    execution_authorized: false as const, section: params.id, instruction: body.instruction, targets: [], note: 'Preview only fixture.' }) },
   'GET progress': { answer: () => ({ items: [] }) },
   'POST progress/observe': { body: true, answer: () => refuse(409, 'No fixture progress observation is authorized') },
   'GET findings': { answer: () => ({ items: [] }) },

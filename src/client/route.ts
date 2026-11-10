@@ -4,7 +4,7 @@ import type { SetupPlace } from '../setup.ts'
 import { DECISION_FILTERS, type DecisionFilter } from './api.ts'
 import type { T } from './text.ts'
 
-export const TABS = ['dot', 'overview', 'source', 'trigger', 'eval', 'execution', 'decisions', 'settings'] as const
+export const TABS = ['dot', 'overview', 'source', 'trigger', 'eval', 'execution', 'sections', 'decisions', 'settings'] as const
 export type Tab = typeof TABS[number]
 export const SETTINGS_GROUPS = ['source', 'eval', 'execution', 'characters', 'prompts', 'branding', 'deployment'] as const
 export type SettingsGroup = typeof SETTINGS_GROUPS[number]
@@ -14,6 +14,7 @@ export type Route = { page: 'dot' | 'overview' | 'source'; id?: undefined; query
   | { page: 'eval'; id?: undefined; query?: { filter?: DecisionFilter; window?: '24h' } }
   | { page: 'execution'; id?: undefined; query?: { filter?: TicketFilter } }
   | { page: 'execution'; id: string; query?: undefined }
+  | { page: 'sections'; id?: undefined; query?: { project?: string; section?: string } }
   | { page: 'decisions'; id?: undefined; query?: { filter?: 'pending' | 'resolved' | 'all' } }
   | { page: 'settings'; id?: undefined; query: { group: SettingsGroup; source?: string; version?: string } }
 export const HOME: Route = { page: 'overview' }
@@ -41,6 +42,7 @@ export function parseRoute(value: unknown): Route | undefined {
     case 'eval': return { page, query: compact({ filter: pick(DECISION_FILTERS, query?.filter),
       window: query?.window === '24h' ? '24h' as const : undefined }) }
     case 'execution': return record ? { page, id: record } : { page, query: compact({ filter: pick(TICKET_FILTERS, query?.filter) }) }
+    case 'sections': return { page, query: compact({ project: text('project'), section: text('section') }) }
     case 'decisions': return { page, query: compact({ filter: pick(['pending', 'resolved', 'all'] as const, query?.filter) }) }
     case 'settings': return { page, query: { group: pick(SETTINGS_GROUPS, query?.group) ?? 'source',
       ...compact({ source: text('source'), version: text('version') }) } }

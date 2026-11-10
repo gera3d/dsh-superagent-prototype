@@ -57,7 +57,7 @@ function Mounted({ ctx, t }: { ctx: ClientContext; t: T }) {
   const form = usePageForm(ctx.get('configForms')?.get<Record<string, unknown>>(ENTRY))
   const getDotContext = useCallback(() => dotContext(ctx.sessions,
     ctx.get('workspaces' as never) as DotWorkspaceSource | undefined), [ctx])
-  return <App t={t} openSession={openSession} deploymentForm={form} dotChat={<DotChat getContext={getDotContext}
+  return <App t={t} openSession={openSession} deploymentForm={form} projectContext={getDotContext} dotChat={<DotChat getContext={getDotContext}
     executeAction={(action, approvedContext, signal) => executeApprovedDotAction(ctx.sessions, action, approvedContext, getDotContext, signal, openSession)}
     openSession={openSession} />} />
 }
