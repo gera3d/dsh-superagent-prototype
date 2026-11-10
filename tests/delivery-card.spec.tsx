@@ -180,4 +180,16 @@ it('shows preparation ownership and withholds publish until the exact package is
   const pending = { ...d, stage: 'ready_to_publish' as const, nextAction: { ...d.nextAction!, kind: 'publish' as const }, release: { findingId: 'f', findingRevision: 1, jobId: 'j', ticketId: 't', assignmentId: 'a', branch: 'agent/t', prNumber: 42, headSha: 'h', patchSha256: 'p', preparedAt: 'now' } }
   await render(item(pending))
   expect(container.querySelector('button')).toBeNull()
+  expect(container.querySelector('.dt-delivery-state')?.textContent).toBe('Preparing release package')
+  expect(container.querySelector('.dt-delivery-hint')?.textContent).toBe('No action needed yet')
+  expect(container.textContent).toContain('running exact-head checks and preparing the release package')
+  expect(container.textContent).toContain('appears here after preparation succeeds')
+})
+
+it('keeps truthful blocked display and offers normal publish once the package is prepared', async () => {
+  const release = { findingId: 'f', findingRevision: 1, jobId: 'j', ticketId: 't', assignmentId: 'a', branch: 'agent/t', prNumber: 42, headSha: 'h', patchSha256: 'p', preparedAt: 'now' }
+  await render(item({ ...d, stage: 'ready_to_publish' as const, blocker: 'checks failed', release }))
+  expect(container.textContent).toContain('Blocked: checks failed')
+  expect(container.textContent).not.toContain('Preparing release package')
+  expect(container.textContent).not.toContain('running exact-head checks')
 })
