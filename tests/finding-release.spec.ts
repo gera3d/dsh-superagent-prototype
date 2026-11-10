@@ -36,9 +36,11 @@ function fixture(opts: { commit?: boolean; ready?: boolean } = {}) {
   const exec: PublicationExecutor = async c => {
     if (c.executable === profile.ghPath) {
       calls.push(`gh ${c.args.slice(0, 2).join(' ')}`)
+      if (c.args[0] === 'api') return sh(source, 'rev-parse', 'HEAD')
       if (c.args[1] === 'list') return JSON.stringify(open ? [{ number: pr, headRefOid: sh(work, 'rev-parse', 'HEAD'), baseRefName: 'main' }] : [])
       if (c.args[1] === 'create') { pr = 7; open = true; return 'https://github.com/org/proj/pull/7\n' }
     }
+    if (c.args.includes('fetch')) return executePublicationCommand({ ...c, args: c.args.map(a => a === profile.source.remoteUrl ? source : a) })
     if (c.args.includes('push')) { calls.push('push'); return '' }
     return executePublicationCommand(c)
   }
@@ -127,4 +129,17 @@ it('busyPublication only blocks a merged or running-stage publication, and the p
   writeFileSync(join(dir, 'release-profile.json'), JSON.stringify({ version: 1, extra: 1 }))
   expect(() => loadReleaseProfile(dir)).toThrow()
   expect(readFileSync(join(dir, 'release-profile.json'), 'utf8')).toContain('extra')
+})
+
+it('fetches only the fixed trusted branch when evidence advanced after the worker cloned', async () => {
+  const f = fixture()
+  const before = sh(f.work, 'rev-parse', 'HEAD')
+  sh(f.work, 'update-ref', '-d', 'refs/remotes/origin/main')
+  writeFileSync(join(f.profile.source.checkoutPath, 'evidence.txt'), 'new coordinator evidence\n')
+  sh(f.profile.source.checkoutPath, 'add', '.')
+  sh(f.profile.source.checkoutPath, 'commit', '-qm', 'record progress')
+  const candidate = await f.release.candidate(f.ticket, f.profile)
+  expect(candidate.headSha).toBe(before)
+  expect(sh(f.work, 'rev-parse', 'HEAD')).toBe(before)
+  expect(sh(f.work, 'status', '--porcelain')).toBe('')
 })
