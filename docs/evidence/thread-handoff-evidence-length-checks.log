@@ -1,0 +1,21 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/launch-retry-release
+
+(node:15934) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15935) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15935) ExperimentalWarning: Transform Types is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15935) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:15935) ExperimentalWarning: Transform Types is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15935) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:15946) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  3 passed (3)
+      Tests  64 passed (64)
+   Start at  21:38:37
+   Duration  5.79s (transform 3.09s, setup 0ms, import 5.53s, tests 3.49s, environment 0ms)
+

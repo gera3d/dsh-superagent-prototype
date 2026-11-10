@@ -1,6 +1,6 @@
 # DeepSeek Harness project status
 
-Updated November 09, 2026, 9:34 PM PST. Owner: current Codex coordinator/reviewer. **Active work and verified checkpoints below distinguish release stages.**
+Updated November 09, 2026, 9:43 PM PST. Owner: current Codex coordinator/reviewer. **Active work and verified checkpoints below distinguish release stages.**
 
 ## Active approved work
 
@@ -11,6 +11,8 @@ Updated November 09, 2026, 9:34 PM PST. Owner: current Codex coordinator/reviewe
 The existing user allowance actually reached0/5000 and reset normally; normal GitHub source polling recovered. Shared-account consumption is not attributed to Harness alone. Another personal token shares the same user allowance; an App installation has separate limits but the existing notifications endpoint does not support installation tokens, so it is not a drop-in replacement. Research only: no purchase, new key/App/account permissions or transport workaround authorized. This is the real feature candidate for the full handoff test once its controls qualify.
 
 **Thread-native review/test/release handoff — deployed through its actual native thread; final protected live acceptance is being verified.** Same finding45251448-f4b9-41aa-8886-86ade8950b11/current r17, deliveryauto-86635beac41a7b1cb43ddace32aab11d. Actual [PR86](https://github.com/gera3d/dsh-superagent-prototype/pull/86) head41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef merged as109e350f77109824b78e2ee56c3c8d67b9c1e276 through the protected thread Publish. Harness independently reviewed on configured Sonnet, ran serial types/targeted tests/build, generated its exact task package and then merged/applied/built/restarted/verified without a separate operator deploy command. Publicationcfa9cf8c-1844-40bf-935f-0bcfd60649ae is published/completed at2026-11-10T05:28:30.327Z. Installed postimages match the merged source; rollback is retained.
+
+The final native evidence click exposed a500-character HTTP validation mismatch with original finding requirements. PR89 aligns it with the existing16,384-character intake limit;64 HTTP/handoff/delivery checks, isolated exact-head types/build pass. All217 base inputs and30 installed postimages matched with rollback; managed restart/live retry is being verified. Local authority, revision, exact requirement subset, HTTPS evidence and separate acceptance gates remain intact.
 
 The source thread now asks only for actual operator live evidence. Configured HTTP verification does not prove intake requirements or native acceptance. Codex is completing native evidence, protected acceptance and completed-history/no-repeat checks before closing the outer finding. [Actual flow and exact limits](docs/reviews/thread-handoff-actual-native-flow.md), [publication/check/postimage evidence](docs/evidence/thread-handoff-actual-native-flow.json). No new user approval is needed.
 
