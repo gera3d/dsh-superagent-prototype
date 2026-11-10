@@ -1,0 +1,50 @@
+import { Context } from '@deepseek-ai/cordis'
+import { ToolRuntime, defineTool } from '@deepseek-ai/dsh-tools'
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { afterEach, expect, it } from 'vitest'
+import { installOutputBound, OUTPUT_DIRECTORY } from '../src/app/tool-output.ts'
+const dirs: string[] = []
+afterEach(() => { for (const d of dirs.splice(0)) rmSync(d,{ recursive:true, force:true }) })
+function fixture() {
+  const dir = mkdtempSync(join(tmpdir(),'root-output-audit-')); dirs.push(dir)
+  const ctx = new Context()
+  ctx.reflect.provide('systemPrompt', { tools: () => () => {} })
+  const tools = new ToolRuntime(ctx)
+  installOutputBound({ctx},()=>dir)
+  tools.register(defineTool({ name:'bash', description:'Isolated structured tool result fixture, no actual shell command',
+    parameters:{ text:{type:'string',required:true}, fail:{type:'boolean'} },
+    output:{ schema:{type:'string'},render:(_a,v)=>[{type:'text',text:v}] },
+    execute: async (a) => { if(a.fail) throw new Error(a.text);return a.text }
+  }))
+  const run = (id:string,text:string,fail=false)=>tools.execute({callId:id as never,name:'bash',arguments:{text,fail},signal:new AbortController().signal})
+  return {dir,run}
+}
+const large = (tag:string)=>Array.from({length:500},(_,i)=>`${tag}: line ${i}: ${'x'.repeat(35)}`).join('\n')
+it('actual ToolRuntime post-execute bounds successful model content and retains the full artifact',async()=>{
+ const f=fixture(),text=large('successful')+'\n[exit code: 0]'
+ const result=await f.run('call-success',text)
+ expect(result.isError).toBe(false)
+ const body=result.content.map(x=>x.type==='text'?x.text:'').join('\n')
+ expect(body).toContain('[output bounded:');expect(body).toContain('[exit code: 0]')
+ const file=readdirSync(join(f.dir,OUTPUT_DIRECTORY))[0]!
+ expect(readFileSync(join(f.dir,OUTPUT_DIRECTORY,file),'utf8')).toBe(text)
+})
+it('actual ToolRuntime error outcomes must preserve the original error content instead of truncating it',async()=>{
+ const f=fixture(),text=large('ERROR')+'\ncritical terminal diagnostic'
+ const result=await f.run('call-error',text,true)
+ expect(result.isError).toBe(true)
+ const body=result.content.map(x=>x.type==='text'?x.text:'').join('\n')
+ expect(body).toBe(text)
+ expect(body).not.toContain('[output bounded:')
+})
+it('distinct accepted tool call identities must not overwrite a previously returned full-output artifact',async()=>{
+ const f=fixture(),first=large('FIRST'),second=large('SECOND')
+ await f.run('call/a',first)
+ const oldFile=join(f.dir,OUTPUT_DIRECTORY,readdirSync(join(f.dir,OUTPUT_DIRECTORY))[0]!)
+ expect(readFileSync(oldFile,'utf8')).toBe(first)
+ await f.run('call?a',second)
+ expect(readFileSync(oldFile,'utf8')).toBe(first)
+ expect(readdirSync(join(f.dir,OUTPUT_DIRECTORY))).toHaveLength(2)
+})

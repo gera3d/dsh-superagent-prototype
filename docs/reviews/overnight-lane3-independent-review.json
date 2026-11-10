@@ -1,0 +1,45 @@
+{
+  "observedAt": "2026-11-10T13:54:22.736584+00:00",
+  "findingId": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+  "jobId": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r1",
+  "ticketId": "97dc3af26b0375da5a5d9637272f81dd",
+  "assignmentId": "a4dfdfc44526a097f67a1cdeaf0c5367",
+  "sourcePr": 92,
+  "artifactRepository": "gera3d/dsh-superagent-prototype",
+  "relatedIssue": "gera3d/superagent-sandbox#14 is separate; original worker binding404 retained, not a missing source PR",
+  "reviewedHead": "9a16934acb95979bdd70468800268210b97ce8c3",
+  "implementationBase": "75f091510d71624b98d4f3b63956909d4799a84f",
+  "patchSha256": "8b94e210b7cf36d611adf5c64df20b38feb45d7af127a52ceb3451bd330b8fa9",
+  "verdict": "changes_required",
+  "productionInspection": {
+    "workerHook": "Sessions.decorate -> workOnly (including bounded worker descendants) installs installOutputBound; master path does not. Read-only static wiring inspection, no live worker hook claim.",
+    "hostBoundary": "Installed @deepseek-ai/dsh-tools ToolRuntime postExecute accepts unchanged errors by default and preserves isError while replacing supplied content. Fixture uses real Context and ToolRuntime, a tool definition named bash returning deterministic text/errors; no real shell/provider/network executed.",
+    "sourceSeams": [
+      "src/app/tool-output.ts: installOutputBound does not check result.isError",
+      "src/app/tool-output.ts: outputFileName sanitizes different identities to the same path; writeFile replaces existing text"
+    ]
+  },
+  "findings": [
+    {
+      "severity": "high",
+      "description": "A real registry-dispatched isError tool result enters the ordinary accept post-execute path and is truncated/saved by the candidate. This contradicts the promised error passthrough and can hide the diagnostic needed for safe recovery. Error flag remains true, but original model-facing error content is not preserved.",
+      "reproduction": "ToolRuntime executes isolated bash tool whose body throws an oversized deterministic error; result.isError true but final content is bounded rather than the original error text."
+    },
+    {
+      "severity": "high",
+      "description": "Distinct accepted opaque tool-call IDs can map to the same sanitized filename; a second result overwrites the first full-output artifact. Prior model context points to a file now containing a different result, violating durable lossless retrieval. Worker/subagent shared directory also has no session namespace.",
+      "reproduction": "Real ToolRuntime accepts call/a then call?a in the same directory; both use call_a-bash.txt. Second content replaces first; replaying first pointer reads SECOND, not FIRST. No live files modified, isolated temporary directory only."
+    }
+  ],
+  "independentCheck": {
+    "command": "pnpm --config.verify-deps-before-run=false exec vitest run tests/root-tool-output.audit.spec.ts",
+    "result": "1passed/2failed",
+    "positiveControl": "Actual ToolRuntime successful text is bounded, exit marker retained and saved full file matches original. This confirms the hook executes at this real registry boundary.",
+    "negativeControls": "Error preservation and distinct-call artifact preservation assertions fail. No mirrored implementation-only tests used.",
+    "log": "../evidence/overnight-lane3-root-tool-output-audit.log",
+    "spec": "../evidence/overnight-lane3-root-tool-output.audit.spec.ts.txt"
+  },
+  "measurementReview": "Worker claims98session replay/29.9%byte savings and approximate token-steps; original corpus manifest/raw measurement receipts were not attached to the ticket directory, which is empty. Figures are not independently qualified here. Replay script calls pure boundOutput, not write/error paths, and does not demonstrate safe runtime savings under these failures. Need reproducible manifest/hashes and explicit input/output/cache vs quota/cost separation on corrected real owned path; no demand to achieve4500tokens by deleting authority.",
+  "requiredCorrection": "Preserve failed/tool-blocked outcomes and error/exit/retrieval context at actual post-execute boundary. Make full-output artifacts collision-safe across call/session/worker-descendant identities and retry/restart, never overwrite a prior pointer; prove byte-identical retrieval of both distinct results. Fail open to original visible result on storage failure; keep non-text, read/orchestrator, normal user/master and permissions/reporting/authority behavior intact. Include actual Sessions worker decoration vs ordinary/master control and real ToolRuntime regressions; repair declared4096byte cap if reproduced, without hiding errors or safety text. Reuse candidate changes on current approved source base retaining acceptedPR96, then relevant targeted qualification and current native ready report. No model/provider/reserve/capacity/hostpackage/newaccess changes, merge/liveedit/restart/publish/accept.",
+  "limits": "Review did not re-run worker original suites, broad tests, typecheck or build after a conclusive blocker. No merge/deployment, no changes to live hook, files, routing or saved credentials; accepted priority1 remains resolved. No live provider/network calls induced by audit."
+}
