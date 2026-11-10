@@ -1,8 +1,12 @@
 # DeepSeek Harness project status
 
-Updated November 09, 2026, 3:43 PM PST. Owner: current Codex coordinator/reviewer. **Active work and verified checkpoints below distinguish release stages.**
+Updated November 09, 2026, 4:35 PM PST. Owner: current Codex coordinator/reviewer. **Active work and verified checkpoints below distinguish release stages.**
 
 ## Active approved work
+
+**Thread-native review/test/release handoff — newly approved and running, not deployed.** Finding `45251448-f4b9-41aa-8886-86ade8950b11` revision1, job `finding:45251448-f4b9-41aa-8886-86ade8950b11:r1`, ticket `88fd8d56e77cce531201546721437982`, assignment `beee2784a62177e9278fe95fc81ede85`. Confirmed through native **Fix now** under the user's explicit request to complete the flow in the task thread. Harness owns implementation in an isolated exact-base checkout; Codex owns independent review and initial bootstrap deployment. This is a new approved gap, separate from the accepted advice/history/cost/legacy scopes below.
+
+Verified gaps: generic recommendations stage replies but do not dispatch a review/release owner; protected publication consumes an existing reviewed manifest, and default delivery verification lacks a native/browser capability. Legacy R3 left an identity-bound report claim without consumption. The task must connect actual execution and in-thread progress, not just change wording. Preserve explicit Send for ordinary advice, exact native publication confirmation, provenance, current revision/head/patch/scope fences and actual operator live acceptance. No new credentials, permissions, routes, spending or unrelated backlog. Full production flow and stale/replay/failure controls remain **unverified** until implemented, independently tested and checked in the real thread. [Approved bounded task](docs/reviews/thread-native-release-handoff-scope.json).
 
 **Legacy delivery reconciliation is complete: reviewed, merged, deployed, applied, native verified and protected repair acceptance recorded.** PR80 source `90c0eb5f41e5d2461173297d0477cd189bf0cc4b`, merge `c2e2bf11d6a70117691af1533cdb6291bdd8963d`; corrected Harness candidate `8e799c6ba674d54d1169e3f9f49d089af09423f2`. Finding `60b19ba2-1ff6-4f95-af39-098829779103` resolved revision5 at `2026-11-09T23:41:47.835Z`. Worker127 focused checks/eight suites and independent integrated48/four suites, types/build passed (overlapping counts; do not add). All210 base source/config inputs matched and all36 installed postimages remain exact. Root integration corrected a residual real option-filter failure; rejected attempts remain evidence.
 
@@ -27,7 +31,8 @@ Live Harness: **0 running,0 queued,max3; intake resumed; all runtime health comp
 
 ## Remaining open work — reconciled against live state
 
-- **No remaining approved implementation pending in these scopes:** the separately approved nine-concern cost repair is now deployed, native verified and accepted. Original accepted history remains preserved.
+- **Newly approved thread-native handoff:** running as recorded above; review, bootstrap deployment and actual end-to-end proof remain with Codex. No user decision pending.
+- **No remaining approved implementation pending in the previously accepted scopes:** the separately approved nine-concern cost repair is now deployed, native verified and accepted. Original accepted history remains preserved.
 - **Three legacy delivery records:** reconciled and native verified as completed history. Original unknown bindings remain preserved, not falsely accepted. No pending original action or release work remains.
 - **Publication diagnostics:** earlier investigation accepted; original66ms pre-enqueue cause remains unproven. Additional phase/cause logging is optional, not implemented or dispatched.
 - **Capability limits:** direct Anthropic allowance data remains unavailable and Cloudflare profile remains advice-only. No new credential/access is authorized. A separate ordinary explanation conversation is not project backlog.
