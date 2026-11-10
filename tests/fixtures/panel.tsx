@@ -17,8 +17,12 @@ export const translator = (dictionary: Record<string, string>): T => ((key: stri
   const template = dictionary[key] ?? key
   return params ? template.replace(/\{(\w+)\}/g, (match, name: string) => name in params ? String(params[name]) : match) : template
 }) as T
+/** Fixture project and thread catalog (not a real DSH workspace); Sections tests pick from it. */
+export const PROJECT_CONTEXT = { projects: [{ id: 'ws-1', title: 'Fixture project', path: '/fixture/project' }],
+  threads: [{ id: 'session-1', title: 'Fixture planning thread', projectId: 'ws-1', running: false, waiting: 0, updatedAt: 0 }] }
+const projectContext = async () => PROJECT_CONTEXT
 function Panel({ t }: { t: T }) {
-  return <App t={t} openSession={async id => { server.opened.push(id) }} deploymentForm={usePageForm(server.form)} />
+  return <App t={t} openSession={async id => { server.opened.push(id) }} deploymentForm={usePageForm(server.form)} projectContext={projectContext} />
 }
 let root: Root | undefined
 let container: HTMLElement | undefined

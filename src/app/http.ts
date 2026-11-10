@@ -30,6 +30,8 @@ import { FindingEvidenceRequest } from './finding-evidence.ts'
 import { coordinateFinding, FindingCoordinationRequestSchema } from './finding-coordination.ts'
 import { snapshotProof } from './publication-proof.ts'
 import { ProgressObservationSchema, ProgressStore } from './progress.ts'
+import { MakeBetterInput, ProjectId, ProposalInputSchema, SectionError, SectionStore, makeBetterPreview, pressForwardPreview, type Member } from './sections.ts'
+import { sectionsOverview, taskKnown, ticketInfo } from './views/sections.ts'
 import { FeatureDeliveryRuntime, deliveryDecision, reconcileInboxCurrency } from './delivery-runtime.ts'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
 import { PromptConflict, SKILL_NAME, SKILL_PREFIX, TEAM_SECTIONS, builtInBase, builtInParts, defaultPrompts, savePrompts, type Prompts }
@@ -127,7 +129,7 @@ function failure(error: unknown): [number, Record<string, unknown>] {
   if (error instanceof SetupError) return [400, { error: error.message, setup: error.problem }]
   if (error instanceof FindingError) return [error.status, { error: error.message }]
   if (error instanceof DeliveryConflict) return [409, { error: error.message }]
-  if (error instanceof RouteError || error instanceof InboxError || error instanceof PublicationError) return [error.status, { error: error.message }]
+  if (error instanceof RouteError || error instanceof InboxError || error instanceof PublicationError || error instanceof SectionError) return [error.status, { error: error.message }]
   if (error instanceof UserError) return [error.missing ? 404 : 400, { error: error.message, code: error.code, values: error.values }]
   if (error instanceof SettingsConflict || error instanceof PromptConflict) return [409, { error: error.message }]
   return [500, { error: error instanceof Error ? error.message : String(error) }]
@@ -275,7 +277,16 @@ export function isSessionEnded(runtime: HttpHost, item: PendingDecisionItem): bo
   return false
 }
 
-function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, progress: () => ProgressStore): Routes {
+function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, progress: () => ProgressStore, sections: () => SectionStore): Routes {
+  const operator = (localApproval: boolean | undefined) => {
+    if (!localApproval) throw new PublicationError(403, 'Explicit local operator section change required')
+  }
+  const sectionsOf = (project: string) => sectionsOverview(views(runtime), sections(), ProjectId.parse(project))
+  const sectionProject = (id: string) => {
+    const section = sections().get(id)
+    if (!section) throw new SectionError(404, 'Section not found')
+    return section.project
+  }
   const refreshTickets = () => {
     const open = runtime.store.tickets.open?.() ?? []
     inbox().syncTickets(ticketDecisions(open), open)
@@ -598,6 +609,52 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
       return ticketList(views(runtime), state, offset, limit)
     },
     'GET tickets/:id': ({ params }) => ticketPage(runtime, params.id),
+    'GET sections': ({ query }) => sectionsOf(query.project ?? ''),
+    'POST sections/propose': async ({ body, localApproval }) => {
+      operator(localApproval)
+      return { proposal: sections().propose(ProposalInputSchema.parse(await body()), taskKnown(runtime)) }
+    },
+    'POST sections/approve': async ({ body, localApproval }) => {
+      operator(localApproval)
+      const { project, proposalId } = z.object({ project: ProjectId, proposalId: z.string().min(1).max(100) }).strict().parse(await body())
+      sections().approve(project, proposalId, taskKnown(runtime))
+      return sectionsOf(project)
+    },
+    'POST sections/reject': async ({ body, localApproval }) => {
+      operator(localApproval)
+      const { project, proposalId } = z.object({ project: ProjectId, proposalId: z.string().min(1).max(100) }).strict().parse(await body())
+      sections().reject(project, proposalId)
+      return sectionsOf(project)
+    },
+    'POST sections/move': async ({ body, localApproval }) => {
+      operator(localApproval)
+      const input = z.object({ project: ProjectId, member: z.object({ kind: z.enum(['ticket', 'session']), id: z.string().trim().min(1).max(200) }).strict(),
+        to: z.string().min(1).max(100).nullable() }).strict().parse(await body())
+      sections().move(input.project, input.member as Member, input.to, taskKnown(runtime))
+      return sectionsOf(input.project)
+    },
+    'POST sections/:id/update': async ({ params, body, localApproval }) => {
+      operator(localApproval)
+      const project = sectionProject(params.id)
+      sections().update(params.id, await body() as never)
+      return sectionsOf(project)
+    },
+    'POST sections/:id/base-thread': async ({ params, body, localApproval }) => {
+      operator(localApproval)
+      const project = sectionProject(params.id)
+      const { sessionId } = z.object({ sessionId: z.string().nullable() }).strict().parse(await body())
+      sections().setBaseThread(params.id, sessionId)
+      return sectionsOf(project)
+    },
+    'POST sections/:id/press-forward': ({ params }) => {
+      const section = sections().list(sectionProject(params.id)).find(item => item.id === params.id)!
+      const info = new Map(section.members.flatMap(member => { const found = member.kind === 'ticket' ? ticketInfo(runtime, member.id) : undefined; return found ? [[member.id, found] as const] : [] }))
+      return pressForwardPreview(section, info)
+    },
+    'POST sections/:id/make-better': async ({ params, body }) => {
+      const section = sections().list(sectionProject(params.id)).find(item => item.id === params.id)!
+      return makeBetterPreview(section, MakeBetterInput.parse(await body()).instruction)
+    },
     'POST tickets/:id/retry': ({ params }) => { const id = ticket(params.id); runtime.engine.retryTicket(id); return { retried: true } },
     'POST tickets/:id/stop': ({ params }) => { const id = ticket(params.id); runtime.engine.stopTicket(id); return { stopped: true } },
     'POST executor/pause': async ({ body }) => runtime.settings.pause(z.object({ paused: z.boolean() }).parse(await body()).paused, 'panel'),
@@ -646,7 +703,9 @@ export function registerHttp(ctx: Context, runtime: HttpHost): () => void {
   let savedProgress: ProgressStore | undefined
   const progress = () => savedProgress ??= new ProgressStore(runtime.store.db)
   const capture = registerDecisionCapture(ctx, inbox)
-  const table = routes(runtime, ctx, inbox, progress)
+  let savedSections: SectionStore | undefined
+  const sections = () => savedSections ??= new SectionStore(runtime.store.db)
+  const table = routes(runtime, ctx, inbox, progress, sections)
   const disposers = [
     ctx.webServer.register({ kind: 'prefix', path: '/orchestrator', handler: async (req, res) => {
       const url = new URL(req.url ?? '/', 'http://localhost')
