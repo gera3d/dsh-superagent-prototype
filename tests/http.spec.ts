@@ -569,3 +569,27 @@ it('gates usage reading so in-flight running tickets do not read or flush usage 
   expect(endedRes.body.usage).toMatchObject({ sessionId: 'worker-t1' })
   expect(usageOf).toHaveBeenCalledWith('worker-t-ended')
 })
+
+it('records full-length persisted finding requirements through the protected live-evidence route', async () => {
+  const { DeliveryStore } = await import('../src/app/feature-delivery.ts')
+  const db = new DatabaseSync(':memory:'); databases.push(db)
+  const store = new DeliveryStore(db)
+  // Findings permit 16,384 characters; the native form sends the exact saved text, not a shortened label.
+  const requirement = 'Verify '.padEnd(16_384, 'x')
+  const bindings = { repository: 'org/repo', sourceIssue: 1, baseSha: 'b'.repeat(40), headSha: 'a'.repeat(40) }
+  const created = store.create({ id: 'long-live', title: 'Long saved requirement', owner: 'owner', authorities: ['local-operator'], requirements: [requirement], bindings })
+  const verifying = store.compareAndSwap(created.id, created.revision, d => {
+    d.stage = 'verifying'; d.state = 'awaiting_decision'
+    for (const kind of ['publication', 'verification'] as const) d.evidence.push({ id: kind, kind, bindings, recordedAt: '2026-11-10T00:00:00.000Z', reference: 'publication:test', outcome: 'passed', generation: 0 })
+  })
+  const call = serve({ deliveries: { store, request: async () => {} } })
+  const browser = { origin: 'http://127.0.0.1:3082', 'sec-fetch-site': 'same-origin', 'sec-fetch-mode': 'cors', 'sec-fetch-dest': 'empty' }
+  const body = { revision: verifying.revision, requirements: [requirement], reference: 'https://example.test/actual-live-evidence' }
+  expect(await call('POST', 'deliveries/long-live/evidence', body)).toMatchObject({ status: 403 })
+  expect(await call('POST', 'deliveries/long-live/evidence', { ...body, requirements: ['unknown'] }, browser)).toMatchObject({ status: 409 })
+  expect(await call('POST', 'deliveries/long-live/evidence', { ...body, requirements: ['x'.repeat(16_385)] }, browser)).toMatchObject({ status: 400 })
+  expect(await call('POST', 'deliveries/long-live/evidence', body, browser)).toMatchObject({ status: 200, body: { delivery: { stage: 'verifying', state: 'awaiting_decision', nextAction: { kind: 'accept' } } } })
+  expect(store.get('long-live')!.evidence.at(-1)!.requirements).toEqual([requirement])
+  expect(store.get('long-live')!.acceptance).toBeUndefined()
+  expect(await call('POST', 'deliveries/long-live/evidence', body, browser)).toMatchObject({ status: 409 })
+})

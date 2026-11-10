@@ -480,7 +480,7 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
     'POST deliveries/:id/evidence': async ({ params, body, localApproval }) => {
       if (!localApproval) throw new PublicationError(403, 'Explicit local operator live evidence required')
       if (!runtime.deliveries) throw new PublicationError(409, 'Delivery coordinator is not configured')
-      const request = z.object({ revision: z.number().int().positive(), requirements: z.array(z.string().max(500)).min(1).max(100), reference: z.string().max(2000), outcome: z.enum(['passed', 'failed']).optional() }).strict().parse(await body())
+      const request = z.object({ revision: z.number().int().positive(), requirements: z.array(z.string().max(16_384)).min(1).max(100), reference: z.string().max(2000), outcome: z.enum(['passed', 'failed']).optional() }).strict().parse(await body())
       const delivery = recordLiveAttestation(runtime.deliveries.store, params.id, request, 'local-operator')
       void runtime.deliveries.request().catch(error => ctx.logger.warn('Delivery live evidence: %s', String(error)))
       return { delivery, item: deliveryDecision(delivery) }
