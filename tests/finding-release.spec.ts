@@ -25,7 +25,7 @@ function fixture(opts: { commit?: boolean; ready?: boolean } = {}) {
   const scripts = Object.fromEntries(['apply', 'build', 'restart', 'verify', 'rollback'].map(name => {
     const path = join(root, `${name}.sh`); const text = `echo ${name}\n`; writeFileSync(path, text); return [name, { path, sha256: sha256(text), dependencies: [] }]
   })) as unknown as ReleaseProfile['scripts']
-  const profile: ReleaseProfile = { version: 1, source: { repository: 'org/proj', baseBranch: 'main', checkoutPath: source, remoteUrl: 'https://github.com/org/proj.git', workspaceSubdir: 'work' },
+  const profile: ReleaseProfile = { version: 1, source: { repository: 'org/proj', baseBranch: 'main', checkoutPath: source, remoteUrl: 'https://github.com/org/proj.git', workspaceSubdir: 'work', artifactRoots: [] },
     ghPath: '/usr/bin/gh', gitPath: execFileSync('which', ['git'], { encoding: 'utf8' }).trim(), cwd: root, patchDir: join(root, 'patches'), environment: 'local harness', components: ['app'], effects: ['restart'], timeoutMs: 30000, scripts }
   const ticket = { id: 't1', title: 'T', origin: { triggerId: 'trig1', triggerIds: ['trig1'] }, execution: { name: 'finding-task-t1', directory: ticketDir, assignment: '' },
     assignments: [{ id: 'a1', state: 'ended', createdAt: '', report: { state: opts.ready === false ? 'blocked' : 'ready', summary: 's', at: '2026-01-01T00:00:00Z' } }] } as unknown as Ticket

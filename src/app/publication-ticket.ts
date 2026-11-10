@@ -6,6 +6,7 @@ import type { PendingDecisionItem } from '../core/decision.ts'
 import { ticketDecisions } from './decision-inbox.ts'
 import { publicationConversation } from './lifecycle-publication.ts'
 import { PublicationError, type PublicationSnapshot } from './publication.ts'
+import { capturePhaseFence, isPhaseConversation, isPhaseFence, phaseCurrent, readOnlyDb, type PublicationPhaseFence } from './delivery-phase.ts'
 
 export interface PublicationTicketFence {
   version: 1
@@ -98,7 +99,11 @@ function readTicket(databasePath: string, ticketId: string): Ticket | undefined 
 }
 
 /** External coordinator entry point: captures its fence from the shared authoritative SQLite ticket. */
-export function capturePublicationTicket(databasePath: string, p: PublicationSnapshot): PublicationTicketFence {
+export function capturePublicationTicket(databasePath: string, p: PublicationSnapshot): PublicationTicketFence | PublicationPhaseFence {
+  if (isPhaseConversation(p.conversationId)) {
+    const db = readOnlyDb(databasePath)
+    try { return capturePhaseFence(db, p) } catch (error) { throw new PublicationError(409, error instanceof Error ? error.message : 'Release phase is not current') } finally { db.close() }
+  }
   const ticket = readTicket(databasePath, p.ticketId)
   const item = ticket && ticketDecisions([ticket]).find(candidate => publicationConversation(candidate) === p.conversationId
     && candidate.lifecycle?.kind === 'done' && candidate.lifecycle.prNumber === p.prNumber)
@@ -108,6 +113,11 @@ export function capturePublicationTicket(databasePath: string, p: PublicationSna
 }
 
 /** Missing/unreadable/malformed ticket data fails closed; it never manufactures current authority. */
-export function validatePublicationTicket(databasePath: string, p: PublicationSnapshot, fence: PublicationTicketFence): boolean {
+export function validatePublicationTicket(databasePath: string, p: PublicationSnapshot, fence: PublicationTicketFence | PublicationPhaseFence): boolean {
+  if (isPhaseFence(fence)) {
+    let db: ReturnType<typeof readOnlyDb> | undefined
+    try { db = readOnlyDb(databasePath); return phaseCurrent(db, fence, p) } catch { return false } finally { db?.close() }
+  }
+  if (isPhaseConversation(p.conversationId)) return false
   try { return publicationTicketCurrent(readTicket(databasePath, p.ticketId), fence, p) } catch { return false }
 }

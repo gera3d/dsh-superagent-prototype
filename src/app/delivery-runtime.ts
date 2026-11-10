@@ -10,6 +10,7 @@ import type { Store } from './store.ts'
 import type { FindingStore } from './finding.ts'
 import type { ProgressStore } from './progress.ts'
 import { deriveDeliveryWork, readDeliveryWorkers, workerTicket } from './delivery-currency.ts'
+import { deliveryPhaseItem, phaseFacts } from './delivery-phase.ts'
 import { publicationProof, snapshotProof } from './publication-proof.ts'
 import { planReleaseHandoff, startReleaseHandoff, type HandoffContext, type StartHandoffRequest } from './delivery-handoff.ts'
 
@@ -237,10 +238,15 @@ export class FeatureDeliveryRuntime {
     if (delivery.stage !== 'ready_to_publish' || delivery.state !== 'awaiting_decision' || delivery.preparedPublication) return
     const publication = this.options.publication
     if (!publication || !delivery.bindings.environment) throw new Error('No configured protected publication capability or explicit deployment target.')
-    for (const worker of delivery.workers) {
+    const phase = delivery.release ? deliveryPhaseItem(delivery) : undefined
+    if (delivery.release) {
+      const facts = phaseFacts(this.store.db, delivery.id)
+      if (typeof facts === 'string') throw new Error(`Release phase is not current (${facts}). No publication is authorized.`)
+    }
+    for (const worker of phase ? [delivery.release!.ticketId] : delivery.workers) {
       const ticket = this.tickets.tickets.get(worker)
-      if (!ticket || ticket.ended) continue
-      const item = ticketDecisions([ticket])[0]
+      if (!ticket || (ticket.ended && !phase)) continue
+      const item = phase ?? ticketDecisions([ticket])[0]
       const ref = delivery.bindings.refs?.find(ref => ref.repository === delivery.bindings.repository && ref.headSha === delivery.bindings.headSha && ref.pr === item?.lifecycle?.prNumber)
       if (!item?.lifecycle || !ref) continue
       const pins = publication.pinsFor(ref.repository, ref.pr)

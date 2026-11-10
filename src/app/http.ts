@@ -423,7 +423,7 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
       if (!current) throw new FindingError(404, 'Finding not found')
       const delivery = await runtime.release.prepare(current, { revision }, `orchestrator-http:release:${params.id}:${revision}`)
       void runtime.deliveries.request().catch(error => ctx.logger.warn('Finding release dispatch: %s', String(error)))
-      return { finding: runtime.findings.store.get(params.id), delivery, item: deliveryDecision(delivery) }
+      return { finding: runtime.findings.store.get(params.id) ?? current, delivery, item: deliveryDecision(delivery) }
     },
     'POST findings/:id/coordinate': async ({ params, body }) => {
       if (!runtime.findings) throw new PublicationError(409, 'Finding coordinator is not configured')
