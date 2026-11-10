@@ -53,7 +53,7 @@ function fixture(opts: { commit?: boolean; ready?: boolean } = {}) {
 it('prepares the exact committed artifact: PR, per-PR manifest and bound delivery lineage, without publishing', async () => {
   const f = fixture()
   const delivery = await f.release.prepare(f.finding, { revision: 3 }, 'ref')
-  expect(f.calls).toEqual(['gh pr list', 'push', 'gh pr create', 'gh pr list'])
+  expect(f.calls).toEqual(['gh api repos/org/proj/branches/main', 'gh pr list', 'push', 'gh pr create', 'gh pr list'])
   const head = sh(f.work, 'rev-parse', 'HEAD')
   expect(delivery).toMatchObject({ id: 'auto-t1', stage: 'implementation', release: { findingId: 'f1', jobId: 'job1', ticketId: 't1', prNumber: 7, headSha: head }, delegatedActions: ['review', 'fix', 'verify'], authorities: ['local-operator'], requirements: ['works live'] })
   expect(delivery.scopeBinding).toBeUndefined()
@@ -97,7 +97,7 @@ it('refuses stale revision, foreign/superseded job, unready or prose report, hum
   await expect(g.release.prepare(g.finding, { revision: 3 }, 'r')).rejects.toBeInstanceOf(ReleaseBlocked)
 })
 
-it('names a missing worker commit, dirty tree, foreign clone and absent profile concretely, with no GitHub effect', async () => {
+it('names a missing worker commit, dirty tree, foreign clone and absent profile concretely, with no GitHub mutation', async () => {
   const none = fixture({ commit: false })
   await expect(none.release.prepare(none.finding, { revision: 3 }, 'r')).rejects.toThrow('nothing to review')
   const dirty = fixture(); writeFileSync(join(dirty.work, 'a.txt'), 'dirty\n')
@@ -107,13 +107,14 @@ it('names a missing worker commit, dirty tree, foreign clone and absent profile 
   const noProfile = fixture()
   const bare = new FindingRelease({ stateDir: noProfile.state, profile: () => undefined, store: noProfile.store, ticket: () => noProfile.ticket, publicationBusy: () => undefined, exec: async () => '' })
   await expect(bare.prepare(noProfile.finding, { revision: 3 }, 'r')).rejects.toThrow('release-profile.json')
-  for (const x of [none, dirty, foreign]) expect(x.calls).toEqual([])
+  expect(none.calls).toEqual(['gh api repos/org/proj/branches/main'])
+  for (const x of [dirty, foreign]) expect(x.calls).toEqual([])
 })
 
 it('refuses to reuse an open PR at another head and a tampered pinned script', async () => {
   const f = fixture()
   const stale = new FindingRelease({ stateDir: f.state, profile: () => f.profile, store: f.store, ticket: () => f.ticket, publicationBusy: () => undefined,
-    exec: async c => c.executable === f.profile.ghPath ? JSON.stringify([{ number: 3, headRefOid: 'f'.repeat(40), baseRefName: 'main' }]) : executePublicationCommand(c) })
+    exec: async c => c.executable === f.profile.ghPath ? c.args[0] === 'api' ? sh(f.profile.source.checkoutPath, 'rev-parse', 'HEAD') : JSON.stringify([{ number: 3, headRefOid: 'f'.repeat(40), baseRefName: 'main' }]) : executePublicationCommand(c) })
   await expect(stale.prepare(f.finding, { revision: 3 }, 'r')).rejects.toThrow('not at the reviewed head')
   const g = fixture(); writeFileSync(g.profile.scripts!.verify.path, 'echo evil\n')
   await expect(g.release.prepare(g.finding, { revision: 3 }, 'r')).rejects.toThrow('missing or changed')
@@ -134,12 +135,14 @@ it('busyPublication only blocks a merged or running-stage publication, and the p
 it('fetches only the fixed trusted branch when evidence advanced after the worker cloned', async () => {
   const f = fixture()
   const before = sh(f.work, 'rev-parse', 'HEAD')
-  sh(f.work, 'update-ref', '-d', 'refs/remotes/origin/main')
   writeFileSync(join(f.profile.source.checkoutPath, 'evidence.txt'), 'new coordinator evidence\n')
   sh(f.profile.source.checkoutPath, 'add', '.')
   sh(f.profile.source.checkoutPath, 'commit', '-qm', 'record progress')
   const candidate = await f.release.candidate(f.ticket, f.profile)
   expect(candidate.headSha).toBe(before)
+  expect(candidate.baseSha).toBe(sh(f.profile.source.checkoutPath, 'rev-parse', 'HEAD'))
+  expect(candidate.diffBaseSha).not.toBe(candidate.baseSha)
+  expect(candidate.patch.toString()).not.toContain('evidence.txt')
   expect(sh(f.work, 'rev-parse', 'HEAD')).toBe(before)
   expect(sh(f.work, 'status', '--porcelain')).toBe('')
 })

@@ -60,7 +60,7 @@ export const PROFILE_FIELDS = 'release-profile.json: source.{repository,baseBran
 export class ReleaseBlocked extends DeliveryConflict {
   constructor(readonly missing: { field: string; owner: string; detail: string }[]) { super(`Release preparation cannot start: ${missing.map(m => `${m.field}: ${m.detail}`).join(' | ')}`) }
 }
-export interface ReleaseCandidate { ticketId: string; assignmentId: string; reportAt: string; dir: string; branch: string; headSha: string; baseSha: string; patchSha256: string; files: number; patch: Buffer }
+export interface ReleaseCandidate { ticketId: string; assignmentId: string; reportAt: string; dir: string; branch: string; headSha: string; baseSha: string; diffBaseSha: string; patchSha256: string; files: number; patch: Buffer }
 
 const MAX_PATCH = 2 * 1024 * 1024
 const sha = /^[a-f0-9]{40}$/
@@ -116,8 +116,6 @@ export class FindingRelease {
     if (await git('status', '--porcelain', '--untracked-files=no')) throw new ReleaseBlocked([{ field: 'worker artifact', owner: `worker-${ticket.id}`, detail: 'The worker checkout has uncommitted changes; only committed work can be reviewed and published.' }])
     const headSha = await git('rev-parse', 'HEAD')
     const trustedBase = async () => {
-      const local = await git('rev-parse', '--verify', '--quiet', `refs/remotes/origin/${profile.source.baseBranch}`).catch(() => '')
-      if (sha.test(local)) return local
       const remote = (await this.run(profile, profile.ghPath, ['api', `repos/${profile.source.repository}/branches/${profile.source.baseBranch}`, '--jq', '.commit.sha'], profile.cwd)).trim()
       if (!sha.test(remote)) throw new DeliveryConflict('Could not resolve the trusted base branch commit')
       await git('cat-file', '-e', `${remote}^{commit}`).catch(async () => {
@@ -128,15 +126,16 @@ export class FindingRelease {
       })
       return remote
     }
-    const baseSha = await git('merge-base', 'HEAD', await trustedBase())
+    const baseSha = await trustedBase()
+    const diffBaseSha = await git('merge-base', 'HEAD', baseSha)
     if (!sha.test(headSha) || !sha.test(baseSha)) throw new DeliveryConflict('Worker checkout did not yield exact head and base commits')
-    if (headSha === baseSha) throw new ReleaseBlocked([{ field: 'worker artifact', owner: `worker-${ticket.id}`, detail: 'The worker has no commit beyond the project base; there is nothing to review.' }])
-    const patch = Buffer.from(await this.run(profile, profile.gitPath, ['-C', dir, 'diff', '--binary', baseSha, headSha], dir), 'utf8')
+    if (headSha === diffBaseSha) throw new ReleaseBlocked([{ field: 'worker artifact', owner: `worker-${ticket.id}`, detail: 'The worker has no commit beyond the project base; there is nothing to review.' }])
+    const patch = Buffer.from(await this.run(profile, profile.gitPath, ['-C', dir, 'diff', '--binary', diffBaseSha, headSha], dir), 'utf8')
     if (!patch.length || patch.length > MAX_PATCH) throw new DeliveryConflict('Worker patch is empty or exceeds the bounded review size')
-    const files = (await git('diff', '--name-only', baseSha, headSha)).split('\n').filter(Boolean).length
+    const files = (await git('diff', '--name-only', diffBaseSha, headSha)).split('\n').filter(Boolean).length
     const branch = `agent/${ticket.execution?.name ?? ticket.id}`
     if (!/^agent\/[\w.-]{1,100}$/.test(branch)) throw new DeliveryConflict('Job ticket name is not a safe branch name')
-    return { ticketId: ticket.id, assignmentId: assignment.id, reportAt: assignment.report?.at ?? '', dir, branch, headSha, baseSha, patchSha256: hash(patch), files, patch }
+    return { ticketId: ticket.id, assignmentId: assignment.id, reportAt: assignment.report?.at ?? '', dir, branch, headSha, baseSha, diffBaseSha, patchSha256: hash(patch), files, patch }
   }
 
   /** Reuse the open source PR for this exact head, or push the exact commit and open one with fixed argv. */
@@ -242,7 +241,7 @@ export class FindingRelease {
     if (!record || record.verdict?.verdict !== 'passed' || !record.lease || record.lease.id !== reviewId || record.lease.deliveryId !== delivery.id || record.lease.action.kind !== 'review' || record.bindingFingerprint !== fp || deliveryFingerprint(record.lease.bindings) !== fp || record.fingerprint !== deliveryFingerprint({ action: record.lease.action, bindings: record.lease.bindings, deliveryId: delivery.id })) throw blocked('independent review', 'Harness independent review', 'The durable review verdict for the exact head is missing.')
     // 2. Exact artifact re-derived from git; a changed head or patch invalidates the package.
     const c = await this.candidate(ticket, profile)
-    if (c.headSha !== release.headSha || c.patchSha256 !== release.patchSha256 || c.headSha !== delivery.bindings.headSha) throw new DeliveryConflict('The worker artifact changed after review; head or patch no longer matches the reviewed release')
+    if (c.headSha !== release.headSha || c.patchSha256 !== release.patchSha256 || c.headSha !== delivery.bindings.headSha || c.baseSha !== delivery.bindings.baseSha) throw new DeliveryConflict('The worker artifact changed after review; head or patch no longer matches the reviewed release')
     const R = profile.source.repository
     const conflict = this.deps.publicationBusy()
     if (conflict) throw new DeliveryConflict(`A publication is in flight (${conflict}); the shared release manifest cannot be replaced until it settles`)
@@ -262,7 +261,7 @@ export class FindingRelease {
       }
       const evidenceScript = join(preset.prepareScript.path, '..', 'record-evidence.py')
       if (!preset.prepareScript.dependencies.some(d => d.path === evidenceScript)) throw blocked('release preset', 'project release profile', `prepareScript.dependencies must pin ${evidenceScript}.`)
-      const tests = (await this.run(profile, profile.gitPath, ['-C', c.dir, 'diff', '--name-only', '--diff-filter=AM', c.baseSha, c.headSha], c.dir)).split('\n')
+      const tests = (await this.run(profile, profile.gitPath, ['-C', c.dir, 'diff', '--name-only', '--diff-filter=AM', c.diffBaseSha, c.headSha], c.dir)).split('\n')
         .filter(f => /^tests\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)*\.spec\.tsx?$/.test(f) && !f.includes('..'))
       if (!tests.length) throw blocked('targeted tests', `worker-${ticket.id}`, 'The commit adds or changes no tests/*.spec.ts(x) file, so no targeted check can prove the change; add focused tests and report ready again.')
       if (tests.length > preset.maxTestFiles) throw blocked('targeted tests', `worker-${ticket.id}`, `The commit changes ${tests.length} spec files (limit ${preset.maxTestFiles}); narrow the change.`)

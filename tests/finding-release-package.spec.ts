@@ -27,7 +27,7 @@ function fixture(opts: { spec?: boolean; failTests?: boolean; noReview?: boolean
   const head = sh(work, 'rev-parse', 'HEAD'), base = sh(work, 'merge-base', 'HEAD', 'origin/main')
   const patch = execFileSync('git', ['-C', work, 'diff', '--binary', base, head])
   const bin = join(root, 'bin'); mkdirSync(bin)
-  const gh = join(bin, 'gh'); writeFileSync(gh, `#!/bin/sh\necho '{"headRefOid":"${head}","state":"OPEN"}'\n`); chmodSync(gh, 0o755)
+  const gh = join(bin, 'gh'); writeFileSync(gh, `#!/bin/sh\nif [ \"$1\" = api ]; then echo ${base}; exit 0; fi\necho '{"headRefOid":"${head}","state":"OPEN"}'\n`); chmodSync(gh, 0o755)
   const pnpm = join(bin, 'pnpm'); writeFileSync(pnpm, `#!/bin/sh\n${opts.failTests ? 'case "$*" in *vitest*) echo FAILED; exit 1;; esac\n' : ''}echo ok "$@"\n`); chmodSync(pnpm, 0o755)
   const restart = join(bin, 'restart.sh'); writeFileSync(restart, '#!/bin/sh\nexit 0\n'); chmodSync(restart, 0o755)
   const dir = join(root, 'pub'); mkdirSync(dir)

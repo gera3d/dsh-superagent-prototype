@@ -17,3 +17,9 @@ The production primitives have separate negative controls for changed source/sco
 One-time infrastructure bootstrap is necessary because the installed runtime cannot yet execute this new per-task packaging path. The remaining compact preparation-progress presentation will be completed by the same canonical Harness finding after bootstrap and used for the real native review/check/package/publish/live-evidence loop. Do not reopen the already accepted quota task or describe bootstrap as full-flow success.
 
 Known boundary: an independent review failure against an ended implementation owner is a recorded blocker, not an automatically reopened worker. Do not hide this boundary or label the new flow universally autonomous.
+
+## Current PR base versus artifact diff base
+
+A cloned worker can branch before later coordinator-only evidence commits. Fresh GitHub base SHA is the review/target pin; the Git merge base defines the worker patch. These must be separate: using the merge base as the PR pin rejects valid review, while diffing directly against the current target would include reverse changes from the coordinator. Candidate lookup now reads the actual configured branch head, fetches that fixed branch's missing objects without changing HEAD, derives the patch from its merge base, and rechecks the actual target pin during package creation. A real Git regression advances the trusted source with a separate evidence commit while the worker retains a stale remote reference; it proves fresh target pin, unchanged worker HEAD/worktree and no evidence-file reversal in the patch.
+
+Final qualification for this correction:16 tests/two finding-release suites plus5 package tests (separate run), unfiltered types and build. The first test run exposed four outdated fake-GitHub expectations after adding a mandatory read; the corrected fixtures distinguish a branch read from mutation. No failed run is described as green.
