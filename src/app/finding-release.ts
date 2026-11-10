@@ -120,7 +120,12 @@ export class FindingRelease {
       if (sha.test(local)) return local
       const remote = (await this.run(profile, profile.ghPath, ['api', `repos/${profile.source.repository}/branches/${profile.source.baseBranch}`, '--jq', '.commit.sha'], profile.cwd)).trim()
       if (!sha.test(remote)) throw new DeliveryConflict('Could not resolve the trusted base branch commit')
-      await git('cat-file', '-e', `${remote}^{commit}`).catch(() => { throw new ReleaseBlocked([{ field: 'worker artifact', owner: `worker-${ticket.id}`, detail: 'The worker checkout does not contain the trusted base commit; rebase onto the project base.' }]) })
+      await git('cat-file', '-e', `${remote}^{commit}`).catch(async () => {
+        // The coordinator may append project evidence after the worker cloned. Fetch only the configured source branch,
+        // not model-supplied refs; no checkout, reset, rebase or mutation of the committed artifact is performed.
+        await git('fetch', '--no-tags', '--no-write-fetch-head', profile.source.remoteUrl, `refs/heads/${profile.source.baseBranch}`)
+        await git('cat-file', '-e', `${remote}^{commit}`).catch(() => { throw new ReleaseBlocked([{ field: 'worker artifact', owner: `worker-${ticket.id}`, detail: 'The trusted branch moved during lookup; refresh the release facts without repeating implementation.' }]) })
+      })
       return remote
     }
     const baseSha = await git('merge-base', 'HEAD', await trustedBase())
