@@ -1,0 +1,28 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/coordinator/lane1-review/code
+
+(node:78857) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/delivery-phase.spec.ts (7 tests | 1 failed) 87ms
+   × independent review: a corrected finding-origin head can reach its protected release phase without rewriting original history 26ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/delivery-phase.spec.ts > independent review: a corrected finding-origin head can reach its protected release phase without rewriting original history
+AssertionError: expected 'Delivery bindings no longer match the…' not to be type of 'string'
+ ❯ tests/delivery-phase.spec.ts:82:36
+     80|  expect(JSON.stringify(s.finding)).toBe(frozenFinding);expect(JSON.str…
+     81|  // This is the exact production gate called by prepareQualified befor…
+     82|  expect(phaseFacts(s.db,d.id)).not.toBeTypeOf('string')
+       |                                    ^
+     83|  s.db.close()
+     84| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  00:48:58
+   Duration  677ms (transform 172ms, setup 0ms, import 234ms, tests 87ms, environment 0ms)
+

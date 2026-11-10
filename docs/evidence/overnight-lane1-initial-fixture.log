@@ -1,0 +1,27 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/coordinator/lane1-review/code
+
+(node:78768) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/delivery-phase.spec.ts (7 tests | 1 failed) 79ms
+   × independent review: a corrected finding-origin head can reach its protected release phase without rewriting original history 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/delivery-phase.spec.ts > independent review: a corrected finding-origin head can reach its protected release phase without rewriting original history
+Error: Immutable intake changed
+ ❯ src/app/feature-delivery.ts:342:484
+
+ ❯ DeliveryStore.atomic src/app/feature-delivery.ts:223:25
+ ❯ DeliveryStore.update src/app/feature-delivery.ts:334:17
+ ❯ DeliveryStore.compareAndSwap src/app/feature-delivery.ts:331:17
+ ❯ tests/delivery-phase.spec.ts:68:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  00:48:20
+   Duration  852ms (transform 212ms, setup 0ms, import 271ms, tests 79ms, environment 0ms)
+

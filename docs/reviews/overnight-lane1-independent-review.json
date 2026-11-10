@@ -1,0 +1,31 @@
+{
+  "at": "2026-11-10T08:50:09.175038+00:00",
+  "findingId": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+  "jobId": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r1",
+  "ticketId": "23e2930f2e20a79b9b7a6b08277adf29",
+  "assignmentId": "dbf67972c3660cda93275c071694fdaa",
+  "reviewedBase": "75f091510d71624b98d4f3b63956909d4799a84f",
+  "reviewedHead": "c87912787e6986ff92ec8144f89ac2e2d69220ad",
+  "verdict": "changes_required",
+  "findings": [
+    {
+      "severity": "high",
+      "path": "src/app/delivery-capabilities.ts",
+      "relatedPaths": [
+        "src/app/feature-delivery.ts",
+        "src/app/delivery-phase.ts",
+        "src/app/delivery-runtime.ts",
+        "src/app/finding-release.ts"
+      ],
+      "description": "Candidate corrector updates Delivery.bindings to new head and successfully re-reviews, but finding-origin Delivery.release remains bound to old original head/patch. Production prepareQualified calls phaseFacts before packaging; phaseFacts rejects Delivery bindings no longer match the released head. Existing successor tests omit release lineage and therefore stop short of this required production boundary. Simply weakening the exact-head fence or overwriting original lineage is not acceptable."
+    }
+  ],
+  "independentCheck": {
+    "command": "pnpm --config.verify-deps-before-run=false exec vitest run tests/delivery-phase.spec.ts",
+    "result": "6 passed / 1 failed at the new release-phase regression",
+    "reproduction": "Exact production DeliveryStore path: original finding release -> implementation -> failed review -> authorized fix with new bound implementation evidence -> independent re-review passed -> ready_to_publish generation1 -> phaseFacts returns Delivery bindings no longer match the released head. Original finding and ticket fixtures unchanged.",
+    "fixtureCorrection": "First draft attempted to mutate immutable followFixHeads and correctly failed; corrected fixture authorizes it at initial scope binding before reproducing actual head-fence gap."
+  },
+  "requiredCorrection": "Carry a separately bound, provenance-checked correction artifact through the actual finding-origin typed phase and per-task package preparation, retaining immutable original finding/job/ready report/approval lineage and prior failures. Recheck true successor head/patch/PR/source identity and current policy, with old head/current generation/stale-ready/human-stop/restart/duplicate negatives. Demonstrate production coordinator + phase + packager boundary; do not just mock a new ready report or stop at re-review. Do not merge/deploy/publish/accept.",
+  "scopeLimit": "Independent review of priority1 only. Other candidates not reviewed or accepted; no live edits or deployments."
+}
