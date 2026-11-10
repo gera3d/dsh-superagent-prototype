@@ -1,21 +1,21 @@
 
  RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/review-r1
 
-(node:80952) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:81875) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:80953) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:81874) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
- ❯ tests/root-report-identity.audit.spec.ts (2 tests | 2 failed) 55ms
+ ❯ tests/root-report-identity.audit.spec.ts (2 tests | 2 failed) 51ms
      × rejects unknown report correlation without consuming ready 33ms
-     × rejects foreign-human report correlation without consuming ready 20ms
- ❯ tests/root-native-evidence.audit.spec.ts (1 test | 1 failed) 19ms
-   × HTTP verification cannot fulfill required native-click evidence 18ms
+     × rejects foreign-human report correlation without consuming ready 17ms
+ ❯ tests/root-native-evidence.audit.spec.ts (1 test | 1 failed) 20ms
+   × HTTP verification cannot fulfill required native-click evidence 19ms
  ❯ tests/root-history-association.audit.spec.ts (1 test | 1 failed) 8ms
-   × completed historical delivery does not suppress later ordinary thread advice 7ms
+   × real reconciled blocked historical delivery does not suppress later ordinary thread advice 7ms
 
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
 
- FAIL  tests/root-history-association.audit.spec.ts > completed historical delivery does not suppress later ordinary thread advice
+ FAIL  tests/root-history-association.audit.spec.ts > real reconciled blocked historical delivery does not suppress later ordinary thread advice
 AssertionError: expected true to be false // Object.is equality
 
 - Expected
@@ -24,8 +24,13 @@ AssertionError: expected true to be false // Object.is equality
 - false
 + true
 
- ❯ tests/root-history-association.audit.spec.ts:5:59
-
+ ❯ tests/root-history-association.audit.spec.ts:27:83
+     25|   }
+     26| }
+     27|  expect(activeDeliveryForSession(item,"worker-1aa9568a8df574db0cef146a…
+       |                                                                                   ^
+     28| })
+     29|
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
 
@@ -52,6 +57,6 @@ AssertionError: expected 'ready' not to be 'ready' // Object.is equality
 
  Test Files  3 failed (3)
       Tests  4 failed (4)
-   Start at  17:11:43
-   Duration  1.20s (transform 953ms, setup 0ms, import 1.44s, tests 82ms, environment 0ms)
+   Start at  17:13:55
+   Duration  1.13s (transform 930ms, setup 0ms, import 1.44s, tests 79ms, environment 0ms)
 
