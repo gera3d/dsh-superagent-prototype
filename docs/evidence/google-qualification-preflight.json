@@ -1,0 +1,196 @@
+{
+  "observedAt": "2026-11-10T06:50:05.936418+00:00",
+  "finding": {
+    "id": "f526782b-1443-4342-b811-3cba5188f455",
+    "revision": 2,
+    "state": "blocked",
+    "job": {
+      "id": "finding:f526782b-1443-4342-b811-3cba5188f455:r1",
+      "ticketId": "b2efbd4f140c102b3a6a25a1fea719e7",
+      "assignmentId": "fac8f33e7410368544b4c7ac84a37aba"
+    },
+    "recommendationError": "Configured-model recommendation unavailable: Finding advice response incomplete"
+  },
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "settings": {
+    "executor": {
+      "value": {
+        "model": {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "reasoningEffort": "high"
+        },
+        "maxWorkers": 3,
+        "directory": "",
+        "prepare": "",
+        "blockedCommands": [],
+        "sound": false,
+        "stallWaitSeconds": 180
+      },
+      "revision": 43
+    },
+    "models": {
+      "value": {
+        "hierarchy": [
+          {
+            "provider": "antigravity",
+            "model": "gemini-3.8-flash",
+            "reasoningEffort": "high",
+            "starred": true
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5",
+            "starred": true
+          },
+          {
+            "provider": "openrouter",
+            "model": "deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial",
+            "starred": false
+          },
+          {
+            "provider": "openai-codex",
+            "model": "gpt-6.1-sol",
+            "starred": true
+          }
+        ],
+        "maxEscalations": 1,
+        "helper": {
+          "provider": "anthropic",
+          "model": "claude-sonnet-5-5"
+        },
+        "conserve": false,
+        "economyRoute": {
+          "provider": "openrouter",
+          "model": "deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial"
+        },
+        "subscriptions": [
+          {
+            "provider": "antigravity",
+            "status": "available",
+            "resetAt": ""
+          },
+          {
+            "provider": "anthropic",
+            "status": "available",
+            "resetAt": ""
+          },
+          {
+            "provider": "openai-codex",
+            "status": "conserved",
+            "resetAt": ""
+          },
+          {
+            "provider": "deepseek-official",
+            "status": "conserved",
+            "resetAt": ""
+          }
+        ]
+      },
+      "revision": 18
+    }
+  },
+  "allowanceObservation": {
+    "accountAlias": "Primary account (system sign-in)",
+    "isPrimary": true,
+    "source": "antigravity",
+    "sourceLabel": "Google Antigravity",
+    "updatedAt": 1794289904711,
+    "providers": [
+      {
+        "provider": "google",
+        "family": "google",
+        "source": "antigravity",
+        "label": "Google (Gemini)",
+        "rollingWindow": {
+          "fraction": 0.7987824082374573,
+          "resetTime": "2026-11-10T05:55:36Z",
+          "stale": true
+        },
+        "weeklyWindow": {
+          "fraction": 0.029801391065120697,
+          "resetTime": "2026-11-14T22:42:10Z",
+          "stale": false
+        },
+        "status": "available",
+        "description": "Models within this group: Gemini Flash, Gemini Pro",
+        "stale": true
+      },
+      {
+        "provider": "antigravity-claude",
+        "family": "anthropic",
+        "source": "antigravity",
+        "label": "Antigravity Claude",
+        "rollingWindow": {
+          "fraction": 1,
+          "stale": false
+        },
+        "weeklyWindow": {
+          "fraction": 0,
+          "resetTime": "2026-11-12T16:11:42Z",
+          "stale": false
+        },
+        "status": "exhausted",
+        "description": "Models within this group: Claude Opus, Claude Sonnet, GPT-OSS",
+        "stale": true
+      },
+      {
+        "provider": "anthropic-direct",
+        "family": "anthropic",
+        "source": "direct",
+        "label": "Anthropic (Direct)",
+        "status": "unavailable",
+        "description": "No local authenticated quota reader configured for direct Anthropic subscription",
+        "stale": false
+      }
+    ],
+    "stale": true
+  },
+  "nativeBlocker": "Native Chrome AX read exposes Run verification but index clicks do not reach the off-screen control; scrolling and window Raise return noWindowsAvailable. Keyboard navigation did not change the view. A focus/unlock request is pending; no protected confirmation was forged or bypassed.",
+  "testState": "Not started. Native finding confirmation is required before a worker is created.",
+  "scope": {
+    "dedupKey": "google-subscription-native-qualification-20261110",
+    "title": "Qualify Google subscription through actual Harness tools and reporting",
+    "problem": "User explicitly approved fresh Google connection qualification after the accepted release. Saved Antigravity Gemini3.8Flash high is not proof of a usable connection: earlier runs looped or required manual Sonnet recovery. Current Google first-response reliability remains unqualified. OpenAI must stay conserved.",
+    "scope": "One bounded native Harness qualification on the existing saved Google subscription route. Read current PROJECT_STATUS and inspect the current installed reporting instructions. Do not change global settings, routing, access, accounts, credentials, permissions or spending. In this actual worker perform three serial small tool round trips, not parallel agents: (1) read source identity and hash a fixed string google-harness-qualification-v1 using a real shell/Python tool; (2) create a small local JSON receipt inside this assigned isolated workspace, read it back and verify its nonce/hash, then invoke the installed identity-bound orchestrator_report CLI for a progress report; (3) independently recompute the hash/read the receipt, record actual completed checks plus limitations, and call orchestrator_report ready using current ticket, assignment and actual turn from the supplied native environment. Never fabricate the turn, provider, receipt or consumption. Do not call the provider API or read credentials directly. Do not run full test suites/builds, open PRs, publish or mutate installed code for a canary. If a command/tool/report fails, record the exact sanitized error and use a bounded correction only; do not claim ready from a local report file. Save qualification-receipt.json with actual command results/timestamps and report what latency/provider evidence only Codex can independently inspect. If an integration code blocker is demonstrated, preserve the failing case and propose a narrow tested correction in the same lineage; coordinator reviews/releases it under existing user authorization. A fallback response is not a Google pass.",
+    "owner": "Harness verification worker; Codex independent reviewer and release owner",
+    "kind": "verification",
+    "requirements": [
+      "Actual native worker requests use existing antigravity/gemini-3.8-flash route; independently inspect selection/request/usage events. OpenAI conserved and excluded; no new credentials, API billing route, account or permission change.",
+      "Three serial real tool round trips complete with fixed nonce/hash and a local read-back receipt; preserve actual start/first-response/tool/report timings and errors. No repeated model polling or unsupported throughput claim.",
+      "Progress and final ready reporting use the installed identity-bound bridge; verify current ticket/assignment/turn, command exit receipt, report hash, consumed marker and canonical transition. A local file or worker claim alone is not delivery.",
+      "Codex verifies the actual thread, provider attribution and final evidence. If Google fails or falls back, classify the concrete failure truthfully, repair demonstrated integration blockers with focused regressions as needed, then retest; do not call availability catalog state healthy or infer exhausted quota.",
+      "Update shared GitHub and local PROJECT_STATUS with tested coverage and limits. Qualification is bounded functionality/latency evidence, not a guarantee of future quota, long-run reliability or parallel throughput. Preserve earlier accepted jobs and their evidence."
+    ],
+    "repository": "gera3d/superagent-sandbox",
+    "occurrence": {
+      "id": "user-google-qualification-20261110",
+      "reference": "codex-chat:user-approve-google-connection-qualification",
+      "evidence": "User: Okay, qualify the Google connection next so we can use that subscription reliably. Keep OpenAI conserved, fix any blockers, and update the project file after testing it in the actual harness."
+    }
+  },
+  "priorEvidence": "Existing reporting-real-gemini-verified.json proves one earlier Google tool/report roundtrip (~5.5 minutes), not current connection performance or throughput.",
+  "noChanges": [
+    "No executor or model settings change",
+    "OpenAI remains conserved",
+    "No new credentials, accounts, permissions or API billing route",
+    "No worker or competing implementation created",
+    "No claim of successful Google qualification"
+  ]
+}
