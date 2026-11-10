@@ -1,0 +1,22 @@
+{
+  "findingId": "45251448-f4b9-41aa-8886-86ade8950b11",
+  "revision": 11,
+  "state": "running",
+  "job": {
+    "id": "finding:45251448-f4b9-41aa-8886-86ade8950b11:r11",
+    "ticketId": "536e14dee35a14acad9a5ea4ac3149ab",
+    "assignmentId": "a3daae9079e03a013f621a7b61bec228"
+  },
+  "selected": true,
+  "recordedAt": "2026-11-10T03:31:51.471521+00:00",
+  "reason": "Actual quota pilot remained manual; f88ecfc failed actual requirement case and lacks canonical ended-owner/per-task plan execution",
+  "defaultExecutorRestored": {
+    "revision": 37,
+    "provider": "antigravity",
+    "model": "gemini-3.8-flash",
+    "reasoningEffort": "high"
+  },
+  "quotaFinding": "resolved revision9, not reopened",
+  "review": "docs/reviews/thread-handoff-f88ecfc-actual-source-review.md",
+  "scopeComplete": false
+}
