@@ -35,3 +35,13 @@ A protected repeated finding action can refresh only the same single-source arti
 Advice receives the real configured native control and phase owner; older generated manual-handoff directions predating that actual handoff become immutable history. A later genuine source turn and unrelated conversation remain pending. Ordinary suggestions still stage text and never press a protected control.
 
 Qualification:150 checks/seven related review/context/store/phase suites, plus10 Git-backed finding-release recovery checks; unfiltered types/build pass. Counts overlap earlier runs and are not a full-suite claim. Initial tests caught a fixture using the same source turn for two requests, and a missing stage reset after target refresh; both were corrected and rerun before deployment. The real thread must still complete review, checks, package, protected publish, actual live evidence and acceptance after installing this correction.
+
+## Actual PR review-base observation and helper role
+
+The second actual native attempt preserved the original read-only failure and refreshed its target, then stopped before a model call: branch superagent-core was83d80c8 while GitHub's PR86 payload still reported base2599d37. Both gh-agent and the connected GitHub tool returned the same PR fact. Earlier branch-tip assumptions were wrong for this observed PR and were not bypassed.
+
+Preparation now reads the actual PR's base SHA after creating/reusing it; package creation rechecks the same PR fact. Artifact patch derivation remains based on Git merge-base and never reverses unrelated branch updates. A regression keeps PR-base observation fixed while advancing the branch and proves no invented target refresh. When the PR base itself changes, the protected target-refresh path still preserves history and budgets.
+
+Independent review/advice also honors an explicitly configured models.helper route before the legacy executor default. Actual settings already designate Anthropic Sonnet5.5 as helper and Google/high as routine executor; no settings, credentials, routes, access or budget were changed. Conservation and the existing availability ladder still apply.
+
+Qualification:24 Git/package checks across three suites and59 capability/routing checks across two other suites, types/build pass. The initial helper-route regression accidentally reset the executor in its own test setup; the corrected full-settings fixture proves the code leaves routine routing unchanged. No new native-flow success is claimed before repeating the same PR86 action.
