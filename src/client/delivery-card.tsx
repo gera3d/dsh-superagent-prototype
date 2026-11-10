@@ -129,12 +129,14 @@ export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile, onPrepar
     finally { acting.current = false; setBusy(false) }
   }
   const status = d.historicalCompletion ? 'Delivered by later release'
+    : packaging && !isHistorical && !d.acceptance ? 'Preparing release package'
     : d.work?.state === 'superseded' ? 'Superseded history' : d.acceptance ? 'Accepted'
     : d.work?.state === 'awaiting_direction' ? 'Ready for your next step'
     : d.work?.state === 'owned' || d.state === 'running' ? 'In progress'
     : d.state === 'awaiting_decision' ? `${d.stage.replaceAll('_', ' ')} ready`
     : d.state.replaceAll('_', ' ')
   const hint = d.historicalCompletion ? 'Completed history'
+    : packaging && !isHistorical && !d.acceptance ? 'No action needed yet'
     : d.work?.state === 'awaiting_direction' ? 'Your next step below'
     : available ? 'Review action' : reconcileAvailable ? 'Handoff needs attention' : recheckAvailable ? 'Configuration needs attention' : 'View details'
   return <section id={`delivery-${d.id}`} className="dt-delivery-card" aria-label={`Feature delivery: ${d.title}`}>
@@ -170,6 +172,7 @@ export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile, onPrepar
       {d.work.supersededBy && <p>Superseded by <code>worker-{d.work.supersededBy}</code>. Original dropped-worker history and mandate are unchanged.</p>}
       {!!d.work.replaces?.length && <p>Active replacement for {d.work.replaces.map(id => `worker-${id}`).join(', ')}.</p>}
     </section>}
+    {packaging && !isHistorical && !d.acceptance && <p role="status">Harness is running exact-head checks and preparing the release package. No action is needed yet; the protected publish confirmation appears here after preparation succeeds.</p>}
     {d.scopeBinding && !!d.handoff && d.work?.state !== 'owned' && d.work?.state !== 'superseded' && !d.historicalCompletion && item.status === 'pending' && !item.invalidation && <HandoffPanel d={d} onPrepare={onPrepare} />}
     {!!d.awaitingOperatorEvidence?.length && item.status === 'pending' && !item.invalidation && <EvidencePanel d={d} onEvidence={onEvidence} />}
     {d.blocker && !d.work && !d.historicalCompletion && <p role="status">Blocked: {d.blocker}</p>}
