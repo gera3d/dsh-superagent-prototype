@@ -1,0 +1,18 @@
+# Actual thread-native review and publication verification
+
+The original r17 thread has now driven PR86 through independent Sonnet review, serial typecheck, targeted rendering tests and build, automatic exact-task package preparation, protected native Publish, real merge/apply/build/restart and configured HTTP verification. Source merge109e350f77109824b78e2ee56c3c8d67b9c1e276 matches both installed patch postimages. No outside per-task deployment command was issued after the native Publish action.
+
+[Structured actual evidence](../evidence/thread-handoff-actual-native-flow.json), including exact head/patch, immutable log hashes, publication stages, preserved rollback preimages and original requirements.
+
+## Requirement coverage personally inspected
+
+1. Original stuck R3 reproduction and authentic-report fences: preserved isolated reproductions and audits in thread-handoff-r3-root-audit.log and prior review artifacts; no accepted original job reopened and no prose promoted to ready. Current r17 authentic report was consumed into the same canonical finding and delivery.
+2. Actual compact native preparation action scheduled review and showed blocked/retrying/preparing/ready progression. The ordinary manual Codex advice was retired after the real handoff. Source job and assignment stayed unchanged.
+3. Real package generated using fixed trusted profile/scripts and exact PR86 pins after actual checks, without a manually written task manifest. Production regression sets exercise missing profile/check failures, source changes and concurrent package fences.
+4. Exact protected native Publish was performed; detached publisher retained original pins and completed through managed restart. Guard tests cover stale revision/head/patch/scope, duplicate and rollback cases. Live browser observation is separate from the HTTP verification. Same source thread now exposes protected operator live evidence.
+5. Actual lifecycle reached post-restart live-evidence step; production coordinator/API/native-card negative and acceptance/history tests already passed. The final native evidence/acceptance action is intentionally the next test step, followed immediately by an actual completed-history/no-obsolete-action observation. This report does not falsely claim that future click occurred. The outer finding will remain open until that observation is recorded.
+6. Exact commits, cumulative patch, prior rejected results and focused test/type/build logs are retained. Actual package check log hashes were reread and validated. Installed UI/test postimages match the merged source and publication ledger.
+
+## Limits
+
+This is a bounded real-thread qualification, not proof that every future model answer or task will succeed. A code-review failure for an ended implementation owner still requires explicit bounded correction, and Google first-response integration is not certified by this Sonnet run. Ordinary recommendation clicks still stage a reply; the actual typed native release controls perform the release work. No new account, permissions, credentials, routes or spending were added.

@@ -1,0 +1,13 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.8 [39m[90m/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/task-releases/auto-86635beac41a7b1cb43ddace32aab11d-41bae0ab0297-w8rdbL/review-worktree[39m
+
+[90mstderr[2m | tests/delivery-card.spec.tsx[2m > [22m[2mrenders unbound scope without dummy SHAs, offers no publish/accept action, and exposes only the release handoff control
+[22m[39mWarning: You are calling ReactDOMClient.createRoot() on a container that has already been passed to createRoot() before. Instead, call root.render() on the existing root instead if you want to update it.
+
+ [32m✓[39m tests/delivery-card.spec.tsx [2m([22m[2m26 tests[22m[2m)[22m[33m 450[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m26 passed[39m[22m[90m (26)[39m
+[2m   Start at [22m 21:25:17
+[2m   Duration [22m 4.21s[2m (transform 491ms, setup 0ms, import 684ms, tests 450ms, environment 2.59s)[22m
+

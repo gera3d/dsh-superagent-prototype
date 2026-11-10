@@ -1,0 +1,152 @@
+{
+  "observedAt": "2026-11-10T05:36:36.338557+00:00",
+  "findingId": "45251448-f4b9-41aa-8886-86ade8950b11",
+  "ticketId": "86635beac41a7b1cb43ddace32aab11d",
+  "assignmentId": "387889e30fde71e5ed3d09ed9bc21f4c",
+  "deliveryId": "auto-86635beac41a7b1cb43ddace32aab11d",
+  "revision": 18,
+  "stage": "verifying",
+  "state": "blocked",
+  "pins": {
+    "repository": "gera3d/dsh-superagent-prototype",
+    "prNumber": 86,
+    "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+    "patchSha256": "23a04741687f4b9b91c01e0b7612171a55059e0e9c7f1f7e2666a0a7793f4861"
+  },
+  "sourceMerge": "109e350f77109824b78e2ee56c3c8d67b9c1e276",
+  "review": {
+    "verdict": "approved",
+    "completedAt": "2026-11-10T05:24:17.865Z",
+    "report": {
+      "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/task-releases/auto-86635beac41a7b1cb43ddace32aab11d-41bae0ab0297-w8rdbL/independent-review.json",
+      "sha256": "019b3ce3733c67f3c833fb9429054d88ba3d23709bc8c7f6cc3356a022ae3e11"
+    }
+  },
+  "checks": [
+    {
+      "name": "pnpm typecheck",
+      "exitCode": 0,
+      "completedAt": "2026-11-10T05:25:15.378180Z",
+      "report": {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/task-releases/auto-86635beac41a7b1cb43ddace32aab11d-41bae0ab0297-w8rdbL/evidence/typecheck.log",
+        "sha256": "8366207267355d3e3d5bf3bf6e8c94c5f93f6078c34f08973fa2b38cdda6cc92"
+      }
+    },
+    {
+      "name": "pnpm exec vitest run (targeted: tests/delivery-card.spec.tsx)",
+      "exitCode": 0,
+      "completedAt": "2026-11-10T05:25:21.903870Z",
+      "report": {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/task-releases/auto-86635beac41a7b1cb43ddace32aab11d-41bae0ab0297-w8rdbL/evidence/tests.log",
+        "sha256": "b60d7b12f2fbf781a620e32dda7090e35a7a34f79f0083abfdb9b5c5edd6a87f"
+      }
+    },
+    {
+      "name": "pnpm build",
+      "exitCode": 0,
+      "completedAt": "2026-11-10T05:25:33.010141Z",
+      "report": {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/task-releases/auto-86635beac41a7b1cb43ddace32aab11d-41bae0ab0297-w8rdbL/evidence/build.log",
+        "sha256": "de63bf52f64deccba77f58db842212e95de1a00901b216e059caf04456053c80"
+      }
+    }
+  ],
+  "publication": {
+    "id": "cfa9cf8c-1844-40bf-935f-0bcfd60649ae",
+    "status": "published",
+    "coordination": {
+      "grantId": "f632acb8-fe41-4f25-ba4a-e5b674673e66",
+      "status": "completed",
+      "createdAt": "2026-11-10T05:27:12.243Z",
+      "updatedAt": "2026-11-10T05:28:30.327Z",
+      "detail": "Detached publication finished with published; inspect individual stage outcomes"
+    },
+    "outcomes": [
+      {
+        "stage": "merge",
+        "operationId": "cfa9cf8c-1844-40bf-935f-0bcfd60649ae:merge",
+        "status": "succeeded",
+        "startedAt": "2026-11-10T05:27:15.357Z",
+        "detail": "merge completed for pinned head 41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+        "finishedAt": "2026-11-10T05:27:23.805Z"
+      },
+      {
+        "stage": "apply",
+        "operationId": "cfa9cf8c-1844-40bf-935f-0bcfd60649ae:apply",
+        "status": "succeeded",
+        "startedAt": "2026-11-10T05:27:25.825Z",
+        "detail": "apply completed for pinned head 41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+        "finishedAt": "2026-11-10T05:27:27.629Z"
+      },
+      {
+        "stage": "build",
+        "operationId": "cfa9cf8c-1844-40bf-935f-0bcfd60649ae:build",
+        "status": "succeeded",
+        "startedAt": "2026-11-10T05:27:29.517Z",
+        "detail": "build completed for pinned head 41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+        "finishedAt": "2026-11-10T05:27:51.657Z"
+      },
+      {
+        "stage": "restart",
+        "operationId": "cfa9cf8c-1844-40bf-935f-0bcfd60649ae:restart",
+        "status": "succeeded",
+        "startedAt": "2026-11-10T05:27:53.817Z",
+        "detail": "restart completed for pinned head 41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+        "finishedAt": "2026-11-10T05:28:21.488Z"
+      },
+      {
+        "stage": "verify",
+        "operationId": "cfa9cf8c-1844-40bf-935f-0bcfd60649ae:verify",
+        "status": "succeeded",
+        "startedAt": "2026-11-10T05:28:28.003Z",
+        "detail": "verify completed for pinned head 41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef; configured HTTP release verification only, browser acceptance not performed",
+        "finishedAt": "2026-11-10T05:28:30.260Z"
+      }
+    ]
+  },
+  "installedPostimages": [
+    {
+      "path": "src/client/delivery-card.tsx",
+      "sha256": "6729d82eb2b0aa08a10e8b8e50425f6e6618d32f7b4732294bb998a1ee03d8d5",
+      "matchesInstalledAndMergedSource": true
+    },
+    {
+      "path": "tests/delivery-card.spec.tsx",
+      "sha256": "957ac80d44ea43ee74336ef410d739b9a9bef447169e5455ec567238b431535b",
+      "matchesInstalledAndMergedSource": true
+    }
+  ],
+  "rollbackPreserved": {
+    "src/client/delivery-card.tsx": {
+      "mode": 420,
+      "sha256": "2de89245f827d19c3a795cd1eb0e9151c5ac7e8e1906f57401aaa2affcf90d26"
+    },
+    "tests/delivery-card.spec.tsx": {
+      "mode": 420,
+      "sha256": "4860b405975fdb3172b5a44c190a4fe9ec6ddf762d3753accc17c40939ff830a"
+    }
+  },
+  "requirements": [
+    "Read current PROJECT_STATUS and existing delivery/publication/reporting implementation before code. Reproduce actual stuck R3 report using preserved isolated copy only: ticket bf248fd506a78622b524e25caad6a570 assignment055a91d055409049be132ab2b2c89e82. Matching .dsh-report.json and claim exist but no consumed marker. Trace Engine.report answers/person trigger rejection and current turn logic. Do not reopen accepted original job or weaken ticket/assignment/turn/path/timestamp/hash protections, or infer ready from prose.",
+    "Provide compact native actionable review/test/preparation handoff in task thread, bound to exact current artifact/job/revision and recorded authorization. Selecting its action must schedule real existing Harness work and show running/blocked/ready results; a staged prompt or suggestion naming Codex is not a handoff. Reuse delivery coordinator durable outbox/idempotency and existing model routes; no fake notification to another chat.",
+    "Within same approved project scope, connect review/test evidence to exact release preparation. Reuse fixed trusted publication scripts/manifest and supported source PR workflow. No model-supplied arbitrary command execution, arbitrary new target/permissions, auto publication, fabricated pin/test/native evidence or accepting worker prose. If required profile data is absent, expose concrete bounded in-thread preparation with next owner; do not silently pretend automatic execution.",
+    "Preserve protected exact local publish confirmation in thread and retain stale revision/head/patch/scope rejection, duplicate-click safety, durable restart recovery, same original job lineage and rollback. Live checks must honestly distinguish HTTP/build evidence from actual browser acceptance. User must be able to inspect live feature and record genuine acceptance in that same thread without returning to Codex.",
+    "Test full lifecycle at production coordinator/API/native card boundary: ready report -> independent review -> corrections if needed -> targeted tests -> exact release preparation -> native publish confirmation -> actual apply/build/restart/verification -> explicit actual live acceptance -> history/no obsolete next steps. Include negative cases stale/replayed action, changed head/evidence, missing approval/manifest, failed check/rollback, cancelled/ended job and no re-review of completed stages. Preserve prior history/legacy fixtures.",
+    "Commit candidate and test evidence with exact base/head and cumulative patch. Run focused meaningful regression tests, types and build serially. Report what real live test remains for Codex; no broad green or automatic native verification claims. Use bound orchestrator_report transport; if ready commit fails record actual error, never state consumed merely from local file."
+  ],
+  "nativeObservations": [
+    "Actual protected Review, test & prepare release scheduled independent review in the same r17 source thread and created/reused PR86.",
+    "Sonnet review passed; Harness ran serial typecheck, targeted test and build, then generated its own task package.",
+    "Actual protected Publish exact release confirmed the bound revision, head, patch, scope and fixed target. No separate deployment command followed that click.",
+    "Detached Harness publisher completed merge, apply, build, managed restart and HTTP verification.",
+    "After restart the same native thread shows Delivery live-evidence controls and six original requirements, not repeat review/build/publish recommendations.",
+    "Final protected live-evidence submission and acceptance/history check are the next native test actions; they are not yet claimed complete in this report."
+  ],
+  "limits": [
+    "Automated HTTP verification alone grants no operator requirement coverage.",
+    "Targeted regression sets, types and build passed; not a broad full-suite claim.",
+    "Original provider failure, stale-base attempt, ended-worker correction refusal and prior failed candidates remain preserved.",
+    "A failed independent review of an ended implementation owner remains an explicit correction blocker; this actual review passed.",
+    "Google first-response behavior is not qualified by the Sonnet run; OpenAI remains conserved."
+  ]
+}
