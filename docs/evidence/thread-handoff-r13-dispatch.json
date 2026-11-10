@@ -1,0 +1,13 @@
+{
+  "findingId": "45251448-f4b9-41aa-8886-86ade8950b11",
+  "revision": 13,
+  "state": "running",
+  "job": {
+    "id": "finding:45251448-f4b9-41aa-8886-86ade8950b11:r13",
+    "ticketId": "1cc611f97767d47916eac0f837f1f5bc",
+    "assignmentId": "9bae99aa77b639deea9dbaa3ce5ac7ae"
+  },
+  "selectionVerified": true,
+  "at": "2026-11-10T03:38:59.260482+00:00",
+  "defaultExecutorRestoredRevision": 39
+}
