@@ -1,0 +1,380 @@
+{
+  "at": "2026-11-10T07:19:30.163139+00:00",
+  "findingId": "f526782b-1443-4342-b811-3cba5188f455",
+  "revision": 4,
+  "state": "blocked",
+  "job": {
+    "id": "finding:f526782b-1443-4342-b811-3cba5188f455:r3",
+    "ticketId": "26b9ea4d4f5d3728e5eed7c89fa5b6dc",
+    "assignmentId": "c7b90960e755e5ceb6a4323295fe64e0"
+  },
+  "events": [
+    {
+      "type": "model/selection",
+      "time": 1794294440780,
+      "facts": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "high"
+      }
+    },
+    {
+      "type": "turn/start",
+      "time": 1794294441444,
+      "facts": {
+        "turn": 1
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794294441543,
+      "facts": {
+        "turn": 1,
+        "step": 1
+      }
+    },
+    {
+      "type": "request/context",
+      "time": 1794294441570,
+      "facts": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash"
+      }
+    },
+    {
+      "type": "assistant/attempt",
+      "time": 1794294441620,
+      "sanitizedError": "All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown) (earliest reset in 17055s). Add an account, wait for reset, or run /agy clear-cooldown."
+    },
+    {
+      "type": "step/end",
+      "time": 1794294441622,
+      "facts": {
+        "turn": 1,
+        "step": 1
+      }
+    },
+    {
+      "type": "turn/end",
+      "time": 1794294441628,
+      "facts": {
+        "turn": 1
+      }
+    },
+    {
+      "type": "model/selection",
+      "time": 1794294441632,
+      "facts": {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      }
+    },
+    {
+      "type": "turn/start",
+      "time": 1794294441697,
+      "facts": {
+        "turn": 2
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794294441910,
+      "facts": {
+        "turn": 2,
+        "step": 1
+      }
+    },
+    {
+      "type": "request/context",
+      "time": 1794294441934,
+      "facts": {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      }
+    },
+    {
+      "type": "step/end",
+      "time": 1794294446113,
+      "facts": {
+        "turn": 2,
+        "step": 1
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794294446180,
+      "facts": {
+        "turn": 2,
+        "step": 2
+      }
+    },
+    {
+      "type": "step/end",
+      "time": 1794294450935,
+      "facts": {
+        "turn": 2,
+        "step": 2
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794294451032,
+      "facts": {
+        "turn": 2,
+        "step": 3
+      }
+    },
+    {
+      "type": "step/end",
+      "time": 1794294454298,
+      "facts": {
+        "turn": 2,
+        "step": 3
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794294454343,
+      "facts": {
+        "turn": 2,
+        "step": 4
+      }
+    },
+    {
+      "type": "step/end",
+      "time": 1794294460416,
+      "facts": {
+        "turn": 2,
+        "step": 4
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794294460465,
+      "facts": {
+        "turn": 2,
+        "step": 5
+      }
+    },
+    {
+      "type": "step/end",
+      "time": 1794294469364,
+      "facts": {
+        "turn": 2,
+        "step": 5
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794294469435,
+      "facts": {
+        "turn": 2,
+        "step": 6
+      }
+    },
+    {
+      "type": "step/end",
+      "time": 1794294479330,
+      "facts": {
+        "turn": 2,
+        "step": 6
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794294479398,
+      "facts": {
+        "turn": 2,
+        "step": 7
+      }
+    },
+    {
+      "type": "step/end",
+      "time": 1794294488383,
+      "facts": {
+        "turn": 2,
+        "step": 7
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794294488553,
+      "facts": {
+        "turn": 2,
+        "step": 8
+      }
+    },
+    {
+      "type": "step/end",
+      "time": 1794294493447,
+      "facts": {
+        "turn": 2,
+        "step": 8
+      }
+    },
+    {
+      "type": "turn/end",
+      "time": 1794294493448,
+      "facts": {
+        "turn": 2
+      }
+    }
+  ],
+  "actualReportCalls": [
+    {
+      "type": "tool/call",
+      "time": 1794294446005,
+      "turn": 2,
+      "step": 1,
+      "callId": "toolu_01KYsQrHCz1vsQkx5F1PMvYp",
+      "name": "bash",
+      "arguments": "{\"description\":\"Show workspace state and env\",\"command\":\"pwd; ls -la; env | grep '^DSH_SUPERAGENT' | grep -vi token; which orchestrator_report\"}"
+    },
+    {
+      "type": "tool/call",
+      "time": 1794294454208,
+      "turn": 2,
+      "step": 3,
+      "callId": "toolu_013hwe8hCPBhSectWSt9SeLs",
+      "name": "bash",
+      "arguments": "{\"description\":\"Inspect reporting CLI wrapper (read-only)\",\"command\":\"cd \\\"$DSH_HOME/state/superagent/worker-bin\\\" && ls -la && head -c 3000 orchestrator_report\"}"
+    },
+    {
+      "type": "tool/call",
+      "time": 1794294468835,
+      "turn": 2,
+      "step": 5,
+      "callId": "toolu_01SkmogXZPbnsefFKXtdNjtb",
+      "name": "bash",
+      "arguments": "{\"description\":\"Round trip 2: write receipt, verify, progress report\",\"command\":\"python3 - <<'EOF'\\nimport hashlib, json, os, secrets, datetime\\nnow=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat()\\ns=\\\"google-harness-qualification-v1\\\"\\nh=hashlib.sha256(s.encode()).hexdigest()\\nnonce=secrets.token_hex(8)\\nr={\\\"schema\\\":\\\"qualification-receipt-draft\\\",\\\"created_at\\\":now(),\\\"nonce\\\":nonce,\\\"input\\\":s,\\\"sha256\\\":h,\\n \\\"round_trips\\\":[{\\\"n\\\":1,\\\"at\\\":\\\"2026-11-10T07:07:40.392195+00:00\\\",\\\"tool\\\":\\\"bash+python3\\\",\\\"exit\\\":0,\\\"sha256\\\":h}],\\n \\\"supplied_identity\\\":{\\\"ticket\\\":\\\"26b9ea4d4f5d3728e5eed7c89fa5b6dc\\\",\\\"assignment\\\":\\\"c7b90960e755e5ceb6a4323295fe64e0\\\",\\\"turn\\\":\\\"2\\\",\\\"source\\\":\\\"system prompt execution environment (shell env has no DSH_SUPERAGENT_* vars)\\\"},\\n \\\"executing_model_per_runtime_context\\\":\\\"anthropic/claude-sonnet-5-5 (fallback after Antigravity LlmError: All Antigravity accounts are unavailable ... 1 in cooldown, earliest reset in 17055s, on turn 1)\\\"}\\njson.dump(r,open(\\\"qualification-receipt.json\\\",\\\"w\\\"),indent=2)\\nb=json.load(open(\\\"qualification-receipt.json\\\"))\\nok = b[\\\"nonce\\\"]==nonce and b[\\\"sha256\\\"]==hashlib.sha256(b[\\\"input\\\"].encode()).hexdigest()\\nprint(\\\"readback_ok\\\",ok,\\\"nonce\\\",nonce,\\\"at\\\",now())\\nEOF\\necho \\\"py_exit=$?\\\"\\norchestrator_report --state progress --ticket 26b9ea4d4f5d3728e5eed7c89fa5b6dc --assignment c7b90960e755e5ceb6a4323295fe64e0 --turn 2 --summary \\\"Qualification progress: round trips 1-2 done (sha256 16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a for google-harness-qualification-v1; receipt written and read back OK). NOTE: turn 2 is executing on anthropic/claude-sonnet-5-5 fallback, not Google (turn 1 failed: all Antigravity accounts in cooldown). This is not a Google pass.\\\"\\necho \\\"cli_exit=$?\\\"; ls -la .dsh-report.json; cat .dsh-report.json; shasum -a 256 .dsh-report.json\"}"
+    },
+    {
+      "type": "tool/call",
+      "time": 1794294478921,
+      "turn": 2,
+      "step": 6,
+      "callId": "toolu_01JmVqsQAjocA3KJfmV83Kfs",
+      "name": "bash",
+      "arguments": "{\"description\":\"Round trip 3: recompute, finalize receipt\",\"command\":\"python3 - <<'EOF'\\nimport hashlib, json, datetime, subprocess\\nnow=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat()\\nr=json.load(open(\\\"qualification-receipt.json\\\"))\\nh2=hashlib.sha256(r[\\\"input\\\"].encode()).hexdigest()\\next=subprocess.run([\\\"shasum\\\",\\\"-a\\\",\\\"256\\\"],input=r[\\\"input\\\"].encode(),capture_output=True).stdout.decode().split()[0]\\nprog=open(\\\".dsh-report.json\\\",\\\"rb\\\").read()\\nr.update({\\n \\\"schema\\\":\\\"qualification-receipt\\\",\\n \\\"finalized_at\\\":now(),\\n \\\"round_trip_3\\\":{\\\"recomputed_sha256_python\\\":h2,\\\"recomputed_sha256_shasum\\\":ext,\\\"match\\\":h2==r[\\\"sha256\\\"]==ext,\\\"receipt_nonce_reread\\\":r[\\\"nonce\\\"]},\\n \\\"round_trips_extra\\\":[{\\\"n\\\":2,\\\"at\\\":\\\"2026-11-10T07:07:49Z\\\",\\\"tool\\\":\\\"bash+python3+orchestrator_report CLI\\\",\\\"exit\\\":0,\\\"progress_report_file_sha256\\\":hashlib.sha256(prog).hexdigest(),\\\"progress_report_cli_output\\\":\\\"Report recorded for delivery: state=progress\\\"}],\\n \\\"provider_classification\\\":\\\"NOT a Google pass. Turn 1 failed before any tool call: 'LlmError: All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown) (earliest reset in 17055s)'; automatic ladder fallback to anthropic/claude-sonnet-5-5 ran turn 2 (this turn).\\\",\\n \\\"limitations\\\":[\\n  \\\"Worker cannot independently see provider/selection/usage events; Codex must inspect them. Latency of model first-response is not observable from inside the worker.\\\",\\n  \\\"Shell env in this worker has no DSH_SUPERAGENT_* variables; identity (ticket/assignment/turn=2) was taken from the supplied system-prompt environment and passed explicitly to the CLI via flags. Without flags the CLI would write a report without ticket/assignment/turn.\\\",\\n  \\\"The CLI writes ./.dsh-report.json only; consumption/ingestion marker, report hash in durable store and canonical transition are not visible to the worker.\\\",\\n  \\\"No provider API, credentials, settings, installed code, PRs, suites or builds touched. PROJECT_STATUS.md read-only (line 7 lists qualification pending; line 35/58 notes earlier Google cooldown->Sonnet fallbacks).\\\"]\\n})\\njson.dump(r,open(\\\"qualification-receipt.json\\\",\\\"w\\\"),indent=2)\\nprint(json.dumps(r[\\\"round_trip_3\\\"]), r[\\\"finalized_at\\\"])\\nEOF\\necho exit=$?; shasum -a 256 qualification-receipt.json\"}"
+    },
+    {
+      "type": "tool/call",
+      "time": 1794294488301,
+      "turn": 2,
+      "step": 7,
+      "callId": "toolu_01RV2NRitgW3hhuNtSGJSxDN",
+      "name": "orchestrator_report",
+      "arguments": "{\"state\":\"ready\",\"summary\":\"Bounded qualification tool/report round trips completed, but this is NOT a Google pass. Turn 1 (Google/Antigravity) failed before any tool call: \\\"LlmError: All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown) (earliest reset in 17055s)\\\". Automatic ladder fallback ran turn 2 (this turn, DSH_SUPERAGENT_TURN=2 per supplied environment) on anthropic/claude-sonnet-5-5 per runtime context. Google first-response reliability therefore remains unqualified; no latency or Google throughput evidence exists. Completed (serial, real tools): (1) bash+python3 read session identity (worker-26b9ea4d..., profile superagent) and sha256(\\\"google-harness-qualification-v1\\\")=16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a, exit 0, 07:07:40Z. (2) Wrote qualification-receipt.json with nonce 41cfe3944c5fc323, read it back, nonce/hash verified; ran installed orchestrator_report CLI for a progress report (exit 0, 'Report recorded for delivery: state=progress'; .dsh-report.json sha256 03480b67b4bcd117bee61570ef6682a616cc173d13c0ff64d25b66aff52a884c; identity ticket 26b9ea4d4f5d3728e5eed7c89fa5b6dc / assignment c7b90960e755e5ceb6a4323295fe64e0 / turn 2), 07:07:49Z. (3) Independently recomputed hash via python and shasum (match), re-read receipt, finalized it at 07:07:59Z (receipt sha256 856c54fb...e0629 before this report). Read PROJECT_STATUS.md (Manage-Builder, line 7: qualification pending; earlier cooldown->Sonnet fallbacks recorded) and inspected the installed worker-bin orchestrator_report wrapper (writes ./.dsh-report.json with ids from env or flags). Limitations/observations: the worker shell has NO DSH_SUPERAGENT_* env vars, so the CLI would omit ticket/assignment/turn unless passed by flags; I passed the values supplied in the system prompt explicitly (not fabricated). The worker cannot see provider/selection/usage events, model first-response latency, the consumed marker, report hash ingestion or canonical transition: only Codex can inspect those. No provider API, credentials, settings, installed code, PRs, suites or builds touched. Integration blocker candidate for Codex: the missing DSH_SUPERAGENT_* shell env in the worker shell (CLI relies on it) and Google cooldown (earliest reset ~17055s from 07:07Z); no code fix proposed. Receipt: qualification-receipt.json in the ticket dir. This ready report needs separate verification and does not resolve the finding.\"}"
+    }
+  ],
+  "nativeAssignment": {
+    "id": "c7b90960e755e5ceb6a4323295fe64e0",
+    "state": "ended",
+    "createdAt": "2026-11-10T07:07:19.681Z",
+    "startedAt": "2026-11-10T07:07:21.460Z",
+    "report": {
+      "state": "ready",
+      "summary": "Bounded qualification tool/report round trips completed, but this is NOT a Google pass. Turn 1 (Google/Antigravity) failed before any tool call: \"LlmError: All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown) (earliest reset in 17055s)\". Automatic ladder fallback ran turn 2 (this turn, DSH_SUPERAGENT_TURN=2 per supplied environment) on anthropic/claude-sonnet-5-5 per runtime context. Google first-response reliability therefore remains unqualified; no latency or Google throughput evidence exists. Completed (serial, real tools): (1) bash+python3 read session identity (worker-26b9ea4d..., profile superagent) and sha256(\"google-harness-qualification-v1\")=16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a, exit 0, 07:07:40Z. (2) Wrote qualification-receipt.json with nonce 41cfe3944c5fc323, read it back, nonce/hash verified; ran installed orchestrator_report CLI for a progress report (exit 0, 'Report recorded for delivery: state=progress'; .dsh-report.json sha256 03480b67b4bcd117bee61570ef6682a616cc173d13c0ff64d25b66aff52a884c; identity ticket 26b9ea4d4f5d3728e5eed7c89fa5b6dc / assignment c7b90960e755e5ceb6a4323295fe64e0 / turn 2), 07:07:49Z. (3) Independently recomputed hash via python and shasum (match), re-read receipt, finalized it at 07:07:59Z (receipt sha256 856c54fb...e0629 before this report). Read PROJECT_STATUS.md (Manage-Builder, line 7: qualification pending; earlier cooldown->Sonnet fallbacks recorded) and inspected the installed worker-bin orchestrator_report wrapper (writes ./.dsh-report.json with ids from env or flags). Limitations/observations: the worker shell has NO DSH_SUPERAGENT_* env vars, so the CLI would omit ticket/assignment/turn unless passed by flags; I passed the values supplied in the system prompt explicitly (not fabricated). The worker cannot see provider/selection/usage events, model first-response latency, the consumed marker, report hash ingestion or canonical transition: only Codex can inspect those. No provider API, credentials, settings, installed code, PRs, suites or builds touched. Integration blocker candidate for Codex: the missing DSH_SUPERAGENT_* shell env in the worker shell (CLI relies on it) and Google cooldown (earliest reset ~17055s from 07:07Z); no code fix proposed. Receipt: qualification-receipt.json in the ticket dir. This ready report needs separate verification and does not resolve the finding.",
+      "at": "2026-11-10T07:08:08.332Z"
+    },
+    "endedAt": "2026-11-10T07:08:08.332Z",
+    "ref": "worker-26b9ea4d4f5d3728e5eed7c89fa5b6dc"
+  },
+  "finalReportTransport": "native orchestrator_report tool; exact supplied summary matches canonical assignment and finding summary SHA256",
+  "finalSummarySha256": "072a87067622e38716e3c9d2ae046e811a7de3462cb8c7ef3b84b622c63b554a",
+  "localProgressFile": {
+    "state": "progress",
+    "summary": "Qualification progress: round trips 1-2 done (sha256 16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a for google-harness-qualification-v1; receipt written and read back OK). NOTE: turn 2 is executing on anthropic/claude-sonnet-5-5 fallback, not Google (turn 1 failed: all Antigravity accounts in cooldown). This is not a Google pass.",
+    "ticket_id": "26b9ea4d4f5d3728e5eed7c89fa5b6dc",
+    "assignment_id": "c7b90960e755e5ceb6a4323295fe64e0",
+    "turn_id": "2",
+    "at": "2026-11-10T07:07:49.245Z"
+  },
+  "receipt": {
+    "schema": "qualification-receipt",
+    "created_at": "2026-11-10T07:07:49.005046+00:00",
+    "nonce": "41cfe3944c5fc323",
+    "input": "google-harness-qualification-v1",
+    "sha256": "16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a",
+    "round_trips": [
+      {
+        "n": 1,
+        "at": "2026-11-10T07:07:40.392195+00:00",
+        "tool": "bash+python3",
+        "exit": 0,
+        "sha256": "16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a"
+      }
+    ],
+    "supplied_identity": {
+      "ticket": "26b9ea4d4f5d3728e5eed7c89fa5b6dc",
+      "assignment": "c7b90960e755e5ceb6a4323295fe64e0",
+      "turn": "2",
+      "source": "system prompt execution environment (shell env has no DSH_SUPERAGENT_* vars)"
+    },
+    "executing_model_per_runtime_context": "anthropic/claude-sonnet-5-5 (fallback after Antigravity LlmError: All Antigravity accounts are unavailable ... 1 in cooldown, earliest reset in 17055s, on turn 1)",
+    "finalized_at": "2026-11-10T07:07:59.227493+00:00",
+    "round_trip_3": {
+      "recomputed_sha256_python": "16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a",
+      "recomputed_sha256_shasum": "16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a",
+      "match": true,
+      "receipt_nonce_reread": "41cfe3944c5fc323"
+    },
+    "round_trips_extra": [
+      {
+        "n": 2,
+        "at": "2026-11-10T07:07:49Z",
+        "tool": "bash+python3+orchestrator_report CLI",
+        "exit": 0,
+        "progress_report_file_sha256": "03480b67b4bcd117bee61570ef6682a616cc173d13c0ff64d25b66aff52a884c",
+        "progress_report_cli_output": "Report recorded for delivery: state=progress"
+      }
+    ],
+    "provider_classification": "NOT a Google pass. Turn 1 failed before any tool call: 'LlmError: All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown) (earliest reset in 17055s)'; automatic ladder fallback to anthropic/claude-sonnet-5-5 ran turn 2 (this turn).",
+    "limitations": [
+      "Worker cannot independently see provider/selection/usage events; Codex must inspect them. Latency of model first-response is not observable from inside the worker.",
+      "Shell env in this worker has no DSH_SUPERAGENT_* variables; identity (ticket/assignment/turn=2) was taken from the supplied system-prompt environment and passed explicitly to the CLI via flags. Without flags the CLI would write a report without ticket/assignment/turn.",
+      "The CLI writes ./.dsh-report.json only; consumption/ingestion marker, report hash in durable store and canonical transition are not visible to the worker.",
+      "No provider API, credentials, settings, installed code, PRs, suites or builds touched. PROJECT_STATUS.md read-only (line 7 lists qualification pending; line 35/58 notes earlier Google cooldown->Sonnet fallbacks)."
+    ]
+  },
+  "usage": {
+    "sessionId": "worker-26b9ea4d4f5d3728e5eed7c89fa5b6dc",
+    "routes": [
+      {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5",
+        "attempts": 8,
+        "uncachedInputTokens": 16,
+        "outputTokens": 5707,
+        "cacheReadTokens": 334730,
+        "cacheWriteTokens": 60677,
+        "totalTokens": 401130
+      }
+    ],
+    "totals": {
+      "uncachedInputTokens": 16,
+      "outputTokens": 5707,
+      "totalTokens": 401130,
+      "cacheReadTokens": 334730,
+      "cacheWriteTokens": 60677
+    },
+    "coverage": {
+      "attempts": 9,
+      "reported": 8,
+      "cacheRead": "partial",
+      "cacheWrite": "exact",
+      "attribution": "complete"
+    },
+    "cost": {
+      "kind": "unavailable",
+      "reason": "noRecordedPrice"
+    }
+  },
+  "verdict": "Google blocked by installed weekly reserve. Native Google unavailable attempt fell back to Sonnet; not a Google pass.",
+  "limits": [
+    "R3 progress CLI wrote local progress file; no consumed marker. Final ready used native reporting and is independently matched to canonical report. Do not falsely equate these transports.",
+    "R1 final CLI ready report did have matching consumed marker, but that run also used Sonnet fallback.",
+    "No upstream Google response or Google latency/throughput qualification.",
+    "Native error cooldown count includes quota ineligibility; displayed earliest rolling reset does not prove weekly eligibility."
+  ]
+}

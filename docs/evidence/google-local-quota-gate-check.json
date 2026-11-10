@@ -1,0 +1,18 @@
+{
+  "at": "2026-11-10T07:14:36.123Z",
+  "pluginVersion": "0.4.100",
+  "installedSourceSha256": "b6f5c061e146cdbbb25db1e8cce9e281133eb1c252c3ddc77fc5126768902d1e",
+  "methodSha256": "23495668c1675dbfa638fad64e8d2d1c2b76d44dce37b024ec462c41b9264c70",
+  "method": "isAccountEligible(acc, family, now = Date.now()) {\n\t\tif (!acc.enabled || acc.authRequired) return false;\n\t\tconst cd = acc.cooldowns?.[family];\n\t\tif (cd && cd.cooldownUntil > now) return false;\n\t\tconst quota = acc.quotas?.[family];\n\t\tif (quota && typeof quota.remainingFraction === \"number\" && quota.remainingFraction <= .1) {\n\t\t\tif (quota.resetTime) {\n\t\t\t\tconst resetMs = Date.parse(quota.resetTime);\n\t\t\t\tif (Number.isNaN(resetMs) || resetMs > now) return false;\n\t\t\t} else return false;\n\t\t}\n\t\tif (quota && typeof quota.weeklyFraction === \"number\" && quota.weeklyFraction <= .05) {\n\t\t\tif (quota.weeklyResetTime) {\n\t\t\t\tconst resetMs = Date.parse(quota.weeklyResetTime);\n\t\t\t\tif (Number.isNaN(resetMs) || resetMs > now) return false;\n\t\t\t} else return false;\n\t\t}\n\t\treturn true;\n\t}",
+  "actualWeeklyFraction": 0.029801391065120697,
+  "actualRollingFraction": 1,
+  "activeCooldown": null,
+  "actualEligible": false,
+  "counterfactuals": {
+    "weekly051": true,
+    "weekly05": false,
+    "weekly0": false
+  },
+  "noLiveSettingsMutation": true,
+  "noModelCall": true
+}

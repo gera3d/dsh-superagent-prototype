@@ -1,0 +1,156 @@
+
+protocol
+  ok   initialize returns server info
+  ok   initialize echoes a supported protocol version
+  ok   unknown protocol version falls back to newest supported
+  ok   tools/list has harness_status
+  ok   tools/list has list_tickets
+  ok   tools/list has get_ticket
+  ok   tools/list has decision_inbox
+  ok   tools/list has get_decision
+  ok   tools/list has get_settings
+  ok   tools/list has get_prompts
+  ok   tools/list has list_threads
+  ok   tools/list has search
+  ok   tools/list has list_findings
+  ok   tools/list has get_finding
+  ok   tools/list has observe_finding
+  ok   tools/list has coordinate_finding
+  ok   tools/list has resolve_decision
+  ok   tools/list has dismiss_decision
+  ok   tools/list has restart_decision
+  ok   tools/list has pause_executor
+  ok   tools/list has retry_ticket
+  ok   tools/list has stop_ticket
+  ok   tools/list has requeue_trigger
+  ok   tools/list has sync_policy
+  ok   tools/list has save_settings
+  ok   tools/list has save_prompts
+  ok   tools/list has check_setup
+  ok   tools/list has api_request
+  ok   every tool has a schema and annotations
+  ok   ping
+  ok   unknown method → -32601
+  ok   resources/list is empty list
+
+reads + auth
+  ok   harness_status works
+  ok   authenticated exactly once via the token URL
+  ok   harness_status flags the degraded part
+  ok   secrets/tokens are redacted from output
+  ok   every API call carries x-orchestrator-request
+  ok   cookie is reused, no second login
+  ok   list_tickets
+  ok   list_tickets sends filters as query
+  ok   get_ticket
+  ok   decision_inbox defaults to pending only
+  ok   decision_inbox reports counts
+  ok   inbox omits prompts and context by default
+  ok   include_context adds context but still no prompts
+  ok   get_decision includes prompts and context
+  ok   get_decision on a missing id is a clean error
+  ok   get_settings
+
+guards
+  ok   get_ticket rejects id "../x"
+  ok   get_ticket rejects id "..%2fadmin"
+  ok   get_ticket rejects id "a/b"
+  ok   get_ticket rejects id "a b"
+  ok   get_ticket rejects id "x?y=1"
+  ok   get_ticket rejects id ""
+  ok   rejected ids never reached the network
+  ok   api_request refuses traversal
+  ok   api_request refuses routes not in the table
+  ok   api_request allows a table route
+  ok   api_request refuses DELETE
+  ok   unknown tool → -32602
+  ok   check_setup (restart route) is gated and never sent
+  ok   upstream 500 is surfaced without leaking the token
+
+writes
+  ok   resolve_decision validates choice against the decision
+  ok   invalid choice sent no POST
+  ok   resolve_decision POSTs {choiceId}
+  ok   pause_executor POSTs {paused:true}
+  ok   pause_executor validates boolean
+  ok   retry_ticket
+  ok   save_settings with a stale revision → friendly 409 message
+  ok   save_settings PUTs value + revision
+  ok   save_settings supports the exact models block with revision fencing
+  ok   save_settings refuses unknown blocks
+
+finding observation boundary
+  ok   MCP records observation without dispatch or approval
+  ok   observation uses exactly the data-only route
+  ok   MCP never synthesizes browser approval headers
+  ok   repeat transport observation preserves backend identity
+  ok   finding read exposes current canonical identity
+  ok   finding list filters the returned state
+  ok   get_finding preserves bounded scope
+  ok   missing finding is a clean read error
+  ok   approved finding coordination uses its typed backend path
+  ok   transport sends only the instruction path, no authority claim
+  ok   headless coordination never impersonates browser origin
+  ok   relative instruction path refused
+  ok   transport rejects invented operator authority
+  ok   invalid coordination does not reach backend
+  ok   backend approval denial is preserved
+  ok   observation rejects caller approval identity
+  ok   observation rejects invented authority fields
+  ok   unknown finding filter is refused
+  ok   MCP escape refuses privileged route findings/f1/confirm
+  ok   MCP escape refuses privileged route findings/f1/review
+  ok   MCP escape refuses privileged route findings/f1/revisit
+  ok   MCP escape refuses privileged route findings/f1/evidence
+  ok   MCP escape refuses privileged route findings
+  ok   rejected finding authority requests never reach the backend
+  ok   decision reads identify typed findings
+  ok   generic choice resolution cannot confirm finding work
+  ok   generic dismissal cannot defer a typed finding
+  ok   generic restart cannot reopen a typed finding
+  ok   generic escape cannot mutate typed finding via resolve
+  ok   generic escape cannot mutate typed finding via dismiss
+  ok   generic escape cannot mutate typed finding via restart
+  ok   generic escape cannot mutate typed finding via stage
+  ok   generic escape cannot mutate typed finding via submission
+  ok   generic escape cannot mutate typed finding via discard-staging
+  ok   typed decision guards send no mutation
+
+audit log
+  ok   writes are audited
+  ok   audit records tool, route and body keys
+  ok   audit records failed attempts too
+  ok   audit never contains body values, token or cookie
+  ok   audit file is owner-only
+  ok   stderr never contains token or cookie
+
+read-only mode
+  ok   read-only hides every write tool
+  ok   read-only refuses write tools
+  ok   read-only still serves reads
+  ok   read-only exposes finding reads but hides observation
+  ok   read-only refuses observation before HTTP
+  ok   read-only hides and refuses coordination
+  ok   read-only finding lookup works
+
+restart gate opened
+  ok   check_setup works when DSH_MCP_ALLOW_RESTART=1
+
+token discovery from logs
+  ok   finds the token in the newest service log
+  ok   no token anywhere → clear message
+
+startup + failure behavior
+  ok   refuses non-loopback URL http://example.com:3082
+  ok   refuses non-loopback URL https://127.0.0.1:3082
+  ok   refuses non-loopback URL http://user:pw@127.0.0.1:3082
+  ok   refuses non-loopback URL http://127.0.0.1.evil.com:3082
+  ok   refuses non-loopback URL not a url
+  ok   service down → friendly "not reachable"
+
+source audit
+  ok   server.cjs opens no listening socket
+  ok   exactly one network call site
+  ok   server.cjs spawns no processes
+
+132 passed, 0 failed

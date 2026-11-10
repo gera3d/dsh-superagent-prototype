@@ -1,0 +1,113 @@
+{
+  "at": "2026-11-10T07:19:30.466750+00:00",
+  "findingId": "f526782b-1443-4342-b811-3cba5188f455",
+  "state": "blocked",
+  "revision": 4,
+  "job": {
+    "id": "finding:f526782b-1443-4342-b811-3cba5188f455:r3",
+    "ticketId": "26b9ea4d4f5d3728e5eed7c89fa5b6dc",
+    "assignmentId": "c7b90960e755e5ceb6a4323295fe64e0"
+  },
+  "ownerDecision": "Keep the 5% reserve",
+  "currentBlocker": "Existing native adapter rejects 2.9801391% weekly remaining at <=5% weekly floor. No actual cooldown or authRequired.",
+  "nativeObserved": "Current actual finding card displays r3 report: NOT a Google pass; no acceptance performed.",
+  "mcpObserved": "Typed installed coordinate_finding invoked retry_scope rev2 then confirm rev3 under prior native approval; real new r3 worker dispatched. Original r1 preserved. Stale exact instruction replay rejected without mutation.",
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "paused": false,
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "settings": {
+    "executor": {
+      "value": {
+        "model": {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "reasoningEffort": "high"
+        },
+        "maxWorkers": 3,
+        "directory": "",
+        "prepare": "",
+        "blockedCommands": [],
+        "sound": false,
+        "stallWaitSeconds": 180
+      },
+      "revision": 43
+    },
+    "models": {
+      "value": {
+        "hierarchy": [
+          {
+            "provider": "antigravity",
+            "model": "gemini-3.8-flash",
+            "reasoningEffort": "high",
+            "starred": true
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5",
+            "starred": true
+          },
+          {
+            "provider": "openrouter",
+            "model": "deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial",
+            "starred": false
+          },
+          {
+            "provider": "openai-codex",
+            "model": "gpt-6.1-sol",
+            "starred": true
+          }
+        ],
+        "maxEscalations": 1,
+        "helper": {
+          "provider": "anthropic",
+          "model": "claude-sonnet-5-5"
+        },
+        "conserve": false,
+        "economyRoute": {
+          "provider": "openrouter",
+          "model": "deepseek/deepseek-v4.1-flash-1017@preset/dsh-flash-1017-particle-trial"
+        },
+        "subscriptions": [
+          {
+            "provider": "antigravity",
+            "status": "available",
+            "resetAt": ""
+          },
+          {
+            "provider": "anthropic",
+            "status": "available",
+            "resetAt": ""
+          },
+          {
+            "provider": "openai-codex",
+            "status": "conserved",
+            "resetAt": ""
+          },
+          {
+            "provider": "deepseek-official",
+            "status": "conserved",
+            "resetAt": ""
+          }
+        ]
+      },
+      "revision": 18
+    }
+  },
+  "qualification": "blocked, not passed",
+  "nextOwner": "Codex coordinator through existing MCP path after actual Google eligibility is restored; no forced retry, new schedule or additional account/routing authority."
+}

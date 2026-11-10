@@ -1,0 +1,27 @@
+{
+  "at": "2026-11-10T07:06:23.424202+00:00",
+  "sourcePR": 91,
+  "sourceHead": "4afa7c51838d2dbd4494b60cdfb8f91ea7d0c875",
+  "sourceMerge": "c7c4881",
+  "target": "/Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-remote-mcp",
+  "rollback": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/google-qualification/mcp-rollback",
+  "files": [
+    {
+      "path": "server.cjs",
+      "before": "5616f697692c3d9aa99e2c3125f23b723796641c45173bfebc47352cec387401",
+      "after": "40c116aa0c236be0e4356fa0f517310ee20d1dbc66871d6be01176d9163c8542"
+    },
+    {
+      "path": "README.md",
+      "before": "3458eacf0c605fe14197ad07ce944553b82ee0ba5f64ac9fcc4bc5715f62240a",
+      "after": "6d5316fe733016ac3a373bfd1e9efd30c1ed37ac33cd40f9f089e86313af4c47"
+    },
+    {
+      "path": "test/smoke.cjs",
+      "before": "a5044478fd32e29a4007b1869c38509df161ccb3e3c45d0a4b11a8dfd3e2c4d5",
+      "after": "1e372457b0fa0f87e74aa4986d9ee82370118320602b6ba5ded695fdeded367f"
+    }
+  ],
+  "restartRequired": false,
+  "limits": "Existing backend validates private exact-scope instruction and prior native approval. Native first approval, publication and evidence acceptance remain protected."
+}

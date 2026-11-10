@@ -1,0 +1,19 @@
+{
+  "observedAt": "2026-11-10T07:11:04.681170+00:00",
+  "mode": "sequential",
+  "accounts": [
+    {
+      "enabled": true,
+      "authRequired": false,
+      "googleCooldown": null,
+      "googleQuota": {
+        "remainingFraction": 1,
+        "resetTime": "2026-11-10T11:51:36Z",
+        "weeklyFraction": 0.029801391065120697,
+        "weeklyResetTime": "2026-11-14T22:42:10Z",
+        "description": "Models within this group: Gemini Flash, Gemini Pro",
+        "updatedAt": 1794293496400
+      }
+    }
+  ]
+}

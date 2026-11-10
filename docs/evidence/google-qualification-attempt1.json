@@ -1,0 +1,435 @@
+{
+  "findingId": "f526782b-1443-4342-b811-3cba5188f455",
+  "revision": 2,
+  "job": {
+    "id": "finding:f526782b-1443-4342-b811-3cba5188f455:r1",
+    "ticketId": "b2efbd4f140c102b3a6a25a1fea719e7",
+    "assignmentId": "fac8f33e7410368544b4c7ac84a37aba"
+  },
+  "actualWorkerEvents": [
+    {
+      "type": "model/selection",
+      "time": 1794293086210,
+      "routeOrIdentity": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "high"
+      }
+    },
+    {
+      "type": "turn/start",
+      "time": 1794293086592,
+      "routeOrIdentity": {
+        "turn": 1
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794293086654,
+      "routeOrIdentity": {
+        "turn": 1,
+        "step": 1
+      }
+    },
+    {
+      "type": "request/context",
+      "time": 1794293086661,
+      "routeOrIdentity": {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash"
+      }
+    },
+    {
+      "type": "assistant/attempt",
+      "time": 1794293086689,
+      "sanitizedError": "All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown). Add an account, wait for reset, or run /agy clear-cooldown."
+    },
+    {
+      "type": "step/end",
+      "time": 1794293086689,
+      "routeOrIdentity": {
+        "turn": 1,
+        "step": 1
+      }
+    },
+    {
+      "type": "turn/end",
+      "time": 1794293086692,
+      "routeOrIdentity": {
+        "turn": 1
+      }
+    },
+    {
+      "type": "turn/end",
+      "time": 1794293086692,
+      "sanitizedError": "All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown). Add an account, wait for reset, or run /agy clear-cooldown."
+    },
+    {
+      "type": "model/selection",
+      "time": 1794293086695,
+      "routeOrIdentity": {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      }
+    },
+    {
+      "type": "agent/inbox/spliced",
+      "time": 1794293086755,
+      "sanitizedError": "All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown). Add an account, wait for reset, or run /agy). Fell back to available ladder model (anthropic/claude-sonnet-5-5): LlmError: All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown). Add an account, wait for reset, or run /agy. Continue the assignment where it stopped."
+    },
+    {
+      "type": "turn/start",
+      "time": 1794293086756,
+      "routeOrIdentity": {
+        "turn": 2
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794293086817,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 1
+      }
+    },
+    {
+      "type": "user/message",
+      "time": 1794293086820,
+      "sanitizedError": "All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown). Add an account, wait for reset, or run /agy). Fell back to available ladder model (anthropic/claude-sonnet-5-5): LlmError: All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown). Add an account, wait for reset, or run /agy. Continue the assignment where it stopped."
+    },
+    {
+      "type": "request/context",
+      "time": 1794293086825,
+      "routeOrIdentity": {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      }
+    },
+    {
+      "type": "step/end",
+      "time": 1794293091699,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 1
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794293091733,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 2
+      }
+    },
+    {
+      "type": "step/end",
+      "time": 1794293103654,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 2
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794293103714,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 3
+      }
+    },
+    {
+      "type": "step/end",
+      "time": 1794293110903,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 3
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794293110936,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 4
+      }
+    },
+    {
+      "type": "step/end",
+      "time": 1794293117606,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 4
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794293117641,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 5
+      }
+    },
+    {
+      "type": "step/end",
+      "time": 1794293121903,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 5
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794293121937,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 6
+      }
+    },
+    {
+      "type": "step/end",
+      "time": 1794293127242,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 6
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794293127281,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 7
+      }
+    },
+    {
+      "type": "step/end",
+      "time": 1794293133237,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 7
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794293133270,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 8
+      }
+    },
+    {
+      "type": "assistant/message",
+      "time": 1794293145266,
+      "sanitizedError": "All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown)'. Therefore this is NOT a Google pass; antigravity/gemini-3.8-flash first-response latency/usage/selection events are unverified here."
+    },
+    {
+      "type": "tool/call",
+      "time": 1794293145267,
+      "sanitizedError": "All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown)'. Therefore this is NOT a Google pass; antigravity/gemini-3.8-flash first-response latency/usage/selection events are unverified here."
+    },
+    {
+      "type": "job/registered",
+      "time": 1794293145294,
+      "sanitizedError": "All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown)'. Therefore this is NOT a Google pass; antigravity/gemini-3.8-flash first-response latency/usage/selection events are unverified here."
+    },
+    {
+      "type": "job/settled",
+      "time": 1794293145411,
+      "sanitizedError": "All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown)'. Therefore this is NOT a Google pass; antigravity/gemini-3.8-flash first-response latency/usage/selection events are unverified here."
+    },
+    {
+      "type": "step/end",
+      "time": 1794293145412,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 8
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794293145444,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 9
+      }
+    },
+    {
+      "type": "assistant/message",
+      "time": 1794293157196,
+      "sanitizedError": "All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown)'; this turn 2 ran on fallback anthropic/claude-sonnet-5-5, so Google first-response/latency/usage are unqualified; a fallback response is not a Google pass. Only Codex can inspect: native provider attribution, request/usage events, first-response latency, turn-1 failure timing, report consumed marker and canonical transition (progress report .dsh-report.json was still unconsumed ~20s after write; shell env lacked DSH_SUPERAGENT_*, ids/turn=2 passed explicitly from supplied environment, so this ready may overwrite the unconsumed progress file). No PROJECT_STATUS, settings, credentials, routing or installed code changed; no integration code blocker demonstrated beyond Google account cooldown. Receipt: qualification-receipt.json in ticket dir. Recommend re-running when Antigravity account leaves cooldown."
+    },
+    {
+      "type": "tool/call",
+      "time": 1794293157197,
+      "sanitizedError": "All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown)'; this turn 2 ran on fallback anthropic/claude-sonnet-5-5, so Google first-response/latency/usage are unqualified; a fallback response is not a Google pass. Only Codex can inspect: native provider attribution, request/usage events, first-response latency, turn-1 failure timing, report consumed marker and canonical transition (progress report .dsh-report.json was still unconsumed ~20s after write; shell env lacked DSH_SUPERAGENT_*, ids/turn=2 passed explicitly from supplied environment, so this ready may overwrite the unconsumed progress file). No PROJECT_STATUS, settings, credentials, routing or installed code changed; no integration code blocker demonstrated beyond Google account cooldown. Receipt: qualification-receipt.json in ticket dir. Recommend re-running when Antigravity account leaves cooldown."
+    },
+    {
+      "type": "job/registered",
+      "time": 1794293157227,
+      "sanitizedError": "All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown)'; this turn 2 ran on fallback anthropic/claude-sonnet-5-5, so Google first-response/latency/usage are unqualified; a fallback response is not a Google pass. Only Codex can inspect: native provider attribution, request/usage events, first-response latency, turn-1 failure timing, report consumed marker and canonical transition (progress report .dsh-report.json was still unconsumed ~20s after write; shell env lacked DSH_SUPERAGENT_*, ids/turn=2 passed explicitly from supplied environment, so this ready may overwrite the unconsumed progress file). No PROJECT_STATUS, settings, credentials, routing or installed code changed; no integration code blocker demonstrated beyond Google account cooldown. Receipt: qualification-receipt.json in ticket dir. Recommend re-running when Antigravity account leaves cooldown."
+    },
+    {
+      "type": "job/settled",
+      "time": 1794293157303,
+      "sanitizedError": "All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown)'; this turn 2 ran on fallback anthropic/claude-sonnet-5-5, so Google first-response/latency/usage are unqualified; a fallback response is not a Google pass. Only Codex can inspect: native provider attribution, request/usage events, first-response latency, turn-1 failure timing, report consumed marker and canonical transition (progress report .dsh-report.json was still unconsumed ~20s after write; shell env lacked DSH_SUPERAGENT_*, ids/turn=2 passed explicitly from supplied environment, so this ready may overwrite the unconsumed progress file). No PROJECT_STATUS, settings, credentials, routing or installed code changed; no integration code blocker demonstrated beyond Google account cooldown. Receipt: qualification-receipt.json in ticket dir. Recommend re-running when Antigravity account leaves cooldown."
+    },
+    {
+      "type": "step/end",
+      "time": 1794293157306,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 9
+      }
+    },
+    {
+      "type": "step/start",
+      "time": 1794293157342,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 10
+      }
+    },
+    {
+      "type": "assistant/message",
+      "time": 1794293163695,
+      "sanitizedError": "All Antigravity accounts are unavailable "
+    },
+    {
+      "type": "step/end",
+      "time": 1794293163696,
+      "routeOrIdentity": {
+        "turn": 2,
+        "step": 10
+      }
+    },
+    {
+      "type": "turn/end",
+      "time": 1794293163697,
+      "routeOrIdentity": {
+        "turn": 2
+      }
+    }
+  ],
+  "usage": {
+    "sessionId": "worker-b2efbd4f140c102b3a6a25a1fea719e7",
+    "routes": [
+      {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5",
+        "attempts": 10,
+        "uncachedInputTokens": 20,
+        "outputTokens": 6748,
+        "cacheReadTokens": 363996,
+        "cacheWriteTokens": 47504,
+        "totalTokens": 418268
+      }
+    ],
+    "totals": {
+      "uncachedInputTokens": 20,
+      "outputTokens": 6748,
+      "totalTokens": 418268,
+      "cacheReadTokens": 363996,
+      "cacheWriteTokens": 47504
+    },
+    "coverage": {
+      "attempts": 11,
+      "reported": 10,
+      "cacheRead": "partial",
+      "cacheWrite": "exact",
+      "attribution": "complete"
+    },
+    "cost": {
+      "kind": "unavailable",
+      "reason": "noRecordedPrice"
+    }
+  },
+  "assignment": [
+    {
+      "id": "fac8f33e7410368544b4c7ac84a37aba",
+      "state": "ended",
+      "createdAt": "2026-11-10T06:44:45.738Z",
+      "startedAt": "2026-11-10T06:44:46.601Z",
+      "idleAt": "2026-11-10T06:46:03.701Z",
+      "report": {
+        "state": "ready",
+        "summary": "Bounded local qualification done, but NOT a Google pass. Completed (3 serial real tool round trips, all exit 0): (1) python3 sha256('google-harness-qualification-v1')=16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a + session id worker-b2efbd4f140c102b3a6a25a1fea719e7 + PROJECT_STATUS read (sha256 892271cb..., dated 2026-11-06: conserve ON, Google/Antigravity marked exhausted); (2) qualification-receipt.json written in ticket dir, read back, nonce 2868d0967e5933ac and hash verified, progress report CLI exit 0 (report file sha256 fd26fb79...); (3) hash independently recomputed via python hashlib and shasum, both match receipt. Provider: turn 1 failed with 'LlmError: All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown)'; this turn 2 ran on fallback anthropic/claude-sonnet-5-5, so Google first-response/latency/usage are unqualified; a fallback response is not a Google pass. Only Codex can inspect: native provider attribution, request/usage events, first-response latency, turn-1 failure timing, report consumed marker and canonical transition (progress report .dsh-report.json was still unconsumed ~20s after write; shell env lacked DSH_SUPERAGENT_*, ids/turn=2 passed explicitly from supplied environment, so this ready may overwrite the unconsumed progress file). No PROJECT_STATUS, settings, credentials, routing or installed code changed; no integration code blocker demonstrated beyond Google account cooldown. Receipt: qualification-receipt.json in ticket dir. Recommend re-running when Antigravity account leaves cooldown.",
+        "at": "2026-11-10T06:46:03.704Z",
+        "hash": "de49aff9b4255041"
+      },
+      "endedAt": "2026-11-10T06:46:03.704Z",
+      "deliveredReportHash": "de49aff9b4255041",
+      "ref": "worker-b2efbd4f140c102b3a6a25a1fea719e7"
+    }
+  ],
+  "workerReport": {
+    "state": "ready",
+    "summary": "Bounded local qualification done, but NOT a Google pass. Completed (3 serial real tool round trips, all exit 0): (1) python3 sha256('google-harness-qualification-v1')=16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a + session id worker-b2efbd4f140c102b3a6a25a1fea719e7 + PROJECT_STATUS read (sha256 892271cb..., dated 2026-11-06: conserve ON, Google/Antigravity marked exhausted); (2) qualification-receipt.json written in ticket dir, read back, nonce 2868d0967e5933ac and hash verified, progress report CLI exit 0 (report file sha256 fd26fb79...); (3) hash independently recomputed via python hashlib and shasum, both match receipt. Provider: turn 1 failed with 'LlmError: All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown)'; this turn 2 ran on fallback anthropic/claude-sonnet-5-5, so Google first-response/latency/usage are unqualified; a fallback response is not a Google pass. Only Codex can inspect: native provider attribution, request/usage events, first-response latency, turn-1 failure timing, report consumed marker and canonical transition (progress report .dsh-report.json was still unconsumed ~20s after write; shell env lacked DSH_SUPERAGENT_*, ids/turn=2 passed explicitly from supplied environment, so this ready may overwrite the unconsumed progress file). No PROJECT_STATUS, settings, credentials, routing or installed code changed; no integration code blocker demonstrated beyond Google account cooldown. Receipt: qualification-receipt.json in ticket dir. Recommend re-running when Antigravity account leaves cooldown.",
+    "ticket_id": "b2efbd4f140c102b3a6a25a1fea719e7",
+    "assignment_id": "fac8f33e7410368544b4c7ac84a37aba",
+    "turn_id": "2",
+    "at": "2026-11-10T06:45:57.291Z"
+  },
+  "consumedMarkers": [
+    {
+      "file": ".dsh-report.consumed.b2efbd4f140c102b3a6a25a1fea719e7.fac8f33e7410368544b4c7ac84a37aba.2.de49aff9b4255041",
+      "content": {
+        "at": 1794293157291,
+        "state": "ready",
+        "hash": "de49aff9b4255041"
+      }
+    }
+  ],
+  "localReceipt": {
+    "schema": "google-harness-qualification-receipt-v1",
+    "ticket_id": "b2efbd4f140c102b3a6a25a1fea719e7",
+    "assignment_id": "fac8f33e7410368544b4c7ac84a37aba",
+    "turn": "2",
+    "nonce": "2868d0967e5933ac",
+    "input": "google-harness-qualification-v1",
+    "sha256": "16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a",
+    "written_at": "2026-11-10T06:45:21.895695+00:00",
+    "steps": [
+      {
+        "n": 1,
+        "tool": "bash+python3",
+        "at": "2026-11-10T06:45:17.473867+00:00",
+        "exit": 0,
+        "sha256": "16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a",
+        "project_status_sha256": "892271cb1cbab81a113fb7ad2802a0d2c22b4cbb7c7216377d37b0f2237d2193"
+      },
+      {
+        "n": 2,
+        "at": "2026-11-10T06:45:21Z",
+        "action": "receipt written + read back, nonce/hash verified",
+        "exit": 0
+      },
+      {
+        "n": 2,
+        "at": "2026-11-10T06:45:27Z",
+        "action": "orchestrator_report --state progress via installed CLI (ids passed explicitly)",
+        "exit": 0,
+        "stdout": "Report recorded for delivery: state=progress",
+        "report_file_sha256": "fd26fb797af9c646455616ddbf92f185d7002a5aa49fd74ceebbade2a0059322",
+        "consumed_marker_observed_after_6s": false
+      },
+      {
+        "n": 3,
+        "at": "2026-11-10T06:45:45.395775+00:00",
+        "action": "independent recompute python hashlib vs shasum vs receipt",
+        "python": "16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a",
+        "shasum": "16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a",
+        "match": true,
+        "exit": 0
+      }
+    ],
+    "limitations": [
+      "Model provider evidence NOT observable from inside this worker; this turn (turn 2) was served by fallback anthropic/claude-sonnet-5-5 after turn 1 failed: 'LlmError: All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown)'. Therefore this is NOT a Google pass; antigravity/gemini-3.8-flash first-response latency/usage/selection events are unverified here.",
+      "Only Codex/coordinator can independently inspect: provider attribution and request/usage events of the native thread, first-response latency, turn-1 failure timing, report consumption marker and canonical ticket transition.",
+      "Shell env lacked DSH_SUPERAGENT_* variables; ticket/assignment/turn=2 were taken from the supplied native environment and passed explicitly to the CLI. CLI wrote .dsh-report.json in the ticket dir; no consumed marker was visible after ~6s, so delivery is unconfirmed from the worker side.",
+      "No tool-latency timings beyond sub-second local commands; no throughput/quota/long-run reliability claim. No provider API, credentials, settings, PROJECT_STATUS or installed code were touched/mutated.",
+      "PROJECT_STATUS.md (default-workspace, updated 2026-11-06) still says Google/Antigravity marked exhausted and conserve mode ON; not updated by this worker (out of bounded scope)."
+    ],
+    "finished_at": "2026-11-10T06:45:45.396187+00:00"
+  },
+  "verdict": "Not a Google pass: initial native Google attempt unavailable in cooldown, existing availability fallback completed on Sonnet. Original attempt and evidence preserved."
+}

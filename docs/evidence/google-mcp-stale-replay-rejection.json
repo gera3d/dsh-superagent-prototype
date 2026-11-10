@@ -1,0 +1,1 @@
+{"jsonrpc": "2.0", "id": 3, "result": {"content": [{"type": "text", "text": "Error: Finding coordination is stale; instruction revision does not match current finding revision (stale revision: re-read the current value and retry)"}], "isError": true}}
