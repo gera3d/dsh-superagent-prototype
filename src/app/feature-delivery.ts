@@ -69,6 +69,10 @@ export interface Delivery {
   id: string; title: string; revision: number; stage: DeliveryStage; state: DeliveryState; owner: string
   /** Read-only native ownership projection; never persisted as an execution grant. */
   work?: import('./delivery-currency.ts').DeliveryWork
+  /** Read-only projection for an unbound delivery: what the one-click release handoff would bind, or what is missing. */
+  handoff?: import('./delivery-handoff.ts').DeliveryHandoff
+  /** Derived: automated verification passed but these intake requirements still lack explicit operator evidence. */
+  awaitingOperatorEvidence?: string[]
   nextAction?: DeliveryAction; blocker?: string; scopeBinding?: DeliveryScopeBinding; bindings: DeliveryBindings; requirements: string[]
   /** Derived recovery control for an existing parked outbox row; never a new mutation grant. */
   reconciliation?: DeliveryReconciliation
@@ -150,15 +154,29 @@ const passed = (d: Delivery, kind: DeliveryEvidence['kind']) => currentEvidence(
 const acceptanceReady = (d: Delivery): boolean => {
   if (d.scopeBinding || d.requirements.includes('intake:acceptance-requirements-unconfirmed')) return false
   const relevant = currentEvidence(d)
-  if (relevant.some(e => e.outcome === 'uncertain' || e.kind === 'rollback')) return false
+  if (relevant.some(e => e.outcome !== 'passed' || e.kind === 'rollback')) return false
   return passed(d, 'publication') && passed(d, 'verification') && d.requirements.length > 0 && d.requirements.every(r => relevant.some(e => ['verification', 'acceptance'].includes(e.kind) && e.outcome === 'passed' && e.requirements?.includes(r)))
+}
+/** Publication-runner verification passed for this exact scope; requirement coverage still needs explicit operator evidence. */
+const automatedVerified = (d: Delivery): boolean => {
+  const relevant = currentEvidence(d)
+  // A failed operator check must leave its recheck form available. Other failed or uncertain execution stays blocked.
+  return passed(d, 'publication') && passed(d, 'verification') && !relevant.some(e => e.outcome === 'uncertain' || e.kind === 'rollback'
+    || e.outcome === 'failed' && !(e.kind === 'verification' && e.id.startsWith('operator-live:') && e.requirements?.length))
+}
+export const uncoveredRequirements = (d: Delivery): string[] => {
+  const relevant = currentEvidence(d)
+  return d.requirements.filter(r => {
+    const lastFailure = relevant.findLastIndex(e => e.outcome === 'failed' && e.requirements?.includes(r))
+    return !relevant.some((e, index) => index > lastFailure && ['verification', 'acceptance'].includes(e.kind) && e.outcome === 'passed' && e.requirements?.includes(r))
+  })
 }
 function nextKind(d: Delivery): DeliveryActionKind | undefined {
   if (d.historicalCompletion || d.scopeBinding || terminal(d) || d.blocker || d.state === 'running') return undefined
   if (d.stage === 'implementation') return 'implement'
   if (d.stage === 'review') return passed(d, 'review') ? undefined : currentEvidence(d).some(e => e.kind === 'review' && e.outcome === 'failed') ? 'fix' : 'review'
   if (d.stage === 'ready_to_publish') return 'publish'
-  if (d.stage === 'verifying') return acceptanceReady(d) ? 'accept' : 'verify'
+  if (d.stage === 'verifying') return acceptanceReady(d) ? 'accept' : automatedVerified(d) ? undefined : 'verify'
   return undefined
 }
 function refresh(d: Delivery): Delivery {
@@ -175,6 +193,8 @@ function refresh(d: Delivery): Delivery {
     const fp = fingerprint(d)
     d.nextAction = { id: `${d.id}:${d.revision}:${kind}:${fp.slice(0, 16)}`, kind, label: ({ implement: 'Implement', review: 'Review', fix: 'Fix review findings', publish: 'Publish bound artifact', verify: 'Verify intake requirements', accept: 'Accept verified delivery' })[kind], revision: d.revision, fingerprint: fp }
   }
+  delete d.awaitingOperatorEvidence
+  if (d.stage === 'verifying' && !terminal(d) && automatedVerified(d) && !acceptanceReady(d)) d.awaitingOperatorEvidence = uncoveredRequirements(d)
   if (d.recommendationError && d.recommendationError.fingerprint !== fingerprint(d)) delete d.recommendationError
   if (d.preparation && d.preparation.fingerprint !== fingerprint(d)) delete d.preparation
   if (d.recommendation && (!d.nextAction || d.recommendation.actionId !== d.nextAction.id || d.recommendation.kind !== d.nextAction.kind || d.recommendation.fingerprint !== d.nextAction.fingerprint)) delete d.recommendation
@@ -435,7 +455,11 @@ export class DeliveryStore {
           else if (lease.action.kind === 'implement' || lease.action.kind === 'fix') { value.stage = 'review'; value.generation = generation }
           else if (lease.action.kind === 'review') value.stage = 'ready_to_publish'
           else if (lease.action.kind === 'publish') value.stage = 'verifying'
-          else if (lease.action.kind === 'verify' && !acceptanceReady(value)) { value.state = 'blocked'; value.blocker = 'Unresolved intake requirements, rollback, or uncertain evidence' }
+          else if (lease.action.kind === 'verify' && !acceptanceReady(value)) {
+            value.state = 'blocked'
+            value.blocker = automatedVerified(value) ? `Unresolved intake requirements: automated release verification passed but explicit operator live evidence is still required for ${uncoveredRequirements(value).join(', ')}`
+              : 'Unresolved intake requirements, rollback, or uncertain evidence'
+          }
         }
         if (value.state === 'awaiting_decision' && value.stage === 'review' && ((result.outcome === 'failed' && value.attempts.fix >= value.attempts.maxFix) || (result.outcome === 'passed' && value.attempts.review >= value.attempts.maxReview))) { value.state = 'blocked'; value.blocker = 'Review/fix retry budget exhausted' }
         value.audit.push({ at: new Date(now).toISOString(), event: `${lease.reconcile ? 'reconciled' : 'completed'}:${lease.action.kind}:${result.outcome}`, actor: lease.worker, actionId: lease.id })

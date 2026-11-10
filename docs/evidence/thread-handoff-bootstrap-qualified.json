@@ -1,0 +1,19 @@
+{
+  "at": "2026-11-10T02:21:43.562798+00:00",
+  "stage": "qualified bootstrap component, not full finding acceptance",
+  "workerHead": "0ada194627c64980a2e2fa3e315b593d95867272",
+  "base": "2405aa1d679a8e2b8af022d06fe48d756154453e",
+  "tests": {
+    "returnedSource": "88 passed /12 suites, types/build passed",
+    "coordinatorIntegration": "3 new meaningful negative cases initially failed;117 related tests/7suites pass after scoped coverage/recheck correction, types/build pass",
+    "countsOverlap": true,
+    "broadFullSuiteClaim": false
+  },
+  "integrationChange": "Do not supersede unrelated failed requirement evidence; collect only explicit passing rechecks after failure; keep failed native requirements actionable and final acceptance blocked until failures reconciled. Removed duplicate copies of R1 audit tests; originals retained canonically.",
+  "reviewedLimits": [
+    "Finding jobs are excluded from Runtime automatic delivery tracking, so actual finding source still lacks a delivery/prepare control.",
+    "Current handoff requires trusted manifest preconfigured for this PR; missing profile fields are visible but not yet prepared inside thread.",
+    "No full native handoff/publish/acceptance proof yet. Current finding stays open until remaining approved work is implemented and actual flow passes."
+  ],
+  "authority": "No new grant or bypass; protected local operator publication and exact operator evidence remain required. No settings/credential/account changes in this code. Executor Google restored revision29 after Sonnet attempt."
+}

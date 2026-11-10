@@ -303,6 +303,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/app/delivery-runtime.ts` | Runtime-owned automatic tracking and handoffs, canonical projection, advice currency and bounded preparation recovery |
 | `src/app/delivery-capabilities.ts` | Configured-model independent exact-diff review, real correction notes and current-action recommendations |
 | `src/app/publication-proof.ts` | Bounded exact-pin descriptors of the protected publication’s recorded review/check evidence, and the pure lock-free peek that advises pre-upgrade prepared cards without recovery |
+| `src/app/delivery-handoff.ts` | One-click release handoff for an unbound delivery: derives scope only from the worker's ready report, its single PR and the trusted release profile, lists exact missing profile fields, delegates only review/fix/verify |
 | `src/app/delivery-publication.ts` | Trusted whole-release scope bridge to existing protected publication; native acceptance remains separately evidenced |
 | `src/app/delivery-intake.ts` | Strict explicit intake schema with per-repository heads, bases and requirements |
 | `src/app/delivery-evidence.ts` | Audited local-operator external evidence recording and exact-bound acceptance re-evaluation |
@@ -488,6 +489,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/finding-observe-cli.spec.ts` | Observation-only CLI loopback transport and argument/origin/authority fences without spoofed approval headers |
 | `tests/feature-delivery.spec.ts` | Durable transitions, CAS concurrency, restart/lease cancellation, scoped approvals, finite retries, backfill and acceptance |
 | `tests/delivery-capabilities.spec.ts` | Actual review and correction adapters against bounded transport/model fixtures, exact base/diff fences and note idempotency |
+| `tests/delivery-handoff.spec.ts` | Real store/coordinator handoff: missing profile fields, protected prepare/evidence routes, durable restart, no publish/accept delegation, operator live attestation, executable card controls |
 | `tests/delivery-publication.spec.ts` | Actual store confirmation provenance through the protected publication bridge and rolled-back acceptance |
 | `tests/delivery-publication-scope.spec.ts` | Trusted manifest target/all-ref scope, digest fences, stale secondary refs and safe rollback |
 | `tests/delivery-provider.spec.ts` | Independent provider projections, durable source-empty advice currency, helper/staging fences and preserved genuine questions |

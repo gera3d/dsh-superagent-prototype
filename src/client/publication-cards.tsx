@@ -3,7 +3,8 @@ import type { ReactNode } from 'react'
 import { Icon } from './controls.tsx'
 import STYLES from './delivery-card.css?raw'
 import type { PendingDecisionItem } from '../core/decision.ts'
-import { findingMatchesSession } from './finding-association.ts'
+import { deliveryMatchesSession, findingMatchesSession } from './finding-association.ts'
+export { deliveryMatchesSession } from './finding-association.ts'
 import { FindingCard } from './finding-card.tsx'
 export { FindingCard, confirmFinding, revisitFinding, reviewFinding, type FindingConfirmation, type FindingReview } from './finding-card.tsx'
 import { LifecycleCard } from './lifecycle-card.tsx'
@@ -63,8 +64,17 @@ export function SharedLifecycleCard({ item, onTicket, compactFindings = false }:
 /** Independent privileged dock remains available even when Next steps owns ordinary suggestion rendering. */
 export function PublicationDock({ sessionId, removed }: { sessionId: string; removed?: boolean }) {
   const { data } = usePoll(() => call('GET decisions/inbox'), [])
-  const items = data?.items.filter(item => (findingMatchesSession(item, sessionId) || item.sessionId === sessionId || item.delivery?.workers.includes(sessionId)) && (item.finding || item.actionMode === 'finding_triage' || item.delivery || item.actionMode === 'feature_delivery' || item.lifecycle
-    && (item.status === 'pending' || item.lifecycle.recovery))) ?? []
+  const items = data?.items.filter(item => (
+    findingMatchesSession(item, sessionId)
+    || item.sessionId === sessionId
+    || deliveryMatchesSession(item, sessionId)
+  ) && (
+    item.finding
+    || item.actionMode === 'finding_triage'
+    || item.delivery
+    || item.actionMode === 'feature_delivery'
+    || (item.lifecycle && (item.status === 'pending' || item.lifecycle.recovery))
+  )) ?? []
   if (removed || !items.length) return null
   return <section aria-label="Senior Developer publications" style={{ boxSizing: 'border-box', width: 'calc(100% - var(--dsh-composer-side-clearance, 24px) * 2)', maxWidth: 'var(--dsh-composer-card-max-width, 840px)', minWidth: 0, margin: '0 auto 4px', display: 'grid', gap: 6 }}>
     {items.map(item => <SharedLifecycleCard key={item.id} item={item} compactFindings />)}

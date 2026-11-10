@@ -218,4 +218,26 @@ describe('currentTurnOf', () => {
     }
     expect(currentTurnOf(agentWithTurn as any)).toBe(2)
   })
+
+  it('recognizes turn/end events and non-empty string turn values', () => {
+    const agentWithEnd = {
+      session: {
+        snapshotEvents: () => [
+          { type: 'turn/start', data: { turn: 1 } },
+          { type: 'assistant/message', data: { turn: 1 } },
+          { type: 'turn/end', data: { turn: 1 } },
+        ],
+      },
+    }
+    expect(currentTurnOf(agentWithEnd as any)).toBe(1)
+
+    const agentWithStringTurn = {
+      session: {
+        snapshotEvents: () => [
+          { type: 'turn/start', data: { turn: 'turn-alpha' } },
+        ],
+      },
+    }
+    expect(currentTurnOf(agentWithStringTurn as any)).toBe('turn-alpha')
+  })
 })
