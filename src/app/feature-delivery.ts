@@ -71,6 +71,8 @@ export interface Delivery {
   work?: import('./delivery-currency.ts').DeliveryWork
   /** Read-only projection for an unbound delivery: what the one-click release handoff would bind, or what is missing. */
   handoff?: import('./delivery-handoff.ts').DeliveryHandoff
+  /** Exact finding lineage when the delivery was prepared from a finding job's committed artifact; history, never an authority. */
+  release?: { findingId: string; findingRevision: number; jobId: string; ticketId: string; assignmentId: string; branch: string; prNumber: number; headSha: string; patchSha256: string; preparedAt: string }
   /** Derived: automated verification passed but these intake requirements still lack explicit operator evidence. */
   awaitingOperatorEvidence?: string[]
   nextAction?: DeliveryAction; blocker?: string; scopeBinding?: DeliveryScopeBinding; bindings: DeliveryBindings; requirements: string[]
@@ -279,7 +281,7 @@ export class DeliveryStore {
     return this.create({ id, title: input.title, owner: input.owner, bindings: { repository: input.repository, sourceIssue: input.sourceIssue ?? 0, baseSha: '', headSha: '', refs: [] }, requirements: [...unconfirmedRequirements], authorities: [], workers: [input.ticketId], scopeBinding: { reason: 'Operator-confirmed delivery scope, target and acceptance requirements are missing', sourceTriggerId: input.triggerId } })
   }
   /** Explicit trusted operator intake replaces unknown scope, never a worker report or model guess. */
-  bindScope(id: string, revision: number, input: DeliveryCreate, authority: DeliveryConfirmationAuthority): Delivery {
+  bindScope(id: string, revision: number, input: DeliveryCreate, authority: DeliveryConfirmationAuthority, extra?: (d: Delivery) => void): Delivery {
     validateIntake(input)
     if (input.id !== id || input.scopeBinding || authority.source !== 'local_operator' || !authority.actor || !authority.reference || !input.authorities.includes(authority.actor) || authority.scope !== deliveryFingerprint(input)) throw new DeliveryConflict('Scope binding requires exact reviewed intake and local operator authority')
     return this.update(id, revision, d => {
@@ -290,6 +292,7 @@ export class DeliveryStore {
       d.workers = [...new Set([...d.workers, ...(input.workers ?? [])])]
       d.attempts = { review: 0, fix: 0, maxReview: input.maxReview ?? 3, maxFix: input.maxFix ?? 2 }
       delete d.scopeBinding; delete d.blocker; delete d.preparation; delete d.preparedPublication; delete d.recommendation; delete d.recommendationError
+      extra?.(d)
       d.stage = 'implementation'; d.state = 'awaiting_decision'
       d.audit.push({ at: new Date().toISOString(), event: `scope-bound:${authority.source}:${authority.reference}:${authority.scope}`, actor: authority.actor })
     }, false, true)

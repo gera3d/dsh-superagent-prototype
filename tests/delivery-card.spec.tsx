@@ -175,3 +175,9 @@ it('defaults to a compact native disclosure and expands without confirming an ac
   expect(disclosure.open).toBe(true)
   expect(confirm).not.toHaveBeenCalled()
 })
+
+it('shows preparation ownership and withholds publish until the exact package is ready', async () => {
+  const pending = { ...d, stage: 'ready_to_publish' as const, nextAction: { ...d.nextAction!, kind: 'publish' as const }, release: { findingId: 'f', findingRevision: 1, jobId: 'j', ticketId: 't', assignmentId: 'a', branch: 'agent/t', prNumber: 42, headSha: 'h', patchSha256: 'p', preparedAt: 'now' } }
+  await render(item(pending))
+  expect(container.querySelector('button')).toBeNull()
+})

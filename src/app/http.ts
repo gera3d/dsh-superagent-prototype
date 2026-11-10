@@ -25,6 +25,7 @@ import { recordLiveAttestation } from './delivery-evidence.ts'
 import { DeliveryIntakeRequest } from './delivery-intake.ts'
 import { FindingIntakeSchema, FindingConfirmSchema, FindingReviewSchema, FindingError, findingDecision } from './finding.ts'
 import type { FindingRuntime } from './finding-runtime.ts'
+import type { FindingRelease } from './finding-release.ts'
 import { FindingEvidenceRequest } from './finding-evidence.ts'
 import { coordinateFinding, FindingCoordinationRequestSchema } from './finding-coordination.ts'
 import { snapshotProof } from './publication-proof.ts'
@@ -61,6 +62,7 @@ export interface HttpHost {
   readonly publication?: LifecyclePublication
   readonly deliveries?: FeatureDeliveryRuntime
   readonly findings?: FindingRuntime
+  readonly release?: FindingRelease
   /** Feishu message links resolved since startup, used by search to match AppLink URLs. */
   readonly sourceLinks: Pick<TextCache, 'entries'>
   readonly sources: SourceRegistry
@@ -413,6 +415,16 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
       void runtime.findings.request().catch(error => ctx.logger.warn('Finding dispatch: %s', String(error)))
       return { finding, item: findingDecision(finding) }
     },
+    'POST findings/:id/release': async ({ params, body, localApproval }) => {
+      if (!localApproval) throw new PublicationError(403, 'Explicit local operator release preparation required')
+      if (!runtime.findings || !runtime.release || !runtime.deliveries) throw new PublicationError(409, 'Finding and delivery coordinators are not configured')
+      const { revision } = z.object({ revision: z.number().int().positive() }).strict().parse(await body())
+      const current = runtime.findings.store.get(params.id)
+      if (!current) throw new FindingError(404, 'Finding not found')
+      const delivery = await runtime.release.prepare(current, { revision }, `orchestrator-http:release:${params.id}:${revision}`)
+      void runtime.deliveries.request().catch(error => ctx.logger.warn('Finding release dispatch: %s', String(error)))
+      return { finding: runtime.findings.store.get(params.id) ?? current, delivery, item: deliveryDecision(delivery) }
+    },
     'POST findings/:id/coordinate': async ({ params, body }) => {
       if (!runtime.findings) throw new PublicationError(409, 'Finding coordinator is not configured')
       if (!runtime.store.settings().coordination?.enabled) {
@@ -420,6 +432,11 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
       }
       const { instructionFile } = FindingCoordinationRequestSchema.parse(await body())
       return coordinateFinding(runtime.findings, params.id, instructionFile)
+    },
+    'GET deliveries/:id': ({ params }) => {
+      const delivery = runtime.deliveries?.store.get(params.id)
+      if (!delivery) throw new PublicationError(404, 'Delivery not found')
+      return { delivery }
     },
     'GET deliveries': () => ({ items: runtime.deliveries?.store.list() ?? [] }),
     'POST deliveries': async ({ body, localApproval }) => {

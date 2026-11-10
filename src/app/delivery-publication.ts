@@ -4,6 +4,7 @@ import { ticketDecisions } from './decision-inbox.ts'
 import { publicationAction, type LifecyclePublication } from './lifecycle-publication.ts'
 import { deliveryFingerprint, sameDeliveryRefs, type DeliveryCapabilityAdapters, type DeliveryEvidence, type DeliveryLease, type DeliveryResult, type DeliveryStore } from './feature-delivery.ts'
 import type { Store } from './store.ts'
+import { deliveryPhaseItem, phaseFacts } from './delivery-phase.ts'
 
 export function deliveryPublicationCapabilities(store: DeliveryStore, tickets: Store['tickets'], publication?: LifecyclePublication): DeliveryCapabilityAdapters {
   const exactScope = (lease: DeliveryLease): boolean => {
@@ -19,6 +20,15 @@ export function deliveryPublicationCapabilities(store: DeliveryStore, tickets: S
     // Only an existing explicitly prepared manifest can enter the protected publication workflow.
     const prepared = delivery.preparedPublication
     if (!prepared || !lease.bindings.environment || !publication || !exactScope(lease)) return
+    if (delivery.release) {
+      // Finding-origin delivery: the durable delivery is the typed phase owner; the ended implementation worker stays immutable history.
+      const item = deliveryPhaseItem(delivery)
+      if (!item || typeof phaseFacts(store.db, delivery.id) === 'string' || item.id !== prepared.decisionId || delivery.release.ticketId !== prepared.ticketId) return
+      const snapshot = await publication.service.snapshot(prepared.ticketId)
+      if (snapshot?.id !== prepared.id || snapshot.patchSha256 !== prepared.patchSha256 || snapshot.repository !== lease.bindings.repository || snapshot.headSha !== lease.bindings.headSha) return
+      if (!lease.bindings.refs?.some(ref => ref.repository === snapshot.repository && ref.pr === snapshot.prNumber && ref.headSha === snapshot.headSha)) return
+      return item
+    }
     for (const worker of delivery.workers) {
       const ticket = tickets.get(worker)
       if (!ticket || ticket.ended) continue // Preserve the existing active-release-owner fence.
@@ -94,7 +104,8 @@ export function deliveryPublicationCapabilities(store: DeliveryStore, tickets: S
         await publicationAction(publication, item, lease.bindings.repository, 'publish', { publicationId: prepared.id, requestId: lease.id }, authority.actor, () => {
           const current = store.get(lease.deliveryId)
           const ticket = item.ticketId ? tickets.get(item.ticketId) : undefined
-          return !lease.signal?.aborted && !!current && !!ticket && !ticket.ended && exactScope(lease) && deliveryFingerprint(current.bindings) === deliveryFingerprint(lease.bindings)
+          const owner = current?.release ? typeof phaseFacts(store.db, current.id) !== 'string' : !!ticket && !ticket.ended
+          return !lease.signal?.aborted && !!current && owner && exactScope(lease) && deliveryFingerprint(current.bindings) === deliveryFingerprint(lease.bindings)
             && deliveryFingerprint(current.preparedPublication) === deliveryFingerprint(prepared)
             && current.audit.some(a => a.actionId === lease.action.id && a.actor === authority.actor)
         })

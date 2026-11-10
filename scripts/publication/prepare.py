@@ -28,12 +28,16 @@ def main():
     parser.add_argument('--baseline-report', help='Reviewed immutable complete Vitest JSON report; not a failure count')
     parser.add_argument('--baseline-head', help='Actual 40-hex commit tested by the immutable baseline')
     parser.add_argument('--baseline-root', help='Original absolute checkout root in baseline JSON; defaults target')
+    parser.add_argument('--targeted-test', action='append', default=[], help='Finite tracked test path run instead of the full suite at build (repeatable); exclusive with a baseline')
     parser.add_argument('--timeout-ms', type=int, default=600000, help='Per-phase deadline in milliseconds, 1000..900000 (default 600000; includes build plus full tests)')
     args = parser.parse_args()
     if not 1000 <= args.timeout_ms <= 900000:
         raise RuntimeError('Publication timeout must be between 1000 and 900000 milliseconds')
     if bool(args.baseline_report) != bool(args.baseline_head) or (args.baseline_head and not re.fullmatch('[a-f0-9]{40}', args.baseline_head)):
         raise RuntimeError('Baseline report and exact baseline head must be provided together')
+    if args.targeted_test and (args.baseline_report or not 1 <= len(args.targeted_test) <= 50 or len(set(args.targeted_test)) != len(args.targeted_test)
+                               or not all(re.fullmatch(r'tests/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\.spec\.tsx?', t) and '..' not in t for t in args.targeted_test)):
+        raise RuntimeError('Invalid targeted test list')
     if not re.fullmatch(r'[\w.-]+/[\w.-]+', args.repository) or not args.pr.isdecimal() or int(args.pr) < 1:
         raise RuntimeError('Invalid repository/PR')
     source = Path(__file__).resolve().parent
@@ -58,6 +62,8 @@ def main():
     shutil.copy2(source / 'runner.py', release / 'publication-runner.py')
     plan = {'version': 1, 'repository': args.repository, 'headSha': head, 'patchSha256': pins['patchSha256'], 'target': str(target), 'pnpmPath': str(pnpm),
             'restartScript': asset(restart), 'verifyUrl': args.verify_url, 'verifyContains': args.verify_contains}
+    if args.targeted_test:
+        plan['targetedTests'] = list(args.targeted_test)
     baseline_dependencies = []
     if args.baseline_report:
         baseline_path = Path(args.baseline_report).resolve(strict=True)

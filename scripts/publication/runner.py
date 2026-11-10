@@ -109,8 +109,14 @@ def load_plan():
     plan_path = declared_asset(Path.cwd() / 'publication-plan.json')
     plan = json.loads(plan_path.read_text())
     required = {'version', 'repository', 'headSha', 'patchSha256', 'target', 'pnpmPath', 'restartScript', 'verifyUrl', 'verifyContains'}
-    if not required.issubset(plan) or set(plan) - required - {'baselineReport'} or plan['version'] != 1:
+    if not required.issubset(plan) or set(plan) - required - {'baselineReport', 'targetedTests'} or plan['version'] != 1:
         fail('Invalid publication plan schema')
+    if 'targetedTests' in plan:
+        # Finite tracked test paths are data validated here, never shell text; mutually exclusive with the full-suite baseline.
+        tests = plan['targetedTests']
+        if 'baselineReport' in plan or not isinstance(tests, list) or not 1 <= len(tests) <= 50 or len(set(tests)) != len(tests) \
+                or not all(isinstance(t, str) and re.fullmatch(r'tests/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\.spec\.tsx?', t) and '..' not in t for t in tests):
+            fail('Invalid targeted test list')
     if 'baselineReport' in plan:
         baseline = plan['baselineReport']
         if not {'path', 'sha256', 'baselineHead'}.issubset(baseline) or set(baseline) - {'path', 'sha256', 'baselineHead', 'root'} or not re.fullmatch('[a-f0-9]{40}', baseline['baselineHead']):
@@ -158,9 +164,12 @@ def main():
         return value
 
     def build():
-        run([plan['pnpmPath'], 'build'], root)
+        run([plan['pnpmPath'], '--config.verify-deps-before-run=false', 'build'], root)
+        if 'targetedTests' in plan:
+            run([plan['pnpmPath'], '--config.verify-deps-before-run=false', 'exec', 'vitest', 'run', '--cache=false'] + plan['targetedTests'], root)
+            return
         if 'baselineReport' not in plan:
-            run([plan['pnpmPath'], 'test'], root)
+            run([plan['pnpmPath'], '--config.verify-deps-before-run=false', 'test'], root)
             return
         baseline = plan['baselineReport']
         report = ledger_dir / (phase + '-tests.json')
@@ -168,7 +177,7 @@ def main():
         output = ledger_dir / (phase + '-test-output.log')
         reporter = Path.cwd() / 'publication-errors-reporter.cjs'
         with output.open('wb') as stream:
-            result = subprocess.run([plan['pnpmPath'], 'exec', 'vitest', 'run', '--cache=false', '--reporter=default', '--reporter=json', '--reporter=' + str(reporter), '--outputFile=' + str(report)],
+            result = subprocess.run([plan['pnpmPath'], '--config.verify-deps-before-run=false', 'exec', 'vitest', 'run', '--cache=false', '--reporter=default', '--reporter=json', '--reporter=' + str(reporter), '--outputFile=' + str(report)],
                                     cwd=root, env=dict(os.environ, PUBLICATION_ERRORS_REPORT=str(errors)), stdout=stream, stderr=subprocess.STDOUT)
         compare = runpy.run_path(str(Path.cwd() / 'publication-baseline.py'))['compare_reports']
         summary = compare(json.loads(Path(baseline['path']).read_text()), json.loads(report.read_text()), baseline.get('root', str(root)), str(root), result.returncode, json.loads(errors.read_text()))
@@ -184,7 +193,7 @@ def main():
             def redirect_request(self, req, fp, code, msg, headers, newurl):
                 fail('Verification redirect refused')
         opener = urllib.request.build_opener(NoRedirect(), urllib.request.ProxyHandler({}))
-        with opener.open(plan['verifyUrl'], timeout=10) as response:
+        with opener.open(urllib.request.Request(plan['verifyUrl'], headers={'x-orchestrator-request': '1'}), timeout=10) as response:
             data = response.read(1048577)
             if response.status != 200 or len(data) > 1048576 or plan['verifyContains'].encode() not in data:
                 fail('Expected publication verification marker absent')

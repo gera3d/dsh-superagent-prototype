@@ -30,6 +30,7 @@ def main():
     parser.add_argument('--review-approved', action='store_true', required=True, help='Explicit operator assertion that the supplied independent review approved this exact candidate')
     parser.add_argument('--review-completed-at', required=True, help='Actual ISO timestamp of the independent review, not recording time')
     parser.add_argument('--limitation', action='append', default=[])
+    parser.add_argument('--targeted-test', action='append', default=[], help='Finite tracked spec path replacing the full suite check; exclusive with a baseline')
     parser.add_argument('--baseline-report')
     parser.add_argument('--baseline-sha256', help='Reviewed immutable SHA-256, required with baseline report')
     parser.add_argument('--baseline-head')
@@ -37,13 +38,17 @@ def main():
     args = parser.parse_args()
     if args.baseline_report and (not args.baseline_sha256 or not re.fullmatch('[a-f0-9]{64}', args.baseline_sha256) or not args.baseline_head or not re.fullmatch('[a-f0-9]{40}', args.baseline_head)):
         raise RuntimeError('Baseline requires reviewed report hash and exact tested commit')
+    if args.targeted_test and (args.baseline_report or not 1 <= len(args.targeted_test) <= 50 or not all(re.fullmatch(r'tests/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\.spec\.tsx?', t) and '..' not in t for t in args.targeted_test)):
+        raise RuntimeError('Invalid targeted test list')
     if not re.fullmatch(r'[\w.-]+/[\w.-]+', args.repository) or not args.pr.isdecimal() or int(args.pr) < 1 or args.author == args.reviewer:
         raise RuntimeError('Invalid candidate or independent reviewer identity')
     worktree = Path(args.worktree).resolve(strict=True)
     # A linked disposable git worktree has a .git FILE, unlike installed primary checkout.
     if not (worktree / '.git').is_file():
         raise RuntimeError('Use a dedicated linked git review worktree, never an installed primary checkout')
-    if subprocess.check_output(['git', 'status', '--porcelain'], cwd=worktree, text=True).strip():
+    # The harness-provided dependency symlink is the only permitted untracked entry.
+    dirty = [l for l in subprocess.check_output(['git', 'status', '--porcelain'], cwd=worktree, text=True).splitlines() if l != '?? node_modules']
+    if dirty:
         raise RuntimeError('Exact-head review worktree must be clean')
     gh = Path(args.gh).resolve(strict=True)
     pnpm = Path(args.pnpm).resolve(strict=True)
@@ -71,16 +76,18 @@ def main():
     checks = []
     for name, argument in [('typecheck', 'typecheck'), ('tests', 'test'), ('build', 'build')]:
         report = output / (name + '.log')
-        command = [str(pnpm), argument]
+        command = [str(pnpm), '--config.verify-deps-before-run=false', argument]
         environment = dict(os.environ)
+        if name == 'tests' and args.targeted_test:
+            command = [str(pnpm), '--config.verify-deps-before-run=false', 'exec', 'vitest', 'run', '--cache=false'] + args.targeted_test
         if name == 'tests' and baseline:
             json_report, errors = output / 'vitest-results.json', output / 'vitest-errors.json'
             reporter = Path(__file__).resolve().parent / 'errors-reporter.cjs'
-            command = [str(pnpm), 'exec', 'vitest', 'run', '--cache=false', '--reporter=default', '--reporter=json', '--reporter=' + str(reporter), '--outputFile=' + str(json_report)]
+            command = [str(pnpm), '--config.verify-deps-before-run=false', 'exec', 'vitest', 'run', '--cache=false', '--reporter=default', '--reporter=json', '--reporter=' + str(reporter), '--outputFile=' + str(json_report)]
             environment['PUBLICATION_ERRORS_REPORT'] = str(errors)
         with report.open('wb') as stream:
             result = subprocess.run(command, cwd=worktree, env=environment, stdout=stream, stderr=subprocess.STDOUT, timeout=900)
-        exit_code, check_name = result.returncode, 'pnpm ' + argument
+        exit_code, check_name = result.returncode, ('pnpm exec vitest run (targeted: ' + ', '.join(args.targeted_test) + ')') if name == 'tests' and args.targeted_test else 'pnpm ' + argument
         if name == 'tests' and baseline:
             compare = runpy.run_path(str(Path(__file__).resolve().parent / 'baseline.py'))['compare_reports']
             if asset(baseline)['sha256'] != args.baseline_sha256:

@@ -228,7 +228,7 @@ async function phaseFixture(serveWrongRelease = false, useBaseline = false) {
   const log = join(config.cwd, 'fixture-commands.log')
   const pnpmPath = join(config.cwd, 'pnpm-stub')
   const restartPath = join(config.cwd, 'restart-stub')
-  writeFileSync(pnpmPath, `#!/bin/sh\nprintf 'pnpm %s\\n' "$*" >> '${log}'\n`); chmodSync(pnpmPath, 0o755)
+  writeFileSync(pnpmPath, `#!/bin/sh\n[ \"$1\" = --config.verify-deps-before-run=false ] || exit 9\nshift\nprintf 'pnpm %s\\n' "$*" >> '${log}'\n`); chmodSync(pnpmPath, 0o755)
   writeFileSync(restartPath, `#!/bin/sh\nprintf 'fixture-only %s\\n' "$*" >> '${log}'\n`); chmodSync(restartPath, 0o755)
   const server = createServer((_request, response) => { response.end(serveWrongRelease ? 'old listener without release identity' : `fixture release marker ${pins.headSha}`) })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
@@ -249,7 +249,7 @@ async function phaseFixture(serveWrongRelease = false, useBaseline = false) {
     }
     baselineDependencies.push(asset(baselinePath))
     baselineReport = { ...asset(baselinePath), baselineHead: 'c'.repeat(40), root: target }
-    writeFileSync(pnpmPath, `#!/usr/bin/python3\nimport json,os,sys\nargs=sys.argv[1:]\nwith open(${JSON.stringify(log)},'a') as f: f.write('pnpm '+args[0]+'\\n')\nif args[0]=='exec':\n report=json.loads(${JSON.stringify(JSON.stringify(report))})\n output=next(a.split('=',1)[1] for a in args if a.startswith('--outputFile='))\n with open(output,'w') as f: json.dump(report,f)\n with open(os.environ['PUBLICATION_ERRORS_REPORT'],'w') as f: json.dump({'reason':'failed','unhandledErrors':[]},f)\n sys.exit(1)\n`)
+    writeFileSync(pnpmPath, `#!/usr/bin/python3\nimport json,os,sys\nargs=sys.argv[1:]\nassert args.pop(0)=='--config.verify-deps-before-run=false'\nwith open(${JSON.stringify(log)},'a') as f: f.write('pnpm '+args[0]+'\\n')\nif args[0]=='exec':\n report=json.loads(${JSON.stringify(JSON.stringify(report))})\n output=next(a.split('=',1)[1] for a in args if a.startswith('--outputFile='))\n with open(output,'w') as f: json.dump(report,f)\n with open(os.environ['PUBLICATION_ERRORS_REPORT'],'w') as f: json.dump({'reason':'failed','unhandledErrors':[]},f)\n sys.exit(1)\n`)
   }
   writeFileSync(planPath, JSON.stringify({ version: 1, repository: pins.repository, headSha: pins.headSha, patchSha256: pins.patchSha256,
     target, pnpmPath, restartScript: asset(restartPath), verifyUrl: `http://127.0.0.1:${address.port}/health`, verifyContains: `fixture release marker ${pins.headSha}`, ...(baselineReport ? {baselineReport}: {}) }))

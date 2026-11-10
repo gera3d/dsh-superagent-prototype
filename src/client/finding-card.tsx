@@ -50,13 +50,24 @@ export async function revisitFinding(id: string, request: { revision: number }) 
   if (!response.ok) throw new Error(`Finding revisit rejected (${response.status}). Refresh before trying again; no automatic replay.`)
   return response.json()
 }
-export function FindingCard({ item, compact = false, onConfirm = request => confirmFinding(item.finding!.id, request), onRevisit = request => revisitFinding(item.finding!.id, request), onReview = request => reviewFinding(item.finding!.id, request), onRecordEvidence = request => recordFindingEvidence(item.finding!.id, request) }: {
-  item: PendingDecisionItem; compact?: boolean; onConfirm?: (request: FindingConfirmation) => Promise<unknown>; onRevisit?: (request: { revision: number }) => Promise<unknown>; onReview?: (request: FindingReview) => Promise<unknown>; onRecordEvidence?: (request: FindingEvidenceRecord & { revision: number }) => Promise<unknown>
+export async function releaseFinding(id: string, request: { revision: number }) {
+  const response = await fetch(`/orchestrator/api/findings/${encodeURIComponent(id)}/release`, {
+    method: 'POST', headers: { 'content-type': 'application/json', 'x-orchestrator-request': '1' }, body: JSON.stringify(request),
+  })
+  if (!response.ok) {
+    const detail = await response.json().catch(() => undefined) as { error?: unknown } | undefined
+    throw new Error(`${typeof detail?.error === 'string' && detail.error.trim() ? detail.error : 'Release preparation was rejected'} (${response.status}). Nothing was published; refresh before trying again.`)
+  }
+  return response.json()
+}
+export function FindingCard({ item, compact = false, onConfirm = request => confirmFinding(item.finding!.id, request), onRevisit = request => revisitFinding(item.finding!.id, request), onReview = request => reviewFinding(item.finding!.id, request), onRecordEvidence = request => recordFindingEvidence(item.finding!.id, request), onRelease = request => releaseFinding(item.finding!.id, request) }: {
+  item: PendingDecisionItem; compact?: boolean; onConfirm?: (request: FindingConfirmation) => Promise<unknown>; onRevisit?: (request: { revision: number }) => Promise<unknown>; onReview?: (request: FindingReview) => Promise<unknown>; onRecordEvidence?: (request: FindingEvidenceRecord & { revision: number }) => Promise<unknown>; onRelease?: (request: { revision: number }) => Promise<unknown>
 }) {
   const [busy, setBusy] = useState(false)
   const acting = useRef(false)
   const [error, setError] = useState<string>()
   const [confirmed, setConfirmed] = useState<string>()
+  const [releasedKey, setReleasedKey] = useState<string>()
   const [reviewedKey, setReviewedKey] = useState<string>()
   const [reviewOutcome, setReviewOutcome] = useState<{ key: string; value: 'verified' | 'no_repair_needed' }>()
   const [selectedEvidence, setSelectedEvidence] = useState<{ key: string; reference: string }>()
@@ -75,6 +86,14 @@ export function FindingCard({ item, compact = false, onConfirm = request => conf
   const evidenceReference = selectedEvidence?.key === key ? selectedEvidence.reference : ''
   const reviewAvailable = item.actionMode === 'finding_triage' && !item.invalidation && f.state === 'blocked' && confirmed !== key
   const recordEvidenceAvailable = item.actionMode === 'finding_triage' && !item.invalidation && !!f.job?.ticketId && ['running', 'blocked'].includes(f.state)
+  const releaseAvailable = item.actionMode === 'finding_triage' && !item.invalidation && f.state === 'blocked' && eligibleReports.length > 0 && releasedKey !== key
+  const release = async () => {
+    if (!releaseAvailable || acting.current) return
+    acting.current = true; setBusy(true); setError(undefined)
+    try { await onRelease({ revision: f.revision }); setReleasedKey(key) }
+    catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)) }
+    finally { acting.current = false; setBusy(false) }
+  }
   const evidenceIncomplete = !evidenceDraft.reference.trim() || !evidenceDraft.evidence.trim() || !evidenceDraft.nextDecision.trim()
   const review = async (decision: FindingReview['decision']) => {
     if (!reviewAvailable || acting.current || decision === 'accept_evidence' && (reviewedKey !== key || !eligibleReports.some(report => report.reference === evidenceReference))) return
@@ -121,6 +140,10 @@ export function FindingCard({ item, compact = false, onConfirm = request => conf
     {f.resolution && <p role="status">Finding review: {f.resolution.outcome === 'no_repair_needed' ? 'No repair needed' : 'Verified'} · {f.resolution.evidenceReference} · {f.resolution.actor} · {f.resolution.at}. This is not acceptance of the linked delivery.</p>}
     {f.state === 'running' && <p role="status">Work dispatched. Await linked execution evidence; idle, merge and worker completion do not resolve this finding.</p>}
     {f.blocker && <p role="status">Blocked: {f.blocker}</p>}
+    {releaseAvailable && <section aria-label="Review, test and prepare release"><h4>Review, test &amp; prepare release</h4>
+      <p role="note">One click starts, in this thread: open the source PR for the worker's exact committed head, independent Harness review, pinned checks, and the exact release package. Publish and accept stay separate confirmations. Nothing is merged or deployed.</p>
+      <Button variant="primary" disabled={busy} onClick={() => { void release() }}>{busy ? 'Preparing…' : 'Review, test & prepare release'}</Button></section>}
+    {releasedKey === key && <p role="status">Release preparation started for revision {f.revision}. Progress and the exact publish confirmation appear in this thread's delivery card.</p>}
     {reviewAvailable && <section aria-label="Finding review requirements"><h4>Bounded requirements to review</h4><p>{f.scope}</p><ul>{f.requirements.map(requirement => <li key={requirement}>{requirement}</li>)}</ul></section>}
     {recordEvidenceAvailable && <section aria-label="Record operator evidence"><h4>Record operator-reviewed evidence</h4>
       <p role="note">Observation only: recording evidence does not accept this finding or the linked delivery, queue work, merge, deploy, change scope or grant authority. Record only results you personally verified.</p>

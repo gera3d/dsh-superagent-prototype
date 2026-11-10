@@ -10,12 +10,14 @@ import type { Store } from './store.ts'
 import type { FindingStore } from './finding.ts'
 import type { ProgressStore } from './progress.ts'
 import { deriveDeliveryWork, readDeliveryWorkers, workerTicket } from './delivery-currency.ts'
+import { deliveryPhaseItem, phaseFacts } from './delivery-phase.ts'
 import { publicationProof, snapshotProof } from './publication-proof.ts'
 import { planReleaseHandoff, startReleaseHandoff, type HandoffContext, type StartHandoffRequest } from './delivery-handoff.ts'
 
 export function deliveryDecision(delivery: Delivery): PendingDecisionItem {
   const isHistorical = !!delivery.historicalCompletion || delivery.work?.state === 'superseded'
-  const action = isHistorical ? undefined : delivery.nextAction
+  const packaging = !!delivery.release && delivery.stage === 'ready_to_publish' && !delivery.preparedPublication && !delivery.blocker
+  const action = isHistorical || packaging ? undefined : delivery.nextAction
   const model = action && delivery.recommendation?.actionId === action.id && delivery.recommendation.kind === action.kind && delivery.recommendation.fingerprint === action.fingerprint ? delivery.recommendation : undefined
   const terminal = ['accepted', 'cancelled', 'abandoned'].includes(delivery.state)
   return {
@@ -27,7 +29,7 @@ export function deliveryDecision(delivery: Delivery): PendingDecisionItem {
     urgency: isHistorical ? 'low' : delivery.state === 'blocked' ? 'medium' : 'low',
     createdAt: Date.parse(delivery.audit[0]?.at ?? '') || 0,
     context: delivery.historicalCompletion ? delivery.historicalCompletion.caption : delivery.work ? `${delivery.work.state}; owner: ${delivery.work.owner}; ${delivery.work.progress ?? ''} ${delivery.work.nextStep}` : delivery.blocker ?? `${delivery.stage}: ${delivery.state}; owner: ${delivery.owner}`,
-    question: delivery.historicalCompletion ? delivery.historicalCompletion.caption : delivery.work?.nextStep ?? delivery.blocker ?? action?.label ?? `${delivery.stage}: ${delivery.state}`,
+    question: packaging ? 'Harness: run exact-head checks and prepare release; no user action yet' : delivery.historicalCompletion ? delivery.historicalCompletion.caption : delivery.work?.nextStep ?? delivery.blocker ?? action?.label ?? `${delivery.stage}: ${delivery.state}`,
     choices: action ? [{ id: action.id, label: action.label, actionKind: 'lifecycle' }] : [],
     recommendation: { recommendedValue: model?.disposition === 'take' ? model.actionId : '', confidence: 0,
       rationale: delivery.historicalCompletion ? 'Nonactionable completed history delivered by later release; no further action.' : model?.rationale ?? delivery.recommendationError?.message ?? (action ? 'Eligible action; Senior Developer advice is not available.' : 'No executable action is currently available.'),
@@ -155,6 +157,8 @@ export function reconcileInboxCurrency(inbox: DecisionInbox, deliveries: Deliver
 export interface DeliveryRuntimeOptions {
   lifetime?: AbortSignal
   publication?: LifecyclePublication
+  /** Builds the exact per-task release package (checks + manifest) after independent review; throws a blocker otherwise. */
+  packageRelease?: (delivery: Delivery, signal: AbortSignal) => Promise<void>
   recommend?: (delivery: Delivery, action: DeliveryAction) => Promise<NonNullable<Delivery['recommendation']>>
 }
 
@@ -237,10 +241,16 @@ export class FeatureDeliveryRuntime {
     if (delivery.stage !== 'ready_to_publish' || delivery.state !== 'awaiting_decision' || delivery.preparedPublication) return
     const publication = this.options.publication
     if (!publication || !delivery.bindings.environment) throw new Error('No configured protected publication capability or explicit deployment target.')
-    for (const worker of delivery.workers) {
+    const phase = delivery.release ? deliveryPhaseItem(delivery) : undefined
+    if (delivery.release) {
+      const facts = phaseFacts(this.store.db, delivery.id)
+      if (typeof facts === 'string') throw new Error(`Release phase is not current (${facts}). No publication is authorized.`)
+      await this.abortable(this.options.packageRelease?.(delivery, this.signal) ?? Promise.resolve())
+    }
+    for (const worker of phase ? [delivery.release!.ticketId] : delivery.workers) {
       const ticket = this.tickets.tickets.get(worker)
-      if (!ticket || ticket.ended) continue
-      const item = ticketDecisions([ticket])[0]
+      if (!ticket || (ticket.ended && !phase)) continue
+      const item = phase ?? ticketDecisions([ticket])[0]
       const ref = delivery.bindings.refs?.find(ref => ref.repository === delivery.bindings.repository && ref.headSha === delivery.bindings.headSha && ref.pr === item?.lifecycle?.prNumber)
       if (!item?.lifecycle || !ref) continue
       const pins = publication.pinsFor(ref.repository, ref.pr)
