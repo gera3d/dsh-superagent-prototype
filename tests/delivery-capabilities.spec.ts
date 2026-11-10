@@ -570,3 +570,13 @@ it('honors the explicit helper route for independent review without changing rou
   expect(h.resolve).toHaveBeenCalledWith({ provider: 'anthropic', model: 'sonnet' }, expect.any(AbortSignal))
   expect(store.settings().executor.model).toEqual({ provider: 'configured', model: 'executor' })
 })
+
+it('explains the separate final acceptance step without trusting worker-looking evidence as operator provenance', async () => {
+  const h = fixture(), d = deliveries.get('feature')!, action = d.nextAction!
+  h.setVerdict({ disposition: 'hold', actionId: action.id, fingerprint: action.fingerprint, rationale: 'No operator evidence for this review stage.' })
+  await recommendDeliveryAction(d, action, h.deps)
+  expect(h.stream).toHaveBeenCalledWith(expect.objectContaining({ system: expect.stringContaining('recommend the separate exact acceptance confirmation rather than demanding that acceptance already have happened') }))
+  const request = h.stream.mock.calls[0]![0] as { messages: unknown[] }
+  expect(JSON.stringify(request)).toContain('protectedOperatorLiveEvidence')
+  expect(deliveries.get(d.id)!.acceptance).toBeUndefined()
+})

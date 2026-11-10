@@ -18,7 +18,7 @@ export interface DeliveryEvidence {
   /** Explicit reconciled evidence IDs superseded in the same bound attempt; history remains intact. */
   supersedes?: string[]
 }
-export interface DeliveryRecommendation { kind: DeliveryActionKind; fingerprint: string; actionId: string; disposition: 'take' | 'hold'; rationale: string; provider: string; recordedAt: string }
+export interface DeliveryRecommendation { operatorEvidenceContextVersion?: 1; kind: DeliveryActionKind; fingerprint: string; actionId: string; disposition: 'take' | 'hold'; rationale: string; provider: string; recordedAt: string }
 export interface DeliveryScopeBinding { reason: string; sourceTriggerId: string }
 export interface DeliveryUnboundInput { ticketId: string; title: string; owner: string; repository: string; sourceIssue?: number; triggerId: string }
 export interface DeliveryAction { id: string; kind: DeliveryActionKind; label: string; revision: number; fingerprint: string }

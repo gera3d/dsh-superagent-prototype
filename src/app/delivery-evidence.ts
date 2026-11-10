@@ -105,3 +105,20 @@ export function recordLiveAttestation(store: DeliveryStore, id: string, request:
   const hash = deliveryFingerprint(operatorRequest)
   return recordOperatorEvidence(store, operatorRequest, hash, { source: 'local_operator', actor, reference: `orchestrator-http:live:${id}:${request.revision}`, scope: hash }, now)
 }
+
+/** Read-only provenance for advice. An operator-looking ID alone is not proof: reconstruct the exact audited request. */
+export function protectedLiveEvidenceFacts(delivery: Delivery) {
+  return delivery.evidence.flatMap(evidence => {
+    const prefix = `operator-live:${delivery.id}:`
+    if (!evidence.id.startsWith(prefix) || evidence.kind !== 'verification' || (evidence.generation ?? 0) !== delivery.generation || !same(evidence.bindings, delivery.bindings)) return []
+    const suffix = /^(\d+):[a-f0-9]{16}$/.exec(evidence.id.slice(prefix.length))
+    if (!suffix) return []
+    const revision = Number(suffix[1])
+    const { generation: _generation, ...original } = evidence
+    const hash = deliveryFingerprint({ deliveryId: delivery.id, revision, evidence: [original] })
+    const event = `operator-evidence:${hash}:orchestrator-http:live:${delivery.id}:${revision}`
+    const audit = delivery.audit.find(a => a.event === event && a.at === evidence.recordedAt && delivery.authorities.includes(a.actor))
+    if (!audit) return []
+    return [{ evidenceId: evidence.id, actor: audit.actor, recordedAt: audit.at, revision, outcome: evidence.outcome, requirements: evidence.requirements ?? [], reference: evidence.reference, source: 'protected-local-operator-live-attestation' as const }]
+  })
+}

@@ -11,6 +11,7 @@ import type { FindingStore } from './finding.ts'
 import type { ProgressStore } from './progress.ts'
 import { deriveDeliveryWork, readDeliveryWorkers, workerTicket } from './delivery-currency.ts'
 import { deliveryPhaseItem, phaseFacts } from './delivery-phase.ts'
+import { protectedLiveEvidenceFacts } from './delivery-evidence.ts'
 import { publicationProof, snapshotProof } from './publication-proof.ts'
 import { planReleaseHandoff, startReleaseHandoff, type HandoffContext, type StartHandoffRequest } from './delivery-handoff.ts'
 
@@ -335,6 +336,15 @@ export class FeatureDeliveryRuntime {
         })
         continue
       }
+      const saved = this.store.get(delivery.id)!
+      // Re-evaluate pre-upgrade acceptance advice once with the now-verifiable operator provenance.
+      // Preserve the old recommendation in audit; no execution authority or evidence changes.
+      if (saved.nextAction?.kind === 'accept' && saved.recommendation && saved.recommendation.operatorEvidenceContextVersion !== 1 && protectedLiveEvidenceFacts(saved).length) {
+        this.store.compareAndSwap(saved.id, saved.revision, d => {
+          d.audit.push({ at: new Date().toISOString(), actor: 'delivery-coordinator', event: `recommendation-context-upgrade:${JSON.stringify(d.recommendation)}` })
+          delete d.recommendation; delete d.recommendationError
+        })
+      }
       const current = this.store.get(delivery.id)!
       const action = current.nextAction
       const previous = current.recommendationError
@@ -346,7 +356,7 @@ export class FeatureDeliveryRuntime {
         this.signal.throwIfAborted()
         const recommendation = await this.abortable(this.options.recommend(advice, action))
         this.signal.throwIfAborted()
-        this.store.setRecommendation(current.id, current.revision, recommendation)
+        this.store.setRecommendation(current.id, current.revision, { ...recommendation, operatorEvidenceContextVersion: 1 })
       } catch (error) {
         if (this.signal.aborted) return
         const latest = this.store.get(delivery.id)!

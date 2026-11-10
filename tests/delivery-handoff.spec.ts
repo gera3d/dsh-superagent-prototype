@@ -156,3 +156,24 @@ it('renders an executable handoff control and an evidence control', async () => 
     expect(html2).toContain('proves none of your requirements')
   } finally { await runtime.stop() }
 })
+
+it('exposes operator provenance only for an exact current-binding protected live-evidence audit receipt', async () => {
+  const { protectedLiveEvidenceFacts } = await import('../src/app/delivery-evidence.ts')
+  const db = new DatabaseSync(':memory:'); cleanup.push(() => db.close())
+  const store = new DeliveryStore(db)
+  const bindings = { repository: 'org/repo', sourceIssue: 1, baseSha: BASE, headSha: HEAD }
+  const created = store.create({ id: 'provenance', title: 'v', owner: 'o', authorities: ['local-operator'], requirements: ['a'], bindings })
+  const verifying = store.compareAndSwap(created.id, created.revision, d => {
+    d.stage = 'verifying'; d.state = 'awaiting_decision'
+    for (const kind of ['publication', 'verification'] as const) d.evidence.push({ id: kind, kind, bindings, recordedAt: at, reference: 'publication:test', outcome: 'passed', generation: 0 })
+  })
+  const recorded = recordLiveAttestation(store, created.id, { revision: verifying.revision, requirements: ['a'], reference: 'https://example.test/later-documentation-commit' }, 'local-operator')
+  expect(protectedLiveEvidenceFacts(recorded)).toEqual([expect.objectContaining({ source: 'protected-local-operator-live-attestation', actor: 'local-operator', outcome: 'passed', requirements: ['a'] })])
+  expect(recorded.acceptance).toBeUndefined()
+  expect(protectedLiveEvidenceFacts({ ...recorded, audit: [] })).toEqual([])
+  expect(protectedLiveEvidenceFacts({ ...recorded, authorities: ['other'] })).toEqual([])
+  expect(protectedLiveEvidenceFacts({ ...recorded, generation: recorded.generation + 1 })).toEqual([])
+  expect(protectedLiveEvidenceFacts({ ...recorded, bindings: { ...bindings, headSha: 'c'.repeat(40) } })).toEqual([])
+  const forged = structuredClone(recorded); forged.evidence.at(-1)!.reference = 'https://example.test/forged'
+  expect(protectedLiveEvidenceFacts(forged)).toEqual([])
+})
