@@ -1,0 +1,57 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/github-quota-repair/review-r5
+
+ ❯ tests/root-quota-real-headers.spec.ts (2 tests | 1 failed) 34ms
+   × does not retry before a supplied server Retry-After deadline 24ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/root-quota-real-headers.spec.ts > does not retry before a supplied server Retry-After deadline
+AssertionError: expected 3600 to be greater than or equal to 7200
+ ❯ tests/root-quota-real-headers.spec.ts:10:66
+      8| })
+      9| it('does not retry before a supplied server Retry-After deadline',()=>{
+     10|  expect(cooldownSeconds({kind:'secondary',retryAfter:7200},0,0)).toBeG…
+       |                                                                  ^
+     11| })
+     12|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  19:02:25
+   Duration  1.45s (transform 142ms, setup 0ms, import 404ms, tests 34ms, environment 0ms)
+
+
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/github-quota-repair/review-r5
+
+(node:26789) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/root-quota-round-audit.spec.ts (72 tests | 1 failed | 71 skipped) 134ms
+   × root quota: stop further source requests after a notifications quota response 130ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/root-quota-round-audit.spec.ts > root quota: stop further source requests after a notifications quota response
+AssertionError: expected [ …(4) ] to have a length of 1 but got 4
+
+- Expected
++ Received
+
+- 1
++ 4
+
+ ❯ tests/root-quota-round-audit.spec.ts:1459:65
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 71 skipped (72)
+   Start at  19:03:37
+   Duration  2.86s (transform 1.64s, setup 0ms, import 2.26s, tests 134ms, environment 0ms)
+
