@@ -1,0 +1,44 @@
+{
+  "observedAt": "2026-11-10T09:43:46.539256+00:00",
+  "findingId": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+  "revision": 4,
+  "jobId": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r3",
+  "ticketId": "bfa376e3fc52c5fc1d59aa92a5dd7797",
+  "assignmentId": "06af9694edd6dd70ffb10c4536bc89dc",
+  "currentReport": "blocked: Finding worker turn ended without a recorded status report.",
+  "actualTerminalEvents": [
+    {
+      "type": "turn/end",
+      "seq": 22,
+      "time": 1794300663174,
+      "reason": {
+        "kind": "error",
+        "error": {
+          "message": "All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown) (earliest reset in 13305s). Add an account, wait for reset, or run /agy clear-cooldown.",
+          "code": "AGY_ERROR"
+        }
+      }
+    },
+    {
+      "type": "turn/end",
+      "seq": 500,
+      "time": 1794301374450,
+      "reason": {
+        "kind": "max-tokens"
+      }
+    }
+  ],
+  "codeDirectory": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-bfa376e3fc52/code",
+  "baseHead": "c87912787e6986ff92ec8144f89ac2e2d69220ad",
+  "workingFiles": [
+    "src/app/delivery-phase.ts",
+    "src/app/delivery-runtime.ts",
+    "src/app/feature-delivery.ts",
+    "src/app/finding-release.ts",
+    "src/app/runtime.ts"
+  ],
+  "workingPatchSha256": "192222ee4baeb89c0eed5bd42cd6b0664bb69a44a95ba88a461500f7dc766d47",
+  "preservedPatch": "/Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/coordinator/lane1-r3-preserved-working.patch",
+  "qualification": "Uncommitted implementation only; no current r3 ready report, immutable revised head or qualification evidence. Original r1 ready report was rejected and does not qualify r3.",
+  "nextStage": "Supported same-finding bounded retry: reuse preserved r3 code, finish actual phase/package regression and relevant checks, commit immutable candidate, file current native report. No new feature, provider setting or release action authorized by this observation."
+}
