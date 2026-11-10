@@ -7,6 +7,7 @@ This changelog tracks all custom features, architectural enhancements, and upstr
 ## Unreleased — 2026-11-10
 
 ### Added
+- **Restart keeps the Decisions key**: `scripts/dsh-superagent start`/`restart` load `OPENROUTER_API_KEY` from `~/.zshrc` into the tmux pane when it is unset, so Jev survives restarts without manual `tmux set-environment` steps.
 - **Thread-native review/test/release handoff**: a finding's source thread can schedule independent review, targeted tests, release preparation and protected publication; evidence and final acceptance stay separate protected steps (PR86, PR89, PR90).
 - **Legacy delivery reconciliation**: historical deliveries completed by a later release are shown as completed history, with original pins and evidence preserved (PR80).
 - **Completed-advice history**: finished recommendation cards move to history and no longer appear as pending decisions (PR77, PR78).

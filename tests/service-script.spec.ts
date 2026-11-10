@@ -136,7 +136,12 @@ it('records the service PID at start, and still refuses a second instance the sc
   const checkout = realpathSync(root)
   expect(tmux).toEqual(expect.arrayContaining(['-P', '-F', '#{pane_pid}', '-c', checkout]))
   const log = new RegExp(`>> '${checkout}/\\.artifacts/dsh-superagent-superagent-\\d{8}-\\d{6}-\\d+\\.log' 2>&1$`)
-  expect(tmux.find(word => word.startsWith('umask 077; exec '))).toMatch(log)
+  const command = tmux.find(word => word.startsWith('umask 077; '))
+  expect(command).toMatch(log)
+  // tmux does not inherit the shell's environment, so the pane loads the Decisions key from ~/.zshrc itself, only when unset.
+  expect(command).toContain(`[ -n "\${OPENROUTER_API_KEY:-}" ] || eval "$(grep -E '^export OPENROUTER_API_KEY=' "$HOME/.zshrc"`)
+  expect(command).toMatch(/; exec /)
+  expect(command).not.toMatch(/sk-or-/)
   const second = sleeper()
   started(service(pid), `${second} node node /opt/dsh --profile superagent`)
   const again = await run('start', '--url', url, '--timeout', '10')

@@ -106,6 +106,8 @@ scripts/dsh-superagent status
 
 `start` runs `dsh --profile superagent` in tmux session `dsh-superagent`, or `dsh-<profile>` for another profile. It waits up to one minute for the runtime to become ready or report a setup requirement. On a first run it prints the missing setup information. It refuses duplicate instances, including ones started outside this script.
 
+`start` and `restart` pass secrets the service needs into the tmux pane, because tmux does not inherit them from the calling shell. For each name in `SECRET_VARS` (today `OPENROUTER_API_KEY`, the Decisions key variable), the pane loads the last `export NAME=...` line from `~/.zshrc` when the variable is not already set. Nothing is printed or logged. Save the key once in `~/.zshrc`; a plain `scripts/dsh-superagent restart` then keeps Jev working. To add another variable, extend `SECRET_VARS` in the script.
+
 `stop` and `restart` request graceful shutdown and wait up to five minutes for Executors. They never force-kill the process or touch other tmux sessions.
 
 `status` prints process ids, health and setup problems. For a different profile or port, use `--profile` and `--url`, or set `DSH_SUPERAGENT_PROFILE` and `DSH_SUPERAGENT_URL`.
