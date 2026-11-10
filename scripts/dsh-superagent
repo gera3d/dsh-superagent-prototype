@@ -25,6 +25,9 @@ ROOT = Path(__file__).resolve().parent.parent
 ARTIFACTS = ROOT / '.artifacts'
 CONTROL = ARTIFACTS / 'control'
 KEEP_LOGS = 20
+# Secrets the service needs but tmux does not inherit from the calling shell. `start` loads each one from `~/.zshrc`
+# (the `export NAME=...` line) inside the tmux pane when it is not already set. Values are never read or printed here.
+SECRET_VARS = ('OPENROUTER_API_KEY',)
 
 
 def control(profile):
@@ -148,6 +151,17 @@ def stop(args, intentional=True):
     print('dsh-superagent stopped. Automatic recovery is paused until start/restart.' if intentional else 'dsh-superagent stopped.')
 
 
+def secrets_prefix(names=SECRET_VARS):
+    """Return a shell snippet that loads each unset variable in `names` from the matching `export` line of `~/.zshrc`."""
+    parts = []
+    for name in names:
+        if not re.fullmatch(r'[A-Z][A-Z0-9_]*', name):
+            raise ValueError('Invalid variable name: ' + name)
+        pattern = shlex.quote('^export ' + name + '=')
+        parts.append(f'[ -n "${{{name}:-}}" ] || eval "$(grep -E {pattern} "$HOME/.zshrc" 2>/dev/null | tail -n 1)";')
+    return ' '.join(parts)
+
+
 def prune_logs(profile):
     """Retain only the newest `KEEP_LOGS` log files for `profile`."""
     name = re.compile(re.escape(f'dsh-superagent-{profile}-') + r'\d{8}-\d{6}-\d+\.log')
@@ -174,7 +188,7 @@ def start(args):
         log.touch()
         prune_logs(args.profile)
         # `exec` replaces the shell so the pane PID printed by tmux is the DSH service process itself.
-        command = ('umask 077; exec ' + shlex.join([dsh, '--profile', args.profile, '--no-open'])
+        command = ('umask 077; ' + secrets_prefix() + ' exec ' + shlex.join([dsh, '--profile', args.profile, '--no-open'])
                    + ' >> ' + shlex.quote(str(log)) + ' 2>&1')
         # Reuse an existing tmux session without disturbing other windows.
         target = ['new-window', '-t', '=' + session + ':'] if exists else ['new-session', '-s', session]
