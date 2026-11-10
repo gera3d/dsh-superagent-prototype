@@ -128,7 +128,7 @@ it('lists the settings groups stages first, opens each stage\'s group from its s
   async () => {
   await mount()
   await click(tab(zh['tab.settings']))
-  expect(all('.dt-settings-link').map(link => link.textContent)).toEqual(['来源', '评估', '执行', '角色', '提示词', '品牌', '部署'])
+  expect(all('.dt-settings-link').map(link => link.textContent)).toEqual(['来源', '评估', '执行', '角色', '提示词', '决策', '品牌', '部署'])
   expect(document.querySelector('.dt-settings-link[aria-current="page"]')?.textContent).toBe(zh['term.source'])
   for (const [tab, group] of [['来源', '来源'], ['评估', '评估'], ['执行', '执行']] as const) {
     await click(find(tab, '[role="tab"]'))
@@ -136,7 +136,7 @@ it('lists the settings groups stages first, opens each stage\'s group from its s
     expect(document.querySelector('.dt-settings-link[aria-current="page"]')?.textContent).toBe(group)
   }
   // Every group link opens its own page, in the order the navigation lists them.
-  for (const group of ['来源', '评估', '执行', '角色', '提示词', '品牌', '部署'] as const) {
+  for (const group of ['来源', '评估', '执行', '角色', '提示词', '决策', '品牌', '部署'] as const) {
     await click(find(group, '.dt-settings-link'))
     expect(document.querySelector('.dt-settings-link[aria-current="page"]')?.textContent).toBe(group)
     expect(document.querySelector('.dt-settings-title')?.textContent).toBe(group)

@@ -451,6 +451,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/publication-cards.tsx` | Shared privileged renderer service and conversation dock; never stages a chat response |
 | `src/client/decisions.tsx` | The Decisions tab: actionable Human-in-the-Loop decision inbox and real-time decision playground |
 | `src/client/branding-mark.tsx`, `branding-settings.tsx` | Custom branding mark presentation and settings configuration |
+| `src/client/decisions-settings.tsx` | Decisions settings section: ranker provider, model, endpoint and key variable name, with a one-click Jev through OpenRouter fill |
 | `src/client/decision-card.tsx` | Recommendation presentation with explicit callback failure handling and stage-only preparation status; never invents choice scores. |
 | `src/client/decision-handoff.tsx` | Reactive Decisions-to-native-composer handoff through the shared staging bridge, independent of Workstream installation. |
 | `src/client/inline-decision.css` | Responsive, composer-scoped presentation for the inline decision dock |
@@ -518,6 +519,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/client-guard.spec.ts` | Guards the client runtime import graph against Node built-ins and server-only modules |
 | `tests/character.spec.ts`, `tests/characters.spec.ts`, `tests/characters-panel.spec.tsx` | Autopilot character profile definitions, evaluator behaviour, and Characters settings panel |
 | `tests/branding.spec.tsx` | Custom branding mark rendering and settings configuration |
+| `tests/decisions-settings.spec.tsx` | Decisions settings section lists, fills Jev through OpenRouter and saves the block |
 | `tests/quiet-notifications.spec.ts` | Notification quiet mode and sound settings |
 | `tests/stage.spec.ts` | The Ticket stages, row by row |
 | `tests/policy.spec.ts` | Source scope, the gate, the admission table, Mandate revalidation, the Policy version, settings migrations and assessment outcomes |
