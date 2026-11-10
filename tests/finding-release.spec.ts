@@ -113,7 +113,7 @@ it('refuses to reuse an open PR at another head and a tampered pinned script', a
   const stale = new FindingRelease({ stateDir: f.state, profile: () => f.profile, store: f.store, ticket: () => f.ticket, publicationBusy: () => undefined,
     exec: async c => c.executable === f.profile.ghPath ? JSON.stringify([{ number: 3, headRefOid: 'f'.repeat(40), baseRefName: 'main' }]) : executePublicationCommand(c) })
   await expect(stale.prepare(f.finding, { revision: 3 }, 'r')).rejects.toThrow('not at the reviewed head')
-  const g = fixture(); writeFileSync(g.profile.scripts.verify.path, 'echo evil\n')
+  const g = fixture(); writeFileSync(g.profile.scripts!.verify.path, 'echo evil\n')
   await expect(g.release.prepare(g.finding, { revision: 3 }, 'r')).rejects.toThrow('missing or changed')
   expect(existsSync(join(g.state, 'publication-runner.json'))).toBe(false)
 })

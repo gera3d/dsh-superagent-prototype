@@ -23,7 +23,7 @@ import { FeatureDeliveryRuntime } from './delivery-runtime.ts'
 import { FindingRuntime } from './finding-runtime.ts'
 import { FindingRelease, busyPublication, loadReleaseProfile } from './finding-release.ts'
 import { FilePublicationPersistence } from './publication-persistence.ts'
-import { DeliveryStore, type DeliveryCapabilityAdapters } from './feature-delivery.ts'
+import { DeliveryStore, type Delivery, type DeliveryCapabilityAdapters } from './feature-delivery.ts'
 import { createDeliveryCapabilities, recommendDeliveryAction } from './delivery-capabilities.ts'
 import { deliveryPublicationCapabilities } from './delivery-publication.ts'
 import type { Deployment, Machine } from '../deployment.ts'
@@ -186,18 +186,20 @@ export class Runtime extends Service implements SourceHost {
         } })
       const deliveryDeps = { ctx, store, commands, engine, lifetime: this.lifetime }
       this.usage = new JobUsageReader(ctx)
+      let packageRelease: ((delivery: Delivery, signal: AbortSignal) => Promise<void>) | undefined
       this.deliveries = new FeatureDeliveryRuntime(store, {
         ...createDeliveryCapabilities(deliveryDeps),
         ...deliveryPublicationCapabilities(new DeliveryStore(store.db), store.tickets, this.publication),
         ...deliveryCapabilities,
       }, {
-        lifetime: this.lifetime, publication: this.publication,
+        lifetime: this.lifetime, publication: this.publication, packageRelease: (delivery, signal) => packageRelease?.(delivery, signal) ?? Promise.resolve(),
         recommend: (delivery, action) => recommendDeliveryAction(delivery, action, deliveryDeps),
       })
       this.findings = new FindingRuntime({ ...deliveryDeps, repository: () => setup.deployment.repository,
         isQuiescent: ticket => this.executor.quiescent(ticket), workerBusy: ticket => this.executor.running(ticket) })
       this.release = new FindingRelease({ stateDir: machine.stateDir, profile: () => loadReleaseProfile(machine.stateDir), store: this.deliveries.store,
         ticket: id => store.tickets.get(id), publicationBusy: () => busyPublication(() => new FilePublicationPersistence(join(machine.stateDir, 'publication-state.json')).peek()) })
+      packageRelease = (delivery, signal) => this.release.packageRelease(delivery, signal)
       // Update the `evals` health entry on every pass if an evaluation failed as unavailable within the last hour.
       const evals = board.claim('evals', { state: 'ready', detail: 'No unavailable Eval in the last hour' })
       const evaluateDue = () => {

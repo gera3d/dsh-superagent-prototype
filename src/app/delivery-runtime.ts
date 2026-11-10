@@ -156,6 +156,8 @@ export function reconcileInboxCurrency(inbox: DecisionInbox, deliveries: Deliver
 export interface DeliveryRuntimeOptions {
   lifetime?: AbortSignal
   publication?: LifecyclePublication
+  /** Builds the exact per-task release package (checks + manifest) after independent review; throws a blocker otherwise. */
+  packageRelease?: (delivery: Delivery, signal: AbortSignal) => Promise<void>
   recommend?: (delivery: Delivery, action: DeliveryAction) => Promise<NonNullable<Delivery['recommendation']>>
 }
 
@@ -242,6 +244,7 @@ export class FeatureDeliveryRuntime {
     if (delivery.release) {
       const facts = phaseFacts(this.store.db, delivery.id)
       if (typeof facts === 'string') throw new Error(`Release phase is not current (${facts}). No publication is authorized.`)
+      await this.abortable(this.options.packageRelease?.(delivery, this.signal) ?? Promise.resolve())
     }
     for (const worker of phase ? [delivery.release!.ticketId] : delivery.workers) {
       const ticket = this.tickets.tickets.get(worker)

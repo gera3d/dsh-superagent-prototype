@@ -109,8 +109,14 @@ def load_plan():
     plan_path = declared_asset(Path.cwd() / 'publication-plan.json')
     plan = json.loads(plan_path.read_text())
     required = {'version', 'repository', 'headSha', 'patchSha256', 'target', 'pnpmPath', 'restartScript', 'verifyUrl', 'verifyContains'}
-    if not required.issubset(plan) or set(plan) - required - {'baselineReport'} or plan['version'] != 1:
+    if not required.issubset(plan) or set(plan) - required - {'baselineReport', 'targetedTests'} or plan['version'] != 1:
         fail('Invalid publication plan schema')
+    if 'targetedTests' in plan:
+        # Finite tracked test paths are data validated here, never shell text; mutually exclusive with the full-suite baseline.
+        tests = plan['targetedTests']
+        if 'baselineReport' in plan or not isinstance(tests, list) or not 1 <= len(tests) <= 50 or len(set(tests)) != len(tests) \
+                or not all(isinstance(t, str) and re.fullmatch(r'tests/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\.spec\.tsx?', t) and '..' not in t for t in tests):
+            fail('Invalid targeted test list')
     if 'baselineReport' in plan:
         baseline = plan['baselineReport']
         if not {'path', 'sha256', 'baselineHead'}.issubset(baseline) or set(baseline) - {'path', 'sha256', 'baselineHead', 'root'} or not re.fullmatch('[a-f0-9]{40}', baseline['baselineHead']):
@@ -159,6 +165,9 @@ def main():
 
     def build():
         run([plan['pnpmPath'], 'build'], root)
+        if 'targetedTests' in plan:
+            run([plan['pnpmPath'], 'exec', 'vitest', 'run', '--cache=false'] + plan['targetedTests'], root)
+            return
         if 'baselineReport' not in plan:
             run([plan['pnpmPath'], 'test'], root)
             return
