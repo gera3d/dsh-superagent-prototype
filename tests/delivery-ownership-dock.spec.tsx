@@ -26,9 +26,12 @@ it('keeps superseded typed delivery history in its actual old conversation while
     state.items[1]!.delivery!.work = { state: 'awaiting_direction', owner: 'user', nextStep: 'Choose a Senior Developer next step in this conversation.' }
     await act(async () => root.render(<PublicationDock sessionId="worker-active" />))
     expect(container.textContent).toContain('Ready for your next step')
-    expect(container.textContent).toContain('Preparing a reply does not merge or publish it')
     expect(container.textContent).not.toContain('owned / in progress')
     expect(container.querySelectorAll('button')).toHaveLength(0)
+    state.items[1]!.delivery!.handoff = { status: 'ready', owner: 'You', missing: [], starts: ['Independent Harness review'] } as any
+    await act(async () => root.render(<PublicationDock sessionId="worker-active" />))
+    expect(container.textContent).toContain('Release handoff: ready to start')
+    expect([...container.querySelectorAll('button')].map(b => b.textContent)).toEqual(['Start review, tests and release preparation'])
     expect(state.call).not.toHaveBeenCalled()
   } finally { await act(async () => root.unmount()) }
 })

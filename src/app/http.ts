@@ -21,6 +21,7 @@ import { LifecycleRequest, enrichLifecycle, lifecycleAction, type LifecycleComma
 import type { LifecyclePublication } from './lifecycle-publication.ts'
 import { PublicationError } from './publication.ts'
 import { DeliveryConflict, deliveryFingerprint } from './feature-delivery.ts'
+import { recordLiveAttestation } from './delivery-evidence.ts'
 import { DeliveryIntakeRequest } from './delivery-intake.ts'
 import { FindingIntakeSchema, FindingConfirmSchema, FindingReviewSchema, FindingError, findingDecision } from './finding.ts'
 import type { FindingRuntime } from './finding-runtime.ts'
@@ -450,6 +451,21 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
       const delivery = runtime.deliveries.store.resume(params.id, request.revision, { actor: 'local-operator', source: 'local_operator',
         reference: `orchestrator-http:reconcile:${params.id}:${request.revision}:${request.actionId}`, scope: current.reconciliation.actionId }, request.actionId)
       void runtime.deliveries.request().catch(error => ctx.logger.warn('Delivery reconciliation: %s', String(error)))
+      return { delivery, item: deliveryDecision(delivery) }
+    },
+    'POST deliveries/:id/prepare': async ({ params, body, localApproval }) => {
+      if (!localApproval) throw new PublicationError(403, 'Explicit local operator release handoff required')
+      if (!runtime.deliveries) throw new PublicationError(409, 'Delivery coordinator is not configured')
+      const request = z.object({ revision: z.number().int().positive(), requirements: z.array(z.string()).max(20) }).strict().parse(await body())
+      const delivery = runtime.deliveries.prepareHandoff(params.id, request)
+      return { delivery, item: deliveryDecision(delivery) }
+    },
+    'POST deliveries/:id/evidence': async ({ params, body, localApproval }) => {
+      if (!localApproval) throw new PublicationError(403, 'Explicit local operator live evidence required')
+      if (!runtime.deliveries) throw new PublicationError(409, 'Delivery coordinator is not configured')
+      const request = z.object({ revision: z.number().int().positive(), requirements: z.array(z.string().max(500)).min(1).max(100), reference: z.string().max(2000), outcome: z.enum(['passed', 'failed']).optional() }).strict().parse(await body())
+      const delivery = recordLiveAttestation(runtime.deliveries.store, params.id, request, 'local-operator')
+      void runtime.deliveries.request().catch(error => ctx.logger.warn('Delivery live evidence: %s', String(error)))
       return { delivery, item: deliveryDecision(delivery) }
     },
     'POST deliveries/:id/recheck': async ({ params, body, localApproval }) => {

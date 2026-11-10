@@ -6,7 +6,7 @@ import { closeSync, constants, existsSync, fstatSync, lstatSync, openSync, readS
 import { createHash } from 'node:crypto'
 import { mkdir, rmdir, stat } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { key, latestAssignment, latestReport, liveTicket, runningAssignment, threadKey, waitsForPerson } from '../core/index.ts'
+import { key, latestAssignment, latestReport, liveTicket, reached, runningAssignment, threadKey, waitsForPerson, UserError } from '../core/index.ts'
 import type { AssessmentOutcome, Assignment, EngineForExecutor, Escalation, Execution, Executor, Mandate, PolicyEffect, ReportState, Ticket, TicketInput,
   Trigger } from '../core/index.ts'
 import type { Machine } from '../deployment.ts'
@@ -908,13 +908,33 @@ export class DshExecutor implements Executor {
           return
         }
 
-        updated = this.host.engine.report(ticket.id, {
+        let answersTriggerId: string | undefined
+        if (fileReport.reply_to_trigger_id) {
+          const replyTrigger = this.host.store.triggers.get(fileReport.reply_to_trigger_id)
+          if (!replyTrigger) return
+          const isReached = reached(currentTicket, replyTrigger, k => (this.host.store as any).threads?.get(k), false)
+          if (!isReached) return
+          if (replyTrigger.human) {
+            answersTriggerId = fileReport.reply_to_trigger_id
+          }
+        }
+        let askedByTriggerId: string | undefined
+        if (fileReport.question_for_trigger_id) {
+          const askedTrigger = this.host.store.triggers.get(fileReport.question_for_trigger_id)
+          if (!askedTrigger || !askedTrigger.human) return
+          const isReached = reached(currentTicket, askedTrigger, k => (this.host.store as any).threads?.get(k), false)
+          if (!isReached) return
+          askedByTriggerId = fileReport.question_for_trigger_id
+        }
+
+        const reportPayload = {
           state: fileReport.state,
           summary: fileReport.summary,
           ...(fileReport.human_action !== undefined ? { question: fileReport.human_action } : {}),
-          ...(fileReport.question_for_trigger_id ? { askedBy: fileReport.question_for_trigger_id } : {}),
-          ...(fileReport.reply_to_trigger_id ? { answers: fileReport.reply_to_trigger_id } : {}),
-        })
+          ...(askedByTriggerId ? { askedBy: askedByTriggerId } : {}),
+          ...(answersTriggerId ? { answers: answersTriggerId } : {}),
+        }
+        updated = this.host.engine.report(ticket.id, reportPayload)
         if (updated) {
           const freshTicket = this.host.store.tickets.get(ticket.id)
           if (freshTicket) {
@@ -1476,9 +1496,11 @@ export function currentTurnOf(agent?: Agent | null, assignment?: Assignment | nu
           for (let i = events.length - 1; i >= 0; i--) {
             const e = events[i] as any
             if (!e) continue
-            if (e.type === 'turn/start' && typeof e.data?.turn === 'number') return e.data.turn
-            if (e.type === 'assistant/message' && typeof e.data?.turn === 'number') return e.data.turn
-            if (e.type === 'step/start' && typeof e.data?.turn === 'number') return e.data.turn
+            if (['turn/start', 'turn/end', 'assistant/message', 'step/start', 'step/end', 'user/message'].includes(e.type)) {
+              const turn = e.data?.turn
+              if (typeof turn === 'number' && !Number.isNaN(turn)) return turn
+              if (typeof turn === 'string' && turn.trim().length > 0) return turn.trim()
+            }
           }
         }
       } catch {}

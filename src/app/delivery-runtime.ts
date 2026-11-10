@@ -11,6 +11,7 @@ import type { FindingStore } from './finding.ts'
 import type { ProgressStore } from './progress.ts'
 import { deriveDeliveryWork, readDeliveryWorkers, workerTicket } from './delivery-currency.ts'
 import { publicationProof, snapshotProof } from './publication-proof.ts'
+import { planReleaseHandoff, startReleaseHandoff, type HandoffContext, type StartHandoffRequest } from './delivery-handoff.ts'
 
 export function deliveryDecision(delivery: Delivery): PendingDecisionItem {
   const isHistorical = !!delivery.historicalCompletion || delivery.work?.state === 'superseded'
@@ -61,10 +62,11 @@ export function reconcileDeliveryAdvice(items: PendingDecisionItem[], deliveries
   })
 }
 
-export function projectDeliveries(store: DeliveryStore, items: PendingDecisionItem[]): PendingDecisionItem[] {
+export function projectDeliveries(store: DeliveryStore, items: PendingDecisionItem[], handoff?: HandoffContext): PendingDecisionItem[] {
   const stored = store.list()
   const work = deriveDeliveryWork(stored, readDeliveryWorkers(store.db))
-  const deliveries = stored.map(delivery => ({ ...delivery, work: delivery.workers.map(worker => work.get(workerTicket(worker))).find(Boolean) }))
+  const deliveries = stored.map(delivery => ({ ...delivery, work: delivery.workers.map(worker => work.get(workerTicket(worker))).find(Boolean),
+    ...(handoff && delivery.scopeBinding && !delivery.historicalCompletion ? { handoff: planReleaseHandoff(delivery, handoff).handoff } : {}) }))
   const ids = new Set(deliveries.map(d => `delivery-${d.id}`))
   const workers = new Set(deliveries.flatMap(d => d.workers))
   return [...reconcileDeliveryAdvice(items, deliveries).filter(i => !ids.has(i.id)
@@ -186,7 +188,16 @@ export class FeatureDeliveryRuntime {
     })
   }
   project(items: PendingDecisionItem[]): PendingDecisionItem[] {
-    return projectDeliveries(this.store, items)
+    return projectDeliveries(this.store, items, this.handoffContext())
+  }
+  private handoffContext(): HandoffContext {
+    return { ticket: id => this.tickets.tickets.get(id), ...(this.options.publication ? { publication: this.options.publication } : {}) }
+  }
+  /** Bind an unbound delivery under the protected local click, then wake the coordinator so delegated routine steps actually run. */
+  prepareHandoff(id: string, request: StartHandoffRequest): Delivery {
+    const delivery = startReleaseHandoff(this.store, this.handoffContext(), id, request, `orchestrator-http:prepare:${id}:${request.revision}`)
+    void this.request().catch(() => undefined)
+    return delivery
   }
   /** A bounded pass; wakeups coalesce rather than concurrently dispatching the same handoff. */
   request(): Promise<void> {

@@ -82,11 +82,18 @@ it('keeps advice failure nonblocking for an eligible action', async () => {
   expect(container.textContent).toContain('Senior Developer advice unavailable: Model timed out')
   expect(container.querySelector('button')?.disabled).toBe(false)
 })
-it('renders unbound scope without dummy SHAs and exposes no action', async () => {
-  await render(item({ ...d, scopeBinding: { reason: 'Exact intake refs missing', sourceTriggerId: 'source-159' }, bindings: { ...d.bindings, baseSha: 'dummy-base', headSha: 'dummy-head' } }))
+it('renders unbound scope without dummy SHAs, offers no publish/accept action, and exposes only the release handoff control', async () => {
+  const unbound = { ...d, scopeBinding: { reason: 'Exact intake refs missing', sourceTriggerId: 'source-159' }, bindings: { ...d.bindings, baseSha: 'dummy-base', headSha: 'dummy-head' } }
+  await render(item(unbound))
   expect(container.textContent).toContain('Scope unbound: Exact intake refs missing')
   expect(container.textContent).not.toContain('dummy-')
   expect(container.querySelector('button')).toBeNull()
+  const handoff = { status: 'needs_inputs' as const, owner: 'project release profile (publication-runner.json)', starts: ['Independent Harness review'],
+    missing: [{ field: 'pins', owner: 'project release profile (publication-runner.json)', detail: 'set pins.repository, pins.prNumber, pins.headSha and pins.patchSha256' }] }
+  await render(item({ ...unbound, handoff }))
+  expect(container.textContent).toContain('pins.headSha')
+  expect(container.textContent).toContain('Next owner: project release profile')
+  expect([...container.querySelectorAll('button')].map(b => b.textContent)).toEqual(['Re-check release inputs and start when complete'])
 })
 it('rechecks only the current preparation blocker once with a typed revision', async () => {
   const recheck = vi.fn().mockResolvedValue({})

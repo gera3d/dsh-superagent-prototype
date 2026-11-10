@@ -75,3 +75,33 @@ export function recordOperatorEvidence(store: DeliveryStore, request: OperatorEv
     throw error
   }
 }
+
+export interface LiveAttestationRequest { revision: number; requirements: string[]; reference: string; outcome?: 'passed' | 'failed' }
+/**
+ * In-thread operator live attestation. The protected local click supplies authority for the exact evidence built here: it maps
+ * only the requirements the operator named (a subset of the intake) to an HTTPS provenance reference. It is distinct from the
+ * runner's automated verification, which asserts no intake requirement, and it never accepts the delivery.
+ */
+export function recordLiveAttestation(store: DeliveryStore, id: string, request: LiveAttestationRequest, actor: string, now = new Date().toISOString()): Delivery {
+  const current = store.get(id)
+  if (!current) reject('Unknown delivery')
+  if (!object(request) || !Array.isArray(request.requirements) || !request.requirements.length || request.requirements.some(r => !text(r)) || !text(request.reference) || !Number.isInteger(request.revision)) reject('Live attestation requires named requirements and an HTTPS evidence reference')
+  const outcome = request.outcome ?? 'passed'
+  if (!['passed', 'failed'].includes(outcome)) reject('Invalid attestation outcome')
+  const requirements = [...new Set(request.requirements.map(r => r.trim()))]
+  const evidence: DeliveryEvidence = { id: `operator-live:${id}:${request.revision}:${deliveryFingerprint({ requirements, reference: request.reference, outcome }).slice(0, 16)}`,
+    kind: 'verification', bindings: current!.bindings, recordedAt: now, reference: request.reference.trim(), outcome, requirements }
+  // Clear a failure only after every failed requirement has an explicit passing recheck recorded after that failure.
+  // Append order is authoritative even when observations share a timestamp. Unrelated passes cannot resurrect old coverage.
+  const relevant = current!.evidence.filter(e => (e.generation ?? 0) === current!.generation && same(e.bindings, current!.bindings))
+  const failed = outcome === 'passed' ? relevant.flatMap((e, index) => {
+    if (!e.id.startsWith('operator-live:') || e.kind !== 'verification' || e.outcome !== 'failed' || !e.requirements?.length) return []
+    const rechecked = new Set([...requirements, ...relevant.slice(index + 1)
+      .filter(p => p.outcome === 'passed' && ['verification', 'acceptance'].includes(p.kind)).flatMap(p => p.requirements ?? [])])
+    return e.requirements.every(r => rechecked.has(r)) ? [e.id] : []
+  }) : []
+  if (failed.length) evidence.supersedes = failed
+  const operatorRequest: OperatorEvidenceRequest = { deliveryId: id, revision: request.revision, evidence: [evidence] }
+  const hash = deliveryFingerprint(operatorRequest)
+  return recordOperatorEvidence(store, operatorRequest, hash, { source: 'local_operator', actor, reference: `orchestrator-http:live:${id}:${request.revision}`, scope: hash }, now)
+}

@@ -6,7 +6,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { FindingStore, findingDecision } from '../src/app/finding.ts'
 import { PublicationDock } from '../src/client/publication-cards.tsx'
 import { InlineDecision } from '../src/client/inline-decision.tsx'
-import { findingMatchesSession } from '../src/client/finding-association.ts'
+import { deliveryMatchesSession, findingMatchesSession } from '../src/client/finding-association.ts'
 const fixture = vi.hoisted(() => ({ items: [] as any[], call: vi.fn() }))
 vi.mock('../src/client/api.ts', () => ({ caller: () => fixture.call, usePoll: () => ({ data: { items: fixture.items }, reload: vi.fn() }) }))
 ;(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true
@@ -83,4 +83,47 @@ it('also keeps legacy publication history out of the chat viewport without remov
   expect(disclosure.textContent).toContain('Publication history · published')
   expect(disclosure.textContent).toContain('verify: succeeded')
   expect(fixture.call).not.toHaveBeenCalled()
+})
+
+it('matches delivery sessions across bare/worker prefixes and links through active findings', async () => {
+  const deliveryItem = {
+    id: 'del-1',
+    status: 'pending' as const,
+    actionMode: 'feature_delivery' as const,
+    ticketTitle: 'Delivery feature',
+    delivery: {
+      id: 'd-123',
+      title: 'Delivery feature',
+      revision: 1,
+      stage: 'verifying' as const,
+      state: 'awaiting_decision' as const,
+      owner: 'operator',
+      workers: ['ticket-worker-alpha'],
+      requirements: ['req-1'],
+      bindings: { repository: 'org/repo', sourceIssue: 1, headSha: 'a'.repeat(40), baseSha: 'b'.repeat(40) },
+      attempts: { review: 1, fix: 0, maxReview: 3, maxFix: 2 },
+      evidence: [],
+      audit: [],
+      authorities: ['operator'],
+      generation: 0,
+      nextAction: { id: 'act-1', kind: 'accept' as const, label: 'Accept', revision: 1, fingerprint: 'fp' },
+    },
+  }
+
+  // 1. Matches bare session or worker-prefixed session directly from delivery.workers
+  expect(deliveryMatchesSession(deliveryItem as any, 'worker-ticket-worker-alpha')).toBe(true)
+  expect(deliveryMatchesSession(deliveryItem as any, 'ticket-worker-alpha')).toBe(true)
+  expect(deliveryMatchesSession(deliveryItem as any, 'unrelated')).toBe(false)
+
+  // 2. Matches worker ticket or worker session
+  expect(deliveryMatchesSession(deliveryItem as any, 'ticket-worker-alpha')).toBe(true)
+  expect(deliveryMatchesSession(deliveryItem as any, 'worker-ticket-worker-alpha')).toBe(true)
+  expect(deliveryMatchesSession(deliveryItem as any, 'unrelated')).toBe(false)
+
+  // 3. Mounts DeliveryCard in PublicationDock for the matching thread session
+  fixture.items = [deliveryItem]
+  const view = await mounted()
+  await view.render('worker-ticket-worker-alpha')
+  expect(view.node.textContent).toContain('Delivery feature')
+  expect(view.node.textContent).toContain('Proceed without recommendation: Accept')
 })

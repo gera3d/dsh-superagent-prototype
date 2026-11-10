@@ -57,6 +57,8 @@ export interface Api {
   'GET deliveries': { response: { items: import('./feature-delivery.ts').Delivery[] } }
   'POST deliveries': { body: import('./delivery-intake.ts').DeliveryIntake; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
   'POST deliveries/:id/reconcile': { body: { revision: number; actionId: string }; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
+  'POST deliveries/:id/prepare': { body: { revision: number; requirements: string[] }; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
+  'POST deliveries/:id/evidence': { body: { revision: number; requirements: string[]; reference: string; outcome?: 'passed' | 'failed' }; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
   'POST deliveries/:id/recheck': { body: { revision: number }; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
   'POST deliveries/:id/bind': { body: { revision: number; intake: import('./delivery-intake.ts').DeliveryIntake }; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
   'POST deliveries/:id/confirm': { body: { revision: number; actionId: string }; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }

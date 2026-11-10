@@ -7,7 +7,7 @@ import type { PendingDecisionItem } from '../core/decision.ts'
 import { decisionNeedsAttention } from '../core/publication-queue.ts'
 import type { DecisionSubmissionBridge } from './decision-submission.ts'
 import { caller, usePoll } from './api.ts'
-import { activeFindingForSession } from './finding-association.ts'
+import { activeDeliveryForSession, activeFindingForSession } from './finding-association.ts'
 import { parseInlineAlternatives } from './inline-alternatives.ts'
 import { SpecialistStatus } from './specialist-status.tsx'
 import { decisionActivity } from '../core/specialist-activity.ts'
@@ -57,7 +57,9 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
   const sourceMessageId = assistant ? String(assistant.messageId ?? assistant.seq) : undefined
   const id = sourceMessageId ? `inline:${session.sessionId}:${sourceMessageId}` : undefined
   const associatedFinding = data?.items.some(item => activeFindingForSession(item, session.sessionId)) ?? false
-  const idle = !associatedFinding && !session.running && !session.removed && session.openState === 'open' && !session.pendingSubmissions.length
+  const associatedDelivery = data?.items.some(item => activeDeliveryForSession(item, session.sessionId)) ?? false
+  const associated = associatedFinding || associatedDelivery
+  const idle = !associated && !session.running && !session.removed && session.openState === 'open' && !session.pendingSubmissions.length
 
   useEffect(() => {
     if (!idle || !closed || !parsed || !id || !sourceMessageId || !data || error || attempted.current === `${id}:${retry}`) return
@@ -91,7 +93,7 @@ function SessionDecision({ session, input, inputActions, useConversation, submis
   }, [id, idle, closed, data, error, retry, reload])
 
   // Privileged lifecycle cards have a dedicated shared renderer and must never enter native chat staging.
-  const sessionItems = associatedFinding ? [] : data?.items.filter(item => item.sessionId === session.sessionId && !item.finding && item.actionMode !== 'finding_triage' && !item.delivery && item.actionMode !== 'feature_delivery' && !item.lifecycle && item.actionMode !== 'ticket_lifecycle') ?? []
+  const sessionItems = associated ? [] : data?.items.filter(item => item.sessionId === session.sessionId && !item.finding && item.actionMode !== 'finding_triage' && !item.delivery && item.actionMode !== 'feature_delivery' && !item.lifecycle && item.actionMode !== 'ticket_lifecycle') ?? []
   const pending = sessionItems.filter(item => item.status === 'pending')
   const emptySource = pending.find(item => item.sourceMessageId === sourceMessageId && !item.choices.length && !item.invalidation)
   const hydrated = useRef<string>()

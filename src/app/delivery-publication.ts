@@ -2,7 +2,7 @@
 import type { PendingDecisionItem } from '../core/decision.ts'
 import { ticketDecisions } from './decision-inbox.ts'
 import { publicationAction, type LifecyclePublication } from './lifecycle-publication.ts'
-import { deliveryFingerprint, sameDeliveryRefs, type DeliveryCapabilityAdapters, type DeliveryLease, type DeliveryResult, type DeliveryStore } from './feature-delivery.ts'
+import { deliveryFingerprint, sameDeliveryRefs, type DeliveryCapabilityAdapters, type DeliveryEvidence, type DeliveryLease, type DeliveryResult, type DeliveryStore } from './feature-delivery.ts'
 import type { Store } from './store.ts'
 
 export function deliveryPublicationCapabilities(store: DeliveryStore, tickets: Store['tickets'], publication?: LifecyclePublication): DeliveryCapabilityAdapters {
@@ -49,6 +49,39 @@ export function deliveryPublicationCapabilities(store: DeliveryStore, tickets: S
     }
     return { outcome: 'uncertain', blocker: `Protected publication requires reconciliation (${snapshot.status}); no mutation replay.` }
   }
+  const reconcileVerify = async (lease: DeliveryLease): Promise<DeliveryResult> => {
+    const delivery = store.get(lease.deliveryId)
+    if (!publication || !delivery?.preparedPublication) return { outcome: 'failed', blocker: 'No bound protected publication capability or prepared manifest.' }
+    const prepared = delivery.preparedPublication
+    if (!exactScope(lease)) return { outcome: 'uncertain', blocker: 'Trusted multi-repository publication scope or deployment target changed; reconcile the manifest before accepting any outcome.' }
+    const snapshots = await Promise.all(delivery.workers.map(worker => publication.service.snapshot(worker)))
+    const snapshot = snapshots.find(p => p?.id === prepared.id && p.patchSha256 === prepared.patchSha256)
+    if (!snapshot || snapshot.headSha !== lease.bindings.headSha || snapshot.repository !== lease.bindings.repository) return { outcome: 'uncertain', blocker: 'Publication outcome cannot be reconciled against the exact prepared manifest.' }
+    if (snapshot.coordination && ['queued', 'running'].includes(snapshot.coordination.status)) return { outcome: 'pending', nextRetryAt: Date.now() + 60_000 }
+    if (snapshot.status === 'rolled_back') {
+      const rollbackEvidence: DeliveryEvidence[] = [{ id: `publication:${snapshot.id}:${snapshot.updatedAt}:rollback`, kind: 'rollback', bindings: lease.bindings, recordedAt: snapshot.updatedAt, reference: `publication:${snapshot.id}`, outcome: 'passed' }]
+      return { outcome: 'failed', blocker: 'Publication verification failed and was rolled back. Feature acceptance remains unresolved.', evidence: rollbackEvidence }
+    }
+    if (snapshot.status === 'published' && (!snapshot.coordination || snapshot.coordination.status === 'completed')) {
+      const verifyOutcome = snapshot.outcomes.find(o => o.stage === 'verify' && o.status === 'succeeded')
+      if (verifyOutcome) {
+        const detail = verifyOutcome.detail ? `#verify:${verifyOutcome.detail}` : '#verify'
+        // Runner verification is its own bounded automated fact (configured HTTP release verification). It never asserts an
+        // intake requirement: requirement coverage comes only from explicit evidence-to-requirement IDs, i.e. operator attestation.
+        const verifyEvidence: DeliveryEvidence[] = [{
+          id: `publication:${snapshot.id}:${snapshot.updatedAt}:verification`,
+          kind: 'verification',
+          bindings: lease.bindings,
+          recordedAt: verifyOutcome.finishedAt || snapshot.updatedAt,
+          reference: `publication:${snapshot.id}${detail}`,
+          outcome: 'passed',
+        }]
+        return { outcome: 'passed', evidence: verifyEvidence }
+      }
+      return { outcome: 'failed', blocker: 'Publication did not record a successful verification outcome.' }
+    }
+    return { outcome: 'uncertain', blocker: `Protected publication verification requires reconciliation (${snapshot.status}); no mutation replay.` }
+  }
   return {
     publish: {
       execute: async lease => {
@@ -69,7 +102,8 @@ export function deliveryPublicationCapabilities(store: DeliveryStore, tickets: S
       }, reconcile,
     },
     verify: {
-      execute: async () => ({ outcome: 'failed', blocker: 'Required native/browser acceptance capability is not configured. Successful HTTP publication verification is not native acceptance; Codex must record the required live evidence.' }),
+      execute: async lease => reconcileVerify(lease),
+      reconcile: reconcileVerify,
     },
   }
 }
