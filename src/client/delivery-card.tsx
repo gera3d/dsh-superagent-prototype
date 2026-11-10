@@ -93,7 +93,8 @@ export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile, onPrepar
   const d = item.delivery
   if (!d) return <section role="status">Delivery metadata unavailable. Refresh before confirming.</section>
   const isHistorical = !!d.historicalCompletion || d.work?.state === 'superseded'
-  const action = d.scopeBinding || isHistorical ? undefined : d.nextAction
+  const packaging = !!d.release && d.stage === 'ready_to_publish' && !d.preparedPublication && !d.blocker
+  const action = d.scopeBinding || isHistorical || packaging ? undefined : d.nextAction
   const key = `${d.id}:${d.revision}:${action?.id}`
   const available = !isHistorical && item.actionMode === 'feature_delivery' && item.status === 'pending' && !item.invalidation
     && !d.scopeBinding && d.state === 'awaiting_decision' && action?.revision === d.revision && !!action.fingerprint && confirmed !== key

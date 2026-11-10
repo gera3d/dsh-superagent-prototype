@@ -76,14 +76,14 @@ def main():
     checks = []
     for name, argument in [('typecheck', 'typecheck'), ('tests', 'test'), ('build', 'build')]:
         report = output / (name + '.log')
-        command = [str(pnpm), argument]
+        command = [str(pnpm), '--config.verify-deps-before-run=false', argument]
         environment = dict(os.environ)
         if name == 'tests' and args.targeted_test:
-            command = [str(pnpm), 'exec', 'vitest', 'run', '--cache=false'] + args.targeted_test
+            command = [str(pnpm), '--config.verify-deps-before-run=false', 'exec', 'vitest', 'run', '--cache=false'] + args.targeted_test
         if name == 'tests' and baseline:
             json_report, errors = output / 'vitest-results.json', output / 'vitest-errors.json'
             reporter = Path(__file__).resolve().parent / 'errors-reporter.cjs'
-            command = [str(pnpm), 'exec', 'vitest', 'run', '--cache=false', '--reporter=default', '--reporter=json', '--reporter=' + str(reporter), '--outputFile=' + str(json_report)]
+            command = [str(pnpm), '--config.verify-deps-before-run=false', 'exec', 'vitest', 'run', '--cache=false', '--reporter=default', '--reporter=json', '--reporter=' + str(reporter), '--outputFile=' + str(json_report)]
             environment['PUBLICATION_ERRORS_REPORT'] = str(errors)
         with report.open('wb') as stream:
             result = subprocess.run(command, cwd=worktree, env=environment, stdout=stream, stderr=subprocess.STDOUT, timeout=900)

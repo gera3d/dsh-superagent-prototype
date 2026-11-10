@@ -8,7 +8,7 @@
  * deploys or accepts, and no worker- or model-supplied text ever becomes a command, path, target or permission.
  */
 import { createHash } from 'node:crypto'
-import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync, symlinkSync } from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync, symlinkSync } from 'node:fs'
 import { isAbsolute, join, sep } from 'node:path'
 import { z } from 'zod'
 import type { Ticket } from '../core/model.ts'
@@ -27,9 +27,10 @@ const repo = z.string().regex(/^[\w.-]+\/[\w.-]+$/)
  */
 export const ReleasePresetSchema = z.object({
   pythonPath: absolute, pnpmPath: absolute, targetPath: absolute, releaseRoot: absolute, dependencyRoot: absolute,
+  companions: z.array(z.object({ name: z.string().regex(/^[A-Za-z0-9_-]+$/), path: absolute }).strict()).max(5).default([]),
   /** Pinned scripts/publication/prepare.py; dependencies pin its sibling runner.py, phase wrappers and helpers. */
   prepareScript: script, restartScript: asset,
-  verifyUrl: z.string().regex(/^http:\/\/(?:127\.0\.0\.1|localhost):\d{2,5}\/[\w./-]*$/),
+  verifyUrl: z.string().regex(/^http:\/\/(?:127\.0\.0\.1|localhost):\d{2,5}\/[\w./{}-]*$/),
   /** Must contain {head} or {patch}; expanded with the exact reviewed head / patch digest. */
   verifyContainsTemplate: z.string().min(1).max(500).refine(t => t.includes('{head}') || t.includes('{patch}'), 'Marker must bind the exact head or patch'),
   maxTestFiles: z.number().int().min(1).max(50).default(30),
@@ -77,6 +78,7 @@ export interface ReleaseDeps {
   ticket: (id: string) => Ticket | undefined
   /** Non-empty reason while a publication for any PR is still in flight; the shared manifest must not move under it. */
   publicationBusy: () => string | undefined
+  validateCurrent?: (delivery: Delivery) => void
   exec?: PublicationExecutor
   now?: () => string
 }
@@ -200,18 +202,39 @@ export class FindingRelease {
     const ticket = this.deps.ticket(release.ticketId)
     if (!ticket) throw new DeliveryConflict('The release job ticket is missing')
     const run = <K>(key: string, work: () => Promise<K>) => { const prior = this.inflight.get(key); if (prior) return prior as Promise<K>; const p = work().finally(() => this.inflight.delete(key)); this.inflight.set(key, p); return p }
-    return run(`package:${delivery.id}`, () => this.packageOnce(delivery, release, profile, preset, ticket, signal))
+    return run(`package:${delivery.id}`, async () => {
+      // Atomic cross-process ownership. A crashed lock is visible and requires explicit reconciliation, never guessed stale.
+      const lock = join(this.deps.stateDir, 'release-package.lock')
+      try { mkdirSync(lock, { mode: 0o700 }) } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'EEXIST') throw new DeliveryConflict('Release packaging is owned by another or interrupted attempt; reconcile release-package.lock before retrying')
+        throw error
+      }
+      writeFileSync(join(lock, 'owner.json'), JSON.stringify({ deliveryId: delivery.id, head: release.headSha, pid: process.pid, at: new Date().toISOString() }), { mode: 0o600 })
+      try { await this.packageOnce(delivery, release, profile, preset, ticket, signal) } finally { rmSync(lock, { recursive: true }) }
+    })
   }
   private async packageOnce(delivery: Delivery, release: NonNullable<Delivery['release']>, profile: ReleaseProfile, preset: ReleasePreset, ticket: Ticket, signal?: AbortSignal): Promise<void> {
     const blocked = (field: string, owner: string, detail: string) => new ReleaseBlocked([{ field, owner, detail }])
+    const scope = (d: Delivery) => deliveryFingerprint({ bindings: d.bindings, generation: d.generation, release: d.release, requirements: d.requirements, evidence: d.evidence, authorities: d.authorities, delegatedScope: d.delegatedScope })
+    const original = scope(delivery), ticketHash = deliveryFingerprint(ticket)
+    const current = () => {
+      signal?.throwIfAborted()
+      const d = this.deps.store.get(delivery.id)
+      if (!d || scope(d) !== original || d.state !== 'awaiting_decision' || d.stage !== 'ready_to_publish' || deliveryFingerprint(this.deps.ticket(ticket.id)) !== ticketHash) throw new DeliveryConflict('Release source or scope changed during packaging; no manifest installed')
+      if (deliveryFingerprint(this.deps.profile()) !== deliveryFingerprint(profile)) throw new DeliveryConflict('Trusted release profile changed during packaging')
+      this.deps.validateCurrent?.(d)
+      const other = this.deps.store.list().find(x => x.id !== d.id && x.preparedPublication && !x.historicalCompletion && !['accepted', 'cancelled', 'abandoned'].includes(x.state))
+      if (other) throw new DeliveryConflict(`Release manifest is reserved by delivery ${other.id}; settle it before preparing another release`)
+    }
+    current()
     // 1. Exact passed independent review for the current bindings and generation.
     const fp = deliveryFingerprint(delivery.bindings)
     const review = delivery.evidence.findLast(e => e.kind === 'review' && e.outcome === 'passed' && (e.generation ?? 0) === delivery.generation && deliveryFingerprint(e.bindings) === fp)
     if (!review) throw blocked('independent review', 'Harness independent review', 'No passed independent review is recorded for the exact current head.')
     const reviewId = review.id.replace(/^independent-review:/, '')
     const row = this.deps.store.db.prepare('SELECT value FROM delivery_capability_review WHERE id=?').get(reviewId)
-    const record = row ? JSON.parse(String(row.value)) as { verdict?: { verdict?: string; rationale?: string; findings?: unknown[] }; provider?: unknown } : undefined
-    if (!record || record.verdict?.verdict !== 'passed') throw blocked('independent review', 'Harness independent review', 'The durable review verdict for the exact head is missing.')
+    const record = row ? JSON.parse(String(row.value)) as { lease?: { id: string; deliveryId: string; bindings: Delivery['bindings']; action: { kind: string } }; fingerprint?: string; bindingFingerprint?: string; verdict?: { verdict?: string; rationale?: string; findings?: unknown[] }; provider?: unknown } : undefined
+    if (!record || record.verdict?.verdict !== 'passed' || !record.lease || record.lease.id !== reviewId || record.lease.deliveryId !== delivery.id || record.lease.action.kind !== 'review' || record.bindingFingerprint !== fp || deliveryFingerprint(record.lease.bindings) !== fp || record.fingerprint !== deliveryFingerprint({ action: record.lease.action, bindings: record.lease.bindings, deliveryId: delivery.id })) throw blocked('independent review', 'Harness independent review', 'The durable review verdict for the exact head is missing.')
     // 2. Exact artifact re-derived from git; a changed head or patch invalidates the package.
     const c = await this.candidate(ticket, profile)
     if (c.headSha !== release.headSha || c.patchSha256 !== release.patchSha256 || c.headSha !== delivery.bindings.headSha) throw new DeliveryConflict('The worker artifact changed after review; head or patch no longer matches the reviewed release')
@@ -222,7 +245,7 @@ export class FindingRelease {
     mkdirSync(preset.releaseRoot, { recursive: true, mode: 0o700 })
     const root = realpathSync(preset.releaseRoot)
     const id = delivery.id.replace(/[^\w.-]/g, '_').slice(0, 80)
-    const work = join(root, `${id}-${c.headSha.slice(0, 12)}`)
+    const work = mkdtempSync(join(root, `${id}-${c.headSha.slice(0, 12)}-`))
     if (!inside(root, work) || work === root) throw new DeliveryConflict('Release workspace escapes the trusted root')
     const verifyContains = preset.verifyContainsTemplate.replaceAll('{head}', c.headSha).replaceAll('{patch}', c.patchSha256)
     const releaseDir = join(work, 'release'), manifestPath = join(releaseDir, 'publication-runner.json')
@@ -238,7 +261,8 @@ export class FindingRelease {
         .filter(f => /^tests\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)*\.spec\.tsx?$/.test(f) && !f.includes('..'))
       if (!tests.length) throw blocked('targeted tests', `worker-${ticket.id}`, 'The commit adds or changes no tests/*.spec.ts(x) file, so no targeted check can prove the change; add focused tests and report ready again.')
       if (tests.length > preset.maxTestFiles) throw blocked('targeted tests', `worker-${ticket.id}`, `The commit changes ${tests.length} spec files (limit ${preset.maxTestFiles}); narrow the change.`)
-      rmSync(work, { recursive: true, force: true }); mkdirSync(work, { recursive: true, mode: 0o700 })
+      // Each attempt keeps its immutable logs, including failed checks; never delete an earlier attempt.
+      current()
       const wt = join(work, 'review-worktree'), evidenceDir = join(work, 'evidence'), patchPath = join(work, 'candidate.patch'), reportPath = join(work, 'independent-review.json')
       writeFileSync(patchPath, c.patch, { mode: 0o600 })
       writeFileSync(reportPath, JSON.stringify({ reviewer: 'harness-independent-review', evidence: review.reference, recordedAt: review.recordedAt, repository: R, headSha: c.headSha, patchSha256: c.patchSha256, verdict: record.verdict, provider: record.provider }, null, 2), { mode: 0o600 })
@@ -247,13 +271,20 @@ export class FindingRelease {
         signal?.throwIfAborted()
         const nm = join(realpathSync(preset.dependencyRoot), 'node_modules')
         if (!existsSync(join(wt, 'node_modules')) && !(() => { try { return lstatSync(join(wt, 'node_modules')) } catch { return undefined } })()) symlinkSync(nm, join(wt, 'node_modules'))
+        for (const companion of preset.companions) symlinkSync(realpathSync(companion.path), join(work, companion.name))
+        // Existing dependencies only. A dependency graph change needs separate setup, never an unattended install.
+        for (const name of ['package.json', 'pnpm-lock.yaml']) {
+          const a = join(wt, name), b = join(preset.dependencyRoot, name)
+          if (existsSync(a) && (!existsSync(b) || hash(readFileSync(a)) !== hash(readFileSync(b)))) throw blocked('dependencies', 'project release profile', `${name} differs from qualified dependencies; no install attempted.`)
+        }
+        current()
         const scriptDir = join(preset.prepareScript.path, '..')
         await this.run(profile, preset.pythonPath, [join(scriptDir, 'record-evidence.py'), '--repository', R, '--pr', String(release.prNumber), '--patch', patchPath, '--worktree', wt, '--gh', profile.ghPath, '--pnpm', preset.pnpmPath,
           '--review-report', reportPath, '--reviewer', 'harness-independent-review', '--author', `worker-${ticket.id}`, '--output-dir', evidenceDir, '--review-approved', '--review-completed-at', review.recordedAt,
           ...tests.flatMap(t => ['--targeted-test', t]), '--limitation', `Targeted checks only: ${tests.join(', ')}`], work, undefined, { timeoutMs: preset.checkTimeoutMs * 4, ...(signal ? { signal } : {}) })
-        signal?.throwIfAborted()
+        current()
         await this.run(profile, preset.pythonPath, [preset.prepareScript.path, '--repository', R, '--pr', String(release.prNumber), '--patch', patchPath, '--target', preset.targetPath, '--release-dir', releaseDir,
-          '--gh', profile.ghPath, '--pnpm', preset.pnpmPath, '--restart-script', preset.restartScript.path, '--verify-url', preset.verifyUrl, '--verify-contains', verifyContains,
+          '--gh', profile.ghPath, '--pnpm', preset.pnpmPath, '--restart-script', preset.restartScript.path, '--verify-url', preset.verifyUrl.replaceAll('{delivery}', encodeURIComponent(delivery.id)), '--verify-contains', verifyContains,
           '--local-evidence', join(evidenceDir, 'local-evidence.json'), '--timeout-ms', String(preset.checkTimeoutMs), ...tests.flatMap(t => ['--targeted-test', t])], work, undefined, { timeoutMs: preset.checkTimeoutMs, ...(signal ? { signal } : {}) })
       } finally {
         await this.run(profile, profile.gitPath, ['-C', c.dir, 'worktree', 'remove', '--force', wt], c.dir).catch(() => {})
@@ -267,6 +298,8 @@ export class FindingRelease {
       deliveryScope: { environment: delivery.bindings.environment ?? profile.environment, refs: [{ repository: R, pr: release.prNumber, headSha: c.headSha, baseSha: c.baseSha }], components: profile.components, effects: profile.effects },
       ...(profile.localEvidenceMaxAgeMs ? { localEvidenceMaxAgeMs: profile.localEvidenceMaxAgeMs } : {}) }
     createPublicationRunner(config, async () => '')
+    current()
+    if (this.deps.publicationBusy()) throw new DeliveryConflict('Publication started during packaging; no manifest installed')
     this.installManifest(config)
   }
 

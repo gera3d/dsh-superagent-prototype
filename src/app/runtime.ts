@@ -1,3 +1,4 @@
+import { phaseFacts } from './delivery-phase.ts'
 /** Application composition root and lifecycle manager for dsh-superagent. */
 import { Service, type Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
@@ -198,6 +199,7 @@ export class Runtime extends Service implements SourceHost {
       this.findings = new FindingRuntime({ ...deliveryDeps, repository: () => setup.deployment.repository,
         isQuiescent: ticket => this.executor.quiescent(ticket), workerBusy: ticket => this.executor.running(ticket) })
       this.release = new FindingRelease({ stateDir: machine.stateDir, profile: () => loadReleaseProfile(machine.stateDir), store: this.deliveries.store,
+        validateCurrent: delivery => { const facts = phaseFacts(store.db, delivery.id); if (typeof facts === 'string') throw new Error(facts) },
         ticket: id => store.tickets.get(id), publicationBusy: () => busyPublication(() => new FilePublicationPersistence(join(machine.stateDir, 'publication-state.json')).peek()) })
       packageRelease = (delivery, signal) => this.release.packageRelease(delivery, signal)
       // Update the `evals` health entry on every pass if an evaluation failed as unavailable within the last hour.

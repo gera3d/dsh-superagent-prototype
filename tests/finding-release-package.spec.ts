@@ -1,11 +1,11 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs'
+import { chmodSync, copyFileSync, existsSync, readdirSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, it as base } from 'vitest'
 import { DeliveryStore, deliveryFingerprint, type DeliveryCreate } from '../src/app/feature-delivery.ts'
-import { FindingRelease, ReleaseBlocked, type ReleaseProfile } from '../src/app/finding-release.ts'
+import { FindingRelease, ReleaseBlocked, type ReleaseProfile, type ReleaseDeps } from '../src/app/finding-release.ts'
 import { loadPublicationRunner } from '../src/infra/publication-runner.ts'
 import type { Ticket } from '../src/core/model.ts'
 
@@ -35,7 +35,7 @@ function fixture(opts: { spec?: boolean; failTests?: boolean; noReview?: boolean
   mkdirSync(join(root, 'deps', 'node_modules'), { recursive: true }); mkdirSync(join(root, 'target'))
   const profile: ReleaseProfile = { version: 1, source: { repository: 'org/proj', baseBranch: 'main', checkoutPath: source, remoteUrl: 'https://github.com/org/proj.git', workspaceSubdir: 'work', artifactRoots: [] },
     ghPath: gh, gitPath: execFileSync('which', ['git'], { encoding: 'utf8' }).trim(), cwd: root, patchDir: join(root, 'patches'), environment: 'local harness', components: ['app'], effects: ['restart'], timeoutMs: 60000,
-    preset: { pythonPath: '/usr/bin/python3', pnpmPath: pnpm, targetPath: join(root, 'target'), releaseRoot: join(root, 'releases'), dependencyRoot: join(root, 'deps'), prepareScript: { ...asset(join(dir, 'prepare.py')), dependencies: ['runner.py', 'record-evidence.py', 'baseline.py', 'errors-reporter.cjs', 'apply.sh', 'build.sh', 'restart.sh', 'verify.sh', 'rollback.sh'].map(f => asset(join(dir, f))) },
+    preset: { pythonPath: '/usr/bin/python3', pnpmPath: pnpm, targetPath: join(root, 'target'), releaseRoot: join(root, 'releases'), dependencyRoot: join(root, 'deps'), companions: [], prepareScript: { ...asset(join(dir, 'prepare.py')), dependencies: ['runner.py', 'record-evidence.py', 'baseline.py', 'errors-reporter.cjs', 'apply.sh', 'build.sh', 'restart.sh', 'verify.sh', 'rollback.sh'].map(f => asset(join(dir, f))) },
       restartScript: asset(restart), verifyUrl: 'http://127.0.0.1:3082/health', verifyContainsTemplate: 'release {head}', maxTestFiles: 30, checkTimeoutMs: 120000 } }
   const ticket = { id: 't1', execution: { name: 'finding-task-t1', directory: ticketDir }, assignments: [{ id: 'a1', state: 'ended', report: { state: 'ready', summary: 's', at: '2026-01-01T00:00:00Z' } }] } as unknown as Ticket
   const store = new DeliveryStore(':memory:')
@@ -45,11 +45,16 @@ function fixture(opts: { spec?: boolean; failTests?: boolean; noReview?: boolean
   const d = store.bindScope('auto-t1', t.revision, input, { actor: 'local-operator', source: 'local_operator', reference: 'r', scope: deliveryFingerprint(input) },
     x => { x.release = { findingId: 'f1', findingRevision: 1, jobId: 'j1', ticketId: 't1', assignmentId: 'a1', branch: 'agent/x', prNumber: 7, headSha: head, patchSha256: d256(patch), preparedAt: '' } })
   store.db.exec('CREATE TABLE IF NOT EXISTS delivery_capability_review(id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, value TEXT NOT NULL)')
-  store.db.prepare('INSERT INTO delivery_capability_review(id,fingerprint,value) VALUES(?,?,?)').run('L1', 'f', JSON.stringify({ verdict: { verdict: 'passed', rationale: 'ok', findings: [] }, provider: 'p' }))
+  const lease = { id: 'L1', deliveryId: d.id, action: { kind: 'review' }, bindings: d.bindings }
+  const reviewFingerprint = deliveryFingerprint({ action: lease.action, bindings: lease.bindings, deliveryId: d.id })
+  store.db.prepare('INSERT INTO delivery_capability_review(id,fingerprint,value) VALUES(?,?,?)').run('L1', reviewFingerprint, JSON.stringify({ lease, fingerprint: reviewFingerprint, bindingFingerprint: deliveryFingerprint(d.bindings), verdict: { verdict: 'passed', rationale: 'ok', findings: [] }, provider: 'p' }))
   if (!opts.noReview) store.compareAndSwap('auto-t1', d.revision, x => { x.evidence.push({ id: 'independent-review:L1', kind: 'review', bindings: x.bindings, recordedAt: new Date().toISOString(), reference: 'sqlite:delivery_capability_review/L1', outcome: 'passed', generation: x.generation }) })
+  const ready = store.get('auto-t1')!
+  store.compareAndSwap(ready.id, ready.revision, x => { x.stage = 'ready_to_publish'; x.state = 'awaiting_decision' })
   let busy: string | undefined
-  const rel = new FindingRelease({ stateDir: state, profile: () => profile, store, ticket: id => id === 't1' ? ticket : undefined, publicationBusy: () => busy })
-  return { root, state, work, head, patch, store, rel, setBusy: (v?: string) => { busy = v }, get: () => store.get('auto-t1')! }
+  const deps: ReleaseDeps = { stateDir: state, profile: () => profile, store, ticket: id => id === 't1' ? ticket : undefined, publicationBusy: () => busy }
+  const rel = new FindingRelease(deps)
+  return { root, state, work, head, patch, store, rel, deps, setBusy: (v?: string) => { busy = v }, get: () => store.get('auto-t1')! }
 }
 
 it('packages the reviewed head: real targeted check evidence, exact manifest, no publication', async () => {
@@ -58,7 +63,7 @@ it('packages the reviewed head: real targeted check evidence, exact manifest, no
   const runner = loadPublicationRunner(join(f.state, 'publication-runner.json'))!
   expect(runner.pinsFor('org/proj', 7)).toMatchObject({ headSha: f.head, patchSha256: d256(f.patch) })
   expect(runner.scopeFor('org/proj', 7)!.refs[0]).toMatchObject({ headSha: f.head })
-  const rel = join(f.root, 'releases', `auto-t1-${f.head.slice(0, 12)}`)
+  const rel = join(f.root, 'releases', readdirSync(join(f.root, 'releases'))[0]!)
   const plan = JSON.parse(readFileSync(join(rel, 'release', 'publication-plan.json'), 'utf8'))
   expect(plan.targetedTests).toEqual(['tests/x.spec.ts']); expect(plan.verifyContains).toBe(`release ${f.head}`)
   const ev = JSON.parse(readFileSync(join(rel, 'evidence', 'local-evidence.json'), 'utf8'))
@@ -81,4 +86,33 @@ it('blocks with a concrete owner when no spec changed, checks fail, review missi
   await expect(moved.rel.packageRelease(moved.get())).rejects.toThrow(/changed after review/)
   const busy = fixture(); busy.setBusy('PR #9 is merged')
   await expect(busy.rel.packageRelease(busy.get())).rejects.toThrow(/in flight/)
+})
+
+ it('rejects a foreign review even when the visible evidence says passed', async () => {
+  const f = fixture()
+  const row = f.store.db.prepare('SELECT value FROM delivery_capability_review WHERE id=?').get('L1')!
+  const r = JSON.parse(String(row.value)); r.lease.deliveryId = 'another-delivery'
+  f.store.db.prepare('UPDATE delivery_capability_review SET value=? WHERE id=?').run(JSON.stringify(r), 'L1')
+  await expect(f.rel.packageRelease(f.get())).rejects.toThrow(/durable review verdict/)
+  expect(existsSync(join(f.state, 'publication-runner.json'))).toBe(false)
+})
+it('preserves failed attempt logs and refuses a cross-process packaging lock', async () => {
+  const f = fixture({ failTests: true })
+  await expect(f.rel.packageRelease(f.get())).rejects.toThrow()
+  const before = readdirSync(join(f.root, 'releases'))
+  await expect(f.rel.packageRelease(f.get())).rejects.toThrow()
+  expect(readdirSync(join(f.root, 'releases'))).toHaveLength(2)
+  expect(existsSync(join(f.root, 'releases', before[0]!, 'evidence', 'tests.log'))).toBe(true)
+  mkdirSync(join(f.state, 'release-package.lock'))
+  await expect(f.rel.packageRelease(f.get())).rejects.toThrow(/interrupted attempt/)
+})
+
+it('rechecks canonical finding currency after checks and never installs a stale package', async () => {
+  const f = fixture()
+  let count = 0
+  f.deps.validateCurrent = () => { if (++count >= 4) throw new Error('Source finding revision changed') }
+  await expect(f.rel.packageRelease(f.get())).rejects.toThrow(/revision changed/)
+  expect(count).toBe(4)
+  expect(existsSync(join(f.state, 'publication-runner.json'))).toBe(false)
+  expect(readdirSync(join(f.root, 'releases'))).toHaveLength(1)
 })

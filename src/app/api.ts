@@ -55,6 +55,7 @@ export interface Api {
   'POST findings/:id/confirm': { body: { revision: number; choiceId: 'fix_now' | 'queue_next' | 'defer' }; response: { finding: import('./finding.ts').Finding; item: PendingDecisionItem } }
   'POST findings/:id/release': { body: { revision: number }; response: { finding: import('./finding.ts').Finding; delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
   'POST findings/:id/coordinate': { body: import('./finding-coordination.ts').FindingCoordinationRequest; response: { finding: import('./finding.ts').Finding; item: PendingDecisionItem } }
+  'GET deliveries/:id': { response: { delivery: import('./feature-delivery.ts').Delivery } }
   'GET deliveries': { response: { items: import('./feature-delivery.ts').Delivery[] } }
   'POST deliveries': { body: import('./delivery-intake.ts').DeliveryIntake; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }
   'POST deliveries/:id/reconcile': { body: { revision: number; actionId: string }; response: { delivery: import('./feature-delivery.ts').Delivery; item: PendingDecisionItem } }

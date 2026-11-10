@@ -9,7 +9,7 @@ import type { Commands } from '../infra/commands.ts'
 import { messageId } from './delivery.ts'
 import { DeliveryStore, deliveryFingerprint, type Delivery, type DeliveryAction, type DeliveryCapabilityAdapters, type DeliveryLease, type DeliveryResult } from './feature-delivery.ts'
 import { preparedPublicationFacts } from './publication-proof.ts'
-import { defaultRoute } from './role-models.ts'
+import { defaultRoute, isModelUnavailable, unavailableFallbackStep } from './role-models.ts'
 import type { Store } from './store.ts'
 
 export interface DeliveryCapabilityDependencies {
@@ -64,11 +64,8 @@ type ModelBudget = { label: string; maxTokens: number; timeoutMs: number; maxRes
 const REVIEW_BUDGET: ModelBudget = { label: 'review', maxTokens: 65_536, timeoutMs: 300_000, maxResponseChars: 32_000 }
 const ADVICE_BUDGET: ModelBudget = { label: 'advice', maxTokens: 8_192, timeoutMs: 60_000, maxResponseChars: 32_000 }
 
-async function modelJSON(deps: DeliveryCapabilityDependencies, system: string, data: unknown, budget: ModelBudget, signal?: AbortSignal): Promise<{ value: unknown; provider: string }> {
+async function modelJSONAttempt(deps: DeliveryCapabilityDependencies, system: string, data: unknown, budget: ModelBudget, signal: AbortSignal | undefined, route: { provider: string; model: string; reasoningEffort?: string }): Promise<{ value: unknown; provider: string }> {
   if (!deps.ctx.llm?.resolveCallConfig || !deps.ctx.llm?.stream) throw new Error('Missing capability: configured LLM service')
-  const route = defaultRoute(deps.store.settings(), 'executor')
-    ?? (deps.ctx.get('agentDefaultModel') as { currentSelection(): { provider: string; model: string; reasoningEffort?: string } } | undefined)?.currentSelection()
-  if (!route?.provider || !route.model) throw new Error('Missing capability: configured executor model')
   const timeout = AbortSignal.timeout(budget.timeoutMs)
   const abort = AbortSignal.any([deps.lifetime, timeout, ...(signal ? [signal] : [])])
   if (abort.aborted) throw new Error(`${budget.label} model call aborted before start; no partial result accepted`)
@@ -97,6 +94,25 @@ async function modelJSON(deps: DeliveryCapabilityDependencies, system: string, d
   let value: unknown
   try { value = JSON.parse(text) } catch { throw new Error(`${budget.label} model returned malformed JSON; no partial result accepted`) }
   return { value, provider: `${config.provider} / ${config.model}` }
+}
+
+/** Same configured availability ladder as native workers; a code/schema review failure is never availability. */
+async function modelJSON(deps: DeliveryCapabilityDependencies, system: string, data: unknown, budget: ModelBudget, signal?: AbortSignal): Promise<{ value: unknown; provider: string }> {
+  const route = defaultRoute(deps.store.settings(), 'executor')
+    ?? (deps.ctx.get('agentDefaultModel') as { currentSelection(): { provider: string; model: string; reasoningEffort?: string } } | undefined)?.currentSelection()
+  if (!route?.provider || !route.model) throw new Error('Missing capability: configured executor model')
+  const settings = deps.store.settings()
+  let current = route
+  const tried = [current]
+  for (;;) {
+    try { return await modelJSONAttempt(deps, system, data, budget, signal, current) }
+    catch (error) {
+      if (signal?.aborted || deps.lifetime.aborted || !isModelUnavailable(error)) throw error
+      const next = unavailableFallbackStep(settings, current, tried)
+      if (!next || tried.length >= 10) throw error
+      current = next.to; tried.push(current)
+    }
+  }
 }
 
 /** Real runtime adapters. All GitHub argv are fixed read-only schemas; code is external data. */

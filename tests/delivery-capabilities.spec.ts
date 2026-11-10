@@ -125,7 +125,7 @@ it('checks every pinned PR head again after model execution and never persists a
 it('blocks missing LLM capability, model quota, GitHub permission, and incomplete diff explicitly', async () => {
   const h = fixture(), l = h.lease()
   const missing = createDeliveryCapabilities({ ...h.deps, ctx: {} as Context }); expect((await missing.review!.execute(l)).blocker).toContain('Missing capability: configured LLM')
-  h.resolve.mockRejectedValueOnce(new Error('Quota exhausted; resets 12:00 UTC')); expect((await h.caps.review!.execute(l)).blocker).toContain('Quota exhausted; resets 12:00 UTC')
+  h.resolve.mockRejectedValue(new Error('Quota exhausted; resets 12:00 UTC')); expect((await h.caps.review!.execute(l)).blocker).toContain('Quota exhausted; resets 12:00 UTC'); h.resolve.mockResolvedValue({ provider: 'configured', model: 'executor' })
   h.gh.mockRejectedValueOnce(new Error('HTTP 403 permission denied')); expect((await h.caps.review!.execute(l)).blocker).toContain('HTTP 403')
   h.gh.mockResolvedValueOnce({ head: { sha: HEAD }, base: { sha: BASE }, changed_files: 101 }); expect((await h.caps.review!.execute(l)).blocker).toContain('oversized')
 })
@@ -528,4 +528,13 @@ it('reports missing or unverified prepared proof as a hold-worthy unknown instea
     patchSha256: 'd'.repeat(64), environment: 'isolated', preparedAt: '2026-11-06T00:00:02.000Z', refs: [{ repository: 'org/repo', pr: 17, headSha: HEAD }] }
   const withPrepared = deliveries.compareAndSwap(before.id, before.revision, d => { d.preparedPublication = prepared })
   expect(await read(withPrepared)).toBe('proof-not-recorded')
+})
+
+it('uses the authorized availability ladder for review while conserving OpenAI', async () => {
+  const h = fixture()
+  store.saveSettings({ models: { hierarchy: [{ provider: 'configured', model: 'executor', starred: true }, { provider: 'openai-codex', model: 'reserved', starred: true }, { provider: 'anthropic', model: 'sonnet', starred: true }], subscriptions: [{ provider: 'openai-codex', status: 'conserved' }] } })
+  h.resolve.mockRejectedValueOnce(new Error('model unavailable')).mockResolvedValueOnce({ provider: 'anthropic', model: 'sonnet' })
+  const result = await h.caps.review!.execute(h.lease())
+  expect(result.outcome).toBe('passed')
+  expect((h.resolve.mock.calls as unknown as [{ provider: string }][]).map(c => c[0].provider)).toEqual(['configured', 'anthropic'])
 })

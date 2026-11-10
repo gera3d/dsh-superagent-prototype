@@ -433,6 +433,11 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
       const { instructionFile } = FindingCoordinationRequestSchema.parse(await body())
       return coordinateFinding(runtime.findings, params.id, instructionFile)
     },
+    'GET deliveries/:id': ({ params }) => {
+      const delivery = runtime.deliveries?.store.get(params.id)
+      if (!delivery) throw new PublicationError(404, 'Delivery not found')
+      return { delivery }
+    },
     'GET deliveries': () => ({ items: runtime.deliveries?.store.list() ?? [] }),
     'POST deliveries': async ({ body, localApproval }) => {
       if (!localApproval) throw new PublicationError(403, 'Explicit local operator intake required')

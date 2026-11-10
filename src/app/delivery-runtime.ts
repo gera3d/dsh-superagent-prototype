@@ -16,7 +16,8 @@ import { planReleaseHandoff, startReleaseHandoff, type HandoffContext, type Star
 
 export function deliveryDecision(delivery: Delivery): PendingDecisionItem {
   const isHistorical = !!delivery.historicalCompletion || delivery.work?.state === 'superseded'
-  const action = isHistorical ? undefined : delivery.nextAction
+  const packaging = !!delivery.release && delivery.stage === 'ready_to_publish' && !delivery.preparedPublication && !delivery.blocker
+  const action = isHistorical || packaging ? undefined : delivery.nextAction
   const model = action && delivery.recommendation?.actionId === action.id && delivery.recommendation.kind === action.kind && delivery.recommendation.fingerprint === action.fingerprint ? delivery.recommendation : undefined
   const terminal = ['accepted', 'cancelled', 'abandoned'].includes(delivery.state)
   return {
@@ -28,7 +29,7 @@ export function deliveryDecision(delivery: Delivery): PendingDecisionItem {
     urgency: isHistorical ? 'low' : delivery.state === 'blocked' ? 'medium' : 'low',
     createdAt: Date.parse(delivery.audit[0]?.at ?? '') || 0,
     context: delivery.historicalCompletion ? delivery.historicalCompletion.caption : delivery.work ? `${delivery.work.state}; owner: ${delivery.work.owner}; ${delivery.work.progress ?? ''} ${delivery.work.nextStep}` : delivery.blocker ?? `${delivery.stage}: ${delivery.state}; owner: ${delivery.owner}`,
-    question: delivery.historicalCompletion ? delivery.historicalCompletion.caption : delivery.work?.nextStep ?? delivery.blocker ?? action?.label ?? `${delivery.stage}: ${delivery.state}`,
+    question: packaging ? 'Harness: run exact-head checks and prepare release; no user action yet' : delivery.historicalCompletion ? delivery.historicalCompletion.caption : delivery.work?.nextStep ?? delivery.blocker ?? action?.label ?? `${delivery.stage}: ${delivery.state}`,
     choices: action ? [{ id: action.id, label: action.label, actionKind: 'lifecycle' }] : [],
     recommendation: { recommendedValue: model?.disposition === 'take' ? model.actionId : '', confidence: 0,
       rationale: delivery.historicalCompletion ? 'Nonactionable completed history delivered by later release; no further action.' : model?.rationale ?? delivery.recommendationError?.message ?? (action ? 'Eligible action; Senior Developer advice is not available.' : 'No executable action is currently available.'),

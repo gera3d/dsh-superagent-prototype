@@ -434,6 +434,7 @@ const ROUTES: { [K in keyof Api]: Route<K> } = {
   'POST findings/:id/confirm': { body: true, answer: () => refuse(409, 'No fixture finding confirmation is authorized') },
   'POST findings/:id/release': { body: true, answer: () => refuse(409, 'No fixture finding release is authorized') },
   'POST findings/:id/coordinate': { body: true, answer: () => refuse(409, 'No fixture finding coordination is authorized') },
+  'GET deliveries/:id': { answer: () => { throw new Error('No fixture delivery') } },
   'GET deliveries': { answer: () => ({ items: [] }) },
   'POST deliveries': { body: true, answer: () => refuse(409, 'No fixture delivery intake is authorized') },
   'POST deliveries/:id/reconcile': { body: true, answer: () => refuse(409, 'No fixture delivery reconciliation is authorized') },
