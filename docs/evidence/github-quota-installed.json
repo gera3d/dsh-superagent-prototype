@@ -948,7 +948,7 @@
     "github-watch.js": "aa6b6e07500d988d9414c4f254ea218787364f544341fced9eb0b14b6fb0d315",
     "decision-inbox-provider-canonical.js": "9d6b6970ebecc86f30e8144bc0bfaba2fe92869fdbf7515abb700f050d6c8d20"
   },
-  "nativeVerified": false,
+  "nativeVerified": true,
   "threadHandoffPassed": false,
   "rollbackLimit": "Code/assets only; never overwrite newer canonical database history",
   "backup": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/github-quota-repair/rollback-20261110T031849Z",
@@ -1010,5 +1010,27 @@
   "nativeFindingInspected": "Current quota job r7 report ac177c0 visible in its actual source thread; current action explicitly says manual handoff to Codex, no automated dispatch exists. This is a failed handoff pilot, not automatic workflow proof.",
   "nativeVerifiedAt": "2026-11-10T03:24:13.781418+00:00",
   "quotaExhaustionMethod": "Mocked production-plugin fake clock; real account was not exhausted",
-  "verifiedScope": "97 focused checks/types/build; 215 base guards,32 installed postimages; managed restart; actual app/finding render and normal GitHub polling ready; acceptance not yet recorded"
+  "verifiedScope": "97 focused checks/types/build; 215 base guards,32 installed postimages; managed restart; actual app/finding render and normal GitHub polling ready; acceptance not yet recorded",
+  "findingAcceptance": {
+    "findingId": "f1e35ba6-697e-4f1c-8502-329c16112ac8",
+    "revision": 9,
+    "state": "resolved",
+    "resolution": {
+      "outcome": "verified",
+      "evidenceReference": "https://github.com/gera3d/dsh-superagent-prototype/blob/superagent-core/docs/evidence/github-quota-installed.json",
+      "requirements": [
+        "Read PROJECT_STATUS and installed GitHub source/watch/Commands paths, existing redacted request/command metadata and exact timing. Identify measurable callers/endpoints and duplicate fetches; distinguish observed Harness calls from other unknown consumers sharing the same user budget. Do not read or print secrets or inspect unrelated projects.",
+        "Compare implementation to official GitHub rate-limit and REST best-practice docs. Explain5k authenticated user pool shared across tokens/OAuth/user apps, App installation separate minimum5k and scaling/qualifying Enterprise limits. No unsupported claim that a paid personal plan, new token or another connector fixes quota. Provide recommendation and exact setup/access tradeoff for any future App option, research only.",
+        "Reproduce evidenced quota/backoff/recovery or waste in isolated mock integration, not by exhausting the real account. Implement minimum safe call reduction: consider conditional ETag/Last-Modified reads respecting x-poll-interval, in-flight deduplication and immutable-by-SHA caching where applicable. Existing source cursors, pagination, unread signals, auth and private data isolation must remain correct. Never serve stale mutable PR/head/base/check facts to independent review or protected publication.",
+        "Honor primary remaining0/reset and secondary retry-after/429 with bounded jittered backoff and visible reason/next retry. Distinguish permissions/auth failures from quota and ordinary5xx. Recover normal polling and health after reset without user restart, reauthentication or infinite retry loops; do not block unrelated local workers solely because GitHub is cooling down. Do not claim the cached old health error is a fresh post-reset failure.",
+        "Test simulated headers/time with primary reset, secondary limit, non-quota403/401,304 reuse/cache identity, changed PR head and failed/uncertain publication safeguards. Show before/after request counts for one bounded representative workload. Keep useful quota remaining/reset/last-refresh metadata visible through existing status where practical; no misleading account-wide attribution.",
+        "Run focused meaningful tests, types/build serially; no live load test or account-exhaustion experiment and no redundant broad suites alongside the active handoff task. Report exact code base/head, logs and limits using supported bound orchestrator_report transport. Commit cumulative patch. Existing routes preserved, OpenAI conserved. No live publication or acceptance claims."
+      ],
+      "at": "2026-11-10T03:28:58.875Z",
+      "actor": "local-operator",
+      "jobId": "finding:f1e35ba6-697e-4f1c-8502-329c16112ac8:r7"
+    }
+  },
+  "threadFinalState": "Resolved; no current Next steps or worker-return recommendation in actual source after protected acceptance",
+  "publicationSafeguardTests": 75
 }
