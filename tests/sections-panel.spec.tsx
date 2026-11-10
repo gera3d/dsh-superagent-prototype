@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 // The Sections tab against fixture data only: no real project, ticket or session is read or moved.
 import { expect, it } from 'vitest'
+import type { ApiResponse } from '../src/app/api.ts'
 import { parseRoute, TABS } from '../src/client/route.ts'
 import { en, zh } from '../src/client/locales.ts'
 import { usePanel, mount, remount, all, find, tab, click, text, at } from './fixtures/panel.tsx'
@@ -8,15 +9,17 @@ import { server, ticketSummary } from './fixtures/panel-server.ts'
 
 usePanel()
 const progress = (over: Partial<Record<string, number>> = {}) => ({ total: 2, working: 1, person: 0, idle: 0, ended: 1, unknown: 0, percent: 50, ...over })
+/** Fixture views are written by hand, so they are checked against the response type only here. */
+const view = (value: unknown) => value as ApiResponse<'GET sections'>
 const door = { name: 'door-open', glyph: '🚪', color: '#38bdf8' }
 const row = ticketSummary({ id: 't1', title: '修复回归' })
 function approved() {
-  server.sections = { project: 'ws-1', structure: 'approved', unassigned: { total: 1, items: [ticketSummary({ id: 'loose', title: '未分区任务' })] },
+  server.sections = view({ project: 'ws-1', structure: 'approved', unassigned: { total: 1, items: [ticketSummary({ id: 'loose', title: '未分区任务' })] },
     totals: progress(), sections: [
       { id: 'sec_1', project: 'ws-1', position: 0, name: 'Front door', icon: door, goal: 'Let people in', baseThread: 'session-1', createdAt: '', updatedAt: '',
         tasks: [{ kind: 'ticket', id: 't1', stage: 'working', ticket: row }, { kind: 'session', id: 'session-2', stage: 'unknown' }], progress: progress() },
       { id: 'sec_2', project: 'ws-1', position: 1, name: 'Autopilot', icon: { name: 'zap', glyph: '⚡', color: '#fbbf24' }, goal: '', createdAt: '', updatedAt: '',
-        tasks: [], progress: progress({ total: 0, working: 0, ended: 0, percent: 0 }) }] }
+        tasks: [], progress: progress({ total: 0, working: 0, ended: 0, percent: 0 }) }] })
 }
 
 it('parses the sections route and lists the tab', () => {
@@ -35,8 +38,8 @@ it('shows the empty state and never offers section structure without a proposal'
 })
 
 it('shows a pending proposal as inert text with approve and reject only behind a confirmation', async () => {
-  server.sections = { project: 'ws-1', structure: 'proposed', sections: [], unassigned: { total: 0, items: [] }, totals: progress({ total: 0 }),
-    proposal: { id: 'prop_1', project: 'ws-1', status: 'pending', proposedAt: '', sections: [{ name: 'Front door', icon: 'door-open', members: [{ kind: 'ticket', id: 't1' }] }] } }
+  server.sections = view({ project: 'ws-1', structure: 'proposed', sections: [], unassigned: { total: 0, items: [] }, totals: progress({ total: 0 }),
+    proposal: { id: 'prop_1', project: 'ws-1', status: 'pending', proposedAt: '', sections: [{ name: 'Front door', icon: 'door-open', members: [{ kind: 'ticket', id: 't1' }] }] } })
   await mount()
   await click(tab(zh['tab.sections']))
   expect(text()).toContain('Front door')
