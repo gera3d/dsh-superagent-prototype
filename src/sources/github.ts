@@ -3,7 +3,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import { key, type Thread } from '../core/index.ts'
 import { sameName } from '../infra/text.ts'
 import { GithubAccountsSchema } from '../deployment.ts'
-import { CliError, validItems, type Tally } from '../infra/commands.ts'
+import { CliError, cooldownSeconds, validItems, type RateLimit, type Tally } from '../infra/commands.ts'
 import { ciCounts, ciFact, ciFailures, ciSummary, githubThreadContext, pullChecks } from './github-read.ts'
 import { branchCiTrigger, ciTrigger, commentTrigger, CommentSchema, githubAddress, isSelfAllowed, issueTrigger, IssueSchema, pullTrigger, SOURCE }
   from './github-trigger.ts'
@@ -127,6 +127,7 @@ export function pollFailure(failures: number, threshold: number, error: unknown)
 async function watch(ctx: SourceContext, signal: AbortSignal): Promise<void> {
   let interval = 60
   let failures = 0
+  let cooling = 0
   await ctx.ready
   // Setup restarts dsh-superagent once it resolves the accounts; until then nothing is polled.
   if (!ctx.configured()) { ctx.report('github', health('paused', 'setupPending')); return }
@@ -137,20 +138,30 @@ async function watch(ctx: SourceContext, signal: AbortSignal): Promise<void> {
       else ctx.report('github', health('paused', 'sourceOff'))
       failures = 0
     } catch (error) {
-      failures += 1
-      const failed = pollFailure(failures, config?.failuresBeforeError ?? 1, error)
-      if (!signal.aborted && failed) ctx.report('github', failed)
+      const rate = error instanceof CliError ? error.rate : undefined
+      if (rate) {
+        // Quota exhaustion is not a poll failure: wait out the reset, say so, and resume on the next successful round.
+        cooling = cooldownSeconds(rate)
+        if (!signal.aborted) ctx.report('github', health('paused', 'rateLimited', { kind: rate.kind, until: new Date(Date.now() + cooling * 1000).toISOString() }))
+      } else {
+        failures += 1
+        const failed = pollFailure(failures, config?.failuresBeforeError ?? 1, error)
+        if (!signal.aborted && failed) ctx.report('github', failed)
+      }
     }
-    await pause(Math.max(interval, ctx.config<GithubConfig>(SOURCE)?.pollSeconds ?? 60) * 1000, signal)
+    await pause(Math.max(cooling, interval, ctx.config<GithubConfig>(SOURCE)?.pollSeconds ?? 60) * 1000, signal)
+    cooling = 0
   }
 }
 interface Round {
   started: string; signal?: AbortSignal | undefined
   pulls: Map<number, Promise<Pull>>; read: Set<number>; failures: string[]; dropped: number[]; abandoned: number[]
-  tally: Tally
+  tally: Tally; rate?: RateLimit
 }
 const newRound = (signal?: AbortSignal): Round => ({ started: new Date().toISOString(), signal, pulls: new Map(), read: new Set(),
   failures: [], dropped: [], abandoned: [], tally: { skipped: 0 } })
+/** Remembers the first quota response of a round so the poller can cool down instead of retrying at the normal pace. */
+const limited = (round: Round, error: unknown): void => { if (error instanceof CliError && error.rate) round.rate ??= error.rate }
 const stopped = (ctx: SourceContext, round: Round): boolean => !!round.signal?.aborted || !ctx.config(SOURCE)
 export interface Retry { since: string; pr: boolean; failedAt?: string; attempts?: number }
 const RETRY_WINDOW_MS = 24 * 3600_000
@@ -160,7 +171,7 @@ const deleted = (error: unknown): boolean => error instanceof CliError && error.
 function failed(ctx: SourceContext, round: Round, number: number, error: unknown, abandoned = false): void {
   if (deleted(error)) round.dropped.push(number)
   else if (abandoned) round.abandoned.push(number)
-  else round.failures.push(`#${number}: ${String(error)}`)
+  else { round.failures.push(`#${number}: ${String(error)}`); limited(round, error) }
   ctx.threads.patch(`github:${number}`, { pollError: String(error) })
 }
 function included(raw: string): { headers: string; body: string } {
@@ -183,7 +194,7 @@ async function pollRepository(ctx: SourceContext, round: Round): Promise<void> {
     if (stopped(ctx, round)) return
     if (!stream.observed(config)) { ctx.state.set(KV.github.stream(stream.id), undefined); continue }
     try { await readStream(ctx, round, stream.id, stream.path, config) }
-    catch (error) { if (!stopped(ctx, round)) round.failures.push(`${stream.id}: ${String(error)}`) }
+    catch (error) { if (!stopped(ctx, round)) { round.failures.push(`${stream.id}: ${String(error)}`); limited(round, error) } }
   }
   // When CI observation is turned off, clear the failure baseline but preserve the revision counter so future triggers have unique IDs.
   if (!config.observeCi) {
@@ -192,7 +203,7 @@ async function pollRepository(ctx: SourceContext, round: Round): Promise<void> {
     return
   }
   try { await pollBranchCi(ctx, round) }
-  catch (error) { if (!stopped(ctx, round)) round.failures.push(`default branch CI: ${String(error)}`) }
+  catch (error) { if (!stopped(ctx, round)) { round.failures.push(`default branch CI: ${String(error)}`); limited(round, error) } }
 }
 /**
  * Polls one repository-wide event stream (oldest first) since its cursor and steps the cursor to five seconds before the
@@ -283,10 +294,10 @@ export async function pollRound(ctx: SourceContext, signal?: AbortSignal): Promi
   await pollRepository(ctx, round)
   await pollTicketPulls(ctx, signal, round)
   await pollThreads(ctx, signal, round)
-  if ('error' in notified) throw notified.error
+  if ('error' in notified) { limited(round, notified.error); throw notified.error }
   const { count, interval } = notified.value
   if (signal?.aborted) return interval
-  if (round.failures.length) throw new Error(`${round.failures.length} GitHub reads failed: ${round.failures.slice(0, 3).join('; ')}`)
+  if (round.failures.length) throw new CliError(`${round.failures.length} GitHub reads failed: ${round.failures.slice(0, 3).join('; ')}`, undefined, undefined, round.rate)
   const named = (numbers: number[]) => [...new Set(numbers)].sort((a, b) => a - b).map(number => `#${number}`).join(', ')
   const dropped = (round.dropped.length ? `; deleted on GitHub: ${named(round.dropped)}` : '')
     + (round.abandoned.length ? `; dropped after their reads kept failing: ${named(round.abandoned)}` : '')
