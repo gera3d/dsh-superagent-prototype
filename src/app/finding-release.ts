@@ -25,7 +25,9 @@ const repo = z.string().regex(/^[\w.-]+\/[\w.-]+$/)
 export const ReleaseProfileSchema = z.object({
   version: z.literal(1),
   /** Source repository and branch that finding workers' commits are based on. */
-  source: z.object({ repository: repo, baseBranch: z.string().regex(/^[\w./-]{1,100}$/), checkoutPath: absolute, remoteUrl: z.string().regex(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\.git$/), workspaceSubdir: z.string().regex(/^[\w.-]{1,60}$/).default('work') }).strict(),
+  source: z.object({ repository: repo, baseBranch: z.string().regex(/^[\w./-]{1,100}$/), checkoutPath: absolute, remoteUrl: z.string().regex(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\.git$/), workspaceSubdir: z.string().regex(/^[\w.-]{1,60}$/).default('work'),
+    /** Trusted extra parents under which a worker may have committed its result at `<root>/<ticket id>`; validated by git facts, never by prose paths. */
+    artifactRoots: z.array(absolute).max(10).default([]) }).strict(),
   ghPath: absolute, gitPath: absolute, cwd: absolute, patchDir: absolute,
   environment: z.string().min(1).max(200), components: z.array(z.string().min(1).max(200)).min(1).max(50), effects: z.array(z.string().min(1).max(1000)).min(1).max(50),
   timeoutMs: z.number().int().min(1000).max(900000).default(90000),
@@ -79,16 +81,29 @@ export class FindingRelease {
     const root = ticket.execution?.directory
     if (!assignment || !root) throw new ReleaseBlocked([{ field: 'worker artifact', owner: `worker-${ticket.id}`, detail: 'The job ticket has no recorded assignment or workspace directory.' }])
     const base = realpathSync(root)
-    let dir: string
-    try { dir = realpathSync(join(base, profile.source.workspaceSubdir)) } catch { throw new ReleaseBlocked([{ field: 'worker artifact', owner: `worker-${ticket.id}`, detail: `No ${profile.source.workspaceSubdir}/ checkout exists in the job workspace; commit the work in a clone of ${profile.source.repository} there.` }]) }
-    if (!inside(base, dir)) throw new DeliveryConflict('Worker checkout resolves outside the job workspace')
+    const options: { parent: string; dir: string }[] = []
+    for (const parent of [base, ...profile.source.artifactRoots.map(r => { try { return realpathSync(r) } catch { return '' } }).filter(Boolean).map(r => r)]) {
+      const sub = parent === base ? profile.source.workspaceSubdir : ticket.id
+      try { options.push({ parent, dir: realpathSync(join(parent, sub)) }) } catch { /* try next */ }
+    }
+    const found = options.find(o => inside(o.parent, o.dir))
+    if (!found) throw new ReleaseBlocked([{ field: 'worker artifact', owner: `worker-${ticket.id}`, detail: `No ${profile.source.workspaceSubdir}/ checkout exists in the job workspace or a trusted artifact root; commit the work in a clone of ${profile.source.repository} there.` }])
+    const dir = found.dir
     const git = (...args: string[]) => this.run(profile, profile.gitPath, ['-C', dir, ...args], dir).then(out => out.trim())
     if (await git('rev-parse', '--show-toplevel') !== dir) throw new DeliveryConflict('Worker checkout is not the root of its own git repository')
     const origin = await git('remote', 'get-url', 'origin')
     if (origin !== profile.source.checkoutPath && (existsSync(origin) ? realpathSync(origin) : origin) !== profile.source.checkoutPath) throw new DeliveryConflict('Worker checkout is not a clone of the trusted project source')
     if (await git('status', '--porcelain', '--untracked-files=no')) throw new ReleaseBlocked([{ field: 'worker artifact', owner: `worker-${ticket.id}`, detail: 'The worker checkout has uncommitted changes; only committed work can be reviewed and published.' }])
     const headSha = await git('rev-parse', 'HEAD')
-    const baseSha = await git('merge-base', 'HEAD', `refs/remotes/origin/${profile.source.baseBranch}`)
+    const trustedBase = async () => {
+      const local = await git('rev-parse', '--verify', '--quiet', `refs/remotes/origin/${profile.source.baseBranch}`).catch(() => '')
+      if (sha.test(local)) return local
+      const remote = (await this.run(profile, profile.ghPath, ['api', `repos/${profile.source.repository}/branches/${profile.source.baseBranch}`, '--jq', '.commit.sha'], profile.cwd)).trim()
+      if (!sha.test(remote)) throw new DeliveryConflict('Could not resolve the trusted base branch commit')
+      await git('cat-file', '-e', `${remote}^{commit}`).catch(() => { throw new ReleaseBlocked([{ field: 'worker artifact', owner: `worker-${ticket.id}`, detail: 'The worker checkout does not contain the trusted base commit; rebase onto the project base.' }]) })
+      return remote
+    }
+    const baseSha = await git('merge-base', 'HEAD', await trustedBase())
     if (!sha.test(headSha) || !sha.test(baseSha)) throw new DeliveryConflict('Worker checkout did not yield exact head and base commits')
     if (headSha === baseSha) throw new ReleaseBlocked([{ field: 'worker artifact', owner: `worker-${ticket.id}`, detail: 'The worker has no commit beyond the project base; there is nothing to review.' }])
     const patch = Buffer.from(await this.run(profile, profile.gitPath, ['-C', dir, 'diff', '--binary', baseSha, headSha], dir), 'utf8')
@@ -171,6 +186,11 @@ export class FindingRelease {
     if (assignment.report?.state !== 'ready') throw new ReleaseBlocked([{ field: 'worker report', owner: `worker-${ticket.id}`, detail: 'The job has not recorded a structured ready report; prose is never treated as ready.' }])
     const latest = finding.reports.filter(r => r.jobId === job.id).at(-1)
     if (!latest || !['ready', 'verified'].includes(latest.state ?? '')) throw new DeliveryConflict('The finding has no current-job ready evidence')
+    if (finding.state === 'resolved' || finding.state === 'deferred') throw new DeliveryConflict(`The finding is ${finding.state}; release preparation applies only to current unresolved work`)
+    if (latest.state === 'verified') throw new DeliveryConflict('The finding job is already verified; nothing remains to prepare')
+    // Exact approved requirements are kept verbatim (lossless); all immutable input is validated before any external effect.
+    const requirements = finding.requirements.map(r => r.trim()).filter(Boolean)
+    if (!requirements.length || requirements.length > 30 || requirements.some(r => r.length > 4000 || r.startsWith('intake:')) || new Set(requirements).size !== requirements.length) throw new DeliveryConflict('Finding requirements are not a bounded distinct list of acceptance criteria')
     const deliveryId = `auto-${ticket.id}`
     const prior = store.get(deliveryId)
     if (prior && !prior.scopeBinding) {
@@ -185,8 +205,6 @@ export class FindingRelease {
     const pr = await this.sourcePr(profile, c, finding)
     const config = this.writeManifest(profile, c, pr)
     const tracked = prior ?? store.trackUnbound({ ticketId: ticket.id, title: finding.title, owner: `worker:${ticket.id}`, repository: profile.source.repository, sourceIssue: 0, triggerId: ticket.origin.triggerId })
-    const requirements = finding.requirements.map(r => r.trim()).filter(Boolean)
-    if (!requirements.length || requirements.length > 20 || requirements.some(r => r.length > 500 || r.startsWith('intake:')) || new Set(requirements).size !== requirements.length) throw new DeliveryConflict('Finding requirements are not a bounded distinct list of acceptance criteria')
     const input: DeliveryCreate = { id: deliveryId, title: finding.title, owner: tracked.owner,
       bindings: { repository: profile.source.repository, sourceIssue: pr, baseSha: c.baseSha, headSha: c.headSha, environment: profile.environment, refs: [{ repository: profile.source.repository, pr, headSha: c.headSha, baseSha: c.baseSha }] },
       requirements, authorities: ['local-operator'], workers: [ticket.id], delegatedActions: ['review', 'fix', 'verify'] }
