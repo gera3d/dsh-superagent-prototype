@@ -1,0 +1,182 @@
+{
+  "observedAt": "2026-11-10T11:52:52.076312+00:00",
+  "stage": "Verified r7 completed turn with unfinished finalization, inspected real saved53capability-tests/typecheck exit0 and exact three pending test files; confirmed same-finding r9 finalization only. Independently applied safe worker heading-only documentation patch and marked map as historical proposal.",
+  "batch": [
+    {
+      "priority": 1,
+      "findingId": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+      "revision": 9,
+      "state": "running",
+      "job": {
+        "id": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r9",
+        "ticketId": "2fb6f203405410f6f47174c6b39725bd",
+        "assignmentId": "cbda8b9b08a6d3935afc96ee67196246"
+      },
+      "currentReports": []
+    },
+    {
+      "priority": 2,
+      "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r1",
+        "ticketId": "81f39e075967b209bb2da33cdeebb9ea",
+        "assignmentId": "b7a29614de084f5006202e2253aecc3f"
+      },
+      "currentReports": [
+        {
+          "reference": "ticket/81f39e075967b209bb2da33cdeebb9ea/report/b7a29614de084f5006202e2253aecc3f",
+          "state": "blocked",
+          "at": "2026-11-10T07:58:01.166Z"
+        }
+      ]
+    },
+    {
+      "priority": 3,
+      "findingId": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r1",
+        "ticketId": "97dc3af26b0375da5a5d9637272f81dd",
+        "assignmentId": "a4dfdfc44526a097f67a1cdeaf0c5367"
+      },
+      "currentReports": [
+        {
+          "reference": "ticket/97dc3af26b0375da5a5d9637272f81dd/report/a4dfdfc44526a097f67a1cdeaf0c5367",
+          "state": "ready",
+          "at": "2026-11-10T08:07:46.290Z"
+        }
+      ]
+    },
+    {
+      "priority": 4,
+      "findingId": "fbd4db89-0485-4e9d-a805-cac220390100",
+      "revision": 3,
+      "state": "blocked",
+      "job": {
+        "id": "finding:fbd4db89-0485-4e9d-a805-cac220390100:r1",
+        "ticketId": "ee96b8e87953f8a1debf4c809dc51a58",
+        "assignmentId": "e7c3e3b506bbeb36ee576236d76a6227"
+      },
+      "currentReports": [
+        {
+          "reference": "ticket/ee96b8e87953f8a1debf4c809dc51a58/report/e7c3e3b506bbeb36ee576236d76a6227",
+          "state": "evidence",
+          "at": "2026-11-10T08:25:56.399Z"
+        },
+        {
+          "reference": "ticket/ee96b8e87953f8a1debf4c809dc51a58/report/e7c3e3b506bbeb36ee576236d76a6227",
+          "state": "ready",
+          "at": "2026-11-10T08:26:13.080Z"
+        }
+      ]
+    },
+    {
+      "priority": 5,
+      "findingId": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r1",
+        "ticketId": "476e0cde1673d0d3278933f87ace6d8f",
+        "assignmentId": "aa513ffbcf8e4f75dceaa9b895132a1e"
+      },
+      "currentReports": [
+        {
+          "reference": "ticket/476e0cde1673d0d3278933f87ace6d8f/report/aa513ffbcf8e4f75dceaa9b895132a1e",
+          "state": "blocked",
+          "at": "2026-11-10T08:07:20.222Z"
+        }
+      ]
+    },
+    {
+      "priority": 6,
+      "findingId": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:60a99ec9-4328-41c1-93cc-dbbe6569e234:r1",
+        "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+        "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7"
+      },
+      "currentReports": [
+        {
+          "reference": "ticket/ecc57b7b6ef827705bb7ebe881718a88/report/cfd1d36113d7f3cd3fc2c8d7f639edd7",
+          "state": "ready",
+          "at": "2026-11-10T08:13:46.536Z"
+        }
+      ]
+    }
+  ],
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "paused": false,
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "settingsRevisions": {
+    "executor": 43,
+    "models": 18,
+    "coordination": 3
+  },
+  "openaiStatus": "conserved",
+  "currentTicketStage": "working",
+  "currentAssignments": [
+    {
+      "id": "cbda8b9b08a6d3935afc96ee67196246",
+      "state": "running",
+      "createdAt": "2026-11-10T11:50:46.333Z",
+      "startedAt": "2026-11-10T11:50:47.521Z",
+      "ref": "worker-2fb6f203405410f6f47174c6b39725bd"
+    }
+  ],
+  "fallbackReceipts": [
+    {
+      "at": "2026-11-10T11:50:47.649Z",
+      "text": "Fell back to available ladder model (anthropic/claude-sonnet-5-5): LlmError: All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown) (earliest reset in 2521s). Add an account, w."
+    }
+  ],
+  "blockedPriorDelivery": {
+    "id": "auto-849d516855dd66638b825aea19a2ff18",
+    "stage": "review",
+    "state": "blocked",
+    "revision": 7,
+    "blocker": "Correction handoff blocked: No active original implementation worker; ended workers are never reopened",
+    "bindings": {
+      "repository": "gera3d/dsh-superagent-prototype",
+      "sourceIssue": 94,
+      "baseSha": "3b26af2703a6fe48e84c5350374dad6bad3a3b2e",
+      "headSha": "92672fcf2a1ea69c3f223404c5e259226a80bbc2",
+      "environment": "installed local Harness superagent",
+      "refs": [
+        {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "pr": 94,
+          "headSha": "92672fcf2a1ea69c3f223404c5e259226a80bbc2",
+          "baseSha": "3b26af2703a6fe48e84c5350374dad6bad3a3b2e"
+        }
+      ]
+    }
+  },
+  "pendingDecisionMetadata": {
+    "count": 676,
+    "choicesSelected": 0
+  },
+  "sourcePr": 94,
+  "scopeLimits": "No duplicate implementation/test runs by coordinator. R7 turn ended completed, not output-limit; background logs subsequently completed. No new immutable candidate or ready report yet at this observation. No merge/live install/restart/publish/nativeacceptance/credentials/settings/reserve/capacity/schedule/spending changes or forced Google trial. Workmap review is partial, not verification of all34 historical issue classifications; no administrative closure.",
+  "nextOwner": "Harness finishes r9 only missing package-helper check, immutable test commit and current native report. Codex independently reviews revised artifact and reconciles source PR94/blocked delivery before qualification/protected release. Codex owns remaining lanes3/4 ready reviews,2/5 saved-work recovery and6 historical external-evidence audit."
+}

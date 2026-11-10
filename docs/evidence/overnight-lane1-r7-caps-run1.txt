@@ -1,0 +1,92 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-aeee110b0787/code
+
+(node:29952) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/delivery-capabilities.spec.ts (53 tests | 1 failed) 12954ms
+   ✓ invokes the configured executor independently with no tools and persists exact review evidence, never publication approval 227ms
+   ✓ gives independent review bounded token and time headroom while advice keeps its tighter budget 50ms
+   ✓ fails closed with privacy-safe incomplete, malformed and oversized review-response diagnostics 39ms
+   ✓ never accepts an oversized advice response 39ms
+   ✓ reconciles a persisted review without another model invocation and fences changed replay heads 41ms
+   ✓ rejects a cached verdict if its base or patches change even when the PR head is unchanged 39ms
+   ✓ checks every pinned PR head again after model execution and never persists a stale review 28ms
+   ✓ blocks missing LLM capability, model quota, GitHub permission, and incomplete diff explicitly 40ms
+   ✓ rejects model approval fields, malformed verdicts and findings outside the pinned diff 41ms
+   ✓ routes exact findings through real Engine.note transaction once across replay; old ready and inbox delivery are not correction completion 70ms
+   ✓ never dispatches a new correction note from reconciliation when no durable handoff exists 39ms
+   ✓ rolls Engine.note back with its fix outbox record on transaction failure 39ms
+   ✓ never broadcasts a correction to ambiguous active owners 46ms
+   ✓ routes a failed review to one new bounded successor when the original worker has ended, retaining ended history and original scope 54ms
+   ✓ proves rejection, successor correction, new ready evidence and independent re-review without publication or acceptance 59ms
+   ✓ dispatches exactly one successor across duplicate execution, restart and reconciliation 48ms
+   ✓ refuses stale or mismatched heads, review evidence and replayed scope before or after a successor exists 52ms
+   ✓ blocks ambiguous, open, stopped or revoked ownership without creating a successor 213ms
+   ✓ keeps missing-authority outcomes explicit: a blocked, stopped or interrupted successor never becomes corrected evidence 105ms
+   ✓ rebinds changed correction heads only within recorded follow-fix scope, clearing old artifact 39ms
+   ✓ blocks changed fix heads without pre-recorded scope and never treats old binding evidence as corrected 36ms
+   ✓ checks all secondary refs before and after review, rather than trusting only the primary head 25ms
+   ✓ requires pinned secondary bases and rejects repository path traversal before issuing GitHub reads 24ms
+   ✓ serializes simultaneous fix deliveries to one real Engine.note and blocks unconfigured executor selection 40ms
+   ✓ blocks truncated and oversized patches rather than silently reviewing a subset 28ms
+   ✓ generates actual bounded Senior Developer advice without adding model-selected actions or authority 25ms
+   ✓ preserves held-publication disposition and rejects model-selected action IDs or stale fingerprints 45ms
+   ✓ reviews each pinned PR as its own bounded batch when the combined source/artifact payload exceeds the aggregate cap 67ms
+   ✓ aggregates a failed batch into one bounded final verdict only after every batch completed 63ms
+   ✓ never persists a partial aggregate when a later batch is unbound or incomplete 36ms
+   ✓ names one authoritative reviewTarget per call with exact outer paths and no competing global refs 30ms
+   ✓ reviews a file containing an embedded source patch as its outer artifact filename and rejects nested identities 29ms
+   ✓ rejects path_note and extra finding keys instead of legalizing or dropping them 28ms
+   ✓ drops only unknown null-valued review metadata and preserves every real finding exactly 26ms
+   ✓ accepts a passed review with null-only unknown root metadata without weakening strict schema 30ms
+   ✓ still rejects null core review keys instead of normalizing them 36ms
+   ✓ keeps unknown non-null review metadata and objects present so strict schema still rejects them 51ms
+   ✓ still rejects unbound finding identity and unknown paths even when unknown metadata is null 39ms
+   ✓ never applies null-metadata canonicalization to advice responses 21ms
+   ✓ rejects a parsed root __proto__ object instead of inheriting injected verdict fields 24ms
+   ✓ rejects a parsed finding __proto__ carrying identity fields instead of letting it pollute the finding 27ms
+   ✓ gives advice bounded server-derived prepared-publication proof and separates source, artifact and target 33ms
+   ✓ reports missing or unverified prepared proof as a hold-worthy unknown instead of assuming freshness 39ms
+   ✓ uses the authorized availability ladder for review while conserving OpenAI 37ms
+   ✓ falls back on an in-band availability failure and discards all partial verdict text 28ms
+   ✓ does not turn an ordinary in-band error into availability escalation or expose its text 30ms
+   ✓ honors the explicit helper route for independent review without changing routine worker routing 31ms
+   ✓ explains the separate final acceptance step without trusting worker-looking evidence as operator provenance 27ms
+   ✓ adopts the re-reviewed successor artifact into the release lineage while the ended original stays immutable 60ms
+   ✓ refuses to adopt a stale, foreign, ambiguous or person-stopped correction and never invents release authority 84ms
+   ✓ fails the protected phase closed when an adopted successor, its failed review, handoff or generation is later altered 112ms
+   ✓ drives the actual FeatureDeliveryRuntime pass: adoption precedes the phase fence and the real packageRelease, which packages only the re-reviewed successor head  10350ms
+   × queues the correction successor through the existing launch effect: three occupied slots never admit a fourth worker, and a provider cooldown still falls back by the existing routes 81ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/delivery-capabilities.spec.ts > queues the correction successor through the existing launch effect: three occupied slots never admit a fourth worker, and a provider cooldown still falls back by the existing routes
+AssertionError: expected { provider: 'configured', …(1) } to match object { provider: 'antigravity', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "model": "gemini-3.8-flash",
+-   "provider": "antigravity",
++   "model": "executor",
++   "provider": "configured",
+  }
+
+ ❯ tests/delivery-capabilities.spec.ts:826:21
+    824|   expect(native.ensure).toHaveBeenCalledTimes(2)
+    825|   const routes = native.ensure.mock.calls.map(c => (c as unknown as un…
+    826|   expect(routes[0]).toMatchObject({ provider: 'antigravity', model: 'g…
+       |                     ^
+    827|   expect(store.tickets.get(successor.id)!.inputs.some(i => i.kind === …
+    828|   expect(store.tickets.get(successor.id)!.mandate).toMatchObject({ sco…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 52 passed (53)
+   Start at  03:00:17
+   Duration  16.11s (transform 2.14s, setup 0ms, import 2.79s, tests 12.95s, environment 0ms)
+
+EXIT=1

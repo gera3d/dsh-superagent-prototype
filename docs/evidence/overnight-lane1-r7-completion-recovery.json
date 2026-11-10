@@ -1,0 +1,58 @@
+{
+  "observedAt": "2026-11-10T11:50:04.238211+00:00",
+  "findingId": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+  "revision": 8,
+  "jobId": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r7",
+  "ticketId": "aeee110b0787a5f981199437a1f44cf3",
+  "assignmentId": "2ba8056531320aca290eb92c6ce5231c",
+  "baseHead": "92672fcf2a1ea69c3f223404c5e259226a80bbc2",
+  "terminalEvents": [
+    {
+      "seq": 22,
+      "time": 1794307972680,
+      "reason": "error"
+    },
+    {
+      "seq": 488,
+      "time": 1794308426418,
+      "reason": "completed"
+    },
+    {
+      "seq": 517,
+      "time": 1794308456780,
+      "reason": "completed"
+    }
+  ],
+  "files": [
+    {
+      "path": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-aeee110b0787/code/tests/delivery-capabilities.spec.ts",
+      "sha256": "cd16913d8a211408212a545e224e0e79f9561be4e36ce4e42bcbeb49c47ea28b"
+    },
+    {
+      "path": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-aeee110b0787/code/tests/finding-release-package.spec.ts",
+      "sha256": "c27ce1ea8a09eba47ae506d695ee70f6891e10f25a481670f384891f60fa4522"
+    },
+    {
+      "path": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-aeee110b0787/code/tests/fixtures/release-package.ts",
+      "sha256": "9a42c8fc2344a048ac47a0d766c42bdff9d89fa25458eec11fd7a3982102bd40"
+    }
+  ],
+  "logs": [
+    {
+      "path": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-aeee110b0787/evidence/r7-tsc.txt",
+      "sha256": "418a5c17f33c70e99b0cc0a07fce69191489cfedc94164bfa903785777c5bd4b",
+      "tail": "EXIT=0\n"
+    },
+    {
+      "path": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-aeee110b0787/evidence/r7-caps-run1.txt",
+      "sha256": "b9573bb560821e72ae458728affc9736ff28f63f77e92db288fb0f94974e7968",
+      "tail": "provider cooldown still falls back by the existing routes\nAssertionError: expected { provider: 'configured', \u2026(1) } to match object { provider: 'antigravity', \u2026(1) }\n\n- Expected\n+ Received\n\n  {\n-   \"model\": \"gemini-3.8-flash\",\n-   \"provider\": \"antigravity\",\n+   \"model\": \"executor\",\n+   \"provider\": \"configured\",\n  }\n\n \u276f tests/delivery-capabilities.spec.ts:826:21\n    824|   expect(native.ensure).toHaveBeenCalledTimes(2)\n    825|   const routes = native.ensure.mock.calls.map(c => (c as unknown as un\u2026\n    826|   expect(routes[0]).toMatchObject({ provider: 'antigravity', model: 'g\u2026\n       |                     ^\n    827|   expect(store.tickets.get(successor.id)!.inputs.some(i => i.kind === \u2026\n    828|   expect(store.tickets.get(successor.id)!.mandate).toMatchObject({ sco\u2026\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/1]\u23af\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 52 passed (53)\n   Start at  03:00:17\n   Duration  16.11s (transform 2.14s, setup 0ms, import 2.79s, tests 12.95s, environment 0ms)\n\nEXIT=1\n"
+    },
+    {
+      "path": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-aeee110b0787/evidence/r7-caps-run2.txt",
+      "sha256": "f4933ebc5a7bb4f293bf5e456802df7dc411b4d34b70ef4bf313955685abff12",
+      "tail": "\n RUN  v4.1.8 /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-aeee110b0787/code\n\n(node:30396) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n \u2713 tests/delivery-capabilities.spec.ts (53 tests) 12253ms\n   \u2713 drives the actual FeatureDeliveryRuntime pass: adoption precedes the phase fence and the real packageRelease, which packages only the re-reviewed successor head  10061ms\n\n Test Files  1 passed (1)\n      Tests  53 passed (53)\n   Start at  03:01:29\n   Duration  14.53s (transform 1.47s, setup 0ms, import 1.97s, tests 12.25s, environment 1ms)\n\nEXIT=0\n"
+    }
+  ],
+  "review": "Read-only inspection finds actual FeatureDeliveryRuntime + real git package integration test, durable Effects/DshExecutor capacity test with3occupied/slotfree and isolated provider-fallback assertion. No production edits relative to92672fc. r7caps53pass/typecheckexit0 saved; first failing setup rerun retained. Missing: extracted-helper dependent package spec qualification, immutable commit and current native ready report. No broad suite/live acceptance or Google success."
+}

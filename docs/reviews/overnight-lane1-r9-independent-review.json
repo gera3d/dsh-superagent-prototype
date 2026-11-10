@@ -1,0 +1,39 @@
+{
+  "observedAt": "2026-11-10T11:54:32.578381+00:00",
+  "findingId": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+  "revision": 10,
+  "jobId": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r9",
+  "ticketId": "2fb6f203405410f6f47174c6b39725bd",
+  "assignmentId": "cbda8b9b08a6d3935afc96ee67196246",
+  "reviewedHead": "4afd1af043cd1b57d992e259e683144de0daea7e",
+  "parent": "92672fcf2a1ea69c3f223404c5e259226a80bbc2",
+  "implementationBase": "75f091510d71624b98d4f3b63956909d4799a84f",
+  "patchSha256": "d2fcf5e8cf013c66d65c28d288c4ee6cdc8729f35dfd0310c3ee3e84b23836b7",
+  "filePins": [
+    {
+      "path": "tests/delivery-capabilities.spec.ts",
+      "sha256": "cd16913d8a211408212a545e224e0e79f9561be4e36ce4e42bcbeb49c47ea28b",
+      "identicalToR7": true
+    },
+    {
+      "path": "tests/finding-release-package.spec.ts",
+      "sha256": "c27ce1ea8a09eba47ae506d695ee70f6891e10f25a481670f384891f60fa4522",
+      "identicalToR7": true
+    },
+    {
+      "path": "tests/fixtures/release-package.ts",
+      "sha256": "9a42c8fc2344a048ac47a0d766c42bdff9d89fa25458eec11fd7a3982102bd40",
+      "identicalToR7": true
+    }
+  ],
+  "productionChangesFromR5": [],
+  "reviewVerdict": "Coordinator review passes both requested integration proof gaps, subject to separate native independent review and exact release qualification. No implementation change was needed; test-only commit.",
+  "checks": {
+    "inheritedR7": "53capabilitytests pass, includes actual FeatureDeliveryRuntime adoption-before-phase/package, durable Effects admission under3occupied slots/slotfree replay, isolated configured cooldown fallback; exact file hashes match committed r9. Typecheck exit0. Not rerun by root.",
+    "freshR9": "5/5 package fixture dependent tests, exit0; retained original failed r7 setup log.",
+    "inheritedR5": "Production build passed exact unchanged src; no redundant build/full-suite."
+  },
+  "proofLimits": "Real local Store/Engine/Effects/DshExecutor/runtime/git/packager used; LLM/GitHub facts/pnpm/restart isolated stubs. Capacity test mocks the launch method to observe queue admission, then separately exercises actual launch provider-unavailable/fallback handling. No actual provider cooldown induced, fourth live executor or live publication. No general throughput/reliability guarantee.",
+  "history": "Originalr1 rejection,r3outputlimit,r5 native failed review/PR94/delivery and r7 uncommitted progress remain immutable evidence. No claim of autonomous repair: coordinator had to recover r7 and click protected native preparation.",
+  "nextStage": "Actual native Review,test&prepare for current r9 invoked; verify resulting exact source PR/delivery/review/package before protected publication. No stale PR94 publication or first-approval bypass."
+}

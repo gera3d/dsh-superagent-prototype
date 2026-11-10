@@ -1,0 +1,14 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-aeee110b0787/code
+
+(node:30396) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/delivery-capabilities.spec.ts (53 tests) 12253ms
+   ✓ drives the actual FeatureDeliveryRuntime pass: adoption precedes the phase fence and the real packageRelease, which packages only the re-reviewed successor head  10061ms
+
+ Test Files  1 passed (1)
+      Tests  53 passed (53)
+   Start at  03:01:29
+   Duration  14.53s (transform 1.47s, setup 0ms, import 1.97s, tests 12.25s, environment 1ms)
+
+EXIT=0

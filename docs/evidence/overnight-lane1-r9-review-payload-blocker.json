@@ -1,0 +1,15 @@
+{
+  "observedAt": "2026-11-10T11:56:38.974541+00:00",
+  "findingId": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+  "jobId": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r9",
+  "head": "4afd1af043cd1b57d992e259e683144de0daea7e",
+  "sourcePr": 95,
+  "deliveryId": "auto-2fb6f203405410f6f47174c6b39725bd",
+  "blocker": "Independent review blocked: PR diff exceeds independent review size limit",
+  "canonicalPayloadBytes": 100986,
+  "existingLimitBytes": 100000,
+  "withoutUnrelatedWorkerStatusDeltaBytes": 98183,
+  "coverage": "Exact native failure plus actual GitHub PR95 /files response; reconstructed strict File schema and per-PR envelope. Raw file response106321bytes is not the canonical payload. Removing PROJECT_STATUS.md worker-only stale delta retains every source/test file and the complete diff under existing limit. Final actual PR payload must be remeasured after narrowing.",
+  "correction": "Same-scope artifact narrowing only: restore worker PROJECT_STATUS.md to implementation merge-base75f0915 in a new isolated candidate; current canonical project checkpoint is maintained separately and must not be overwritten. No source/test/fixture modifications, truncation, reviewer limit increase, provider/settings change or repeated qualified tests. Return immutable new head/current native report; preserve PR94/95 failed history.",
+  "limits": "Native review did not evaluate this r9 payload; no qualified package/publication, merge, deployment or acceptance. R9 proof tests/root review remain evidence, not a bypass."
+}

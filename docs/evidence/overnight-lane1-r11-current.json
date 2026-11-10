@@ -1,0 +1,182 @@
+{
+  "observedAt": "2026-11-10T11:57:25.488992+00:00",
+  "stage": "R7 finalization recovered; r9 exact test-only head4afd1af independently verified (53inheritedcaps+types,5freshpackage tests, unchanged production build). Native release preparation openedPR95 then actual complete-diff guard blocked100986bytes. Same-findingr11 narrowing only stale worker status delta is running. Safe historical-heading workmap doc correction integrated; no administrative closure.",
+  "batch": [
+    {
+      "priority": 1,
+      "findingId": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+      "revision": 11,
+      "state": "running",
+      "job": {
+        "id": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r11",
+        "ticketId": "c22796a56c57b96f120a42ec4db17cdd",
+        "assignmentId": "73ee3ed17d4e4ec88b75f61e228aa1c1"
+      },
+      "currentReports": []
+    },
+    {
+      "priority": 2,
+      "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r1",
+        "ticketId": "81f39e075967b209bb2da33cdeebb9ea",
+        "assignmentId": "b7a29614de084f5006202e2253aecc3f"
+      },
+      "currentReports": [
+        {
+          "reference": "ticket/81f39e075967b209bb2da33cdeebb9ea/report/b7a29614de084f5006202e2253aecc3f",
+          "state": "blocked",
+          "at": "2026-11-10T07:58:01.166Z"
+        }
+      ]
+    },
+    {
+      "priority": 3,
+      "findingId": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r1",
+        "ticketId": "97dc3af26b0375da5a5d9637272f81dd",
+        "assignmentId": "a4dfdfc44526a097f67a1cdeaf0c5367"
+      },
+      "currentReports": [
+        {
+          "reference": "ticket/97dc3af26b0375da5a5d9637272f81dd/report/a4dfdfc44526a097f67a1cdeaf0c5367",
+          "state": "ready",
+          "at": "2026-11-10T08:07:46.290Z"
+        }
+      ]
+    },
+    {
+      "priority": 4,
+      "findingId": "fbd4db89-0485-4e9d-a805-cac220390100",
+      "revision": 3,
+      "state": "blocked",
+      "job": {
+        "id": "finding:fbd4db89-0485-4e9d-a805-cac220390100:r1",
+        "ticketId": "ee96b8e87953f8a1debf4c809dc51a58",
+        "assignmentId": "e7c3e3b506bbeb36ee576236d76a6227"
+      },
+      "currentReports": [
+        {
+          "reference": "ticket/ee96b8e87953f8a1debf4c809dc51a58/report/e7c3e3b506bbeb36ee576236d76a6227",
+          "state": "evidence",
+          "at": "2026-11-10T08:25:56.399Z"
+        },
+        {
+          "reference": "ticket/ee96b8e87953f8a1debf4c809dc51a58/report/e7c3e3b506bbeb36ee576236d76a6227",
+          "state": "ready",
+          "at": "2026-11-10T08:26:13.080Z"
+        }
+      ]
+    },
+    {
+      "priority": 5,
+      "findingId": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r1",
+        "ticketId": "476e0cde1673d0d3278933f87ace6d8f",
+        "assignmentId": "aa513ffbcf8e4f75dceaa9b895132a1e"
+      },
+      "currentReports": [
+        {
+          "reference": "ticket/476e0cde1673d0d3278933f87ace6d8f/report/aa513ffbcf8e4f75dceaa9b895132a1e",
+          "state": "blocked",
+          "at": "2026-11-10T08:07:20.222Z"
+        }
+      ]
+    },
+    {
+      "priority": 6,
+      "findingId": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:60a99ec9-4328-41c1-93cc-dbbe6569e234:r1",
+        "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+        "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7"
+      },
+      "currentReports": [
+        {
+          "reference": "ticket/ecc57b7b6ef827705bb7ebe881718a88/report/cfd1d36113d7f3cd3fc2c8d7f639edd7",
+          "state": "ready",
+          "at": "2026-11-10T08:13:46.536Z"
+        }
+      ]
+    }
+  ],
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "paused": false,
+  "health": {
+    "runtime": "ready",
+    "relay": "ready",
+    "notice": "ready",
+    "launch": "ready",
+    "delivery": "ready",
+    "assessment": "ready",
+    "reply": "ready",
+    "evals": "ready",
+    "models": "ready",
+    "github": "ready"
+  },
+  "settingsRevisions": {
+    "executor": 43,
+    "models": 18,
+    "coordination": 3
+  },
+  "openaiStatus": "conserved",
+  "currentTicketStage": "working",
+  "currentAssignments": [
+    {
+      "id": "73ee3ed17d4e4ec88b75f61e228aa1c1",
+      "state": "running",
+      "createdAt": "2026-11-10T11:56:41.127Z",
+      "startedAt": "2026-11-10T11:56:44.861Z",
+      "ref": "worker-c22796a56c57b96f120a42ec4db17cdd"
+    }
+  ],
+  "fallbackReceipts": [
+    {
+      "at": "2026-11-10T11:56:45.008Z",
+      "text": "Fell back to available ladder model (anthropic/claude-sonnet-5-5): LlmError: All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown) (earliest reset in 2164s). Add an account, w."
+    }
+  ],
+  "currentRejectedDelivery": {
+    "id": "auto-2fb6f203405410f6f47174c6b39725bd",
+    "revision": 5,
+    "stage": "review",
+    "state": "blocked",
+    "bindings": {
+      "repository": "gera3d/dsh-superagent-prototype",
+      "sourceIssue": 95,
+      "baseSha": "7e2acc17f22b99848779a2605b2731a1455d4618",
+      "headSha": "4afd1af043cd1b57d992e259e683144de0daea7e",
+      "environment": "installed local Harness superagent",
+      "refs": [
+        {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "pr": 95,
+          "headSha": "4afd1af043cd1b57d992e259e683144de0daea7e",
+          "baseSha": "7e2acc17f22b99848779a2605b2731a1455d4618"
+        }
+      ]
+    },
+    "blocker": "Independent review blocked: PR diff exceeds independent review size limit",
+    "preparedPublication": null
+  },
+  "pendingDecisionMetadata": {
+    "count": 677,
+    "choicesSelected": 0
+  },
+  "limits": "No merge, live deployment/restart, native live proof, publication or acceptance. Root repeated no worker implementation/tests. Native full-payload bound enforced without truncation or limit/provider changes. R11 may change only candidate stale worker status delta, not authoritative project checkpoint/source/tests. Documentation lane6 only partial independent review; historical classifications unverified in full, no issueclosure/advice retirement. No force Google qualification, credential/settings/capacity/spending/schedule change.",
+  "nextOwner": "Harness completes r11 narrowed immutable artifact+current report. Codex verifies source/test byte identity, actual native full diff size, then exact native review/package/protected publication and live acceptance. Prior PR94/95 blocked histories remain. Codex owns remaining3/4 reviews,2/5 saved-work recovery,6 historical external-evidence audit."
+}

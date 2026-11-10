@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-11-10T11:51:48.787839+00:00",
+  "findingId": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+  "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+  "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7",
+  "stage": "Partial independent documentation review: safe heading-only worker patch applies cleanly to current source and is integrated; historical work-map proposal archived with explicit uncertainty.",
+  "coverage": "Inspected worker patch, full proposed work map and current checkpoint. Corrected misleading Current/Remaining/Open headings below history boundary without replacing newer top rows or removing original body/evidence/decisions. This does not independently verify all34 historical issue classifications or authorize administrative closures.",
+  "limits": "No issue/PR closure, advice retirement, ordinary choice, reopened accepted job, deployment, settings or canonical acceptance. Finding remains blocked/unaccepted; next owner Codex finishes external-evidence audit and exact native bounded acceptance when justified."
+}

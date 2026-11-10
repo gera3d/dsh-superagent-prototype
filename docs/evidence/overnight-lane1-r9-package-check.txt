@@ -1,0 +1,18 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-2fb6f2034054/work
+
+(node:44681) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/finding-release-package.spec.ts (5 tests) 52849ms
+   ✓ packages the reviewed head: real targeted check evidence, exact manifest, no publication  12931ms
+   ✓ blocks with a concrete owner when no spec changed, checks fail, review missing, head moved, or publication busy  20778ms
+   ✓ rejects a foreign review even when the visible evidence says passed  801ms
+   ✓ preserves failed attempt logs and refuses a cross-process packaging lock  11743ms
+   ✓ rechecks canonical finding currency after checks and never installs a stale package  6588ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  03:51:41
+   Duration  53.64s (transform 232ms, setup 0ms, import 452ms, tests 52.85s, environment 0ms)
+
+EXIT=0

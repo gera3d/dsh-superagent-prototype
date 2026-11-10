@@ -1,21 +1,27 @@
 # DeepSeek Harness project status
 
-## Current overnight batch — explicitly authorized November 9, 2026
+## CURRENT CHECKPOINT — overnight batch, explicitly authorized November 9, 2026 (the only section that describes live state)
 
 Gera instructed Codex chat `01a1c46a-41e7-7f33-a459-7b621a70e97e`: give all six proposed assignments to Harness, start the first three and queue the rest, keep OpenAI conserved and the 5% Google reserve, and advance only as far as existing approval gates allow. All six exact bounded findings were observed through MCP and individually confirmed through the actual native finding controls. No first-approval bypass, generic decision selection or canonical database edit was used.
 
-Verified November 10 at 02:53 AM PST: **priority1 same-finding r7 is running; executor load 1running/0queued, maxWorkers3, intake enabled; all ten health components ready.** Original six-task FIFO drained. No new batch feature is merged, deployed or accepted this pass.
+Verified November 10 at 03:57 AM PST: **priority1 same-finding r11 is running; executor load 1running/0queued, maxWorkers3, intake enabled and all ten health components ready.** R9 returned reviewed immutable test candidate4afd1af, but native PR95 full-diff review bound blocked100986bytes. R11 narrows only an unrelated stale worker status delta under the same limit; no feature is deployed or accepted. Historical-heading documentation correction is integrated; no administrative closure.
 
 | Priority | Bounded assignment | Canonical finding | Current stage / next owner |
 |---|---|---|---|
-| 1 | Recover independent-review rejection after implementation worker ended | `dd8d3ab1-7941-43f2-b498-4a82a27c9bb2` | r5 candidate92672fc passes root corrected-head packaging check/build; native independent review requests runtime-ordering/capacity proof. Source PR94 / blocked delivery `auto-849d516855dd66638b825aea19a2ff18` preserved. Same-finding r7 running: ticket `aeee110b0787a5f981199437a1f44cf3`, assignment `2ba8056531320aca290eb92c6ce5231c`; Harness owns focused test proof, Codex re-review. |
+| 1 | Recover independent-review rejection after implementation worker ended | `dd8d3ab1-7941-43f2-b498-4a82a27c9bb2` | r9head4afd1af and proof tests independently reviewed; PR95/delivery `auto-2fb6f203405410f6f47174c6b39725bd` blocked by full-diff limit. Same-finding r11 running: ticket `c22796a56c57b96f120a42ec4db17cdd`, assignment `73ee3ed17d4e4ec88b75f61e228aa1c1`. Harness narrows status-only delta; Codex verifies exact source/test identity and resumes native review. |
 | 2 | Production Composio action-failure handling | `c844ce8f-7c80-407c-a237-9dd53d62f3c3` | blockedrevision2; original ticket81f39e075967 ended without structured report. Codex must inspect/recover saved work, not infer no implementation. |
 | 3 | Measure/reduce worker context waste | `e1dfd442-bb88-409e-bef0-b2db569dca79` | blockedrevision2; candidate9a16934 / draft PR92 awaits independent review. |
 | 4 | First integrated project sections | `fbd4db89-0485-4e9d-a805-cac220390100` | blockedrevision3; candidate3d5bf97 / PR93 awaits independent review/qualification/native proof; no real taxonomy changed. |
 | 5 | Sanitized publication diagnostics | `f1d6590a-5aff-4b9a-9440-65033a5c250f` | blockedrevision2; original ticket476e0cde1673 ended without structured report. Saved work/cause needs inspection; no synthetic publication. |
-| 6 | Work map / historical backlog | `60a99ec9-4328-41c1-93cc-dbbe6569e234` | blockedrevision2; documentation proposal awaits independent review; unapplied, no administrative closure. |
+| 6 | Work map / historical backlog | `60a99ec9-4328-41c1-93cc-dbbe6569e234` | blockedrevision2; heading-only doc correction independently reviewed/applied, historical proposal archived with uncertainty. External issue classification audit and protected acceptance remain with Codex. No closures or advice retirement. |
 
-**This pass: exact-head review → native independent review → bounded proof correction.** Current r5 ready evidence is ticket849d516855dd66638b825aea19a2ff18/assignmentf55d688a7df4a92898f79fe433ce36cc, head `92672fcf2a1ea69c3f223404c5e259226a80bbc2`, patchsha256 `aa4948382f81f70c7ba0eeff87ce908a35cbce3322d0010e8926c1dfa58fb7f5`. Root inspected saved136tests/eight suites and typecheck; a NEW isolated real git-derived successor adoption/phase/package test passed (1pass/51skipped), and root production build passed. No broad-suite or live acceptance claim. [Root review and limits](docs/reviews/overnight-lane1-r5-independent-review.json).
+**Latest pass: finalization → exact-head review → native diff-size blocker → bounded artifact narrowing.** R7's preserved test work was finalized at current ready r9 ticket `2fb6f203405410f6f47174c6b39725bd` / assignment `cbda8b9b08a6d3935afc96ee67196246`, exact head `4afd1af043cd1b57d992e259e683144de0daea7e`. Three test/fixture files match r7 byte-for-byte; no production change from92672fc. Root inspected inherited53caps tests/typecheck and fresh5/5 package tests; no repeated worker tests or broad-suite claim. [R7 preserved work](docs/evidence/overnight-lane1-r7-completion-recovery.json), [r9 independent review and precise coverage](docs/reviews/overnight-lane1-r9-independent-review.json).
+
+Actual native Review,test&prepare opened [PR95](https://github.com/gera3d/dsh-superagent-prototype/pull/95), exact head4afd1af/patchsha256 `d2fcf5e8cf013c66d65c28d288c4ee6cdc8729f35dfd0310c3ee3e84b23836b7`, targetbase7e2acc1. Full File-schema per-PR payload100986bytes exceeded the existing100000 bound, so native review did not evaluate it and no package/publication was prepared. Actual GitHub complete files were measured; removing only unrelated worker PROJECT_STATUS delta yields98183bytes. Supported same-finding r11 narrows that stale artifact delta, preserving all implementation/tests/evidence/current canonical project status and the bound; no truncation, reviewer-limit increase or provider change. [Exact payload blocker](docs/evidence/overnight-lane1-r9-review-payload-blocker.json), [current canonical state/owner](docs/evidence/overnight-lane1-r11-current.json). Codex must remeasure actual new native PR payload and qualify it before release; old PR94/95 failures remain history.
+
+**Documentation lane6 partial review:** applied the worker's safe heading-only patch against current source without replacing current top rows or removing historical body/evidence/decisions. Exactly one CURRENT CHECKPOINT and an explicit HISTORY BOUNDARY now separate live from old state. [Historical worker map/proposals](docs/evidence/work-map-reconciliation-20261110.md) are expressly dated, not current or independently revalidated in full. [Review coverage/remaining owner](docs/reviews/overnight-workmap-partial-review.json). Canonical observation records partial review only; no finding acceptance, issue closure, taxonomy change or stored-advice retirement.
+
+**Earlier bounded pass: exact-head review → native independent review → bounded proof correction.** Current r5 ready evidence is ticket849d516855dd66638b825aea19a2ff18/assignmentf55d688a7df4a92898f79fe433ce36cc, head `92672fcf2a1ea69c3f223404c5e259226a80bbc2`, patchsha256 `aa4948382f81f70c7ba0eeff87ce908a35cbce3322d0010e8926c1dfa58fb7f5`. Root inspected saved136tests/eight suites and typecheck; a NEW isolated real git-derived successor adoption/phase/package test passed (1pass/51skipped), and root production build passed. No broad-suite or live acceptance claim. [Root review and limits](docs/reviews/overnight-lane1-r5-independent-review.json).
 
 The exact artifact was staged in the trusted existing profile's work/ subdirectory without modifying original code/, settings or source head. Actual native **Review, test & prepare release** opened [PR94](https://github.com/gera3d/dsh-superagent-prototype/pull/94) and bound delivery to targetbase3b26af2. Native Sonnet review then requested two **proof gaps**, not demonstrated live violations: real FeatureDeliveryRuntime adoption-before-packaging ordering and downstream correction admission enforcing existing capacity/cooldowns. [Native verdict](docs/evidence/overnight-lane1-r5-native-review.json). Installed predecessor correction adapter cannot advance an ended worker, so the failed delivery is preserved and the supported coordinator MCP used original approval to continue the same finding at r7. No bypass, reopened ended job or invented ready report. [Current canonical state/handles](docs/evidence/overnight-lane1-r7-current.json).
 
@@ -31,11 +37,13 @@ The existing coordinator should take these six through demonstrated blocker corr
 
 Durable local batch packet and evidence: [assignment specifications](/Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/assignments.json), [native confirmation/job receipts](/Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/confirmed-batch.json), [actual provider events and reserve adapter proof](/Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/provider-proof.json). On GitHub these absolute paths identify operator-local artifacts, not repository-hosted evidence. The full bounded scopes/requirements also live in their canonical finding records.
 
-### Earlier checkpoints below — history except unreplaced evidence and authority
+## HISTORY BOUNDARY — everything below is dated history, not current state
+
+Reading rule: a section below that says Current, Active, Remaining or Open describes only its own dated snapshot. Where it conflicts with the CURRENT CHECKPOINT above, the checkpoint wins; the older text is kept unchanged as evidence (failed candidates, user decisions, original unknown pins and reconciliation receipts included). A merged PR or an ended worker is not live completion unless a section cites installed postimages, native verification or protected acceptance. Item-by-item classification of open GitHub issues and the batch: [work map reconciliation 2026-11-10](docs/evidence/work-map-reconciliation-20261110.md).
 
 Updated November 09, 2026, 11:19 PM PST. Owner: current Codex coordinator/reviewer. **Active work and verified checkpoints below distinguish release stages.**
 
-## Active approved work
+## Historical — Active approved work (snapshot Nov 9, 11:19 PM PST)
 
 **Google subscription connection qualification — actual Harness attempts complete; Google remains unqualified and blocked by the preserved 5% weekly reserve.** Finding `f526782b-1443-4342-b811-3cba5188f455` blockedrevision4, same scope/currentr3 ticket `26b9ea4d4f5d3728e5eed7c89fa5b6dc`; originalr1 retained. Both actual Google attempts were unavailable and fell back to Sonnet; fallback completed local tools/reporting but is not Google success. Native pool shows100% rolling and2.9801391% weekly remaining, no active cooldown/auth error; installed adapter eligibility rejects<=5% weekly. **User explicitly chose Keep the5% reserve.** No threshold/cooldown/account/route change or forced retry. Weekly reset snapshot2026-11-14T22:42:10Z; rolling reset alone is insufficient. Codex owns the same-scope MCP continuation when real Google eligibility returns.
 
@@ -81,7 +89,7 @@ Installed six application/fixture/package files and28 assets match qualified pos
 
 Actual repair thread advanced from deployed to native verification, then final evidence/head-binding acceptance. After protected acceptance, a fresh source reload shows **Resolved and no Next steps**. No repeated tests/merge/deploy, conversation choice selected or reply sent. Original accepted cost feature/investigation and rejected R1 history remain intact. No new user decision or approved implementation remains pending in this scope.
 
-## Current verified checkpoint
+## Historical — verified checkpoint (superseded snapshot)
 
 | Work | Actual current stage | Next owner / limit |
 |---|---|---|
@@ -92,7 +100,7 @@ Actual repair thread advanced from deployed to native verification, then final e
 
 Live Harness: **1 running (handoff R15),0 queued,max3; intake resumed; quota is protected-accepted and all health components including GitHub ready.** Both bounded recovery sessions selected native Sonnet5.5 low; saved executor default is restored Google/high at revision33. Earlier quota requests failed Google availability cooldown then fell back to Sonnet; no universal Google health/quota claim. Existing helper/models/account settings and OpenAI conservation unchanged. No new credentials, account access, capacity or schedule change. Full automatic handoff remains unverified; only the handoff correction is active/unaccepted. Quota repair is verified and protected-accepted.
 
-## Remaining open work — reconciled against live state
+## Historical — Remaining open work (superseded snapshot; the overnight batch above now defines open work)
 
 - **Newly approved thread-native handoff:** running as recorded above; review, bootstrap deployment and actual end-to-end proof remain with Codex. No user decision pending.
 - **No remaining approved implementation pending in the previously accepted scopes:** the separately approved nine-concern cost repair is now deployed, native verified and accepted. Original accepted history remains preserved.
@@ -119,7 +127,7 @@ Live Harness: **1 running (handoff R15),0 queued,max3; intake resumed; quota is 
 
 Updated November 09, 2026, 1:15 PM PST. Owner: current Codex coordinator/reviewer. **Only this current checkpoint describes the live stage. Dated attempt logs below the history divider are historical.**
 
-## Current verified checkpoint
+## Historical — verified checkpoint (Nov 9, 1:15 PM PST snapshot)
 
 | Work | Actual current stage | Next owner / blocker |
 |---|---|---|
@@ -133,7 +141,7 @@ Live Harness: **1 running,0 queued,max3; intake resumed; all runtime health comp
 
 Current canonical feature: finding `bf38fc9c-8273-4d61-9ae4-e98c45e51365`, **queued revision15**, job `finding:bf38fc9c-8273-4d61-9ae4-e98c45e51365:r15`, ticket `pending`, assignment `pending`. R13 candidatead9fdd3 corrected both earlier blockers; independent root audit2pass/1fail demonstrates normal progress-observe reconciliation prevents fresh native replacement. No R11/R13 code installed. Same-finding narrow correction preserves all prior attempts and deployed PR77.
 
-## Current evidence and limits
+## Historical — evidence and limits (Nov 9, 1:15 PM PST snapshot)
 
 - [Exact source qualification](docs/evidence/completed-advice-history-source-qualified.json), [installed manifest/rollback](docs/evidence/completed-advice-history-installed-manifest.json), [live backend verification](docs/evidence/completed-advice-history-installed-backend.json).
 - All17 pre-install pending stored rows retain the same status, choices, option sets and source identity; history classification is a read-time projection. The live API now has6 pending projections: this feature's current advice +review record, one ordinary conversation and3 unbound delivery gates. These are not6 jobs or6 confirmed user decisions. The current review belongs to Codex; expected final completion must stop its advice too.
@@ -417,7 +425,7 @@ User unlocked the Mac. Codex verified native access, used **Reopen bounded triag
 
 [Canonical dispatch evidence](docs/evidence/unlocked-correction-dispatch.json). Three executor slots are assigned. Dispatch/working does not establish returned output or passed corrections; current usage is not yet reported. Root owns independent review and approved release after exact-head checks and rollback; workers remain isolated implementation owners. The locked-screen blocker below is historical and cleared for these confirmations.
 
-## Independent current-state reviews — concrete remaining blockers
+## Historical — independent state reviews and blockers (dated snapshot)
 
 **Advisor:** root directly ran five suites on the revised Settings candidate:44 tests pass, including persona propagation coverage. Two new current-state tests fail. The actual blocked finding whose ended worker awaits coordinator evidence review generates “do not recommend proceeding with review,” blocking the very next owner action. Separately a waiting progress report explicitly saying tests have not run is described as candidate testing complete. State mapping still conflates implementation blockers, review-needed handoffs and waiting progress. [Independent advisor verdict](docs/evidence/advisor-r6-root-review.json). The live cards also infer no work from zero outer tool calls; that does not measure internal Antigravity activity. Any fix must preserve evidence uncertainty and request only specifically missing checks, not broadly repeat all tests.
 
@@ -445,7 +453,7 @@ After confirming paused intake and zero active/queued executors, root installed 
 
 Limits: English heuristic closeout; quoted/negated requests, real work/blockers/questions, failed tools and later reopening covered by regression tests. A new live model reopening conversation was not sent. Do not generalize this acceptance to all future phrases, Settings recommendations or reporting integration. Only completion behavior was included in this deployment.
 
-## Tracking and next release work
+## Historical — Tracking and next release work (dated snapshot)
 
 [Latest post-release live state](docs/evidence/post-closeout-release-state.json) distinguishes canonical finding/job identities, ended worker mandates and active assignments. Do not resurrect ended mandates directly. The original repository-mismatched verifications remain deferred as superseded history with explicit replacement links. Hourly automation remains active, advances coherent bounded stages, and is not continuous execution between checks.
 
@@ -459,7 +467,7 @@ The original closed Cloudflare decision is not pending after the deployed comple
 
 ## Historical checkpoints
 
-## Three current workers admitted; completion pair merged, not installed
+## Historical — three workers admitted; completion pair merged, not installed (dated snapshot)
 
 User requested using available Antigravity capacity across all discussed work. Codex corrected the immutable repository mismatch by recording explicitly linked replacement verifications against the configured sandbox dispatch carrier, preserving the prototype as the inspected source target and retaining original requirements/evidence. The original blocked intakes never created workers; each was natively deferred as superseded history, not resolved or deleted. Replacements were natively confirmed; there are no competing active jobs for those scopes.
 
@@ -515,7 +523,7 @@ One bounded correction was sent through the native composer to the same current,
 
 The advisor Settings/handoff candidate is at backend `4502b86` with real checkpoint patches; source inspection began, but independent full review and paired integration remain outstanding. The unattended-coordination worker reports a file-based command candidate and 56 checks; no privileges are enabled and no activation is authorized by its report. That candidate still requires security/authority review and any required specific owner confirmation. The allowance display and both older verifications remain in the canonical finding queue (three queued, separate from executor load). Do not unqueue/reconfirm or create duplicate jobs to bypass finding capacity.
 
-## All discussed remaining work assigned — capacity-managed finding queue
+## Historical — all discussed remaining work assigned (dated snapshot)
 
 User explicitly requested assigning the discussed work to Harness using available Antigravity capacity. Through native protected triage, Codex confirmed the Google/Anthropic allowance display implementation and both existing read-only verifications (cost-summary findings and publication confirmation before enqueue). These three canonical findings are now **queued**, with stable job identities; they have not started and have no worker result yet. The finding queue is separate from executor `load.queued`, which currently reports zero: do not mistake that for an empty approved-work queue.
 
@@ -545,7 +553,7 @@ Scope: supported authenticated coordination for already-approved exact finding/j
 
 Canonical finding `a338ad44-893d-4ebf-b8ff-aa0c3067e384`; job `finding:a338ad44-893d-4ebf-b8ff-aa0c3067e384:r1`. Current state `running`.
 
-## Active bounded correction — native retry dispatched
+## Historical — bounded correction, native retry dispatched (dated snapshot)
 
 Verified November 8, 2026, 7:27 AM PST: native access is available again. Codex used **Reopen bounded triage**, then confirmed **Fix now** on the existing completion-advice finding. Its revision-4 job is running; the prior ended assignment and all three occurrences/review evidence remain attached as history. Harness reports one running worker, zero queued. This is a correction dispatch, not a completed fix or deployment.
 
@@ -561,7 +569,7 @@ Root reviewed the exact commits and independently replayed three cases. Both ear
 
 The required next action is a bounded same-finding correction through native review/retry, preserving the ended assignment and prior evidence as history. Do not directly revive its ended mandate or create another finding. The Mac is locked again, so that native retry is not sent; the exact full-fixture finding has been appended as a third occurrence on the existing record. Nine local components are ready; GitHub remains in the known account-wide rate-limit wait. No settings, credentials, permissions, new job or spending policy changed.
 
-## Open correction — recommendations after explicit completion
+## Historical — correction opened for recommendations after explicit completion (later fixed and accepted)
 
 The user's 8:03 PM screenshot exposed a remaining gap after the accepted release: the completed Cloudflare validation still offered **Start real Cloudflare guidance — 48%**, even though the preceding choice and response explicitly closed the check. The confirmation was correct; the unsolicited next-work recommendation was not. The prior six findings remain resolved and the release stays installed, but **completion relevance is not fully fixed**. Do not report every recommendation behavior as complete.
 
@@ -596,7 +604,7 @@ Finish and verify the four approved tracks in the installed Harness. Review, blo
 
 Backend PRs [55](https://github.com/gera3d/dsh-superagent-prototype/pull/55), [57](https://github.com/gera3d/dsh-superagent-prototype/pull/57), [58](https://github.com/gera3d/dsh-superagent-prototype/pull/58), [59](https://github.com/gera3d/dsh-superagent-prototype/pull/59), [60](https://github.com/gera3d/dsh-superagent-prototype/pull/60), [61](https://github.com/gera3d/dsh-superagent-prototype/pull/61), [62](https://github.com/gera3d/dsh-superagent-prototype/pull/62), [63](https://github.com/gera3d/dsh-superagent-prototype/pull/63), [64](https://github.com/gera3d/dsh-superagent-prototype/pull/64), [65](https://github.com/gera3d/dsh-superagent-prototype/pull/65), [66](https://github.com/gera3d/dsh-superagent-prototype/pull/66) and plugin PRs [17](https://github.com/gera3d/dsh-plugins/pull/17), [18](https://github.com/gera3d/dsh-plugins/pull/18), [19](https://github.com/gera3d/dsh-plugins/pull/19) are merged. Original unwired specialist PR56 is closed as superseded, preserving history.
 
-## Qualification and current next owner
+## Historical — qualification and next owner (dated snapshot)
 
 The preceding integrated source passed **2,275 tests, two skipped**. Latest evaluator/HTTP/routing regressions: **55 passed**, types/build pass. Final plugin: **17 real-backend contract, 24 host/parser, 201 UI/behavior tests**, types/build pass. Final paired full suite passed **2,279 tests, two skipped, zero failures** on frozen source with the exact corrected companion. Fresh native 72/18/10 scoring and highest-choice stage → Send → submission-proof completed while historical recovery remained pending. Backups and postimage hashes are retained locally. Intake has resumed; no workers or queued jobs. Both specialist findings are now accepted and all six findings for this scope are resolved. All ten service components, including GitHub, were ready at release acceptance; the operational check above records recovery from the later quota limit. No user action is required for these completed tracks; seven unrelated inbox decisions remain visible.
 
