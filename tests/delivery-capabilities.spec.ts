@@ -4,7 +4,9 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { Context } from '@deepseek-ai/cordis'
 import { createDeliveryCapabilities, recommendDeliveryAction, type DeliveryCapabilityDependencies } from '../src/app/delivery-capabilities.ts'
-import { DeliveryStore, type DeliveryBindings, type DeliveryLease } from '../src/app/feature-delivery.ts'
+import { DeliveryStore, effectiveRelease, type DeliveryBindings, type DeliveryLease } from '../src/app/feature-delivery.ts'
+import { FindingRelease } from '../src/app/finding-release.ts'
+import { phaseFacts } from '../src/app/delivery-phase.ts'
 import { Store } from '../src/app/store.ts'
 import { Engine } from '../src/core/engine.ts'
 import type { EngineOptions } from '../src/core/part.ts'
@@ -12,13 +14,20 @@ import type { Ticket } from '../src/core/model.ts'
 import { key } from '../src/core/ids.ts'
 import { messageId } from '../src/app/delivery.ts'
 import type { Commands } from '../src/infra/commands.ts'
+import { FeatureDeliveryRuntime } from '../src/app/delivery-runtime.ts'
+import type { LifecyclePublication } from '../src/app/lifecycle-publication.ts'
+import { loadPublicationRunner } from '../src/infra/publication-runner.ts'
+import { Effects } from '../src/app/effects.ts'
+import { HealthBoard } from '../src/infra/health.ts'
+import { DshExecutor, workerSessionId, type ExecutorHost } from '../src/executor/dsh.ts'
+import { fixture as releasePackageFixture } from './fixtures/release-package.ts'
 
-const HEAD = 'a'.repeat(40), BASE = 'b'.repeat(40), NEW = 'c'.repeat(40)
+const HEAD = 'a'.repeat(40); let BASE = 'b'.repeat(40), NEW = 'c'.repeat(40)
 const bindings: DeliveryBindings = { repository: 'org/repo', sourceIssue: 167, baseSha: BASE, headSha: HEAD, refs: [{ repository: 'org/repo', pr: 17, headSha: HEAD }], artifact: 'old-artifact' }
 let directory: string, store: Store, deliveries: DeliveryStore
 beforeEach(() => { directory = mkdtempSync(join(tmpdir(), 'delivery-capabilities-')); store = new Store(join(directory, 'db.sqlite')); deliveries = new DeliveryStore(store.db) })
 afterEach(() => { vi.restoreAllMocks(); store.close(); rmSync(directory, { recursive: true, force: true }) })
-function fixture(followFixHeads = true) {
+function fixture(followFixHeads = true, nativeExecutor?: unknown) {
   store.saveSettings({ executor: { model: { provider: 'configured', model: 'executor' } } })
   let verdict: unknown = { verdict: 'passed', findings: [], rationale: 'The bounded code satisfies the intake; this is not publication approval.' }
   let head = HEAD
@@ -33,8 +42,9 @@ function fixture(followFixHeads = true) {
   })
   const commands = { gh, withSignal: vi.fn(function () { return commands }) } as unknown as Commands
   const ctx = { llm: { resolveCallConfig: resolve, stream }, agents: { get: vi.fn(() => ({ session: { snapshotEvents: () => events } })) }, get: vi.fn() } as unknown as Context
-  const deliver = vi.fn()
-  const engine = new Engine({ repo: store, executor: { deliver, start: vi.fn(), stop: vi.fn() }, now: () => '2026-11-06T00:00:01.000Z' } as unknown as EngineOptions)
+  const deliver = vi.fn(), start = vi.fn()
+  let policy = { version: 'p2', paused: false, revalidate: (_mandate: unknown) => true }
+  const engine = new Engine({ repo: store, executor: nativeExecutor ?? { deliver, start, stop: vi.fn() }, policy: () => policy, now: () => '2026-11-06T00:00:01.000Z' } as unknown as EngineOptions)
   const note = vi.spyOn(engine, 'note')
   const deps: DeliveryCapabilityDependencies = { ctx, store, commands, engine, lifetime: new AbortController().signal }
   const caps = createDeliveryCapabilities(deps)
@@ -52,7 +62,7 @@ function fixture(followFixHeads = true) {
     events.push({ type: 'user/message', time: Date.parse('2026-11-06T00:00:02.000Z'), data: { id: messageId(key(input.id)), source: { kind: 'dsh-superagent' } } })
     t.assignments[0]!.report = { state: 'ready', summary: 'Corrected under original mandate', at }; store.tickets.save(t)
   }
-  return { caps, deps, lease, worker, fixLease, consumeAndReady, note, deliver, events, stream, resolve, gh, setHead: (v: string) => { head = v }, setVerdict: (v: unknown) => { verdict = v } }
+  return { caps, deps, lease, worker, fixLease, consumeAndReady, note, deliver, start, setPolicy: (v: Partial<typeof policy>) => { policy = { ...policy, ...v } }, events, stream, resolve, gh, setHead: (v: string) => { head = v }, setVerdict: (v: unknown) => { verdict = v } }
 }
 
 it('invokes the configured executor independently with no tools and persists exact review evidence, never publication approval', async () => {
@@ -165,11 +175,99 @@ it('rolls Engine.note back with its fix outbox record on transaction failure', a
   store.db.exec("CREATE TRIGGER reject_fix BEFORE INSERT ON delivery_capability_fix BEGIN SELECT RAISE(ABORT, 'outbox failure'); END")
   expect((await h.caps.fix!.execute(l)).blocker).toContain('outbox failure'); expect(store.tickets.get('original')!.inputs).toEqual([])
 })
-it('never reopens ended workers or broadcasts a correction to ambiguous active owners', async () => {
-  const h = fixture(); const t = h.worker(); t.ended = { by: 'executor', outcome: 'completed', at: '2026-11-06T00:00:00.000Z' }; store.tickets.save(t); const l = await h.fixLease()
-  expect((await h.caps.fix!.execute(l)).blocker).toContain('never reopened'); expect(h.note).not.toHaveBeenCalled()
-  delete t.ended; store.tickets.save(t); h.worker('second'); const d = deliveries.get('feature')!; deliveries.compareAndSwap(d.id, d.revision, v => { v.workers.push('second') })
-  expect((await h.caps.fix!.execute(l)).blocker).toContain('Ambiguous correction owner'); expect(h.note).not.toHaveBeenCalled()
+it('never broadcasts a correction to ambiguous active owners', async () => {
+  const h = fixture(); h.worker(); h.worker('second'); const l = await h.fixLease(); const d = deliveries.get('feature')!; deliveries.compareAndSwap(d.id, d.revision, v => { v.workers.push('second') })
+  expect((await h.caps.fix!.execute(l)).blocker).toContain('Ambiguous correction owner'); expect(h.note).not.toHaveBeenCalled(); expect(h.start).not.toHaveBeenCalled()
+})
+const endWorker = (id = 'original', ended: Ticket['ended'] = { by: 'executor', outcome: 'completed', at: '2026-11-06T00:00:00.000Z' }) => { const t = store.tickets.get(id)!; t.ended = ended; store.tickets.save(t); return t }
+const successors = () => store.tickets.list().filter(t => store.triggers.get(t.origin.triggerId)?.meta.correctionOf !== undefined)
+const SUCCESSOR_READY = '2026-11-06T00:00:05.000Z'
+function successorReady(at = SUCCESSOR_READY) {
+  const t = successors()[0]!; t.assignments[0]!.state = 'ended'; t.assignments[0]!.report = { state: 'ready', summary: 'Corrected under original scope', at }
+  t.ended = { by: 'executor', outcome: 'completed', at }; store.tickets.save(t); return t
+}
+it('routes a failed review to one new bounded successor when the original worker has ended, retaining ended history and original scope', async () => {
+  const h = fixture(); const original = endWorker(h.worker().id); const frozen = JSON.stringify(store.tickets.get('original'))
+  const l = await h.fixLease(); const result = await h.caps.fix!.execute(l)
+  expect(result).toEqual({ outcome: 'pending', nextRetryAt: expect.any(Number) })
+  expect(h.note).not.toHaveBeenCalled(); expect(h.start).toHaveBeenCalledTimes(1)
+  expect(JSON.stringify(store.tickets.get('original'))).toBe(frozen)
+  expect(store.tickets.get('original')!.ended).toEqual(original.ended)
+  const [next, ...rest] = successors(); expect(rest).toEqual([])
+  expect(next!.mandate).toEqual({ ...original.mandate, policyVersion: 'p2' }); expect(next!.assignments).toHaveLength(1)
+  const trigger = store.triggers.get(next!.origin.triggerId)!
+  expect(trigger.text).toContain(HEAD); expect(trigger.text).toContain('Preserve authorization fence before mutation.'); expect(trigger.text).toContain('untrusted data')
+  expect(trigger.text).toContain('No publication, merge, deployment, acceptance or live-operation authority')
+  expect(trigger.meta).toMatchObject({ correctionOf: 'original', deliveryId: 'feature', correctionAssignment: { originalTicketId: 'original', generation: 0, reviewReference: expect.stringContaining('sqlite:delivery_capability_review/') } })
+  expect(deliveries.get('feature')!.workers).toEqual(['original'])
+})
+it('proves rejection, successor correction, new ready evidence and independent re-review without publication or acceptance', async () => {
+  const h = fixture(); h.worker(); endWorker(); const l = await h.fixLease()
+  expect((await h.caps.fix!.execute(l)).outcome).toBe('pending')
+  expect((await h.caps.fix!.reconcile!(l)).outcome).toBe('pending')
+  successorReady(); h.setHead(NEW)
+  const fixed = await h.caps.fix!.reconcile!(l); expect(fixed.outcome).toBe('passed'); expect(fixed.updatedBindings).toMatchObject({ headSha: NEW })
+  expect(fixed.evidence![0]!.reference).toContain(`#ticket/${successors()[0]!.id}/report/`)
+  deliveries.complete(l, fixed)
+  let d = deliveries.get('feature')!; expect(d).toMatchObject({ stage: 'review', generation: 1 }); expect(d.nextAction!.kind).toBe('review')
+  h.setVerdict({ verdict: 'passed', findings: [], rationale: 'The corrected head preserves the fence.' })
+  const rl = h.lease(); const review = await h.caps.review!.execute(rl); expect(review.outcome).toBe('passed'); expect(review.evidence![0]!.bindings.headSha).toBe(NEW)
+  deliveries.complete(rl, review); d = deliveries.get('feature')!
+  expect(d.state).not.toBe('accepted'); expect(d.stage).not.toBe('accepted'); expect(d.nextAction!.kind).not.toBe('accept')
+  expect(d.evidence.filter(e => e.kind === 'acceptance' || e.kind === 'publication')).toEqual([])
+})
+it('dispatches exactly one successor across duplicate execution, restart and reconciliation', async () => {
+  const h = fixture(); h.worker(); endWorker(); const l = await h.fixLease()
+  const results = await Promise.all([h.caps.fix!.execute(l), h.caps.fix!.execute(l)])
+  expect(results).toEqual([{ outcome: 'pending', nextRetryAt: expect.any(Number) }, { outcome: 'pending', nextRetryAt: expect.any(Number) }])
+  const restarted = createDeliveryCapabilities(h.deps)
+  expect((await restarted.fix!.execute(l)).outcome).toBe('pending'); expect((await restarted.fix!.reconcile!(l)).outcome).toBe('pending')
+  expect(successors()).toHaveLength(1); expect(h.start).toHaveBeenCalledTimes(1); expect(h.note).not.toHaveBeenCalled()
+  successorReady(); h.setHead(NEW)
+  expect((await restarted.fix!.reconcile!(l)).outcome).toBe('passed'); expect((await h.caps.fix!.execute(l)).outcome).toBe('passed'); expect(successors()).toHaveLength(1)
+})
+it('refuses stale or mismatched heads, review evidence and replayed scope before or after a successor exists', async () => {
+  const h = fixture(); h.worker(); endWorker(); const l = await h.fixLease()
+  h.setHead(NEW); expect((await h.caps.fix!.execute(l)).blocker).toContain('Stale head fence'); expect(successors()).toEqual([]); expect(h.start).not.toHaveBeenCalled()
+  h.setHead(HEAD); expect((await h.caps.fix!.execute({ ...l, bindings: { ...l.bindings, headSha: NEW } })).blocker).toContain('Missing pinned base SHA'); expect(successors()).toEqual([])
+  expect((await h.caps.fix!.execute({ ...l, bindings: { ...l.bindings, sourceIssue: 168 } })).blocker).toContain('exact bound independent findings'); expect(successors()).toEqual([])
+  expect((await h.caps.fix!.execute(l)).outcome).toBe('pending'); expect(successors()).toHaveLength(1)
+  expect((await h.caps.fix!.reconcile!({ ...l, action: { ...l.action, fingerprint: 'different-scope' } })).blocker).toContain('idempotency scope mismatch'); expect(successors()).toHaveLength(1)
+  const store2 = h.deps.engine
+  expect(() => store2.dispatchCorrection({ jobId: `correction-${l.id}`, originalTicketId: 'original', deliveryId: 'feature', title: 'x', text: 'x', reviewReference: 'r', generation: 1, bindingsFingerprint: 'other' })).toThrow('Correction job scope mismatch')
+  expect(successors()).toHaveLength(1)
+})
+it('blocks ambiguous, open, stopped or revoked ownership without creating a successor', async () => {
+  const link = (id: string) => { const d = deliveries.get('feature')!; deliveries.compareAndSwap(d.id, d.revision, v => { v.workers.push(id) }) }
+  let h = fixture(); h.worker(); endWorker(); h.worker('second'); endWorker('second'); link('second'); let l = await h.fixLease()
+  expect((await h.caps.fix!.execute(l)).blocker).toContain('multiple original implementation workers'); expect(successors()).toEqual([])
+  store.close(); store = new Store(join(directory, 'db2.sqlite')); deliveries = new DeliveryStore(store.db)
+  h = fixture(); h.worker(); endWorker(); const open = h.worker('open'); open.assignments[0]!.state = 'pending'; store.tickets.save(open); link('open'); l = await h.fixLease()
+  expect((await h.caps.fix!.execute(l)).blocker).toContain('open but not running'); expect(successors()).toEqual([])
+  store.close(); store = new Store(join(directory, 'db3.sqlite')); deliveries = new DeliveryStore(store.db)
+  h = fixture(); h.worker(); endWorker('original', { by: 'human', outcome: 'stopped', at: '2026-11-06T00:00:00.000Z' }); l = await h.fixLease()
+  expect((await h.caps.fix!.execute(l)).blocker).toContain('stopped by a person'); expect(successors()).toEqual([]); expect(store.tickets.get('original')!.ended!.by).toBe('human')
+  store.close(); store = new Store(join(directory, 'db4.sqlite')); deliveries = new DeliveryStore(store.db)
+  h = fixture(); h.worker(); endWorker('original', { by: 'executor', outcome: 'dropped', at: '2026-11-06T00:00:00.000Z' }); l = await h.fixLease()
+  expect((await h.caps.fix!.execute(l)).blocker).toContain('no correction authority is inherited'); expect(successors()).toEqual([])
+  store.close(); store = new Store(join(directory, 'db5.sqlite')); deliveries = new DeliveryStore(store.db)
+  h = fixture(); h.worker(); endWorker(); l = await h.fixLease(); h.setPolicy({ revalidate: () => false })
+  expect((await h.caps.fix!.execute(l)).blocker).toContain('correction authority is missing'); expect(successors()).toEqual([])
+  h.setPolicy({ revalidate: () => true, paused: true }); expect((await h.caps.fix!.execute(l)).blocker).toContain('paused'); expect(successors()).toEqual([])
+  h.setPolicy({ paused: false }); expect((await h.caps.fix!.execute(l)).outcome).toBe('pending'); expect(successors()).toHaveLength(1)
+})
+it('keeps missing-authority outcomes explicit: a blocked, stopped or interrupted successor never becomes corrected evidence', async () => {
+  for (const [name, finish] of [
+    ['blocked', (t: Ticket) => { t.assignments[0]!.report = { state: 'blocked', summary: 'Needs authority outside the original scope', at: SUCCESSOR_READY }; t.ended = { by: 'executor', outcome: 'dropped', at: SUCCESSOR_READY } }],
+    ['stopped', (t: Ticket) => { t.ended = { by: 'human', outcome: 'stopped', at: SUCCESSOR_READY } }],
+  ] as const) {
+    store.close(); store = new Store(join(directory, `${name}.sqlite`)); deliveries = new DeliveryStore(store.db)
+    const h = fixture(); h.worker(); endWorker(); const l = await h.fixLease(); await h.caps.fix!.execute(l)
+    const t = successors()[0]!; finish(t); store.tickets.save(t)
+    const result = await h.caps.fix!.reconcile!(l)
+    expect(result.outcome).toBe('uncertain'); expect(result.evidence).toBeUndefined(); expect(result.blocker).toContain(name === 'blocked' ? 'reported blocked' : 'stopped by a person')
+    expect(successors()).toHaveLength(1); expect(deliveries.get('feature')!.stage).toBe('review')
+  }
 })
 it('rebinds changed correction heads only within recorded follow-fix scope, clearing old artifact', async () => {
   const h = fixture(); h.worker(); const l = await h.fixLease(); await h.caps.fix!.execute(l); h.consumeAndReady(); h.setHead(NEW)
@@ -579,4 +677,155 @@ it('explains the separate final acceptance step without trusting worker-looking 
   const request = h.stream.mock.calls[0]![0] as { messages: unknown[] }
   expect(JSON.stringify(request)).toContain('protectedOperatorLiveEvidence')
   expect(deliveries.get(d.id)!.acceptance).toBeUndefined()
+})
+
+// Release lineage: the corrected successor artifact is adopted before the protected phase, never rewriting the ended original.
+async function correctedToReleasePhase(opts: { endOriginal?: boolean } = {}) {
+  const h = fixture(); h.worker(); if (opts.endOriginal !== false) endWorker()
+  store.db.exec('CREATE TABLE IF NOT EXISTS finding (id TEXT PRIMARY KEY, dedup_key TEXT NOT NULL UNIQUE, value TEXT NOT NULL)')
+  const finding = { id: 'f1', revision: 1, state: 'blocked', reports: [{ jobId: 'j1', state: 'ready', reference: 'ticket/original/report/a1', evidence: 'ready', at: '2026-11-06T00:00:00.000Z' }], job: { id: 'j1', ticketId: 'worker-original', assignmentId: 'a1' } }
+  store.db.prepare('INSERT INTO finding VALUES(?,?,?)').run('f1', 'k', JSON.stringify(finding))
+  const d0 = deliveries.get('feature')!
+  deliveries.compareAndSwap(d0.id, d0.revision, v => { v.release = { findingId: 'f1', findingRevision: 1, jobId: 'j1', ticketId: 'original', assignmentId: 'a1', branch: 'agent/x', prNumber: 17, headSha: HEAD, patchSha256: 'p'.repeat(64), preparedAt: '' } })
+  const l = await h.fixLease(); await h.caps.fix!.execute(l); successorReady(); h.setHead(NEW)
+  deliveries.complete(l, await h.caps.fix!.reconcile!(l))
+  h.setVerdict({ verdict: 'passed', findings: [], rationale: 'The corrected head preserves the fence.' })
+  const rl = h.lease(); deliveries.complete(rl, await h.caps.review!.execute(rl))
+  const base = { candidate: vi.fn(async () => ({ headSha: NEW, patchSha256: 'q'.repeat(64) })), reviewBase: vi.fn(async () => BASE) }
+  const rel = new FindingRelease({ stateDir: directory, profile: () => ({}) as never, store: deliveries, ticket: id => store.tickets.get(id), publicationBusy: () => undefined, now: () => '2026-11-06T00:01:00.000Z' })
+  Object.assign(rel, base)
+  return { h, rel, base, finding }
+}
+it('adopts the re-reviewed successor artifact into the release lineage while the ended original stays immutable', async () => {
+  const { rel, base } = await correctedToReleasePhase()
+  const before = deliveries.get('feature')!; expect(before).toMatchObject({ stage: 'ready_to_publish', generation: 1 })
+  expect(phaseFacts(store.db, 'feature')).toContain('Delivery bindings no longer match the released head')
+  const frozen = JSON.stringify(store.tickets.get('original')), original = { ...before.release! }
+  const adopted = await rel.adoptCorrection(before)
+  expect(adopted.release!.successors).toHaveLength(1)
+  expect(adopted.release).toMatchObject({ ticketId: 'original', jobId: 'j1', headSha: HEAD, patchSha256: 'p'.repeat(64) }); expect({ ...adopted.release!, successors: undefined }).toEqual({ ...original, successors: undefined })
+  expect(effectiveRelease(adopted.release!)).toMatchObject({ ticketId: successors()[0]!.id, headSha: NEW, patchSha256: 'q'.repeat(64), generation: 1 })
+  expect(JSON.stringify(store.tickets.get('original'))).toBe(frozen)
+  const facts = phaseFacts(store.db, 'feature'); expect(typeof facts).not.toBe('string')
+  const again = await rel.adoptCorrection(deliveries.get('feature')!); expect(again.release!.successors).toHaveLength(1); expect(base.candidate).toHaveBeenCalledTimes(1)
+  expect(adopted.evidence.filter(e => e.kind === 'acceptance' || e.kind === 'publication')).toEqual([]); expect(adopted.preparedPublication).toBeUndefined()
+})
+it('refuses to adopt a stale, foreign, ambiguous or person-stopped correction and never invents release authority', async () => {
+  const { rel, base } = await correctedToReleasePhase(); const d = deliveries.get('feature')!
+  base.candidate.mockResolvedValueOnce({ headSha: HEAD, patchSha256: 'q'.repeat(64) }); await expect(rel.adoptCorrection(d)).rejects.toThrow('does not match the independently re-reviewed head')
+  base.reviewBase.mockResolvedValueOnce('e'.repeat(40)); await expect(rel.adoptCorrection(d)).rejects.toThrow('Target base changed')
+  const t = successors()[0]!; t.ended = { by: 'human', outcome: 'stopped', at: SUCCESSOR_READY }; store.tickets.save(t); await expect(rel.adoptCorrection(d)).rejects.toThrow('stopped by a person')
+  t.ended = { by: 'executor', outcome: 'completed', at: SUCCESSOR_READY }; t.assignments[0]!.report = { state: 'blocked', summary: 'needs authority', at: SUCCESSOR_READY }; store.tickets.save(t)
+  await expect(rel.adoptCorrection(d)).rejects.toThrow('no current ready report')
+  t.assignments[0]!.report = { state: 'ready', summary: 'Corrected under original scope', at: SUCCESSOR_READY }; store.tickets.save(t)
+  const row = store.db.prepare('SELECT id,value FROM delivery_capability_fix').get()!; const dup = JSON.parse(String(row.value))
+  store.db.prepare('INSERT INTO delivery_capability_fix VALUES(?,?,?)').run('other-lease', 'x', JSON.stringify(dup)); await expect(rel.adoptCorrection(d)).rejects.toThrow('Ambiguous correction ownership')
+  store.db.prepare('DELETE FROM delivery_capability_fix WHERE id=?').run('other-lease'); store.db.prepare('DELETE FROM delivery_capability_fix').run(); await expect(rel.adoptCorrection(d)).rejects.toThrow('No durable successor correction handoff')
+  expect(deliveries.get('feature')!.release!.successors).toBeUndefined()
+})
+it('fails the protected phase closed when an adopted successor, its failed review, handoff or generation is later altered', async () => {
+  const { rel } = await correctedToReleasePhase(); await rel.adoptCorrection(deliveries.get('feature')!)
+  expect(typeof phaseFacts(store.db, 'feature')).not.toBe('string')
+  const t = successors()[0]!, saved = JSON.stringify(t)
+  t.ended = { by: 'human', outcome: 'stopped', at: SUCCESSOR_READY }; store.tickets.save(t); expect(phaseFacts(store.db, 'feature')).toBe('Correction successor was ended by a person')
+  store.tickets.save(JSON.parse(saved)); expect(typeof phaseFacts(store.db, 'feature')).not.toBe('string')
+  // The store refuses to rewrite lineage; a forged row written around it must still fail the read-only phase gate.
+  const tamper = (edit: (r: NonNullable<ReturnType<DeliveryStore['get']>>['release'] & object) => void) => {
+    const row = store.db.prepare('SELECT value FROM feature_delivery WHERE id=?').get('feature')!; const v = JSON.parse(String(row.value)); edit(v.release); store.db.prepare('UPDATE feature_delivery SET value=? WHERE id=?').run(JSON.stringify(v), 'feature')
+  }
+  const good = JSON.stringify(deliveries.get('feature')!.release!.successors![0]), restore = () => tamper(r => { r.successors![0] = JSON.parse(good) })
+  const failedId = deliveries.get('feature')!.evidence.find(e => e.kind === 'review' && e.outcome === 'failed')!.id
+  tamper(r => { r.successors![0]!.originalTicketId = 'forged' }); expect(phaseFacts(store.db, 'feature')).toContain('does not match its bounded job'); restore()
+  tamper(r => { r.successors![0]!.failedReviewEvidenceId = 'missing' }); expect(phaseFacts(store.db, 'feature')).toContain('Failed independent review evidence'); restore()
+  tamper(r => { r.successors![0]!.generation = 5 }); expect(phaseFacts(store.db, 'feature')).toContain('Correction job is not bound'); restore()
+  tamper(r => { r.successors![0]!.fixLeaseId = 'forged-lease' }); expect(phaseFacts(store.db, 'feature')).toContain('Corrected implementation evidence'); restore()
+  expect(failedId).toBeTruthy(); expect(typeof phaseFacts(store.db, 'feature')).not.toBe('string')
+  store.db.prepare('DELETE FROM delivery_capability_fix').run(); expect(phaseFacts(store.db, 'feature')).toContain('Durable correction handoff')
+})
+
+it('drives the actual FeatureDeliveryRuntime pass: adoption precedes the phase fence and the real packageRelease, which packages only the re-reviewed successor head', async () => {
+  const f = releasePackageFixture(); const saved = structuredClone(bindings)
+  BASE = f.base; NEW = f.head; bindings.baseSha = BASE; bindings.environment = 'local harness'; bindings.refs = [{ repository: 'org/repo', pr: 17, headSha: HEAD, baseSha: BASE }]
+  try {
+    const { h } = await correctedToReleasePhase()
+    const successor = successors()[0]!; successor.execution = f.ticket.execution; store.tickets.save(successor)
+    f.deps.profile()!.source.repository = 'org/repo'
+    const rel = new FindingRelease({ ...f.deps, store: deliveries, ticket: id => store.tickets.get(id), validateCurrent: d => { const facts = phaseFacts(store.db, d.id); if (typeof facts === 'string') throw new Error(facts) } })
+    const adopt = vi.spyOn(rel, 'adoptCorrection'), pack = vi.spyOn(rel, 'packageRelease')
+    const runner = () => loadPublicationRunner(join(f.state, 'publication-runner.json'))!
+    const prepare = vi.fn(async () => ({ status: 'prepared', id: 'manifest-1', updatedAt: '2026-11-06T00:02:00.000Z', evidence: [] }))
+    const publication = { pinsFor: (r: string, p: number) => runner().pinsFor(r, p), scopeFor: (r: string, p: number) => runner().scopeFor(r, p), service: { prepare } } as unknown as LifecyclePublication
+    const frozen = JSON.stringify(store.tickets.get('original')); const before = deliveries.get('feature')!
+    expect(before).toMatchObject({ stage: 'ready_to_publish', state: 'awaiting_decision', generation: 1 }); expect(h.start).toHaveBeenCalledTimes(1)
+    // Without adoption wired the stale original lineage is the only artifact: the pass fails closed before any packaging or publication.
+    const unwired = new FeatureDeliveryRuntime(store, {}, { publication, packageRelease: (d, s) => rel.packageRelease(d, s) })
+    await unwired.request()
+    expect(pack).not.toHaveBeenCalled(); expect(prepare).not.toHaveBeenCalled()
+    expect(deliveries.get('feature')).toMatchObject({ state: 'blocked', blocker: expect.stringContaining('Release phase is not current') }); expect(deliveries.get('feature')!.release!.successors).toBeUndefined()
+    deliveries.compareAndSwap('feature', deliveries.get('feature')!.revision, d => { delete d.preparation; delete d.blocker; d.state = 'awaiting_decision' })
+    // The real wiring: one bounded pass adopts, validates the fence, then packages the exact successor head from git.
+    const runtime = new FeatureDeliveryRuntime(store, {}, { publication, adoptCorrection: (d, s) => adopt.getMockImplementation() ? rel.adoptCorrection(d, s) : rel.adoptCorrection(d, s), packageRelease: (d, s) => rel.packageRelease(d, s) })
+    await runtime.request()
+    expect(adopt).toHaveBeenCalledTimes(1); expect(pack).toHaveBeenCalledTimes(1)
+    expect(adopt.mock.invocationCallOrder[0]!).toBeLessThan(pack.mock.invocationCallOrder[0]!)
+    const packaged = pack.mock.calls[0]![0]; expect(effectiveRelease(packaged.release!)).toMatchObject({ headSha: f.head, ticketId: successor.id })
+    expect(packaged.release!.successors).toHaveLength(1); expect(packaged.release).toMatchObject({ ticketId: 'original', headSha: HEAD })
+    expect(runner().pinsFor('org/repo', 17)).toMatchObject({ headSha: f.head })
+    const after = deliveries.get('feature')!
+    expect(after.preparedPublication).toMatchObject({ headSha: f.head, pr: 17 }); expect(after.stage).toBe('ready_to_publish')
+    expect(after.evidence.filter(e => e.kind === 'acceptance' || e.kind === 'publication')).toEqual([]); expect(after.state).not.toBe('accepted')
+    expect(JSON.stringify(store.tickets.get('original'))).toBe(frozen)
+    // Restart / duplicate pass: nothing is adopted, packaged or prepared a second time.
+    await new FeatureDeliveryRuntime(store, {}, { publication, adoptCorrection: (d, s) => rel.adoptCorrection(d, s), packageRelease: (d, s) => rel.packageRelease(d, s) }).request()
+    expect(adopt).toHaveBeenCalledTimes(1); expect(pack).toHaveBeenCalledTimes(1); expect(prepare).toHaveBeenCalledTimes(1); expect(deliveries.get('feature')!.release!.successors).toHaveLength(1)
+  } finally { BASE = 'b'.repeat(40); NEW = 'c'.repeat(40); for (const k of Object.keys(bindings)) delete (bindings as unknown as Record<string, unknown>)[k]; Object.assign(bindings, saved) }
+}, 120000)
+
+/** A real Effects queue and DshExecutor over the same Store, with `occupied` workers whose turn is running, and the model-routing fallback exercised. */
+function nativeExecutor(maxWorkers: number, occupied: number) {
+  const agents = new Map<string, { status: string }>()
+  for (let i = 0; i < occupied; i++) {
+    const id = `occupant-${i}`
+    store.tickets.save({ id, title: id, decisionId: 'd', mandate: { strength: 'explicit', policyVersion: 'p1', basis: { via: 'listed' }, actor: { source: 'github', id: 'alice' }, scope: 'unrelated work' }, channels: [], assignments: [{ id: `${id}-a`, state: 'running', createdAt: '2026-11-06T00:00:00.000Z' }], inputs: [], undelivered: [], origin: { triggerId: `${id}-t`, triggerIds: [`${id}-t`] }, createdAt: '2026-11-06T00:00:00.000Z', updatedAt: '2026-11-06T00:00:00.000Z' } as Ticket)
+    agents.set(workerSessionId(id), { status: 'running' })
+  }
+  const ensure = vi.fn(async () => { throw new Error('All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown)') })
+  const effects = new Effects(store, new HealthBoard())
+  const executor = new DshExecutor({ store, effects, context: { agents: { get: (id: string) => agents.get(id) }, get: () => undefined }, sessions: { ensure, selectModel: vi.fn(), prompt: vi.fn(), relay: vi.fn(), holds: () => false },
+    health: new HealthBoard().claim('worker'), machine: { stateDir: directory }, lifetime: new AbortController().signal, closing: () => false, paused: () => false, environment: () => [] } as unknown as ExecutorHost)
+  /** Settings are read live; apply after the delivery fixture, which seeds its own executor route. */
+  const configure = () => store.saveSettings({ executor: { model: { provider: 'antigravity', model: 'gemini-3.8-flash' }, maxWorkers },
+    models: { hierarchy: [{ provider: 'antigravity', model: 'gemini-3.8-flash', starred: true }, { provider: 'anthropic', model: 'claude-sonnet-5-5', starred: true }] } })
+  return { effects, executor, agents, ensure, configure }
+}
+it('queues the correction successor through the existing launch effect: three occupied slots never admit a fourth worker, and a provider cooldown still falls back by the existing routes', async () => {
+  const native = nativeExecutor(3, 3)
+  const h = fixture(true, native.executor); native.configure(); h.worker(); endWorker()
+  const l = await h.fixLease(); expect((await h.caps.fix!.execute(l)).outcome).toBe('pending')
+  const successor = successors()[0]!; expect(successor.assignments).toHaveLength(1)
+  const launch = (native.executor as unknown as { launch: (t: Ticket, a: unknown) => Promise<void> }); const launched = vi.spyOn(launch, 'launch').mockResolvedValue(undefined)
+  const queued = () => store.db.prepare("SELECT key, value FROM effect WHERE kind='launch'").all()
+  // Durably queued exactly once; all three configured slots are held by unrelated running workers, so nothing starts.
+  expect(queued().map(r => JSON.parse(String(r.value)))).toEqual([{ ticketId: successor.id, assignmentId: successor.assignments[0]!.id }])
+  native.effects.start(); await native.effects.idle()
+  expect(launched).not.toHaveBeenCalled(); expect(native.ensure).not.toHaveBeenCalled(); expect(native.executor.activeCount()).toBe(3); expect(queued()).toHaveLength(1)
+  expect((await h.caps.fix!.execute(l)).outcome).toBe('pending'); expect(successors()).toHaveLength(1); expect(queued()).toHaveLength(1)
+  // The queued correction is not a fourth executor, and it does not appear as occupying a slot before it starts.
+  expect(store.tickets.open().filter(t => native.executor.running(t))).toHaveLength(3)
+  // A slot frees: the very same queued launch runs once (not duplicated), within capacity.
+  native.agents.set(workerSessionId('occupant-0'), { status: 'idle' })
+  const row = store.tickets.get('occupant-0')!; row.assignments[0]!.state = 'ended'; store.tickets.save(row)
+  native.effects.kick(); await native.effects.idle()
+  expect(launched).toHaveBeenCalledTimes(1); expect(launched.mock.calls[0]![0]).toMatchObject({ id: successor.id }); expect(queued()).toHaveLength(0)
+  expect(store.tickets.get('original')!.ended).toBeDefined()
+  launched.mockRestore()
+  // Provider cooldown on the first route: the successor takes the existing next ladder route and records the step; it is neither forced onto the cooled route nor retried by the correction path.
+  successor.execution = { name: 'correction', directory, text: 'bounded', assignment: 'bounded' } as Ticket['execution']; store.tickets.save(successor)
+  await expect(launch.launch(store.tickets.get(successor.id)!, store.tickets.get(successor.id)!.assignments[0]!)).rejects.toBeTruthy()
+  expect(native.ensure).toHaveBeenCalledTimes(2)
+  const routes = native.ensure.mock.calls.map(c => (c as unknown as unknown[])[4] as { provider: string; model: string })
+  expect(routes[0]).toMatchObject({ provider: 'antigravity', model: 'gemini-3.8-flash' }); expect(routes[1]).toMatchObject({ provider: 'anthropic', model: 'claude-sonnet-5-5' })
+  expect(store.tickets.get(successor.id)!.inputs.some(i => i.kind === 'note')).toBe(true)
+  expect(store.tickets.get(successor.id)!.mandate).toMatchObject({ scope: 'original implementation only' })
+  await native.effects.drain()
 })

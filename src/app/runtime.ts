@@ -188,12 +188,14 @@ export class Runtime extends Service implements SourceHost {
       const deliveryDeps = { ctx, store, commands, engine, lifetime: this.lifetime }
       this.usage = new JobUsageReader(ctx)
       let packageRelease: ((delivery: Delivery, signal: AbortSignal) => Promise<void>) | undefined
+      let adoptCorrection: ((delivery: Delivery, signal: AbortSignal) => Promise<Delivery>) | undefined
       this.deliveries = new FeatureDeliveryRuntime(store, {
         ...createDeliveryCapabilities(deliveryDeps),
         ...deliveryPublicationCapabilities(new DeliveryStore(store.db), store.tickets, this.publication),
         ...deliveryCapabilities,
       }, {
         lifetime: this.lifetime, publication: this.publication, packageRelease: (delivery, signal) => packageRelease?.(delivery, signal) ?? Promise.resolve(),
+        adoptCorrection: async (delivery, signal) => adoptCorrection ? adoptCorrection(delivery, signal) : delivery,
         recommend: (delivery, action) => recommendDeliveryAction(delivery, action, deliveryDeps),
       })
       this.findings = new FindingRuntime({ ...deliveryDeps, repository: () => setup.deployment.repository,
@@ -202,6 +204,7 @@ export class Runtime extends Service implements SourceHost {
         validateCurrent: delivery => { const facts = phaseFacts(store.db, delivery.id); if (typeof facts === 'string') throw new Error(facts) },
         ticket: id => store.tickets.get(id), publicationBusy: () => busyPublication(() => new FilePublicationPersistence(join(machine.stateDir, 'publication-state.json')).peek()) })
       packageRelease = (delivery, signal) => this.release.packageRelease(delivery, signal)
+      adoptCorrection = (delivery, signal) => this.release.adoptCorrection(delivery, signal)
       // Update the `evals` health entry on every pass if an evaluation failed as unavailable within the last hour.
       const evals = board.claim('evals', { state: 'ready', detail: 'No unavailable Eval in the last hour' })
       const evaluateDue = () => {
