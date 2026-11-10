@@ -19,53 +19,32 @@ fi
 echo "==> Fetching latest changes from upstream..."
 git fetch upstream --tags
 
-CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 UPSTREAM_BRANCH="upstream/main"
-
-NEW_COMMITS="$(git log --oneline "$CURRENT_BRANCH..$UPSTREAM_BRANCH" 2>/dev/null || true)"
-COMMIT_COUNT="$(echo "$NEW_COMMITS" | grep -c . || true)"
-
-if [[ "$COMMIT_COUNT" -eq 0 ]]; then
-  echo "✓ superagent-core is fully up to date with upstream/main. No new upstream commits found."
-  exit 0
-fi
-
-echo "Found $COMMIT_COUNT new upstream commit(s):"
-echo "$NEW_COMMITS"
-echo ""
+# Last upstream commit a person reviewed (see docs/011). The fork shares no history with upstream, so commits cannot be
+# counted with `git log A..B`; compare the upstream tip with this recorded commit instead.
+REVIEWED="$(sed -n 's/^Last reviewed upstream commit: `\([0-9a-f]*\)`.*/\1/p' docs/011-upstream-synchronization.md | head -n 1)"
+TIP="$(git rev-parse "$UPSTREAM_BRANCH")"
 
 MODE="${1:---check}"
 
-if [[ "$MODE" == "--check" ]]; then
-  echo "Run './scripts/sync-upstream.sh --rebase' to integrate these commits into superagent-core."
+if git merge-base HEAD "$UPSTREAM_BRANCH" >/dev/null 2>&1; then
+  echo "Note: histories are related now; see docs/011 before choosing a workflow."
+fi
+
+if [[ -n "$REVIEWED" && "$TIP" == "$REVIEWED"* ]]; then
+  echo "✓ upstream/main is unchanged since the last reviewed commit ($REVIEWED). Nothing to port."
   exit 0
 fi
 
-if [[ "$MODE" == "--rebase" ]]; then
-  # Ensure working directory is clean
-  if ! git diff-index --quiet HEAD --; then
-    echo "Error: Working directory has uncommitted changes. Please commit or stash before syncing."
-    exit 1
-  fi
+echo "Upstream changed: tip ${TIP:0:8}, last reviewed ${REVIEWED:-none}."
+git log --oneline -n 20 "$UPSTREAM_BRANCH"
+echo ""
 
-  echo "==> Updating local main branch..."
-  git checkout main
-  git merge --ff-only "$UPSTREAM_BRANCH"
-  git push origin main
-
-  echo "==> Rebasing $CURRENT_BRANCH onto updated main..."
-  git checkout "$CURRENT_BRANCH"
-  git rebase main
-
-  echo "==> Running full verification check (tsc, vitest, build)..."
-  pnpm check
-
-  echo ""
-  echo "✓ Successfully rebased $CURRENT_BRANCH onto upstream/main!"
-  echo "To push to your fork, run:"
-  echo "  git push origin $CURRENT_BRANCH --force-with-lease"
-  exit 0
+if [[ "$MODE" != "--check" ]]; then
+  echo "Error: '$MODE' is not supported. The fork shares no history with upstream, so it cannot be rebased or merged."
+  echo "Port changes by hand as described in docs/011-upstream-synchronization.md, section 3."
+  exit 2
 fi
 
-echo "Unknown option: $MODE. Use --check or --rebase."
-exit 1
+echo "Review with: git diff superagent-core $UPSTREAM_BRANCH -- <path>"
+exit 0
