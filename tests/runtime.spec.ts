@@ -820,6 +820,66 @@ it('leaves waiting and blocked assignments alone after a restart and keeps block
   expect(runtime.store.tickets.get(other.ticket.id)!.assignments.map(item => item.state)).toEqual(['ended', 'pending'])
 })
 
+describe('startup quota exhaustion', () => {
+  const START = Date.parse('2026-11-12T10:00:00Z')
+  const MINUTE = 60_000
+  const RESET = () => `${AGENT()} api rate_limit --jq .resources.core.reset`
+  const limited = () => { answers[`${AGENT()} api user`] = new Error('gh: API rate limit exceeded for user ID 7 (HTTP 403)') }
+  const nextRetry = async (): Promise<Runtime> => { const next = await restart(); await next.ready; return next }
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'], now: START })
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    limited()
+  })
+  afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
+
+  it('restarts setup once, at the quota reset plus jitter, and backs off while the limit persists', async () => {
+    const reset = START / 1000 + 1800
+    answers[RESET()] = `${reset}\n`
+    const first = await nextRetry()
+    expect(first.setupProblem).toMatchObject({ place: 'github', code: 'githubRateLimited' })
+    const until = new Date(reset * 1000 + 5000).toISOString()
+    expect(first.health.runtime).toMatchObject({ state: 'paused', code: 'setupRetry', values: { until }, detail: expect.stringContaining(until) })
+    vi.advanceTimersByTime(1_804_999)
+    expect(restarts).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(1)
+    vi.advanceTimersByTime(1) // `Setup.restart` defers the restart by one more timer tick.
+    expect(restarts).toHaveBeenCalledTimes(1)
+    vi.advanceTimersByTime(24 * 60 * MINUTE)
+    expect(restarts).toHaveBeenCalledTimes(1)
+    // The restart finds the limit still active and its reset already past: the second consecutive failure waits 20 minutes.
+    const second = await nextRetry()
+    expect(second.health.runtime).toMatchObject({ code: 'setupRetry', values: { until: new Date(Date.now() + 20 * MINUTE).toISOString() } })
+    vi.advanceTimersByTime(20 * MINUTE - 1)
+    expect(restarts).toHaveBeenCalledTimes(1)
+    vi.advanceTimersByTime(2)
+    expect(restarts).toHaveBeenCalledTimes(2)
+  })
+  it('retries after 10 minutes, doubling per consecutive failure, when the reset cannot be read', async () => {
+    answers[RESET()] = new Error('gh: not found')
+    const first = await nextRetry()
+    expect(first.health.runtime).toMatchObject({ code: 'setupRetry', values: { until: new Date(START + 10 * MINUTE).toISOString() } })
+    vi.advanceTimersByTime(10 * MINUTE - 1)
+    expect(restarts).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(2)
+    expect(restarts).toHaveBeenCalledTimes(1)
+    const second = await nextRetry()
+    expect(second.health.runtime).toMatchObject({ values: { until: new Date(Date.now() + 20 * MINUTE).toISOString() } })
+  })
+  it('clears the timer on stop and the failure count once setup succeeds', async () => {
+    answers[RESET()] = new Error('gh: not found')
+    const next = await nextRetry()
+    await next.stop()
+    vi.advanceTimersByTime(2 * 60 * MINUTE)
+    expect(restarts).not.toHaveBeenCalled()
+    answers = { ...answers, [`${AGENT()} api user`]: '{"login":"agent-bot","id":7}' }
+    const healthy = await nextRetry()
+    expect(healthy.configured()).toBe(true)
+    expect(healthy.store.get(KV.runtime.quotaFailures)).toBeUndefined()
+    expect(restarts).not.toHaveBeenCalled()
+  })
+})
+
 it('waits for setup without the agent\'s GitHub CLI: the panel works, and nothing is polled, assessed or dispatched', async () => {
   const { ticket, sessionId } = await acceptedTicket()
   await runTool(sessionId, 'orchestrator_report', { state: 'failed', summary: 'crashed' })

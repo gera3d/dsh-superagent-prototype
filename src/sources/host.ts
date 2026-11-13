@@ -10,6 +10,7 @@ import { fill } from '../infra/text.ts'
 /** Fixed English health templates (`{name}` placeholders); the panel localizes each `code` in the interface language. */
 export const HEALTH_TEXT = {
   setupPending: 'Waiting for the deployment check',
+  setupRetry: 'Waiting for the deployment check; GitHub quota reached, setup retries after {until}',
   sourceOff: 'Off',
   feishuCliUnset: 'The Source is on, and its bot lark-cli is not set',
   feishuBotMissing: 'Waiting for the Feishu bot',
