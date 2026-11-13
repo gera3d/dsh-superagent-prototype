@@ -176,6 +176,12 @@ export function TicketPage({ id }: { id: string }) {
             className="dt-hint">{t('empty')}</span>}</td>
         </tr>)}</tbody></table>
       </Details>}
+      {data.ghCalls.total > 0 && <Details icon="settings" title={`${t('ghCallsTitle')} · ${data.ghCalls.total}`}>
+        <Hint>{t('ghCallsHint')}</Hint>
+        <table className="dt-table"><tbody>{data.ghCalls.commands.map(item => <tr key={item.name}>
+          <td className="dt-mono">{item.name}</td><td className="dt-mono">{item.count}</td>
+        </tr>)}</tbody></table>
+      </Details>}
       <Details icon="message" title={t('term.channel')}>
         <ul className="dt-plain-list">{data.channels.map((item, index) => <li key={index}>
           <ExternalLink href={item.url} icon={item.source === 'github' ? 'pull' : 'message'}>{localized(t, item.label)}</ExternalLink>

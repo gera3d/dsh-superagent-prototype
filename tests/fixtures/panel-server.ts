@@ -153,6 +153,7 @@ function sourceStatuses(): SourceStatusRow[] {
       : health.some(item => item.state === 'starting') ? 'starting' : health.some(item => item.state === 'paused') ? 'paused' : 'ready'
     const feishu = kind.kind === 'feishu'
     return { id: kind.kind, title: kind.title, installed: true, enabled, state, health, ...problem ? { problem } : {},
+      ...kind.kind === 'github' ? { workerCalls: { hour: '2026-09-23T00', total: 7 } } : {},
       stats: { received: feishu ? 12 : 0, filtered: feishu ? 2 : 0, lastAt: '2026-09-23T00:00:00Z' },
       filtered: feishu ? [] : [{ id: 'e9', at: '2026-09-23T00:02:00Z', actor: actor('github', 'someone'), preview: 'looks wrong',
         reason: { code: 'source_disabled' } }],
@@ -218,6 +219,8 @@ const ticketDetail = (): TicketPageView => ({
   basis: { facts: [{ name: 'sender', value: 'Alice' }, { name: 'addressed', value: 'mention' }], legacy: false },
   environment: [{ key: 'DSH_SUPERAGENT_DIR', value: '/w/t1', description: { zh: '执行目录', en: 'Directory' }, owner: 'executor' },
     { key: 'DSH_SUPERAGENT_GITHUB_NUMBER', value: '', description: { zh: '编号', en: 'Number' }, owner: 'github' }],
+  ghCalls: { total: 3, hours: [{ hour: '2026-09-22T00', count: 3 }],
+    commands: [{ name: 'pr view', count: 2 }, { name: 'api repos/:o/:r/issues/:n/comments', count: 1 }] },
   channels: [{ source: 'feishu', url: 'https://applink.feishu.cn/client/chat/open?openChatId=oc_1', label: { zh: '飞书消息',
     en: 'Feishu message' } },
     { source: 'github', url: 'https://github.com/acme/widgets/issues/42', label: { zh: 'GitHub #42', en: 'GitHub #42' } }],

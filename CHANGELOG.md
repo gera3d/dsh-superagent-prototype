@@ -7,6 +7,7 @@ This changelog tracks all custom features, architectural enhancements, and upstr
 ## Unreleased — 2026-11-10
 
 ### Added
+- **Worker `gh` call counting**: the worker `gh` shim appends one line per call (date and hour, subcommand, number-masked `gh api` path; never arguments, bodies or headers) to a per-ticket counter under the state directory. Counts show on the ticket page and as an hourly total on the GitHub Source status; worker prompt gains short rules to reuse harness facts, read once per turn, not poll, and use `gh api --cache 60s`.
 - **Restart keeps the Decisions key**: `scripts/dsh-superagent start`/`restart` load `OPENROUTER_API_KEY` from `~/.zshrc` into the tmux pane when it is unset, so Jev survives restarts without manual `tmux set-environment` steps.
 - **Thread-native review/test/release handoff**: a finding's source thread can schedule independent review, targeted tests, release preparation and protected publication; evidence and final acceptance stay separate protected steps (PR86, PR89, PR90).
 - **Legacy delivery reconciliation**: historical deliveries completed by a later release are shown as completed history, with original pins and evidence preserved (PR80).
