@@ -24,7 +24,8 @@ if (process.argv.includes('--synthetic')) {
   synthetic('S4-bash-oversized-error', 'bash', 600, 60, '[exit code: 1]', true)
   synthetic('S5-bash-under-limit', 'bash', 50, 40, '[exit code: 0]')
   synthetic('S6-read-large-never-bounded', 'read', 800, 60)
-  synthetic('S7-bash-one-huge-line', 'bash', 1, 20000, '[status: completed, exit code: 4]')
+  synthetic('S7-bash-huge-line-then-status', 'bash', 1, 20000, '[status: completed, exit code: 4]')   // two lines: a huge line, then the status
+  cases.push({ corpus: 'synthetic', id: 'S8-bash-true-single-line', tool: 'bash', isError: false, text: `${'x'.repeat(20000)}[exit code: 137]` })   // exactly one line
 }
 for (const path of process.argv.slice(2).filter(arg => !arg.startsWith('--'))) {
   const calls = new Map(), corpus = `${path}@${sha(readFileSync(path)).slice(0, 12)}`
@@ -63,7 +64,7 @@ for (const [index, item] of cases.entries()) {
     total.boundedResults++; total.worstBoundedBytes = Math.max(total.worstBoundedBytes, now)
     if (now > OUTPUT_BYTES || after.split('\n').length > OUTPUT_LINES) total.overLimit++
     if (!after.endsWith(item.text.split('\n').at(-1).slice(-60))) total.tailLost++
-    const file = /Complete text: (.+?)\. Read it with/.exec(after)?.[1]
+    const file = /Complete text: (.+?)(?:\. Read it with|\])/.exec(after)?.[1]
     if (!file || sha(readFileSync(file)) !== sha(item.text)) total.retrievalMismatch++
   }
   rows.push({ corpus: item.corpus, id: item.id, tool: item.tool, error: item.isError, sha256: sha(item.text).slice(0, 16), beforeBytes: before, afterBytes: now, bounded })

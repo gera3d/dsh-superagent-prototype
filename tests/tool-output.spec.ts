@@ -122,3 +122,30 @@ it('keeps the status that ends one very long last line', () => {
   expect(bytes(bounded)).toBeLessThanOrEqual(OUTPUT_BYTES)
   expect(bounded.endsWith('[status: completed, exit code: 4]')).toBe(true)
 })
+
+it('keeps the status that ends a text of one line, at and just past the limit', () => {
+  const status = '[status: completed, exit code: 137]'
+  for (const unit of ['x', '错', '😀']) {
+    const exact = unit.repeat(Math.floor((OUTPUT_BYTES - bytes(status)) / bytes(unit))) + status
+    expect(bytes(exact)).toBeLessThanOrEqual(OUTPUT_BYTES)
+    expect(boundOutput(exact, '/f')).toBe(exact)
+    for (const size of [OUTPUT_BYTES + 1, 20000]) {
+      const text = unit.repeat(Math.ceil(size / bytes(unit))) + status, bounded = boundOutput(text, '/saved/file.txt')
+      expect(text.split('\n')).toHaveLength(1)
+      expect(bytes(bounded)).toBeLessThanOrEqual(OUTPUT_BYTES)
+      expect(bounded).toContain('Complete text: /saved/file.txt')
+      expect(bounded.endsWith(status)).toBe(true)
+      expect(bounded).not.toMatch(/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/)
+    }
+  }
+})
+
+it('keeps the whole pointer and the status when the pointer is so long the full notice has no room', () => {
+  const status = '[exit code: 137]', pointer = `/${'p'.repeat(3900)}.txt`
+  for (const text of [`${'x'.repeat(20000)}${status}`, `${numbered(300)}\n${status}`]) {
+    const bounded = boundOutput(text, pointer)
+    expect(bytes(bounded)).toBeLessThanOrEqual(OUTPUT_BYTES)
+    expect(bounded).toContain(`Complete text: ${pointer}`)
+    expect(bounded.endsWith(status)).toBe(true)
+  }
+})

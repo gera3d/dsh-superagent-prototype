@@ -141,3 +141,33 @@ it('leaves a blocked result as the blocking listener made it', async () => {
   expect(bodyOf(result)).not.toContain('[output bounded:')
   expect(f.saved()).toEqual([])
 })
+
+it('keeps the terminal status of a true one-line oversized result, whole and saved byte for byte', async () => {
+  const f = fixture()
+  for (const [id, marker] of [['single-a', '[exit code: 137]'], ['single-b', '[status: completed, exit code: 4]']] as const) {
+    const text = `${'x'.repeat(20000)}${marker}`
+    expect(text.split('\n')).toHaveLength(1)
+    const result = await f.run(id, text), body = bodyOf(result)
+    expect(result.isError).toBe(false)
+    expect(Buffer.byteLength(body)).toBeLessThanOrEqual(OUTPUT_BYTES)
+    expect(body).toContain('[output bounded: 1 lines')
+    expect(body.endsWith(marker)).toBe(true)
+    expect(readFileSync(pointerIn(body), 'utf8')).toBe(text)
+  }
+})
+
+it('bounds a successful result saved under a long directory path, with a pointer that opens and the status kept', async () => {
+  const root = temp(), deep = join(root, ...Array.from({ length: 3 }, (_, i) => `ticket-directory-${i}-${'d'.repeat(230)}`))
+  mkdirSync(deep, { recursive: true })
+  const f = fixture(deep), text = `${large('deep')}\n[exit code: 3]`, body = bodyOf(await f.run('call-deep', text))
+  expect(Buffer.byteLength(body)).toBeLessThanOrEqual(OUTPUT_BYTES)
+  expect(body.endsWith('[exit code: 3]')).toBe(true)
+  expect(readFileSync(pointerIn(body), 'utf8')).toBe(text)
+})
+
+it('leaves the original output whole when the ticket directory path is too long for any file system to hold the saved text', async () => {
+  const root = temp(), tooLong = join(root, ...Array.from({ length: 24 }, (_, i) => `d${i}-${'d'.repeat(200)}`)), text = `${large('long-path')}\n[exit code: 9]`
+  const f = fixture(tooLong), body = bodyOf(await f.run('call-too-long', text))
+  expect(body).toBe(text)
+  expect(existsSync(tooLong)).toBe(false)
+})

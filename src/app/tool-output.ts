@@ -15,22 +15,38 @@ const bytes = (text: string) => Buffer.byteLength(text)
 
 /**
  * `line` cut to at most `budget` bytes and `LINE_CHARS` characters, marked when cut, never inside a character. With `end`, the
- * cut keeps the line's last `END_CHARS` characters as well, so a status or exit marker that ends the text survives.
+ * cut keeps the line's last `END_CHARS` characters as well, and gives up its head before any of that end, so a status or exit
+ * marker that ends the text survives.
  */
 function fit(line: string, budget: number, end = false): string {
   const chars = Array.from(line)
   if (chars.length <= LINE_CHARS && bytes(line) <= budget) return line
   const tail = end ? chars.slice(-END_CHARS) : [], head = chars.slice(0, end ? LINE_CHARS - END_CHARS - 1 : LINE_CHARS)
   const size = () => bytes(head.join('')) + bytes(tail.join('')) + 3
-  while (size() > budget && (head.length || tail.length)) { if (head.length > tail.length || !tail.length) head.pop(); else tail.shift() }
+  while (size() > budget && (head.length || tail.length)) { if (head.length > (end ? 0 : tail.length) || !tail.length) head.pop(); else tail.shift() }
   return head.length || tail.length ? `${head.join('')}…${tail.join('')}` : ''
+}
+
+/**
+ * The fallback for a pointer so long that the full notice leaves no room: the sizes, the whole `file` pointer and as much of the
+ * end of `text` as then fits, so the exit code or status marker is kept and the pointer is never cut. When even this exceeds the
+ * limits (a file name of several kilobytes), the caller must not use it; `installOutputBound` then leaves the result unchanged.
+ */
+function compact(text: string, lines: string[], file: string): string {
+  const head = `[output bounded: ${lines.length} lines, ${bytes(text)} bytes. Complete text: ${file}]`
+  const room = OUTPUT_BYTES - bytes(head) - 2
+  // Only the end of the last line, as much as fits: a status marker is read from its start, so it is never cut into by a head.
+  const end = Array.from(lines.at(-1)!).slice(-END_CHARS)
+  while (end.length && bytes(end.join('')) + 3 > room) end.shift()
+  return end.length ? `${head}\n…${end.join('')}` : head
 }
 
 /**
  * The first and last lines of `text` that fit the limits, with a notice between them that states what was omitted and where
  * the complete text is. The last lines are always kept, as the exit code, status marker and any earlier truncation notice
- * of the tool end the text; a very long last line keeps its end. `text` within both limits is returned unchanged; the result
- * never exceeds `OUTPUT_BYTES` bytes or `OUTPUT_LINES` lines.
+ * of the tool end the text; a very long last line, or the only line, keeps its end. `text` within both limits is returned
+ * unchanged; the result stays within `OUTPUT_BYTES` bytes and `OUTPUT_LINES` lines unless `file` alone is longer than that,
+ * which the caller must check.
  */
 export function boundOutput(text: string, file: string): string {
   const lines = text.split('\n')
@@ -42,7 +58,8 @@ export function boundOutput(text: string, file: string): string {
     // Each line costs its bytes and a newline.
     const head: string[] = [], tail: string[] = []
     let tailUsed = 0, start = lines.length
-    for (let at = lines.length - 1; at > 0 && tail.length < OUTPUT_LINES / 2 - 1; at--) {
+    // A text of one line has no head: its only line is also its last, so it is cut with its end kept like any last line.
+    for (let at = lines.length - 1; at >= (lines.length === 1 ? 0 : 1) && tail.length < OUTPUT_LINES / 2 - 1; at--) {
       const kept = fit(lines[at]!, Math.floor(room * (1 - HEAD_SHARE)) - tailUsed - 1, at === lines.length - 1)
       if (!kept && lines[at]) break
       tail.unshift(kept); tailUsed += bytes(kept) + 1; start = at
@@ -61,7 +78,7 @@ export function boundOutput(text: string, file: string): string {
     const result = build(room)
     if (bytes(result) <= OUTPUT_BYTES && result.split('\n').length <= OUTPUT_LINES) return result
     room -= Math.max(16, bytes(result) - OUTPUT_BYTES)
-    if (room < 0) return Array.from(notice(lines.length)).slice(0, 1000).join('')
+    if (room < 0) return compact(text, lines, file)
   }
 }
 
@@ -107,7 +124,8 @@ async function save(folder: string, name: string, text: string): Promise<string>
 /**
  * Registers a post-execute listener on one agent that replaces an oversized text result of a `BOUNDED_TOOLS` tool with its
  * bounded form, after saving the complete text under `directory`. A result that is an error (thrown or reported), an error
- * decision, holds anything but text, fits the limits, or whose complete text cannot be saved exactly is left as it was.
+ * decision, holds anything but text, fits the limits, whose complete text cannot be saved exactly, or whose bounded form would
+ * break a limit or lose the pointer is left as it was.
  */
 export function installOutputBound(agent: { ctx: Context; id?: string }, directory: () => string | undefined): () => void {
   return agent.ctx.on('tools/post-execute', async (exec, result, next) => {
@@ -123,7 +141,10 @@ export function installOutputBound(agent: { ctx: Context; id?: string }, directo
       const identity: OutputIdentity = { agent: exec.agent?.id ?? agent.id, callId: String(exec.callId), tool: exec.name,
         ...(exec.rootCallId === undefined ? {} : { rootCallId: String(exec.rootCallId) }) }
       const file = await save(join(root, OUTPUT_DIRECTORY), outputFileName(identity, text), text)
-      return { ...decision, content: [{ type: 'text', text: boundOutput(text, file) }] }
+      const bounded = boundOutput(text, file)
+      // A replacement that breaks a limit or lost the pointer (a path of several kilobytes) is worth less than the original text.
+      if (bytes(bounded) > OUTPUT_BYTES || bounded.split('\n').length > OUTPUT_LINES || !bounded.includes(`Complete text: ${file}`)) return decision
+      return { ...decision, content: [{ type: 'text', text: bounded }] }
     } catch { return decision }
   })
 }
