@@ -178,6 +178,39 @@ describe('classification details', () => {
     expect(clean).not.toMatch(/ghp_abc|s3cr3tvalue|tok_abcdef|sid=abc123/)
   })
 
+  it('keeps every entry accounted for: explicit successes, explicit failures, and entries of unknown outcome', () => {
+    const run = (payload: unknown) => assessComposioResult(MULTI, { content: [{ type: 'text', text: JSON.stringify(payload) }] })
+    const good = { index: 0, response: { successful: true, data: { id: 'kept' } } }
+    expect(run({ successful: false, data: { results: [good, { index: 1, response: { successful: false, error: 'bad input' } }] } })?.succeeded).toEqual([good])
+    const empty = run({ successful: false, data: { total_count: 2, results: [{ index: 0, tool_slug: 'GITHUB_CREATE_ISSUE', response: {} }, { index: 1, response: { successful: false, error: 'bad input' } }] } })!
+    expect(empty.succeeded).toEqual([])
+    expect(empty.kinds).toContain('uncertain_completion')
+    expect(empty.counts.unreported).toBe(1)
+    const malformed = run({ successful: false, data: { total_count: 2, results: [null, { index: 1, response: { successful: false, error: 'bad input' } }] } })!
+    expect(malformed.counts.unreported).toBe(1)
+    expect(malformed.unconfirmed).toEqual([{ index: 0, reason: 'malformed' }])
+    expect(malformed.kinds).toContain('uncertain_completion')
+    // A counted-but-missing entry and a malformed one are both unknown, and neither is dropped from the accounting.
+    expect(run({ successful: false, data: { total_count: 3, results: [null, good] } })!.counts).toMatchObject({ succeeded: 1, unreported: 2 })
+    // The service's own top-level failure is not lost behind unconfirmed entries.
+    expect(run({ successful: false, error: 'Validation failed', data: { results: [{ index: 0, response: {} }] } })!.failed[0]).toMatchObject({ kind: 'action_failed' })
+  })
+
+  it('does not hold search or listing results, which are not execution batches, to the success flag', () => {
+    const search = { successful: true, data: { results: [{ primary_tool_slugs: ['GMAIL_FETCH_EMAILS'], toolkits: ['gmail'] }, 'free text'] } }
+    expect(assessComposioResult('mcp__composio__COMPOSIO_SEARCH_TOOLS', { content: [{ type: 'text', text: JSON.stringify(search) }] })).toBeUndefined()
+  })
+
+  it('lets a timeout or lost acknowledgement outrank a rate-limit word, and keeps Retry-After only as a wait floor', () => {
+    const lost = assessComposioResult(MULTI, { content: [{ type: 'text', text: JSON.stringify({ successful: false, error: '429 upstream rate limit; request timed out after sending; acknowledgement lost; Retry-After: 20' }) }] })!
+    expect(lost).toMatchObject({ kind: 'uncertain_completion', completion: 'unknown', retryAfterSeconds: 20 })
+    const feedback = composioFeedback(lost)
+    expect(feedback).not.toMatch(/did not run|rejected it/)
+    expect(feedback).toContain('not before 20 seconds')
+    const plain = assessComposioResult(MULTI, { content: [{ type: 'text', text: JSON.stringify({ successful: false, error: '429 upstream rate limit; Retry-After: 20' }) }] })!
+    expect(plain).toMatchObject({ kind: 'rate_limited', completion: 'failed', retryAfterSeconds: 20 })
+  })
+
   it('states the classification, completion and one recovery per kind in the feedback', () => {
     const assessment = assessComposioResult(MULTI, { content: [{ type: 'text', text: JSON.stringify(batch(read, write('No active connection'))) }] })!
     const text = composioFeedback(assessment)
