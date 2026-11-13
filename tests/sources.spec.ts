@@ -937,6 +937,101 @@ describe('github source', () => {
       meta: expect.objectContaining({ isPr: true }) })])
     h.store.close()
   })
+  const headed = (...lines: string[]) => lines.join('\r\n')
+  /** The notifications list answers as `reply` says (default 200, empty, `Last-Modified` stamped); every other read is recorded, and Issue 7 is gone unless routed. */
+  function listed(h: ReturnType<typeof host>, reply: (args: string[], call: number) => string | Error) {
+    const calls: string[][] = []
+    vi.spyOn(h.commands, 'run').mockImplementation(async (_program, args) => {
+      calls.push(args)
+      const path = args[1]!.replace(/^repos\/acme\/widgets\//, '').split('?')[0]!
+      if (path !== 'notifications') {
+        if (path === 'issues/7') return JSON.stringify(issue(7))
+        if (path === 'issues/7/comments') return JSON.stringify(args.includes('--slurp') ? [[]] : [])
+        throw refused(404, 'Not Found')
+      }
+      const call = calls.filter(each => each[1]!.includes('/notifications?') && !each.includes('--paginate')).length
+      const value = reply(args, call)
+      if (value instanceof Error) throw value
+      return args.includes('--paginate') ? '[[]]' : value
+    })
+    const lists = () => calls.filter(args => args[1]!.includes('/notifications?'))
+    const others = () => calls.filter(args => !args[1]!.includes('/notifications?'))
+    return { lists, others }
+  }
+  const stamped = (modified: string, ...more: string[]) => headed('HTTP/2.0 200 OK', `Last-Modified: ${modified}`, ...more, '', '[]')
+  const unmodified = (...headers: string[]) => commandError({ stderr: 'gh: HTTP 304', code: 1, stdout: headed('HTTP/2.0 304 Not Modified', ...headers, '', '') })
+  const FIRST = 'Fri, 13 Nov 2026 01:00:00 GMT'
+  const SECOND = 'Fri, 13 Nov 2026 02:00:00 GMT'
+  it('stores the notifications Last-Modified and interval from a 200 and sends it as If-Modified-Since on the next first-page read', async () => {
+    const h = host()
+    h.store.set('github-since', '2026-09-08T00:00:00.000Z')
+    const { lists } = listed(h, (_args, call) => stamped(call === 1 ? FIRST : SECOND, 'X-Poll-Interval: 90'))
+    expect(await pollRound(h)).toBe(90)
+    expect(lists()[0]).not.toContain(`If-Modified-Since: ${FIRST}`)
+    expect(lists()[0]!.join(' ')).not.toContain('If-Modified-Since')
+    expect(h.store.get('github-notifications')).toEqual({ lastModified: FIRST, interval: 90 })
+    await pollRound(h)
+    expect(lists()[1]).toEqual(expect.arrayContaining(['-H', `If-Modified-Since: ${FIRST}`]))
+    expect(h.store.get('github-notifications')).toEqual({ lastModified: SECOND, interval: 90 })
+    h.store.close()
+  })
+  it('sends no condition on a first run without a cursor, and none on the later pages of a paged list', async () => {
+    const h = host()
+    h.store.set('github-notifications', { lastModified: FIRST, interval: 60 })
+    const { lists } = listed(h, () => stamped(SECOND, 'Link: <https://api.github.com/x?page=2>; rel="next"'))
+    await pollRound(h)
+    expect(lists()[0]!.join(' ')).not.toContain('If-Modified-Since')
+    // The cursor now exists, so the next round is conditional on its first page only; its paged read has no condition.
+    await pollRound(h)
+    const [first, ...rest] = lists().slice(-2)
+    expect(first).toEqual(expect.arrayContaining(['-H', `If-Modified-Since: ${SECOND}`]))
+    expect(rest[0]).toContain('--paginate')
+    expect(rest[0]!.join(' ')).not.toContain('If-Modified-Since')
+    h.store.close()
+  })
+  it('treats 304 as no notifications: no item reads, the cursor still advances and the interval from the 304 headers is honoured', async () => {
+    const h = host()
+    h.store.set('github-since', '2026-09-08T00:00:00.000Z')
+    h.store.set('github-notifications', { lastModified: FIRST, interval: 60 })
+    const { lists, others } = listed(h, () => unmodified('X-Poll-Interval: 120'))
+    const interval = await pollRound(h)
+    expect(lists()).toHaveLength(1)
+    expect(others()).toEqual([])
+    expect(interval).toBe(120)
+    expect(h.store.get('github-since')).not.toBe('2026-09-08T00:00:00.000Z')
+    // The stored header is kept, and the interval is remembered for a 304 that does not carry one.
+    expect(h.store.get('github-notifications')).toEqual({ lastModified: FIRST, interval: 120 })
+    expect(h.health.github).toMatchObject({ state: 'ready', detail: expect.stringContaining('0 notifications; next poll ≥ 120s') })
+    vi.mocked(h.commands.run).mockImplementation(async () => { throw unmodified() })
+    expect(await pollRound(h)).toBe(120)
+    h.store.close()
+  })
+  it('retries failed items on a 304 round and clears them once they read', async () => {
+    const h = host()
+    h.store.set('github-since', '2026-09-08T00:00:00.000Z')
+    h.store.set('github-notifications', { lastModified: FIRST, interval: 60 })
+    h.store.set('github-retry', { 7: { since: '2026-09-07T00:00:00.000Z', pr: false, failedAt: '2026-09-08T00:00:00.000Z', attempts: 1 } })
+    const { others } = listed(h, () => unmodified('X-Poll-Interval: 60'))
+    await pollRound(h)
+    expect(others().map(args => args[1]!.replace(/^repos\/acme\/widgets\//, '').split('?')[0])).toEqual(['issues/7', 'issues/7/comments'])
+    expect(h.store.get('github-retry')).toEqual({})
+    expect(h.store.get('github-cursor:7')).toBeDefined()
+    h.store.close()
+  })
+  it('keeps the old Last-Modified, the cursor and the retries when the notifications read fails', async () => {
+    const h = host()
+    h.store.set('github-since', '2026-09-08T00:00:00.000Z')
+    h.store.set('github-notifications', { lastModified: FIRST, interval: 60 })
+    listed(h, () => refused(500, 'Server Error'))
+    await expect(pollRound(h)).rejects.toThrow()
+    expect(h.store.get('github-notifications')).toEqual({ lastModified: FIRST, interval: 60 })
+    expect(h.store.get('github-since')).toBe('2026-09-08T00:00:00.000Z')
+    // A 304 without a stored condition is not a Not Modified answer to ours, so it fails the round like any other error.
+    h.store.delete('github-notifications')
+    vi.mocked(h.commands.run).mockImplementation(async () => { throw unmodified() })
+    await expect(pollRound(h)).rejects.toMatchObject({ code: 304 })
+    h.store.close()
+  })
   it('moves no read position when the Source is turned off during a read', async () => {
     const h = host()
     const comment: GithubComment = { id: 5, body: 'more', user: { login: 'alice', type: 'User' }, created_at: '2026-09-09T00:00:00Z',
