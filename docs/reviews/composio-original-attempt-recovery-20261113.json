@@ -1,0 +1,102 @@
+{
+  "at": "2026-11-13T12:57:24.535572+00:00",
+  "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+  "findingRevision": 2,
+  "stage": "Original blocked attempt inspected; no ready candidate. Bounded retained-approval recovery appropriate.",
+  "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r1",
+  "ticketId": "81f39e075967b209bb2da33cdeebb9ea",
+  "assignmentId": "b7a29614de084f5006202e2253aecc3f",
+  "oldWorkspace": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-81f39e075967/repo",
+  "oldHead": "75f091510d71624b98d4f3b63956909d4799a84f",
+  "oldStatus": " M src/app/tools/composio.ts\n",
+  "dirtyPatchSha256": "8328ef512b88d4deef656d9e55141d720fb46829f9f89f89a960564d44e2c452",
+  "savedChange": "One line exporting CONNECTION_FAILURE_PATTERN; original workspace left untouched. Not a completed implementation.",
+  "trajectory": {
+    "path": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/sessions/--Users-gerayeremin-Library-Application~0020Support-dsh-desktop-harness-state-superagent-work-finding-task-81f39e075967--/worker-81f39e075967b209bb2da33cdeebb9ea/session.v4.jsonl.zstd",
+    "routes": [
+      {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash"
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      }
+    ],
+    "terminal": [
+      {
+        "kind": "max-tokens"
+      }
+    ],
+    "lastUsage": [
+      {
+        "inputTokens": 2,
+        "outputTokens": 8192,
+        "totalTokens": 123974,
+        "cacheReadTokens": 115393,
+        "cacheWriteTokens": 387
+      }
+    ],
+    "nativeReportToolCalls": 0,
+    "historicalToolTestSummaries": [
+      {
+        "seq": 64,
+        "summary": [
+          "[status: completed, exit code: 0]"
+        ]
+      },
+      {
+        "seq": 201,
+        "summary": [
+          "[status: completed, exit code: 0]"
+        ]
+      },
+      {
+        "seq": 220,
+        "summary": [
+          "Test Files  1 passed (1)",
+          "Tests  17 passed (17)",
+          "Duration  3.39s (transform 1.72s, setup 0ms, import 2.84s, tests 47ms, environment 0ms)",
+          "[status: completed, exit code: 0]"
+        ]
+      },
+      {
+        "seq": 263,
+        "summary": [
+          "Test Files  1 passed (1)",
+          "Tests  1 passed (1)",
+          "Duration  1.51s (transform 124ms, setup 0ms, import 447ms, tests 90ms, environment 1ms)",
+          "[status: completed, exit code: 0]"
+        ]
+      }
+    ],
+    "interpretation": "Ended max-tokens, not productive current work or successful report. Historical unit/spike outputs do not qualify production wiring. No raw provider reasoning/logs copied."
+  },
+  "sourceInspection": {
+    "helper": "src/app/tools/composio.ts",
+    "currentRefs": "Self-module wrappers, src/index.ts export and tests/composio.spec.ts; no imported production consumer found in current owned source search.",
+    "workerLimits": "Master/worker work-tool allowlists remain restricted; do not grant Composio MCP tools to make an integration test run. Trace actual host result path and ownership first.",
+    "limits": "Host-side behavior outside owned plugin not fully traced in this finite recovery audit; Harness must inspect and prove actual boundary or report missing host hook. No external service/mutation/auth probe."
+  },
+  "live": {
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "runtime": {
+      "state": "ready",
+      "detail": "Orchestrator is ready",
+      "at": "2026-11-13T08:45:25.900Z"
+    },
+    "github": {
+      "state": "ready",
+      "detail": "0 notifications; next poll \u2265 60s",
+      "at": "2026-11-13T12:52:51.152Z"
+    }
+  },
+  "recoveryScope": "Same original finding/requirements and native approved lineage. Reuse/qualify current helper, actual owned MCP result consumption path, transport/nested/mixed/timeout-lostack/unknown classification, sanitized actionable recovery with successful entries preserved, no blind mutating retry. Current trusted clone work/ and existing dependencies/companion only, current-source exact commits and native report. No hostpackage/permissions/accounts/tools/provider/routes/reserve/concurrency/spend/schedule change.",
+  "pendingOtherDecision": "Protected review-clarification proposal has no approval in this pass; e1dfd442rev8/PR105 and its failed delivery untouched.",
+  "nextOwner": "Harness bounded implementation/recovery through supported same-finding controls; Codex independent review and original protected release when actual candidate is ready.",
+  "coverage": "One original assignment, saved tree and matching nested trajectory; current local source refs/allowlists/settings. No new tests/PR API lookup/publication/acceptance; no global complete scan."
+}
