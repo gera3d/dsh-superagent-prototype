@@ -73,6 +73,23 @@ function membership(error: unknown): unknown {
   const hint = 'The Feishu bot is not a member of the chat. Add the bot in the chat settings, then retry.'
   return new CliError(hint, error.code, error.exitCode)
 }
+/** Bounded in-memory map from API path to the ETag and body of its last single-page 200 (or 'pages' for lists that need pagination), least recently used first; cleared on restart. */
+export class Validators {
+  private readonly entries = new Map<string, { etag: string; body: string } | 'pages'>()
+  constructor(private readonly limit = 512) {}
+  get(key: string): { etag: string; body: string } | 'pages' | undefined {
+    const entry = this.entries.get(key)
+    if (entry !== undefined) { this.entries.delete(key); this.entries.set(key, entry) }
+    return entry
+  }
+  set(key: string, entry: { etag: string; body: string } | 'pages'): void {
+    this.entries.delete(key)
+    this.entries.set(key, entry)
+    for (const oldest of this.entries.keys()) { if (this.entries.size <= this.limit) break; this.entries.delete(oldest) }
+  }
+  delete(key: string): void { this.entries.delete(key) }
+  get size(): number { return this.entries.size }
+}
 /**
  * Executes gh, lark-cli, and git subprocesses with deployment account credentials, timeouts, and abort signals.
  * Restricts GitHub API calls to the configured repository and translates CLI failures into CliError instances for Sources, MasterAssessor, Outbox, and Settings.
@@ -82,10 +99,11 @@ export class Commands {
    * @param resolved - returns the resolved deployment setup, or throws while setup is still pending.
    * @param environment - variables overriding `process.env` for every command (such as isolated git settings).
    */
-  constructor(private readonly resolved: () => Deployment, private readonly environment: Record<string, string | undefined>, private readonly signal: AbortSignal) {}
+  constructor(private readonly resolved: () => Deployment, private readonly environment: Record<string, string | undefined>, private readonly signal: AbortSignal,
+    private readonly validators = new Validators()) {}
   get deployment(): Deployment { return this.resolved() }
   get repository(): string { return this.deployment.repository }
-  withSignal(signal?: AbortSignal): Commands { return signal ? new Commands(this.resolved, this.environment, AbortSignal.any([this.signal, signal])) : this }
+  withSignal(signal?: AbortSignal): Commands { return signal ? new Commands(this.resolved, this.environment, AbortSignal.any([this.signal, signal]), this.validators) : this }
   async run(program: string, args: string[], cwd?: string): Promise<string> {
     try {
       const { stdout } = await exec(program, args, { cwd, signal: this.signal, timeout: TIMEOUT_MS, maxBuffer: 16 * 1024 * 1024,
@@ -106,6 +124,41 @@ export class Commands {
     if (typeof schema === 'string') return this.run(this.deployment.github.cli, ['api', this.path(schema), ...rest])
     const [path = '', ...flags] = rest
     return schema.parse(await this.gh(['api', this.path(path), ...flags]))
+  }
+  /**
+   * Reads a GitHub API path by revalidation: sends `If-None-Match` with the ETag of the last 200 and, only when GitHub
+   * answers 304 to that request now, parses the body stored from it again. A body is never reused without a 304 from this call,
+   * so the facts are as current as an unconditional read, while a 304 costs no primary quota. Any failure drops the entry.
+   * `fresh` sends no `If-None-Match`. Returns undefined, without reusing anything, when the list spans several pages
+   * (the caller then reads all pages normally); only single-page responses are remembered.
+   * @param parse - validates the decoded JSON body; called again with a new decode on every read, so callers never share objects.
+   */
+  async revalidate<T>(path: string, parse: (body: unknown) => T, options: { fresh?: boolean } = {}): Promise<T | undefined> {
+    const key = `${this.deployment.github.cli}\n${this.path(path)}`
+    const entry = this.validators.get(key)
+    if (entry === 'pages') return undefined
+    const stored = options.fresh ? undefined : entry
+    let output: string
+    try { output = await this.api(path, '--include', ...stored ? ['-H', `If-None-Match: ${stored.etag}`] : []) }
+    catch (error) {
+      this.validators.delete(key)
+      if (stored && error instanceof CliError && error.code === 304) {
+        const value = parse(JSON.parse(stored.body))
+        this.validators.set(key, stored)
+        return value
+      }
+      throw error
+    }
+    try {
+      // `gh api --include` prints the status line and headers, a blank line and the body; without them there is no ETag to keep.
+      const split = /^HTTP\/\S+\s/.test(output) ? output.search(/\r?\n\r?\n/) : -1
+      const headers = split < 0 ? '' : output.slice(0, split), body = split < 0 ? output : output.slice(split).trimStart()
+      const etag = /^etag:\s*(.+)$/im.exec(headers)?.[1]?.trim()
+      const value = parse(JSON.parse(body))
+      if (/^link:.*rel="next"/im.test(headers)) { this.validators.set(key, 'pages'); return undefined }
+      if (etag) this.validators.set(key, { etag, body })
+      return value
+    } catch (error) { this.validators.delete(key); throw error }
   }
   /** Fetches all pages of a GitHub API list within the configured repository, skipping items that fail schema validation. */
   async pages<T>(item: z.ZodType<T>, path: string, tally?: Tally): Promise<T[]> {
