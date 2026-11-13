@@ -119,6 +119,50 @@ describe.skipIf(!available)('installed MCP bridge to the host boundary', () => {
     expect(advice).toContain('never repeat them')
   })
 
+  it('does not claim a batch entry without success evidence succeeded, nor lose a malformed one', async () => {
+    const empty = entry(1, 'GITHUB_CREATE_ISSUE', {})
+    const body = { successful: false, data: { total_count: 4, results: [read, empty, null, entry(3, 'SLACK_SEND_MESSAGE', { successful: false, error: 'bad input' })] } }
+    const { run, sent } = await bridge({ [MULTI]: async () => ok(body) })
+    const result = await run(MULTI)
+    expect(result.isError).toBe(true)
+    const found = failure(result)
+    expect(found).toMatchObject({ classification: 'uncertain_completion', completion: 'partial', counts: { total: 4, succeeded: 1, failed: 1, unreported: 2 } })
+    expect(found.succeeded).toEqual([read])
+    expect(found.unconfirmed).toEqual([{ index: 1, tool_slug: 'GITHUB_CREATE_ISSUE', reason: 'no_completion_evidence' }, { index: 2, reason: 'malformed' }])
+    const advice = found.recovery.join(' ')
+    expect(advice).toContain('outcome of entries 1, 2 is unknown')
+    expect(advice).not.toMatch(/never repeat them.*entries? 1\b/)
+    expect(sent).toEqual([MULTI])
+  })
+
+  it('does not report a batch whose only entry lacks success evidence as taking effect', async () => {
+    const { run } = await bridge({ [MULTI]: async () => ok({ successful: true, data: { total_count: 1, results: [entry(0, 'GITHUB_CREATE_ISSUE', {})] } }) })
+    const found = failure(await run(MULTI))
+    expect(found).toMatchObject({ classification: 'uncertain_completion', completion: 'unknown', succeeded: [] })
+    expect(JSON.stringify(found)).not.toMatch(/took effect|never repeat them/)
+  })
+
+  it('lets a lost acknowledgement outrank a rate-limit word and never promises the action did not run', async () => {
+    const text429 = '429 upstream rate limit; request timed out after sending; acknowledgement lost; Retry-After: 45'
+    const { run, sent } = await bridge({ [MULTI]: async () => ({ isError: true, content: text(text429) }) })
+    const found = failure(await run(MULTI))
+    expect(found).toMatchObject({ classification: 'uncertain_completion', completion: 'unknown', retry_after_seconds: 45 })
+    const advice = found.recovery.join(' ')
+    expect(advice).toContain('do NOT resend it')
+    expect(advice).toContain('not before 45 seconds')
+    expect(advice).not.toMatch(/did not run|retry (?:it|the call) once/i)
+    expect(sent).toEqual([MULTI])
+  })
+
+  it('keeps a plain rate limit guidance and a rate-limited batch entry that also says the request timed out as unknown', async () => {
+    const plain = await bridge({ [MULTI]: async () => ok(batch(read, entry(1, 'SLACK_SEND_MESSAGE', { successful: false, error: { message: 'upstream 429 rate limit', retry_after: 10 } }))) })
+    expect(failure(await plain.run(MULTI))).toMatchObject({ classification: 'rate_limited', retry_after_seconds: 10, succeeded: [read] })
+    const lost = await bridge({ [MULTI]: async () => ok(batch(read, entry(1, 'SLACK_SEND_MESSAGE', { successful: false, error: { message: 'rate limit hit, then the request timed out; no acknowledgement', retry_after: 10 } }))) })
+    const found = failure(await lost.run(MULTI))
+    expect(found).toMatchObject({ classification: 'uncertain_completion', completion: 'partial', succeeded: [read] })
+    expect(found.recovery.join(' ')).not.toMatch(/then retry entry 1/)
+  })
+
   it('leaves a prior success untouched when a later call fails', async () => {
     let calls = 0
     const { run } = await bridge({ [MULTI]: async () => ++calls === 1 ? ok(batch(read)) : ok({ successful: false, error: 'Validation failed' }) })

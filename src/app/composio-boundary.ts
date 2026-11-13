@@ -26,24 +26,34 @@ export type ComposioFailureKind = 'connection_required' | 'uncertain_completion'
 export type ComposioCompletion = 'failed' | 'partial' | 'unknown'
 
 export interface ComposioFailedEntry { index?: number; tool_slug?: string; kind: ComposioFailureKind; error: string; retry_after_seconds?: number }
+/** A batch entry whose outcome the service did not confirm: malformed, or without an explicit success flag. */
+export interface ComposioUnconfirmedEntry { index: number; tool_slug?: string; reason: 'malformed' | 'no_completion_evidence' }
 export interface ComposioAssessment {
   tool: string
   kind: ComposioFailureKind
   completion: ComposioCompletion
   /** Seconds the service asked to wait before a retry, the longest asked. */
   retryAfterSeconds?: number
+  /** `unreported` counts every entry whose outcome is not confirmed: counted but missing, malformed, or without success evidence. */
   counts: { total?: number; succeeded: number; failed: number; unreported: number }
   failed: ComposioFailedEntry[]
-  /** Successful batch entries exactly as the service returned them. */
+  /** Batch entries the service explicitly reported as successful, exactly as returned. */
   succeeded: unknown[]
+  /** Entries present in the batch whose outcome is unknown; they are never promoted to succeeded or offered for a retry. */
+  unconfirmed: ComposioUnconfirmedEntry[]
   /** Distinct kinds present, most urgent first. */
   kinds: ComposioFailureKind[]
   message: string
 }
 
+/** Kinds whose Retry-After is kept: a wait floor for a rate limit, and for an unknown outcome a wait before checking it. */
+const WAITED: readonly ComposioFailureKind[] = ['rate_limited', 'uncertain_completion']
 const PRIORITY: readonly ComposioFailureKind[] = ['connection_required', 'uncertain_completion', 'rate_limited', 'action_failed', 'transport_failure']
 const RATE_LIMIT = /rate[\s_-]?limit|too many requests|\b429\b|throttl|quota (?:exceeded|exhausted)|RATE_LIMIT/i
-const UNCERTAIN = /time[sd]?[\s_-]?out|ETIMEDOUT|ESOCKETTIMEDOUT|ECONNRESET|EPIPE|socket hang up|deadline exceeded|\b50[234]\b|gateway|bad gateway|aborted|connection (?:closed|reset|lost)|stream (?:closed|ended)|no response|did not respond|not acknowledged|acknowledg|upstream|-32001|-32000/i
+/** Wording that says the request may have been sent and its result lost: it outranks a rate-limit word in the same text. */
+const LOST_OUTCOME = /time[sd]?[\s_-]?out|ETIMEDOUT|ESOCKETTIMEDOUT|ECONNRESET|EPIPE|socket hang up|deadline exceeded|\b50[234]\b|bad gateway|aborted|connection (?:closed|reset|lost)|stream (?:closed|ended)|no response|did not respond|not acknowledged|acknowledg|lost ack|-32001|-32000/i
+/** Wording that only hints at an unknown outcome: it yields to an explicit rate limit. */
+const MAYBE_LOST = /gateway|upstream/i
 const CONNECTION_CODES = new Set(['NO_ACTIVE_CONNECTION', 'AUTH_REQUIRED', 'UNAUTHORIZED', 'CONNECTION_REQUIRED'])
 const DIAGNOSTIC_CHARS = 300
 
@@ -97,8 +107,11 @@ export function retryAfterSeconds(...sources: unknown[]): number | undefined {
 function kindOf(text: string, candidate?: unknown, transport = false): ComposioFailureKind {
   const code = isRecord(candidate) ? [candidate.code, candidate.error_code, isRecord(candidate.error) ? candidate.error.code : undefined].find(value => typeof value === 'string') as string | undefined : undefined
   if (CONNECTION_FAILURE_PATTERN.test(text) || (code !== undefined && CONNECTION_CODES.has(code.toUpperCase()))) return 'connection_required'
-  if (RATE_LIMIT.test(text) || (code !== undefined && RATE_LIMIT.test(code))) return 'rate_limited'
-  if (UNCERTAIN.test(text) || (code !== undefined && UNCERTAIN.test(code))) return 'uncertain_completion'
+  const says = (pattern: RegExp) => pattern.test(text) || (code !== undefined && pattern.test(code))
+  // A lost acknowledgement or timeout dominates: the request may have run, whatever else the message says about limits.
+  if (says(LOST_OUTCOME)) return 'uncertain_completion'
+  if (says(RATE_LIMIT)) return 'rate_limited'
+  if (says(MAYBE_LOST)) return 'uncertain_completion'
   return transport ? 'transport_failure' : 'action_failed'
 }
 
@@ -117,6 +130,20 @@ function errorTextOf(item: Record<string, unknown>): string {
 function batchOf(payload: Record<string, unknown>): ComposioBatchData | undefined {
   if (isRecord(payload.data) && Array.isArray((payload.data as ComposioBatchData).results)) return payload.data as ComposioBatchData
   return Array.isArray((payload as ComposioBatchData).results) ? payload as ComposioBatchData : undefined
+}
+
+/** An entry carries explicit success evidence only through its own `successful: true` or its response's. */
+const hasSuccessEvidence = (item: Record<string, unknown>): boolean =>
+  item.successful === true || (isRecord(item.response) && item.response.successful === true)
+
+/**
+ * Whether a batch is a Composio execution batch, whose entries must each say how they ended. Search or listing results also
+ * arrive as a `results` array and carry no such flag, so they are not held to it.
+ */
+function isExecutionBatch(batch: ComposioBatchData, payload: Record<string, unknown>, entries: unknown[]): boolean {
+  const counted = [batch, payload].some(source => ['total_count', 'success_count', 'error_count'].some(key => typeof source[key] === 'number'))
+  return counted || payload.successful === false
+    || entries.some(item => isRecord(item) && (isRecord(item.response) || typeof item.successful === 'boolean'))
 }
 
 /** The envelope(s) of a result, structured content first: a tool value shaped like an MCP result, JSON text blocks, structuredContent. */
@@ -159,26 +186,32 @@ export function assessComposioResult(name: string, result: ToolResult & { value?
   const payloads = payloadsOf(result, transport)
   const batchPayload = payloads.find(item => batchOf(item))
   const batch = batchPayload ? batchOf(batchPayload) : undefined
-  const failed: ComposioFailedEntry[] = [], succeeded: unknown[] = []
+  const failed: ComposioFailedEntry[] = [], succeeded: unknown[] = [], unconfirmed: ComposioUnconfirmedEntry[] = []
   let unreported = 0, total: number | undefined
 
   if (batch && batchPayload) {
     const entries = batch.results!
     total = typeof batch.total_count === 'number' ? batch.total_count : typeof batchPayload.total_count === 'number' ? batchPayload.total_count : undefined
+    const executed = isExecutionBatch(batch, batchPayload, entries)
     entries.forEach((item, position) => {
-      if (!isRecord(item)) return
-      if (!isBatchItemFailed(item)) { succeeded.push(item); return }
+      if (!isRecord(item)) { if (executed) unconfirmed.push({ index: position, reason: 'malformed' }); return }
+      if (!isBatchItemFailed(item)) {
+        if (!executed || hasSuccessEvidence(item)) succeeded.push(item)
+        // Neither a failure nor an explicit success: its outcome is unknown and must not be claimed or discarded.
+        else unconfirmed.push({ index: typeof item.index === 'number' ? item.index : position, ...(typeof item.tool_slug === 'string' ? { tool_slug: item.tool_slug } : {}), reason: 'no_completion_evidence' })
+        return
+      }
       const message = errorTextOf(item)
       const response = isRecord(item.response) ? item.response : undefined
       const kind = kindOf(message, response ?? item)
       const retry = retryAfterSeconds(response, item, message)
       failed.push({ index: typeof item.index === 'number' ? item.index : position, ...(typeof item.tool_slug === 'string' ? { tool_slug: item.tool_slug } : {}),
-        kind, error: sanitizeDiagnostic(message), ...(retry !== undefined && kind === 'rate_limited' ? { retry_after_seconds: retry } : {}) })
+        kind, error: sanitizeDiagnostic(message), ...(retry !== undefined && WAITED.includes(kind) ? { retry_after_seconds: retry } : {}) })
     })
-    // Entries the service counted but never reported: their outcome is unknown.
-    if (total !== undefined && total > entries.length) unreported = total - entries.length
+    // Entries the service counted but never reported, and those it reported without confirming: their outcome is unknown.
+    unreported = (total !== undefined && total > entries.length ? total - entries.length : 0) + unconfirmed.length
     const declaredErrors = typeof batch.error_count === 'number' ? batch.error_count : typeof batchPayload.error_count === 'number' ? batchPayload.error_count : 0
-    if (!failed.length && !unreported && (declaredErrors > 0 || batchPayload.successful === false)) {
+    if (!failed.length && (declaredErrors > 0 || batchPayload.successful === false)) {
       const message = errorTextOf(batchPayload)
       failed.push({ kind: kindOf(message, batchPayload), error: sanitizeDiagnostic(message) })
     }
@@ -191,7 +224,7 @@ export function assessComposioResult(name: string, result: ToolResult & { value?
       ? (text || result.error?.message || 'The Composio tool call failed')
       : errorTextOf(envelope ?? {}) !== 'The action reported a failure without a message' ? errorTextOf(envelope!) : (text || 'The action reported a failure without a message')
     const kind = unwrapped.connectionError ? 'connection_required' : kindOf(message, envelope, transport)
-    failed.push({ kind, error: sanitizeDiagnostic(message), ...(kind === 'rate_limited' ? optionalRetry(retryAfterSeconds(envelope, message)) : {}) })
+    failed.push({ kind, error: sanitizeDiagnostic(message), ...(WAITED.includes(kind) ? optionalRetry(retryAfterSeconds(envelope, message)) : {}) })
   }
 
   if (!failed.length && !unreported) return undefined
@@ -204,7 +237,7 @@ export function assessComposioResult(name: string, result: ToolResult & { value?
     completion: succeeded.length ? 'partial' : uncertain ? 'unknown' : 'failed',
     ...(retry.length ? { retryAfterSeconds: Math.max(...retry) } : {}),
     counts: { ...(total !== undefined ? { total } : {}), succeeded: succeeded.length, failed: failed.length, unreported },
-    failed, succeeded,
+    failed, succeeded, unconfirmed,
     message: failed[0]?.error ?? `${unreported} batch ${unreported === 1 ? 'entry was' : 'entries were'} counted by the service but not reported`,
   }
 }
@@ -223,6 +256,24 @@ function scopeOf(assessment: ComposioAssessment, kind: ComposioFailureKind): str
   const indices = entries.flatMap(entry => entry.index === undefined ? [] : [entry.index])
   return indices.length ? `entry ${indices.join(', ')}` : assessment.counts.total === undefined && !assessment.succeeded.length ? 'the call' : 'the entries of this kind'
 }
+/** The longest Retry-After the service stated for entries of this kind. */
+function waitFor(assessment: ComposioAssessment, kind: ComposioFailureKind): number | undefined {
+  const seconds = assessment.failed.flatMap(entry => entry.kind === kind && entry.retry_after_seconds !== undefined ? [entry.retry_after_seconds] : [])
+  return seconds.length ? Math.max(...seconds) : undefined
+}
+/** What an unknown outcome is about: entries by index (failed with an unknown outcome and unconfirmed), the call, and entries the service never reported. */
+function unknownSubject(assessment: ComposioAssessment): string {
+  const indices = [...new Set([
+    ...assessment.failed.flatMap(entry => entry.kind === 'uncertain_completion' && entry.index !== undefined ? [entry.index] : []),
+    ...assessment.unconfirmed.map(entry => entry.index),
+  ])].sort((a, b) => a - b)
+  const missing = assessment.counts.unreported - assessment.unconfirmed.length
+  const parts: string[] = []
+  if (indices.length) parts.push(`${indices.length === 1 ? 'entry' : 'entries'} ${indices.join(', ')}`)
+  else if (assessment.failed.some(entry => entry.kind === 'uncertain_completion' && entry.index === undefined)) parts.push('the call')
+  if (missing > 0) parts.push(`${missing} unreported entr${missing === 1 ? 'y' : 'ies'}`)
+  return parts.join(' and ') || 'the call'
+}
 /**
  * One recovery sentence per kind present; each says what not to do before what to do, and names only the entries it applies
  * to, so that no entry that succeeded or whose outcome is unknown is ever offered for a retry.
@@ -233,12 +284,16 @@ function recoveryFor(kind: ComposioFailureKind, assessment: ComposioAssessment):
   switch (kind) {
     case 'connection_required':
       return 'Do not retry and do not reconnect or re-authorize yourself. Tell the person which app needs its Composio connection (re)authorized, ask them to do it, and report this ticket blocked with that single action until they confirm.'
-    case 'uncertain_completion':
-      return `The outcome of ${assessment.counts.unreported ? `${scope === 'the call' ? 'the call' : scope} and of ${assessment.counts.unreported} unreported entr${assessment.counts.unreported === 1 ? 'y' : 'ies'}` : scope} is unknown (it may already have run): do NOT resend it. Check the external state with a read-only lookup, or ask the person to check, and let a person decide before anything is repeated.`
-    case 'rate_limited':
-      return assessment.retryAfterSeconds !== undefined
-        ? `Wait at least ${assessment.retryAfterSeconds} seconds (the service's Retry-After), then retry ${scope} once, only after that wait; the service rejected it, so it did not run. Never include an entry that succeeded or whose outcome is unknown; do not loop.`
-        : `The service gave no Retry-After: wait before retrying ${scope} once, which the service rejected and did not run. Never include an entry that succeeded or whose outcome is unknown; do not loop. If it repeats, report the limit to the person.`
+    case 'uncertain_completion': {
+      const wait = waitFor(assessment, kind)
+      return `The outcome of ${unknownSubject(assessment)} is unknown (it may already have run): do NOT resend it, whatever a rate limit or Retry-After in the message says. Check the external state with a read-only lookup${wait !== undefined ? ` (not before ${wait} seconds, the service's Retry-After, a wait floor only, not evidence about whether it ran)` : ''}, or ask the person to check, and let a person decide before anything is repeated.`
+    }
+    case 'rate_limited': {
+      const wait = waitFor(assessment, kind)
+      return wait !== undefined
+        ? `Wait at least ${wait} seconds (the service's Retry-After), then retry ${scope} once, only after that wait; the service reported a rate limit for it. Never include an entry that succeeded or whose outcome is unknown; do not loop.`
+        : `The service gave no Retry-After: wait before retrying ${scope} once, which the service reported as rate-limited. Never include an entry that succeeded or whose outcome is unknown; do not loop. If it repeats, report the limit to the person.`
+    }
     case 'action_failed':
       return `${scope === 'the call' ? 'The action' : `The ${scope === 'the entries of this kind' ? 'failed entries' : scope}`} ran and reported failure: read the error and correct the input or the target before retrying ${scope === 'the call' ? 'it' : 'only that'}${mixed ? '; never an entry that succeeded or whose outcome is unknown' : ''}.`
     case 'transport_failure':
@@ -256,7 +311,7 @@ export function composioFeedback(assessment: ComposioAssessment): string {
   return `${headline}\n${JSON.stringify({ composio_failure: {
     tool: assessment.tool, classification: assessment.kind, completion: assessment.completion,
     ...(assessment.retryAfterSeconds !== undefined ? { retry_after_seconds: assessment.retryAfterSeconds } : {}),
-    counts: assessment.counts, recovery, failed: assessment.failed, succeeded: assessment.succeeded } })}`
+    counts: assessment.counts, recovery, failed: assessment.failed, ...(assessment.unconfirmed.length ? { unconfirmed: assessment.unconfirmed } : {}), succeeded: assessment.succeeded } })}`
 }
 
 /**
