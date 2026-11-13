@@ -1,0 +1,35 @@
+{
+  "at": "2026-11-13T16:59:35.126528+00:00",
+  "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+  "findingRevision": 12,
+  "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r11",
+  "ticketId": "616615804db1a90e9974258d2efb18a7",
+  "assignmentId": "5681a0c034bbb1ea2c78a75dfd24f036",
+  "head": "3e630f84037a47a744a29632fd2f01e19f7e3b9a",
+  "base": "a00e0b2c34f05516d7ac35792dfd0da62206592a",
+  "patchSha256": "b9b5b8b3dccdb5d03e0edb283f0fc39fb43b1b07910b192ce4219bc9ab3dd065",
+  "verdict": "CHANGES REQUIRED before new protected native review; no source PR/package/publish/deploy/acceptance attempted for r11",
+  "verifiedProgress": [
+    "Explicit ordinary observer binding plus disposal/idempotence controls preserve managed routing exclusion; guard retained.",
+    "Always-on realToolRuntime prior-success control present; actual installedbridge suite still runs here, absence separately reported.",
+    "Single-action isEnvelopeFailed handles error-only service envelope and ignores error inside data/explicit successful:true.",
+    "Current operator dd0b48b differs from candidatebase a00e0b2 only outside src/tests/package/lock; scoped fetch/read-only diff verified.",
+    "Matching worker trajectory469events/65toolcalls, Googleunavailability->Sonnet, completed structured native report."
+  ],
+  "checks": {
+    "result": "178passed/7files, exit0, existing specs and reused original r3/r5 audits only; no new Codex tests or implementation",
+    "metadata": "docs/evidence/composio-r11-root-targeted.json",
+    "log": "docs/evidence/composio-r11-root-targeted.log",
+    "coverage": "Offline/mock remote. Installed bridge/realToolRuntime versus pureassessor and stand-in ordinarySession controls distinguished; no externalcall/liveacceptance/broadsuite proof."
+  },
+  "blockingStaticReview": {
+    "path": "src/app/tools/composio.ts",
+    "lines": "99-117",
+    "consumer": "src/app/composio-boundary.ts:198-209",
+    "finding": "New isEnvelopeFailed honors explicit successful:true and treats error:{} as no report. Existing isBatchItemFailed still ORs !!item.error/!!response.error, bypassing those rules. Thus entry response:{successful:true,data:{id:kept},error:note} (or error:{}) deterministically enters failed branch, not succeeded, unlike equivalent single action. Known completed mutation result is omitted from preserved successes and may receive action_failed/retry guidance. Exact same prior-review consistency/known-success retention scope. This is source/control-flow review, not a newly executed test or observed real remote payload.",
+    "correction": "Use consistent explicit completion/error-envelope semantics for single and batch actions; retain affirmative successes and their results, including warning/error-value metadata; contradictory actual failure/uncertain flags need deliberate safe accounting. Preserve no-success-flag real failures and unknown outcomes. Harness adds focused always-on ToolRuntime and installedbridge batch-vs-single controls, no external probe."
+  },
+  "preserved": "Original r1/r3/r5/r8/r11 trees/commits/reports/patches/bundles, PR106/head78a8f78 nativefailed/deliveryblocked7 and deniedautomaticcorrection unchanged. AcceptedPR96/usermerges/pendingunapprovedclarification untouched.",
+  "authority": "Original retained six-batch human approval, samefinding bounded correction only. No raw DB/deniedlease/policy/access bypass. All settings/routes/auth/toolallowlists/accounts/hostpackages/spend/reserve/max3 unchanged.",
+  "nextOwner": "Harness samefinding correction; Codex exact-head review and original protected release if qualified"
+}

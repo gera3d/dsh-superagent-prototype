@@ -1,0 +1,19 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-616615804db1/work
+
+
+ Test Files  7 passed (7)
+      Tests  178 passed (178)
+   Start at  08:58:21
+   Duration  22.11s (transform 4.54s, setup 0ms, import 9.78s, tests 22.01s, environment 2ms)
+
+(node:62251) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:62252) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:62280) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:62316) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:62340) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
