@@ -1,0 +1,49 @@
+{
+  "at": "2026-11-13T14:05:57.697669+00:00",
+  "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+  "findingRevision": 4,
+  "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r3",
+  "ticketId": "4b322b6ef82dfff0d1a7fc3e49de4a6b",
+  "assignmentId": "29973617ee0a5a11f3660577385d686b",
+  "head": "dd0e5eac9433b6c949839c6720d45c5f02e5edf8",
+  "base": "4e6ff0d19c17da8010f4884af1009b4537dba8f1",
+  "patchSha256": "5d190d330650eaa260dfdbf520c0b01f92f9c267ea4062c0d476da8d51375304",
+  "verdict": "CHANGES REQUIRED; no source PR, package, deployment or acceptance attempted by coordinator",
+  "workerClaims": "Structured native ready report;87targeted/6suites/types/build reported. Root did not rerun this unchanged positive suite before testing missing boundaries. Current source848e82f differs from candidatebase only in checkpoint docs; source integration not qualified yet.",
+  "audit": {
+    "command": "pnpm --config.verify-deps-before-run=false exec vitest run tests/root-composio-boundary.audit.spec.ts",
+    "result": "1pass/3fail",
+    "positive": "Real installed ToolRuntime plus candidate listener classifies nested successful:false, proving fixture hook execution.",
+    "negative": [
+      {
+        "severity": "high",
+        "case": "MCP error flag in tool value",
+        "result": "Same realToolRuntime MCP-value contract as candidate tests: execute returns {isError:true,content:[429...]} without throw; candidate only reads outer result.isError, final result.isError remainsfalse. This is real registry fixture, not proof of current remote MCP bridge mapping."
+      },
+      {
+        "severity": "high",
+        "case": "Ordinary-session consumption path",
+        "result": "Actual Runtime/Sessions agent-created lifecycle on ordinary-user fixture followed by post-execute waterfall returnsaccept for nested failure. decorate routes nonmaster/nonworker to limitSubagent thenreturns; listener only installed on main/workers whose unchanged allowlists containnoMCPtools. Claimed production reachability not established. Registry in this lifecycle fixture is host stand-in, not real authorized external call."
+      },
+      {
+        "severity": "high",
+        "case": "Prior success with normalized transport error",
+        "result": "Direct exported assessor called with normalized isError:true +structuredContent partialbatch discards known successful entry (succeeded[]), because batch processing is guarded !transport. This is consumption-assessment fixture, not external service outcome."
+      }
+    ],
+    "fixtureCorrection": "First ordinary fixture lacked normal Session header and failed with TypeError; set header={} in fixture, preserved first raw log locally, then reproduced actual accept-vs-block failure. Production code unchanged.",
+    "logs": [
+      "docs/evidence/composio-r3-root-boundary-audit.log"
+    ],
+    "spec": "docs/evidence/composio-r3-root-boundary.audit.spec.ts.txt"
+  },
+  "reachabilityAudit": {
+    "verified": "Candidate listener installs only in managed master/workOnly path. Actual Sessions.decorate skips ordinary sessions. Current managed allowlists have no mcp__ tool. Worker tests manually invoke waterfall on restricted sessions and separately unrestrictedToolRuntime fixtures; they do not prove allowed production execution.",
+    "notVerified": "Actual installed MCP bridge naming/provenance and real registered Composio invocation consumer were not established. Name regex containingcomposio is not itself trusted provenance proof. No permission widened or externalcall/failure induced to force proof.",
+    "required": "Trace installed host registration/metadata and existing authorized consumer from local source/read-only inventory. Attach only on actual already-authorized owned path while keeping all access/profile/prompt/routing restrictions. If hook outside owned source unavailable, report exact limit, not future-grant readiness."
+  },
+  "additionalReviewRisk": "Mixed uncertain+rate-limited entries receive both no-resend and unqualified retryfailedentries guidance. Correction must exclude succeeded and uncertain entries from any retry suggestion, preserve actual Retry-After and require checking side effects. No new automatic mutation authority.",
+  "history": "Originalr1max-token WIP and r3commit/report/bundle/patch preserved. No ended ticket revival or live edit. Original review-clarification proposal remains unapproved, priority3held.",
+  "nextOwner": "Harness same-finding bounded correction under retained native approval, then Codex exact re-review/relevant qualification and original protected release; no new access or host package changes.",
+  "coverage": "Four new controlled boundary checks only. No broad suite, native externalComposio proof, sourcePR-state API scan or deployed native result. Historical helper passes not acceptance."
+}
