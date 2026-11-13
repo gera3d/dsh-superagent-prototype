@@ -222,6 +222,13 @@ describe('classification details', () => {
     expect(clean).not.toMatch(/ghp_abc|s3cr3tvalue|tok_abcdef|sid=abc123/)
   })
 
+  it('strips control characters from diagnostics but keeps printable text, tabs and newlines as single spaces', () => {
+    const raw = `upstream\x00failed\x01 with\x08code\x0b429\x1f and\x7fmore\ttext\nline2 \u00e9\u4e2d`
+    const clean = sanitizeDiagnostic(raw)
+    expect(clean).toBe('upstream failed with code 429 and more text line2 \u00e9\u4e2d')
+    expect(clean).not.toMatch(/[\x00-\x08\x0B-\x1F\x7F]/)
+  })
+
   it('keeps every entry accounted for: explicit successes, explicit failures, and entries of unknown outcome', () => {
     const run = (payload: unknown) => assessComposioResult(MULTI, { content: [{ type: 'text', text: JSON.stringify(payload) }] })
     const good = { index: 0, response: { successful: true, data: { id: 'kept' } } }

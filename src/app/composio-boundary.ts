@@ -59,7 +59,7 @@ const DIAGNOSTIC_CHARS = 300
 
 /** Diagnostic text with credentials, authorization headers and secret-looking values replaced, cut to a useful length. */
 export function sanitizeDiagnostic(text: string, max = DIAGNOSTIC_CHARS): string {
-  let out = text.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, ' ')
+  let out = text.replace(/[\x00-\x08\x0B-\x1F\x7F]/g, ' ')
   out = out
     .replace(/\b((?:proxy-)?authorization|cookie|set-cookie)\b(\s*["']?\s*[:=]\s*)(?:(?:Bearer|Basic|Token)\s+)?[^\n"',;]+/gi, '$1$2[redacted]')
     .replace(/\b(Bearer|Basic)\s+[A-Za-z0-9._~+/=-]{8,}/g, '$1 [redacted]')
