@@ -1,0 +1,21 @@
+{
+  "at": "2026-11-13T16:04:06.495715+00:00",
+  "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+  "findingRevision": 10,
+  "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r8",
+  "ticketId": "5cbcad514cfa6f880f483c0e0f2ae566",
+  "assignmentId": "c447ef4dc4a1231ecbeddb5f2feab2d5",
+  "workerHead": "a91a27ac5d5d36511eef6d35eb004a38ea2f271e",
+  "workerBase": "d15a98260817c5d74a7001144f7d7602e3831906",
+  "workerPatchSha256": "b782835c45e15ae2e835441736f016ff161da95d29ade8aea8ec9e450bd103f5",
+  "integratedHead": "78a8f78892e029dda9720ae069464f44b95e5b4a",
+  "integrationBase": "1cde553005f0b684f776c53f7ce9f6d54af2cb9f",
+  "integratedPatchSha256": "1602f13714e7ba40abcd09eca6bc284466005a21f2e5842be6714b0774e677d9",
+  "artifactPath": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-5cbcad514cfa/work",
+  "review": "Independent code review passed for bounded failure handling; original r3/r5 uncertainty cases corrected. Eligible for native independent review/check/package; NOT deployment or acceptance.",
+  "integration": "Routine coordinator staging: trusted local-origin clone work/, cherry-picked three exact worker commits onto current source. No implementation changes; original repo/untracked bundle left intact. Temporary root audit specs removed after exact head tests; dependencies linked from existing installed setup.",
+  "checks": "139 tests/8files passed exit0 on integrated exact head, includes original r3audit4, r5 pure4+bridge12, candidate suite and output/runtimeconcurrency controls. Raw command/head/exit in docs/evidence/composio-r8-root-targeted.json; full log beside it. Worker types/build passed claims; native current-head qualification still pending.",
+  "contract": "Installed client naming mcp__composio__ and error throws validated locally; ordinary Session observer added without registry/allowlist/guard/prompt/routing changes; real bridge+ToolRuntime mocked remote differs from stand-in ordinary lifecycle and pureassessor.",
+  "limits": "No external Composio action or induced failure; no actual deployed ordinary chat hook proof yet. No broad suite. No auth/accounts/access/allowlist/packages/settings/routes/spend/reserve/max3 change. All original r1/r3/r5 history/acceptedPR96/usermerges/pendingunapprovedclarification preserved.",
+  "nextOwner": "Codex native release preparation/review/exact checks/rollback/protected Publish only if gates pass; native evidence and separate acceptance afterward."
+}

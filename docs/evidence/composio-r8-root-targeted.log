@@ -1,0 +1,19 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-5cbcad514cfa/work
+
+
+ Test Files  8 passed (8)
+      Tests  139 passed (139)
+   Start at  08:02:58
+   Duration  12.23s (transform 1.86s, setup 0ms, import 4.58s, tests 12.09s, environment 1ms)
+
+(node:45249) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45248) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45272) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45277) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45309) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
