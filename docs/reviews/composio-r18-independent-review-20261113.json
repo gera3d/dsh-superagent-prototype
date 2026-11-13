@@ -1,0 +1,30 @@
+{
+  "at": "2026-11-13T20:07:55.450422+00:00",
+  "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+  "findingRevision": 19,
+  "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r18",
+  "ticketId": "90b01f2a0531979c292f19f482df2a3e",
+  "assignmentId": "9fcfa76462a763cf8289661908868ae2",
+  "head": "488f8400c78d1969fede084fd39899ca342efd1c",
+  "actualDiffBase": "cc8763d03dba2ef82cdea27b86d4dd277911be66",
+  "binaryDiffSha256": "a9599c1902699d81fc8467ad042b43c047ba13d8a1befc1500c969eaa435e5cf",
+  "workerR18OnlyFormatPatchSha256": "d494d83cd2c730409cd746906ade7b1f70af195d17bf92f86876c499d36ec388",
+  "verdict": "Independent bounded code review passed; eligible for native independent review/check/package, NOT native deployment or acceptance",
+  "sourceRepresentation": {
+    "committedLine": "  let out = text.replace(/[\\x00-\\x08\\x0B-\\x1F\\x7F]/g, ' ')",
+    "worktreeMatchesBlob": true,
+    "equivalence": "Explicit hex ranges match previous Unicode ranges; printable Unicode retained, intended control bytes stripped. Existing credential redaction and new control-strip test pass. New native PR/review diff not yet observed.",
+    "baseClarification": "Worker reports cumulative a00e0b2 diff53de6e; native actual merge-base is cc8763d and excludes intervening coordinator docs. Use actual5file patch a9599c19, not broader historical cumulative documentation patch."
+  },
+  "checks": {
+    "result": "194existingchecks/7files pass exit0, candidate/runtime specs and reusedr3/r5audits; no newCodeximplementation/test",
+    "metadata": "docs/evidence/composio-r18-root-targeted.json",
+    "log": "docs/evidence/composio-r18-root-targeted.log"
+  },
+  "currentSource": "Fetchedtrustedorigin codex/release-aware-advice97ced15; no src/tests/package/lock differences vscc8763d. All prior source corrections preserved.",
+  "trajectory": "257events/35toolcalls, completed native structuredreport; Anthropic35reportedrequests/36totalattempts, priceunavailable; no inferred allowance burn/billedcost.",
+  "nativeAccess": "Chrome currently shows another active project. No isolated browser connector available; MCP coordinate_finding supports retry_scope/confirm/defer only, not protected release preparation/Publish/evidenceacceptance. Requested brief Composio-tab availability; no raw-endpoint/header/permission bypass and no inputs sent into other task.",
+  "limits": "Offline mocked remote only; realToolRuntime/installedbridge vs pureassessor/stand-in ordinarySession distinct. Actual nativePR/reviewrepresentation and liveinstalledhook notyetverified, no broad-suite/generalreliability claim.",
+  "preserved": "PR106/107failednativeverdicts/blocked7deliveries/deniedleases; alloriginalr1/r3/r5/r8/r11/r13/r15/r18 work/reports/bundles. AcceptedPR96/usermerges/pendingunapprovedclarificationheld unchanged. No auth/access/toolallowlists/profile/hostpackages/deps/provider/routes/settings/accounts/credentials/spend/max3/reserve/schedules change.",
+  "nextOwner": "Codex supported sourcePR/nativeindependentreview/check/package, exact rollback/protectedPublish/deploy/nativeproof/evidence/acceptance onlyifqualified and screenavailable; no competingworker."
+}
