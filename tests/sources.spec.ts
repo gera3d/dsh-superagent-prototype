@@ -616,7 +616,7 @@ describe('github source', () => {
     expect(h.store.get('github-cursor:14')).toBeUndefined()
     expect(h.store.threads.get('github:14')!.meta.pollError).toContain('deleted')
     // Without a Thread to keep it, the Source's health names it.
-    expect(h.health.github).toMatchObject({ state: 'ready', detail: '2 notifications; next poll ≥ 60s; deleted on GitHub: #14, #15' })
+    expect(h.health.github).toMatchObject({ state: 'ready', detail: expect.stringContaining('2 notifications; next poll ≥ 60s; deleted on GitHub: #14, #15') })
     // GitHub also answers 404 for a private repository the agent lost access to: that is a failure read again.
     github(h, { notifications: [notification(16)] })
     await expect(pollRound(h)).rejects.toThrow('#16: Error: gh: Not Found (HTTP 404)')
@@ -633,7 +633,7 @@ describe('github source', () => {
       'issues/12/comments': [comment, { body: 'no id' }] })
     await pollRound(h)
     expect(h.receive.mock.calls.map(([trigger]) => trigger.text)).toEqual(['@agent-bot please fix'])
-    expect(h.health.github).toMatchObject({ state: 'ready', detail: '1 notifications; next poll ≥ 60s; 2 unreadable items skipped' })
+    expect(h.health.github).toMatchObject({ state: 'ready', detail: expect.stringContaining('1 notifications; next poll ≥ 60s; 2 unreadable items skipped') })
     h.store.close()
   })
   it('reads every page of the notifications when GitHub says there are more, and waits as long as GitHub asks', async () => {
@@ -655,7 +655,7 @@ describe('github source', () => {
     expect(notifications.map(args => args.includes('--paginate'))).toEqual([false, true])
     const paths = calls.map(args => args[1]!.split('?')[0])
     expect(paths).toEqual(expect.arrayContaining(['repos/acme/widgets/issues/12', 'repos/acme/widgets/issues/13']))
-    expect(h.health.github).toMatchObject({ state: 'ready', detail: '2 notifications; next poll ≥ 120s' })
+    expect(h.health.github).toMatchObject({ state: 'ready', detail: expect.stringContaining('2 notifications; next poll ≥ 120s') })
     h.store.close()
   })
   it('drops a notified Issue whose reads fail for a day, so the Source leaves the error, and keeps its read position', async () => {
@@ -680,7 +680,7 @@ describe('github source', () => {
     expect(h.store.get('github-cursor:16')).toBe('2026-09-01T00:00:00.000Z')
     expect(h.store.threads.get('github:16')?.meta.pollError).toContain('Not Found')
     expect(h.health.github).toMatchObject({ state: 'ready',
-      detail: '0 notifications; next poll ≥ 60s; dropped after their reads kept failing: #16' })
+      detail: expect.stringContaining('0 notifications; next poll ≥ 60s; dropped after their reads kept failing: #16') })
     h.store.close()
   })
   it('polls the PRs of open tickets and subscribed Threads although the notifications fail, and then fails the round', async () => {
@@ -1487,6 +1487,45 @@ describe('github quota stops the round', () => {
   })
 })
 
+describe('github request telemetry', () => {
+  const headers = 'X-Poll-Interval: 60\r\nX-Ratelimit-Remaining: 4321\r\nX-Ratelimit-Reset: 1794613928\r\nX-Ratelimit-Resource: core'
+  const start = (store: Store | undefined, config: Record<string, unknown> = {}) => {
+    const board = new HealthBoard()
+    const sources = new SourceRegistry(() => SettingsSchema.parse({ sources: { github: { enabled: true, config } } }), board)
+    healthOf.set(sources, board)
+    const value = host({ sources, ...store ? { store } : {} })
+    const disposers: (() => unknown)[] = []
+    applyGithub({ orchestrator: value, effect: (effect: () => () => unknown) => { disposers.push(effect()) } } as never)
+    return { value, stop: async () => { for (const dispose of disposers) await dispose() } }
+  }
+  it('attributes a round\'s requests to their callers, shows them in health, and keeps them across a restart', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    try {
+      const run = vi.spyOn(Commands.prototype, 'run').mockImplementation(async () => `HTTP/2.0 200 OK\r\n${headers}\r\n\r\n[]`)
+      const first = start(undefined)
+      await vi.waitFor(() => expect(first.value.health.github).toMatchObject({ state: 'ready' }))
+      const view = (first.value.health.github as { telemetry?: { hour: { requests: number }; callers: unknown[]; quota?: unknown } }).telemetry!
+      // Counting adds no request: one notification read, one request counted.
+      expect(run).toHaveBeenCalledTimes(1)
+      expect(view.hour.requests).toBe(1)
+      expect(view.callers).toEqual([{ caller: 'poll-notifications', requests: 1, free: 0, limited: 0 }])
+      expect(view.quota).toMatchObject({ remaining: 4321, reset: 1794613928, resource: 'core' })
+      expect(first.value.health.github!.detail).toContain('GitHub requests: 1 in the last hour')
+      expect(first.value.store.get(KV.github.telemetry)).toMatchObject({ quota: { core: { remaining: 4321 } } })
+      await first.stop()
+      // A new process reads the same state store: the earlier counts and quota facts are still there while its own round fails.
+      run.mockImplementation(async () => { throw refused(502, 'Bad Gateway') })
+      const second = start(first.value.store, { failuresBeforeError: 1 })
+      await vi.waitFor(() => expect(second.value.health.github).toMatchObject({ state: 'error' }))
+      const after = (second.value.health.github as { telemetry?: { day: { requests: number; '200': number; error: number }; quota?: unknown } }).telemetry!
+      expect(after.day['200']).toBe(1)
+      expect(after.day.error).toBeGreaterThanOrEqual(1)
+      expect(after.quota).toMatchObject({ remaining: 4321 })
+      await second.stop()
+      first.value.store.close()
+    } finally { vi.useRealTimers(); vi.restoreAllMocks() }
+  })
+})
 it('root quota watch: respects the full server deadline then recovers without restart',async()=>{
  vi.useFakeTimers(); vi.setSystemTime(new Date('2026-11-10T03:00:00Z'))
  const random=vi.spyOn(Math,'random').mockReturnValue(0)

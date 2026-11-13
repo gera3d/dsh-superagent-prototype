@@ -14,6 +14,7 @@ import { health, sourceContext, type Health, type SourceContext } from './host.t
 import { KV } from '../kv.ts'
 import { cursorAt, pause, POLL_HORIZON_MS, pollThreads as pollEach } from './poll.ts'
 import type { Localized, SourceKind } from './kind.ts'
+import { withCaller } from '../infra/github-telemetry.ts'
 import { z } from 'zod'
 
 export { commentTrigger, type GithubComment } from './github-trigger.ts'
@@ -129,6 +130,8 @@ async function watch(ctx: SourceContext, signal: AbortSignal): Promise<void> {
   let failures = 0
   let cooling = 0
   await ctx.ready
+  // Restore the counts of earlier runs once, so a restart does not lose the picture of what was spent.
+  if (ctx.configured()) ctx.commands.telemetry.restore(ctx.state.get(KV.github.telemetry))
   // Setup restarts dsh-superagent once it resolves the accounts; until then nothing is polled.
   if (!ctx.configured()) { ctx.report('github', health('paused', 'setupPending')); return }
   while (!signal.aborted) {
@@ -142,13 +145,14 @@ async function watch(ctx: SourceContext, signal: AbortSignal): Promise<void> {
       if (rate) {
         // Quota exhaustion is not a poll failure: wait out the reset, say so, and resume on the next successful round.
         cooling = cooldownSeconds(rate)
-        if (!signal.aborted) ctx.report('github', health('paused', 'rateLimited', { kind: rate.kind, until: new Date(Date.now() + cooling * 1000).toISOString() }))
+        if (!signal.aborted) ctx.report('github', { ...health('paused', 'rateLimited', { kind: rate.kind, until: new Date(Date.now() + cooling * 1000).toISOString() }), telemetry: ctx.commands.telemetry.view() })
       } else {
         failures += 1
         const failed = pollFailure(failures, config?.failuresBeforeError ?? 1, error)
-        if (!signal.aborted && failed) ctx.report('github', failed)
+        if (!signal.aborted && failed) ctx.report('github', { ...failed, telemetry: ctx.commands.telemetry.view() })
       }
     }
+    ctx.state.set(KV.github.telemetry, ctx.commands.telemetry.summary())
     let remainingWaitMs = Math.max(cooling, interval, ctx.config<GithubConfig>(SOURCE)?.pollSeconds ?? 60) * 1000
     // Chunk long waits without shortening the server deadline or overflowing a native timeout.
     while (!signal.aborted && remainingWaitMs > 0) {
@@ -200,7 +204,7 @@ async function pollRepository(ctx: SourceContext, round: Round): Promise<void> {
   for (const stream of STREAMS) {
     if (stopped(ctx, round)) return
     if (!stream.observed(config)) { ctx.state.set(KV.github.stream(stream.id), undefined); continue }
-    try { await readStream(ctx, round, stream.id, stream.path, config) }
+    try { await withCaller(`poll-${stream.id}`, () => readStream(ctx, round, stream.id, stream.path, config)) }
     catch (error) { limited(round, error); if (!stopped(ctx, round)) round.failures.push(`${stream.id}: ${String(error)}`) }
   }
   if (stopped(ctx, round)) return
@@ -210,7 +214,7 @@ async function pollRepository(ctx: SourceContext, round: Round): Promise<void> {
     ctx.state.set(KV.github.branchCi, seen && { revision: seen.revision })
     return
   }
-  try { await pollBranchCi(ctx, round) }
+  try { await withCaller('poll-branch-ci', () => pollBranchCi(ctx, round)) }
   catch (error) { limited(round, error); if (!stopped(ctx, round)) round.failures.push(`default branch CI: ${String(error)}`) }
 }
 /**
@@ -298,7 +302,7 @@ async function pollBranchCi(ctx: SourceContext, round: Round): Promise<void> {
  */
 export async function pollRound(ctx: SourceContext, signal?: AbortSignal): Promise<number> {
   const round = newRound(signal)
-  const notified = await pollNotifications(ctx, round).then(value => ({ value }), (error: unknown) => ({ error }))
+  const notified = await withCaller('poll-notifications', () => pollNotifications(ctx, round)).then(value => ({ value }), (error: unknown) => ({ error }))
   if (!(('error' in notified) && (limited(round, notified.error), round.rate))) await pollRepository(ctx, round)
   await pollTicketPulls(ctx, signal, round)
   await pollThreads(ctx, signal, round)
@@ -311,7 +315,8 @@ export async function pollRound(ctx: SourceContext, signal?: AbortSignal): Promi
   const dropped = (round.dropped.length ? `; deleted on GitHub: ${named(round.dropped)}` : '')
     + (round.abandoned.length ? `; dropped after their reads kept failing: ${named(round.abandoned)}` : '')
     + (round.tally.skipped ? `; ${round.tally.skipped} unreadable items skipped` : '')
-  ctx.report('github', { state: 'ready', detail: `${count} notifications; next poll ≥ ${interval}s${dropped}`, at: round.started })
+  const telemetry = ctx.commands.telemetry.view()
+  ctx.report('github', { state: 'ready', detail: `${count} notifications; next poll ≥ ${interval}s${dropped}; ${telemetry.text}`, at: round.started, telemetry })
   return interval
 }
 /** Reads notifications since the cursor and each Issue or PR they name, advancing the cursor atomically with the retry map for failed reads; deleted (410) Issues are dropped once their error is recorded. */
@@ -428,8 +433,8 @@ export async function pollTicketPulls(ctx: SourceContext, signal?: AbortSignal, 
   for (const number of numbers) {
     if (stopped(ctx, round)) return
     try {
-      const pr = await pull(ctx, round, number)
-      if (pr.state !== 'closed' && !pr.merged) await pollChecks(ctx, round, number, pr)
+      const pr = await withCaller('poll-ticket-pr', () => pull(ctx, round, number))
+      if (pr.state !== 'closed' && !pr.merged) await withCaller('poll-ticket-checks', () => pollChecks(ctx, round, number, pr))
     } catch (error) { limited(round, error); if (!stopped(ctx, round)) failed(ctx, round, number, error) }
   }
 }
@@ -451,7 +456,7 @@ function nameThread(ctx: SourceContext, number: number, title: string): void {
 /** Polls subscribed Issue and PR Threads not already read in this round; a deleted (410) Issue is still polled within the horizon (costing one read) and does not fail the round. */
 export async function pollThreads(ctx: SourceContext, signal?: AbortSignal, round = newRound(signal)): Promise<void> {
   await pollEach(ctx, SOURCE, () => stopped(ctx, round), async thread => {
-    try { await pollThread(ctx, round, thread) }
+    try { await withCaller('poll-thread', () => pollThread(ctx, round, thread)) }
     catch (error) {
       limited(round, error)
       if (stopped(ctx, round)) throw error

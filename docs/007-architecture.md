@@ -419,6 +419,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/infra/environment.ts` | The agent's process environment: command shims, the git configuration and credential helper, `runAsWorker`, and the checks of the environment and of a Ticket's directory |
 | `src/infra/paths.ts` | The package's root, where packaged files are |
 | `src/infra/text.ts` | Word counts and the chat message limit, `fill` and `sameName` |
+| `src/infra/github-telemetry.ts` | `GithubTelemetry`, the counts of the agent's GitHub requests by caller (`withCaller`), masked endpoint and outcome, with the last `x-ratelimit-*` values; its hourly window and persisted daily summary feed the GitHub health entry |
 | `src/infra/health.ts` | The `HealthBoard`, every part's health entry, each claimed by its one writer |
 | `src/sources/kind.ts` | The `SourceKind` protocol |
 | `src/sources/registry.ts` | `SourceRegistry` |
@@ -623,6 +624,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/finding-release-package.spec.ts` | finding release package |
 | `tests/finding-release.spec.ts` | finding release |
 | `tests/github-quota.spec.ts` | github quota |
+| `tests/github-telemetry.spec.ts` | github request telemetry |
 | `tests/legacy-delivery-card.spec.tsx` | legacy delivery card |
 | `tests/legacy-delivery-reconciliation.spec.ts` | Legacy delivery historical completion reconciliation |
 | `tests/live-attestation-coverage.spec.ts` | live attestation coverage |
