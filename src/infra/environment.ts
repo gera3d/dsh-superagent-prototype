@@ -10,6 +10,7 @@ import type { SubprocessOutputReader, SubprocessRuntime } from '@deepseek-ai/dsh
 import type { Deployment } from '../deployment.ts'
 import { SetupError } from '../setup.ts'
 import { CliError } from './commands.ts'
+import { ghCallsDir } from './gh-calls.ts'
 
 const MARKER = '# Written by dsh-superagent on every start; edits are lost.'
 /** Markers of files written under the project's earlier names (`dsh-tag`, `dsh-go`, `dsh-freelancer`), which `dsh-superagent` owns and replaces too. */
@@ -72,6 +73,52 @@ async function own(file: string, text: string, mode = 0o644): Promise<void> {
   await rename(temporary, file)
 }
 
+/** awk program that masks a `gh api` endpoint: owner, repository and user become `:o`, `:r`, `:u`, numbers `:n`, and anything not a plain lowercase word `:x`. */
+const MASK_ENDPOINT = [
+  '{ s = $0; sub(/[?#].*/, "", s); sub(/^[A-Za-z][A-Za-z0-9+.-]*:\\/\\/[^\\/]*\\//, "", s); sub(/^\\/+/, "", s)',
+  '  n = split(s, p, "/"); out = ""; o = 0',
+  '  for (i = 1; i <= n; i++) { seg = p[i]; if (seg == "") continue; o++; if (o == 1) lead = seg',
+  '    if (lead == "repos" && o == 2) seg = ":o"; else if (lead == "repos" && o == 3) seg = ":r"',
+  '    else if (lead == "orgs" && o == 2) seg = ":o"; else if (lead == "users" && o == 2) seg = ":u"',
+  '    else if (seg ~ /^[0-9]+$/) seg = ":n"',
+  '    else if (seg !~ /^[a-z][a-z_-]*$/ || length(seg) > 30) seg = ":x"',
+  '    out = out (out == "" ? "" : "/") seg }',
+  '  print substr(out, 1, 120) }',
+].join('\n')
+
+/**
+ * Shell that appends one line per `gh` call to the ticket's counter, so the harness can see how much of the shared GitHub quota workers use.
+ * It records only the subcommand and, for `gh api`, the masked endpoint path; flag values, field values, headers, bodies and query strings
+ * are skipped and never reach the line. It runs in a subshell with its output discarded, so a counting problem never changes what `gh` does.
+ */
+const countCalls = (dir: string): string => [
+  'count_call() {',
+  '  [ -n "${DSH_SUPERAGENT_TICKET:-}" ] || return 0',
+  '  case $DSH_SUPERAGENT_TICKET in *[!A-Za-z0-9_-]*) return 0 ;; esac',
+  '  name=$1; detail=',
+  '  case $name in ""|*[!a-z-]*) name=other ;; esac',
+  '  [ ${#name} -le 24 ] || name=other',
+  '  case $name in',
+  '    api)',
+  '      shift',
+  '      while [ $# -gt 0 ]; do',
+  '        case $1 in',
+  '          --) shift; detail=${1:-}; break ;;',
+  '          -X|-H|-f|-F|-q|-t|-p|--method|--header|--field|--raw-field|--jq|--template|--cache|--input|--hostname|--preview) shift ;;',
+  '          -*) ;;',
+  '          *) detail=$1; break ;;',
+  '        esac',
+  '        [ $# -gt 0 ] && shift',
+  '      done',
+  `      detail=$(printf '%s\\n' "$detail" | awk ${shellQuote(MASK_ENDPOINT)}) ;;`,
+  '    pr|issue|repo|run|release|workflow|auth|search|label|gist|cache|secret|variable|ruleset|project|codespace|extension|alias|config|ssh-key|gpg-key|org)',
+  '      case ${2:-} in ""|*[!a-z-]*) ;; *) [ ${#2} -le 24 ] && detail=$2 ;; esac ;;',
+  '  esac',
+  `  mkdir -p ${shellQuote(dir)} && printf '%s\\t%s\\t%s\\n' "$(date -u +%Y-%m-%dT%H)" "$name" "$detail" >> ${shellQuote(dir)}/"$DSH_SUPERAGENT_TICKET"`,
+  '}',
+  '( umask 077; count_call "$@" ) >/dev/null 2>&1 </dev/null || true',
+].join('\n')
+
 /**
  * Atomically writes worker CLI shims and the isolated git configuration file into the state directory, refusing to overwrite foreign files.
  * Each shim strips the shim directory from PATH before exec so wrapper scripts resolving `gh` or `lark-cli` by name reach the real binary.
@@ -97,7 +144,7 @@ export async function writeEnvironment(deployment: Pick<Deployment, 'stateDir' |
   ].join('\n')
   const run = (program: string): string => `${withoutShims}\nexec ${shellQuote(program)} "$@"`
   const fail = (message: string): string => `echo ${shellQuote(message)} >&2\nexit 1`
-  await shim('gh', run(github.cli))
+  await shim('gh', `${withoutShims}\n${countCalls(ghCallsDir(stateDir))}\nexec ${shellQuote(github.cli)} "$@"`)
   await shim('lark-cli', feishu ? run(feishu.cli) : fail('lark-cli is unavailable: this installation has no Feishu bot.'))
   const reportShimBody = [
     'target="${DSH_SUPERAGENT_DIR:-.}/.dsh-report.json"',

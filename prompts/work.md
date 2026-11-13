@@ -46,3 +46,6 @@ Call orchestrator_report with progress, ready, blocked, failed or dropped; inclu
 Omit pr_number or use null if no PR exists; never fill it with a placeholder such as 1.
 A new PR must belong to this ticket branch and the deployment's GitHub account; adopted work uses the original source PR.
 ready means reviewed implementation with relevant checks passed.
+Every gh call you make is counted against your ticket and the shared GitHub quota, so keep them few.
+Reuse what the harness gives you (`DSH_SUPERAGENT_GITHUB_NUMBER`, `DSH_SUPERAGENT_GITHUB_PR_HEAD`, the trigger text); read each GitHub fact once per turn.
+Never poll or use `--watch`. For a repeated GET of one endpoint use `gh api --cache 60s`. GraphQL is blocked here; do not try to batch with it.

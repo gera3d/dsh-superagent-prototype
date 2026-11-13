@@ -54,6 +54,7 @@ import type { Variable } from './execution-environment.ts'
 import { policyHistory } from './settings-history.ts'
 import { overview } from './views/overview.ts'
 import { settingsView } from './views/settings.ts'
+import { hourlyCalls, readTicketCalls } from '../infra/gh-calls.ts'
 import { sourcesStatus, type SetupState } from './views/sources.ts'
 import { decisionList, search, threadDetail, threadList } from './views/threads.ts'
 import { executorLoad, ticketDetail, ticketList } from './views/tickets.ts'
@@ -164,7 +165,9 @@ async function ticketPage(runtime: HttpHost, id: string) {
   // A job's recorded usage is read from its one worker Session only once completed/ended and an Assignment actually started in it.
   const usage: JobUsage | undefined = detail.ended && detail.assignments.some(assignment => assignment.startedAt)
     ? await runtime.usage.of(workerSessionId(id)) : undefined
-  return { ...detail, environment: runtime.configured() ? runtime.ticketEnvironment(ticket) : [], ...usage ? { usage } : {} }
+  // The `gh` calls the worker made, counted by its shim on disk, so they survive a restart.
+  const ghCalls = await readTicketCalls(runtime.machine.stateDir, id)
+  return { ...detail, environment: runtime.configured() ? runtime.ticketEnvironment(ticket) : [], ghCalls, ...usage ? { usage } : {} }
 }
 export type TicketPageView = Awaited<ReturnType<typeof ticketPage>>
 function promptsView(runtime: HttpHost, revision: number | undefined, offset: number) {
@@ -323,7 +326,7 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
     'GET overview': () => overview(views(runtime), runtime.health, policyVersion(store.settings()),
       executorLoad(store, runtime.executor.activeCount()), runtime.setupProblem ?? runtime.feishuProblem),
     'GET search': ({ query }) => search(views(runtime), query.q ?? '', runtime.sourceLinks),
-    'GET sources': () => sourcesStatus(views(runtime), runtime.health, setupState(runtime)),
+    'GET sources': async () => sourcesStatus(views(runtime), runtime.health, setupState(runtime), await hourlyCalls(runtime.machine.stateDir)),
     'GET settings': () => settingsView(store, runtime.sources, runtime.health, setupState(runtime), runtime.machine.stateDir),
     'GET allowance': () => allowanceReader.report(),
     'POST allowance/refresh': async () => {

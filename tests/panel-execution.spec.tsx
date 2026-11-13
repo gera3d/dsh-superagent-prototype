@@ -71,6 +71,9 @@ it('shows a Ticket with its stage, its Mandate details with the Trigger and Deci
   await click(zh['term.environment'])
   expect(all('.dt-disclosure-body .dt-table tr').map(row => row.textContent)).toEqual(['DSH_SUPERAGENT_DIR/w/t1',
     'DSH_SUPERAGENT_GITHUB_NUMBER—'])
+  // The worker's gh calls, counted by command, open beside the environment.
+  await click(`${zh.ghCallsTitle} · 3`)
+  expect(all('.dt-disclosure-body .dt-table tr').slice(2).map(row => row.textContent)).toEqual(['pr view2', 'api repos/:o/:r/issues/:n/comments1'])
   await click(document.querySelector<HTMLElement>('.dt-trigger-link')!)
   expect(tab(zh['tab.trigger']).getAttribute('aria-selected')).toBe('true')
 })

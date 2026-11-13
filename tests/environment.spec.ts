@@ -1,5 +1,5 @@
 import { execFile, spawn } from 'node:child_process'
-import { chmodSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { chmodSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
@@ -8,6 +8,7 @@ import { SENSITIVE_ENV_PATTERN, type SubprocessRuntime } from '@deepseek-ai/dsh-
 import { GIT_LOCATION, agentVariables, credentialHelper, runAsWorker, verifyDirectory, withoutDirectory, workerBin, workerGitConfig, writeEnvironment }
   from '../src/infra/environment.ts'
 import { CliError } from '../src/infra/commands.ts'
+import { ghCallsDir, hourlyCalls, readTicketCalls } from '../src/infra/gh-calls.ts'
 import { testDeployment } from './fixtures/deployment.ts'
 import { gitEnv } from './fixtures/git.ts'
 
@@ -93,6 +94,89 @@ GH_CONFIG_DIR=${dir}/agent-config exec gh "$@"`)
     expect(jsonOut).toContain('Report recorded for delivery: state=blocked')
     const jsonRecorded = JSON.parse(readFileSync(join(workDir, '.dsh-report.json'), 'utf8'))
     expect(jsonRecorded).toMatchObject({ state: 'blocked', summary: 'Blocked on credentials' })
+  })
+})
+
+describe('the gh call counter', () => {
+  const TICKET = 'ticket-123'
+  const SECRETS = ['ghp_SECRET1', 'ghp_SECRET2', 'ghp_SECRET3', 'ghp_SECRET4', 'ghp_SECRET5', 'Bearer', 'Authorization', 'body=']
+  const gh = async (args: string[], ticket: string | null = TICKET) => {
+    const env: Record<string, string> = { PATH: [workerBin(dir), '/usr/bin', '/bin'].join(':'), ...ticket === null ? {} : { DSH_SUPERAGENT_TICKET: ticket } }
+    return exec(join(workerBin(dir), 'gh'), args, { env, timeout: 10_000 })
+  }
+  const deployment = () => testDeployment({ stateDir: dir, github: { ...testDeployment().github, cli: join(dir, 'real', 'gh') }, feishu: undefined })
+  const prepare = async (body = 'echo real "$@"') => { program(join(dir, 'real', 'gh'), body); await writeEnvironment(deployment(), []) }
+  const lines = () => readFileSync(join(ghCallsDir(dir), TICKET), 'utf8').split('\n').filter(Boolean).map(line => line.split('\t'))
+
+  it('writes one line per call, with the date and hour and the subcommand only, and still runs the real gh', async () => {
+    await prepare()
+    const before = new Date().toISOString().slice(0, 13)
+    expect((await gh(['pr', 'view', '12', '--json', 'title'])).stdout).toBe('real pr view 12 --json title\n')
+    await gh(['issue', 'comment', '5', '--body', 'ghp_SECRET5'])
+    await gh(['ghp_SECRET4', 'foo'])
+    await gh(['pr', 'ghp_SECRET3'])
+    await gh([])
+    const rows = lines()
+    expect(rows.map(row => row.slice(1))).toEqual([['pr', 'view'], ['issue', 'comment'], ['other', ''], ['pr', ''], ['other', '']])
+    for (const [hour] of rows) expect([before, new Date().toISOString().slice(0, 13)]).toContain(hour)
+    expect(readFileSync(join(ghCallsDir(dir), TICKET), 'utf8')).not.toMatch(/SECRET/)
+  })
+  it('records `gh api` endpoints with the owner, repository, users and numbers masked, and never flags, bodies, headers or queries', async () => {
+    await prepare()
+    await gh(['api', 'repos/gera3d/superagent-sandbox/issues/204/comments?per_page=5&access=ghp_SECRET1', '--cache', '60s', '-H', 'Authorization: token ghp_SECRET1', '-f', 'body=ghp_SECRET2'])
+    await gh(['api', '-X', 'POST', '/repos/o/r/pulls/12/comments/345/replies', '-f', 'body=Bearer ghp_SECRET3'])
+    await gh(['api', 'https://api.github.com/user', '--jq', '.login'])
+    await gh(['api', '--paginate', 'rate_limit'])
+    await gh(['api', 'users/bob/repos'])
+    await gh(['api', 'orgs/acme/members'])
+    await gh(['api', 'repos/o/r/git/ref/heads/agent/gh-call-counting-4c15fb9c193a'])
+    await gh(['api', '--method=GET', 'repos/o/r/commits/ABCDEF0123'])
+    await gh(['api', 'ghp_SECRET4'])
+    await gh(['api', '--input', '-', '--', 'graphql'])
+    await gh(['api'])
+    expect(lines().map(row => row.slice(1).join(' '))).toEqual([
+      'api repos/:o/:r/issues/:n/comments', 'api repos/:o/:r/pulls/:n/comments/:n/replies', 'api user', 'api rate_limit', 'api users/:u/repos',
+      'api orgs/:o/members', 'api repos/:o/:r/git/ref/heads/agent/:x', 'api repos/:o/:r/commits/:x', 'api :x', 'api graphql', 'api ',
+    ])
+    const text = readFileSync(join(ghCallsDir(dir), TICKET), 'utf8')
+    for (const secret of SECRETS) expect(text, secret).not.toContain(secret)
+    expect(text).not.toMatch(/gera3d|sandbox|per_page|204|bob|acme/)
+  })
+  it('counts nothing without a safe ticket id, and never changes the exit status or output of gh, even when the counter cannot be written', async () => {
+    await prepare('echo "out $1"; echo "err $1" >&2; exit 7')
+    const failure = (error: unknown) => error as { code: number; stdout: string; stderr: string }
+    expect(await gh(['pr'], null).catch(failure)).toMatchObject({ code: 7, stdout: 'out pr\n', stderr: 'err pr\n' })
+    for (const ticket of ['../escape', 'a b']) await gh(['pr'], ticket).catch(failure)
+    await gh(['pr'], 'other-ticket').catch(failure)
+    expect(readdirSync(ghCallsDir(dir))).toEqual(['other-ticket'])
+    rmSync(ghCallsDir(dir), { recursive: true })
+    writeFileSync(ghCallsDir(dir), 'not a directory')
+    expect(await gh(['pr']).catch(failure)).toMatchObject({ code: 7, stdout: 'out pr\n', stderr: 'err pr\n' })
+  })
+  it('keeps the shims atomic while they are rewritten and still blocks blocked commands', async () => {
+    await prepare()
+    const rewrite = async () => { for (let i = 0; i < 5; i++) await writeEnvironment(deployment(), ['personal-gh']) }
+    const calls = async () => { const outputs: string[] = []; for (let i = 0; i < 15; i++) outputs.push((await gh(['api', 'user'])).stdout); return outputs }
+    const [, outputs] = await Promise.all([rewrite(), calls()])
+    expect(outputs).toEqual(Array(15).fill('real api user\n'))
+    expect(readdirSync(workerBin(dir)).filter(name => name.endsWith('.tmp'))).toEqual([])
+    const blocked = await exec(join(workerBin(dir), 'personal-gh'), []).catch((error: unknown) => error as { code: number; stderr: string })
+    expect(blocked).toMatchObject({ code: 1, stderr: expect.stringContaining('personal-gh is blocked in this installation') })
+    expect(readdirSync(ghCallsDir(dir))).toEqual([TICKET])
+  })
+  it('reads a ticket\'s counter back by hour and command, and sums the current hour across tickets', async () => {
+    const now = new Date('2026-11-13T15:30:00Z')
+    mkdirSync(ghCallsDir(dir))
+    const file = (name: string, text: string, modified = now) => { writeFileSync(join(ghCallsDir(dir), name), text); utimesSync(join(ghCallsDir(dir), name), modified, modified) }
+    file('a', ['2026-11-13T14\tpr\tview', '2026-11-13T15\tapi\trepos/:o/:r', '2026-11-13T15\tpr\tview', 'garbage', '2026-11-13T15\tpr\tview', ''].join('\n'))
+    file('b', '2026-11-13T15\tapi\t\n')
+    file('old', '2026-11-13T15\tapi\t\n', new Date('2026-11-12T00:00:00Z'))
+    expect(await readTicketCalls(dir, 'a')).toEqual({ total: 4, hours: [{ hour: '2026-11-13T14', count: 1 }, { hour: '2026-11-13T15', count: 3 }],
+      commands: [{ name: 'pr view', count: 3 }, { name: 'api repos/:o/:r', count: 1 }] })
+    expect(await readTicketCalls(dir, 'missing')).toEqual({ total: 0, hours: [], commands: [] })
+    expect(await readTicketCalls(dir, '../a')).toEqual({ total: 0, hours: [], commands: [] })
+    expect(await hourlyCalls(dir, now)).toEqual({ hour: '2026-11-13T15', total: 4 })
+    expect(await hourlyCalls(join(dir, 'none'), now)).toEqual({ hour: '2026-11-13T15', total: 0 })
   })
 })
 
