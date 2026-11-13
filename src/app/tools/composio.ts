@@ -79,7 +79,7 @@ export function isComposioConnectionError(error: unknown): error is ComposioConn
     || (typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'COMPOSIO_CONNECTION_REQUIRED')
 }
 
-const CONNECTION_FAILURE_PATTERN = /(?:connection required|no active connection|authorization required|unauthorized|not connected|connect your account|auth(?:entication)? (?:required|failed)|invalid (?:token|api[-_ ]?key)|token expired|connection (?:is )?(?:not active|inactive|expired)|re-?authenticate|NO_ACTIVE_CONNECTION|AUTH_REQUIRED)/i
+export const CONNECTION_FAILURE_PATTERN = /(?:connection required|no active connection|authorization required|unauthorized|not connected|connect your account|auth(?:entication)? (?:required|failed)|invalid (?:token|api[-_ ]?key)|token expired|connection (?:is )?(?:not active|inactive|expired)|re-?authenticate|NO_ACTIVE_CONNECTION|AUTH_REQUIRED)/i
 
 export interface UnwrapComposioOptions {
   /** If true, throws ComposioConnectionError immediately when an auth/connection failure is detected */
@@ -91,8 +91,54 @@ export interface UnwrappedComposioResult extends ToolResult {
   connectionError?: ComposioConnectionError
 }
 
-function isRecord(val: unknown): val is Record<string, unknown> {
+export function isRecord(val: unknown): val is Record<string, unknown> {
   return typeof val === 'object' && val !== null && !Array.isArray(val)
+}
+
+/** A failure report an envelope carries in its `error`: a non-empty string, an object or array (a message, code or details), or a bare `true`. */
+function hasErrorValue(error: unknown): boolean {
+  if (typeof error === 'string') return error.trim() !== ''
+  if (Array.isArray(error)) return error.length > 0
+  return isRecord(error) ? Object.keys(error).length > 0 : error === true
+}
+
+/** How an envelope or batch entry ended, by what the service itself reported (never by the business data under `data`). */
+export type EnvelopeOutcome = 'failed' | 'succeeded' | 'contradictory' | 'unconfirmed'
+
+/**
+ * One rule for a single-action envelope and a batch entry alike. `levels` are the objects that may carry the flags: the
+ * envelope/entry itself and its `response`. An explicit `successful: false` is a failure; an explicit `successful: true` is a
+ * success that outranks an `error` the service attached (a warning or note), so a completed mutation is never relabelled
+ * failed. `true` at one level and `false` at another contradict each other: the outcome is unknown and neither is claimed.
+ * Without any flag, an `error` the level carries is the service's own failure report; otherwise nothing confirms the outcome.
+ * `error: null`, `""` and `false` are no report at all.
+ */
+export function envelopeOutcome(...levels: unknown[]): EnvelopeOutcome {
+  const records = levels.filter(isRecord)
+  const said = (value: boolean) => records.some(level => level.successful === value)
+  if (said(true) && said(false)) return 'contradictory'
+  if (said(false)) return 'failed'
+  if (said(true)) return 'succeeded'
+  return records.some(level => hasErrorValue(level.error)) ? 'failed' : 'unconfirmed'
+}
+
+/** The outcome of one batch entry, by its own flag and its `response`'s. */
+export const batchItemOutcome = (item: Record<string, unknown>): EnvelopeOutcome => envelopeOutcome(item, item.response)
+
+/** Whether one batch entry needs failure handling: it reported a failure, or its own flags contradict each other. */
+export function isBatchItemFailed(item: Record<string, unknown>): boolean {
+  const outcome = batchItemOutcome(item)
+  return outcome === 'failed' || outcome === 'contradictory'
+}
+
+/**
+ * Whether the root of a single-action envelope reports its own failure (or contradicts itself, which is not a success).
+ * Composio's envelope is `{ successful, data, error }`: the action's business data lives under `data`, so the root `error`
+ * is the service's own report and an `error` inside `data` never counts. See `envelopeOutcome` for the precedence.
+ */
+export function isEnvelopeFailed(payload: Record<string, unknown>): boolean {
+  const outcome = envelopeOutcome(payload, payload.response)
+  return outcome === 'failed' || outcome === 'contradictory'
 }
 
 function parseJsonSafe(text: string): unknown {
@@ -103,7 +149,7 @@ function parseJsonSafe(text: string): unknown {
   }
 }
 
-function extractErrorMessage(err: unknown): string | undefined {
+export function extractErrorMessage(err: unknown): string | undefined {
   if (typeof err === 'string') return err
   if (isRecord(err)) {
     if (typeof err.message === 'string') return err.message
@@ -188,17 +234,12 @@ export function unwrapComposioResult<T extends ToolResult>(
             ? (payload as { error_count: number }).error_count
             : undefined)
 
-      let batchHasError = (errorCount !== undefined && errorCount > 0)
+      let batchHasError = (errorCount !== undefined && errorCount > 0) || isEnvelopeFailed({ ...payload, response: undefined })
 
       for (const item of batchData.results) {
         if (!isRecord(item)) continue
         const itemResp = isRecord(item.response) ? item.response : undefined
-        const itemFailed = item.successful === false
-          || itemResp?.successful === false
-          || !!item.error
-          || !!itemResp?.error
-
-        if (itemFailed) {
+        if (isBatchItemFailed(item)) {
           batchHasError = true
           if (!connectionError) {
             connectionError = detectConnectionError(itemResp, item.tool_slug as string | undefined)
@@ -211,9 +252,8 @@ export function unwrapComposioResult<T extends ToolResult>(
         hasFailure = true
       }
     } else {
-      const isFailed = payload.successful === false
-        || (isRecord(payload.response) && payload.response.successful === false)
-        || (payload.error !== undefined && payload.error !== null && payload.successful !== true)
+      // Business data is under `data`; an `error` inside it is not the envelope's report (see isEnvelopeFailed).
+      const isFailed = isEnvelopeFailed(payload)
 
       if (isFailed) {
         hasFailure = true
@@ -224,12 +264,14 @@ export function unwrapComposioResult<T extends ToolResult>(
       }
     }
 
-    if (!connectionError && payload.error) {
+    if (!connectionError && hasFailure && payload.error) {
       connectionError = detectConnectionError(payload.error)
     }
   }
 
-  if (!connectionError && Array.isArray(result.content)) {
+  // Raw text is scanned only once a failure is established: a successful business payload (an email, a document) may
+  // legitimately contain words such as "unauthorized" and must not be taken for a lost connection.
+  if (!connectionError && hasFailure && Array.isArray(result.content)) {
     for (const block of result.content) {
       if (block?.type === 'text' && typeof block.text === 'string') {
         const found = detectConnectionError(block.text)
