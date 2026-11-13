@@ -142,5 +142,44 @@
   "reviewTriage": {
     "accept": "True one-line tail-loss and S7 coverage defect. Correct evidence narrative relative to current merged base: restoration differs from prior candidate; do not call current-base prompt delta one added retrieval sentence.",
     "doNotBlindlyApply": "Native reviewer requests bounding errors, contrary to explicit original independent error-passthrough correction; preserve isError whole. Prompt restoration must be assessed against pre-PR92 authority, not deleted just to reduce tokens. Long-path notice fallback concern requires meaningful actual-hook/storage reproduction or fail-open behavior, not invented native proof."
+  },
+  "finalState": {
+    "at": "2026-11-13T08:57:18.317464+00:00",
+    "finding": {
+      "id": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+      "revision": 5,
+      "state": "running",
+      "job": {
+        "id": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r5",
+        "ticketId": "ad6f72afa5b3f68693c8f064735c5d0f",
+        "assignmentId": "ed32f00a6c146f67ba3bfd871758f0c7"
+      },
+      "blocker": null
+    },
+    "load": {
+      "running": 1,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "runtime": {
+      "state": "ready",
+      "detail": "Orchestrator is ready",
+      "at": "2026-11-13T08:45:25.900Z"
+    },
+    "github": {
+      "state": "ready",
+      "detail": "0 notifications; next poll \u2265 60s",
+      "at": "2026-11-13T08:52:33.737Z"
+    }
+  },
+  "sameFindingCorrection": {
+    "approval": "Supported coordinate_finding retry_scope revision4->5 and confirm accepted retained original native approval; no core mandate edit or bypass. This distinct correction follows newfailed PR103 review, not duplicate r3.",
+    "job": {
+      "id": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r5",
+      "ticketId": "ad6f72afa5b3f68693c8f064735c5d0f",
+      "assignmentId": "ed32f00a6c146f67ba3bfd871758f0c7"
+    },
+    "automaticDeliveryCorrection": "Still blocked/history at deliveryrevision7; same-finding supported correction does not erase failed automatic successor.",
+    "receiptLocal": "overnight-batch-20261110/coordinator/lane3-current-integration/native-rejection-confirm-receipt.json"
   }
 }
