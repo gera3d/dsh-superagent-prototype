@@ -1,0 +1,46 @@
+{
+  "at": "2026-11-13T19:10:36.152928+00:00",
+  "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+  "revision": 18,
+  "state": "running",
+  "job": {
+    "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r18",
+    "ticketId": "90b01f2a0531979c292f19f482df2a3e",
+    "assignmentId": "9fcfa76462a763cf8289661908868ae2"
+  },
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "priorHead": "2daef8122c245fcc1d8235463e785123b3f60e13",
+  "review": "193existingchecks/rootreview passed; actual PR107nativefailed on alteredcontrolregex in storedreviewdiff; committedsource/test differs. Failedverdict preserved, not overridden.",
+  "authority": "Supported retainedoriginalhumanapproval samefindingretry17->18/confirm equivalent samecode spelling correction; no newfeature/access/deniedlease override",
+  "nextOwner": "Harness boundedcorrection; Codex exacthead/nativereview/protectedrelease ifqualified",
+  "limits": "No externalcall/implementationbyCodex/package/deploy/acceptance/settingschange; clarificationheld; Chrome userchangedpage and nativeinputs stopped",
+  "nestedActivity": {
+    "events": 125,
+    "toolCalls": 15,
+    "tools": [
+      "bash",
+      "job_output",
+      "bash",
+      "bash",
+      "bash",
+      "bash",
+      "bash",
+      "bash"
+    ],
+    "routes": [
+      {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "medium"
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      }
+    ]
+  }
+}
