@@ -1,0 +1,9 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/coordinator/lane3-r5-qualification/work
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  01:46:11
+   Duration  515ms (transform 73ms, setup 0ms, import 175ms, tests 28ms, environment 0ms)
+

@@ -1,0 +1,28 @@
+{
+  "routes": [
+    {
+      "provider": "antigravity",
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5"
+    }
+  ],
+  "requestCount": 2,
+  "lastUsage": [
+    {
+      "inputTokens": 2,
+      "outputTokens": 767,
+      "totalTokens": 107527,
+      "cacheReadTokens": 104679,
+      "cacheWriteTokens": 2079
+    }
+  ],
+  "terminal": [
+    {
+      "kind": "completed"
+    }
+  ],
+  "limit": "Nested session metadata, no inference from outer call count; usage is not allowance or dollar cost."
+}

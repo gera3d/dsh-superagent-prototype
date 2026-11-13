@@ -1,0 +1,174 @@
+{
+  "at": "2026-11-13T09:48:50.226786+00:00",
+  "verdict": "Root exact-head bounded qualification passed; native independent review/publication/deployment/acceptance remain separate",
+  "findingId": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+  "revision": 6,
+  "jobId": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r5",
+  "ticketId": "ad6f72afa5b3f68693c8f064735c5d0f",
+  "assignmentId": "ed32f00a6c146f67ba3bfd871758f0c7",
+  "workerHead": "7e4c3091bb247d054aedca60519a4a712f2a4207",
+  "integratedHead": "9fac827da9ed6a373296cf4caed5deaf2bfb93d1",
+  "base": "ac4195126ef39894de0a0f378c0d27cdbeb30f8e",
+  "patchSha256": "51b1f9d53d8b3e6a8e327ffc8cb7a8936aa4e78f181068421d16e4d49de728f5",
+  "integration": "Merged only intervening ac41951 checkpoint documents into immutable worker candidate in isolated trusted clone; original worker branch/head/report retained. Clean original ticket clone detached at integrated head for native review; local existing companion symlink only, no host dependency/config change. No new implementation authored.",
+  "review": "Confirmed true-one-line handling, last-line tail prioritized, full pointer maintained or hook fails open, error/block/nontext/read/orchestrator passthrough preserved. Prompt explicitly says successful outputs and errors whole; restored authority retained. Root previous failed actualToolRuntime singleline audit now passes.",
+  "checks": [
+    {
+      "name": "root-single-line",
+      "exit": 0,
+      "seconds": 2.56,
+      "command": [
+        "pnpm",
+        "--config.verify-deps-before-run=false",
+        "exec",
+        "vitest",
+        "run",
+        "tests/root-single-line.audit.spec.ts"
+      ]
+    },
+    {
+      "name": "targeted",
+      "exit": 0,
+      "seconds": 23.75,
+      "command": [
+        "pnpm",
+        "--config.verify-deps-before-run=false",
+        "exec",
+        "vitest",
+        "run",
+        "tests/tool-output.spec.ts",
+        "tests/tool-output-runtime.spec.ts",
+        "tests/tool-output-sessions.spec.ts",
+        "tests/runtime.spec.ts",
+        "tests/prompts.spec.ts",
+        "tests/prompt-config.spec.ts"
+      ]
+    },
+    {
+      "name": "typecheck",
+      "exit": 0,
+      "seconds": 34.92,
+      "command": [
+        "pnpm",
+        "--config.verify-deps-before-run=false",
+        "exec",
+        "tsc",
+        "--noEmit"
+      ]
+    },
+    {
+      "name": "build",
+      "exit": 0,
+      "seconds": 7.64,
+      "command": [
+        "pnpm",
+        "--config.verify-deps-before-run=false",
+        "exec",
+        "tsdown"
+      ]
+    }
+  ],
+  "synthetic": {
+    "limits": {
+      "OUTPUT_LINES": 100,
+      "OUTPUT_BYTES": 4096,
+      "tools": [
+        "bash",
+        "pwsh",
+        "job_output",
+        "job_list",
+        "grep",
+        "glob"
+      ]
+    },
+    "results": 8,
+    "boundedResults": 5,
+    "beforeBytes": 356584,
+    "afterBytes": 153047,
+    "worstBoundedBytes": 4094,
+    "overLimit": 0,
+    "errorsAltered": 0,
+    "tailLost": 0,
+    "retrievalMismatch": 0,
+    "savedFiles": 5,
+    "beforeTokensApprox": 89146,
+    "afterTokensApprox": 38262,
+    "savedPct": 57.1,
+    "note": "bytes/4 estimate of model-facing tool-result text only; excludes quota, cost and cache pricing"
+  },
+  "syntheticSha256": "7cbf2c867e19513609e1a4d33390a8fa0b4a6594c434af77c7074e25248ddcc6",
+  "recorded": {
+    "limits": {
+      "OUTPUT_LINES": 100,
+      "OUTPUT_BYTES": 4096,
+      "tools": [
+        "bash",
+        "pwsh",
+        "job_output",
+        "job_list",
+        "grep",
+        "glob"
+      ]
+    },
+    "results": 644,
+    "boundedResults": 68,
+    "beforeBytes": 1043327,
+    "afterBytes": 771843,
+    "worstBoundedBytes": 4095,
+    "overLimit": 0,
+    "errorsAltered": 0,
+    "tailLost": 0,
+    "retrievalMismatch": 0,
+    "savedFiles": 68,
+    "beforeTokensApprox": 260832,
+    "afterTokensApprox": 192961,
+    "savedPct": 26,
+    "note": "bytes/4 estimate of model-facing tool-result text only; excludes quota, cost and cache pricing"
+  },
+  "providerProof": {
+    "routes": [
+      {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash"
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      }
+    ],
+    "requestCount": 2,
+    "lastUsage": [
+      {
+        "inputTokens": 2,
+        "outputTokens": 767,
+        "totalTokens": 107527,
+        "cacheReadTokens": 104679,
+        "cacheWriteTokens": 2079
+      }
+    ],
+    "terminal": [
+      {
+        "kind": "completed"
+      }
+    ],
+    "limit": "Nested session metadata, no inference from outer call count; usage is not allowance or dollar cost."
+  },
+  "liveGate": {
+    "runtime": "ready",
+    "load": "0running/0queued/max3",
+    "github": "Primary rateLimited; automatic polling resumes after2026-11-13T09:52:38.026Z",
+    "evals": "8 unrelated Eval-timeout observations remain; not dismissed or retried",
+    "action": "No forced API retry, restart, setup/check, account switch or deadline inference. Offline stage continued."
+  },
+  "limits": [
+    "No broad suite or deployed native-worker proof",
+    "Recorded644 tool results contain no lone oversized line; corrected8case synthetic corpus includes it",
+    "Tool-result byte reductions26percent recorded/57.1percent synthetic are not quota/cost/cache savings or behavioral result",
+    "Pointer files persist; cleanup not added",
+    "Static symlink redirects tested, not hostile concurrent filesystem attack",
+    "A3880byte local directory probe was rejected ENAMETOOLONG before hook; not evidence of a native pointer regression or full filesystem/path equivalence"
+  ],
+  "history": "Original r1/r3/r5 jobs, negative PR92, failed PR103/native automatic correction denial and acceptedPR96 retained; no acceptance to free slots",
+  "settings": "44/22/3 unchanged; OpenAIconserved,Google5percentreserve,max3/currentroutes/cooldowns retained",
+  "nextOwner": "Existing Codex coordinator: after actual GitHub cooldown recovery, native exact-head review/test/package and protected publish/live verification/acceptance if prerequisites pass. Harness implements any demonstrated correction."
+}
