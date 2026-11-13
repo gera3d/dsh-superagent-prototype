@@ -1,0 +1,46 @@
+{
+  "at": "2026-11-13T18:02:57.042956+00:00",
+  "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+  "revision": 16,
+  "state": "running",
+  "job": {
+    "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r15",
+    "ticketId": "acf97559fd76618bf9d5022091718874",
+    "assignmentId": "9d7e746ad83c1a192a33e65d6ebb7702"
+  },
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "priorHead": "d1ff2532fa82ae159bea73431264794efb992fc1",
+  "review": "184existingchecks passed exit0; static MCP-error contradictoryflags precedence needs correction; no new Codex test or observedlivefailure",
+  "authority": "Supported original-humanapproval samefindingretry14->15/confirm; no deniedlease/policy/access override",
+  "nextOwner": "Harness correction then Codex exactheadreview/protectedrelease ifqualified",
+  "limits": "No externalcall/implementationbyCodex/nativepackage/deploy/acceptance/settingschange; clarificationheld",
+  "nestedActivity": {
+    "events": 114,
+    "toolCalls": 16,
+    "tools": [
+      "bash",
+      "bash",
+      "bash",
+      "bash",
+      "bash",
+      "grep",
+      "read",
+      "read"
+    ],
+    "routes": [
+      {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "medium"
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      }
+    ]
+  }
+}
