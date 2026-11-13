@@ -1,0 +1,53 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/coordinator/lane2-r5-review/code
+
+(node:24517) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/root-composio-bridge.audit.spec.ts (12 tests | 2 failed | 9 skipped) 359ms
+     × root audit: incomplete mutation entry must not be reported as succeeded 28ms
+     × root audit: timeout after sending overrides rate-limit retry inference 20ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/root-composio-bridge.audit.spec.ts > installed MCP bridge to the host boundary > root audit: incomplete mutation entry must not be reported as succeeded
+AssertionError: expected [ { index: +0, …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "index": 0,
++     "response": {},
++     "tool_slug": "GITHUB_CREATE_ISSUE",
++   },
++ ]
+
+ ❯ tests/root-composio-bridge.audit.spec.ts:125:29
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/root-composio-bridge.audit.spec.ts > installed MCP bridge to the host boundary > root audit: timeout after sending overrides rate-limit retry inference
+AssertionError: expected 'failed' to be 'unknown' // Object.is equality
+
+Expected: "unknown"
+Received: "failed"
+
+ ❯ tests/root-composio-bridge.audit.spec.ts:132:30
+    130|     const found=failure(await run(MULTI))
+    131|     expect(sent).toEqual([MULTI])
+    132|     expect(found.completion).toBe('unknown')
+       |                              ^
+    133|     expect(found.recovery.join(' ')).not.toContain('so it did not run')
+    134|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed | 9 skipped (12)
+   Start at  06:57:24
+   Duration  3.83s (transform 2.38s, setup 0ms, import 3.17s, tests 359ms, environment 0ms)
+

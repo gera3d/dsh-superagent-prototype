@@ -1,0 +1,25 @@
+import { describe, it, expect } from 'vitest'
+import { assessComposioResult, composioFeedback } from '../src/app/composio-boundary.ts'
+const tool='mcp__composio__COMPOSIO_MULTI_EXECUTE_TOOL'
+const run=(payload:unknown)=>assessComposioResult(tool,{content:[{type:'text',text:JSON.stringify(payload)}]})
+describe('independent uncertainty boundary',()=>{
+ it('retains known success alongside explicit failure',()=>{
+  const good={index:0,response:{successful:true,data:{id:'kept'}}}
+  expect(run({successful:false,data:{results:[good,{index:1,response:{successful:false,error:'bad input'}}]}})?.succeeded).toEqual([good])
+ })
+ it('does not claim an incomplete batch entry succeeded',()=>{
+  const a=run({successful:false,data:{total_count:2,results:[{index:0,tool_slug:'GITHUB_CREATE_ISSUE',response:{}},{index:1,response:{successful:false,error:'bad input'}}]}})!
+  expect(a.succeeded).toEqual([])
+  expect(a.kinds).toContain('uncertain_completion')
+ })
+ it('does not claim malformed batch entries are fully accounted for',()=>{
+  const a=run({successful:false,data:{total_count:2,results:[null,{index:1,response:{successful:false,error:'bad input'}}]}})!
+  expect(a.counts.unreported).toBeGreaterThan(0)
+  expect(a.kinds).toContain('uncertain_completion')
+ })
+ it('does not recommend retry after sending when error also mentions rate limiting',()=>{
+  const a=run({successful:false,error:'429 upstream rate limit; request timed out after sending; acknowledgement lost'})!
+  expect(a.completion).toBe('unknown')
+  expect(composioFeedback(a)).not.toContain('so it did not run')
+ })
+})
