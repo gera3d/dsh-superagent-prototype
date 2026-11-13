@@ -1,0 +1,113 @@
+{
+  "at": "2026-11-13T11:53:52.410087+00:00",
+  "sourceHead": "ea06d65f187da72585eea351a970a83fd61f868f",
+  "coverage": "Read-only actual HTTP state/schema/UI-source/model-payload audit. No mutating negative probes or repeated tests, no GitHub API read during active quota cooldown. Original authority and rejection history read from canonical finding and committed reports.",
+  "sourceChecks": [
+    {
+      "path": "src/app/finding.ts",
+      "installedMatchesSource": true,
+      "sha256": "1c8909fc25d66edb22c84985000373134477bfed43578cae7b1811fb9e9e5151"
+    },
+    {
+      "path": "src/app/finding-coordination.ts",
+      "installedMatchesSource": true,
+      "sha256": "f4cbddac3a725e6f38240b01cd131f73220b99c14cdf962f8ba1b6f080eb8e7e"
+    },
+    {
+      "path": "src/app/feature-delivery.ts",
+      "installedMatchesSource": true,
+      "sha256": "3cf1dda7c117204aeeceab2ad66e5f2049aa98ffdfd0635449a6eb6a84dd92a7"
+    },
+    {
+      "path": "src/app/finding-release.ts",
+      "installedMatchesSource": true,
+      "sha256": "d8812513c26cefc0c35b42ce635236bbeadefd6bc0dd5707e43d57045798d5cd"
+    },
+    {
+      "path": "src/app/delivery-capabilities.ts",
+      "installedMatchesSource": true,
+      "sha256": "13b757f416e59d9d33767889786b181b5f6d43643f6a29d1658206f033ad2b52"
+    },
+    {
+      "path": "src/app/http.ts",
+      "installedMatchesSource": false,
+      "sha256": "a85f8ed7c1dbff218605a52da8aeb232316a40abd8cd026d302ce240bf2f3bde"
+    },
+    {
+      "path": "src/client/delivery-card.tsx",
+      "installedMatchesSource": true,
+      "sha256": "6729d82eb2b0aa08a10e8b8e50425f6e6618d32f7b4732294bb998a1ee03d8d5"
+    }
+  ],
+  "findingId": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+  "findingRevision": 8,
+  "ticket": "4abae94273cfd65a149e9ee6333c0b87",
+  "assignment": "ba3796bc797424d3cdf97948782af08f",
+  "delivery": "auto-4abae94273cfd65a149e9ee6333c0b87",
+  "deliveryRevision": 7,
+  "head": "8936bcf7e412642cd50965721e6e3342e645e145",
+  "patchSha256": "9b26185b40e2ec784b65984351729d01ac9dec47733163f33201abd6bb981a90",
+  "paths": [
+    {
+      "operation": "Finding observe",
+      "source": "src/app/finding.ts",
+      "result": "Existing dedup key checks title/problem/scope/owner/kind/requirements/repository as immutable and rejects differences. Observation can append evidence; not scope authority."
+    },
+    {
+      "operation": "Finding retry_scope / coordinate",
+      "source": "src/app/finding-coordination.ts",
+      "result": "Only retry/confirm/defer existing bounded finding; no clarification or requirement field. Retains original approved lineage, cannot fix reviewer context."
+    },
+    {
+      "operation": "Delivery bindScope",
+      "source": "src/app/feature-delivery.ts",
+      "result": "Requires d.scopeBinding unbound; current delivery already bound, rejects replacement. Fresh parallel intake would not preserve automatic finding-release lineage; not used as workaround."
+    },
+    {
+      "operation": "Same-artifact release target refresh",
+      "source": "src/app/feature-delivery.ts",
+      "result": "May change only exact target base for same artifact; retains requirements and existing evidence. It does not add review context."
+    },
+    {
+      "operation": "Finding release prepare",
+      "source": "src/app/finding-release.ts",
+      "result": "Copies exact finding requirements verbatim to bound delivery. Cannot mutate original protected requirement set through re-preparation."
+    },
+    {
+      "operation": "Native independent review",
+      "source": "src/app/delivery-capabilities.ts",
+      "result": "Fixed system prompt and model payload requirements/reviewTarget/batch only. Later canonical occurrences/operator clarification and UI Characters prompts are not supplied to this review. Source/worker text is explicitly untrusted, so injecting authority through artifact text is not a lawful fix."
+    },
+    {
+      "operation": "Evidence/recheck/confirm",
+      "source": "src/app/http.ts and src/client/delivery-card.tsx",
+      "result": "Live evidence attests checked intake requirements and does not replace review verdict. Recheck recovers configuration preparation; ordinary next actions require current valid fingerprint. No supported verdict waiver or contextual re-review parameter."
+    }
+  ],
+  "authorityConclusion": "Current explicit instruction preserves fulloversizedisError; native high finding requests opposite under broad original requirement. Routine clarification is authorized conceptually, but no existing supported authority-bearing review-context path can carry it. Do not rewrite protected original requirements/DB or mark failed review passed. A minimal new protected addendum capability requires separate feature approval under current bounded instruction. No new implementation dispatched.",
+  "remainingOutputItems": [
+    "Harness-only fail-open when compact fallback cannot retain required terminal tail; pure helper counterexample already saved, no actual Mac hook failure claimed.",
+    "Typecheck evidence command/head/exitmetadata or removal of empty standalone artifact; root verified exit0 already."
+  ],
+  "option": "docs/reviews/review-clarification-bounded-proposal-20261113.md",
+  "nextOwner": "Gera for one new-feature scope decision; Codex prepares/coordinates after approval, Harness implements. Existing output finding stays blocked, no duplicate review/job.",
+  "installedHttpDifference": "Only sameOrigin helper differs in installed http.ts: installed permits matching-host reverse-proxied origins while source requires loopback. Read-only diff inspected; relevant finding/delivery routes are identical. This customization was preserved, not qualified or changed; proposal must not overwrite it or broaden any guard.",
+  "finalLive": {
+    "at": "2026-11-13T11:55:56.902410+00:00",
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "runtime": {
+      "state": "ready",
+      "detail": "Orchestrator is ready",
+      "at": "2026-11-13T08:45:25.900Z"
+    },
+    "github": {
+      "state": "ready",
+      "detail": "0 notifications; next poll \u2265 60s",
+      "at": "2026-11-13T11:52:45.692Z"
+    }
+  }
+}
