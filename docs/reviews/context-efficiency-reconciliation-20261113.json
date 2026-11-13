@@ -1,0 +1,45 @@
+{
+  "at": "2026-11-13T07:53:58.699924+00:00",
+  "scope": "Finite reconciliation and three independent ToolRuntime counterexamples; no release or native acceptance",
+  "findingId": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+  "findingRevision": 4,
+  "findingState": "blocked",
+  "ticketId": "a12db6e6725b9a11fafe3b68eaab8bc7",
+  "assignmentId": "83c1f80fea9deb8ddbef25cb36389bae",
+  "candidate": "11f9b5bec38950e5ed7cf01fce559526e039bfcf",
+  "remoteHeadBeforeRecord": "3d566a0c0bcb224cb7655ad548ad14c9f4b650ed",
+  "pr92Merge": "fd7a2828993aa0285e4fa0df6c481fe1cfffcc95",
+  "mergeProvenance": "GitHub squash commit author Gera Yeremin, Claude Sonnet coauthor, November10 18:03:11Z; not this coordinator publication",
+  "installedSourceProof": {
+    "src/app/tool-output.ts": "a006284eabf70bf7f0ef8292a6c6515efce017450c8cdd97b505417519b7d25c",
+    "matches": "remote and PR92 merge, not corrected r3",
+    "correctedHash": "199823240d3f5abef3e3619152b0978a39ac211c4636c58ff7c25e547c2f531f",
+    "limits": "Source hash proof only; not built artifact or native execution proof. No matching publication record found in inspected publication-state or deliveries."
+  },
+  "independentChecks": {
+    "realToolRuntime": "3 passed on isolated exact corrected head: successful bounding/full retrieval, error equality to unhooked control, opaque-ID artifact collision",
+    "oracleCorrection": "First rerun 2pass/1fail because old assertion omitted ToolRuntime Error: prefix. Preserved raw local log; corrected test compares full error result with unhooked same-runtime control. This was test-oracle correction, not implementation change.",
+    "notCovered": "No broad suite, current-main integration/type/build/native review/publication or full measurement qualification."
+  },
+  "live": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3,
+    "operatorPausedFlag": false,
+    "runtime": "paused setupPending",
+    "github": "paused setupPending",
+    "setupProblem": "githubRateLimited, HTTP403 at 2026-11-13T02:44:25.132Z",
+    "cause": "Runtime initialization returns before installing executor/loops when setup.run fails; setup/check restarts and re-probes GitHub, not a generic pause toggle."
+  },
+  "actions": [
+    "Read live finding, ticket, deliveries, publication state and settings/request metadata",
+    "Fetched and fast-forwarded clean operator checkout to remote without overwriting other changes",
+    "Compared four installed source/prompt hashes against merge and corrected candidate",
+    "Ran three isolated independent actual ToolRuntime checks; corrected assertion oracle against unhooked control",
+    "No dispatch, restart, retry, deployment, acceptance, provider/settings/account/spend/schedule change"
+  ],
+  "nextOwner": "Existing Codex coordinator",
+  "nextStage": "Review/integrate corrected r3 delta against current source including intervening user merges; restore companion layout and complete targeted type/build/package qualification. Separately inspect authentic GitHub quota deadline before supported setup recheck. Then exact protected review/publication and native verification; preserve original finding identity.",
+  "priority1": "Accepted PR96 unchanged; no reopen/retest",
+  "coverage": "Only priority3 reconciliation and startup blocker inspected. Other five scopes not independently requalified this pass; no continuous execution claim."
+}

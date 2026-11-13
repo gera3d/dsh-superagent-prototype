@@ -1,0 +1,9 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/coordinator/lane3-r3-review/code
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:52:59
+   Duration  507ms (transform 71ms, setup 0ms, import 161ms, tests 51ms, environment 0ms)
+
