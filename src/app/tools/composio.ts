@@ -79,7 +79,7 @@ export function isComposioConnectionError(error: unknown): error is ComposioConn
     || (typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'COMPOSIO_CONNECTION_REQUIRED')
 }
 
-const CONNECTION_FAILURE_PATTERN = /(?:connection required|no active connection|authorization required|unauthorized|not connected|connect your account|auth(?:entication)? (?:required|failed)|invalid (?:token|api[-_ ]?key)|token expired|connection (?:is )?(?:not active|inactive|expired)|re-?authenticate|NO_ACTIVE_CONNECTION|AUTH_REQUIRED)/i
+export const CONNECTION_FAILURE_PATTERN = /(?:connection required|no active connection|authorization required|unauthorized|not connected|connect your account|auth(?:entication)? (?:required|failed)|invalid (?:token|api[-_ ]?key)|token expired|connection (?:is )?(?:not active|inactive|expired)|re-?authenticate|NO_ACTIVE_CONNECTION|AUTH_REQUIRED)/i
 
 export interface UnwrapComposioOptions {
   /** If true, throws ComposioConnectionError immediately when an auth/connection failure is detected */
@@ -91,8 +91,14 @@ export interface UnwrappedComposioResult extends ToolResult {
   connectionError?: ComposioConnectionError
 }
 
-function isRecord(val: unknown): val is Record<string, unknown> {
+export function isRecord(val: unknown): val is Record<string, unknown> {
   return typeof val === 'object' && val !== null && !Array.isArray(val)
+}
+
+/** Whether one batch entry reports its own action failure, by its own flag or an error it carries. */
+export function isBatchItemFailed(item: Record<string, unknown>): boolean {
+  const response = isRecord(item.response) ? item.response : undefined
+  return item.successful === false || response?.successful === false || !!item.error || !!response?.error
 }
 
 function parseJsonSafe(text: string): unknown {
@@ -103,7 +109,7 @@ function parseJsonSafe(text: string): unknown {
   }
 }
 
-function extractErrorMessage(err: unknown): string | undefined {
+export function extractErrorMessage(err: unknown): string | undefined {
   if (typeof err === 'string') return err
   if (isRecord(err)) {
     if (typeof err.message === 'string') return err.message
@@ -188,17 +194,12 @@ export function unwrapComposioResult<T extends ToolResult>(
             ? (payload as { error_count: number }).error_count
             : undefined)
 
-      let batchHasError = (errorCount !== undefined && errorCount > 0)
+      let batchHasError = (errorCount !== undefined && errorCount > 0) || payload.successful === false
 
       for (const item of batchData.results) {
         if (!isRecord(item)) continue
         const itemResp = isRecord(item.response) ? item.response : undefined
-        const itemFailed = item.successful === false
-          || itemResp?.successful === false
-          || !!item.error
-          || !!itemResp?.error
-
-        if (itemFailed) {
+        if (isBatchItemFailed(item)) {
           batchHasError = true
           if (!connectionError) {
             connectionError = detectConnectionError(itemResp, item.tool_slug as string | undefined)
@@ -213,7 +214,7 @@ export function unwrapComposioResult<T extends ToolResult>(
     } else {
       const isFailed = payload.successful === false
         || (isRecord(payload.response) && payload.response.successful === false)
-        || (payload.error !== undefined && payload.error !== null && payload.successful !== true)
+        // An `error` without the envelope's `successful` flag is not a Composio failure report: it may be business data.
 
       if (isFailed) {
         hasFailure = true
@@ -224,12 +225,14 @@ export function unwrapComposioResult<T extends ToolResult>(
       }
     }
 
-    if (!connectionError && payload.error) {
+    if (!connectionError && hasFailure && payload.error) {
       connectionError = detectConnectionError(payload.error)
     }
   }
 
-  if (!connectionError && Array.isArray(result.content)) {
+  // Raw text is scanned only once a failure is established: a successful business payload (an email, a document) may
+  // legitimately contain words such as "unauthorized" and must not be taken for a lost connection.
+  if (!connectionError && hasFailure && Array.isArray(result.content)) {
     for (const block of result.content) {
       if (block?.type === 'text' && typeof block.text === 'string') {
         const found = detectConnectionError(block.text)
