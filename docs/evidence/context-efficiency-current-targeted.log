@@ -1,0 +1,15 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/coordinator/lane3-current-integration/work
+
+(node:7853) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7854) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7890) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  6 passed (6)
+      Tests  145 passed (145)
+   Start at  00:45:24
+   Duration  30.27s (transform 5.44s, setup 0ms, import 9.58s, tests 29.54s, environment 1ms)
+

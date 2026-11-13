@@ -1,0 +1,65 @@
+{
+  "provider": "deepseek-official / deepseek-flash",
+  "verdict": {
+    "verdict": "failed",
+    "findings": [
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 103,
+        "headSha": "a579ae682a4c7b3f424d024808d3cc25fa9164d6",
+        "path": "src/app/tool-output.ts",
+        "line": 45,
+        "severity": "high",
+        "message": "boundOutput's tail loop starts at `at > 0`, so a single-line oversized result is never treated as the tail. The head path calls `fit(..., end=false)`, which keeps the first ~300 characters and drops the trailing `[exit code: ...]`/status marker. This violates the retained exit/error information requirement and the comment that a long last line keeps its end. Treat index 0 as the last line when `lines.length === 1` (or pass `end=true` for the sole/last line) and add a true one-line test."
+      },
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 103,
+        "headSha": "a579ae682a4c7b3f424d024808d3cc25fa9164d6",
+        "path": "src/app/tool-output.ts",
+        "line": 115,
+        "severity": "high",
+        "message": "The listener returns early when `result.isError` is true, so oversized error stdout is never saved under `.tool-output` and has no retrieval pointer or bounded replacement. The updated prompt still says output over 100 lines/4 KB is bounded and names the saved file. A failing command can still flood the model context. Bound error text as well (save the full text, keep the tail/status) or narrow the prompt/requirement explicitly."
+      },
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 103,
+        "headSha": "a579ae682a4c7b3f424d024808d3cc25fa9164d6",
+        "path": "src/app/tool-output.ts",
+        "line": 64,
+        "severity": "medium",
+        "message": "When the notice itself is too long for `OUTPUT_BYTES` (for example, a long ticket directory path), the loop reaches `room < 0` and returns `Array.from(notice(...)).slice(0, 1000)`. This truncates the `Complete text:` pointer, drops the head/tail and exit marker, and can produce a pointer the worker cannot open. The code comment promises the last lines are always kept and the result never exceeds the limit. Use a short/relative pointer fallback or fail closed with a valid retrievable reference."
+      },
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 103,
+        "headSha": "a579ae682a4c7b3f424d024808d3cc25fa9164d6",
+        "path": "prompts/team/communication.md",
+        "line": 12,
+        "severity": "medium",
+        "message": "The prompt change adds duplicate policy lines ('Human attention is the condition...' repeats the unsolicited-IM rule; 'A PR merely existing...' repeats the PR-not-ready rule) and also introduces a new 'bots and CI need no acknowledgement' exception in this file. The requirement is to remove demonstrably duplicated instructions without losing rules; this increases prompt size and changes communication policy, while the evidence doc says communication.md was reverted. Remove the duplicate/unrelated policy edits or replace existing wording instead of adding a second copy."
+      },
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 103,
+        "headSha": "a579ae682a4c7b3f424d024808d3cc25fa9164d6",
+        "path": "docs/evidence/worker-output-bound-measurement.md",
+        "line": 47,
+        "severity": "medium",
+        "message": "The evidence document says 'The only prompt change is one added sentence in prompts/work.md telling workers to read the saved file, about +45 tokens.' That is inaccurate: `prompts/team/communication.md` is also changed (including duplicate policy lines and a bot/CI exception), and the sentence actually added to work.md is 'Assess scope yourself under the Ticket scope section.' The reading-the-saved-file sentence already existed. This makes the prompt-token and scope claims unreviewable; correct the summary or revert the unrelated prompt edits."
+      },
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 103,
+        "headSha": "a579ae682a4c7b3f424d024808d3cc25fa9164d6",
+        "path": "scripts/replay-output-bound.mjs",
+        "line": 27,
+        "severity": "medium",
+        "message": "The 'S7-bash-one-huge-line' synthetic case passes `lines=1` to a helper that appends `\\n${tail}`, so S7 is a two-line input. No replay case exercises a true single-line oversized result, which is the path where the tail loop skips index 0 and loses the exit/status marker. Add a one-line case and assert the trailing marker survives."
+      }
+    ],
+    "rationale": "Batch 1/1 gera3d/dsh-superagent-prototype#103@a579ae682a4c: Static review of the supplied diff found high-impact bounding gaps: a sole oversized line loses its trailing exit/status marker, error results are never bounded or saved, and the long-notice fallback can truncate the retrieval pointer and drop the tail. The prompt edits also add duplicated policy and a new acknowledgement exception while the evidence document incorrectly says only work.md changed. The synthetic 'one huge line' case is actually two lines, so it does not cover the sole-line failure."
+  },
+  "fingerprint": "cae8e4a890d141426b5760d834eefde2a602a2efce45a0e14abbe25bf45097a7",
+  "bindingFingerprint": "dd95fff99be94f630ff284e846d9c6d5685ad3ab706531a7886edaeb3f4febb8"
+}

@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-13T08:45:03Z",
+  "transport": "Configured /Users/gerayeremin/.npm-global/bin/gh-agent api --include rate_limit, existing login",
+  "status": 200,
+  "core": {
+    "limit": 5000,
+    "remaining": 3289,
+    "used": 1711,
+    "resetEpoch": 1794559940
+  },
+  "retryAfter": null,
+  "purpose": "Read-only actual eligibility before one supported idle setup/check; not alternate account or inferred reset."
+}

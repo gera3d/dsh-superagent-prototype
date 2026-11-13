@@ -1,0 +1,37 @@
+[
+  {
+    "manifestId": "s1",
+    "sha256": "7166b816e135042ca079e2d9a173bf5b35f54f37ed37d85b47a3e983ebd7c3c8",
+    "bytes": 280376
+  },
+  {
+    "manifestId": "s2",
+    "sha256": "b3424f7a500f852fedb486a14dbdff1b276ff9fc05815b8666b356f9422756ee",
+    "bytes": 1107168
+  },
+  {
+    "manifestId": "s4",
+    "sha256": "1156e31a5eb04d71a4291ea89a0c4c8ffcac14710e54590fe3eeef300fe26b13",
+    "bytes": 1997252
+  },
+  {
+    "manifestId": "s5",
+    "sha256": "4629c41b1b303c316e5b4320be87074553bb6d54f096034698706e63342784a3",
+    "bytes": 3404194
+  },
+  {
+    "manifestId": "s6",
+    "sha256": "809b8bb065474f736af29d7a422f7adeee0e9113c9ccc1a9ee2c5eeb3368a74b",
+    "bytes": 1097002
+  },
+  {
+    "manifestId": "s7",
+    "sha256": "b3978247a1f40477a0087d26db816a182ae74f47a0218e1b68fc9f2b13a315ec",
+    "bytes": 1665092
+  },
+  {
+    "manifestId": "s8",
+    "sha256": "ed3d4b0fd870092c7c726fad5d51f12c388977853b1795b0af3954a038b16651",
+    "bytes": 549105
+  }
+]

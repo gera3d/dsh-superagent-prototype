@@ -1,0 +1,19 @@
+import { Context } from '@deepseek-ai/cordis'
+import { ToolRuntime, defineTool } from '@deepseek-ai/dsh-tools'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { expect, it } from 'vitest'
+import { installOutputBound } from '../src/app/tool-output.ts'
+it('retains terminal status in a true one-line oversized real tool result',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'single-line-audit-')); const ctx=new Context()
+ ctx.reflect.provide('systemPrompt',{tools:()=>()=>{}});const tools=new ToolRuntime(ctx)
+ installOutputBound({ctx},()=>dir)
+ tools.register(defineTool({name:'bash',description:'Deterministic local fixture, no shell or provider',parameters:{text:{type:'string',required:true}},output:{schema:{type:'string'},render:(_a,v)=>[{type:'text',text:v}]},execute:async a=>a.text}))
+ try { const marker='[exit code: 137]', text='x'.repeat(20000)+marker
+  expect(text.split('\n')).toHaveLength(1)
+  const result=await tools.execute({callId:'true-single-line' as never,name:'bash',arguments:{text},signal:new AbortController().signal})
+  const body=result.content.map(x=>x.type==='text'?x.text:'').join('\n')
+  expect(body.endsWith(marker)).toBe(true)
+ } finally {rmSync(dir,{recursive:true,force:true})}
+})

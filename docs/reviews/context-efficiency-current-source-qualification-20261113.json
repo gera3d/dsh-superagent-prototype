@@ -1,0 +1,146 @@
+{
+  "at": "2026-11-13T08:50:33.672254+00:00",
+  "verdict": "CHANGES REQUIRED after extended native independent review and new root real-ToolRuntime counterexample; not deployed",
+  "candidate": "a579ae682a4c7b3f424d024808d3cc25fa9164d6",
+  "base": "fc6f9c4be43fb10e0e1b095ae7f1cb76bc9f2d7b",
+  "originalCandidate": "11f9b5bec38950e5ed7cf01fce559526e039bfcf",
+  "patchSha256": "d7bd775392dddbc80cc7930b34ea5fdf8a52befcee44564e48a8963a105b8b31",
+  "integration": "Clean cherry-pick of existing Harness-authored correction only; no implementation authored by Codex. Existing remote/user merges and accepted PR96 retained. Isolated existing node_modules and companion symlinks; no host package changes. Original branch and report retained, original ticket clean detached head staged through trusted clone for native release.",
+  "checks": [
+    {
+      "name": "targeted",
+      "exit": 0,
+      "seconds": 33.55,
+      "command": [
+        "pnpm",
+        "--config.verify-deps-before-run=false",
+        "exec",
+        "vitest",
+        "run",
+        "tests/tool-output.spec.ts",
+        "tests/tool-output-runtime.spec.ts",
+        "tests/tool-output-sessions.spec.ts",
+        "tests/runtime.spec.ts",
+        "tests/prompts.spec.ts",
+        "tests/prompt-config.spec.ts"
+      ]
+    },
+    {
+      "name": "typecheck",
+      "exit": 0,
+      "seconds": 56.56,
+      "command": [
+        "pnpm",
+        "--config.verify-deps-before-run=false",
+        "exec",
+        "tsc",
+        "--noEmit"
+      ]
+    },
+    {
+      "name": "build",
+      "exit": 0,
+      "seconds": 10.97,
+      "command": [
+        "pnpm",
+        "--config.verify-deps-before-run=false",
+        "exec",
+        "tsdown"
+      ]
+    }
+  ],
+  "synthetic": {
+    "limits": {
+      "OUTPUT_LINES": 100,
+      "OUTPUT_BYTES": 4096,
+      "tools": [
+        "bash",
+        "pwsh",
+        "job_output",
+        "job_list",
+        "grep",
+        "glob"
+      ]
+    },
+    "results": 7,
+    "boundedResults": 4,
+    "beforeBytes": 336560,
+    "afterBytes": 152428,
+    "worstBoundedBytes": 4094,
+    "overLimit": 0,
+    "errorsAltered": 0,
+    "tailLost": 0,
+    "retrievalMismatch": 0,
+    "savedFiles": 4,
+    "beforeTokensApprox": 84140,
+    "afterTokensApprox": 38107,
+    "savedPct": 54.7,
+    "note": "bytes/4 estimate of model-facing tool-result text only; excludes quota, cost and cache pricing"
+  },
+  "recorded": {
+    "limits": {
+      "OUTPUT_LINES": 100,
+      "OUTPUT_BYTES": 4096,
+      "tools": [
+        "bash",
+        "pwsh",
+        "job_output",
+        "job_list",
+        "grep",
+        "glob"
+      ]
+    },
+    "results": 644,
+    "boundedResults": 68,
+    "beforeBytes": 1043327,
+    "afterBytes": 771843,
+    "worstBoundedBytes": 4095,
+    "overLimit": 0,
+    "errorsAltered": 0,
+    "tailLost": 0,
+    "retrievalMismatch": 0,
+    "savedFiles": 68,
+    "beforeTokensApprox": 260832,
+    "afterTokensApprox": 192961,
+    "savedPct": 26,
+    "note": "bytes/4 estimate of model-facing tool-result text only; excludes quota, cost and cache pricing"
+  },
+  "corpus": "All7 immutable decompressed hashes in worker manifest matched;644results/68bounded; retrieval hashes, errors, cap/tail checked by real ToolRuntime replay. No raw session logs published.",
+  "measurementLimits": "Tool-result model-facing bytes only, not quota/cost/cache savings or observed behavioral improvement. Error wrapping adds runtime Error: prefix. Read/orchestrator/nontext intentionally unbounded. Spill files accumulate, no cleanup promised. Prompt authority restored; no claimed4500token reduction.",
+  "reviewLimits": "No broad suite; Sessions with actual ToolRuntime is controlled integration fixture, not deployed native worker proof. Symlink safety tests cover static redirect cases, not hostile concurrent filesystem mutation. Protected native review/pins/rollback/publish/live evidence/acceptance not replaced by root checks.",
+  "startupRecovery": "Configured gh-agent rate_limit HTTP200 at2026-11-13T08:45:03Z, core3289/5000, no Retry-After. One supported setup/check at idle0/0; runtime ready08:45:25.900Z and GitHub ready08:45:25.954Z. Native Overview accessible pending0 executing0/3; four unrelated historical Eval-timeout cards left untouched. No blind pause clear, reauth/settings/model/reserve change.",
+  "canonicalRecovery": "Previously denied reconciliation occurrence now appended once through observe_finding; confirmed present at findingrevision4/same r3 job. Original denial receipt retained.",
+  "nativePreparation": {
+    "pr": 103,
+    "deliveryId": "auto-a12db6e6725b9a11fafe3b68eaab8bc7",
+    "nativeClick": "Review, test & prepare release in original r3 source thread",
+    "preparedAt": "2026-11-13T08:48:39.426Z",
+    "stateAtReport": "blocked",
+    "stageAtReport": "review",
+    "revision": 7
+  },
+  "nextOwner": "Harness bounded same-scope correction, then existing Codex independent re-review/current-source qualification and protected release. No acceptance or deployment.",
+  "settings": "Executor44/models22/coordination3 read unchanged. OpenAIconserved,Google5%reserve,max3 maintained. Recent completed worker request metadata included AntigravitySonnet and directDeepSeek; no forced model trial.",
+  "sourceFiles": {
+    "docs/evidence/worker-output-bound-measurement.md": "609cd1d16a3a797384bf96ac68786733421b17c61a2b630cdb8ae1274e1f6e01",
+    "prompts/team/communication.md": "b55d3687080457aedb51f4c1fcee9ee530985bcf46f494a5374bd0d7dae7ef04",
+    "prompts/work.md": "45e7e3caf2f593a91b87097b728fac2f9548e98a88fd24d921caf13ebf456b0d",
+    "scripts/replay-output-bound.mjs": "3e524488cacbb41ceb4a45b2196aca070c1a0ff832c0a8c049efc69e2db08b05",
+    "src/app/tool-output.ts": "199823240d3f5abef3e3619152b0978a39ac211c4636c58ff7c25e547c2f531f",
+    "tests/fixtures/host.ts": "98f5d42f6f3430a2ba17514c6326c9ebe0feea1ced5bcb7ce9b851a7f5a3af64",
+    "tests/tool-output-runtime.spec.ts": "4c29dcee31affc65938a39f98420f638477a6d81edaba64c47ecb2b74989b3f0",
+    "tests/tool-output-sessions.spec.ts": "9314e84dc488c99bd14238dff35307896da7b5098853ea09795d85eada1a8008",
+    "tests/tool-output.spec.ts": "c0160fa1594f3332784c2566af67547d817bfd15c208174766cb9ab12550568b"
+  },
+  "extendedAudit": {
+    "tests": 1,
+    "failed": 1,
+    "case": "True single-line20016byte successful tool result loses terminal [exit code:137] marker. Reproduced through actual ToolRuntime; prior synthetic S7 actually contains2lines. Existing145pass and reproductions remain valid but incomplete.",
+    "reference": "docs/evidence/context-efficiency-current-single-line-audit.log"
+  },
+  "nativeCorrectionGate": "Automatic correction handoff failed: Original mandate is no longer authorized; correction authority is missing. No bypass or policy mutation. Same-finding supported coordination may request bounded correction only under retained explicit approval; exact denial/status must be recorded.",
+  "reviewTriage": {
+    "accept": "True one-line tail-loss and S7 coverage defect. Correct evidence narrative relative to current merged base: restoration differs from prior candidate; do not call current-base prompt delta one added retrieval sentence.",
+    "doNotBlindlyApply": "Native reviewer requests bounding errors, contrary to explicit original independent error-passthrough correction; preserve isError whole. Prompt restoration must be assessed against pre-PR92 authority, not deleted just to reduce tokens. Long-path notice fallback concern requires meaningful actual-hook/storage reproduction or fail-open behavior, not invented native proof."
+  }
+}
