@@ -1,0 +1,669 @@
+{
+  "observedAt": "2026-11-13T23:16:03.296245+00:00",
+  "observedLocal": "2026-11-13 15:16:03 PST",
+  "scope": "Read-only reconciliation of exactly six new quota tickets and matching three scoped trajectories, plus current project/Composio reference. Documentation writes only; original canonical records untouched.",
+  "newQuotaTracks": [
+    {
+      "issue": 203,
+      "sourceUrl": "https://github.com/gera3d/superagent-sandbox/issues/203",
+      "triggerIds": [
+        "b5eaadc9f7a190dade160f5537eca59a"
+      ],
+      "sourceActor": {
+        "source": "github",
+        "id": "gera3d",
+        "name": {
+          "zh": "gera3d",
+          "en": "gera3d"
+        }
+      },
+      "canonicalHumanFlag": true,
+      "sourceAt": "2026-11-13T03:07:47.000Z",
+      "authorityLines": [
+        "@gera3d Please start this one now. Scope is in this issue body. Work in an isolated checkout, open a PR with the change and a short report.",
+        "Filed by Claude at Gera's request (GitHub rate limit fix plan, 2026-11-12).",
+        "Source repo: gera3d/dsh-superagent-prototype, branch superagent-core. The installed copy at /Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent has uncommitted local changes: base your work on origin/superagent-core, not on that working tree. No live edits, restarts, deployments or merges by the worker. Never read or print tokens. Keep your own GitHub calls light: read rate_limit first and stop if fewer than 500 remain; test with mocks, do not exhaust the real account. Other tickets in this batch also touch src/sources/github.ts and src/infra/commands.ts: keep the diff narrow and rebase before opening the PR."
+      ],
+      "authorityLimit": "Owner-account source accepted as explicit by installed policy; body discloses agent filing. Underlying direct human instruction was not located/independently verified. No additional merge/deploy authority inferred.",
+      "ticketId": "0bc7ce4f117ff254d7507c2f689fb23b",
+      "title": "Startup deployment check: restart setup automatically after the GitHub quota reset",
+      "state": "ended",
+      "stage": "ended",
+      "assignments": [
+        {
+          "id": "256bf7703c53ea0402c89254fc0ac95f",
+          "state": "ended",
+          "createdAt": "2026-11-13T22:54:37.805Z",
+          "startedAt": "2026-11-13T23:00:12.837Z",
+          "reportState": "ready",
+          "reportAt": "2026-11-13T23:13:36.291Z"
+        }
+      ],
+      "mandate": {
+        "strength": "explicit",
+        "policyVersion": "4a94ccdb073230148f3e77fb3c25f48b",
+        "basis": {
+          "source": "github",
+          "scope": {
+            "number": 203,
+            "isPr": false,
+            "kind": "issue"
+          },
+          "row": "issues",
+          "sender": "gera3d",
+          "via": "addressed",
+          "addressed": "mention"
+        },
+        "actor": {
+          "source": "github",
+          "id": "gera3d",
+          "name": {
+            "zh": "gera3d",
+            "en": "gera3d"
+          }
+        },
+        "scope": "Startup deployment check: restart setup automatically after the GitHub quota reset"
+      },
+      "reportedUsage": {
+        "sessionId": "worker-0bc7ce4f117ff254d7507c2f689fb23b",
+        "routes": [
+          {
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5",
+            "attempts": 59,
+            "uncachedInputTokens": 126,
+            "outputTokens": 27391,
+            "cacheReadTokens": 4067676,
+            "cacheWriteTokens": 187232,
+            "totalTokens": 4282425
+          }
+        ],
+        "totals": {
+          "uncachedInputTokens": 126,
+          "outputTokens": 27391,
+          "totalTokens": 4282425,
+          "cacheReadTokens": 4067676,
+          "cacheWriteTokens": 187232
+        },
+        "coverage": {
+          "attempts": 59,
+          "reported": 59,
+          "cacheRead": "exact",
+          "cacheWrite": "exact",
+          "attribution": "complete"
+        },
+        "cost": {
+          "kind": "unavailable",
+          "reason": "noRecordedPrice"
+        }
+      },
+      "nestedRequestEvidence": {
+        "events": 424,
+        "toolCalls": 63,
+        "requests": [
+          {
+            "type": "request/header",
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5"
+          },
+          {
+            "type": "request/context",
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5"
+          }
+        ],
+        "modelSelections": [
+          {
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5"
+          }
+        ],
+        "turnEndKinds": [
+          "completed",
+          "completed"
+        ],
+        "limit": "Request/tool metadata confirms scoped execution, not correctness/job completion. Completed turns can carry progress reports. Empty summary usage is not zero activity. No provider probe or raw reasoning/credentials read."
+      }
+    },
+    {
+      "issue": 204,
+      "sourceUrl": "https://github.com/gera3d/superagent-sandbox/issues/204",
+      "triggerIds": [
+        "f5c3f8a87ed9936d33a0a18a8187ee3f"
+      ],
+      "sourceActor": {
+        "source": "github",
+        "id": "gera3d",
+        "name": {
+          "zh": "gera3d",
+          "en": "gera3d"
+        }
+      },
+      "canonicalHumanFlag": true,
+      "sourceAt": "2026-11-13T03:08:13.000Z",
+      "authorityLines": [
+        "@gera3d Please start this one now. Scope is in this issue body. Work in an isolated checkout, open a PR with the change, tests and a short report.",
+        "Filed by Claude at Gera's request (GitHub rate limit fix plan, 2026-11-12).",
+        "Source repo: gera3d/dsh-superagent-prototype, branch superagent-core. The installed copy at /Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent has uncommitted local changes: base your work on origin/superagent-core, not on that working tree. No live edits, restarts, deployments or merges by the worker. Never read or print tokens. Keep your own GitHub calls light: read rate_limit first and stop if fewer than 500 remain; test with mocks. Other tickets in this batch touch src/sources/github.ts and src/infra/commands.ts: keep the diff narrow and rebase before opening the PR."
+      ],
+      "authorityLimit": "Owner-account source accepted as explicit by installed policy; body discloses agent filing. Underlying direct human instruction was not located/independently verified. No additional merge/deploy authority inferred.",
+      "ticketId": "4c15fb9c193aa9891da7a8966a1823bd",
+      "title": "Worker gh wrapper: count calls per ticket and add read-caching guidance",
+      "state": "open",
+      "stage": "working",
+      "assignments": [
+        {
+          "id": "2e4aea4b0c48ae2f0c8f3281443a29d0",
+          "state": "running",
+          "createdAt": "2026-11-13T22:54:37.816Z",
+          "startedAt": "2026-11-13T23:00:13.711Z",
+          "reportState": null,
+          "reportAt": null
+        }
+      ],
+      "mandate": {
+        "strength": "explicit",
+        "policyVersion": "4a94ccdb073230148f3e77fb3c25f48b",
+        "basis": {
+          "source": "github",
+          "scope": {
+            "number": 204,
+            "isPr": false,
+            "kind": "issue"
+          },
+          "row": "issues",
+          "sender": "gera3d",
+          "via": "addressed",
+          "addressed": "mention"
+        },
+        "actor": {
+          "source": "github",
+          "id": "gera3d",
+          "name": {
+            "zh": "gera3d",
+            "en": "gera3d"
+          }
+        },
+        "scope": "Worker gh wrapper: count calls per ticket and add read-caching guidance"
+      },
+      "reportedUsage": null,
+      "nestedRequestEvidence": {
+        "events": 962,
+        "toolCalls": 156,
+        "requests": [
+          {
+            "type": "request/header",
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5"
+          },
+          {
+            "type": "request/context",
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5"
+          },
+          {
+            "type": "request/header",
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5"
+          },
+          {
+            "type": "request/header",
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5"
+          }
+        ],
+        "modelSelections": [
+          {
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5"
+          }
+        ],
+        "turnEndKinds": [],
+        "limit": "Request/tool metadata confirms scoped execution, not correctness/job completion. Completed turns can carry progress reports. Empty summary usage is not zero activity. No provider probe or raw reasoning/credentials read."
+      }
+    },
+    {
+      "issue": 205,
+      "sourceUrl": "https://github.com/gera3d/superagent-sandbox/issues/205",
+      "triggerIds": [
+        "671a9af456fc16893c411641e1770a0f"
+      ],
+      "sourceActor": {
+        "source": "github",
+        "id": "gera3d",
+        "name": {
+          "zh": "gera3d",
+          "en": "gera3d"
+        }
+      },
+      "canonicalHumanFlag": true,
+      "sourceAt": "2026-11-13T03:08:14.000Z",
+      "authorityLines": [
+        "@gera3d Please start this one now. Scope is in this issue body. Work in an isolated checkout, open a PR with the change, tests and a short report.",
+        "Filed by Claude at Gera's request (GitHub rate limit fix plan, 2026-11-12).",
+        "Source repo: gera3d/dsh-superagent-prototype, branch superagent-core. The installed copy at /Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent has uncommitted local changes: base your work on origin/superagent-core, not on that working tree. No live edits, restarts, deployments or merges by the worker. Never read or print tokens. Keep your own GitHub calls light: read rate_limit first and stop if fewer than 500 remain; test with mocks, do not exhaust the real account. Other tickets in this batch also touch src/sources/github.ts: keep the diff narrow and rebase before opening the PR."
+      ],
+      "authorityLimit": "Owner-account source accepted as explicit by installed policy; body discloses agent filing. Underlying direct human instruction was not located/independently verified. No additional merge/deploy authority inferred.",
+      "ticketId": "62109ed6c4652337501d2bcf044b744a",
+      "title": "Thread comment polls: advance cursor only on new items and send If-None-Match",
+      "state": "ended",
+      "stage": "ended",
+      "assignments": [
+        {
+          "id": "34d8d7b31917e7c8b51e6b146b885eb8",
+          "state": "ended",
+          "createdAt": "2026-11-13T22:54:37.820Z",
+          "startedAt": "2026-11-13T23:03:25.174Z",
+          "reportState": "ready",
+          "reportAt": "2026-11-13T23:12:10.899Z"
+        }
+      ],
+      "mandate": {
+        "strength": "explicit",
+        "policyVersion": "4a94ccdb073230148f3e77fb3c25f48b",
+        "basis": {
+          "source": "github",
+          "scope": {
+            "number": 205,
+            "isPr": false,
+            "kind": "issue"
+          },
+          "row": "issues",
+          "sender": "gera3d",
+          "via": "addressed",
+          "addressed": "mention"
+        },
+        "actor": {
+          "source": "github",
+          "id": "gera3d",
+          "name": {
+            "zh": "gera3d",
+            "en": "gera3d"
+          }
+        },
+        "scope": "Thread comment polls: advance cursor only on new items and send If-None-Match"
+      },
+      "reportedUsage": {
+        "sessionId": "worker-62109ed6c4652337501d2bcf044b744a",
+        "routes": [
+          {
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5",
+            "attempts": 72,
+            "uncachedInputTokens": 162,
+            "outputTokens": 33095,
+            "cacheReadTokens": 5774808,
+            "cacheWriteTokens": 211567,
+            "totalTokens": 6019632
+          }
+        ],
+        "totals": {
+          "uncachedInputTokens": 162,
+          "outputTokens": 33095,
+          "totalTokens": 6019632,
+          "cacheReadTokens": 5774808,
+          "cacheWriteTokens": 211567
+        },
+        "coverage": {
+          "attempts": 72,
+          "reported": 72,
+          "cacheRead": "exact",
+          "cacheWrite": "exact",
+          "attribution": "complete"
+        },
+        "cost": {
+          "kind": "unavailable",
+          "reason": "noRecordedPrice"
+        }
+      },
+      "nestedRequestEvidence": {
+        "events": 523,
+        "toolCalls": 80,
+        "requests": [
+          {
+            "type": "request/header",
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5"
+          },
+          {
+            "type": "request/context",
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5"
+          },
+          {
+            "type": "request/header",
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5"
+          }
+        ],
+        "modelSelections": [
+          {
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5"
+          }
+        ],
+        "turnEndKinds": [
+          "completed",
+          "completed",
+          "completed"
+        ],
+        "limit": "Request/tool metadata confirms scoped execution, not correctness/job completion. Completed turns can carry progress reports. Empty summary usage is not zero activity. No provider probe or raw reasoning/credentials read."
+      }
+    },
+    {
+      "issue": 206,
+      "sourceUrl": "https://github.com/gera3d/superagent-sandbox/issues/206",
+      "triggerIds": [
+        "e58afe52c13b269dda3a787f91539001"
+      ],
+      "sourceActor": {
+        "source": "github",
+        "id": "gera3d",
+        "name": {
+          "zh": "gera3d",
+          "en": "gera3d"
+        }
+      },
+      "canonicalHumanFlag": true,
+      "sourceAt": "2026-11-13T03:08:45.000Z",
+      "authorityLines": [
+        "@gera3d Please start this one now. Scope is in this issue body. Work in an isolated checkout, open a PR with the change, tests and a short report.",
+        "Filed by Claude at Gera's request (GitHub rate limit fix plan, 2026-11-12).",
+        "Source repo: gera3d/dsh-superagent-prototype, branch superagent-core. The installed copy at /Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent has uncommitted local changes: base your work on origin/superagent-core, not on that working tree. No live edits, restarts, deployments or merges by the worker. Never read or print tokens. Keep your own GitHub calls light: read rate_limit first and stop if fewer than 500 remain; test with mocks, do not exhaust the real account. Other tickets in this batch also touch src/sources/github.ts and src/infra/commands.ts: keep the diff narrow and rebase before opening the PR."
+      ],
+      "authorityLimit": "Owner-account source accepted as explicit by installed policy; body discloses agent filing. Underlying direct human instruction was not located/independently verified. No additional merge/deploy authority inferred.",
+      "ticketId": "023c7490c1d207729815177a0e0f1910",
+      "title": "PR, check-run and status reads: revalidate with ETag and reuse the body on 304",
+      "state": "open",
+      "stage": "working",
+      "assignments": [
+        {
+          "id": "b2b27e8aef5e51fad1fb57d529a76a55",
+          "state": "running",
+          "createdAt": "2026-11-13T22:54:37.828Z",
+          "startedAt": "2026-11-13T23:12:16.545Z",
+          "reportState": null,
+          "reportAt": null
+        }
+      ],
+      "mandate": {
+        "strength": "explicit",
+        "policyVersion": "4a94ccdb073230148f3e77fb3c25f48b",
+        "basis": {
+          "source": "github",
+          "scope": {
+            "number": 206,
+            "isPr": false,
+            "kind": "issue"
+          },
+          "row": "issues",
+          "sender": "gera3d",
+          "via": "addressed",
+          "addressed": "mention"
+        },
+        "actor": {
+          "source": "github",
+          "id": "gera3d",
+          "name": {
+            "zh": "gera3d",
+            "en": "gera3d"
+          }
+        },
+        "scope": "PR, check-run and status reads: revalidate with ETag and reuse the body on 304"
+      },
+      "reportedUsage": null
+    },
+    {
+      "issue": 207,
+      "sourceUrl": "https://github.com/gera3d/superagent-sandbox/issues/207",
+      "triggerIds": [
+        "29fea9c0048d3c697a048fe0bd08546b"
+      ],
+      "sourceActor": {
+        "source": "github",
+        "id": "gera3d",
+        "name": {
+          "zh": "gera3d",
+          "en": "gera3d"
+        }
+      },
+      "canonicalHumanFlag": true,
+      "sourceAt": "2026-11-13T03:08:45.000Z",
+      "authorityLines": [
+        "@gera3d Please start this one now. Scope is in this issue body. Work in an isolated checkout, open a PR with the change, tests and a short report.",
+        "Filed by Claude at Gera's request (GitHub rate limit fix plan, 2026-11-12).",
+        "Source repo: gera3d/dsh-superagent-prototype, branch superagent-core. The installed copy at /Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent has uncommitted local changes: base your work on origin/superagent-core, not on that working tree. No live edits, restarts, deployments or merges by the worker. Never read or print tokens. Keep your own GitHub calls light: read rate_limit first and stop if fewer than 500 remain; test with mocks, do not exhaust the real account. Other tickets in this batch also touch src/sources/github.ts and src/infra/commands.ts: keep the diff narrow and rebase before opening the PR."
+      ],
+      "authorityLimit": "Owner-account source accepted as explicit by installed policy; body discloses agent filing. Underlying direct human instruction was not located/independently verified. No additional merge/deploy authority inferred.",
+      "ticketId": "07b154b703addc42273fa0eee389f4b2",
+      "title": "GitHub request telemetry: per-endpoint counts and x-ratelimit headers in source health",
+      "state": "open",
+      "stage": "working",
+      "assignments": [
+        {
+          "id": "acc5cac51406e843da9e7104a80fd967",
+          "state": "running",
+          "createdAt": "2026-11-13T22:54:37.836Z",
+          "startedAt": "2026-11-13T23:13:37.948Z",
+          "reportState": null,
+          "reportAt": null
+        }
+      ],
+      "mandate": {
+        "strength": "explicit",
+        "policyVersion": "4a94ccdb073230148f3e77fb3c25f48b",
+        "basis": {
+          "source": "github",
+          "scope": {
+            "number": 207,
+            "isPr": false,
+            "kind": "issue"
+          },
+          "row": "issues",
+          "sender": "gera3d",
+          "via": "addressed",
+          "addressed": "mention"
+        },
+        "actor": {
+          "source": "github",
+          "id": "gera3d",
+          "name": {
+            "zh": "gera3d",
+            "en": "gera3d"
+          }
+        },
+        "scope": "GitHub request telemetry: per-endpoint counts and x-ratelimit headers in source health"
+      },
+      "reportedUsage": null
+    },
+    {
+      "issue": 208,
+      "sourceUrl": "https://github.com/gera3d/superagent-sandbox/issues/208",
+      "triggerIds": [
+        "3c011acb7676b1c70d0175d0788b317a"
+      ],
+      "sourceActor": {
+        "source": "github",
+        "id": "gera3d",
+        "name": {
+          "zh": "gera3d",
+          "en": "gera3d"
+        }
+      },
+      "canonicalHumanFlag": true,
+      "sourceAt": "2026-11-13T03:08:45.000Z",
+      "authorityLines": [
+        "@gera3d Please start this one now. Scope is in this issue body. Work in an isolated checkout, open a PR with the change, tests and a short report.",
+        "Filed by Claude at Gera's request (GitHub rate limit fix plan, 2026-11-12).",
+        "Source repo: gera3d/dsh-superagent-prototype, branch superagent-core. The installed copy at /Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent has uncommitted local changes: base your work on origin/superagent-core, not on that working tree. No live edits, restarts, deployments or merges by the worker. Never read or print tokens. Keep your own GitHub calls light: read rate_limit first and stop if fewer than 500 remain; test with mocks, do not exhaust the real account. Other tickets in this batch also touch src/sources/github.ts: keep the diff narrow and rebase before opening the PR."
+      ],
+      "authorityLimit": "Owner-account source accepted as explicit by installed policy; body discloses agent filing. Underlying direct human instruction was not located/independently verified. No additional merge/deploy authority inferred.",
+      "ticketId": "738d3967187f76218d5dd405957a6c8f",
+      "title": "Notifications poll: send If-Modified-Since and honour 304",
+      "state": "open",
+      "stage": "working",
+      "assignments": [
+        {
+          "id": "f505e12e48e74aad324fea0b850033fd",
+          "state": "pending",
+          "createdAt": "2026-11-13T22:54:37.840Z",
+          "startedAt": null,
+          "reportState": null,
+          "reportAt": null
+        }
+      ],
+      "mandate": {
+        "strength": "explicit",
+        "policyVersion": "4a94ccdb073230148f3e77fb3c25f48b",
+        "basis": {
+          "source": "github",
+          "scope": {
+            "number": 208,
+            "isPr": false,
+            "kind": "issue"
+          },
+          "row": "issues",
+          "sender": "gera3d",
+          "via": "addressed",
+          "addressed": "mention"
+        },
+        "actor": {
+          "source": "github",
+          "id": "gera3d",
+          "name": {
+            "zh": "gera3d",
+            "en": "gera3d"
+          }
+        },
+        "scope": "Notifications poll: send If-Modified-Since and honour 304"
+      },
+      "reportedUsage": null
+    }
+  ],
+  "globalLoad": {
+    "running": 3,
+    "queued": 2,
+    "maxWorkers": 3
+  },
+  "coverageLimit": "Exactly six tickets inspected. Extra queued item(s) beyond those six explicitly uninspected; do not call this a global backlog scan. No code/tests/PR correctness or live acceptance audit.",
+  "authorityConclusion": "Canonical source instructions request isolated implementation/tests/PRs and forbid worker live edits/restarts/deploys/merges; actor gera3d/humanFlagtrue is not proof of actual human authorship when body says filed by Claude. Underlying human approval and extra release authority remain unlocated; no execution/acceptance decision taken here.",
+  "implementationOwner": "Existing Harness assignments, untouched.",
+  "releaseOwner": "Existing Codex coordinator retains Composio protected release. For these six new scopes, no additional release approval or independently verified human mandate is inferred; scope/release authority must be established before advancing outside recorded isolated-work/PR limits.",
+  "acceptedQuotaHistory": "Separate from previously accepted bounded GitHub quota recovery/PR96 history. These six are new intake improvements, not proof the old accepted work failed or authority to reopen it.",
+  "settings": {
+    "executor": {
+      "value": {
+        "model": {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "reasoningEffort": "medium"
+        },
+        "maxWorkers": 3,
+        "directory": "",
+        "prepare": "",
+        "blockedCommands": [],
+        "sound": false,
+        "stallWaitSeconds": 180
+      },
+      "revision": 44
+    },
+    "models": {
+      "value": {
+        "hierarchy": [
+          {
+            "provider": "antigravity",
+            "model": "gemini-3.8-flash",
+            "reasoningEffort": "medium",
+            "starred": true
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5",
+            "starred": true
+          },
+          {
+            "provider": "deepseek-official",
+            "model": "deepseek-flash",
+            "starred": false
+          },
+          {
+            "provider": "openai-codex",
+            "model": "gpt-6.1-sol",
+            "starred": true
+          }
+        ],
+        "maxEscalations": 1,
+        "helper": {
+          "provider": "deepseek-official",
+          "model": "deepseek-flash"
+        },
+        "conserve": false,
+        "economyRoute": {
+          "provider": "deepseek-official",
+          "model": "deepseek-flash"
+        },
+        "subscriptions": [
+          {
+            "provider": "antigravity",
+            "status": "exhausted",
+            "resetAt": "2026-11-14T02:55:00Z"
+          },
+          {
+            "provider": "anthropic",
+            "status": "available",
+            "resetAt": ""
+          },
+          {
+            "provider": "openai-codex",
+            "status": "conserved",
+            "resetAt": ""
+          },
+          {
+            "provider": "deepseek-official",
+            "status": "available",
+            "resetAt": ""
+          }
+        ]
+      },
+      "revision": 25
+    },
+    "coordination": {
+      "value": {
+        "enabled": true
+      },
+      "revision": 3
+    }
+  },
+  "settingsLimit": "Observed revisions/marks only, not proof of physical quota or who changed them. Google and OpenRouter marked exhausted; OpenAI conserved. No modification or forced trial.",
+  "backoff": {
+    "github": {
+      "state": "ready",
+      "detail": "1 notifications; next poll \u2265 60s",
+      "at": "2026-11-13T23:11:48.401Z"
+    },
+    "models": {
+      "state": "ready",
+      "detail": "No managed Session is waiting on a model budget retry"
+    },
+    "remainingGitHubQuota": "not independently measured; no rate_limit exhaustion/probe performed"
+  },
+  "composio": {
+    "revision": 19,
+    "state": "blocked",
+    "job": {
+      "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r18",
+      "ticketId": "90b01f2a0531979c292f19f482df2a3e",
+      "assignmentId": "9fcfa76462a763cf8289661908868ae2"
+    },
+    "pr108": {
+      "baseRefName": "superagent-core",
+      "headRefOid": "488f8400c78d1969fede084fd39899ca342efd1c",
+      "mergedAt": null,
+      "number": 108,
+      "state": "OPEN"
+    },
+    "pendingScreenQuestion": "Unanswered; no repeat prompt, Chrome action or inferred consent.",
+    "stage": "194check source candidate remains awaiting original native review/package/Publish/verification/acceptance; not deployed."
+  },
+  "actions": "Observational reads and requested durable documentation only. No canonical issue/job/decision mutation, workerinput, message, dispatch/retry/reopening, tests, implementation, Chrome, settings/access/accounts/credential/routes/spending/reserve/capacity change."
+}
