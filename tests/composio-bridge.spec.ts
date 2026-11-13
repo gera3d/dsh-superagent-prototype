@@ -175,6 +175,22 @@ describe.skipIf(!available)('installed MCP bridge to the host boundary', () => {
     expect(second.isError).toBe(true)
   })
 
+  it('keeps an entry that explicitly succeeded with an error note, and holds a contradictory one as unknown, as for a single action', async () => {
+    const kept = entry(1, 'GITHUB_CREATE_ISSUE', { successful: true, data: { id: 'kept' }, error: 'a note the service attached to a success' })
+    const bad = entry(2, 'SLACK_SEND_MESSAGE', { successful: false, error: 'bad input' })
+    const mixed = await bridge({ [MULTI]: async () => ok({ successful: true, data: { total_count: 3, results: [read, kept, bad] } }) })
+    const found = failure(await mixed.run(MULTI))
+    expect(found).toMatchObject({ classification: 'action_failed', completion: 'partial', counts: { total: 3, succeeded: 2, failed: 1, unreported: 0 } })
+    expect(found.succeeded).toEqual([read, kept])
+    const alone = await bridge({ [MULTI]: async () => ok({ successful: true, data: { total_count: 2, results: [read, kept] } }) })
+    expect((await alone.run(MULTI)).isError).toBe(false)
+    const clash = { index: 1, tool_slug: 'GITHUB_CREATE_ISSUE', successful: true, response: { successful: false, error: 'Validation failed' } }
+    const contradicted = await bridge({ [MULTI]: async () => ok({ successful: true, data: { total_count: 2, results: [read, clash] } }) })
+    const unknown = failure(await contradicted.run(MULTI))
+    expect(unknown).toMatchObject({ classification: 'uncertain_completion', succeeded: [read], unconfirmed: [{ index: 1, reason: 'contradictory_flags' }] })
+    expect(contradicted.sent).toEqual([MULTI])
+  })
+
   it('does not touch a success, business text with failure words, or another MCP server', async () => {
     const business = ok({ successful: true, data: { note: 'The user was unauthorized; authentication failed on the old host', error: 'none of the above' } })
     const other = ok({ successful: false, error: 'not a Composio tool' })

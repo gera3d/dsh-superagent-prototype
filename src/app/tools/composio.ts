@@ -95,26 +95,50 @@ export function isRecord(val: unknown): val is Record<string, unknown> {
   return typeof val === 'object' && val !== null && !Array.isArray(val)
 }
 
-/** Whether one batch entry reports its own action failure, by its own flag or an error it carries. */
-export function isBatchItemFailed(item: Record<string, unknown>): boolean {
-  const response = isRecord(item.response) ? item.response : undefined
-  return item.successful === false || response?.successful === false || !!item.error || !!response?.error
+/** A failure report an envelope carries in its `error`: a non-empty string, an object or array (a message, code or details), or a bare `true`. */
+function hasErrorValue(error: unknown): boolean {
+  if (typeof error === 'string') return error.trim() !== ''
+  if (Array.isArray(error)) return error.length > 0
+  return isRecord(error) ? Object.keys(error).length > 0 : error === true
 }
 
-/** A failure report an envelope carries in its `error`: a non-empty string, or an object (a message, code or details). */
-function hasErrorValue(error: unknown): boolean {
-  return typeof error === 'string' ? error.trim() !== '' : isRecord(error) && Object.keys(error).length > 0
+/** How an envelope or batch entry ended, by what the service itself reported (never by the business data under `data`). */
+export type EnvelopeOutcome = 'failed' | 'succeeded' | 'contradictory' | 'unconfirmed'
+
+/**
+ * One rule for a single-action envelope and a batch entry alike. `levels` are the objects that may carry the flags: the
+ * envelope/entry itself and its `response`. An explicit `successful: false` is a failure; an explicit `successful: true` is a
+ * success that outranks an `error` the service attached (a warning or note), so a completed mutation is never relabelled
+ * failed. `true` at one level and `false` at another contradict each other: the outcome is unknown and neither is claimed.
+ * Without any flag, an `error` the level carries is the service's own failure report; otherwise nothing confirms the outcome.
+ * `error: null`, `""` and `false` are no report at all.
+ */
+export function envelopeOutcome(...levels: unknown[]): EnvelopeOutcome {
+  const records = levels.filter(isRecord)
+  const said = (value: boolean) => records.some(level => level.successful === value)
+  if (said(true) && said(false)) return 'contradictory'
+  if (said(false)) return 'failed'
+  if (said(true)) return 'succeeded'
+  return records.some(level => hasErrorValue(level.error)) ? 'failed' : 'unconfirmed'
+}
+
+/** The outcome of one batch entry, by its own flag and its `response`'s. */
+export const batchItemOutcome = (item: Record<string, unknown>): EnvelopeOutcome => envelopeOutcome(item, item.response)
+
+/** Whether one batch entry needs failure handling: it reported a failure, or its own flags contradict each other. */
+export function isBatchItemFailed(item: Record<string, unknown>): boolean {
+  const outcome = batchItemOutcome(item)
+  return outcome === 'failed' || outcome === 'contradictory'
 }
 
 /**
- * Whether the root of a single-action envelope reports its own failure: `successful: false`, or an `error` the envelope
- * carries without saying `successful: true`. Composio's envelope is `{ successful, data, error }`: the action's business
- * data lives under `data`, so the root `error` is the service's own report and an `error` inside `data` never counts.
- * An explicit `successful: true` outranks an `error` string, and `error: null`, `""` or `false` are no report at all.
+ * Whether the root of a single-action envelope reports its own failure (or contradicts itself, which is not a success).
+ * Composio's envelope is `{ successful, data, error }`: the action's business data lives under `data`, so the root `error`
+ * is the service's own report and an `error` inside `data` never counts. See `envelopeOutcome` for the precedence.
  */
 export function isEnvelopeFailed(payload: Record<string, unknown>): boolean {
-  const reports = (envelope: Record<string, unknown>): boolean => envelope.successful === false || (envelope.successful !== true && hasErrorValue(envelope.error))
-  return reports(payload) || (isRecord(payload.response) && reports(payload.response))
+  const outcome = envelopeOutcome(payload, payload.response)
+  return outcome === 'failed' || outcome === 'contradictory'
 }
 
 function parseJsonSafe(text: string): unknown {

@@ -9,7 +9,7 @@
  */
 import type { Context } from '@deepseek-ai/cordis'
 import {
-  CONNECTION_FAILURE_PATTERN, extractErrorMessage, isBatchItemFailed, isEnvelopeFailed, isRecord, unwrapComposioResult,
+  CONNECTION_FAILURE_PATTERN, batchItemOutcome, envelopeOutcome, extractErrorMessage, isEnvelopeFailed, isRecord, unwrapComposioResult,
   type ComposioBatchData, type ToolResult,
 } from './tools/composio.ts'
 
@@ -26,8 +26,8 @@ export type ComposioFailureKind = 'connection_required' | 'uncertain_completion'
 export type ComposioCompletion = 'failed' | 'partial' | 'unknown'
 
 export interface ComposioFailedEntry { index?: number; tool_slug?: string; kind: ComposioFailureKind; error: string; retry_after_seconds?: number }
-/** A batch entry whose outcome the service did not confirm: malformed, or without an explicit success flag. */
-export interface ComposioUnconfirmedEntry { index: number; tool_slug?: string; reason: 'malformed' | 'no_completion_evidence' }
+/** A batch entry whose outcome the service did not confirm: malformed, without an explicit success flag, or flagged both successful and failed. */
+export interface ComposioUnconfirmedEntry { index: number; tool_slug?: string; reason: 'malformed' | 'no_completion_evidence' | 'contradictory_flags' }
 export interface ComposioAssessment {
   tool: string
   kind: ComposioFailureKind
@@ -132,10 +132,6 @@ function batchOf(payload: Record<string, unknown>): ComposioBatchData | undefine
   return Array.isArray((payload as ComposioBatchData).results) ? payload as ComposioBatchData : undefined
 }
 
-/** An entry carries explicit success evidence only through its own `successful: true` or its response's. */
-const hasSuccessEvidence = (item: Record<string, unknown>): boolean =>
-  item.successful === true || (isRecord(item.response) && item.response.successful === true)
-
 /**
  * Whether a batch is a Composio execution batch, whose entries must each say how they ended. Search or listing results also
  * arrive as a `results` array and carry no such flag, so they are not held to it.
@@ -195,10 +191,13 @@ export function assessComposioResult(name: string, result: ToolResult & { value?
     const executed = isExecutionBatch(batch, batchPayload, entries)
     entries.forEach((item, position) => {
       if (!isRecord(item)) { if (executed) unconfirmed.push({ index: position, reason: 'malformed' }); return }
-      if (!isBatchItemFailed(item)) {
-        if (!executed || hasSuccessEvidence(item)) succeeded.push(item)
-        // Neither a failure nor an explicit success: its outcome is unknown and must not be claimed or discarded.
-        else unconfirmed.push({ index: typeof item.index === 'number' ? item.index : position, ...(typeof item.tool_slug === 'string' ? { tool_slug: item.tool_slug } : {}), reason: 'no_completion_evidence' })
+      // The same rule as a single action's envelope: an explicit `successful: true` is kept as a success even if the entry also
+      // carries an `error` note; an entry whose flags contradict each other, or that has none, is unknown, never claimed or dropped.
+      const outcome = batchItemOutcome(item)
+      if (outcome !== 'failed') {
+        if (outcome === 'succeeded' || (!executed && outcome === 'unconfirmed')) succeeded.push(item)
+        else unconfirmed.push({ index: typeof item.index === 'number' ? item.index : position, ...(typeof item.tool_slug === 'string' ? { tool_slug: item.tool_slug } : {}),
+          reason: outcome === 'contradictory' ? 'contradictory_flags' : 'no_completion_evidence' })
         return
       }
       const message = errorTextOf(item)
@@ -223,7 +222,9 @@ export function assessComposioResult(name: string, result: ToolResult & { value?
     const message = transport && !envelope
       ? (text || result.error?.message || 'The Composio tool call failed')
       : errorTextOf(envelope ?? {}) !== 'The action reported a failure without a message' ? errorTextOf(envelope!) : (text || 'The action reported a failure without a message')
-    const kind = unwrapped.connectionError ? 'connection_required' : kindOf(message, envelope, transport)
+    // An envelope that says both successful and failed does not say the action did not run: its outcome is unknown.
+    const conflicting = !transport && envelope !== undefined && envelopeOutcome(envelope, envelope.response) === 'contradictory'
+    const kind = unwrapped.connectionError ? 'connection_required' : conflicting ? 'uncertain_completion' : kindOf(message, envelope, transport)
     failed.push({ kind, error: sanitizeDiagnostic(message), ...(WAITED.includes(kind) ? optionalRetry(retryAfterSeconds(envelope, message)) : {}) })
   }
 

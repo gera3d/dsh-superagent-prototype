@@ -355,3 +355,90 @@ describe('ordinary Session binding', () => {
 })
 
 afterEach(() => { vi.restoreAllMocks() })
+
+describe('batch and single envelopes follow one rule', () => {
+  const note = (index: number, extra: Record<string, unknown>) => ({ index, tool_slug: 'GITHUB_CREATE_ISSUE', ...extra })
+  const declared = (...results: unknown[]) => ({ successful: true, data: { results, total_count: results.length, success_count: results.length, error_count: 0 } })
+  /** Entries that completed, each carrying an `error` note of a different shape; an explicit `successful: true` outranks the note. */
+  const completed = [
+    note(0, { response: { successful: true, data: { id: 'kept-0' }, error: 'deprecated field ignored' } }),
+    note(1, { response: { successful: true, data: { id: 'kept-1' }, error: {} } }),
+    note(2, { successful: true, data: { id: 'kept-2' }, error: { message: 'label was created instead of reused' } }),
+    note(3, { successful: true, response: { data: { id: 'kept-3' }, error: 'a warning' } }),
+  ]
+
+  it('keeps an entry that explicitly succeeded although it carries an error note, in an all-successful batch and in a mixed one', async () => {
+    const clean = await runtimeWith({ [MULTI]: { value: mcp(declared(...completed)) } })
+    const ok = await clean.run(MULTI)
+    expect(ok.isError).toBe(false)
+    expect(JSON.parse(textOf(ok))).toEqual(declared(...completed))
+    const mixed = await runtimeWith({ [MULTI]: { value: mcp({ successful: true, data: { results: [...completed, write('Validation failed', 4)], total_count: 5, success_count: 4, error_count: 1 } }) } })
+    const found = failure(await mixed.run(MULTI))
+    expect(found).toMatchObject({ classification: 'action_failed', completion: 'partial', counts: { total: 5, succeeded: 4, failed: 1, unreported: 0 } })
+    expect(found.succeeded).toEqual(completed)
+    expect(found.failed).toEqual([{ index: 4, tool_slug: 'GITHUB_CREATE_ISSUE', kind: 'action_failed', error: 'Validation failed' }])
+    expect(found.recovery.join(' ')).not.toMatch(/entry 0|entry 1|entry 2|entry 3/)
+  })
+
+  it('treats the same envelope the same whether it is a single action or a batch entry', async () => {
+    const shapes: [string, Record<string, unknown>, boolean][] = [
+      ['success with an error note', { successful: true, data: { id: 'x' }, error: 'a note' }, false],
+      ['success with an empty error object', { successful: true, data: { id: 'x' }, error: {} }, false],
+      ['no flag and no error', { data: { id: 'x' } }, false],
+      ['error only (string)', { data: {}, error: 'Validation failed: title is required' }, true],
+      ['error only (object)', { error: { message: 'Validation failed', code: 'VALIDATION' } }, true],
+      ['explicit failure', { successful: false, data: null, error: 'Validation failed' }, true],
+    ]
+    for (const [label, envelope, fails] of shapes) {
+      const single = await runtimeWith({ [SINGLE]: { value: mcp(envelope) } })
+      expect((await single.run(SINGLE)).isError, `single: ${label}`).toBe(fails)
+      // As a batch entry, flat or under `response`; a good entry beside it is always kept.
+      for (const entry of [note(1, envelope), note(1, { response: envelope })]) {
+        const { run } = await runtimeWith({ [MULTI]: { value: mcp(declared(read, entry)) } })
+        const result = await run(MULTI)
+        if (fails) {
+          const found = failure(result)
+          expect(found, `batch: ${label}`).toMatchObject({ completion: 'partial', counts: { succeeded: 1, failed: 1 }, succeeded: [read] })
+        } else if (label === 'no flag and no error') {
+          // An execution batch entry that never says it completed is unknown, not a success and not lost.
+          expect(failure(result), `batch: ${label}`).toMatchObject({ completion: 'partial', succeeded: [read], unconfirmed: [{ index: 1, reason: 'no_completion_evidence' }] })
+        } else {
+          expect(result.isError, `batch: ${label}`).toBe(false)
+        }
+      }
+    }
+  })
+
+  it('does not call a business `error` inside an entry\'s data a failure', async () => {
+    const entry = note(1, { response: { successful: true, data: { error: 'invalid token in the document body', note: 'unauthorized' } } })
+    const { run } = await runtimeWith({ [MULTI]: { value: mcp(declared(read, entry)) } })
+    expect((await run(MULTI)).isError).toBe(false)
+  })
+
+  it('keeps an entry whose success and failure flags contradict each other as unknown: not a success, not a retry candidate', async () => {
+    for (const entry of [
+      note(1, { successful: true, response: { successful: false, error: 'Validation failed' } }),
+      note(1, { successful: false, response: { successful: true, data: { id: 'maybe' } } }),
+    ]) {
+      const { run, calls } = await runtimeWith({ [MULTI]: { value: mcp(declared(read, entry)) } })
+      const found = failure(await run(MULTI))
+      expect(found).toMatchObject({ classification: 'uncertain_completion', completion: 'partial', counts: { succeeded: 1, failed: 0, unreported: 1 },
+        succeeded: [read], unconfirmed: [{ index: 1, tool_slug: 'GITHUB_CREATE_ISSUE', reason: 'contradictory_flags' }] })
+      expect(found.recovery.join(' ')).toMatch(/do NOT resend it/)
+      expect(found.recovery.join(' ')).not.toMatch(/then retry|retry entry|retry it once/i)
+      expect(calls).toEqual([MULTI])
+    }
+    // The same contradiction in a single envelope: the action may have run.
+    const single = await runtimeWith({ [SINGLE]: { value: mcp({ successful: true, response: { successful: false, error: 'Validation failed' } }) } })
+    expect(failure(await single.run(SINGLE))).toMatchObject({ classification: 'uncertain_completion', completion: 'unknown' })
+  })
+
+  it('assesses the same entries identically without the runtime', () => {
+    const run = (...results: unknown[]) => assessComposioResult(MULTI, { content: [{ type: 'text', text: JSON.stringify(declared(...results)) }] })
+    expect(run(read, ...completed)).toBeUndefined()
+    const warned = run(read, ...completed, write('bad input', 5))!
+    expect(warned.succeeded).toEqual([read, ...completed])
+    expect(warned.failed).toHaveLength(1)
+    expect(run(read, note(1, { error: 'no flag' }))!.failed).toMatchObject([{ index: 1, kind: 'action_failed' }])
+  })
+})
