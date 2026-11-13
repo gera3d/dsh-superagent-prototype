@@ -41,5 +41,12 @@
   "nextOwner": "Existing Codex coordinator",
   "nextStage": "Review/integrate corrected r3 delta against current source including intervening user merges; restore companion layout and complete targeted type/build/package qualification. Separately inspect authentic GitHub quota deadline before supported setup recheck. Then exact protected review/publication and native verification; preserve original finding identity.",
   "priority1": "Accepted PR96 unchanged; no reopen/retest",
-  "coverage": "Only priority3 reconciliation and startup blocker inspected. Other five scopes not independently requalified this pass; no continuous execution claim."
+  "coverage": "Only priority3 reconciliation and startup blocker inspected. Other five scopes not independently requalified this pass; no continuous execution claim.",
+  "canonicalObservation": {
+    "attempted": true,
+    "recorded": false,
+    "reason": "Supported observe_finding refused because deployment setup is unresolved (githubRateLimited). Live re-read confirms occurrence absent; finding remains blockedrevision4 with same r3 job. No raw database write or bypass attempted.",
+    "localReceipt": "overnight-batch-20261110/coordinator/lane3-reconciliation-observation-20261113.json",
+    "nextOwner": "Codex coordinator, after authentic quota eligibility and supported setup recovery, append this exact observation once; do not duplicate dispatch."
+  }
 }
