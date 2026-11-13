@@ -1,0 +1,15 @@
+{
+  "textResults": 644,
+  "errorResults": 10,
+  "errorBytes": 1697,
+  "oversizedErrors": 0,
+  "boundedSuccesses": 68,
+  "bytesThreshold": 64,
+  "linesOnlyThreshold": 4,
+  "oversizedOutOfScope": 19,
+  "oversizedOutOfScopeBytes": 139949,
+  "outOfScopeTools": [
+    "read",
+    "skill"
+  ]
+}

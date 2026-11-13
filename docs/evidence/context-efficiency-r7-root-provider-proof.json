@@ -1,0 +1,27 @@
+{
+  "routes": [
+    {
+      "provider": "antigravity",
+      "model": "gemini-3.8-flash"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5"
+    }
+  ],
+  "terminal": [
+    {
+      "kind": "completed"
+    }
+  ],
+  "lastUsage": [
+    {
+      "inputTokens": 2,
+      "outputTokens": 870,
+      "totalTokens": 105146,
+      "cacheReadTokens": 102251,
+      "cacheWriteTokens": 2023
+    }
+  ],
+  "note": "Actual nested metadata; not subscription allowance or dollar spend."
+}

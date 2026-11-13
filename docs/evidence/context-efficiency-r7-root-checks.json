@@ -1,0 +1,44 @@
+[
+  {
+    "name": "targeted",
+    "exit": 0,
+    "seconds": 11.62,
+    "command": [
+      "pnpm",
+      "--config.verify-deps-before-run=false",
+      "exec",
+      "vitest",
+      "run",
+      "tests/replay-output-bound.spec.ts",
+      "tests/tool-output.spec.ts",
+      "tests/tool-output-runtime.spec.ts",
+      "tests/tool-output-sessions.spec.ts",
+      "tests/prompts.spec.ts",
+      "tests/model-surface.spec.ts",
+      "tests/tools.spec.ts"
+    ]
+  },
+  {
+    "name": "typecheck",
+    "exit": 0,
+    "seconds": 35.38,
+    "command": [
+      "pnpm",
+      "--config.verify-deps-before-run=false",
+      "exec",
+      "tsc",
+      "--noEmit"
+    ]
+  },
+  {
+    "name": "build",
+    "exit": 0,
+    "seconds": 7.48,
+    "command": [
+      "pnpm",
+      "--config.verify-deps-before-run=false",
+      "exec",
+      "tsdown"
+    ]
+  }
+]

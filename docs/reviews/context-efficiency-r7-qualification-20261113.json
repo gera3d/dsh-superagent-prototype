@@ -1,0 +1,229 @@
+{
+  "at": "2026-11-13T10:44:23.850172+00:00",
+  "verdict": "Root bounded exact-head qualification passed; native review/release/acceptance pending actual GitHub eligibility",
+  "findingId": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+  "findingRevision": 8,
+  "jobId": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r7",
+  "ticketId": "4abae94273cfd65a149e9ee6333c0b87",
+  "assignmentId": "ba3796bc797424d3cdf97948782af08f",
+  "head": "8936bcf7e412642cd50965721e6e3342e645e145",
+  "base": "f0da7b5e9b7f9428fd3cc8c2518475759fc7f99a",
+  "patchSha256": "9b26185b40e2ec784b65984351729d01ac9dec47733163f33201abd6bb981a90",
+  "checks": [
+    {
+      "name": "targeted",
+      "exit": 0,
+      "seconds": 11.62,
+      "command": [
+        "pnpm",
+        "--config.verify-deps-before-run=false",
+        "exec",
+        "vitest",
+        "run",
+        "tests/replay-output-bound.spec.ts",
+        "tests/tool-output.spec.ts",
+        "tests/tool-output-runtime.spec.ts",
+        "tests/tool-output-sessions.spec.ts",
+        "tests/prompts.spec.ts",
+        "tests/model-surface.spec.ts",
+        "tests/tools.spec.ts"
+      ]
+    },
+    {
+      "name": "typecheck",
+      "exit": 0,
+      "seconds": 35.38,
+      "command": [
+        "pnpm",
+        "--config.verify-deps-before-run=false",
+        "exec",
+        "tsc",
+        "--noEmit"
+      ]
+    },
+    {
+      "name": "build",
+      "exit": 0,
+      "seconds": 7.48,
+      "command": [
+        "pnpm",
+        "--config.verify-deps-before-run=false",
+        "exec",
+        "tsdown"
+      ]
+    }
+  ],
+  "zeroResultReplay": {
+    "limits": {
+      "OUTPUT_LINES": 100,
+      "OUTPUT_BYTES": 4096,
+      "tools": [
+        "bash",
+        "pwsh",
+        "job_output",
+        "job_list",
+        "grep",
+        "glob"
+      ]
+    },
+    "results": 0,
+    "boundedResults": 0,
+    "beforeBytes": 0,
+    "afterBytes": 0,
+    "worstBoundedBytes": 0,
+    "overLimit": 0,
+    "errorsAltered": 0,
+    "tailLost": 0,
+    "retrievalMismatch": 0,
+    "savedFiles": 0,
+    "beforeTokensApprox": 0,
+    "afterTokensApprox": 0,
+    "savedPct": 0,
+    "note": "bytes/4 estimate of model-facing tool-result text only; excludes quota, cost and cache pricing",
+    "rows": []
+  },
+  "synthetic": {
+    "limits": {
+      "OUTPUT_LINES": 100,
+      "OUTPUT_BYTES": 4096,
+      "tools": [
+        "bash",
+        "pwsh",
+        "job_output",
+        "job_list",
+        "grep",
+        "glob"
+      ]
+    },
+    "results": 8,
+    "boundedResults": 5,
+    "beforeBytes": 356584,
+    "afterBytes": 153047,
+    "worstBoundedBytes": 4094,
+    "overLimit": 0,
+    "errorsAltered": 0,
+    "tailLost": 0,
+    "retrievalMismatch": 0,
+    "savedFiles": 5,
+    "beforeTokensApprox": 89146,
+    "afterTokensApprox": 38262,
+    "savedPct": 57.1,
+    "note": "bytes/4 estimate of model-facing tool-result text only; excludes quota, cost and cache pricing"
+  },
+  "syntheticSha256": "7cbf2c867e19513609e1a4d33390a8fa0b4a6594c434af77c7074e25248ddcc6",
+  "recorded": {
+    "limits": {
+      "OUTPUT_LINES": 100,
+      "OUTPUT_BYTES": 4096,
+      "tools": [
+        "bash",
+        "pwsh",
+        "job_output",
+        "job_list",
+        "grep",
+        "glob"
+      ]
+    },
+    "results": 644,
+    "boundedResults": 68,
+    "beforeBytes": 1043327,
+    "afterBytes": 771843,
+    "worstBoundedBytes": 4095,
+    "overLimit": 0,
+    "errorsAltered": 0,
+    "tailLost": 0,
+    "retrievalMismatch": 0,
+    "savedFiles": 68,
+    "beforeTokensApprox": 260832,
+    "afterTokensApprox": 192961,
+    "savedPct": 26,
+    "note": "bytes/4 estimate of model-facing tool-result text only; excludes quota, cost and cache pricing"
+  },
+  "coverageTally": {
+    "textResults": 644,
+    "errorResults": 10,
+    "errorBytes": 1697,
+    "oversizedErrors": 0,
+    "boundedSuccesses": 68,
+    "bytesThreshold": 64,
+    "linesOnlyThreshold": 4,
+    "oversizedOutOfScope": 19,
+    "oversizedOutOfScopeBytes": 139949,
+    "outOfScopeTools": [
+      "read",
+      "skill"
+    ]
+  },
+  "reviewInputSizeEstimate": {
+    "sourcePatchBytes": 74651,
+    "fileCount": 15,
+    "estimatedDiffObjectBytes": 75072,
+    "limit": 100000,
+    "limitation": "Offline complete git hunk serialization estimate, not actual GitHub native reviewer payload; native completeness/size fences remain authoritative."
+  },
+  "providerProof": {
+    "routes": [
+      {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash"
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      }
+    ],
+    "terminal": [
+      {
+        "kind": "completed"
+      }
+    ],
+    "lastUsage": [
+      {
+        "inputTokens": 2,
+        "outputTokens": 870,
+        "totalTokens": 105146,
+        "cacheReadTokens": 102251,
+        "cacheWriteTokens": 2023
+      }
+    ],
+    "note": "Actual nested metadata; not subscription allowance or dollar spend."
+  },
+  "review": "Inspected entire new replay regression fixture, guard, prompt/evidence corrections and unchanged hook. Empty invocation nowexit0/savedFiles0; all-short/all-error controlled sessions tested through spawned real script. Only2identified redundant restatements absent, equivalent explicit authority rules remain; oversized errors staywhole, intentional read/skill exclusion quantified. Prior singleline/collision/pointer corrections reused, no new runtime scope.",
+  "rawLogWhitespace": "git diff --check reports only raw worker build-log trailing space and test-log blank EOF. Raw evidence left exact; not a source/test failure.",
+  "limits": [
+    "85targetedtests/7files not broad suite; overlaps earlier correction coverage, do not sum as independent tests",
+    "No native deployedworker/release acceptance proof",
+    "644recorded results have0oversizederrors; oversizederror passthrough is controlledsynthetic/ToolRuntime/Sessions coverage",
+    "Bytes/4 is estimate;26percent recorded and57.1percent synthetictooltext reduction not quota/cost/cache savings",
+    "Outputspillfiles persist;no cleanup added",
+    "Offline75kBreviewinput estimate not nativeGitHub completeness/cap proof"
+  ],
+  "live": {
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "runtime": {
+      "state": "ready",
+      "detail": "Orchestrator is ready",
+      "at": "2026-11-13T08:45:25.900Z"
+    },
+    "github": {
+      "state": "paused",
+      "detail": "GitHub primary rate limit reached; polling resumes after 2026-11-13T10:52:46.892Z",
+      "code": "rateLimited",
+      "values": {
+        "kind": "primary",
+        "until": "2026-11-13T10:52:46.892Z"
+      }
+    }
+  },
+  "actions": [
+    "Read actual r7 endedassignment and nested completed trajectory with native orchestrator_report",
+    "Cloned immutablecandidate into isolated trustedlayout with existing dependencies/companion only",
+    "Independent exact-head targeted/type/build/zero/synthetic/recordedreplays and rawcoverage tally",
+    "No native release attempt while activequota cooldown, no restart/settings/account/credential/spend/schedule change; original candidate/report/jobs/PR104failure and acceptedPR96 untouched"
+  ],
+  "nextOwner": "Existing Codex coordinator for actual-eligible native independent review/package/protected publication/liveverification/evidence acceptance; Harness for demonstrated implementation corrections."
+}
