@@ -403,25 +403,51 @@ function pull(ctx: SourceContext, round: Round, number: number): Promise<Pull> {
   }
   return read
 }
-async function intakeComments(ctx: SourceContext, ref: PullRef, since: string, round: Round): Promise<void> {
+/**
+ * Reads a Thread's comment lists (conversation, inline and review) and delivers what is at or after `since`.
+ * Each list is requested once with `--include`. Its ETag is kept, with the request path it was fetched with, only when the
+ * list fit on one page; the next request for the same path sends `If-None-Match`, and HTTP 304 means nothing changed. A list
+ * of several pages is read in full every time. A failed read stores nothing.
+ * @returns the time of the newest item at or after `since` that was read, or undefined when nothing new was read.
+ */
+async function intakeComments(ctx: SourceContext, ref: PullRef, since: string, round: Round): Promise<number | undefined> {
   const commands = ctx.commands.withSignal(round.signal)
   const { login } = ctx.deployment.github
   const kinds = ref.isPr ? ['conversation', 'inline', 'review'] as const : ['conversation'] as const
+  const tag = KV.github.reads(ref.number)
+  const kept = { ...ctx.state.get(tag) }
+  let newest: number | undefined
   for (const kind of kinds) {
     const suffix = `&since=${encodeURIComponent(since)}`
     const path = kind === 'conversation' ? `issues/${ref.number}/comments?per_page=100${suffix}` : kind === 'inline' ? `pulls/${ref.number}/comments?per_page=100${suffix}` : `pulls/${ref.number}/reviews?per_page=100`
-    const comments = await commands.pages(CommentSchema, path, round.tally)
+    const stored = kept[kind]?.path === path ? kept[kind] : undefined
+    let raw: string
+    try { raw = await commands.api(path, '--include', ...stored ? ['-H', `If-None-Match: ${stored.etag}`] : []) }
+    catch (error) {
+      if (error instanceof CliError && error.code === 304) continue
+      throw error
+    }
+    const { headers, body } = included(raw)
+    const paged = /rel="next"/.test(headers)
+    const comments = paged ? await commands.pages(CommentSchema, path, round.tally)
+      : validItems(CommentSchema, z.array(z.unknown()).parse(JSON.parse(body)), round.tally)
     for (const comment of comments) {
       // Stopping mid-read throws so the thread's cursor stays where it was.
       if (stopped(ctx, round)) throw new Error('The GitHub Source stopped during the poll')
       const timestamp = Date.parse(comment.updated_at ?? comment.submitted_at ?? comment.created_at ?? '')
       if (!Number.isFinite(timestamp) || timestamp < Date.parse(since)) continue
+      newest = Math.max(newest ?? timestamp, timestamp)
       if (sameName(comment.user.login, login) && !isSelfAllowed(undefined, comment.body)) continue
       // A review decision without a body still reaches the ticket: a worker may be waiting for that approval.
       const trigger = commentTrigger(comment, ref, kind, login)
       if (trigger.text) await ctx.receive(trigger)
     }
+    const etag = /^etag:\s*(.+)$/im.exec(headers)?.[1]?.trim()
+    if (etag && !paged) kept[kind] = { path, etag }
+    else delete kept[kind]
+    ctx.state.set(tag, kept)
   }
+  return newest
 }
 export async function pollTicketPulls(ctx: SourceContext, signal?: AbortSignal, round = newRound(signal)): Promise<void> {
   const numbers = [...new Set(ctx.tickets.open().flatMap(ticket => pullsOf(ticket, true)))]
@@ -474,9 +500,10 @@ async function pollThread(ctx: SourceContext, round: Round, thread: Thread): Pro
   }
   const checkpoint = KV.github.cursor(number)
   const since = ctx.state.get(checkpoint) ?? thread.createdAt
-  if (thread.meta.isPr === true) {
-    const pr = await pull(ctx, round, number)
-    await intakeComments(ctx, { number, isPr: true, url: pr.html_url, prAuthor: pr.user.login }, since, round)
-  } else await intakeComments(ctx, { number, isPr: false }, since, round)
-  ctx.state.set(checkpoint, cursorAt(round.started))
+  const pr = thread.meta.isPr === true ? await pull(ctx, round, number) : undefined
+  const newest = await intakeComments(ctx, pr ? { number, isPr: true, url: pr.html_url, prAuthor: pr.user.login } : { number, isPr: false }, since, round)
+  // The cursor moves only when a newer item was read, as for the repository streams, so an unchanged Thread repeats the same
+  // request and GitHub can answer 304. Trigger ID deduplication and the five-second overlap cover items that arrive late.
+  const moved = newest === undefined ? since : cursorAt(new Date(newest).toISOString())
+  if (Date.parse(moved) > Date.parse(since)) ctx.state.set(checkpoint, moved)
 }
