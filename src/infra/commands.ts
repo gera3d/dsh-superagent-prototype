@@ -4,6 +4,7 @@ import { basename } from 'node:path'
 import { promisify } from 'node:util'
 import { z } from 'zod'
 import type { Deployment } from '../deployment.ts'
+import { currentCaller, endpointOf, GithubTelemetry, quotaHeaders, statusOf, type Outcome, type QuotaHeaders } from './github-telemetry.ts'
 
 const exec = promisify(execFile)
 const TIMEOUT_MS = 90_000
@@ -12,7 +13,7 @@ const TIMEOUT_MS = 90_000
  * Source channels and pollers inspect its code to distinguish deleted conversations from retryable failures.
  */
 export class CliError extends Error {
-  constructor(message: string, readonly code?: number, readonly exitCode?: number, readonly rate?: RateLimit) { super(message) }
+  constructor(message: string, readonly code?: number, readonly exitCode?: number, readonly rate?: RateLimit, readonly quota?: QuotaHeaders) { super(message) }
 }
 /** Sanitized GitHub quota facts from a failed response: `primary` when the hourly allowance is spent, `secondary` for abuse limits and HTTP 429. */
 export interface RateLimit { kind: 'primary' | 'secondary'; resetAt?: number; retryAfter?: number }
@@ -47,7 +48,7 @@ export function commandError(error: unknown, program = 'command'): Error {
     const code = parsed?.error?.code
     if (parsed?.error?.message) return new CliError(`${parsed.error.message}${code ? ` (${code})` : ''}`, code, exitCode)
     // `gh` exits non-zero on HTTP errors (such as `gh: Not Found (HTTP 404)`) and on `gh: HTTP 304`, which ETag polling relies on.
-    if (stderr) return new CliError(stderr.slice(0, 2000), Number(/\bHTTP (\d{3})\b/.exec(stderr)?.[1]) || undefined, exitCode, rateLimit('stdout' in error ? error.stdout : undefined, stderr))
+    if (stderr) return new CliError(stderr.slice(0, 2000), Number(/\bHTTP (\d{3})\b/.exec(stderr)?.[1]) || undefined, exitCode, rateLimit('stdout' in error ? error.stdout : undefined, stderr), quotaHeaders('stdout' in error ? error.stdout : undefined))
   }
   return new CliError(`${basename(program)} ${ended(error)}`, undefined, exitCode)
 }
@@ -82,10 +83,13 @@ export class Commands {
    * @param resolved - returns the resolved deployment setup, or throws while setup is still pending.
    * @param environment - variables overriding `process.env` for every command (such as isolated git settings).
    */
-  constructor(private readonly resolved: () => Deployment, private readonly environment: Record<string, string | undefined>, private readonly signal: AbortSignal) {}
+  /** Counts of this deployment's GitHub requests; shared by every `withSignal` copy. */
+  readonly telemetry: GithubTelemetry
+  constructor(private readonly resolved: () => Deployment, private readonly environment: Record<string, string | undefined>, private readonly signal: AbortSignal,
+    telemetry?: GithubTelemetry) { this.telemetry = telemetry ?? new GithubTelemetry() }
   get deployment(): Deployment { return this.resolved() }
   get repository(): string { return this.deployment.repository }
-  withSignal(signal?: AbortSignal): Commands { return signal ? new Commands(this.resolved, this.environment, AbortSignal.any([this.signal, signal])) : this }
+  withSignal(signal?: AbortSignal): Commands { return signal ? new Commands(this.resolved, this.environment, AbortSignal.any([this.signal, signal]), this.telemetry) : this }
   async run(program: string, args: string[], cwd?: string): Promise<string> {
     try {
       const { stdout } = await exec(program, args, { cwd, signal: this.signal, timeout: TIMEOUT_MS, maxBuffer: 16 * 1024 * 1024,
@@ -94,7 +98,40 @@ export class Commands {
     } catch (error) { throw commandError(error, program) }
   }
   /** Runs the agent's GitHub CLI and parses its JSON output; callers should prefer `api`, which is restricted to the configured repository and validates output. */
-  async gh<T>(args: string[]): Promise<T> { return JSON.parse(await this.run(this.deployment.github.cli, args)) as T }
+  async gh<T>(args: string[]): Promise<T> {
+    // A slurped paginated call made one request per page; each page is one entry of the top-level array.
+    const slurped = args.includes('--paginate') && args.includes('--slurp')
+    let parsed: unknown, done = false
+    const output = await this.github(args, stdout => { parsed = JSON.parse(stdout); done = true; return slurped && Array.isArray(parsed) ? parsed.length : 1 })
+    return (done ? parsed : JSON.parse(output)) as T
+  }
+  /**
+   * Runs the agent's GitHub CLI and counts an `api` call in `telemetry` under the caller the code runs for: its masked endpoint, its outcome
+   * (from the `--include` status line when present, else the exit status) and the quota headers of the response. Makes no request of its own.
+   */
+  private async github(args: string[], weigh: (stdout: string) => number = () => 1): Promise<string> {
+    const counted = args[0] === 'api'
+    const sample = { caller: currentCaller(), endpoint: counted ? endpointOf(args) : '' }
+    let stdout: string
+    try { stdout = await this.run(this.deployment.github.cli, args) }
+    catch (error) {
+      if (counted) {
+        const code = error instanceof CliError ? error.code : undefined
+        const outcome: Outcome = code === 304 ? '304' : error instanceof CliError && (error.rate || code === 429) ? 'limited' : 'error'
+        this.telemetry.record({ ...sample, outcome, quota: error instanceof CliError ? error.quota : undefined })
+      }
+      throw error
+    }
+    if (counted) {
+      const status = statusOf(stdout)
+      // Without `--include` the status is unknown: a write is some other 2xx, a read is a plain 200.
+      const outcome: Outcome = status !== undefined ? status === 200 ? '200' : status === 304 ? '304' : '2xx' : sample.endpoint.includes(' ') ? '2xx' : '200'
+      let weight = 1
+      try { weight = weigh(stdout) } catch { /* Unreadable output counts as one request; the caller reports it. */ }
+      this.telemetry.record({ ...sample, outcome, weight, quota: quotaHeaders(stdout) })
+    }
+    return stdout
+  }
   /**
    * Calls the GitHub API on a path within the configured repository, validating JSON output when a schema is provided
    * or returning raw CLI output (such as raw files or `--include` headers) when omitted.
@@ -103,7 +140,7 @@ export class Commands {
   async api<T>(schema: z.ZodType<T>, path: string, ...flags: string[]): Promise<T>
   async api(path: string, ...flags: string[]): Promise<string>
   async api<T>(schema: z.ZodType<T> | string, ...rest: string[]): Promise<T | string> {
-    if (typeof schema === 'string') return this.run(this.deployment.github.cli, ['api', this.path(schema), ...rest])
+    if (typeof schema === 'string') return this.github(['api', this.path(schema), ...rest])
     const [path = '', ...flags] = rest
     return schema.parse(await this.gh(['api', this.path(path), ...flags]))
   }
