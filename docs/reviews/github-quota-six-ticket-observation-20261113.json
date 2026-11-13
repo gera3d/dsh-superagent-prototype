@@ -634,7 +634,7 @@
       "revision": 3
     }
   },
-  "settingsLimit": "Observed revisions/marks only, not proof of physical quota or who changed them. Google and OpenRouter marked exhausted; OpenAI conserved. No modification or forced trial.",
+  "settingsLimit": "Observed models revision25: Google marked exhausted; Anthropic/DeepSeekOfficial available; OpenAI conserved. Economy route now DeepSeekOfficial rather than earlier OpenRouter. Neither physical quota nor change author/authority was independently verified. Observer made no settings change.",
   "backoff": {
     "github": {
       "state": "ready",
@@ -665,5 +665,6 @@
     "pendingScreenQuestion": "Unanswered; no repeat prompt, Chrome action or inferred consent.",
     "stage": "194check source candidate remains awaiting original native review/package/Publish/verification/acceptance; not deployed."
   },
-  "actions": "Observational reads and requested durable documentation only. No canonical issue/job/decision mutation, workerinput, message, dispatch/retry/reopening, tests, implementation, Chrome, settings/access/accounts/credential/routes/spending/reserve/capacity change."
+  "actions": "Observational reads and requested durable documentation only. No canonical issue/job/decision mutation, workerinput, message, dispatch/retry/reopening, tests, implementation, Chrome, settings/access/accounts/credential/routes/spending/reserve/capacity change.",
+  "snapshotStageNote": "During this bounded observation #203/#205 became ended with ready reports; #204/#206/#207 were running, #208 pending. Original scoped request logs were inspected only for #203/#204/#205 and prove Sonnet execution for those original three, not the newly started #206/#207. No candidate correctness/test execution/PR/native acceptance was audited."
 }
