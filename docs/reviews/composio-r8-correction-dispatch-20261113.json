@@ -1,0 +1,20 @@
+{
+  "at": "2026-11-13T14:59:46.075135+00:00",
+  "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+  "revision": 8,
+  "state": "running",
+  "job": {
+    "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r8",
+    "ticketId": "5cbcad514cfa6f880f483c0e0f2ae566",
+    "assignmentId": "c447ef4dc4a1231ecbeddb5f2feab2d5"
+  },
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "ticketStage": "working",
+  "preserved": "r1/r3/r5 original history, acceptedPR96/user merges, pending unapproved clarification",
+  "nextOwner": "Harness correction; Codex exact-head independent review/protected release if qualified",
+  "limits": "No remoteComposio actions/access/config changes or release acceptance"
+}
