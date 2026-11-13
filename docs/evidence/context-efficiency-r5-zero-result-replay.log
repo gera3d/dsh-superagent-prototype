@@ -1,0 +1,17 @@
+node:fs:1583
+  const result = binding.readdir(
+                         ^
+
+Error: ENOENT: no such file or directory, scandir '/var/folders/d_/kvf0gxbn5rd5n1qxcfhry1pr0000gn/T/replay-output-bound-E8N3wM/.tool-output'
+    at readdirSync (node:fs:1583:26)
+    at file:///Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/coordinator/lane3-r5-qualification/work/scripts/replay-output-bound.mjs:72:20
+    at ModuleJob.run (node:internal/modules/esm/module_job:413:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:660:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'scandir',
+  path: '/var/folders/d_/kvf0gxbn5rd5n1qxcfhry1pr0000gn/T/replay-output-bound-E8N3wM/.tool-output'
+}
+
+Node.js v24.13.0

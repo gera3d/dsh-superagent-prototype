@@ -1,0 +1,68 @@
+{
+  "rows": [
+    {
+      "corpus": "s6.jsonl",
+      "bytes": 172,
+      "lines": 1,
+      "overLimit": false
+    },
+    {
+      "corpus": "s4.jsonl",
+      "bytes": 172,
+      "lines": 1,
+      "overLimit": false
+    },
+    {
+      "corpus": "s5.jsonl",
+      "bytes": 180,
+      "lines": 1,
+      "overLimit": false
+    },
+    {
+      "corpus": "s5.jsonl",
+      "bytes": 173,
+      "lines": 1,
+      "overLimit": false
+    },
+    {
+      "corpus": "s5.jsonl",
+      "bytes": 155,
+      "lines": 1,
+      "overLimit": false
+    },
+    {
+      "corpus": "s5.jsonl",
+      "bytes": 148,
+      "lines": 1,
+      "overLimit": false
+    },
+    {
+      "corpus": "s5.jsonl",
+      "bytes": 61,
+      "lines": 1,
+      "overLimit": false
+    },
+    {
+      "corpus": "s5.jsonl",
+      "bytes": 232,
+      "lines": 1,
+      "overLimit": false
+    },
+    {
+      "corpus": "s5.jsonl",
+      "bytes": 232,
+      "lines": 1,
+      "overLimit": false
+    },
+    {
+      "corpus": "s1.jsonl",
+      "bytes": 172,
+      "lines": 1,
+      "overLimit": false
+    }
+  ],
+  "totalErrors": 10,
+  "totalBytes": 1697,
+  "oversizedErrors": 0,
+  "oversizedErrorBytes": 0
+}

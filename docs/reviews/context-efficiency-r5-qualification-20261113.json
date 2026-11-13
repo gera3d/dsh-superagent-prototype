@@ -1,6 +1,6 @@
 {
   "at": "2026-11-13T09:48:50.226786+00:00",
-  "verdict": "Root exact-head bounded qualification passed; native independent review/publication/deployment/acceptance remain separate",
+  "verdict": "CHANGES REQUIRED after native PR104 review and root zero-result replay reproduction; not deployed",
   "findingId": "e1dfd442-bb88-409e-bef0-b2db569dca79",
   "revision": 6,
   "jobId": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r5",
@@ -170,5 +170,108 @@
   ],
   "history": "Original r1/r3/r5 jobs, negative PR92, failed PR103/native automatic correction denial and acceptedPR96 retained; no acceptance to free slots",
   "settings": "44/22/3 unchanged; OpenAIconserved,Google5percentreserve,max3/currentroutes/cooldowns retained",
-  "nextOwner": "Existing Codex coordinator: after actual GitHub cooldown recovery, native exact-head review/test/package and protected publish/live verification/acceptance if prerequisites pass. Harness implements any demonstrated correction."
+  "nextOwner": "Harness same-finding bounded zero-result replay/documentation correction under retained approval, then Codex exact re-review/package/protected release; preserve failed PR104 and original reports.",
+  "nativeReview": {
+    "pr": 104,
+    "delivery": "auto-ad6f72afa5b3f68693c8f064735c5d0f",
+    "revision": 7,
+    "stage": "review",
+    "state": "blocked",
+    "provider": "deepseek-official/deepseek-flash",
+    "head": "9fac827da9ed6a373296cf4caed5deaf2bfb93d1",
+    "base": "60b868a149d8ffb74bbcd1b62e56c1ac1834cd06",
+    "patchSha256": "51b1f9d53d8b3e6a8e327ffc8cb7a8936aa4e78f181068421d16e4d49de728f5",
+    "result": "failed",
+    "automaticCorrection": "Original mandate is no longer authorized; correction authority is missing; no bypass attempted."
+  },
+  "newRootFindings": {
+    "zeroResultReplay": "node --experimental-strip-types scripts/replay-output-bound.mjs with no corpus exits1/ENOENT at readdirSync; no OUTPUT_DIRECTORY exists when no result bounded.",
+    "errorCoverage": {
+      "rows": [
+        {
+          "corpus": "s6.jsonl",
+          "bytes": 172,
+          "lines": 1,
+          "overLimit": false
+        },
+        {
+          "corpus": "s4.jsonl",
+          "bytes": 172,
+          "lines": 1,
+          "overLimit": false
+        },
+        {
+          "corpus": "s5.jsonl",
+          "bytes": 180,
+          "lines": 1,
+          "overLimit": false
+        },
+        {
+          "corpus": "s5.jsonl",
+          "bytes": 173,
+          "lines": 1,
+          "overLimit": false
+        },
+        {
+          "corpus": "s5.jsonl",
+          "bytes": 155,
+          "lines": 1,
+          "overLimit": false
+        },
+        {
+          "corpus": "s5.jsonl",
+          "bytes": 148,
+          "lines": 1,
+          "overLimit": false
+        },
+        {
+          "corpus": "s5.jsonl",
+          "bytes": 61,
+          "lines": 1,
+          "overLimit": false
+        },
+        {
+          "corpus": "s5.jsonl",
+          "bytes": 232,
+          "lines": 1,
+          "overLimit": false
+        },
+        {
+          "corpus": "s5.jsonl",
+          "bytes": 232,
+          "lines": 1,
+          "overLimit": false
+        },
+        {
+          "corpus": "s1.jsonl",
+          "bytes": 172,
+          "lines": 1,
+          "overLimit": false
+        }
+      ],
+      "totalErrors": 10,
+      "totalBytes": 1697,
+      "oversizedErrors": 0,
+      "oversizedErrorBytes": 0
+    },
+    "triage": "Native review describes output bound itself consistently; requires accurate prompt narrative/dedup reasoning and replay coverage. Preserve isError whole; recorded corpus actually contains10short error results/1697bytes,0oversized, not worker-doc claimed4oversized. Synthetic oversized-error passthrough remains controlled coverage. Native model claim is not evidence without this tally."
+  },
+  "quotaAfterDeadline": {
+    "at": "2026-11-13T09:53:23.838830+00:00",
+    "exit": 0,
+    "core": {
+      "limit": 5000,
+      "used": 142,
+      "remaining": 4858,
+      "reset": 1794567159
+    },
+    "graphql": {
+      "limit": 5000,
+      "used": 2,
+      "remaining": 4998,
+      "reset": 1794564613
+    },
+    "responseStatus": "HTTP/2.0 200 OK",
+    "retryAfter": []
+  }
 }

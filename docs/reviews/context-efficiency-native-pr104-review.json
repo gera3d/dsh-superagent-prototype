@@ -1,0 +1,47 @@
+{
+  "provider": "deepseek-official / deepseek-flash",
+  "verdict": {
+    "verdict": "failed",
+    "findings": [
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 104,
+        "headSha": "9fac827da9ed6a373296cf4caed5deaf2bfb93d1",
+        "path": "prompts/team/communication.md",
+        "line": 12,
+        "severity": "medium",
+        "message": "Requirement 2 asks to remove demonstrably duplicated prompt instructions, but this hunk adds restatements of rules that already sit on the two preceding lines (line 9 'Creating a PR does not mean it is ready, fixed or merged.', line 10 'Unsolicited IM must require human attention: a ready outcome, necessary human action, or definitive inability to complete'). 'Human attention is the condition for an unsolicited IM update.' and 'A PR merely existing is not a delivery milestone.' can be deleted without losing any authority, requirement or reporting rule, so the evidence claim that 'no duplicated line was shown to be removable without losing a rule' is contradicted by this addition. Either drop the two redundant lines or drop the no-duplication claim and justify why the restatement is needed."
+      },
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 104,
+        "headSha": "9fac827da9ed6a373296cf4caed5deaf2bfb93d1",
+        "path": "src/app/tool-output.ts",
+        "line": 133,
+        "severity": "low",
+        "message": "The `result.isError` short-circuit means oversized failing-command output is never bounded or saved, so the largest real stdout (failed build/test runs, non-zero exits, grep with no match) still enters the model context whole; the recorded corpus already contains 4 oversized isError results that were passed whole. The evidence table reports these as 'passed whole' but not how many bytes they leave unbounded, so the coverage claim stays imprecise. Either save the full error text and bound it while keeping the pointer plus the trailing diagnostic/exit code, or state explicitly in the evidence how much oversized output is out of scope and why a saved pointer would not be acceptable."
+      },
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 104,
+        "headSha": "9fac827da9ed6a373296cf4caed5deaf2bfb93d1",
+        "path": "scripts/replay-output-bound.mjs",
+        "line": 72,
+        "severity": "low",
+        "message": "`readdirSync(join(directory, OUTPUT_DIRECTORY))` throws ENOENT whenever no result was bounded, so the documented replay aborts after all measurement work instead of reporting zeros: a small recorded session, a session whose oversized results are all errors (skipped by the bound), or an invocation with no `--synthetic` flag and no paths all crash here. Guard with `existsSync` (or catch ENOENT) and report `savedFiles: 0` so the reproduction command in docs/evidence/worker-output-bound-measurement.md stays runnable and deterministic."
+      },
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 104,
+        "headSha": "9fac827da9ed6a373296cf4caed5deaf2bfb93d1",
+        "path": "docs/evidence/worker-output-bound-measurement.md",
+        "line": 53,
+        "severity": "low",
+        "message": "The claim 'Relative to the current merged base (#92) the diff therefore only adds those restored lines' is inaccurate for prompts/team/communication.md: the base line 'Silent resolution does not suppress the initial acknowledgement of a new human request.' is deleted and replaced by the two new acknowledgement lines, so that hunk removes as well as adds text. Correct the wording (e.g. 'restores the pre-#92 acknowledgement rule in place of the base line') so the per-file diff description in this evidence file matches the actual patch."
+      }
+    ],
+    "rationale": "Batch 1/1 gera3d/dsh-superagent-prototype#104@9fac827da9ed: The bound itself is well covered: the single-line truncation fix, end-of-line/status preservation, no-overwrite digest naming, atomic save, limit/pointer guard, error passthrough, and real ToolRuntime plus Sessions-level tests are consistent with the prompt text, and no routing, quota, OpenAI-conservation or approval-gate change appears. Reproducibility is mostly good (corpus sha256s, deterministic synthetic case, explicit disclaimer that bytes/4 is an estimate and that input/output/cache-read tokens, allowance burn and billed cost are distinct and not claimed; the earlier 98-session/29.9% claim is retracted). Two intake requirements are not met. Requirement 2 asked for removal of demonstrably duplicated prompt text, yet this change adds restatements of rules already present one line above, and the evidence file simultaneously asserts no duplicated line was removable. Coverage reporting (requirement 6) is also incomplete for oversized error output, which the bound deliberately excludes and leaves unbounded in context. The replay script additionally crashes on corpora with no bounded result, undermining the published reproduction command."
+  },
+  "fingerprint": "58fd51e0022295ca3c8ac4b3a909a801fc0c9eb25e559b2fb4fc47a35114221f",
+  "bindingFingerprint": "c4ce1fc1d470b41fa6f1ff19928a1c0e5b5496d0be010aec3c18aa6c19b50720"
+}
