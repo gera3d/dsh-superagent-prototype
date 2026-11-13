@@ -1,0 +1,46 @@
+{
+  "at": "2026-11-13T17:00:51.205841+00:00",
+  "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+  "revision": 13,
+  "state": "running",
+  "job": {
+    "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r13",
+    "ticketId": "a0f19eb95830336f45c261abf5113ef1",
+    "assignmentId": "a82330c1a8086953c4afb2ef6f707083"
+  },
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "priorHead": "3e630f84037a47a744a29632fd2f01e19f7e3b9a",
+  "review": "178existingchecks passed exit0; static batch-success consistency review requires correction, no new runtimefailureclaim",
+  "authority": "Supported original humanapproval samefindingretry12->13/confirm; no deniedlease/policy/access override",
+  "nextOwner": "Harness correction; Codex exacthead review/protected release ifqualified",
+  "limits": "No externalcall/newtestsbyCodex/implementation/package/deploy/accept/settingschange; pendingclarification held",
+  "nestedActivity": {
+    "events": 126,
+    "tools": [
+      "bash",
+      "job_output",
+      "bash",
+      "bash",
+      "read",
+      "bash",
+      "bash",
+      "read"
+    ],
+    "toolCalls": 15,
+    "routes": [
+      {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "medium"
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      }
+    ]
+  }
+}
