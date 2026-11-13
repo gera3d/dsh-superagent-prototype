@@ -1,0 +1,85 @@
+{
+  "provider": "deepseek-official / deepseek-flash",
+  "verdict": {
+    "verdict": "failed",
+    "findings": [
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 106,
+        "headSha": "78a8f78892e029dda9720ae069464f44b95e5b4a",
+        "path": "src/app/tools/composio.ts",
+        "line": 217,
+        "severity": "medium",
+        "message": "Removing the `payload.error`-only detection makes the single-action path asymmetric with the batch path. `assessComposioResult` relies on `unwrapped.isError` for a single action, which now requires `payload.successful === false`; a single Composio action that reports failure only through a structured `error` (no `successful` flag) is treated as success, while the equivalent batch entry is still flagged via `isBatchItemFailed` (`item.error`/`response.error`). Confirm Composio always sets `successful:false` for failures, or detect a structured `error` consistently for single actions; otherwise a genuine nested single-action failure is silently passed (requirement 2)."
+      },
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 106,
+        "headSha": "78a8f78892e029dda9720ae069464f44b95e5b4a",
+        "path": "tests/composio-bridge.spec.ts",
+        "line": 35,
+        "severity": "medium",
+        "message": "The only regressions that exercise the real `createMcpToolDefinition` bridge \u2014 and the only 'preserved prior success' case \u2014 are wrapped in `describe.skipIf(!available)`, keyed to a hardcoded `~/.npm-global/.../dsh-mcp-client/lib/index.js`. When that package is absent (typical CI), these tests are silently skipped, so requirement 5's real boundary regressions, including preserved prior success, may not actually run. Add an always-on equivalent (e.g., preserved-prior-success via a mock `call` behind the real definition) or ensure the host package is installed in CI."
+      },
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 106,
+        "headSha": "78a8f78892e029dda9720ae069464f44b95e5b4a",
+        "path": "src/app/sessions.ts",
+        "line": 370,
+        "severity": "medium",
+        "message": "`observeComposio` binds an ordinary (root) Session with `subagent: true` and overwrites any existing binding via `this.bindings.set`, discarding previously stored disposers. For a person's own chat this mislabels a non-subagent session and may alter disposal/routing semantics, contradicting the comment that 'permissions, prompt and routing stay exactly as they are' and requirement 7 (keep routes unchanged). Prefer adding the disposer to a correctly-typed non-subagent binding rather than replacing the whole binding."
+      }
+    ],
+    "rationale": "Batch 1/1 gera3d/dsh-superagent-prototype#106@78a8f78892e0: The classification precedence, success retention, sanitized diagnostics, retry-after/connection-required guidance and no-allowlist-widening are solid and well tested at a real ToolRuntime boundary. However, three concrete gaps remain: the single-action failure detection is now asymmetric with batch detection (a nested `error`-only failure can be treated as success); the real MCP bridge and preserved-prior-success regressions are conditionally skipped under a hardcoded home path, so requirement 5's regressions may not execute; and ordinary-session wiring marks the binding `subagent:true` and overwrites existing bindings, risking requirement 7. Failing pending these fixes/confirmations."
+  },
+  "result": {
+    "outcome": "failed",
+    "evidence": [
+      {
+        "id": "independent-review:auto-5cbcad514cfa6f880f483c0e0f2ae566:3:review:5aece2de9b6a69ee",
+        "kind": "review",
+        "bindings": {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "sourceIssue": 106,
+          "baseSha": "e9b49c3d754748c2ba50322770bd6f6dfad78a1a",
+          "headSha": "78a8f78892e029dda9720ae069464f44b95e5b4a",
+          "environment": "installed local Harness superagent",
+          "refs": [
+            {
+              "repository": "gera3d/dsh-superagent-prototype",
+              "pr": 106,
+              "headSha": "78a8f78892e029dda9720ae069464f44b95e5b4a",
+              "baseSha": "e9b49c3d754748c2ba50322770bd6f6dfad78a1a"
+            }
+          ]
+        },
+        "recordedAt": "2026-11-13T16:08:01.613Z",
+        "reference": "sqlite:delivery_capability_review/auto-5cbcad514cfa6f880f483c0e0f2ae566%3A3%3Areview%3A5aece2de9b6a69ee",
+        "outcome": "failed"
+      }
+    ]
+  },
+  "batches": [
+    {
+      "repository": "gera3d/dsh-superagent-prototype",
+      "pr": 106,
+      "headSha": "78a8f78892e029dda9720ae069464f44b95e5b4a",
+      "diffSha256": "ca1e144782c35570b910d0c6b6a3027ae296334222b860ed613e805c703e5484",
+      "verdict": "failed",
+      "rationale": "The classification precedence, success retention, sanitized diagnostics, retry-after/connection-required guidance and no-allowlist-widening are solid and well tested at a real ToolRuntime boundary. However, three concrete gaps remain: the single-action failure detection is now asymmetric with batch detection (a nested `error`-only failure can be treated as success); the real MCP bridge and preserved-prior-success regressions are conditionally skipped under a hardcoded home path, so requirement 5's regressions may not execute; and ordinary-session wiring marks the binding `subagent:true` and overwrites existing bindings, risking requirement 7. Failing pending these fixes/confirmations.",
+      "provider": "deepseek-official / deepseek-flash"
+    }
+  ],
+  "at": "2026-11-13T16:09:24.024545+00:00",
+  "deliveryId": "auto-5cbcad514cfa6f880f483c0e0f2ae566",
+  "deliveryRevision": 7,
+  "state": "blocked",
+  "correctionBlocker": "Original mandate is no longer authorized; correction authority is missing",
+  "integratedHead": "78a8f78892e029dda9720ae069464f44b95e5b4a",
+  "integratedPatchSha256": "1602f13714e7ba40abcd09eca6bc284466005a21f2e5842be6714b0774e677d9",
+  "sourcePr": 106,
+  "rootQualification": "139 targeted checks pass exit0; code eligible for native review but NOT accepted. Native review subsequently failed; original candidate and all failed review evidence retained. No native package/types/build/publish/install or acceptance reached.",
+  "coordinatorAssessment": "Native binding overwrite claim needs qualification: Sessions.decorate begins if(bindings.has(agent))return; ordinary bindings intentionally skip managed prompt/routing events using subagent:true. Do not blindly remove this guard/flag and route ordinary user chats. Worker must demonstrate/reconcile the semantic concern with disposal/repeated creation/prompt/routing controls and precise evidence. Error-only detection must distinguish actual action failure from business data; preserve existing positive controls.",
+  "next": "Use only original same-finding bounded correction under retained operator approval through supported coordinator interface; not raw DB, policy/access change, failed-verdict override or revival of ended worker. Native automatic successor denial preserved. No new review-clarification feature approved."
+}
