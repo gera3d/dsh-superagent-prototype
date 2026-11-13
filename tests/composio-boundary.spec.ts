@@ -433,6 +433,64 @@ describe('batch and single envelopes follow one rule', () => {
     expect(failure(await single.run(SINGLE))).toMatchObject({ classification: 'uncertain_completion', completion: 'unknown' })
   })
 
+  describe('contradictory flags stay unknown whatever the outer error flag says', () => {
+    const limited = { successful: true, response: { successful: false, error: '429 rate limit exceeded; Retry-After: 30' } }
+    const contradictory = [
+      ['a thrown MCP error (the bridge throws a raw isError result)', () => ({ throws: new Error(`MCP error -32000: ${JSON.stringify(limited)}`) })],
+      ['a returned value flagged isError:true', () => ({ value: { isError: true, content: [{ type: 'text', text: JSON.stringify(limited) }] } })],
+      ['a successful MCP envelope', () => ({ value: mcp(limited) })],
+    ] as const
+
+    it.each(contradictory)('classifies %s as an unknown outcome: no retry, the Retry-After kept only as a wait floor', async (_label, outcome) => {
+      const { run, calls } = await runtimeWith({ [SINGLE]: outcome() })
+      const result = await run(SINGLE)
+      expect(result.isError).toBe(true)
+      const found = failure(result)
+      expect(found).toMatchObject({ classification: 'uncertain_completion', completion: 'unknown', retry_after_seconds: 30 })
+      const advice = found.recovery.join(' ')
+      expect(advice).toContain('do NOT resend it')
+      expect(advice).toContain('not before 30 seconds')
+      expect(advice).not.toMatch(/retry (?:it|the call|entry \d+) once|did not run|rate-limited the call/i)
+      expect(found.failed[0].error).toContain('429 rate limit exceeded')
+      expect(calls).toEqual([SINGLE])
+    })
+
+    it('keeps the successes of a batch carried by an error-flagged result whose own envelope contradicts itself', async () => {
+      const body = { ...limited, data: { total_count: 2, results: [read, { index: 1, tool_slug: 'GITHUB_CREATE_ISSUE', response: { successful: false, error: '429 rate limit; Retry-After: 30' } }] } }
+      for (const outcome of [{ value: { isError: true, content: [{ type: 'text', text: JSON.stringify(body) }] } }, { throws: new Error(`MCP error -32000: ${JSON.stringify(body)}`) }, { value: mcp(body) }]) {
+        const { run } = await runtimeWith({ [MULTI]: outcome })
+        const found = failure(await run(MULTI))
+        expect(found.succeeded, JSON.stringify(outcome)).toEqual([read])
+        expect(found.completion).toBe('partial')
+        expect(found.recovery.join(' ')).toContain('never repeat them')
+      }
+    })
+
+    it('still offers one retry after the wait for a plain error-flagged rate limit with no contradiction', async () => {
+      for (const body of [{ successful: false, error: '429 rate limit exceeded; Retry-After: 30' }, '429 rate limit exceeded; Retry-After: 30']) {
+        const { run } = await runtimeWith({ [SINGLE]: { value: { isError: true, content: [{ type: 'text', text: typeof body === 'string' ? body : JSON.stringify(body) }] } } })
+        const found = failure(await run(SINGLE))
+        expect(found).toMatchObject({ classification: 'rate_limited', retry_after_seconds: 30 })
+        expect(found.recovery.join(' ')).toContain('at least 30 seconds')
+      }
+    })
+
+    it('judges the batch-level envelope by the same rule: a contradicting top level is unknown, a clean error count is not', () => {
+      const entries = [read]
+      const flagged = assessComposioResult(MULTI, { content: [{ type: 'text', text: JSON.stringify({ ...limited, data: { results: entries, total_count: 1, error_count: 1 } }) }] })!
+      expect(flagged).toMatchObject({ kind: 'uncertain_completion', completion: 'partial', retryAfterSeconds: 30, succeeded: entries })
+      const counted = assessComposioResult(MULTI, { content: [{ type: 'text', text: JSON.stringify({ successful: false, error: '429 rate limit; Retry-After: 30', data: { results: entries, total_count: 1, error_count: 1 } }) }] })!
+      expect(counted).toMatchObject({ kind: 'rate_limited', retryAfterSeconds: 30 })
+    })
+
+    it('assesses the same contradiction identically without the runtime, for every outer flag', () => {
+      for (const flag of [{}, { isError: true }, { value: { isError: true } }]) {
+        const assessment = assessComposioResult(SINGLE, { content: [{ type: 'text', text: JSON.stringify(limited) }], ...flag } as never)!
+        expect(assessment, JSON.stringify(flag)).toMatchObject({ kind: 'uncertain_completion', completion: 'unknown', retryAfterSeconds: 30 })
+      }
+    })
+  })
+
   it('assesses the same entries identically without the runtime', () => {
     const run = (...results: unknown[]) => assessComposioResult(MULTI, { content: [{ type: 'text', text: JSON.stringify(declared(...results)) }] })
     expect(run(read, ...completed)).toBeUndefined()

@@ -212,7 +212,9 @@ export function assessComposioResult(name: string, result: ToolResult & { value?
     const declaredErrors = typeof batch.error_count === 'number' ? batch.error_count : typeof batchPayload.error_count === 'number' ? batchPayload.error_count : 0
     if (!failed.length && (declaredErrors > 0 || isEnvelopeFailed({ ...batchPayload, response: undefined }))) {
       const message = errorTextOf(batchPayload)
-      failed.push({ kind: kindOf(message, batchPayload), error: sanitizeDiagnostic(message) })
+      // The same rule as a single envelope: flags that contradict each other do not say the batch did not run.
+      const kind = envelopeOutcome(batchPayload, batchPayload.response) === 'contradictory' ? 'uncertain_completion' : kindOf(message, batchPayload)
+      failed.push({ kind, error: sanitizeDiagnostic(message), ...(WAITED.includes(kind) ? optionalRetry(retryAfterSeconds(batchPayload, message)) : {}) })
     }
   }
   if (!batch && (transport || unwrapped.isError) || (batch && transport && !failed.length && !unreported)) {
@@ -222,8 +224,9 @@ export function assessComposioResult(name: string, result: ToolResult & { value?
     const message = transport && !envelope
       ? (text || result.error?.message || 'The Composio tool call failed')
       : errorTextOf(envelope ?? {}) !== 'The action reported a failure without a message' ? errorTextOf(envelope!) : (text || 'The action reported a failure without a message')
-    // An envelope that says both successful and failed does not say the action did not run: its outcome is unknown.
-    const conflicting = !transport && envelope !== undefined && envelopeOutcome(envelope, envelope.response) === 'contradictory'
+    // An envelope that says both successful and failed does not say the action did not run: its outcome is unknown, whether or
+    // not the MCP result or the tool call around it was flagged as an error (a bridge throws an `isError` result as text).
+    const conflicting = envelope !== undefined && envelopeOutcome(envelope, envelope.response) === 'contradictory'
     const kind = unwrapped.connectionError ? 'connection_required' : conflicting ? 'uncertain_completion' : kindOf(message, envelope, transport)
     failed.push({ kind, error: sanitizeDiagnostic(message), ...(WAITED.includes(kind) ? optionalRetry(retryAfterSeconds(envelope, message)) : {}) })
   }

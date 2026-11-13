@@ -191,6 +191,36 @@ describe.skipIf(!available)('installed MCP bridge to the host boundary', () => {
     expect(contradicted.sent).toEqual([MULTI])
   })
 
+  it('holds a self-contradicting envelope as unknown whether the bridge threw it (raw isError) or returned it, and never offers a retry', async () => {
+    const clash = { successful: true, response: { successful: false, error: '429 rate limit exceeded; Retry-After: 30' } }
+    for (const [label, answer] of [['raw isError result, thrown by the bridge', async (): Promise<Raw> => ({ isError: true, content: text(clash) })],
+      ['successful MCP result', async (): Promise<Raw> => ok(clash)]] as const) {
+      const { run, sent } = await bridge({ [MULTI]: answer })
+      const result = await run(MULTI)
+      expect(result.isError, label).toBe(true)
+      const found = failure(result)
+      expect(found, label).toMatchObject({ classification: 'uncertain_completion', completion: 'unknown', retry_after_seconds: 30 })
+      const advice = found.recovery.join(' ')
+      expect(advice, label).toContain('do NOT resend it')
+      expect(advice, label).toContain('not before 30 seconds')
+      expect(advice, label).not.toMatch(/retry (?:it|the call|entry \d+) once|did not run/i)
+      expect(sent, label).toEqual([MULTI])
+    }
+    // The same failure without a contradiction is a plain, retryable rate limit.
+    const plain = await bridge({ [MULTI]: async () => ({ isError: true, content: text({ successful: false, error: '429 rate limit exceeded; Retry-After: 30' }) }) })
+    expect(failure(await plain.run(MULTI))).toMatchObject({ classification: 'rate_limited', retry_after_seconds: 30 })
+  })
+
+  it('keeps the known successes of an error-flagged batch whose own envelope contradicts itself', async () => {
+    const body = { successful: true, response: { successful: false, error: '429 rate limit; Retry-After: 30' },
+      data: { total_count: 2, results: [read, entry(1, 'GITHUB_CREATE_ISSUE', { successful: false, error: '429 rate limit; Retry-After: 30' })] } }
+    const { run, sent } = await bridge({ [MULTI]: async () => ({ isError: true, content: text(body) }) })
+    const found = failure(await run(MULTI))
+    expect(found).toMatchObject({ completion: 'partial', succeeded: [read], counts: { total: 2, succeeded: 1 } })
+    expect(found.recovery.join(' ')).toContain('never repeat them')
+    expect(sent).toEqual([MULTI])
+  })
+
   it('does not touch a success, business text with failure words, or another MCP server', async () => {
     const business = ok({ successful: true, data: { note: 'The user was unauthorized; authentication failed on the old host', error: 'none of the above' } })
     const other = ok({ successful: false, error: 'not a Composio tool' })
