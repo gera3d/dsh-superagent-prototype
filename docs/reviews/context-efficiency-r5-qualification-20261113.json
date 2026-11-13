@@ -273,5 +273,34 @@
     },
     "responseStatus": "HTTP/2.0 200 OK",
     "retryAfter": []
-  }
+  },
+  "finalState": {
+    "at": "2026-11-13T09:59:30.113879+00:00",
+    "finding": {
+      "revision": 7,
+      "state": "running",
+      "job": {
+        "id": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r7",
+        "ticketId": "4abae94273cfd65a149e9ee6333c0b87",
+        "assignmentId": "ba3796bc797424d3cdf97948782af08f"
+      },
+      "blocker": null
+    },
+    "load": {
+      "running": 1,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "github": {
+      "state": "ready",
+      "detail": "0 notifications; next poll \u2265 60s",
+      "at": "2026-11-13T09:56:42.430Z"
+    },
+    "runtime": {
+      "state": "ready",
+      "detail": "Orchestrator is ready",
+      "at": "2026-11-13T08:45:25.900Z"
+    }
+  },
+  "boundedNextCorrection": "NewfailedPR104review/rootreproduction observed underoriginalfinding; supported retry_scope revision6->7 andconfirm accepted retainednativeapproval. Distinctr7correction, no duplicate productiveowner/authorityedit. Narrowreplayzero/coverage/documentation scope, preserveerrorpassthrough andfailedPR104history. Harnessownsimplementation, Codexlaterreview/release."
 }
