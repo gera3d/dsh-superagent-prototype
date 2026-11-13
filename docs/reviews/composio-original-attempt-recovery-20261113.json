@@ -97,6 +97,106 @@
   },
   "recoveryScope": "Same original finding/requirements and native approved lineage. Reuse/qualify current helper, actual owned MCP result consumption path, transport/nested/mixed/timeout-lostack/unknown classification, sanitized actionable recovery with successful entries preserved, no blind mutating retry. Current trusted clone work/ and existing dependencies/companion only, current-source exact commits and native report. No hostpackage/permissions/accounts/tools/provider/routes/reserve/concurrency/spend/schedule change.",
   "pendingOtherDecision": "Protected review-clarification proposal has no approval in this pass; e1dfd442rev8/PR105 and its failed delivery untouched.",
-  "nextOwner": "Harness bounded implementation/recovery through supported same-finding controls; Codex independent review and original protected release when actual candidate is ready.",
-  "coverage": "One original assignment, saved tree and matching nested trajectory; current local source refs/allowlists/settings. No new tests/PR API lookup/publication/acceptance; no global complete scan."
+  "nextOwner": "Harness currentr3: productive actualread/bash inspection, leave intact. Codex next independent exacthead review/release when structured report/candidate returns, or finite same-scope blocker triage. No continuous coordination between passes.",
+  "coverage": "One original assignment, saved tree and matching nested trajectory; current local source refs/allowlists/settings. No new tests/PR API lookup/publication/acceptance; no global complete scan.",
+  "finalState": {
+    "at": "2026-11-13T13:00:37.260184+00:00",
+    "finding": {
+      "id": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+      "revision": 3,
+      "state": "running",
+      "job": {
+        "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r3",
+        "ticketId": "4b322b6ef82dfff0d1a7fc3e49de4a6b",
+        "assignmentId": "29973617ee0a5a11f3660577385d686b"
+      },
+      "blocker": null
+    },
+    "load": {
+      "running": 1,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "runtime": {
+      "state": "ready",
+      "detail": "Orchestrator is ready",
+      "at": "2026-11-13T08:45:25.900Z"
+    },
+    "github": {
+      "state": "ready",
+      "detail": "0 notifications; next poll \u2265 60s",
+      "at": "2026-11-13T12:56:10.754Z"
+    }
+  },
+  "supportedRecovery": "observe exact prior work/trajectory then coordinate_finding retry_scope revision2->3 and confirm accepted retained original native approval. Distinct boundedr3 under same finding, no ended-worker revival or duplicate productive owner. Originalr1/WIP unchanged.",
+  "activeTrajectory": {
+    "routes": [
+      {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash"
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      }
+    ],
+    "recentSteps": [
+      {
+        "seq": 66,
+        "calls": [
+          "bash"
+        ],
+        "text": ""
+      },
+      {
+        "seq": 73,
+        "calls": [
+          "read",
+          "bash"
+        ],
+        "text": ""
+      },
+      {
+        "seq": 82,
+        "calls": [
+          "bash"
+        ],
+        "text": ""
+      },
+      {
+        "seq": 89,
+        "calls": [
+          "read",
+          "read",
+          "read"
+        ],
+        "text": ""
+      },
+      {
+        "seq": 98,
+        "calls": [
+          "bash"
+        ],
+        "text": ""
+      },
+      {
+        "seq": 105,
+        "calls": [
+          "read"
+        ],
+        "text": ""
+      }
+    ],
+    "lastUsage": [
+      {
+        "inputTokens": 2,
+        "outputTokens": 157,
+        "totalTokens": 61498,
+        "cacheReadTokens": 59561,
+        "cacheWriteTokens": 1778
+      }
+    ],
+    "traceFound": true,
+    "limit": "Request/step metadata only; no healthy Google or allowance/cost claim from selection."
+  }
 }
