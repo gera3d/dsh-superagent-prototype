@@ -16,6 +16,7 @@ import { join } from 'node:path'
 import { lockSync } from 'proper-lockfile'
 import { Engine, key, reasonText, type EngineForSettings, type ReceiveResult, type Ticket, type Trigger } from '../core/index.ts'
 import { allowedSender, settingsPolicy } from '../policy.ts'
+import { quotaRetryAt } from './setup.ts'
 import { SourceRegistry } from '../sources/registry.ts'
 import { Commands } from '../infra/commands.ts'
 import { loadLifecyclePublication } from './publication-context.ts'
@@ -96,6 +97,7 @@ export class Runtime extends Service implements SourceHost {
   private readonly disposers: (() => void)[] = []
   private releaseLock?: () => Promise<void>
   private closingFlag = false
+  private quotaTimer?: NodeJS.Timeout
   private stopping?: Promise<void>
   private readonly sourceDeps: SourceContextDeps
   private readonly toolHost: MainToolsHost & ExecutorToolsHost
@@ -259,10 +261,8 @@ export class Runtime extends Service implements SourceHost {
   private async initialize(): Promise<void> {
     // Register management HTTP routes before setup completes so operators can fix setup problems in the UI.
     this.disposers.push(registerHttp(this.ctx, this.httpHost()))
-    if (!await this.setup.run(this.store.settings())) {
-      this.runtimeHealth.set({ ...health('paused', 'setupPending'), at: now() })
-      return
-    }
+    if (!await this.setup.run(this.store.settings())) return this.waitForSetup()
+    this.store.delete(KV.runtime.quotaFailures)
     this.sessions.install()
     this.executor.install()
     await this.sessions.ensure(this.masterId, this.machine.stateDir, 'dsh-superagent orchestrator', 'orchestrator')
@@ -273,6 +273,21 @@ export class Runtime extends Service implements SourceHost {
     this.passes.start()
     this.effects.start()
     this.runtimeHealth.set({ state: 'ready', detail: 'Orchestrator is ready', at: now() })
+  }
+  /** Mark setup pending; after GitHub quota exhaustion, also schedule the one restart that reruns setup once the quota has reset. */
+  private async waitForSetup(): Promise<void> {
+    let state = health('paused', 'setupPending')
+    if (this.setup.problem?.code === 'githubRateLimited') {
+      const reset = await this.setup.quotaReset(this.store.settings())
+      if (this.closing()) return
+      const failures = (this.store.get(KV.runtime.quotaFailures) ?? 0) + 1
+      this.store.set(KV.runtime.quotaFailures, failures)
+      const at = quotaRetryAt(reset, Date.now(), failures)
+      clearTimeout(this.quotaTimer)
+      this.quotaTimer = setTimeout(() => this.setup.restart(), Math.max(0, at - Date.now()))
+      state = health('paused', 'setupRetry', { until: new Date(at).toISOString() })
+    } else this.store.delete(KV.runtime.quotaFailures)
+    this.runtimeHealth.set({ ...state, at: now() })
   }
   private httpHost(): HttpHost {
     const runtime = this
@@ -286,7 +301,7 @@ export class Runtime extends Service implements SourceHost {
   /** Idempotent stop; concurrent or repeated calls share the same shutdown promise. */
   stop(): Promise<void> { return this.stopping ??= this.shutdown() }
   private async shutdown(): Promise<void> {
-    this.closingFlag = true; const passes = this.passes.stop(); this.stopped.abort()
+    this.closingFlag = true; clearTimeout(this.quotaTimer); const passes = this.passes.stop(); this.stopped.abort()
     try {
       this.assessor.stop()
       const ids = [this.masterId, ...this.store.tickets.list().map(ticket => workerSessionId(ticket.id))]
