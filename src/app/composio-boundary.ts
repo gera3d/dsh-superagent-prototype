@@ -9,7 +9,7 @@
  */
 import type { Context } from '@deepseek-ai/cordis'
 import {
-  CONNECTION_FAILURE_PATTERN, extractErrorMessage, isBatchItemFailed, isRecord, unwrapComposioResult,
+  CONNECTION_FAILURE_PATTERN, extractErrorMessage, isBatchItemFailed, isEnvelopeFailed, isRecord, unwrapComposioResult,
   type ComposioBatchData, type ToolResult,
 } from './tools/composio.ts'
 
@@ -153,7 +153,7 @@ function payloadsOf(result: ToolResult & { value?: unknown }, embedded: boolean)
   if (isRecord(value)) {
     if (value.structuredContent !== undefined) found.push(value.structuredContent)
     if (Array.isArray(value.content)) for (const block of value.content as ToolResult['content'] & unknown[]) found.push(parse(block?.text, embedded))
-    if ('successful' in value || 'results' in value || isRecord(value.data)) found.push(value)
+    if ('successful' in value || 'results' in value || isRecord(value.data) || (!Array.isArray(value.content) && 'error' in value)) found.push(value)
   }
   if (result.structuredContent !== undefined) found.push(result.structuredContent)
   for (const block of Array.isArray(result.content) ? result.content : []) if (block?.type === 'text') found.push(parse(block.text, embedded))
@@ -211,7 +211,7 @@ export function assessComposioResult(name: string, result: ToolResult & { value?
     // Entries the service counted but never reported, and those it reported without confirming: their outcome is unknown.
     unreported = (total !== undefined && total > entries.length ? total - entries.length : 0) + unconfirmed.length
     const declaredErrors = typeof batch.error_count === 'number' ? batch.error_count : typeof batchPayload.error_count === 'number' ? batchPayload.error_count : 0
-    if (!failed.length && (declaredErrors > 0 || batchPayload.successful === false)) {
+    if (!failed.length && (declaredErrors > 0 || isEnvelopeFailed({ ...batchPayload, response: undefined }))) {
       const message = errorTextOf(batchPayload)
       failed.push({ kind: kindOf(message, batchPayload), error: sanitizeDiagnostic(message) })
     }
@@ -219,7 +219,7 @@ export function assessComposioResult(name: string, result: ToolResult & { value?
   if (!batch && (transport || unwrapped.isError) || (batch && transport && !failed.length && !unreported)) {
     // A protocol/transport failure, or a single action whose own envelope says it failed. A transport error that carried a
     // batch with no failed entry is still a failure: the outcome of what it carried is not known.
-    const envelope = payloads.find(item => item.successful === false) ?? payloads[0]
+    const envelope = payloads.find(isEnvelopeFailed) ?? payloads[0]
     const message = transport && !envelope
       ? (text || result.error?.message || 'The Composio tool call failed')
       : errorTextOf(envelope ?? {}) !== 'The action reported a failure without a message' ? errorTextOf(envelope!) : (text || 'The action reported a failure without a message')

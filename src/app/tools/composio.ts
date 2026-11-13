@@ -101,6 +101,22 @@ export function isBatchItemFailed(item: Record<string, unknown>): boolean {
   return item.successful === false || response?.successful === false || !!item.error || !!response?.error
 }
 
+/** A failure report an envelope carries in its `error`: a non-empty string, or an object (a message, code or details). */
+function hasErrorValue(error: unknown): boolean {
+  return typeof error === 'string' ? error.trim() !== '' : isRecord(error) && Object.keys(error).length > 0
+}
+
+/**
+ * Whether the root of a single-action envelope reports its own failure: `successful: false`, or an `error` the envelope
+ * carries without saying `successful: true`. Composio's envelope is `{ successful, data, error }`: the action's business
+ * data lives under `data`, so the root `error` is the service's own report and an `error` inside `data` never counts.
+ * An explicit `successful: true` outranks an `error` string, and `error: null`, `""` or `false` are no report at all.
+ */
+export function isEnvelopeFailed(payload: Record<string, unknown>): boolean {
+  const reports = (envelope: Record<string, unknown>): boolean => envelope.successful === false || (envelope.successful !== true && hasErrorValue(envelope.error))
+  return reports(payload) || (isRecord(payload.response) && reports(payload.response))
+}
+
 function parseJsonSafe(text: string): unknown {
   try {
     return JSON.parse(text)
@@ -194,7 +210,7 @@ export function unwrapComposioResult<T extends ToolResult>(
             ? (payload as { error_count: number }).error_count
             : undefined)
 
-      let batchHasError = (errorCount !== undefined && errorCount > 0) || payload.successful === false
+      let batchHasError = (errorCount !== undefined && errorCount > 0) || isEnvelopeFailed({ ...payload, response: undefined })
 
       for (const item of batchData.results) {
         if (!isRecord(item)) continue
@@ -212,9 +228,8 @@ export function unwrapComposioResult<T extends ToolResult>(
         hasFailure = true
       }
     } else {
-      const isFailed = payload.successful === false
-        || (isRecord(payload.response) && payload.response.successful === false)
-        // An `error` without the envelope's `successful` flag is not a Composio failure report: it may be business data.
+      // Business data is under `data`; an `error` inside it is not the envelope's report (see isEnvelopeFailed).
+      const isFailed = isEnvelopeFailed(payload)
 
       if (isFailed) {
         hasFailure = true

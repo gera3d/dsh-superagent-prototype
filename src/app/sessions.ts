@@ -45,7 +45,7 @@ export interface SessionsHost {
  * What Sessions registered for an agent it decorated: the releases of its prompt section, tools and skill scope, the scope
  * its skills are registered in, and the skills of one prompt revision; for a worker's subagent, only its tool limits.
  */
-interface SessionBinding { routing?: () => void; disposers: (() => void)[]; scope?: Context; skills?: { revision: number; dispose: () => void }; subagent?: true }
+interface SessionBinding { routing?: () => void; disposers: (() => void)[]; scope?: Context; skills?: { revision: number; dispose: () => void }; subagent?: true; observer?: true }
 
 /** The agent presets Executor Sessions and the main Session are created with, which the bundle's patch defines. */
 export const WORKER_PRESET = 'dsh-superagent-worker', ROUTER_PRESET = 'dsh-superagent-router'
@@ -117,7 +117,7 @@ export class Sessions {
     ctx.on('session/event', (session, event) => {
       const agent = ctx.agents.get(session.id)
       const binding = agent && agent.session === session ? this.bindings.get(agent) : undefined
-      if (!agent || !binding || binding.subagent) return
+      if (!agent || !binding || binding.subagent || binding.observer) return
       this.retryHealth.observe(agent.id, event)
       this.updateModelHealth()
     })
@@ -192,7 +192,7 @@ export class Sessions {
   }
   private protectRouting(agent: Agent): void {
     const binding = this.bindings.get(agent)
-    if (!binding || binding.subagent) return
+    if (!binding || binding.subagent || binding.observer) return
     binding.routing?.()
     binding.routing = installRoutingGuard(this.ctx, agent, () => this.host.store.settings())
   }
@@ -367,7 +367,8 @@ export class Sessions {
    * successful MCP result.
    */
   private observeComposio(agent: Agent): void {
-    this.bindings.set(agent, { disposers: [installComposioBoundary(agent)], subagent: true })
+    if (this.bindings.has(agent)) return
+    this.bindings.set(agent, { disposers: [installComposioBoundary(agent)], observer: true })
   }
   /** Register the skills of a prompt version in the agent's skill scope, in place of an earlier version's. */
   private bindSkills(binding: SessionBinding, version: PromptVersion): void {

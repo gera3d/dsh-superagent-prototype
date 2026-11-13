@@ -139,8 +139,52 @@ describe('host boundary with a real ToolRuntime', () => {
     const multi = await run(MULTI)
     expect(multi.isError).toBe(false)
     expect(JSON.parse(textOf(multi))).toEqual(batch(read))
-    const bare = await runtimeWith({ [SINGLE]: { value: mcp({ error: 'invalid token in the document body', data: {} }) } })
-    expect((await bare.run(SINGLE)).isError).toBe(false)
+    // Business data lives under `data`; an `error` inside it, a null/empty root error, or an explicit success is not a failure report.
+    for (const payload of [
+      { data: { error: 'invalid token in the document body' } },
+      { successful: true, data: { error: 'invalid token in the document body' } },
+      { successful: true, error: 'a note the service attached to a success', data: {} },
+      { successful: true, data: { id: 'x' }, error: null },
+      { data: { id: 'x' }, error: '' },
+      { data: { id: 'x' }, error: false },
+    ]) {
+      const bare = await runtimeWith({ [SINGLE]: { value: mcp(payload) } })
+      expect((await bare.run(SINGLE)).isError, JSON.stringify(payload)).toBe(false)
+    }
+  })
+
+  it('takes a root error without the successful flag for the service\'s own failure report, in the content and in structuredContent', async () => {
+    const message = 'Validation failed: title is required'
+    for (const value of [
+      mcp({ data: {}, error: message }),
+      mcp({ error: { message, code: 'VALIDATION' } }),
+      mcp({ response: { error: message } }),
+      { content: [{ type: 'text', text: 'see structured content' }], structuredContent: { data: null, error: message }, isError: false },
+    ]) {
+      const { run } = await runtimeWith({ [SINGLE]: { value } })
+      const result = await run(SINGLE)
+      expect(result.isError, JSON.stringify(value)).toBe(true)
+      expect(failure(result)).toMatchObject({ classification: 'action_failed', completion: 'failed', failed: [{ error: expect.stringContaining('Validation failed') }] })
+    }
+    // Its connection and rate-limit wording still classify it.
+    const auth = await runtimeWith({ [SINGLE]: { value: mcp({ error: 'No active connection found for github' }) } })
+    expect(failure(await auth.run(SINGLE))).toMatchObject({ classification: 'connection_required' })
+    const limited = await runtimeWith({ [SINGLE]: { value: mcp({ error: '429 rate limit exceeded, retry after 12 seconds' }) } })
+    expect(failure(await limited.run(SINGLE))).toMatchObject({ classification: 'rate_limited', retry_after_seconds: 12 })
+  })
+
+  it('keeps the prior successes of a Session intact when a later Composio call fails, and keeps a batch\'s own successes', async () => {
+    const { run, calls } = await runtimeWith({ [SINGLE]: { value: mcp({ successful: true, data: { id: 'issue_1' } }) }, [MULTI]: { value: mcp({ data: { results: [read, write('Validation failed')], total_count: 2 }, error: 'one entry failed' }) } })
+    const first = await run(SINGLE)
+    expect(first.isError).toBe(false)
+    const failed = await run(MULTI)
+    expect(failed.isError).toBe(true)
+    expect(failure(failed)).toMatchObject({ completion: 'partial', counts: { succeeded: 1, failed: 1 } })
+    expect(failure(failed).succeeded).toEqual([read])
+    // The earlier success was not re-run, rewritten or reclassified by the later failure.
+    expect(JSON.parse(textOf(first))).toEqual({ successful: true, data: { id: 'issue_1' } })
+    expect(calls).toEqual([SINGLE, MULTI])
+    expect((await run(SINGLE)).isError).toBe(false)
   })
 
   it('leaves an unrecognised payload, plain text and non-Composio tools untouched', async () => {
@@ -239,6 +283,74 @@ describe('Session wiring', () => {
     const { sessionId } = await h.acceptedTicket((await import('./fixtures/host.ts')).feishu('1', '@bot 修一下回归'))
     const registered = [...h.tools.get(sessionId)!.keys(), ...h.tools.get(h.runtime.masterId)!.keys()]
     expect(registered.filter(name => /^mcp__/i.test(name) || /composio/i.test(name))).toEqual([])
+  })
+})
+
+describe('ordinary Session binding', () => {
+  let h: Host
+  beforeEach(async () => { h = await startRuntime() })
+  afterEach(async () => { await h.stop() })
+  type Fake = { id: string; ctx: Context & { waterfall: (...args: unknown[]) => Promise<unknown>; tools: { restrict: ReturnType<typeof vi.fn>; guard: ReturnType<typeof vi.fn> }; systemPrompt: { section: ReturnType<typeof vi.fn> } }; session: { header?: object } }
+  const created = (agent: Fake) => (h.runtime as unknown as { ctx: { parallel: (name: string, value: unknown) => Promise<void> } }).ctx.parallel('agent/created', { agent })
+  const disposed = (agent: Fake) => (h.runtime as unknown as { ctx: { parallel: (name: string, value: unknown) => Promise<void> } }).ctx.parallel('agent/disposed', { agent })
+  const post = (agent: Fake, payload: unknown) => agent.ctx.waterfall('tools/post-execute', { name: MULTI, callId: 'c1', arguments: {} },
+    { isError: false, value: mcp(payload), content: mcp(payload).content }, async () => ({ kind: 'accept' }))
+  async function ordinary(id = 'ordinary') {
+    await (h.controller.create as (options: { sessionId: string }) => Promise<void>)({ sessionId: id })
+    const agent = h.agents.get(id) as unknown as Fake
+    agent.session.header = {}
+    agent.ctx.systemPrompt.section = vi.fn(() => () => {})
+    const events: string[] = []
+    const on = agent.ctx.on.bind(agent.ctx)
+    vi.spyOn(agent.ctx, 'on').mockImplementation(((name: string, ...rest: unknown[]) => { events.push(name); return (on as (...args: unknown[]) => () => void)(name, ...rest) }) as never)
+    return { agent, events }
+  }
+
+  it('adds only the read-only post-execute listener to an ordinary Session: no prompt, routing, restriction or guard', async () => {
+    const { agent, events } = await ordinary()
+    await created(agent)
+    expect(events).toEqual(['tools/post-execute'])
+    expect(agent.ctx.systemPrompt.section).not.toHaveBeenCalled()
+    expect(agent.ctx.tools.restrict).not.toHaveBeenCalled()
+    expect(agent.ctx.tools.guard).not.toHaveBeenCalled()
+    // Selecting a route installs the one request hook of the selection itself and, on a managed Session, a routing guard after it:
+    // a person's own chat gets no guard (a managed worker, the control, gets both).
+    await h.runtime.sessions.selectModel(agent as never, { provider: 'x', model: 'y' } as never)
+    expect(events.filter(name => name === 'agent/request')).toHaveLength(1)
+    const { sessionId } = await h.acceptedTicket((await import('./fixtures/host.ts')).feishu('1', '@bot 修一下回归'))
+    const worker = h.agents.get(sessionId) as unknown as Fake, seen: string[] = []
+    const on = worker.ctx.on.bind(worker.ctx)
+    vi.spyOn(worker.ctx, 'on').mockImplementation(((name: string, ...rest: unknown[]) => { seen.push(name); return (on as (...args: unknown[]) => () => void)(name, ...rest) }) as never)
+    await h.runtime.sessions.selectModel(worker as never, { provider: 'x', model: 'y' } as never)
+    expect(seen.filter(name => name === 'agent/request')).toHaveLength(2)
+    expect(await post(agent, batch(read, write('bad input')))).toMatchObject({ kind: 'block' })
+  })
+
+  it('is idempotent for repeated creation, and a second creation never rebinds an already bound Session', async () => {
+    const { agent, events } = await ordinary()
+    await created(agent); await created(agent); await created(agent)
+    expect(events.filter(name => name === 'tools/post-execute')).toEqual(['tools/post-execute'])
+    const { sessionId } = await h.acceptedTicket((await import('./fixtures/host.ts')).feishu('1', '@bot 修一下回归'))
+    for (const id of [sessionId, h.runtime.masterId]) {
+      const bound = h.agents.get(id) as unknown as Fake
+      const seen: string[] = []
+      const on = bound.ctx.on.bind(bound.ctx)
+      vi.spyOn(bound.ctx, 'on').mockImplementation(((name: string, ...rest: unknown[]) => { seen.push(name); return (on as (...args: unknown[]) => () => void)(name, ...rest) }) as never)
+      await created(bound)
+      expect(seen, id).toEqual([])
+    }
+  })
+
+  it('releases its listener when the agent is disposed, and a later disposal is harmless', async () => {
+    const { agent } = await ordinary()
+    await created(agent)
+    expect(await post(agent, batch(read, write('bad input')))).toMatchObject({ kind: 'block' })
+    await disposed(agent)
+    expect(await post(agent, batch(read, write('bad input')))).toEqual({ kind: 'accept' })
+    await disposed(agent)
+    // A recreated Session of the same id is bound afresh.
+    await created(agent)
+    expect(await post(agent, batch(read, write('bad input')))).toMatchObject({ kind: 'block' })
   })
 })
 

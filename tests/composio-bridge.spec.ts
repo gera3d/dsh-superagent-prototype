@@ -3,7 +3,8 @@
  * (`createMcpToolDefinition`, the function its `syncTools` registers every `mcp__<server>__<tool>` with), so a raw MCP
  * `CallToolResult` takes the bridge's real path (an `isError` result is thrown, anything else becomes
  * `{ content, structuredContent? }`) into a real ToolRuntime carrying this plugin's listener. Only the remote `call` is a
- * mock: no network, account, connection or Composio action is used. Skipped when the host package is not installed.
+ * mock: no network, account, connection or Composio action is used. Skipped (reported as skipped, not as passed) when the host package is not installed; the always-on `composio-boundary.spec.ts` and the
+ * `Session decoration` suite below then still run the same failures through a real ToolRuntime without the MCP client.
  */
 import { Context } from '@deepseek-ai/cordis'
 import { ToolRuntime } from '@deepseek-ai/dsh-tools'
@@ -15,9 +16,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { installComposioBoundary } from '../src/app/composio-boundary.ts'
 import { startRuntime, type Host } from './fixtures/host.ts'
 
-const ENTRY = process.env.DSH_MCP_CLIENT_ENTRY
-  ?? join(homedir(), '.npm-global/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-mcp-client/lib/index.js')
-const available = existsSync(ENTRY)
+const PACKAGE = '@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-mcp-client/lib/index.js'
+/** The installed `dsh-mcp-client` entry: the explicit override, then the usual global package roots (npm prefix, Homebrew, /usr/local). */
+const ENTRY = [process.env.DSH_MCP_CLIENT_ENTRY, join(homedir(), '.npm-global/lib/node_modules', PACKAGE), join(process.env.npm_config_prefix ?? '', 'lib/node_modules', PACKAGE),
+  join('/opt/homebrew/lib/node_modules', PACKAGE), join('/usr/local/lib/node_modules', PACKAGE)].find(entry => !!entry && existsSync(entry)) ?? ''
+const available = ENTRY !== ''
 type Raw = { content: { type: 'text'; text: string }[]; isError?: boolean; structuredContent?: unknown }
 type Definition = { name: string; execute: unknown }
 
