@@ -1,0 +1,47 @@
+{
+  "level": "Pure exported helper boundary only; not actual filesystem/native hook proof. Current Mac rejected 3880byte directory in earlier fixture with ENAMETOOLONG; no live failure induced.",
+  "rows": [
+    {
+      "pointerBytes": 3905,
+      "outputBytes": 4075,
+      "pointerRetained": true,
+      "terminalRetained": true,
+      "withinBytes": true
+    },
+    {
+      "pointerBytes": 3975,
+      "outputBytes": 4095,
+      "pointerRetained": true,
+      "terminalRetained": true,
+      "withinBytes": true
+    },
+    {
+      "pointerBytes": 3995,
+      "outputBytes": 4095,
+      "pointerRetained": true,
+      "terminalRetained": true,
+      "withinBytes": true
+    },
+    {
+      "pointerBytes": 4005,
+      "outputBytes": 4095,
+      "pointerRetained": true,
+      "terminalRetained": true,
+      "withinBytes": true
+    },
+    {
+      "pointerBytes": 4015,
+      "outputBytes": 4095,
+      "pointerRetained": true,
+      "terminalRetained": true,
+      "withinBytes": true
+    },
+    {
+      "pointerBytes": 4025,
+      "outputBytes": 4095,
+      "pointerRetained": true,
+      "terminalRetained": false,
+      "withinBytes": true
+    }
+  ]
+}

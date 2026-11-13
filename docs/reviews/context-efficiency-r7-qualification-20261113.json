@@ -1,6 +1,6 @@
 {
   "at": "2026-11-13T10:44:23.850172+00:00",
-  "verdict": "Root bounded exact-head qualification passed; native review/release/acceptance pending actual GitHub eligibility",
+  "verdict": "Native PR105 review rejected; no deployment or acceptance. Root85targeted/types/build/replays remain passing with finite coverage.",
   "findingId": "e1dfd442-bb88-409e-bef0-b2db569dca79",
   "findingRevision": 8,
   "jobId": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r7",
@@ -225,5 +225,344 @@
     "Independent exact-head targeted/type/build/zero/synthetic/recordedreplays and rawcoverage tally",
     "No native release attempt while activequota cooldown, no restart/settings/account/credential/spend/schedule change; original candidate/report/jobs/PR104failure and acceptedPR96 untouched"
   ],
-  "nextOwner": "Existing Codex coordinator for actual-eligible native independent review/package/protected publication/liveverification/evidence acceptance; Harness for demonstrated implementation corrections."
+  "nextOwner": "Existing Codex coordinator: reconcile native review intake/context with already-approved full-error exception using supported authority path, then send only valid compact-tail fail-open/evidence-format corrections to Harness under original same-finding scope. No new worker dispatched on contradictory premise this pass.",
+  "finalState": {
+    "at": "2026-11-13T11:00:14.015226+00:00",
+    "delivery": {
+      "id": "auto-4abae94273cfd65a149e9ee6333c0b87",
+      "revision": 7,
+      "stage": "review",
+      "state": "blocked",
+      "blocker": "Correction handoff blocked: Original mandate is no longer authorized; correction authority is missing",
+      "release": {
+        "findingId": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+        "findingRevision": 8,
+        "jobId": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r7",
+        "ticketId": "4abae94273cfd65a149e9ee6333c0b87",
+        "assignmentId": "ba3796bc797424d3cdf97948782af08f",
+        "branch": "agent/finding-task-4abae94273cf",
+        "prNumber": 105,
+        "headSha": "8936bcf7e412642cd50965721e6e3342e645e145",
+        "patchSha256": "9b26185b40e2ec784b65984351729d01ac9dec47733163f33201abd6bb981a90",
+        "preparedAt": "2026-11-13T10:54:19.822Z"
+      },
+      "bindings": {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "sourceIssue": 105,
+        "baseSha": "ac379b85e1cba186aa99f875615f2cdf3bc079ef",
+        "headSha": "8936bcf7e412642cd50965721e6e3342e645e145",
+        "environment": "installed local Harness superagent",
+        "refs": [
+          {
+            "repository": "gera3d/dsh-superagent-prototype",
+            "pr": 105,
+            "headSha": "8936bcf7e412642cd50965721e6e3342e645e145",
+            "baseSha": "ac379b85e1cba186aa99f875615f2cdf3bc079ef"
+          }
+        ]
+      },
+      "attempts": {
+        "review": 1,
+        "fix": 1,
+        "maxReview": 3,
+        "maxFix": 2
+      }
+    },
+    "finding": {
+      "id": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+      "revision": 8,
+      "state": "blocked",
+      "job": {
+        "id": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r7",
+        "ticketId": "4abae94273cfd65a149e9ee6333c0b87",
+        "assignmentId": "ba3796bc797424d3cdf97948782af08f"
+      },
+      "blocker": "Review the linked evidence and explicitly accept or request further work."
+    },
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "runtime": {
+      "state": "ready",
+      "detail": "Orchestrator is ready",
+      "at": "2026-11-13T08:45:25.900Z"
+    },
+    "github": {
+      "state": "ready",
+      "detail": "0 notifications; next poll \u2265 60s",
+      "at": "2026-11-13T10:56:52.691Z"
+    }
+  },
+  "nativeReview": {
+    "provider": "deepseek-official / deepseek-flash",
+    "verdict": {
+      "verdict": "failed",
+      "findings": [
+        {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "pr": 105,
+          "headSha": "8936bcf7e412642cd50965721e6e3342e645e145",
+          "path": "src/app/tool-output.ts",
+          "line": 133,
+          "severity": "high",
+          "message": "The hook returns early whenever result.isError is true, so oversized failing bash/grep/job output is never bounded and no durable copy is saved; a failing build or test with large output still floods the model context. That misses the requirement to bound oversized stdout while retaining error/exit information. Bound error results too (save full text, keep the diagnostic/exit tail, emit the truncation notice) instead of exempting every error."
+        },
+        {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "pr": 105,
+          "headSha": "8936bcf7e412642cd50965721e6e3342e645e145",
+          "path": "src/app/tool-output.ts",
+          "line": 146,
+          "severity": "medium",
+          "message": "When a saved path is long enough that the compact notice leaves no room for the last-line tail, compact() returns just the notice, and this acceptance check still passes because it verifies only bytes, line count and pointer. The original result is then replaced without its exit/status information. Make compact report that it kept no tail and leave the original unchanged in that case (or require the retained tail in this check)."
+        },
+        {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "pr": 105,
+          "headSha": "8936bcf7e412642cd50965721e6e3342e645e145",
+          "path": "docs/evidence/context-efficiency-r7-typecheck.log",
+          "line": 1,
+          "severity": "low",
+          "message": "This typecheck evidence file is empty, so it cannot show that the pinned SHA typechecks; the change therefore lacks the claimed typecheck baseline/regression evidence. Add the command and its output (including exit status), or remove the empty artifact."
+        }
+      ],
+      "rationale": "Batch 1/1 gera3d/dsh-superagent-prototype#105@8936bcf7e412: The PR has strong test coverage and detailed measurement, but it fails key intake requirements: all isError results bypass the bound, so large failing output can still flood context without a durable copy, and the compact fallback can silently accept a notice-only replacement that drops exit/status data for near-limit pointers. The empty typecheck evidence also weakens the claimed baseline."
+    },
+    "fingerprint": "af4d118f892abd4773ba013d26322e6eb2ffdac40666b41a07940528982364f7",
+    "bindingFingerprint": "b8ca52b462c22775586465e7883460b17d441a7d8efdc69f549332037046245e"
+  },
+  "quotaAfterDeadline": {
+    "at": "2026-11-13T10:53:34.189406+00:00",
+    "exit": 0,
+    "status": "HTTP/2.0 200 OK",
+    "core": {
+      "limit": 5000,
+      "used": 142,
+      "remaining": 4858,
+      "reset": 1794570761
+    },
+    "graphql": {
+      "limit": 5000,
+      "used": 5,
+      "remaining": 4995,
+      "reset": 1794568292
+    },
+    "retryAfter": []
+  },
+  "installedPreimageReadiness": {
+    "files": [
+      {
+        "path": "docs/evidence/context-efficiency-r7-build.log",
+        "baseExists": false,
+        "installedExists": false,
+        "preimageMatches": true,
+        "candidateMatchesInstalled": false,
+        "installedSha256": null
+      },
+      {
+        "path": "docs/evidence/context-efficiency-r7-replay-summary.json",
+        "baseExists": false,
+        "installedExists": false,
+        "preimageMatches": true,
+        "candidateMatchesInstalled": false,
+        "installedSha256": null
+      },
+      {
+        "path": "docs/evidence/context-efficiency-r7-targeted.log",
+        "baseExists": false,
+        "installedExists": false,
+        "preimageMatches": true,
+        "candidateMatchesInstalled": false,
+        "installedSha256": null
+      },
+      {
+        "path": "docs/evidence/context-efficiency-r7-typecheck.log",
+        "baseExists": false,
+        "installedExists": false,
+        "preimageMatches": true,
+        "candidateMatchesInstalled": false,
+        "installedSha256": null
+      },
+      {
+        "path": "docs/evidence/context-efficiency-r7-zero-result-replay.json",
+        "baseExists": false,
+        "installedExists": false,
+        "preimageMatches": true,
+        "candidateMatchesInstalled": false,
+        "installedSha256": null
+      },
+      {
+        "path": "docs/evidence/worker-output-bound-measurement.md",
+        "baseExists": false,
+        "installedExists": false,
+        "preimageMatches": true,
+        "candidateMatchesInstalled": false,
+        "installedSha256": null
+      },
+      {
+        "path": "prompts/team/communication.md",
+        "baseExists": true,
+        "installedExists": true,
+        "preimageMatches": true,
+        "candidateMatchesInstalled": false,
+        "installedSha256": "c237350bb12a023b354ae72287c0c56051ee2f3ddcd443601eeec8dc6b411955"
+      },
+      {
+        "path": "prompts/work.md",
+        "baseExists": true,
+        "installedExists": true,
+        "preimageMatches": true,
+        "candidateMatchesInstalled": false,
+        "installedSha256": "eac6dcb6809b2154d8d61cc91f4557af574a7f12529c53400e4dc8bb61386f08"
+      },
+      {
+        "path": "scripts/replay-output-bound.mjs",
+        "baseExists": true,
+        "installedExists": true,
+        "preimageMatches": true,
+        "candidateMatchesInstalled": false,
+        "installedSha256": "d8ce41ade78264b72e33e89e2b686b318d9357b01c83b9ec3a4870ba8e894391"
+      },
+      {
+        "path": "src/app/tool-output.ts",
+        "baseExists": true,
+        "installedExists": true,
+        "preimageMatches": true,
+        "candidateMatchesInstalled": false,
+        "installedSha256": "a006284eabf70bf7f0ef8292a6c6515efce017450c8cdd97b505417519b7d25c"
+      },
+      {
+        "path": "tests/fixtures/host.ts",
+        "baseExists": true,
+        "installedExists": true,
+        "preimageMatches": true,
+        "candidateMatchesInstalled": false,
+        "installedSha256": "d2ffcc23240a5327a477e330c153ba55d14012fd2dfd21f77ae3d5fd35db5b1b"
+      },
+      {
+        "path": "tests/replay-output-bound.spec.ts",
+        "baseExists": false,
+        "installedExists": false,
+        "preimageMatches": true,
+        "candidateMatchesInstalled": false,
+        "installedSha256": null
+      },
+      {
+        "path": "tests/tool-output-runtime.spec.ts",
+        "baseExists": false,
+        "installedExists": false,
+        "preimageMatches": true,
+        "candidateMatchesInstalled": false,
+        "installedSha256": null
+      },
+      {
+        "path": "tests/tool-output-sessions.spec.ts",
+        "baseExists": false,
+        "installedExists": false,
+        "preimageMatches": true,
+        "candidateMatchesInstalled": false,
+        "installedSha256": null
+      },
+      {
+        "path": "tests/tool-output.spec.ts",
+        "baseExists": true,
+        "installedExists": true,
+        "preimageMatches": true,
+        "candidateMatchesInstalled": false,
+        "installedSha256": "858b1705c2567eb7e981999b1ee4682fd268e95cdfe08750d4a2947e4ee4333e"
+      }
+    ],
+    "dependencies": [
+      {
+        "path": "package.json",
+        "candidateEqualsInstalled": true
+      },
+      {
+        "path": "pnpm-lock.yaml",
+        "candidateEqualsInstalled": true
+      }
+    ],
+    "limit": "Read-only current preimages; real publication prepares rollback and revalidates exact pins, idle state and file guards. No manual live source change."
+  },
+  "trustedProfileReadiness": {
+    "at": "2026-11-13T10:48:24.557598+00:00",
+    "profileSha256": "84b17a76b932711966f48ba838fe6a522211f4d0bf71019195001e612f2f472d",
+    "pinnedScripts": [
+      {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/trusted-preset-v1/prepare.py",
+        "present": true,
+        "matchesPinnedHash": true,
+        "realpathMatches": true
+      },
+      {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/trusted-preset-v1/runner.py",
+        "present": true,
+        "matchesPinnedHash": true,
+        "realpathMatches": true
+      },
+      {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/trusted-preset-v1/record-evidence.py",
+        "present": true,
+        "matchesPinnedHash": true,
+        "realpathMatches": true
+      },
+      {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/trusted-preset-v1/baseline.py",
+        "present": true,
+        "matchesPinnedHash": true,
+        "realpathMatches": true
+      },
+      {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/trusted-preset-v1/errors-reporter.cjs",
+        "present": true,
+        "matchesPinnedHash": true,
+        "realpathMatches": true
+      },
+      {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/trusted-preset-v1/apply.sh",
+        "present": true,
+        "matchesPinnedHash": true,
+        "realpathMatches": true
+      },
+      {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/trusted-preset-v1/build.sh",
+        "present": true,
+        "matchesPinnedHash": true,
+        "realpathMatches": true
+      },
+      {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/trusted-preset-v1/restart.sh",
+        "present": true,
+        "matchesPinnedHash": true,
+        "realpathMatches": true
+      },
+      {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/trusted-preset-v1/verify.sh",
+        "present": true,
+        "matchesPinnedHash": true,
+        "realpathMatches": true
+      },
+      {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/thread-release-handoff/trusted-preset-v1/rollback.sh",
+        "present": true,
+        "matchesPinnedHash": true,
+        "realpathMatches": true
+      },
+      {
+        "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/handoff-batch-context/protected-release/restart-live.sh",
+        "present": true,
+        "matchesPinnedHash": true,
+        "realpathMatches": true
+      }
+    ],
+    "limit": "Read-only readiness inspection; trusted native packager must revalidate all pins and prepare real rollback. No profile edits."
+  },
+  "reviewTriage": {
+    "highErrorBounding": "Conflicts with the current explicit delegated instruction to preserve fulloversizedisError. Do not implement that recommendation. Native reviewer input includes immutable original intake requirements, not the later canonical occurrence/approved exception; reconcile at supported review-context/scope authority layer before another identical review loop. No raw record edits or gate bypass.",
+    "mediumCompactTail": "Root pure helper probe confirms pointer4025bytes returns within4096 with pointer retained but terminal marker lost. This is exported-helper boundary evidence, not actual Mac hook/storage failure; earlier actual3880byte directory was rejected ENAMETOOLONG. Bounded fail-open when no required tail can be retained remains appropriate same-scope correction, Harness-owned.",
+    "lowEmptyTypecheckLog": "Empty stdout is normal tsc success. Root machine-readable command/exit0 on exacthead already establishes bounded typecheck result. Worker evidence can carry command/head/exitmetadata or remove empty standalone artifact; do not reclassify as actual test failure."
+  },
+  "checkpointStrategy": "Native review returned before final checkpoint write; shared base remained ac379b8 for the entire productive review. After it blocked, safe to update superagent-core/current local checkpoint. No side document branch or competing PR created."
 }
