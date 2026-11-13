@@ -1252,7 +1252,7 @@ describe('observing the GitHub repository', () => {
       if (bare === 'pulls/comments') return listed(answers.reviewComments)
       if (bare === '') return JSON.stringify({ default_branch: 'main' })
       if (bare === 'commits/main') return JSON.stringify({ sha: answers.branch!.sha })
-      if (bare.endsWith('/check-runs')) return JSON.stringify([{ check_runs: answers.branch!.checks }])
+      if (bare.endsWith('/check-runs')) return args.includes('--include') ? `HTTP/2.0 200 OK\r\n\r\n${JSON.stringify({ check_runs: answers.branch!.checks })}` : JSON.stringify([{ check_runs: answers.branch!.checks }])
       return JSON.stringify(args.includes('--slurp') ? [[]] : [])
     })
     return calls

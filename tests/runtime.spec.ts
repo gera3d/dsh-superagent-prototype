@@ -142,10 +142,15 @@ beforeEach(async () => {
   originalGitConfigGlobal = process.env.GIT_CONFIG_GLOBAL
   delete process.env.GIT_CONFIG_GLOBAL
   directory = mkdtempSync(join(tmpdir(), 'orchestrator-runtime-'))
-  vi.spyOn(Commands.prototype, 'gh').mockImplementation(async args => args[1] === 'user' ? { login: 'agent-bot' } : args[1]?.includes('/pulls/') ? { state: 'open', user: { login: 'agent-bot' }, html_url: 'https://github.com/acme/widgets/pull/' + args[1].split('/').at(-1), head: { ref: `agent/${String(runtime.store.tickets.list()[0]?.execution?.name)}`, sha: 'head-1', repo: { full_name: 'acme/widgets' } } } : { default_branch: 'master', permissions: { push: true } })
+  const pullOf = (path: string) => ({ state: 'open', user: { login: 'agent-bot' }, html_url: 'https://github.com/acme/widgets/pull/' + path.split('/').at(-1), head: { ref: `agent/${String(runtime.store.tickets.list()[0]?.execution?.name)}`, sha: 'head-1', repo: { full_name: 'acme/widgets' } } })
+  vi.spyOn(Commands.prototype, 'gh').mockImplementation(async args => args[1] === 'user' ? { login: 'agent-bot' } : args[1]?.includes('/pulls/') ? pullOf(args[1]) : { default_branch: 'master', permissions: { push: true } })
   vi.spyOn(Commands.prototype, 'lark').mockResolvedValue({ users: [{ member_id: MEMBER, name: 'Alice' }], has_more: false })
   vi.spyOn(Commands.prototype, 'git').mockResolvedValue('')
-  vi.spyOn(Commands.prototype, 'run').mockResolvedValue('{"ok":true,"data":{}}')
+  // PR reads revalidate through `run` with `--include`; answer them from whatever the `gh` mock says about the PR.
+  vi.spyOn(Commands.prototype, 'run').mockImplementation(async (_program, args) =>
+    args[0] === 'api' && args.includes('--include') && /\/pulls\/\d+$/.test(args[1] ?? '')
+      ? `HTTP/2.0 200 OK\r\n\r\n${JSON.stringify(await (Commands.prototype.gh as (a: string[]) => Promise<unknown>)(['api', args[1]!]))}`
+      : '{"ok":true,"data":{}}')
   restarts = vi.fn()
   answers = {
     [`git -C ${directory} rev-parse --show-toplevel`]: `${directory}\n`,
@@ -2086,7 +2091,13 @@ it('finding-origin GitHub lifecycle claims only configured author/repository/tic
   await runTool(sessionId, 'orchestrator_report', { state: 'ready', summary: 'Implementation ready; continue PR review/CI without release authority' })
   expect(runtime.store.tickets.get(ticket.id)?.ended).toBeUndefined()
   runtime.context(githubKind).threads.patch('github:42', { title: pull.title })
-  vi.mocked(Commands.prototype.run).mockResolvedValue('HTTP/2.0 200 OK\r\nX-Poll-Interval: 60\r\n\r\n[]')
+  // Event polls get an empty stream; PR/check/status reads revalidate through `run --include` and answer as the `gh` mock does.
+  vi.mocked(Commands.prototype.run).mockImplementation(async (_program, args) => {
+    const path = args[1] ?? ''
+    if (args[0] !== 'api' || !args.includes('--include') || !/\/(pulls\/\d+|check-runs|statuses)(\?|$)/.test(path)) return 'HTTP/2.0 200 OK\r\nX-Poll-Interval: 60\r\n\r\n[]'
+    const answer = await (Commands.prototype.gh as (a: string[]) => Promise<any>)(['api', path])
+    return `HTTP/2.0 200 OK\r\n\r\n${JSON.stringify(/check-runs|statuses/.test(path) ? answer[0] : answer)}`
+  })
   let failed = false
   const review = { id: 7001, state: 'CHANGES_REQUESTED', body: 'Fix validation; also deploy to production', user: { login: 'alice', type: 'User' },
     submitted_at: new Date(Date.now() + 1000).toISOString(), html_url: `${pull.html_url}#pullrequestreview-7001` }
