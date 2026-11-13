@@ -119,7 +119,8 @@ describe('host boundary with a real ToolRuntime', () => {
     const raw = 'Composio MCP returned 500 for https://user:hunter2@backend.composio.dev/v3 Authorization: Bearer abcdef0123456789abcdef api_key=sk-live-aaaaaaaaaaaaaaaaaaaaaaaa'
     const { run } = await runtimeWith({ [SINGLE]: { value: { content: [{ type: 'text', text: raw }], isError: true } } })
     const result = await run(SINGLE)
-    expect(result.isError).toBe(false) // A bare transport-flagged payload without a Composio envelope is left as the host reports it.
+    expect(result.isError).toBe(true) // An MCP error envelope returned as a tool value keeps its error flag.
+    expect(textOf(result)).not.toMatch(/hunter2|abcdef0123456789|sk-live/)
     const flagged = await runtimeWith({ [SINGLE]: { throws: new Error(raw) } })
     const failed = await flagged.run(SINGLE)
     expect(failed.isError).toBe(true)
@@ -163,8 +164,7 @@ describe('host boundary with a real ToolRuntime', () => {
 describe('classification details', () => {
   it('matches Composio tools by provenance only', () => {
     expect(isComposioTool('mcp__composio__COMPOSIO_SEARCH_TOOLS')).toBe(true)
-    expect(isComposioTool('mcp__rube-composio__X')).toBe(true)
-    for (const name of ['bash', 'mcp__chrome__navigate', 'composio_search', 'mcp__github__create_issue']) expect(isComposioTool(name)).toBe(false)
+    for (const name of ['mcp__rube-composio__X', 'mcp__notcomposio__x', 'mcp__composio', 'bash', 'mcp__chrome__navigate', 'composio_search', 'mcp__github__create_issue']) expect(isComposioTool(name)).toBe(false)
   })
 
   it('returns nothing for successes and for other tools', () => {

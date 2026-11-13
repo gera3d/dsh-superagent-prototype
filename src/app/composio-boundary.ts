@@ -13,8 +13,12 @@ import {
   type ComposioBatchData, type ToolResult,
 } from './tools/composio.ts'
 
-/** A Composio MCP tool by provenance: `mcp__<server>__<tool>` with `composio` in the server part. Nothing else is touched. */
-export const COMPOSIO_TOOL = /^mcp__[A-Za-z0-9_-]*composio[A-Za-z0-9_-]*__/i
+/**
+ * A Composio MCP tool by provenance: the public name `dsh-mcp-client` gives a tool of the MCP server whose configured
+ * `serverName` is `composio` (the `mcp-composio` plugin row of the web and superagent profiles) is `mcp__composio__<tool>`.
+ * Any other server, including one whose name merely contains "composio", is not touched.
+ */
+export const COMPOSIO_TOOL = /^mcp__composio__/
 export const isComposioTool = (name: string): boolean => COMPOSIO_TOOL.test(name)
 
 export type ComposioFailureKind = 'connection_required' | 'uncertain_completion' | 'rate_limited' | 'action_failed' | 'transport_failure'
@@ -116,21 +120,30 @@ function batchOf(payload: Record<string, unknown>): ComposioBatchData | undefine
 }
 
 /** The envelope(s) of a result, structured content first: a tool value shaped like an MCP result, JSON text blocks, structuredContent. */
-function payloadsOf(result: ToolResult & { value?: unknown }): Record<string, unknown>[] {
+function payloadsOf(result: ToolResult & { value?: unknown }, embedded: boolean): Record<string, unknown>[] {
   const found: unknown[] = []
   const value = result.value
   if (isRecord(value)) {
     if (value.structuredContent !== undefined) found.push(value.structuredContent)
-    if (Array.isArray(value.content)) for (const block of value.content as ToolResult['content'] & unknown[]) found.push(parse(block?.text))
+    if (Array.isArray(value.content)) for (const block of value.content as ToolResult['content'] & unknown[]) found.push(parse(block?.text, embedded))
     if ('successful' in value || 'results' in value || isRecord(value.data)) found.push(value)
   }
   if (result.structuredContent !== undefined) found.push(result.structuredContent)
-  for (const block of Array.isArray(result.content) ? result.content : []) if (block?.type === 'text') found.push(parse(block.text))
+  for (const block of Array.isArray(result.content) ? result.content : []) if (block?.type === 'text') found.push(parse(block.text, embedded))
   return found.filter(isRecord)
 }
-function parse(text: unknown): unknown {
+/**
+ * JSON from a text block. A failed MCP call reaches the host as a thrown error, so its text is the service's body behind an
+ * `Error: ` prefix (and possibly a JSON-RPC prefix such as `MCP error -32000:`): for a result already known to be an error,
+ * `embedded` reads the first `{` to the last `}`. A successful result's prose is never searched for JSON.
+ */
+function parse(text: unknown, embedded = false): unknown {
   if (typeof text !== 'string') return undefined
-  try { return JSON.parse(text) } catch { return undefined }
+  try { return JSON.parse(text) } catch { /* not plain JSON */ }
+  if (!embedded) return undefined
+  const start = text.indexOf('{'), end = text.lastIndexOf('}')
+  if (start < 0 || end <= start) return undefined
+  try { return JSON.parse(text.slice(start, end + 1)) } catch { return undefined }
 }
 
 /**
@@ -140,15 +153,16 @@ function parse(text: unknown): unknown {
 export function assessComposioResult(name: string, result: ToolResult & { value?: unknown; error?: { message?: string } }): ComposioAssessment | undefined {
   if (!isComposioTool(name)) return undefined
   const text = textOf(result)
-  const transport = result.isError === true
+  // A failed call is flagged by the registry result, or by an MCP error envelope a tool returned as its value.
+  const transport = result.isError === true || (isRecord(result.value) && result.value.isError === true)
   const unwrapped = unwrapComposioResult({ ...result, ...(isRecord(result.value) && result.value.structuredContent !== undefined && result.structuredContent === undefined ? { structuredContent: result.value.structuredContent } : {}) })
-  const payloads = payloadsOf(result)
+  const payloads = payloadsOf(result, transport)
   const batchPayload = payloads.find(item => batchOf(item))
   const batch = batchPayload ? batchOf(batchPayload) : undefined
   const failed: ComposioFailedEntry[] = [], succeeded: unknown[] = []
   let unreported = 0, total: number | undefined
 
-  if (batch && batchPayload && !transport) {
+  if (batch && batchPayload) {
     const entries = batch.results!
     total = typeof batch.total_count === 'number' ? batch.total_count : typeof batchPayload.total_count === 'number' ? batchPayload.total_count : undefined
     entries.forEach((item, position) => {
@@ -168,8 +182,10 @@ export function assessComposioResult(name: string, result: ToolResult & { value?
       const message = errorTextOf(batchPayload)
       failed.push({ kind: kindOf(message, batchPayload), error: sanitizeDiagnostic(message) })
     }
-  } else if (transport || unwrapped.isError) {
-    // A protocol/transport failure, or a single action whose own envelope says it failed.
+  }
+  if (!batch && (transport || unwrapped.isError) || (batch && transport && !failed.length && !unreported)) {
+    // A protocol/transport failure, or a single action whose own envelope says it failed. A transport error that carried a
+    // batch with no failed entry is still a failure: the outcome of what it carried is not known.
     const envelope = payloads.find(item => item.successful === false) ?? payloads[0]
     const message = transport && !envelope
       ? (text || result.error?.message || 'The Composio tool call failed')
@@ -201,19 +217,30 @@ const HEADLINE: Record<ComposioFailureKind, string> = {
   action_failed: 'the action reported a failure',
   transport_failure: 'the Composio tool call failed',
 }
-/** One recovery sentence per kind present; each says what not to do before what to do. */
+/** Which entries a recovery sentence is about: those of the kind, by batch index, or the whole call when it is not a batch. */
+function scopeOf(assessment: ComposioAssessment, kind: ComposioFailureKind): string {
+  const entries = assessment.failed.filter(entry => entry.kind === kind)
+  const indices = entries.flatMap(entry => entry.index === undefined ? [] : [entry.index])
+  return indices.length ? `entry ${indices.join(', ')}` : assessment.counts.total === undefined && !assessment.succeeded.length ? 'the call' : 'the entries of this kind'
+}
+/**
+ * One recovery sentence per kind present; each says what not to do before what to do, and names only the entries it applies
+ * to, so that no entry that succeeded or whose outcome is unknown is ever offered for a retry.
+ */
 function recoveryFor(kind: ComposioFailureKind, assessment: ComposioAssessment): string {
+  const scope = scopeOf(assessment, kind)
+  const mixed = assessment.counts.succeeded > 0 || assessment.kinds.length > 1
   switch (kind) {
     case 'connection_required':
       return 'Do not retry and do not reconnect or re-authorize yourself. Tell the person which app needs its Composio connection (re)authorized, ask them to do it, and report this ticket blocked with that single action until they confirm.'
     case 'uncertain_completion':
-      return 'The action may already have run: do NOT resend it. Check the external state with a read-only lookup, or ask the person to check, and let a person decide before anything is repeated.'
+      return `The outcome of ${assessment.counts.unreported ? `${scope === 'the call' ? 'the call' : scope} and of ${assessment.counts.unreported} unreported entr${assessment.counts.unreported === 1 ? 'y' : 'ies'}` : scope} is unknown (it may already have run): do NOT resend it. Check the external state with a read-only lookup, or ask the person to check, and let a person decide before anything is repeated.`
     case 'rate_limited':
       return assessment.retryAfterSeconds !== undefined
-        ? `Wait at least ${assessment.retryAfterSeconds} seconds (the service's Retry-After) before retrying only the failed entries, once; do not loop.`
-        : 'The service gave no Retry-After: wait before retrying only the failed entries, once, and do not loop. If it repeats, report the limit to the person.'
+        ? `Wait at least ${assessment.retryAfterSeconds} seconds (the service's Retry-After), then retry ${scope} once, only after that wait; the service rejected it, so it did not run. Never include an entry that succeeded or whose outcome is unknown; do not loop.`
+        : `The service gave no Retry-After: wait before retrying ${scope} once, which the service rejected and did not run. Never include an entry that succeeded or whose outcome is unknown; do not loop. If it repeats, report the limit to the person.`
     case 'action_failed':
-      return 'The action ran and reported failure: read the error, correct the input or the target, and retry only the failed entries.'
+      return `${scope === 'the call' ? 'The action' : `The ${scope === 'the entries of this kind' ? 'failed entries' : scope}`} ran and reported failure: read the error and correct the input or the target before retrying ${scope === 'the call' ? 'it' : 'only that'}${mixed ? '; never an entry that succeeded or whose outcome is unknown' : ''}.`
     case 'transport_failure':
       return 'The call did not return a usable result and may or may not have run. Do not resend a side-effecting action blindly: verify its effect first (read-only lookup or ask the person); only a read-only call is safe to repeat.'
   }
