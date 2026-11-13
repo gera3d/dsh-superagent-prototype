@@ -16,5 +16,19 @@
   "ticketStage": "working",
   "preserved": "r1/r3/r5 original history, acceptedPR96/user merges, pending unapproved clarification",
   "nextOwner": "Harness correction; Codex exact-head independent review/protected release if qualified",
-  "limits": "No remoteComposio actions/access/config changes or release acceptance"
+  "limits": "No remoteComposio actions/access/config changes or release acceptance",
+  "observedNestedActivity": {
+    "events": 105,
+    "toolCalls": 14,
+    "tools": [
+      "read",
+      "bash",
+      "job_output"
+    ],
+    "routes": [
+      "antigravity/gemini-3.8-flash",
+      "anthropic/claude-sonnet-5-5"
+    ],
+    "limit": "request selections and read/bash activity prove productive execution, not candidate correctness or provider quota availability"
+  }
 }
