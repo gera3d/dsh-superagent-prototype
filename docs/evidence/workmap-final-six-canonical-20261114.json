@@ -1,0 +1,638 @@
+{
+  "observedAt": "2026-11-14T11:29:49.885045+00:00",
+  "items": [
+    {
+      "issue": 131,
+      "threadKey": "github:131",
+      "stage": "unsubscribed",
+      "admissions": [
+        {
+          "id": "137afb83b99e8617b254282462d5c594",
+          "at": "2026-11-05T02:44:29.554Z",
+          "kind": "accept",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ],
+          "ticketId": "7b75094cf09e9b313f82bb7097087bed"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "7b75094cf09e9b313f82bb7097087bed",
+          "state": "ended",
+          "stage": "ended",
+          "ended": {
+            "at": "2026-11-13T03:05:12.299Z",
+            "by": "human",
+            "outcome": "stopped"
+          },
+          "assignments": [
+            {
+              "id": "3f76948d72c93d2b77acb56dab0cb75c",
+              "state": "ended",
+              "report": {
+                "state": "waiting",
+                "summary": "Verifying baseline integrity on branch `superagent-core`.\n\n- `🟢 DONE`: Cloned repo and checked out `superagent-core`.\n- `⚡ DOING`: Running `pnpm check` (typecheck, tests, build) on baseline.\n- `🎯 NEXT`: Rebase PR #16 (`agent/strip-one-surface-aae289a9a223`) onto `superagent-core`.\n\nVerifying test suite behavior in `strip-one-surface` worktree.\n\n- `🟢 DONE`: Located multi-repo structure (`repos/dsh-next-steps`, `repos/dsh-superagent`).\n- `⚡ DOING`: Running vitest suite in `strip-one-surface-aae289a9a223` worktree.\n- `🎯 NEXT`: Mirror `repos/` structure in current workspace to resolve imports cleanly.\n\nVerifying TypeScript resolution with symlinked `dsh-next-steps`.\n\n- `🟢 DONE`: Linked `dsh-next-steps` into `work/` to resolve `../../dsh-next-steps` relative imports.\n- `⚡ DOING`: Running `tsc --noEmit` check.\n- `🎯 NEXT`: Verify remaining type errors and begin rebase on PR #16.\n\nVerifying TypeScript compilation after linking `dsh-next-steps`.\n\n- `🟢 DONE`: Linked active `dsh-next-steps` with node_modules into `work/`.\n- `⚡ DOING`: Running `tsc --noEmit`.\n- `🎯 NEXT`: Resolve any typecheck errors on baseline before rebasing PR #16.\n\nTesting typecheck resolution with `prompt` included in `HttpHost.sessions`.\n\n- `🟢 DONE`: Added `'prompt'` to `HttpHost.sessions` in `src/app/http.ts`.\n- `⚡ DOING`: Running `tsc --noEmit` to confirm 0 type errors.\n- `🎯 NEXT`: Revert scratch edit on `superagent-core` and checkout PR #16 branch.\n\nValidating typecheck on rebased PR #16 branch.\n\n- `🟢 DONE`: Rebased PR #16 onto `superagent-core` and preserved all tests in `decision-card.spec.tsx`.\n- `⚡ DOING`: Running `tsc --noEmit`.\n- `🎯 NEXT`: Run targeted vitest suites for PR #16.\n\nVerifying `pnpm typecheck` after fixing `HttpHost.sessions`.\n\n- `🟢 DONE`: Added `'prompt'` to `HttpHost.sessions` in `src/app/http.ts`.\n- `⚡ DOING`: Running `pnpm typecheck`.\n- `🎯 NEXT`: Run PR #16 tests (`inline-decision.spec.tsx` and `decision-card.spec.tsx`).\n\nVerifying typecheck on rebased PR #15 branch.\n\n- `🟢 DONE`: Rebased PR #15 onto `superagent-core` and resolved architecture doc conflict cleanly.\n- `⚡ DOING`: Running `pnpm typecheck`.\n- `🎯 NEXT`: Run fallback vitest suites (`model-fallback.spec.ts`, `role-models.spec.ts`).\n\nVerifying typecheck on PR #15 branch.\n\n- `🟢 DONE`: Added `'prompt'` to `HttpHost.sessions` in `src/app/http.ts`.\n- `⚡ DOING`: Running `pnpm typecheck`.\n- `🎯 NEXT`: Run fallback vitest suites (`model-fallback.spec.ts`, `role-models.spec.ts`).\n\nVerifying typecheck and build on PR #8 branch.\n\n- `🟢 DONE`: Merged `superagent-core` into PR #8 branch and passed 423/423 vitest tests.\n- `⚡ DOING`: Running `pnpm typecheck && pnpm build`.\n- `🎯 NEXT`: Commit test expectation update and push PR #8 to origin.\n\nCleared all conflicts across prototype PRs **#16**, **#15**, and **#8** in order, verified types, tests, and builds, and pushed each branch to origin ready for merge.\n\n- `🟢 DONE`: Rebased/merged PRs #16, #15, and #8 onto `superagent-core`; all three report `mergeable: MERGEABLE` (`mergeStateStatus: CLEAN`) and verification comment posted to [issue #131](https://github.com/gera3d/superagent-sandbox/issues/131#issuecomment-6648555981).\n- `⚡ DOING`: Standing by with clean git working tree and all branches up to date.\n- `🎯 NEXT`: Merge PR #16, #15, and #8 on GitHub in sequence.\n\n### Summary\n\n- **PR #16 (`agent/strip-one-surface-aae289a9a223`)**: Rebased onto `superagent-core`. Preserved pick-and-send submission proof and scored/unscored badge test suites (56/56 tests passing).\n- **PR #15 (`agent/deepseek-fallback-2058aed95582`)**: Rebased onto `superagent-core`. Preserved escalation ladder separation and DeepSeek flash availability fallback (45/45 tests passing).\n- **PR #8 (`agent/characters-panel-6385257ce896`)**: Merged `superagent-core`. Preserved character attributions, card overrides, and strip percent badges (428/428 tests passing).",
+                "at": "2026-11-05T03:05:36.143Z"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 132,
+      "threadKey": "github:132",
+      "stage": "unsubscribed",
+      "admissions": [
+        {
+          "id": "f8eb34b826cf83a4b66cb0605a6e9eec",
+          "at": "2026-11-05T02:44:27.482Z",
+          "kind": "accept",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ],
+          "ticketId": "743b2f534b68c91c32cc8b4b72b5abe0"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "743b2f534b68c91c32cc8b4b72b5abe0",
+          "state": "ended",
+          "stage": "ended",
+          "ended": {
+            "at": "2026-11-13T03:05:12.704Z",
+            "by": "human",
+            "outcome": "stopped"
+          },
+          "assignments": [
+            {
+              "id": "7a901f0b7e52c54b49d45e224f8a11cd",
+              "state": "ended",
+              "report": {
+                "state": "waiting",
+                "summary": "PR #100 is now clean and mergeable with latest `main`.\n\n🟢 **DONE**:\n* Merged latest `main` into **`agent/ready-to-try-notify-add95bbfbf5a`**, resolving conflicts in **`scripts/ready-to-try-notification.py`** and **`scripts/test-sweep-stale-decisions.py`**.\n* Preserved quiet-by-default alerts (`sound=False`, `sound_name=\"none\"`) from merged PR #130 alongside scheduled sweeps and dock handshakes.\n* Verified all 10 script test suites (89/89 tests passed), pushed commit `849b1c0`, and posted verification status to [issue #132](https://github.com/gera3d/superagent-sandbox/issues/132).\n\n⚡ **DOING**:\n* Idle; awaiting human operator merge on PR #100.\n\n🎯 **NEXT**:\n* Merge [PR #100](https://github.com/gera3d/superagent-sandbox/pull/100) via GitHub or run `gh pr merge 100 --squash` when ready.",
+                "at": "2026-11-05T02:48:29.716Z"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 133,
+      "threadKey": "github:133",
+      "stage": "unsubscribed",
+      "admissions": [
+        {
+          "id": "bfd99f07cc134cd8aa1ce02014243983",
+          "at": "2026-11-05T14:56:34.755Z",
+          "kind": "accept",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ],
+          "ticketId": "423683c3ec65671fbe6666606d3bd03f"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "423683c3ec65671fbe6666606d3bd03f",
+          "state": "ended",
+          "stage": "ended",
+          "ended": {
+            "at": "2026-11-13T03:05:11.870Z",
+            "by": "human",
+            "outcome": "stopped"
+          },
+          "assignments": [
+            {
+              "id": "add33bae6827c6a6b3455ad5abc38e84",
+              "state": "ended",
+              "report": {
+                "state": "waiting",
+                "summary": "🟢 **DONE**: Applied the browser-safe `locked-escalation` fix to an isolated worktree branch and verified `pnpm build` creates `lib/client.js` with 0 `node:child_process` references.\n⚡ **DOING**: Running baseline test suite in the worktree.\n🎯 **NEXT**: Add the guard test verifying `src/client` import graph cannot reach Node modules or server-only files.\n🟢 **DONE**: Traced client import graph and verified safe resolution to 46 client-safe modules with zero `node:` or server module violations.\n⚡ **DOING**: Waiting for full test suite execution to complete in the worktree.\n🎯 **NEXT**: Inspect test suite output and create `tests/client-bundle-guard.spec.ts`.\n🟢 **DONE**: Drafted guard test specifications ensuring zero `node:` modules or server files in the client runtime dependency graph.\n⚡ **DOING**: Waiting for full baseline test run to finish.\n🎯 **NEXT**: Write `tests/client-guard.spec.ts` and run it.\n🟢 **DONE**: Worktree setup and typecheck passed.\n⚡ **DOING**: Finalizing test suite run.\n🎯 **NEXT**: Inspect test results and add guard test.\n🟢 **DONE**: Created `tests/client-guard.spec.ts` and updated `docs/007-architecture.md`; both tests passed.\n⚡ **DOING**: Running TypeScript check (`pnpm typecheck`).\n🎯 **NEXT**: Build plugin bundle (`pnpm build`) and verify `lib/client.js`.\n🟢 **DONE**: Documented new modules in architecture docs and validated `tests/client-guard.spec.ts`.\n⚡ **DOING**: Waiting for `tsc --noEmit` to finish.\n🎯 **NEXT**: Execute `pnpm build` and verify `lib/client.js`.\n🟢 **DONE**: Typecheck passed (`tsc --noEmit`).\n⚡ **DOING**: Building output bundles (`tsdown`).\n🎯 **NEXT**: Verify `grep -c 'node:child_process' lib/client.js` is 0.\nPR opened at **https://github.com/gera3d/dsh-superagent-prototype/pull/18** and completion comment posted to issue #133.\n\n🟢 **DONE**:\n- Extracted `LOCKED_ESCALATION_LIST` to **src/locked-escalation.ts** and added **tests/client-guard.spec.ts**.\n- Verified `grep -c 'node:child_process' lib/client.js` is `0`, with typechecks and tests passing.\n- Backed up patch to **`/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/commit-plugin-load-fix-423683c3ec65/backup/live-fix.patch`**.\n\n⚡ **DOING**:\n- Awaiting operator review and merge of PR #18 into `superagent-core`.\n\n🎯 **NEXT**:\n- Review and merge **https://github.com/gera3d/dsh-superagent-prototype/pull/18**.",
+                "at": "2026-11-05T15:10:04.916Z"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 135,
+      "threadKey": "github:135",
+      "stage": "unsubscribed",
+      "admissions": [
+        {
+          "id": "b2e14a862736274ed3bd83ceb46b3461",
+          "at": "2026-11-05T15:07:04.554Z",
+          "kind": "accept",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ],
+          "ticketId": "964f342d3869da674ca6144a71674ac1"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "964f342d3869da674ca6144a71674ac1",
+          "state": "ended",
+          "stage": "ended",
+          "ended": {
+            "at": "2026-11-13T03:05:11.490Z",
+            "by": "human",
+            "outcome": "stopped"
+          },
+          "assignments": [
+            {
+              "id": "ae7495064ec705851de67e7c1fd103e3",
+              "state": "ended",
+              "report": {
+                "state": "waiting",
+                "summary": "I've launched the test suite in the background and am waiting for execution to complete.\n\nI've launched the test suite in the background and am waiting for execution to complete.\n\nI am waiting for the test suite execution to finish.\n\nI've launched TypeScript typecheck in the background and am waiting for it to finish.\n\nI am waiting for the TypeScript typecheck to finish.\n\nI am waiting for the TypeScript compiler check to complete.\n\nI'll pause here and wait for the typecheck process to notify upon completion.\n\nWaiting for the TypeScript typecheck task to finish.\n\nWaiting for `tsc --noEmit` task completion.\n\nWaiting for `tsc --noEmit` to verify type checking.\n\nWaiting for `tsc --noEmit` validation to complete.\n\nWaiting for `tsdown` build to complete.\n\nWaiting for tests to finish executing.\n\nCreated pull request [dsh-superagent-prototype#19](https://github.com/gera3d/dsh-superagent-prototype/pull/19) fixing the brand logo fetch header, settings save form submission, and raw asset loopback host routing.\n\n🟢 **DONE**:\n- Added `x-orchestrator-request: 1` header to **`src/client/branding-mark.tsx`**.\n- Wrapped **`src/client/branding-settings.tsx`** in `<form onSubmit={event => { void draft.submit(event) }}>`.\n- Enabled loopback `Host` check for `/orchestrator/api/branding/raw` in **`src/app/http.ts`** and added test suite coverage in **`tests/branding.spec.tsx`** and **`tests/http.spec.ts`**.\n- Commented on [superagent-sandbox#135](https://github.com/gera3d/superagent-sandbox/issues/135#issuecomment-6661907239) with the PR link, test verification, and try-it steps.\n\n⚡ **DOING**:\n- Completed all ticket criteria.\n\n🎯 **NEXT**:\n- Review and merge [PR #19](https://github.com/gera3d/dsh-superagent-prototype/pull/19) into **`superagent-core`**.",
+                "at": "2026-11-05T15:27:31.328Z"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 136,
+      "threadKey": "github:136",
+      "stage": "unsubscribed",
+      "admissions": [
+        {
+          "id": "37f635ec8a5a0ad391fafb48b7392148",
+          "at": "2026-11-05T15:15:15.209Z",
+          "kind": "accept",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ],
+          "ticketId": "90edc2e60a7fcab8af33982effbba5af"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "90edc2e60a7fcab8af33982effbba5af",
+          "state": "ended",
+          "stage": "ended",
+          "ended": {
+            "at": "2026-11-13T03:05:10.715Z",
+            "by": "human",
+            "outcome": "stopped"
+          },
+          "assignments": [
+            {
+              "id": "70a6642d4f0e0aff2f1df5d098147d92",
+              "state": "ended",
+              "report": {
+                "state": "waiting",
+                "summary": "Visual verification in the live app at http://127.0.0.1:3082/ confirmed that the DeepSeek wordmark is hidden with an empty spot by default, and toggling `Hide DeepSeek wordmark` off in Settings > Branding successfully restores it.\n\n`🟢 DONE`:\n- Verified default state: `sidebar.brand.name` slot renders empty (`innerHTML: \"\"`), leaving clean empty space next to the intact 57 logo mark ([live_wordmark_hidden_verified.png](file:///Users/gerayeremin/.gemini/antigravity-cli/brain/81c69048-ece3-4e75-b49b-3d24ce51135e/live_wordmark_hidden_verified.png)).\n- Verified settings toggle: disabled `Hide DeepSeek wordmark` in **Settings > Branding** ([live_settings_branding_hidden.png](file:///Users/gerayeremin/.gemini/antigravity-cli/brain/81c69048-ece3-4e75-b49b-3d24ce51135e/live_settings_branding_hidden.png)) and confirmed the 156x24 wordmark SVG restores cleanly ([live_wordmark_restored_verified.png](file:///Users/gerayeremin/.gemini/antigravity-cli/brain/81c69048-ece3-4e75-b49b-3d24ce51135e/live_wordmark_restored_verified.png)).\n- Reset setting back to ON (default hidden), leaving the top-left area empty for your future layout plans.\n\n`⚡ DOING`:\n- All verification steps completed and screenshots recorded at 1440 x 913.\n\n`🎯 NEXT`:\n- Confirm whether to prune the ephemeral worker worktree `hide-wordmark-90edc2e60a7f`.",
+                "at": "2026-11-05T20:05:37.280Z"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 138,
+      "threadKey": "github:138",
+      "stage": "unsubscribed",
+      "admissions": [
+        {
+          "id": "a5b87f29a2b562cbf5aaa2f1b5f7a1ca",
+          "at": "2026-11-05T20:07:47.495Z",
+          "kind": "accept",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ],
+          "ticketId": "dbb7b49b9dd23f19c0f7b2fdd0c260b3"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "dbb7b49b9dd23f19c0f7b2fdd0c260b3",
+          "state": "ended",
+          "stage": "ended",
+          "ended": {
+            "at": "2026-11-13T03:05:10.367Z",
+            "by": "human",
+            "outcome": "stopped"
+          },
+          "assignments": [
+            {
+              "id": "09e441593ee21e981279f1f7c12dcb9f",
+              "state": "ended",
+              "report": {
+                "state": "waiting",
+                "summary": "Created private GitHub repository [**gera3d/dsh-plugins**](https://github.com/gera3d/dsh-plugins) containing the complete working trees of **dsh-next-steps** and **dsh-workstream**.\n\n🟢 **DONE**:\n- Created private repo [**gera3d/dsh-plugins**](https://github.com/gera3d/dsh-plugins) and pushed **main** branch (39 files total).\n- Pushed standalone plugin git histories to read-only branches **history/dsh-next-steps** and **history/dsh-workstream**.\n- Verified all required files and uncommitted scoring edits via GitHub API, confirmed 0 secrets detected, and posted report on [issue #138](https://github.com/gera3d/superagent-sandbox/issues/138).\n\n⚡ **DOING**:\n- Task completed; waiting for review.\n\n🎯 **NEXT**:\n- Review [https://github.com/gera3d/dsh-plugins](https://github.com/gera3d/dsh-plugins) to verify files and private status (~1 minute).",
+                "at": "2026-11-05T20:12:42.209Z"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "nativeDeliverySearch": {
+    "scope": "Exact final six original ticket IDs only; no matches does not prove no historical deploy",
+    "matches": []
+  },
+  "localPluginSnapshot": {
+    "snapshotPath": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/plugins-backup-repo-dbb7b49b9dd2/dsh-plugins",
+    "head": "ec224abb5a87fa23ee331e18f7ee473b19f0c722",
+    "branches": [
+      "refs/heads/history/dsh-next-steps 8fe11feba6cfd4fb484b08773da1d83645dd24ad",
+      "refs/heads/history/dsh-workstream 66fd04560e39123b73220b67775d2a0b395648c6",
+      "refs/heads/main ec224abb5a87fa23ee331e18f7ee473b19f0c722",
+      "refs/remotes/origin/history/dsh-next-steps 8fe11feba6cfd4fb484b08773da1d83645dd24ad",
+      "refs/remotes/origin/history/dsh-workstream 66fd04560e39123b73220b67775d2a0b395648c6",
+      "refs/remotes/origin/main ec224abb5a87fa23ee331e18f7ee473b19f0c722"
+    ],
+    "tree": [
+      ".gitignore",
+      "README.md",
+      "dsh-next-steps/.gitignore",
+      "dsh-next-steps/cordis.patch.yml",
+      "dsh-next-steps/package.json",
+      "dsh-next-steps/src/client/index.tsx",
+      "dsh-next-steps/src/index.ts",
+      "dsh-next-steps/src/suggest.ts",
+      "dsh-next-steps/test/client.test.tsx",
+      "dsh-next-steps/test/suggest.test.mjs",
+      "dsh-next-steps/tsconfig.json",
+      "dsh-next-steps/tsdown.config.ts",
+      "dsh-workstream/NOTE_FOR_CLAUDE.md",
+      "dsh-workstream/README.md",
+      "dsh-workstream/cordis.patch.yml",
+      "dsh-workstream/package.json",
+      "dsh-workstream/src/client/app.test.tsx",
+      "dsh-workstream/src/client/app.tsx",
+      "dsh-workstream/src/client/components/DecisionCard.tsx",
+      "dsh-workstream/src/client/components/FocusCard.tsx",
+      "dsh-workstream/src/client/components/Footer.tsx",
+      "dsh-workstream/src/client/components/Header.tsx",
+      "dsh-workstream/src/client/components/Insights.tsx",
+      "dsh-workstream/src/client/components/Pipeline.tsx",
+      "dsh-workstream/src/client/components/Radar.tsx",
+      "dsh-workstream/src/client/decision-api.ts",
+      "dsh-workstream/src/client/handoff.test.tsx",
+      "dsh-workstream/src/client/handoff.tsx",
+      "dsh-workstream/src/client/hud.css",
+      "dsh-workstream/src/client/inbox.css",
+      "dsh-workstream/src/client/index.tsx",
+      "dsh-workstream/src/client/locales.ts",
+      "dsh-workstream/src/client/threads.test.ts",
+      "dsh-workstream/src/client/threads.ts",
+      "dsh-workstream/src/client/types.ts",
+      "dsh-workstream/src/env.d.ts",
+      "dsh-workstream/src/index.ts",
+      "dsh-workstream/tsconfig.json",
+      "dsh-workstream/tsdown.config.ts"
+    ],
+    "remote": "https://github.com/gera3d/dsh-plugins.git",
+    "limits": "Read-only original local scratch snapshot; no remote request or verification of current repository privacy/access. Original reported zero-secret scan not rerun."
+  },
+  "originalLoadFixBackup": {
+    "path": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/commit-plugin-load-fix-423683c3ec65/backup/live-fix.patch",
+    "exists": true,
+    "sha256": "544c12ce3a073d3d602a120bcb2abc7a5662ee8af45c88b729a695dda8a583a3"
+  },
+  "liveState": {
+    "state": {
+      "load": {
+        "running": 0,
+        "queued": 0,
+        "maxWorkers": 3
+      },
+      "health": {
+        "runtime": {
+          "state": "ready",
+          "detail": "Orchestrator is ready",
+          "at": "2026-11-14T02:01:17.255Z"
+        },
+        "relay": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T06:03:31.494Z"
+        },
+        "notice": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T04:38:16.277Z"
+        },
+        "launch": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T04:23:50.748Z"
+        },
+        "delivery": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T05:50:35.560Z"
+        },
+        "assessment": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T02:39:23.274Z"
+        },
+        "reply": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T02:39:31.279Z"
+        },
+        "evals": {
+          "state": "ready",
+          "detail": "No unavailable Eval in the last hour"
+        },
+        "models": {
+          "state": "ready",
+          "detail": "No managed Session is waiting on a model budget retry"
+        },
+        "github": {
+          "state": "ready",
+          "detail": "0 notifications; next poll ≥ 60s",
+          "at": "2026-11-14T11:25:34.671Z"
+        }
+      }
+    },
+    "config": {
+      "executor": {
+        "value": {
+          "model": {
+            "provider": "antigravity",
+            "model": "gemini-3.8-flash",
+            "reasoningEffort": "medium"
+          },
+          "maxWorkers": 3,
+          "directory": "",
+          "prepare": "",
+          "blockedCommands": [],
+          "sound": false,
+          "stallWaitSeconds": 180
+        },
+        "revision": 44
+      },
+      "models": {
+        "value": {
+          "hierarchy": [
+            {
+              "provider": "antigravity",
+              "model": "gemini-3.8-flash",
+              "reasoningEffort": "medium",
+              "starred": true
+            },
+            {
+              "provider": "anthropic",
+              "model": "claude-sonnet-5-5",
+              "starred": true
+            },
+            {
+              "provider": "deepseek-official",
+              "model": "deepseek-flash",
+              "starred": false
+            },
+            {
+              "provider": "openai-codex",
+              "model": "gpt-6.1-sol",
+              "starred": true
+            }
+          ],
+          "maxEscalations": 1,
+          "helper": {
+            "provider": "deepseek-official",
+            "model": "deepseek-flash"
+          },
+          "conserve": false,
+          "economyRoute": {
+            "provider": "deepseek-official",
+            "model": "deepseek-flash"
+          },
+          "subscriptions": [
+            {
+              "provider": "antigravity",
+              "status": "available",
+              "resetAt": ""
+            },
+            {
+              "provider": "anthropic",
+              "status": "available",
+              "resetAt": ""
+            },
+            {
+              "provider": "openai-codex",
+              "status": "conserved",
+              "resetAt": ""
+            },
+            {
+              "provider": "deepseek-official",
+              "status": "available",
+              "resetAt": ""
+            }
+          ]
+        },
+        "revision": 26
+      },
+      "coordination": {
+        "value": {
+          "enabled": true
+        },
+        "revision": 3
+      }
+    },
+    "findings": [
+      {
+        "id": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+        "revision": 19,
+        "state": "blocked",
+        "blocker": "Review the linked evidence and explicitly accept or request further work."
+      },
+      {
+        "id": "fbd4db89-0485-4e9d-a805-cac220390100",
+        "revision": 3,
+        "state": "blocked",
+        "blocker": "Review the linked evidence and explicitly accept or request further work."
+      },
+      {
+        "id": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+        "revision": 10,
+        "state": "blocked",
+        "blocker": "Inspect the blocked work report and decide the next bounded recovery step."
+      },
+      {
+        "id": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+        "revision": 2,
+        "state": "blocked",
+        "blocker": "Review the linked evidence and explicitly accept or request further work."
+      }
+    ],
+    "openTickets": [
+      {
+        "id": "8db3c6ac57589b65e10bca887ae6df01",
+        "title": "Make each thread's purpose and definition of done obvious",
+        "state": "open",
+        "stage": "idle"
+      },
+      {
+        "id": "ea85d9eb8a702bef3c0065d156df1e04",
+        "title": "Explain and control the unexplained ding sound",
+        "state": "open",
+        "stage": "idle"
+      },
+      {
+        "id": "ff97608c4932079f4021b6b4d8ac03f4",
+        "title": "Fall back to a working model instead of stopping the session",
+        "state": "open",
+        "stage": "idle"
+      },
+      {
+        "id": "2b13359942e59c1fcb183bef902cc7ea",
+        "title": "Keep updates from killing running sessions",
+        "state": "open",
+        "stage": "idle"
+      }
+    ],
+    "existingProviderUsage": {
+      "sessionId": "worker-0310d5fb926de996644d23a0768bf518",
+      "routes": [
+        {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "attempts": 1,
+          "uncachedInputTokens": 2248,
+          "outputTokens": 712,
+          "cacheReadTokens": 152868,
+          "totalTokens": 155828
+        }
+      ],
+      "totals": {
+        "uncachedInputTokens": 2248,
+        "outputTokens": 712,
+        "totalTokens": 155828,
+        "cacheReadTokens": 152868
+      },
+      "coverage": {
+        "attempts": 1,
+        "reported": 1,
+        "cacheRead": "exact",
+        "cacheWrite": "unreported",
+        "attribution": "complete"
+      },
+      "cost": {
+        "kind": "unavailable",
+        "reason": "noRecordedPrice"
+      }
+    }
+  },
+  "originalSixAndGoogle": [
+    {
+      "id": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+      "revision": 13,
+      "state": "resolved",
+      "owner": "Harness execution; existing Codex coordinator independent review and shared release",
+      "job": {
+        "id": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r11",
+        "ticketId": "c22796a56c57b96f120a42ec4db17cdd",
+        "assignmentId": "73ee3ed17d4e4ec88b75f61e228aa1c1"
+      },
+      "blocker": null
+    },
+    {
+      "id": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+      "revision": 19,
+      "state": "blocked",
+      "owner": "Harness execution; existing Codex coordinator independent review and shared release",
+      "job": {
+        "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r18",
+        "ticketId": "90b01f2a0531979c292f19f482df2a3e",
+        "assignmentId": "9fcfa76462a763cf8289661908868ae2"
+      },
+      "blocker": "Review the linked evidence and explicitly accept or request further work."
+    },
+    {
+      "id": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+      "revision": 8,
+      "state": "blocked",
+      "owner": "Harness execution; existing Codex coordinator independent review and shared release",
+      "job": {
+        "id": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r7",
+        "ticketId": "4abae94273cfd65a149e9ee6333c0b87",
+        "assignmentId": "ba3796bc797424d3cdf97948782af08f"
+      },
+      "blocker": "Review the linked evidence and explicitly accept or request further work."
+    },
+    {
+      "id": "fbd4db89-0485-4e9d-a805-cac220390100",
+      "revision": 3,
+      "state": "blocked",
+      "owner": "Harness execution; existing Codex coordinator independent review and shared release",
+      "job": {
+        "id": "finding:fbd4db89-0485-4e9d-a805-cac220390100:r1",
+        "ticketId": "ee96b8e87953f8a1debf4c809dc51a58",
+        "assignmentId": "e7c3e3b506bbeb36ee576236d76a6227"
+      },
+      "blocker": "Review the linked evidence and explicitly accept or request further work."
+    },
+    {
+      "id": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+      "revision": 10,
+      "state": "blocked",
+      "owner": "Harness execution; existing Codex coordinator independent review and shared release",
+      "job": {
+        "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r9",
+        "ticketId": "0310d5fb926de996644d23a0768bf518",
+        "assignmentId": "5a63c9930a78eee4655970525c946bf0"
+      },
+      "blocker": "Inspect the blocked work report and decide the next bounded recovery step."
+    },
+    {
+      "id": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+      "revision": 2,
+      "state": "blocked",
+      "owner": "Harness execution; existing Codex coordinator independent review and shared release",
+      "job": {
+        "id": "finding:60a99ec9-4328-41c1-93cc-dbbe6569e234:r1",
+        "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+        "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7"
+      },
+      "blocker": "Review the linked evidence and explicitly accept or request further work."
+    },
+    {
+      "id": "f526782b-1443-4342-b811-3cba5188f455",
+      "revision": 4,
+      "state": "blocked",
+      "owner": "Harness verification worker; Codex independent reviewer and release owner",
+      "job": {
+        "id": "finding:f526782b-1443-4342-b811-3cba5188f455:r3",
+        "ticketId": "26b9ea4d4f5d3728e5eed7c89fa5b6dc",
+        "assignmentId": "c7b90960e755e5ceb6a4323295fe64e0"
+      },
+      "blocker": "Review the linked evidence and explicitly accept or request further work."
+    }
+  ],
+  "installedSourceReadOnly": {
+    "clientApi": "LOCKED_ESCALATION_LIST re-export from ../locked-escalation.ts",
+    "brandingMark": "Fetch management header1; BrandWordmark returnsnull when configured/default hide true",
+    "brandingSettings": "form onSubmit draft.submit; hideWordmark switch remains",
+    "quietNotification": "Existing sandbox source documents sound=False/sound_name none; no alert or schedule invoked"
+  },
+  "limits": [
+    "No Chrome use/current screenshot/native acceptance or provider probe",
+    "Exact original six-ticket search found zero typed delivery/capability matches; bounded absence is not all-history nonexistence",
+    "Current configured branding values not changed; historical screenshots and worker tests not rerun"
+  ]
+}

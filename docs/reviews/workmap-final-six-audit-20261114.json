@@ -1,0 +1,204 @@
+{
+  "observedAt": "2026-11-14T11:29:49.885045+00:00",
+  "findingId": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+  "revision": 2,
+  "state": "blocked/unaccepted; historical34 classifications reconciled, supplemental/acceptance outstanding",
+  "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+  "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7",
+  "scope": "Original priority6 last six historical classifications; documentation/reconciliation only",
+  "coverage": {
+    "historicalTotal": 34,
+    "newlyReconciled": [
+      131,
+      132,
+      133,
+      135,
+      136,
+      138
+    ],
+    "priorReconciledNotRepeated": [
+      3,
+      5,
+      11,
+      13,
+      14,
+      16,
+      54,
+      80,
+      84,
+      86,
+      87,
+      91,
+      98,
+      102,
+      108,
+      109,
+      112,
+      116,
+      117,
+      121,
+      122,
+      123,
+      128,
+      157,
+      159,
+      163,
+      165,
+      167
+    ],
+    "cumulative": [
+      3,
+      5,
+      11,
+      13,
+      14,
+      16,
+      54,
+      80,
+      84,
+      86,
+      87,
+      91,
+      98,
+      102,
+      108,
+      109,
+      112,
+      116,
+      117,
+      121,
+      122,
+      123,
+      128,
+      131,
+      132,
+      133,
+      135,
+      136,
+      138,
+      157,
+      159,
+      163,
+      165,
+      167
+    ],
+    "cumulativeCount": 34,
+    "historicalRemaining": [],
+    "historicalRemainingCount": 0,
+    "meaning": "All34 historical classifications reconciled INCLUDING explicitunknowns; not34acceptedfeatures/currentbacklogsize/fullworkmapacceptance.",
+    "supplementalUnknowns": [
+      "sandboxPR150",
+      "prototypeissues2/3",
+      "otherpluginrepoopenmetadata; configured visibilitydenials retained"
+    ],
+    "prototypePR92Limit": "Previously metadata/merge/change list only as14 successor; no full independentqualification"
+  },
+  "items": [
+    {
+      "issue": 131,
+      "classification": "completed bounded rebase/push scope; subsequent merges verified by previously pinned metadata",
+      "evidence": [
+        "7b75094cf09e9b313f82bb7097087bed /3f76948d72c93d2b77acb56dab0cb75c waiting report and comment6648555981 report prototype16→15→8 conflicts cleared with type/build/targeted checks and branches pushed.",
+        "Previously inspected exact merged pins retained: prototype16 6fa65305a0c310fd30b257f27bac8c0196502ea1; prototype15 9d3801ed16693f969df254542ce48fadd0486bbc; prototype8 6139a38d9377b471da08fb97f81cc121c40c6e9b. No duplicate rebase/merge needed."
+      ],
+      "limits": "Reported PR16 total56 conflicts with listed9+47+8=64; preserve discrepancy rather than certify count. Intermediate423 vs final428 Characters totals remain historical. No new tests/provider cooldown trigger/settings/ranker edit. Original no-apply/no-restart/PR-only rule retained; source merge is not all-feature native acceptance."
+    },
+    {
+      "issue": 132,
+      "classification": "completed bounded second Stage5 rebase; old merge suggestion is completed history",
+      "evidence": [
+        "743b2f534b68c91c32cc8b4b72b5abe0 /7a901f0b7e52c54b49d45e224f8a11cd and comment6648311904 report quiet-by-default behavior preserved with scheduled-sweep/dock changes,89checks/10script suites and pushed849b1c0.",
+        "Earlier independently fetched sandbox100 finalhead849b1c08c5f6e031924aadb3ed76b71a666b86aa matches report prefix; merge da6dc80fcb95f9c3d80f8d6b1a4ec39e90cdb5a4 verified. Existing source documents soundFalse/none."
+      ],
+      "limits": "Scope is same-branch conflict resolution/push, not new notification/daemon acceptance. Do not replay old schedule/sweep/test alert/merge instructions or enable a timer. Historical test results not rerun; no claims about current ding issue."
+    },
+    {
+      "issue": 133,
+      "classification": "completed narrower PR-only preservation of browser import fix; current source lineage present",
+      "evidence": [
+        "423683c3ec65671fbe6666606d3bd03f /add33bae6827c6a6b3455ad5abc38e84 and comment6661480022 deliver prototype18 with isolated locked-escalation module,client import guard, backup path and historical zero-child_process bundle check.",
+        "Prototype18 headc1aa83e4bf533acc5797f33f91d215457982e2ca merged5aace7eb0c4b5fe4d540c2644946cd4cf749b153, current operator ancestor. Installed client API imports safe module; original backup exists with SHA544c12ce3a073d3d602a120bcb2abc7a5662ee8af45c88b729a695dda8a583a3."
+      ],
+      "limits": "Issue reports earlier live page repaired; this task preserved source only. Original historical guard2/3 count progression retained, no new type/build/test/bundle probe or current-native-load proof. No source reset/live apply/restart."
+    },
+    {
+      "issue": 135,
+      "classification": "completed bounded branding PR delivery with installed source markers; native save/load not requalified",
+      "evidence": [
+        "964f342d3869da674ca6144a71674ac1 /ae7495064ec705851de67e7c1fd103e3 and comment6661907239 deliver prototype19; historical10branding+9httpchecks/types/build.",
+        "Head a1bf78205fa2b475fa266654dad34dcd7159fc48 merged b3a0b368b8557ad16987143ac3b7e246181b4758, current ancestor. Installed fetch sends management header; branding settings has form onSubmit draft.submit."
+      ],
+      "limits": "Original requested no-logo-value/settings/live apply changes. No current save, local-file/raw-route request, visual check or setting toggle performed. Source markers/merge do not establish current native acceptance. No management-header spoofing of protected publication."
+    },
+    {
+      "issue": 136,
+      "classification": "narrower merged wordmark override with historical reported live verification; present native outcome unverified",
+      "evidence": [
+        "90edc2e60a7fcab8af33982effbba5af /70a6642d4f0e0aff2f1df5d098147d92 explicitly reports live hidden→toggleoff/restored→backon and screenshots on Nov5; comment6662616334 lists sidebar SVG and HARNESS boot text distinction.",
+        "Prototype20 headfd20dd70b95745608131ddae05ea7f544a0cb068 mergeddbf9410f07cecdb9a855bb98c42a6b105dcf73cc,current ancestor. Installed BrandWordmark returnsnull on configured/defaulttrue hide and setting exists."
+      ],
+      "limits": "Historical worker actions went beyond PR-only text; preserve evidence and scope discrepancy, do not retroactively treat it as blanket authorization. No screenshot/nativeUI/current toggle/layout/all-location audit in this stage. Historical screenshot links are worker claims, not newly viewed images. No ephemeral worktree deletion."
+    },
+    {
+      "issue": 138,
+      "classification": "narrower historical backup delivery with independently preserved local snapshot; current remote privacy/access unverified",
+      "evidence": [
+        "dbb7b49b9dd23f19c0f7b2fdd0c260b3 /09e441593ee21e981279f1f7c12dcb9f and comment6668167429 report private dsh-plugins/main,39files(10nextsteps+27workstream+2root),zero-secret scan and two history branches.",
+        "Original scratch snapshot still exists at ec224abb5a87fa23ee331e18f7ee473b19f0c722 with exactly39 tracked paths, requested critical files, history/dsh-next-steps8fe11feba6cfd4fb484b08773da1d83645dd24ad andhistory/dsh-workstream66fd04560e39123b73220b67775d2a0b395648c6. Local origin-tracking refs preserved; origin URL matches requested repository."
+      ],
+      "limits": "Local tracking refs do not prove current remote existence/privacy/access or fresh secret-scan/upload equivalence. Prior plugin metadata denials retained; no denied read retry, alternate account/credential/transport or new repo/push. Required note/readme exact-original-byte identity not independently reconstructed in this slice; names present only. No live-folder git mutation."
+    }
+  ],
+  "originalRequirementReview": [
+    {
+      "requirement": 1,
+      "coverage": "All34 historical entries classified across five audit slices, including explicit unverified/blocked/narrower limits; supplemental items remain outside completed historical34 coverage.",
+      "completeForHistoricalSet": true
+    },
+    {
+      "requirement": 2,
+      "coverage": "One CURRENT checkpoint controls; earlier snapshots explicitly historical and bodies/userchoices/failed evidence retained.",
+      "completeForHistoricalSet": true
+    },
+    {
+      "requirement": 3,
+      "coverage": "Allsix original IDs/owners/revisions/jobs/stages re-read, priority1resolved13; priorities2/3/4/5/6 blocked19/8/3/10/2. Separate Googlequalification findingf526...blocked4 remains unaccepted, no forced trial; actual later Google usage does not retroactively accept original qualification.",
+      "completeForHistoricalSet": true
+    },
+    {
+      "requirement": 4,
+      "coverage": "Source merges/endedworkers/cleanup closures separated from native acceptance; old failed/retracted attempts and unknownpins retained.",
+      "completeForHistoricalSet": true
+    },
+    {
+      "requirement": 5,
+      "coverage": "Reviewable documentation commits/diffs and pinned evidence; all34 inspected issues alreadyclosed, no new administrative closure proposal/action needed. Other supplemental openmetadata not yet independently reconciled.",
+      "completeForHistoricalSet": true
+    },
+    {
+      "requirement": 6,
+      "coverage": "Sole existing Codex coordinator; clean baseline64d1302 and exact shared/localsync verified; no competing worker/sharedrelease edits.",
+      "completeForHistoricalSet": true
+    },
+    {
+      "requirement": 7,
+      "coverage": "Executor44/models26/coordination3 unchanged, OpenAIconserved, Google5reserve/max3/backoff/nativegates preserved. No provider/config/access/spend/limit change.",
+      "completeForHistoricalSet": true
+    }
+  ],
+  "administrativeClosures": {
+    "proposed": [],
+    "executed": [],
+    "reason": "All34historicalissues alreadyclosed; no furtherclosureproposed. Supplementalmetadata notcovered."
+  },
+  "evidence": [
+    "../evidence/workmap-final-six-source-20261114.json",
+    "../evidence/workmap-final-six-canonical-20261114.json"
+  ],
+  "holds": [
+    "Original findingr2blocked/job/scope/requirements unchanged; documentation count is not protected acceptance.",
+    "No native screen readiness or clarification approval supplied; no Chrome/readinessquestion repeated. Diagnostics115/Composio108/sections nativeholds and separatequota authority boundaries unchanged.",
+    "No implementation/tests/newjobs/acceptedjob reopening/replay/ordinarychoice/taxonomy/rawretirement/canonicalDBwrite/issuePR mutations/comments/providerprobe/config/routes/keys/access/spend/limit changes."
+  ],
+  "nextOwner": "Codex: separately reconcile supplemental evidence gaps within originalscope and assemble final requirement/evidence review; only supported protected native acceptance if originalscope fullyjustified and gateavailable. Do not retry denied plugin reads or infer approval from history."
+}
