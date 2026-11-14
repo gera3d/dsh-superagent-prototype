@@ -1,0 +1,59 @@
+{
+  "observedAt": "2026-11-14T00:18:00.651966+00:00",
+  "observedLocal": "2026-11-13 16:18:00 PST",
+  "findingId": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+  "findingRevision": 2,
+  "findingState": "blocked",
+  "jobId": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r1",
+  "ticketId": "476e0cde1673d0d3278933f87ace6d8f",
+  "assignmentId": "aa513ffbcf8e4f75dceaa9b895132a1e",
+  "authority": "Original six overnight scopes explicitly human-approved in codex chat01a1c46a-41e7-7f33-a459-7b621a70e97e; native queue_next confirmed2026-11-10T07:53:06.875Z. This inspection grants nothing new and performs no recovery transition.",
+  "canonicalEnd": {
+    "ticketState": "ended",
+    "outcome": "dropped",
+    "at": "2026-11-10T08:07:20.222Z",
+    "report": "Finding worker turn ended without a recorded status report."
+  },
+  "actualWork": {
+    "ticketDirectory": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-476e0cde1673",
+    "ticketDirectoryEntries": [],
+    "foundVia": "Matching original assistant tool-call arguments show git worktree add and subsequent reads/tests under ~/tmp-work/worktrees/finding-task-476e0cde1673, not canonical jobdir.",
+    "savedWorktree": "/Users/gerayeremin/tmp-work/worktrees/finding-task-476e0cde1673",
+    "branch": "agent/finding-task-476e0cde1673",
+    "head": "0ce84a6be57e1b9f97e3de0e7b39d838406bea1e",
+    "statusPorcelain": "",
+    "uncommittedPatchBytes": 0,
+    "uncommittedPatchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "conclusion": "Clean historical source0ce84a6; no diagnostics implementation delta, new commit or ready artifact in inspected saved worktree. Absence of native report alone was NOT used to infer absence of work. Old tree remains untouched."
+  },
+  "trajectory": {
+    "path": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/sessions/--Users-gerayeremin-Library-Application~0020Support-dsh-desktop-harness-state-superagent-work-finding-task-476e0cde1673--/worker-476e0cde1673d0d3278933f87ace6d8f/session.v4.jsonl.zstd",
+    "events": 168,
+    "tools": {
+      "orchestrator_read": 2,
+      "bash": 13,
+      "grep": 1,
+      "read": 7,
+      "job_output": 3,
+      "orchestrator_report": 0
+    },
+    "routes": [
+      "antigravity/gemini-3.8-flash: AGY_ERROR unavailable/cooldown",
+      "anthropic/claude-sonnet-5-5: actual request header"
+    ],
+    "terminal": "max-tokens",
+    "interpretation": "Sonnet exhausted output tokens after code inspection and baseline tests, before any native report; no screen-lock/reporttool-unavailable or originalpublication66mscause claim inferred.",
+    "historicalUsage": "18reportedSonnetrequests/19attempts total, price unavailable; usage is not billedcost/allowance proof."
+  },
+  "historicalChecks": {
+    "firstAttempt": "timeout280 wrapper unavailable (timeout:notfound); no hostpackage install needed or attempted here.",
+    "completedCommand": "npx vitest run tests/publication.spec.ts tests/publication-worker.spec.ts tests/lifecycle-publication.spec.ts tests/publication-runner.spec.ts tests/publication-operator.spec.ts tests/delivery-publication.spec.ts tests/canonical-publication.spec.ts tests/publication-ticket.spec.ts tests/publication-process.spec.ts 2>&1 | tail -25",
+    "result": "Historical unchanged-base9files/112tests pass, output reports statuscompleted exitcode0 for shell pipeline; individualVitestexit not separately captured because tail pipeline. This is baseline evidence only, NOT diagnostics qualification.",
+    "log": "docs/evidence/publication-diagnostics-original-baseline-20261110.log",
+    "logSha256": "6c8d7bc519924f0934bcfc2faa66176dbe59ac638771fed118d94c847f3e51d5",
+    "newTestsRun": false
+  },
+  "nextBoundedHarnessRequirement": "Future supported samefinding recovery under retained original approval: create new isolated trusted work/ local-origin clone of CURRENT operator source; do not revive/reset/overwrite original ended ticket/tree. First inventory current confirmation->validation->enqueue->execution and existing audit facilities, since oldbase0ce84a6 predates later changes. Reuse any already-present diagnostics. Add only remaining authorized allowlisted phase/cause observations tied to existing request/publication/task identities; distinguish beforeeffect rejection/queued/failed/uncertain/rollback, sanitize no raw request/provider payload/secrets. Cover preenqueue/stalepins/duplicateconfirm/interrupted enqueue/downstream failure using offlinebounded fixtures, preserving exactnativeconfirmation/pins/oneuseapproval/idempotence/no retryloop. No synthetic livepublication/release/rollback/userchoice. Return exactcommittedhead/base/hash, focusedcommands/exits and diagnosticguide via native structuredreport. If current scope alreadycovered return evidence/no-repair recommendation, not duplicate implementation.",
+  "nextOwner": "Harness future bounded implementation/recovery, existing Codex coordinator independent review/protectedrelease ifqualified. No dispatch/retry authorized in THIS inspection pass.",
+  "limits": "Read-only canonical/source/trajectory inspection plus documentation/evidence archival and observation-only originalfinding occurrence. No implementation/newtests/livepublication/dispatch/retry/revival/Chrome/settings/access/telemetryexpansion/credentials/spend/routes/approvalchange. Original66mscause remains unproven. No current-source semantic completeness audit or acceptance. Composio pendingUI/clarificationheld/acceptedfeatures untouched."
+}
