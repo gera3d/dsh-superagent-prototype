@@ -1,0 +1,53 @@
+{
+  "observedAt": "2026-11-14T03:21:25.898777+00:00",
+  "findingId": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+  "revision": 7,
+  "state": "running",
+  "job": {
+    "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r7",
+    "ticketId": "c7b6e06c5888e8e4cfbb9c8dc839b719",
+    "assignmentId": "3e5773f0f298deb03e677112cbe24682"
+  },
+  "priorJobs": [
+    {
+      "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r1",
+      "ticketId": "476e0cde1673d0d3278933f87ace6d8f",
+      "assignmentId": "aa513ffbcf8e4f75dceaa9b895132a1e"
+    },
+    {
+      "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r3",
+      "ticketId": "5d7c23667a52c3e9afb03ce04352024b",
+      "assignmentId": "f6b7aa4d9bf4b44a686a026885ec7326"
+    },
+    {
+      "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r5",
+      "ticketId": "8aa87a3e4b93aadda0dcbea585001f25",
+      "assignmentId": "26223d23e7d674d3189b51af46c50d7b"
+    }
+  ],
+  "confirmation": {
+    "revision": 7,
+    "choiceId": "queue_next",
+    "actor": "codex-project-coordinator",
+    "at": "2026-11-14T03:20:12.549Z"
+  },
+  "reviewCommit": "2bc9ead",
+  "reviewOccurrenceLanded": true,
+  "supportedRecovery": "Exact-live revision6 retry_scope->7 and confirm exactretainedqueue_next accepted; no override",
+  "load": {
+    "running": 2,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "actualRequestConfigs": [
+    {
+      "provider": "antigravity",
+      "model": "gemini-3.8-flash",
+      "reasoningEffort": "medium",
+      "maxTokens": 65536
+    }
+  ],
+  "nextOwner": "Harness r7 originalscope fixed diagnostic persistence/privacy fixtures/newtesttyping correction on CURRENTlocal-source; Codex independently reviews exacthead/checks then protects native release ifqualified",
+  "releaseSourceConstraint": "Re-read installed releaseprofile unchanged: source.workspaceSubdir=work, artifactRoots=[]; before native release ensure exactreviewed candidate source is in trusted job/work via supported staging, not arbitraryrepo/ or root overrides. No codequalification waived.",
+  "limits": "R5rejectedandnotdeployed;44focusedtestspass/typecheckfails/privateoutcomeprobe as2bc9ead. Originalr1/r3/r5history/trees/artifacts/reports preserved. No Codeximplementation/newtestfiles/livepublication/Chrome/config/route/access/spend/credential/limit or releaseprofilechange. ComposioUIhold/clarificationunapproved/quotaPR109-114authorityqualified unchanged."
+}
