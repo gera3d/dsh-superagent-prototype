@@ -1,0 +1,541 @@
+{
+  "at": "2026-11-14T22:40:01.494215+00:00",
+  "checkpointBefore": "d1458c5caa9f36ed0e526e784f5da43ecf9856f0",
+  "scope": "completion audit, PR121 independent runtime counterexamples and source continuations; not a release",
+  "pr121": {
+    "head": "82424ccbc7e6746d1b617ca3f0f20e8351095213",
+    "githubCI": "success; independently read current status",
+    "parentExactCounts": {
+      "filesPassed": 176,
+      "filesSkipped": 2,
+      "testsPassed": 2530,
+      "testsSkipped": 3
+    },
+    "verdict": "REJECTED for release pending concrete runtime/ledger correction",
+    "sourceConfirmedGaps": [
+      "no production callers to recordStart/recordCompletion/recordUncertain outside ledger definition; existing hosttest seeds accessor manually",
+      "runtime fallback clock initializes on first fallback, same-route/inflight transport not routed through bounded executeWithFallback helper",
+      "tool ledger start permits duplicate unresolved/inflight call identity"
+    ],
+    "reproductions": {
+      "runtimeTotalBound": {
+        "config": {
+          "primary": {
+            "provider": "antigravity",
+            "model": "gemini-3.8-flash"
+          },
+          "fallbacks": [
+            {
+              "provider": "anthropic",
+              "model": "claude-sonnet-5-5"
+            }
+          ],
+          "max_attempts_per_model": 1,
+          "max_total_attempts": 1,
+          "total_timeout_ms": 30000,
+          "backoff_base_ms": 500,
+          "backoff_ceiling_ms": 5000,
+          "required_capabilities": []
+        },
+        "trigger": "initial Google429 after accepted isolated synthetic ticket",
+        "expectedNewModelSelections": [],
+        "actualNewModelSelections": [
+          {
+            "provider": "anthropic",
+            "model": "claude-sonnet-5-5"
+          }
+        ],
+        "exit": 1,
+        "test": "real runtime honors total one-attempt limit even when another fallback is eligible"
+      },
+      "inflightDuplicateStart": {
+        "operations": [
+          "recordStart(effect-1,write)",
+          "recordStart(effect-1,write)"
+        ],
+        "expected": "second call throws",
+        "actual": "second call accepted",
+        "exit": 1
+      },
+      "passingNegativeControl": {
+        "test": "empty configured fallbacks prevent substitution",
+        "result": "passed, no new model selection; preserve this behavior"
+      }
+    },
+    "auditSource": "import {test,expect} from 'vitest';\nimport {startRuntime,feishu} from '/Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent/.worktrees/model-fallback-bounds-ff97608c4932/tests/fixtures/host.ts';\nimport {ModelRoutingConfigSchema} from '/Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent/.worktrees/model-fallback-bounds-ff97608c4932/src/policy.ts';\nimport {ToolExecutionLedger} from '/Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent/.worktrees/model-fallback-bounds-ff97608c4932/src/model-routing.ts';\ntest('real runtime honors total one-attempt limit even when another fallback is eligible',async()=>{\nconst h=await startRuntime();try{\nconst google={provider:'antigravity',model:'gemini-3.8-flash',starred:true};const sonnet={provider:'anthropic',model:'claude-sonnet-5-5',starred:true};\nawait h.runtime.settings.save('models',{hierarchy:[google,sonnet],maxEscalations:1,routing:ModelRoutingConfigSchema.parse({primary:{provider:google.provider,model:google.model},fallbacks:[{provider:sonnet.provider,model:sonnet.model}],max_total_attempts:1,max_attempts_per_model:1})},h.runtime.store.blockRevision('models'),'panel');\nconst one=await h.acceptedTicket(feishu('review-no-substitution','@bot Fix isolated audit fixture'));\nconst agent=h.agents.get(one.sessionId)!;const session=agent.session as any;const before=session.append.mock.calls.filter(([e]:any)=>e==='model/selection').length;\nh.ctx.emit('agent/error',{agent,error:Object.assign(new Error('Google quota exhausted'),{status:429})} as never);await h.runtime.idle(); for(let i=0;i<10;i++){await new Promise(resolve=>setImmediate(resolve));await h.runtime.idle();}\nconst later=session.append.mock.calls.filter(([e]:any)=>e==='model/selection').slice(before).map(([,v]:any)=>v);\n(await import('node:fs')).writeFileSync('/private/tmp/pr121-runtime-observation.json',JSON.stringify({later,settings:h.runtime.store.settings().models,ticket:h.runtime.store.tickets.get(one.ticket.id)}));expect(later).toHaveLength(0);\n}finally{await h.stop();}});\ntest('ledger prevents a second start while identical tool outcome remains in flight',()=>{\nconst ledger=new ToolExecutionLedger();ledger.recordStart('effect-1','write');expect(()=>ledger.recordStart('effect-1','write')).toThrow();\n});\n",
+    "initialLedgerLog": "\n RUN  v4.1.8 /private/tmp/pr121-runtime-review-fl3wsx94\n\n \u276f audit.spec.ts (2 tests | 1 failed) 335ms\n   \u00d7 ledger prevents a second start while identical tool outcome remains in flight 7ms\n\n Test Files  1 failed (1)\n      Tests  1 failed | 1 passed (2)\n   Start at  14:34:23\n   Duration  3.80s (transform 2.22s, setup 0ms, import 3.09s, tests 335ms, environment 0ms)\n\n(node:46312) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af Failed Tests 1 \u23af\u23af\u23af\u23af\u23af\u23af\u23af\n\n FAIL  audit.spec.ts > ledger prevents a second start while identical tool outcome remains in flight\nAssertionError: expected [Function] to throw an error\n \u276f audit.spec.ts:16:130\n     14| }finally{await h.stop();}});\n     15| test('ledger prevents a second start while identical tool outcome rema\u2026\n     16| const ledger=new ToolExecutionLedger();ledger.recordStart('effect-1','\u2026\n       |                                                                                                                                  ^\n     17| });\n     18|\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/1]\u23af\n\n",
+    "emptyFallbackLog": "\n RUN  v4.1.8 /private/tmp/pr121-runtime-review-fl3wsx94\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 1 skipped (2)\n   Start at  14:35:33\n   Duration  4.00s (transform 2.30s, setup 0ms, import 3.06s, tests 322ms, environment 0ms)\n\n(node:46582) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n",
+    "totalBoundLog": "\n RUN  v4.1.8 /private/tmp/pr121-runtime-review-fl3wsx94\n\n \u276f audit.spec.ts (2 tests | 1 failed | 1 skipped) 564ms\n   \u00d7 real runtime honors total one-attempt limit even when another fallback is eligible 562ms\n\n Test Files  1 failed (1)\n      Tests  1 failed | 1 skipped (2)\n   Start at  14:36:25\n   Duration  5.21s (transform 3.12s, setup 0ms, import 4.23s, tests 564ms, environment 0ms)\n\n(node:46819) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af Failed Tests 1 \u23af\u23af\u23af\u23af\u23af\u23af\u23af\n\n FAIL  audit.spec.ts > real runtime honors total one-attempt limit even when another fallback is eligible\nAssertionError: expected [ { provider: 'anthropic', \u2026(1) } ] to have a length of +0 but got 1\n\n- Expected\n+ Received\n\n- 0\n+ 1\n\n \u276f audit.spec.ts:13:219\n\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/1]\u23af\n\n",
+    "canonical": {
+      "ticket": "ff97608c4932079f4021b6b4d8ac03f4",
+      "assignment": "a0bfbb1698be8f88a0f62e05ea591015",
+      "state": "idle waiting at review; no consumedready; no report rewrite"
+    },
+    "continuation": {
+      "comment": 6885294304,
+      "scope": "original request/attempt/tool boundaries + focused real-runtime deterministic tests + actual current report; samePR121, no provider/live work"
+    }
+  },
+  "brief216": {
+    "ticket": "8db3c6ac57589b65e10bca887ae6df01",
+    "assignment": "83bc2d9f6b1cbebdf2c96d8bb9b2b3ef",
+    "continuation": 6885294524,
+    "scope": "brief-specific domain/context adapter and compact client component only; synthetic fixtures, actual TS modules; preserve verbatim ask/unconfirmed scope/criteria/revisions",
+    "exclusiveFiles": "brief-specific client/domain files and focused tests",
+    "deferred": "sessions/executor/modelrouting/policy/docs007 mounts/persistence/recovery integration after217 exact-head owner seals",
+    "notComplete": "old Python receipts not real DSH persistence/context/mount acceptance"
+  },
+  "shared228": {
+    "head": "a688da0037c5603ab7b853e976be663e746b953f",
+    "clean": true,
+    "independentTests": {
+      "host": {
+        "command": "node --experimental-strip-types --test test/host.test.mjs",
+        "pass": 25,
+        "fail": 0,
+        "exit": 0
+      },
+      "ui": {
+        "command": "./node_modules/.bin/vitest run test/unavailable-dock.test.tsx test/specialist-badge.test.tsx",
+        "pass": 27,
+        "fail": 0,
+        "exit": 0
+      }
+    },
+    "hostLog": "\u2714 feature delivery metadata never becomes native chat suggestions (2.578484ms)\n\u2714 canonical projection preserves Track A privileged action kinds without label inference (1.347433ms)\n\u2714 helper 2\u20134 choices retain exact IDs, order, labels, full prompts and recommendation (0.741263ms)\n\u2714 capture-before-helper: pending visible, cards precede scores, publication and scoring same exact record (66.7796ms)\n\u2714 helper-before-capture: early result retained, never displayed unlinked, final publication once (7.893148ms)\ndsh-next-steps-score-diagnostic {\"stage\":\"claim\",\"code\":\"held\",\"attempt\":0,\"retryAfterMs\":119999,\"retryable\":true}\n\u2714 simultaneous tabs/hosts and reload share durable lease and persisted choices (10.432083ms)\ndsh-next-steps-score-diagnostic {\"stage\":\"evaluate\",\"code\":\"network\",\"attempt\":1,\"elapsedMs\":0,\"deadlineMs\":60000,\"retryable\":true}\ndsh-next-steps-score-diagnostic {\"stage\":\"evaluate\",\"code\":\"network\",\"attempt\":2,\"elapsedMs\":502,\"deadlineMs\":60000,\"retryable\":true}\ndsh-next-steps-score-diagnostic {\"stage\":\"evaluate\",\"code\":\"network\",\"rev\":\"505626de\",\"attempt\":2,\"elapsedMs\":503,\"retryable\":true}\n\u2714 concurrent requests and score failure retain unscored cards without fake probabilities (510.063675ms)\ndsh-next-steps-score-diagnostic {\"stage\":\"evaluate\",\"code\":\"http-503\",\"attempt\":1,\"elapsedMs\":1,\"deadlineMs\":60000,\"retryable\":true}\ndsh-next-steps-score-diagnostic {\"stage\":\"evaluate\",\"code\":\"http-503\",\"attempt\":2,\"elapsedMs\":504,\"deadlineMs\":60000,\"retryable\":true}\ndsh-next-steps-score-diagnostic {\"stage\":\"evaluate\",\"code\":\"http-503\",\"rev\":\"505626de\",\"attempt\":2,\"elapsedMs\":505,\"retryable\":true}\n\u2714 explicit refresh retries failed scoring without regenerating or replacing choices (515.769289ms)\ndsh-next-steps-score-diagnostic {\"stage\":\"claim\",\"code\":\"stale\",\"status\":409}\n\u2714 expired scoring lease renews, cached scores never resurrect resolved records (7.814558ms)\ndsh-next-steps-score-diagnostic {\"stage\":\"evaluate\",\"code\":\"http-503\",\"attempt\":1,\"elapsedMs\":1,\"deadlineMs\":60000,\"retryable\":true}\n\u2714 source changing during failed ranking cannot resurrect unscored cards (508.401368ms)\ndsh-next-steps-score-diagnostic {\"stage\":\"publish\",\"code\":\"stale\",\"status\":409,\"retryable\":false}\ndsh-next-steps-score-diagnostic {\"stage\":\"claim\",\"code\":\"stale\",\"status\":409,\"retryable\":false}\ndsh-next-steps-score-diagnostic {\"stage\":\"claim\",\"code\":\"stale\",\"status\":409,\"retryable\":false}\ndsh-next-steps-score-diagnostic {\"stage\":\"claim\",\"code\":\"network\",\"status\":0,\"retryable\":true}\n\u2714 stale publication and staged choice cannot replace durable choices or resurrect resolved decision (12.163809ms)\ndsh-next-steps-score-diagnostic {\"stage\":\"claim\",\"code\":\"network\",\"status\":0,\"retryable\":true}\ndsh-next-steps-score-diagnostic {\"stage\":\"publish\",\"code\":\"network\",\"status\":0,\"retryable\":true}\n\u2714 shared transport unavailable is visible and never generates a competing local decision (2.899008ms)\ndsh-next-steps-score-diagnostic {\"stage\":\"publish\",\"code\":\"invalid\",\"status\":400,\"retryable\":false}\n\u2714 claim and publish transport failures emit privacy-safe stage diagnostics and bounded reconciliation (7.644347ms)\ndsh-next-steps-score-diagnostic {\"stage\":\"claim\",\"code\":\"invalid\",\"status\":400,\"retryable\":false}\n\u2714 publish HTTP 400 emits publish invalid diagnostic and does not republish (8.630844ms)\n\u2714 invalid claim or publish HTTP 400 returns invalid reason without indefinite retry (3.846545ms)\ndsh-next-steps-score-diagnostic {\"stage\":\"evaluate\",\"code\":\"http-503\",\"attempt\":1,\"elapsedMs\":1,\"deadlineMs\":60000,\"retryable\":true}\n\u2714 source snapshot includes tools, ignores bookkeeping and rejects interrupted/continued source (2.708017ms)\n\u2714 fallback-generated canonical choices receive real scores without regenerating their prompts (11.000797ms)\ndsh-next-steps-score-diagnostic {\"stage\":\"evaluate\",\"code\":\"http-503\",\"attempt\":2,\"elapsedMs\":505,\"deadlineMs\":60000,\"retryable\":true}\ndsh-next-steps-score-diagnostic {\"stage\":\"evaluate\",\"code\":\"http-503\",\"rev\":\"505626de\",\"attempt\":2,\"elapsedMs\":506,\"retryable\":true}\ndsh-next-steps-score-diagnostic {\"stage\":\"claim\",\"code\":\"stale\",\"status\":409}\n\u2714 failed fallback scoring retries only on explicit refresh and survives renewed leases (514.698952ms)\ndsh-next-steps-score-diagnostic {\"stage\":\"claim\",\"code\":\"stale\",\"status\":409}\n\u2714 fallback scoring after host reload uses the existing choices and refuses staged records (12.49244ms)\ndsh-next-steps-score-diagnostic {\"stage\":\"evaluate\",\"code\":\"invalid-distribution\",\"attempt\":1,\"elapsedMs\":1,\"deadlineMs\":60000,\"retryable\":true}\ndsh-next-steps-score-diagnostic {\"stage\":\"evaluate\",\"code\":\"invalid-distribution\",\"attempt\":2,\"elapsedMs\":504,\"deadlineMs\":60000,\"retryable\":true}\ndsh-next-steps-score-diagnostic {\"stage\":\"evaluate\",\"code\":\"invalid-distribution\",\"rev\":\"505626de\",\"attempt\":2,\"elapsedMs\":504,\"retryable\":true}\n\u2714 invalid fallback ranking stays unscored and a continued source invalidates in-flight scores (515.108089ms)\ndsh-next-steps-score-diagnostic {\"stage\":\"claim\",\"code\":\"stale\",\"status\":409}\n\u2714 restoring a completed session seed does not invalidate its canonical content identity or scoring (9.216576ms)\n\u2714 bounded specialist attribution is relayed on publish, projected to the dock, and the internal field never leaves the host (6.483197ms)\n\u2714 malformed or oversized specialist metadata is ignored and advice still publishes unattributed (3.888154ms)\n\u2714 suggest returns stale on explicit conversation close-out without invoking helper or ranker (5.514397ms)\n\u2714 mixed close-out and continuing work is NOT suppressed: helper still drafts (2.291988ms)\n\u2139 tests 25\n\u2139 suites 0\n\u2139 pass 25\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 3056.71157\n",
+    "uiLog": "\n RUN  v4.1.8 /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/shared-decision-avail-099f4f1a6b2e/repo/dsh-next-steps\n\n\n Test Files  2 passed (2)\n      Tests  27 passed (27)\n   Start at  14:38:17\n   Duration  5.23s (transform 451ms, setup 0ms, import 1.15s, tests 1.01s, environment 6.76s)\n\n",
+    "scope": "bounded publish400/no-republish/lost-response single-record and availability/badge/timer behavior; not full feature/native acceptance",
+    "canonicalConsumed": "8559aa92fc05b4f7",
+    "publication": "DENIED repository lookup preserved; no repeat or alternate credentials/account",
+    "next": "Codex retains local reviewed candidate; sanctioned source publication only after materially new relevant authorization/access evidence"
+  },
+  "sourcePRs": {
+    "117": {
+      "head": "327f63472d3e1b68c6dae2988b4893c57585d6fa",
+      "state": "draftopen",
+      "ci": "success",
+      "stage": "reviewed source; native publication/release pending"
+    },
+    "118": {
+      "head": "b179a121ef754e454116702e7c969100d31d29a7",
+      "state": "draftopen",
+      "ci": "success",
+      "stage": "reviewed source/consumed report2823f44f; native mounted-flow/release pending"
+    },
+    "108": {
+      "remoteHead": "488f8400c78d1969fede084fd39899ca342efd1c",
+      "state": "open nondraft",
+      "localCorrection": "53369320ab0da142f1fa84fd58de82b559aa71ba",
+      "stage": "native sanctioned source publication hold; no manualpush"
+    },
+    "115": {
+      "remoteHead": "a6b754d4656e26a4813763a3bcd784e36e5857b9",
+      "state": "open nondraft",
+      "localCorrection": "a9be5b92369fd5e2f80f92e43c89211b4139c19b",
+      "stage": "native sanctioned source publication hold; no manualpush"
+    }
+  },
+  "issueCensus": [
+    {
+      "repo": "gera3d/superagent-sandbox",
+      "number": 215,
+      "state": "open",
+      "title": "Explain and control the unexplained ding sound",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/215",
+      "pr": false,
+      "error": null
+    },
+    {
+      "repo": "gera3d/superagent-sandbox",
+      "number": 216,
+      "state": "open",
+      "title": "Make each thread's purpose and definition of done obvious",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/216",
+      "pr": false,
+      "error": null
+    },
+    {
+      "repo": "gera3d/superagent-sandbox",
+      "number": 217,
+      "state": "open",
+      "title": "Fall back to a working model instead of stopping the session",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/217",
+      "pr": false,
+      "error": null
+    },
+    {
+      "repo": "gera3d/superagent-sandbox",
+      "number": 218,
+      "state": "open",
+      "title": "Keep updates from killing running sessions",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/218",
+      "pr": false,
+      "error": null
+    },
+    {
+      "repo": "gera3d/superagent-sandbox",
+      "number": 219,
+      "state": "closed",
+      "title": "feat: session-safe updates, update matrix, and maintenance recovery (#218)",
+      "url": "https://github.com/gera3d/superagent-sandbox/pull/219",
+      "pr": true,
+      "error": null
+    },
+    {
+      "repo": "gera3d/superagent-sandbox",
+      "number": 220,
+      "state": "closed",
+      "title": "feat: model fallback routing engine with bounded retries and tool safety (#217)",
+      "url": "https://github.com/gera3d/superagent-sandbox/pull/220",
+      "pr": true,
+      "error": null
+    },
+    {
+      "repo": "gera3d/superagent-sandbox",
+      "number": 221,
+      "state": "closed",
+      "title": "Explain and control the unexplained ding sound (#215)",
+      "url": "https://github.com/gera3d/superagent-sandbox/pull/221",
+      "pr": true,
+      "error": null
+    },
+    {
+      "repo": "gera3d/superagent-sandbox",
+      "number": 222,
+      "state": "closed",
+      "title": "feat: thread purpose, definition of done, and criteria visibility (#216)",
+      "url": "https://github.com/gera3d/superagent-sandbox/pull/222",
+      "pr": true,
+      "error": null
+    },
+    {
+      "repo": "gera3d/superagent-sandbox",
+      "number": 223,
+      "state": "closed",
+      "title": "fix(model-fallback): in-flight cancellation, accurate telemetry, dispatch-side replay ledger, and valid DSH patch (#217)",
+      "url": "https://github.com/gera3d/superagent-sandbox/pull/223",
+      "pr": true,
+      "error": null
+    },
+    {
+      "repo": "gera3d/superagent-sandbox",
+      "number": 224,
+      "state": "closed",
+      "title": "fix: audit corrections for thread purpose, definition of done, and criteria (#216)",
+      "url": "https://github.com/gera3d/superagent-sandbox/pull/224",
+      "pr": true,
+      "error": null
+    },
+    {
+      "repo": "gera3d/superagent-sandbox",
+      "number": 225,
+      "state": "open",
+      "title": "[test] Superagent isolated intake check: correct one supplied typo, no code changes",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/225",
+      "pr": false,
+      "error": null
+    },
+    {
+      "repo": "gera3d/superagent-sandbox",
+      "number": 226,
+      "state": "open",
+      "title": "[superagent] Integrate the isolated report-identity repair with strict exactly-once reporting",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/226",
+      "pr": false,
+      "error": null
+    },
+    {
+      "repo": "gera3d/superagent-sandbox",
+      "number": 227,
+      "state": "open",
+      "title": "[superagent] Route prototype116 WorkerReportSummary alignment fix to the source worker",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/227",
+      "pr": false,
+      "error": null
+    },
+    {
+      "repo": "gera3d/superagent-sandbox",
+      "number": 228,
+      "state": "open",
+      "title": "[superagent] Fix shared-decision availability and misleading Senior Developer blocked state",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/228",
+      "pr": false,
+      "error": null
+    },
+    {
+      "repo": "gera3d/superagent-sandbox",
+      "number": 229,
+      "state": "open",
+      "title": "[superagent] Route prototype3 computer-use preflight audit; no interactive OS input",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/229",
+      "pr": false,
+      "error": null
+    },
+    {
+      "repo": "gera3d/dsh-superagent-prototype",
+      "number": 119,
+      "state": "open",
+      "title": "Finish protected-publication diagnostics and verify uncertain handoffs",
+      "url": "https://github.com/gera3d/dsh-superagent-prototype/issues/119",
+      "pr": false,
+      "error": null
+    },
+    {
+      "repo": "gera3d/dsh-superagent-prototype",
+      "number": 120,
+      "state": "open",
+      "title": "Support authorized adoption of an existing PR without branch churn",
+      "url": "https://github.com/gera3d/dsh-superagent-prototype/issues/120",
+      "pr": false,
+      "error": null
+    }
+  ],
+  "remainingOwners": {
+    "215": "adapterf084a01 narrow qualified/root14; executor wiring waits217; actualdingunverified",
+    "218": "existing lifecycle ticket queued behind sharedruntime, no restart/crash",
+    "120": "canonical sourceissue open, authorized PR adoption queued behind executor owner; no duplicate routing issue",
+    "119": "existing diagnostics lane/sourceissue open; canonicalfinding12blocked",
+    "229": "noninteractive preflight only; no desktopinput authority change",
+    "225": "open isolated typo/control history; assisted report not hands-off acceptance",
+    "226": "sourcePR117green consumed0287c929; no deployment",
+    "217": "existing worker/runtime owner; correction postedonce, no competingimplementer"
+  },
+  "runtimeAtRead": {
+    "setup": {
+      "machine": {
+        "stateDir": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent",
+        "promptMaxChars": 100000,
+        "admissionContextMaxPages": 10,
+        "admissionContextTimeoutMs": 15000
+      },
+      "problem": null,
+      "feishuProblem": null,
+      "accounts": {
+        "repository": "gera3d/superagent-sandbox",
+        "agent": "Ultron-Uplink",
+        "feishu": null
+      }
+    },
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "masterId": "orchestrator-core",
+    "paused": false,
+    "health": {
+      "runtime": {
+        "state": "ready",
+        "detail": "Orchestrator is ready",
+        "at": "2026-11-14T18:08:56.965Z"
+      },
+      "relay": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T20:49:10.636Z"
+      },
+      "notice": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T20:49:10.638Z"
+      },
+      "launch": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T20:27:46.674Z"
+      },
+      "delivery": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T20:38:22.389Z"
+      },
+      "assessment": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T19:39:28.574Z"
+      },
+      "reply": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T20:27:11.137Z"
+      },
+      "evals": {
+        "state": "ready",
+        "detail": "No unavailable Eval in the last hour"
+      },
+      "models": {
+        "state": "ready",
+        "detail": "No managed Session is waiting on a model budget retry"
+      },
+      "github": {
+        "state": "ready",
+        "detail": "0 notifications; next poll \u2265 60s",
+        "at": "2026-11-14T22:29:45.746Z"
+      }
+    }
+  },
+  "limits": [
+    "0running/0queued at22:38:47UTC; posted continuations are pending intake, not claimed executing",
+    "max3/settings44/26/3/OpenAIconserved/Google5reserve/cooldowns unchanged",
+    "No release/install/restart/crash/config/credentials/account/permission/access/spend changes",
+    "No new downloads/largeclones/fullbuilds/deletions/deniedlookupretry; existing dependencies only",
+    "Native availability and narrower clarification unanswered; no repeated question or approval inferred"
+  ],
+  "followThroughRead": {
+    "at": "2026-11-14T22:40:24.804083+00:00",
+    "state": {
+      "setup": {
+        "machine": {
+          "stateDir": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent",
+          "promptMaxChars": 100000,
+          "admissionContextMaxPages": 10,
+          "admissionContextTimeoutMs": 15000
+        },
+        "problem": null,
+        "feishuProblem": null,
+        "accounts": {
+          "repository": "gera3d/superagent-sandbox",
+          "agent": "Ultron-Uplink",
+          "feishu": null
+        }
+      },
+      "load": {
+        "running": 0,
+        "queued": 0,
+        "maxWorkers": 3
+      },
+      "masterId": "orchestrator-core",
+      "paused": false,
+      "health": {
+        "runtime": {
+          "state": "ready",
+          "detail": "Orchestrator is ready",
+          "at": "2026-11-14T18:08:56.965Z"
+        },
+        "relay": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T20:49:10.636Z"
+        },
+        "notice": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T20:49:10.638Z"
+        },
+        "launch": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T20:27:46.674Z"
+        },
+        "delivery": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T20:38:22.389Z"
+        },
+        "assessment": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T19:39:28.574Z"
+        },
+        "reply": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T20:27:11.137Z"
+        },
+        "evals": {
+          "state": "ready",
+          "detail": "No unavailable Eval in the last hour"
+        },
+        "models": {
+          "state": "ready",
+          "detail": "No managed Session is waiting on a model budget retry"
+        },
+        "github": {
+          "state": "ready",
+          "detail": "0 notifications; next poll \u2265 60s",
+          "at": "2026-11-14T22:35:03.606Z"
+        }
+      }
+    },
+    "workers": {
+      "217": {
+        "ticket": "ff97608c4932079f4021b6b4d8ac03f4",
+        "stage": "idle",
+        "latestInput": [
+          {
+            "id": "6845b88a60d1e8a66080e6f5e70f7e21",
+            "kind": "trigger",
+            "triggerId": "f9a2e8b6868167bc948917d58ebfd885",
+            "at": "2026-11-14T20:38:22.059Z",
+            "human": true,
+            "readAt": "2026-11-14T20:38:22.291Z",
+            "deliveredTo": "a0bfbb1698be8f88a0f62e05ea591015",
+            "delivered": true,
+            "trigger": {
+              "id": "f9a2e8b6868167bc948917d58ebfd885",
+              "actor": {
+                "source": "github",
+                "id": "gera3d",
+                "name": {
+                  "zh": "gera3d",
+                  "en": "gera3d"
+                }
+              },
+              "human": true,
+              "preview": "Automated Codex review continuation on Gera's existing verified connected account, not manually authored by Gera. Preserve the user authorization/transcript in ",
+              "thread": "github:217"
+            }
+          }
+        ],
+        "assignments": [
+          {
+            "id": "a0bfbb1698be8f88a0f62e05ea591015",
+            "state": "running",
+            "idleAt": "2026-11-14T20:47:08.104Z",
+            "deliveredAt": "2026-11-14T20:38:22.375Z",
+            "deliveredReportHash": null
+          }
+        ]
+      },
+      "216": {
+        "ticket": "8db3c6ac57589b65e10bca887ae6df01",
+        "stage": "idle",
+        "latestInput": [
+          {
+            "id": "afd6abf377224d80caf466a462adeb6e",
+            "kind": "trigger",
+            "triggerId": "8e5f387aea7be9fb0587bae390bb2ff7",
+            "at": "2026-11-14T19:39:27.576Z",
+            "human": true,
+            "readAt": "2026-11-14T19:44:21.590Z",
+            "deliveredTo": "83bc2d9f6b1cbebdf2c96d8bb9b2b3ef",
+            "delivered": true,
+            "trigger": {
+              "id": "8e5f387aea7be9fb0587bae390bb2ff7",
+              "actor": {
+                "source": "github",
+                "id": "gera3d",
+                "name": {
+                  "zh": "gera3d",
+                  "en": "gera3d"
+                }
+              },
+              "human": true,
+              "preview": "This comment is written by Codex, an automated coordinator using Gera's verified existing connected GitHub account on the request below; it is not manually writ",
+              "thread": "github:216"
+            }
+          }
+        ],
+        "assignments": [
+          {
+            "id": "83bc2d9f6b1cbebdf2c96d8bb9b2b3ef",
+            "state": "running",
+            "idleAt": "2026-11-14T19:47:57.101Z",
+            "deliveredAt": "2026-11-14T19:44:21.477Z",
+            "deliveredReportHash": null
+          }
+        ]
+      }
+    }
+  }
+}
