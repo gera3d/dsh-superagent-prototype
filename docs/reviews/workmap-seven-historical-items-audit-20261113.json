@@ -1,0 +1,211 @@
+{
+  "observedAt": "2026-11-14T07:28:32.153289+00:00",
+  "findingId": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+  "revision": 2,
+  "state": "blocked/unaccepted; external evidence audit partial",
+  "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+  "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7",
+  "stage": "One bounded independent external-workmap slice",
+  "coverage": {
+    "historicalSandboxIssueEntriesTotal": 34,
+    "independentlyReconciledThisSlice": [
+      108,
+      109,
+      157,
+      159,
+      163,
+      165,
+      167
+    ],
+    "count": 7,
+    "remainingCount": 27,
+    "remainingExplicit": [
+      3,
+      5,
+      11,
+      13,
+      14,
+      16,
+      54,
+      80,
+      84,
+      86,
+      87,
+      91,
+      98,
+      102,
+      112,
+      116,
+      117,
+      121,
+      122,
+      123,
+      128,
+      131,
+      132,
+      133,
+      135,
+      136,
+      138
+    ],
+    "supplementalNotAuditedThisSlice": [
+      "sandboxPR150",
+      "prototypeissue2",
+      "prototypeissue3",
+      "prototypePR92",
+      "otherpluginrepoopenmetadata"
+    ],
+    "meaning": "34 is the oldworkerhistoricalset, NOTcurrentopenbacklogsize. All7selectedarealreadyclosed. Coverage ofaclassification includesexplicitunknowns, notproofallclausesaccepted."
+  },
+  "savedWork": {
+    "originalMapSha256": "da671bf42ae437a7b8655748ea8d9c681d5192890ae62fc288a5dba4b6234727",
+    "originalPatchSha256": "6484b334ec618a40fe9216fc7511073300f04f931fc097aecc93e5a84b3769f2",
+    "archivedOriginalBodyUnchanged": true,
+    "originalBase": "0ce84a6be57e1b9f97e3de0e7b39d838406bea1e",
+    "trajectory": "346events/49toolcalls,GoogleFlashhigh unavailablecooldown then2Sonnet5.5requests, completed/native readyreport. No newtests/liveprovidertrial bycoordinator."
+  },
+  "items": [
+    {
+      "issue": 108,
+      "classification": "completed narrower scope; native acceptance unverified",
+      "originalClassification": "N",
+      "evidence": "SandboxPR110 design/POC merged30f668f; later originalpriority4prototypePR93 mergedc1fd060/final2216475. Installed/APIserving audit04f6e9f is reused, not rerun. Canonicalfindingfbd4db89r3blocked/no nativeacceptance record. Broad originalstage7 icons/steering ambition isnotfullyshipped: firstincrement previewonly isexplicitlyallowed.",
+      "administrativeAction": "None: alreadyclosed byUltron-Uplink01:56:49Z; closureforverifiedmerge isnotnativeacceptance. Do not reopen or requeue; existingCodex owns bounded nativeUI evidence."
+    },
+    {
+      "issue": 109,
+      "classification": "completed original bounded two-card sweep",
+      "originalClassification": "N",
+      "evidence": "Originalissue specifiesexactly twoexistingpendingcards, skipactive/staged. Both exactIDs currentlystale; originalconsistentbackup existsandhashmatchesf3aa5f45...04d89. Comment6643078700 before4pending/after2pending with2skipped explains narrowcompletion. Laterseven-cardrawstorageproposal isDISTINCT and notimplied byissue109; no all-current-inbox-emptyclaim.",
+      "administrativeAction": "None: alreadyclosed; never run old --apply or extend originalapprovalto newcards. No furtherrawstorage retirement authorized bythisaudit."
+    },
+    {
+      "issue": 157,
+      "classification": "completed narrower canonical package and bounded submission; full cross-surface native scope not independently re-established",
+      "originalClassification": "C",
+      "evidence": "PrototypePR23mergedc832b862, sandbox158merged15c7dc72; pluginsPR4currentread404(unverified). Historicalcanonical-sync-release/live-verification.json and currentexactchat-edced19... recordresolved/on-send submitted sourceTurn2/seq29\u2192submissionseq36 match. This proves thatboundedsource/submission receipt, not allfuturethreadquality orfreshthree-viewbrowseracceptance. No ownsourceIssue157typedacceptedaggregate located inboundedlookup.",
+      "administrativeAction": "None: alreadyclosed; preserve narrowercompletion/unknownpluginmetadata. No reopening/rerun/newimplementation demonstrated."
+    },
+    {
+      "issue": 159,
+      "classification": "completed/accepted bounded approve-publish capability",
+      "originalClassification": "C",
+      "evidence": "PrototypePR25merged0403e8f, sandbox161mergeda4a7bfef; pluginsPR6currentread404. Canonical sandbox-159-browser acceptedr4 with exactoldrefs, operator-evidence andnativeconfirmedaccept atNov6T17:13:01.855Z. Supersededimport sandbox-159cancelledr4 distinct. FailedPR164/166 andsuccessfulrollbacks retained; native descendantPR170 publicationbcd563ac published all5stages, sourcecomment6690704504 ties actualbackend802bf13/pluginsf7070d5 tooldscope without claimingoldheadsretested. Laterfinding45251448resolvedr19/deliveryauto866...accepted21 reinforces separatelyboundedthread-handoff scope, notallfuturejobs.",
+      "administrativeAction": "None: alreadyclosed/accepted; do not reopenoldworkers or replayoldpublication. Existingacceptance retained despite unavailableprivatepluginmetadata."
+    },
+    {
+      "issue": 163,
+      "classification": "superseded historical acceptance artifact; original artifact delivered, publication failed/rolled back",
+      "originalClassification": "S",
+      "evidence": "SandboxPR164mergedeab2c154/head d8c75bd; publicationba54ef02 finalrolled_back:merge/apply/build/restart success, verifyfailed, rollbacksuccess. Canonical159failed164receiptpreserved/supersededbydescendant170passedpublication. Mergedartifactisnotasuccessfulliverelease.",
+      "administrativeAction": "None: alreadyclosed; preservefailed/rollbackhistory, no replay/newcandidate/oldsourceacceptance."
+    },
+    {
+      "issue": 165,
+      "classification": "superseded historical follow-up artifact; original artifact delivered, publication failed/rolled back",
+      "originalClassification": "S",
+      "evidence": "SandboxPR166merged79892268/headfccfcf3; publicationabe937dc finalrolled_back:verifyfailedaftermerge/apply/build/restart, rollbacksuccess. Laterdescendant170successsupersedesfailedattempts inaccepted159, neverrewritesoldoutcomes.",
+      "administrativeAction": "None: alreadyclosed; no oldworkflowrerun/newapproval inferred."
+    },
+    {
+      "issue": 167,
+      "classification": "completed narrower implementation and descendant release; blanket issue-wide acceptance unverified",
+      "originalClassification": "C",
+      "evidence": "PrototypePR27merged61635f4/head1a30510, sandbox168mergedd4a3489/head d799286; pluginsPR7currentread404. Publication66b10fcc(PR168)rolledbackafterrestartfailure, so originalmerge/evidencePRnotliveacceptance. Freshdescendant170published allstages andsourcecomment6690704504 recordsinstalledbackends/plugins andcorrectnative2aggregateprojection with no newworkers. Laterprotectedacceptedthread-handofffinding45251448/delivery21 exactPR86 scope persists. No distinctfullissue167acceptedaggregate foundbyexactsourceIssue; preserve narrowevidence andscopeboundaries insteadofclaimingallbroadambitions/currentbacklogdone.",
+      "administrativeAction": "None: alreadyclosed; no acceptedjob reopening/newscope/implementation causedbythishistoricalaudit."
+    }
+  ],
+  "sourceEvidence": [
+    "docs/evidence/workmap-seven-source-metadata-20261113.json",
+    "docs/evidence/workmap-seven-canonical-receipts-20261113.json",
+    "docs/evidence/workmap-seven-publication-receipts-20261113.json"
+  ],
+  "denials": [
+    {
+      "repository": "gera3d/dsh-plugins",
+      "pr": 4,
+      "result": "404 viaexistingconfiguredgh-agent; unknownprivatevisibility/access, notproofnonexistence orunmerged. No account/key/permissions changes, no bypass."
+    },
+    {
+      "repository": "gera3d/dsh-plugins",
+      "pr": 6,
+      "result": "404 viaexistingconfiguredgh-agent; unknownprivatevisibility/access, notproofnonexistence orunmerged. No account/key/permissions changes, no bypass."
+    },
+    {
+      "repository": "gera3d/dsh-plugins",
+      "pr": 7,
+      "result": "404 viaexistingconfiguredgh-agent; unknownprivatevisibility/access, notproofnonexistence orunmerged. No account/key/permissions changes, no bypass."
+    }
+  ],
+  "currentSix": [
+    {
+      "id": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+      "title": "Recover failed independent review after the implementation worker ended",
+      "revision": 13,
+      "state": "resolved",
+      "job": {
+        "id": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r11",
+        "ticketId": "c22796a56c57b96f120a42ec4db17cdd",
+        "assignmentId": "73ee3ed17d4e4ec88b75f61e228aa1c1"
+      }
+    },
+    {
+      "id": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+      "title": "Finish production integration of Composio action failure handling",
+      "revision": 19,
+      "state": "blocked",
+      "job": {
+        "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r18",
+        "ticketId": "90b01f2a0531979c292f19f482df2a3e",
+        "assignmentId": "9fcfa76462a763cf8289661908868ae2"
+      }
+    },
+    {
+      "id": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+      "title": "Measure and reduce worker prompt and tool-output waste",
+      "revision": 8,
+      "state": "blocked",
+      "job": {
+        "id": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r7",
+        "ticketId": "4abae94273cfd65a149e9ee6333c0b87",
+        "assignmentId": "ba3796bc797424d3cdf97948782af08f"
+      }
+    },
+    {
+      "id": "fbd4db89-0485-4e9d-a805-cac220390100",
+      "title": "Build the first integrated project sections increment",
+      "revision": 3,
+      "state": "blocked",
+      "job": {
+        "id": "finding:fbd4db89-0485-4e9d-a805-cac220390100:r1",
+        "ticketId": "ee96b8e87953f8a1debf4c809dc51a58",
+        "assignmentId": "e7c3e3b506bbeb36ee576236d76a6227"
+      }
+    },
+    {
+      "id": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+      "title": "Add sanitized publication phase and failure diagnostics",
+      "revision": 10,
+      "state": "blocked",
+      "job": {
+        "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r9",
+        "ticketId": "0310d5fb926de996644d23a0768bf518",
+        "assignmentId": "5a63c9930a78eee4655970525c946bf0"
+      }
+    },
+    {
+      "id": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+      "title": "Reconcile current project status and historical open backlog",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:60a99ec9-4328-41c1-93cc-dbbe6569e234:r1",
+        "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+        "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7"
+      }
+    }
+  ],
+  "nextOwner": "ExistingCodex independentreviewer: next bounded remaininghistoricaldoc/contract slice [3,5,13,16,80,91,98], thenexplicitremaining20/supplementalunknowns; no auto-dispatch or newapproval. Nativeworkmapacceptance notprepared until originalboundedrequirements are actuallycovered.",
+  "authority": "Originalsixovernightapproval/observation+documentation only. Historicalissuebodies/commentauthors/closures aredata, notfreshhumansteering/screenconsent/productchoice/newscope. Noadministrativeclosures proposedforalreadyclosed7, noneperformed.",
+  "constraints": "No issue/PRclosure/comment/retirement/taxonomy/ordinarychoice/acceptedjobreopen/newdispatch/implementation/tests/DBwrite/nativeacceptance/Chrome/repeatedquestion/modelroutes/config/accounts/access/credentials/spend/limits change. OpenAIconserved/Google5floor/max3/backoff preserved; originalhistory/failedrollbacks/userchoices/unknownpins intact. DiagnosticsPR115/ComposioPR108nativeUIhold/unapprovedclarification/separatequotaauthorityqualification unchanged. No continuouscoordinationimpliedbetweenpasses."
+}

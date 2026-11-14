@@ -1,0 +1,130 @@
+[
+  {
+    "id": "ba54ef02-c8ae-4340-9b57-d78a6a926995",
+    "ticketId": "5cc280c130fa6bdea2da00563e04f5c0",
+    "repository": "gera3d/superagent-sandbox",
+    "prNumber": 164,
+    "headSha": "d8c75bd148e6182d135117d15fa4c3e5f9c129c7",
+    "status": "rolled_back",
+    "outcomes": [
+      {
+        "stage": "merge",
+        "status": "succeeded"
+      },
+      {
+        "stage": "apply",
+        "status": "succeeded"
+      },
+      {
+        "stage": "build",
+        "status": "succeeded"
+      },
+      {
+        "stage": "restart",
+        "status": "succeeded"
+      },
+      {
+        "stage": "verify",
+        "status": "failed"
+      },
+      {
+        "stage": "rollback",
+        "status": "succeeded"
+      }
+    ]
+  },
+  {
+    "id": "abe937dc-7690-41a6-b385-8ce1640d8cb5",
+    "ticketId": "c3eef6d2c3f8f14479c2c95838f8df86",
+    "repository": "gera3d/superagent-sandbox",
+    "prNumber": 166,
+    "headSha": "fccfcf3bb8a4864fd35df705bd65d9640457e0ec",
+    "status": "rolled_back",
+    "outcomes": [
+      {
+        "stage": "merge",
+        "status": "succeeded"
+      },
+      {
+        "stage": "apply",
+        "status": "succeeded"
+      },
+      {
+        "stage": "build",
+        "status": "succeeded"
+      },
+      {
+        "stage": "restart",
+        "status": "succeeded"
+      },
+      {
+        "stage": "verify",
+        "status": "failed"
+      },
+      {
+        "stage": "rollback",
+        "status": "succeeded"
+      }
+    ]
+  },
+  {
+    "id": "66b10fcc-43e1-4c61-9d7a-31e7e80ce5f0",
+    "ticketId": "6a25853bbf3b4f971773cc7bd75327b3",
+    "repository": "gera3d/superagent-sandbox",
+    "prNumber": 168,
+    "headSha": "d7992860c050bb5b6181616311c70b4ddcda3ed6",
+    "status": "rolled_back",
+    "outcomes": [
+      {
+        "stage": "merge",
+        "status": "succeeded"
+      },
+      {
+        "stage": "apply",
+        "status": "succeeded"
+      },
+      {
+        "stage": "build",
+        "status": "succeeded"
+      },
+      {
+        "stage": "restart",
+        "status": "failed"
+      },
+      {
+        "stage": "rollback",
+        "status": "succeeded"
+      }
+    ]
+  },
+  {
+    "id": "bcd563ac-7567-49f4-b1b0-c3a4d4c2728b",
+    "ticketId": "6c8e3f2ee721ba376b1db9fdee5fe072",
+    "repository": "gera3d/superagent-sandbox",
+    "prNumber": 170,
+    "headSha": "cb6d602047486d3cfd08fea6823bcf99aa78baff",
+    "status": "published",
+    "outcomes": [
+      {
+        "stage": "merge",
+        "status": "succeeded"
+      },
+      {
+        "stage": "apply",
+        "status": "succeeded"
+      },
+      {
+        "stage": "build",
+        "status": "succeeded"
+      },
+      {
+        "stage": "restart",
+        "status": "succeeded"
+      },
+      {
+        "stage": "verify",
+        "status": "succeeded"
+      }
+    ]
+  }
+]
