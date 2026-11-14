@@ -1,0 +1,60 @@
+{
+  "observedAt": "2026-11-14T02:15:54.141198+00:00",
+  "findingId": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+  "findingRevision": 4,
+  "state": "blocked",
+  "ticketId": "5d7c23667a52c3e9afb03ce04352024b",
+  "assignmentId": "f6b7aa4d9bf4b44a686a026885ec7326",
+  "head": "20c1a847ceca0d76d9629cb515f67c23f5568f52",
+  "base": "0ce84a6be57e1b9f97e3de0e7b39d838406bea1e",
+  "worktree": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-5d7c23667a52/repo",
+  "verdict": "correction_required; not release-qualified",
+  "sourceReview": {
+    "files": 6,
+    "clean": true,
+    "originSuperagentCore": "0ce84a6be57e1b9f97e3de0e7b39d838406bea1e",
+    "operatorCurrent": "2a968b66437af8fbc34e38b1dbe3bbcb989572ae",
+    "sourcePr": "Configured gh-agent query for open PR from exact worker branch returned none"
+  },
+  "checks": {
+    "worker": "Saved log shows128checks/12files passing; preserved with original artifact, not new root broad-suite qualification",
+    "root": "Existing publication-failure-diagnostics.spec.ts and delivery-publication.spec.ts:15tests/2files passed exit0,4.79seconds; gitdiffcheck passed",
+    "directExistingFunctionProbe": "Node experimental-transform-types imports exact candidate sanitizer; synthetic quoted api_key leaves suffix; arbitrary provider JSON/content preserved. Initial strip-only invocation unsupported TS parameter property, corrected transform invocation exit0. No new test files or implementation by coordinator."
+  },
+  "blockers": [
+    {
+      "file": "src/app/publication.ts",
+      "issue": "sanitizeDiagnosticMessage is a denylist over arbitrary error strings; it preserves raw provider JSON and sensitive external content, violating original no-raw-payload/sensitive-content requirement. Quoted space-containing api_key only partly redacted. Capturing replacement references nonexistent group yielding literal$1. Free-form sanitized errors are newly persisted as audit cause/detail and generic capability blocker.",
+      "syntheticReproductions": [
+        {
+          "input": "raw provider response: {\"customerEmail\":\"fixture@example.invalid\",\"content\":\"PRIVATE_FIXTURE_CONTENT\"}",
+          "output": "unchanged raw JSON/customerEmail/content"
+        },
+        {
+          "input": "api_key=\"abc def ghi\"",
+          "output": "$1: [REDACTED] def ghi\""
+        }
+      ],
+      "required": "Use fixed allowlisted diagnostic category/cause/phase values with existing correlation IDs. Do not persist arbitrary exception/provider/request message in new observations. Preserve existing gate semantics; add offline regression fixtures for secret whitespace/structured raw payload/private text."
+    },
+    {
+      "file": "docs/operator-publication-diagnostics.md",
+      "issue": "Opening states historical pre-enqueue66ms cause known and no effects, while originalcause remains unproven. Guide recommends safe immediate retry without evidence or retained approval revalidation.",
+      "required": "Explicitly keep oldcause unproven; distinguish newly mocked scenarios from historical facts; remove blanket retry advice and preserve explicit protected recovery/pins/idempotence."
+    },
+    {
+      "file": "source/provenance",
+      "issue": "Candidate cloned historical remote origin/superagent-core0ce84a6, not CURRENToperator source; current-source inventory requirement not established.",
+      "required": "New trusted isolated work/local-origin clone from CURRENToperator source, inventory current diagnostics first, port only missing minimal changes; preserve r1/r3 work/artifacts, no reset/revival."
+    }
+  ],
+  "reportProvenance": "Canonical assignment ended with blocked report despite ready wording; later outerturns attempted ready report and called work100percentcomplete/operatorapproved. Those worker claims do not change canonical state or establish source review/release acceptance. Preserve history, do not rewrite or infer authority.",
+  "trajectory": {
+    "events": 190,
+    "requests": "15 actualGoogleGemini3.8Flash request headers; completed turn ends and generated tool/result evidence, not merely catalog availability",
+    "toolResults": "Scoped last native toolcalls include read-only sqlite queries and worker-bin/orchestrator_report; no canonicalDBwrite observed in inspected call arguments",
+    "limits": "No general Google throughput/quota/fallback guarantee; no native release/livepublication acceptance"
+  },
+  "nextCorrection": "Same original finding retained approval; exact current revision retry only if protected guard permits. Harness implements bounded three corrections above and returns exact head/base/patch/commands/exits/native structuredreport, no approval claim. Codex independent review; no protected release for rejectedr3.",
+  "constraints": "OpenAI conserved,Google5%reserve/max3/currentroutes/backoff untouched; no newtelemetry/access/hostinstall/livepublication/merge/deploy/restart/acceptance; old66mscauseunproven; ComposioUIhold/clarificationunapproved/quotaPR109-114authorityqualified unchanged."
+}
