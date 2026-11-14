@@ -1,0 +1,49 @@
+{
+  "observedAt": "2026-11-14T05:19:13.870100+00:00",
+  "findingId": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+  "revision": 10,
+  "state": "blocked/ready-for-native-review",
+  "jobId": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r9",
+  "ticketId": "0310d5fb926de996644d23a0768bf518",
+  "assignmentId": "5a63c9930a78eee4655970525c946bf0",
+  "head": "a6b754d4656e26a4813763a3bcd784e36e5857b9",
+  "base": "be5575d48d701fe6cba925bb9145f01cfccd6cf3",
+  "verdict": "Independent source review/checks qualified; native review/check/package/protected Publish/installed verification/acceptance NOT done",
+  "source": "Clean trustedjob/work, origin currentlocaloperator source;5filediff. Previousr7publication.ts andpublication-worker.ts byteidentical (passingprivacy preserved); deliverycatch now explicitnoeffectproof or uncertain exact-state reconciliation; regression actualservice+durablerunninggrant/indexloss passes. Historical66mscause remainsUNPROVEN/guide noautoryetry.",
+  "rootChecks": {
+    "environment": "Separate exact-head no-hardlinks reviewcopy /private/tmp/publication-diagnostics-r9-review-pncqdk2n with existingoperator node_modules symlink, no install/newtestfiles/implementation; originalwork untouched",
+    "existingFocusedTests": "47tests/4files passed exit0,18.21seconds",
+    "fullTypecheck": "tsc --noEmit exit0",
+    "productionBuild": "tsdown exit0,27files/5.657seconds",
+    "diffCheck": "git diff --check be5575d..HEAD exit0",
+    "installedBase": "All3modifiedruntime source files equal reviewedbase byteforbyte; hashes in installedpreimages evidence",
+    "logs": [
+      "docs/evidence/publication-diagnostics-r9-root-tests-20261113.log",
+      "docs/evidence/publication-diagnostics-r9-root-types-20261113.log",
+      "docs/evidence/publication-diagnostics-r9-root-build-20261113.log",
+      "docs/evidence/publication-diagnostics-r9-installed-preimages-20261113.json"
+    ]
+  },
+  "artifacts": {
+    "workerFormatPatchSha256": "cd59c219d43d51a8c4f1aaf0b00139b2bd3b9a2b3a9cd99accbf1bc05e915155",
+    "workerBundleSha256": "13291bd457758e3f522c1aefcdbafdde0ba08ee75aed5734a24281bf761219c0",
+    "nativeActualBinaryDiffSha256": "120d2c2fa34dfe4a9ee2e8ac7cc9bee1777b74e653570cfe33a4bc5e2fc18659",
+    "rollback": {
+      "path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/publication-diagnostics-release/20261114T051721Z",
+      "archiveSha256": "b50069a0cef1229a7a01fd3d4cc1bbcb4b07bb67dba178ec38ae55c207d8afcb",
+      "preparedOnly": true
+    }
+  },
+  "trajectory": "Matching24events/GoogleGemini3.8Flashrequest/turncompleted,0outertoolcalls notno-workproof; independentlyreviewed actualsavedsource/commits/artifacts/testlogs. Canonicalreportblocked withreadyprose; no workerclaimtreatedasacceptance.",
+  "sourcePrStage": {
+    "url": "https://github.com/gera3d/dsh-superagent-prototype/pull/115",
+    "state": "open/unmerged",
+    "head": "a6b754d4656e26a4813763a3bcd784e36e5857b9",
+    "baseBranch": "superagent-core",
+    "transport": "ConfiguredexistingGittransport/gh-agent; initial prematurePRattemptfailedbeforebranchpushcompleted/noPRthen. Awaited successfulnewbranchpush thenPR115created. No alternateroute/auth/credential/backoff bypass."
+  },
+  "nativeGate": "Existing protected Review,test&prepare release UI required; installedMCP only approvedretry/confirm/defer. Chrome availability question remains unanswered for existingnativehandoff, no readinessinferred/noquestionrepeated/noChromeinterference. Currentheldsource mayreuse exactPRoncecreated; no rawendpoint/nativeheader/gateoverride.",
+  "eligibility": "Models26/OpenAIconservation/max3 unchanged; latestGooglepool100rolling/81.55weeklypercent, noGooglecooldown,5floor retained. Zeroactive/queued at reviewedscopesnapshot. No forcedproviderprobe/config/routes/access/spend/credential/account/limits changes.",
+  "nextOwner": "Codex finishes exactsourcePR whenpushsettles, then existingnativeprotectedreview/check/package/release gates ifUIavailable; Harness owns anyreviewcorrection; no duplicateworker.",
+  "limits": "No source merge/deployment/restart/livepublication/verification/acceptance. R1/r3/r5/r7/r9evidence/trees/reports preserved. ComposioUIhold/clarificationunapproved/separatequotaauthorityqualified unchanged; no broadenedscope/rawpayloadtelemetry."
+}

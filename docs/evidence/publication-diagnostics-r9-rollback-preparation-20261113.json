@@ -1,0 +1,24 @@
+{
+  "stagePath": "/Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/publication-diagnostics-release/20261114T051721Z",
+  "createdAt": "20261114T051721Z",
+  "candidateHead": "a6b754d4656e26a4813763a3bcd784e36e5857b9",
+  "base": "be5575d48d701fe6cba925bb9145f01cfccd6cf3",
+  "target": "/Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent",
+  "sourcePostimagesBeforeRelease": [
+    {
+      "path": "src/app/publication.ts",
+      "sha256": "94983fbd77af94956a34d0823180735294a0dfb753d8a8c2c690b9fe3f8208ad"
+    },
+    {
+      "path": "src/app/publication-worker.ts",
+      "sha256": "9cb6c961cc3132ba9e1470d6352d899ea29ad7fdf1389cb333072bf63d9ea0cd"
+    },
+    {
+      "path": "src/app/delivery-publication.ts",
+      "sha256": "1f62ce41f898156099be202c09cd7638719da51e8b41277d1f18ecb4852db0f6"
+    }
+  ],
+  "patchSha256": "120d2c2fa34dfe4a9ee2e8ac7cc9bee1777b74e653570cfe33a4bc5e2fc18659",
+  "rollbackArchiveSha256": "b50069a0cef1229a7a01fd3d4cc1bbcb4b07bb67dba178ec38ae55c207d8afcb",
+  "status": "Prepared backup only; no apply/build/restart/restore/deploy executed; native manifest still owns later release/rollback actions."
+}
