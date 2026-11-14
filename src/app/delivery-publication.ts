@@ -5,6 +5,7 @@ import { publicationAction, type LifecyclePublication } from './lifecycle-public
 import { deliveryFingerprint, sameDeliveryRefs, type DeliveryCapabilityAdapters, type DeliveryEvidence, type DeliveryLease, type DeliveryResult, type DeliveryStore } from './feature-delivery.ts'
 import type { Store } from './store.ts'
 import { deliveryPhaseItem, phaseFacts } from './delivery-phase.ts'
+import { classifyPublicationError } from './publication.ts'
 
 export function deliveryPublicationCapabilities(store: DeliveryStore, tickets: Store['tickets'], publication?: LifecyclePublication): DeliveryCapabilityAdapters {
   const exactScope = (lease: DeliveryLease): boolean => {
@@ -101,14 +102,35 @@ export function deliveryPublicationCapabilities(store: DeliveryStore, tickets: S
         const authority = lease.authorization
         if (authority.source !== 'local_operator' || authority.scope !== lease.action.fingerprint) return { outcome: 'failed', blocker: 'Publication requires the exact trusted local confirmation; a model recommendation or delegated intake is not publication authority.' }
         lease.signal?.throwIfAborted()
-        await publicationAction(publication, item, lease.bindings.repository, 'publish', { publicationId: prepared.id, requestId: lease.id }, authority.actor, () => {
-          const current = store.get(lease.deliveryId)
-          const ticket = item.ticketId ? tickets.get(item.ticketId) : undefined
-          const owner = current?.release ? typeof phaseFacts(store.db, current.id) !== 'string' : !!ticket && !ticket.ended
-          return !lease.signal?.aborted && !!current && owner && exactScope(lease) && deliveryFingerprint(current.bindings) === deliveryFingerprint(lease.bindings)
-            && deliveryFingerprint(current.preparedPublication) === deliveryFingerprint(prepared)
-            && current.audit.some(a => a.actionId === lease.action.id && a.actor === authority.actor)
-        })
+        try {
+          await publicationAction(publication, item, lease.bindings.repository, 'publish', { publicationId: prepared.id, requestId: lease.id }, authority.actor, () => {
+            const current = store.get(lease.deliveryId)
+            const ticket = item.ticketId ? tickets.get(item.ticketId) : undefined
+            const owner = current?.release ? typeof phaseFacts(store.db, current.id) !== 'string' : !!ticket && !ticket.ended
+            return !lease.signal?.aborted && !!current && owner && exactScope(lease) && deliveryFingerprint(current.bindings) === deliveryFingerprint(lease.bindings)
+              && deliveryFingerprint(current.preparedPublication) === deliveryFingerprint(prepared)
+              && current.audit.some(a => a.actionId === lease.action.id && a.actor === authority.actor)
+          })
+        } catch (error) {
+          const snapshot = await publication.service.snapshot(prepared.ticketId)
+          if (!snapshot || snapshot.id !== prepared.id) {
+            return reconcile(lease)
+          }
+          const hasGrant = Boolean(snapshot.coordination?.grantId || snapshot.requests?.[lease.id])
+          if (hasGrant) {
+            return reconcile(lease)
+          }
+          const auditRejection = snapshot.audit?.find(a => a.event === 'before_effect_rejection' && a.requestId === lease.id)
+          const configured = publication.pinsFor(prepared.repository, prepared.pr)
+          const staleConfig = !configured || configured.headSha !== snapshot.headSha || configured.patchSha256 !== snapshot.patchSha256
+          const isProvedPreEffect = Boolean(auditRejection || staleConfig)
+          if (isProvedPreEffect) {
+            const classified = classifyPublicationError(error)
+            const category = auditRejection?.category ?? classified.category
+            return { outcome: 'failed', blocker: `Publication rejected before effect: ${category} [req=${lease.id}]; zero mutations executed` }
+          }
+          return reconcile(lease)
+        }
         return reconcile(lease)
       }, reconcile,
     },

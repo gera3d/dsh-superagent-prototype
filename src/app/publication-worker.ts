@@ -5,7 +5,7 @@ import { closeSync, openSync, readFileSync, realpathSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import lockfile from 'proper-lockfile'
 import { publicationProcessIdentity, publicationProcessState } from './publication-process.ts'
-import { PublicationError, PublicationService, type PublicationActInput, type PublicationAdapter, type PublicationAuthority, type PublicationDocument, type PublicationPersistence, type PublicationPins, type PublicationSnapshot, type PublicationWorkerGrant } from './publication.ts'
+import { PublicationError, PublicationService, type PublicationActInput, type PublicationAdapter, type PublicationAuthority, type PublicationDocument, type PublicationPersistence, type PublicationPins, type PublicationSnapshot, type PublicationWorkerGrant, type PublicationFailureCategory, type PublicationFailureCause, classifyPublicationError } from './publication.ts'
 
 const samePins = (a: PublicationPins, b: PublicationPins) => a.repository === b.repository && a.prNumber === b.prNumber && a.headSha === b.headSha && a.patchSha256 === b.patchSha256
 const clone = <T>(value: T): T => structuredClone(value)
@@ -111,20 +111,54 @@ export class PublicationCoordinator {
       if (reconciled) this.options.store.save(d)
       const p = d.publications[input.publicationId]
       if (!p || d.tickets[input.ticketId] !== p.id) throw new PublicationError(404, 'Publication not found')
-      if (p.ticketId !== input.ticketId || p.conversationId !== input.conversationId) throw new PublicationError(403, 'Publication conversation binding mismatch')
+      const reject = (status: number, message: string, category: PublicationFailureCategory, cause: PublicationFailureCause) => {
+        p.audit.push({
+          at: this.at(),
+          event: 'before_effect_rejection',
+          detail: `pre_enqueue_rejected:${category} [req=${input.requestId}]`,
+          requestId: input.requestId,
+          phase: 'enqueue',
+          category,
+          cause,
+        })
+        this.options.store.save(d)
+        throw new PublicationError(status, message)
+      }
+      if (p.ticketId !== input.ticketId || p.conversationId !== input.conversationId) {
+        reject(403, 'Publication conversation binding mismatch', 'authority_mismatch', 'authority_missing_or_mismatched')
+      }
       if (!authority || authority.authorized !== true || !['human_click', 'operator_instruction'].includes(authority.kind) || !authority.actorId
-        || authority.action !== input.action || authority.publicationId !== p.id || authority.ticketId !== p.ticketId || authority.conversationId !== p.conversationId) throw new PublicationError(403, 'Explicit bound human/operator approval required')
+        || authority.action !== input.action || authority.publicationId !== p.id || authority.ticketId !== p.ticketId || authority.conversationId !== p.conversationId) {
+        reject(403, 'Explicit bound human/operator approval required', 'authority_mismatch', 'authority_missing_or_mismatched')
+      }
       const previous = Object.values(d.workerGrants ?? {}).find(g => g.publicationId === p.id && g.requestId === input.requestId)
       if (previous) {
-        if (previous.action !== input.action || previous.actorId !== authority.actorId || previous.authorityKind !== authority.kind || previous.sourceProof?.recordSha256 !== authority.sourceProof?.recordSha256) throw new PublicationError(409, 'Worker idempotency key reused for another authority/action/instruction')
+        if (previous.action !== input.action || previous.actorId !== authority.actorId || previous.authorityKind !== authority.kind || previous.sourceProof?.recordSha256 !== authority.sourceProof?.recordSha256) {
+          reject(409, 'Worker idempotency key reused for another authority/action/instruction', 'idempotency_conflict', 'idempotency_key_reused')
+        }
         return clone(p) // Including queued grants: an uncertain launch is NEVER blindly repeated.
       }
-      if (Object.values(d.workerGrants ?? {}).some(g => g.status === 'interrupted' && !g.settledAt)) throw new PublicationError(409, 'Interrupted coordinator may have unknown descendants; operator reconciliation is required before ANY effects')
-      if (Object.values(d.workerGrants ?? {}).some(g => ['queued', 'running'].includes(g.status))) throw new PublicationError(409, 'Another approved detached publication is in progress')
-      if (authority.isCurrent && !authority.isCurrent()) throw new PublicationError(409, 'Canonical decision changed before handoff')
-      if (input.action === 'publish' && (p.status === 'interrupted' || p.outcomes.some(o => ['failed', 'interrupted'].includes(o.status)))) throw new PublicationError(409, 'Uncertain publication requires explicit recovery, not another publish')
-      if (input.action === 'rollback' && (!p.outcomes.length || p.outcomes.some(o => o.stage === 'rollback'))) throw new PublicationError(409, 'No recoverable unattempted rollback remains')
-      const binding = input.action === 'rollback' ? null : JSON.parse(JSON.stringify(this.options.captureBinding(clone(p)))) as unknown
+      if (Object.values(d.workerGrants ?? {}).some(g => g.status === 'interrupted' && !g.settledAt)) {
+        reject(409, 'Interrupted coordinator may have unknown descendants; operator reconciliation is required before ANY effects', 'concurrency_blocked', 'interrupted_grant_pending_reconciliation')
+      }
+      if (Object.values(d.workerGrants ?? {}).some(g => ['queued', 'running'].includes(g.status))) {
+        reject(409, 'Another approved detached publication is in progress', 'concurrency_blocked', 'concurrency_grant_active')
+      }
+      if (authority.isCurrent && !authority.isCurrent()) {
+        reject(409, 'Canonical decision changed before handoff', 'canonical_ticket_changed', 'canonical_ticket_or_decision_changed')
+      }
+      if (input.action === 'publish' && (p.status === 'interrupted' || p.outcomes.some(o => ['failed', 'interrupted'].includes(o.status)))) {
+        reject(409, 'Uncertain publication requires explicit recovery, not another publish', 'before_effect_rejection', 'before_effect_rejected')
+      }
+      if (input.action === 'rollback' && (!p.outcomes.length || p.outcomes.some(o => o.stage === 'rollback'))) {
+        reject(409, 'No recoverable unattempted rollback remains', 'before_effect_rejection', 'before_effect_rejected')
+      }
+      let binding: unknown
+      try {
+        binding = input.action === 'rollback' ? null : JSON.parse(JSON.stringify(this.options.captureBinding(clone(p)))) as unknown
+      } catch (error) {
+        reject(500, 'Pre-enqueue binding serialization failed', 'pre_enqueue_binding_failed', 'pre_enqueue_binding_serialization_failed')
+      }
       const g: PublicationWorkerGrant = {
         grantId: randomUUID(), publicationId: p.id, ticketId: p.ticketId, conversationId: p.conversationId, requestId: input.requestId,
         action: input.action as 'publish' | 'rollback', pins: { repository: p.repository, prNumber: p.prNumber, headSha: p.headSha, patchSha256: p.patchSha256 },
@@ -142,9 +176,24 @@ export class PublicationCoordinator {
       try { await this.launch(launchId) } catch (error) {
         await this.options.store.exclusive(async () => {
           const d = this.options.store.load(), g = d.workerGrants?.[launchId!]
-          if (g?.status === 'queued') { update(d, g, 'failed', this.at(), `Worker launch failed: ${errorText(error)}`); this.options.store.save(d) }
+          if (g?.status === 'queued') {
+            update(d, g, 'failed', this.at(), `Worker launch failed: worker_launch_process_failed [grant=${launchId}]`)
+            const pub = d.publications[g.publicationId]
+            if (pub) {
+              pub.audit.push({
+                at: this.at(),
+                event: 'worker_failed',
+                detail: `worker_launch_failed [grant=${launchId}]`,
+                requestId: g.requestId,
+                phase: 'enqueue',
+                category: 'worker_launch_failed',
+                cause: 'worker_launch_process_failed',
+              })
+            }
+            this.options.store.save(d)
+          }
         })
-        throw new PublicationError(500, `Worker launch failed: ${errorText(error)}; no automatic replay`)
+        throw new PublicationError(500, 'Worker launch failed: worker_launch_process_failed; no automatic replay')
       }
     }
     return queued
