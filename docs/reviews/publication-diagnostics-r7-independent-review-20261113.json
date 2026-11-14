@@ -1,0 +1,42 @@
+{
+  "observedAt": "2026-11-14T04:22:40.409619+00:00",
+  "findingId": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+  "findingRevision": 8,
+  "state": "blocked",
+  "jobId": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r7",
+  "ticketId": "c7b6e06c5888e8e4cfbb9c8dc839b719",
+  "assignmentId": "3e5773f0f298deb03e677112cbe24682",
+  "head": "b1df7ebbee64458ac2eadce6623e5f3217587f84",
+  "base": "e640e792bca1f5a87d2b0b5ccb8c0682b117c015",
+  "source": "clean currentlocalorigin clone in trusted job/work as required;5changedfiles; artifacts hashes match report",
+  "artifacts": {
+    "publication-diagnostics.patch": "245fd86eecf3fe409d9b2d180d6377ece963cf732458762134fb51a693c96f68",
+    "publication-diagnostics.bundle": "bf6b96b442f8fe24ec48f494d1271f7c6fe488370af687ad209dc704d65e2798",
+    "test-pass.log": "9ecd05af25a9b4cb0842658b8d324dc8d1a7645dc7bb16569b7a0a0049563bac"
+  },
+  "verdict": "correction_required; new demonstrated uncertainty-classification bug, no protected release",
+  "fixedPriorBlockers": "Fixed safeStageDetail allowlisting now prevents arbitrary error/adapter text in modified outcome.details; existing real-service privacy fixture includes private marker/multilinequotedsecret/rawpayload; classifier message fixed token. Newtesttype narrow passes; historicalcauseguideUNPROVEN/explicitrecovery/currentlocalorigin/trustedwork preserved.",
+  "rootChecks": {
+    "environment": "Separate exact-head no-hardlinks reviewclone /private/tmp/publication-diagnostics-r7-review-0vqpl67u with existingoperator node_modules symlink; originalworkerclone untouched; no install/newtestfiles/implementation byCodex",
+    "tests": "46existingtests/4files passed exit0,19.93s",
+    "types": "tsc --noEmit exit0",
+    "build": "tsdown exit0,27files,10.896s",
+    "privacy": "Existing real-service saved-document fixture passes; no arbitrary private marker, multilinequotedsecret/rawstructuredpayload persisted in modified outcome paths",
+    "logs": [
+      "docs/evidence/publication-diagnostics-r7-root-tests-20261113.log",
+      "docs/evidence/publication-diagnostics-r7-root-types-20261113.log",
+      "docs/evidence/publication-diagnostics-r7-root-build-20261113.log",
+      "docs/evidence/publication-diagnostics-r7-root-boundary-probe-20261113.log"
+    ]
+  },
+  "newBlocker": {
+    "file": "src/app/delivery-publication.ts",
+    "area": "publish.execute catch: snapshot byticket + !hasGrant => failed/zero mutations",
+    "issue": "Absence of snapshot/ticket lookup is treated as proof no grant/effects. Existing durable grant can remain running while ticket index becomes unavailable between binding read and publicationAction snapshot. This new behavior reports definite failure/zero mutations for an uncertain prior confirmation instead of fail-closed reconciliation.",
+    "offlineProbe": "Exact candidate actual DeliveryStore SQLite memory + real PublicationService/lifecycle/publication capability; reuse existing test fixture shape. Durable grant statusrunning and snapshot.requests[currentleaseid] preserved. First binding snapshot succeeds; delete only doc.tickets[ticket] before second read (injected interrupted-index-loss fixture). publicationAction rejects stale; catch reads missinglookup and returns outcome failed, blocker Publication rejected before effect: stale_pins [req=...]; zero mutations executed. Snapshotreads3; existingGrantStillPresent=true,statusrunning. No real publish/launch/external effects executed. Initial probe import path error corrected to actual decision-inbox.ts; only successful output archived.",
+    "required": "Do not infer definite before-effect rejection from missing/mismatched snapshot or absence through indirect ticket lookup. Keep uncertain/reconciliation with no zero-effects claim when grant/persistence/outcome cannot be proven. Either retain original fail-closed uncertainty for unknown cases or use explicit trusted typed before-effect proof with exact IDs; no new authority or retry. Add bounded offline existing-grant/indexloss/unknownack fixture, preserve true provedpre-effect classification and exactpins/idempotence/one-useapproval/noautoretry."
+  },
+  "trajectory": "24outerevents/oneGoogleFlashrequest/turncompleted/0outertoolcalls; not absence of work, actual commits/source/artifacts/logs independently verified. Canonical report blocked despite readyprose; no workerend/nativeacceptance inference.",
+  "nextOwner": "Harness sameoriginalfinding bounded uncertainty correction ifretainedguard permits; Codex independent review/protected release ifqualified",
+  "constraints": "Originalr1/r3/r5/r7trees/jobs/reports/artifacts preserved; no livepublication/Chrome/DBedit/mandateoverride/competingimplementation/newtestfiles/config/routes/access/spend/hostpackages/credentials/limits change. OpenAI conserved/Google5reserve/max3/backoff intact; ComposioUIhold/clarificationunapproved/quotaauthorityqualified unchanged; old66mscauseUNPROVEN."
+}
