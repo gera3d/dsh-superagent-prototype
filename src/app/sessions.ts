@@ -14,6 +14,7 @@ import { AgentDelivery, messageId } from './delivery.ts'
 import type { Effects } from './effects.ts'
 import type { Variable } from './execution-environment.ts'
 import { RetryHealth } from './retry-health.ts'
+import { installComposioBoundary } from './composio-boundary.ts'
 import { installOutputBound } from './tool-output.ts'
 import { defaultRoute, fallbackNote, initializeRoleModel, isModelUnavailable, installRoutingGuard, selectRoleModel, unavailableFallbackStep } from './role-models.ts'
 import { bundledSkills } from './skill-files.ts'
@@ -44,7 +45,7 @@ export interface SessionsHost {
  * What Sessions registered for an agent it decorated: the releases of its prompt section, tools and skill scope, the scope
  * its skills are registered in, and the skills of one prompt revision; for a worker's subagent, only its tool limits.
  */
-interface SessionBinding { routing?: () => void; disposers: (() => void)[]; scope?: Context; skills?: { revision: number; dispose: () => void }; subagent?: true }
+interface SessionBinding { routing?: () => void; disposers: (() => void)[]; scope?: Context; skills?: { revision: number; dispose: () => void }; subagent?: true; observer?: true }
 
 /** The agent presets Executor Sessions and the main Session are created with, which the bundle's patch defines. */
 export const WORKER_PRESET = 'dsh-superagent-worker', ROUTER_PRESET = 'dsh-superagent-router'
@@ -116,7 +117,7 @@ export class Sessions {
     ctx.on('session/event', (session, event) => {
       const agent = ctx.agents.get(session.id)
       const binding = agent && agent.session === session ? this.bindings.get(agent) : undefined
-      if (!agent || !binding || binding.subagent) return
+      if (!agent || !binding || binding.subagent || binding.observer) return
       this.retryHealth.observe(agent.id, event)
       this.updateModelHealth()
     })
@@ -191,7 +192,7 @@ export class Sessions {
   }
   private protectRouting(agent: Agent): void {
     const binding = this.bindings.get(agent)
-    if (!binding || binding.subagent) return
+    if (!binding || binding.subagent || binding.observer) return
     binding.routing?.()
     binding.routing = installRoutingGuard(this.ctx, agent, () => this.host.store.settings())
   }
@@ -306,7 +307,7 @@ export class Sessions {
     for (const tool of host.tools(agent, ticket)) register(tool.name, tool.description, tool.schema, tool.execute)
     if (master) {
       binding.disposers.push(agent.ctx.tools.restrict({ allow: ['skill', 'bash', 'read', 'read_image', 'job_output', 'job_list', 'job_kill'] }),
-        agent.ctx.tools.guard(execution => noWait(execution, () => this.routed(agent))))
+        agent.ctx.tools.guard(execution => noWait(execution, () => this.routed(agent))), installComposioBoundary(agent))
     } else {
       // An Executor Session keeps the profile's work tools it has, which DSH requires to be known; its own tools are not masked.
       binding.disposers.push(...this.workOnly(agent, ticket!.id))
@@ -339,7 +340,10 @@ export class Sessions {
     return [agent.ctx.tools.restrict({ allow }), agent.ctx.tools.guard(() => {
       const current = store.tickets.get(ticketId)
       return !current || !liveTicket(current) ? 'Ticket ended; new work needs a new authorized ticket' : undefined
-    }), installOutputBound(agent, () => store.tickets.get(ticketId)?.execution?.directory)]
+    }), installOutputBound(agent, () => store.tickets.get(ticketId)?.execution?.directory),
+    // The allowlist above names no MCP tool, so a worker cannot call Composio today; if a person ever allows one, a failure
+    // nested in a successful MCP envelope still reaches the model as an error.
+    installComposioBoundary(agent)]
   }
   /**
    * A subagent of an Executor Session, or of one of its subagents, which runs under DSH's `standard` preset with the worker's
@@ -353,8 +357,18 @@ export class Sessions {
       parent = this.ctx.agents.get(parent)?.session.header.parentSession
     }
     const ticketId = parent === undefined ? undefined : ticketOfSession(parent)
-    if (ticketId === undefined || !this.host.store.tickets.get(ticketId)) return
+    if (ticketId === undefined || !this.host.store.tickets.get(ticketId)) { this.observeComposio(agent); return }
     this.bindings.set(agent, { disposers: this.workOnly(agent, ticketId), subagent: true })
+  }
+  /**
+   * An ordinary Session (a person's own DSH chat, not the main or an Executor Session) is where `mcp__composio__*` tools are
+   * reachable: the managed allowlists name no MCP tool. Its tools, permissions, prompt and routing stay exactly as they are;
+   * the only addition is the read-only `tools/post-execute` listener that re-classifies a Composio failure nested in a
+   * successful MCP result.
+   */
+  private observeComposio(agent: Agent): void {
+    if (this.bindings.has(agent)) return
+    this.bindings.set(agent, { disposers: [installComposioBoundary(agent)], observer: true })
   }
   /** Register the skills of a prompt version in the agent's skill scope, in place of an earlier version's. */
   private bindSkills(binding: SessionBinding, version: PromptVersion): void {
