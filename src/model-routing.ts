@@ -149,8 +149,16 @@ export class ToolExecutionLedger {
 
   recordStart(toolCallId: string, toolName: string): void {
     const existing = this.records.get(toolCallId)
-    if (existing && (existing.status === 'completed' || existing.status === 'reconciled_success')) {
-      throw new Error(`Tool call ${toolCallId} already completed; replay prevented`)
+    if (existing) {
+      if (existing.status === 'in_flight') {
+        throw new Error(`Tool call ${toolCallId} is already in-flight; duplicate execution prevented`)
+      }
+      if (existing.status === 'completed' || existing.status === 'reconciled_success') {
+        throw new Error(`Tool call ${toolCallId} already completed; replay prevented`)
+      }
+      if (existing.status === 'uncertain') {
+        throw new Error(`Tool call ${toolCallId} has uncertain outcome; execution blocked until reconciliation`)
+      }
     }
     this.records.set(toolCallId, { status: 'in_flight', toolName, timestamp: Date.now() })
   }

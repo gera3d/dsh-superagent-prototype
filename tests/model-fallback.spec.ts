@@ -285,6 +285,34 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
     expect(uncertainNote).toBeDefined()
     expect(latestAssignment(ticket)?.report?.state).toBe('failed')
   })
+
+  it('real runtime honors total one-attempt limit even when another fallback is eligible', async () => {
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 1,
+        max_attempts_per_model: 1,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    const one = await h.acceptedTicket(feishu('review-no-substitution', '@bot Fix isolated audit fixture'))
+    const agent = h.agents.get(one.sessionId)!
+    const session = (agent as unknown as { session: { append: ReturnType<typeof vi.fn> } }).session
+    const before = session.append.mock.calls.filter(([e]) => e === 'model/selection').length
+
+    h.ctx.emit('agent/error', { agent, error: Object.assign(new Error('Google quota exhausted'), { status: 429 }) } as never)
+    await h.runtime.idle()
+    for (let i = 0; i < 10; i++) {
+      await new Promise(resolve => setImmediate(resolve))
+      await h.runtime.idle()
+    }
+
+    const later = session.append.mock.calls.filter(([e]) => e === 'model/selection').slice(before).map(([, v]) => v)
+    expect(later).toHaveLength(0)
+  })
 })
 
 describe('Bounded Model Routing and Tool Execution Guard', () => {
@@ -466,6 +494,12 @@ describe('Bounded Model Routing and Tool Execution Guard', () => {
     expect(() => ledger.recordStart('call-1', 'bash')).toThrow(/already completed/)
     expect(() => ledger.guard('call-1')).toThrow(/already completed/)
     expect(ledger.completedCount()).toBe(1)
+  })
+
+  it('prevents a second start while identical tool outcome remains in flight', () => {
+    const ledger = new ToolExecutionLedger()
+    ledger.recordStart('effect-1', 'write')
+    expect(() => ledger.recordStart('effect-1', 'write')).toThrow(/already in-flight/)
   })
 
   it('CRIT-24 & Audit Point 3: blocks execution on uncertain outcome until valid terminal reconciliation', () => {

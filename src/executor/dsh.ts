@@ -549,10 +549,13 @@ export class DshExecutor implements Executor {
       const nowTime = Date.now()
       const startTime = this.fallbackStartTimes.get(ticket.id) ?? nowTime
       if (!this.fallbackStartTimes.has(ticket.id)) this.fallbackStartTimes.set(ticket.id, startTime)
-      const attempts = (this.fallbackAttempts.get(ticket.id) ?? 0) + 1
-      this.fallbackAttempts.set(ticket.id, attempts)
 
-      if (attempts > routing.max_total_attempts) {
+      // Original request counts as 1 attempt, plus any same-route retries, plus prior fallbacks
+      const priorFallbacks = this.fallbackAttempts.get(ticket.id) ?? 0
+      const sameRouteRetries = this.transient.get(assignment.id) ?? 0
+      const totalAttemptsSoFar = 1 + sameRouteRetries + priorFallbacks
+
+      if (totalAttemptsSoFar >= routing.max_total_attempts) {
         this.unavailableRoutes.delete(ticket.id)
         this.fallbackAttempts.delete(ticket.id)
         this.fallbackStartTimes.delete(ticket.id)
@@ -571,6 +574,8 @@ export class DshExecutor implements Executor {
         }))
         return
       }
+
+      this.fallbackAttempts.set(ticket.id, priorFallbacks + 1)
     }
 
     const tried = this.unavailableRoutes.get(ticket.id) ?? []
@@ -782,7 +787,7 @@ export class DshExecutor implements Executor {
         await this.handleUnavailableModel(ticket, assignment, agent, error)
         return
       }
-      if (this.retries(assignment.id, error)) { this.resumeAfter(ticket.id, assignment.id, error); return }
+      if (this.retries(assignment.id, error, ticket)) { this.resumeAfter(ticket.id, assignment.id, error); return }
       void this.background(Promise.resolve().then(() => { this.failed(ticket.id, String(error)) }))
     }))
   }
@@ -821,9 +826,11 @@ export class DshExecutor implements Executor {
    * Checks whether `error` is a transient failure with retry attempts remaining under `key`, mutating `this.transient`:
    * increments the attempt counter and returns `true` when retrying, or deletes `key` from `this.transient` and returns `false` when non-transient or out of tries.
    */
-  private retries(key: string, error: unknown): boolean {
+  private retries(key: string, error: unknown, ticket?: Ticket): boolean {
     const tries = this.transient.get(key) ?? 0
-    if (!transient(error) || tries >= TRANSIENT_TRIES) { this.transient.delete(key); return false }
+    const routing = ticket && (this.host.store.settings().models.routing ?? this.host.store.settings().models.model_routing)
+    const maxTries = routing ? Math.min(TRANSIENT_TRIES, Math.max(0, routing.max_attempts_per_model - 1)) : TRANSIENT_TRIES
+    if (!transient(error) || tries >= maxTries) { this.transient.delete(key); return false }
     this.transient.set(key, tries + 1)
     return true
   }

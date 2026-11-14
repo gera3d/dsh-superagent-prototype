@@ -15,7 +15,7 @@ import type { Effects } from './effects.ts'
 import type { Variable } from './execution-environment.ts'
 import { RetryHealth } from './retry-health.ts'
 import { installOutputBound } from './tool-output.ts'
-import { classifyModelError, defaultRoute, fallbackNote, initializeRoleModel, isModelUnavailable, installRoutingGuard, selectRoleModel, unavailableFallbackStep } from './role-models.ts'
+import { classifyModelError, defaultRoute, fallbackNote, initializeRoleModel, isModelUnavailable, installRoutingGuard, selectRoleModel, ToolExecutionLedger, unavailableFallbackStep } from './role-models.ts'
 import { bundledSkills } from './skill-files.ts'
 import { SKILL_PREFIX, type PromptVersion, type Prompts } from './prompts.ts'
 import type { Store } from './store.ts'
@@ -33,6 +33,7 @@ export interface SessionsHost {
   readonly health: HealthEntry
   readonly masterId: string
   readonly lifetime: AbortSignal
+  readonly toolLedger?: (ticketId: string) => ToolExecutionLedger | undefined
   closing(): boolean
   /** Execution environment variables for `ticket`, rendered into its worker's system prompt. */
   environment(ticket: Ticket, turn?: number | string): Variable[]
@@ -255,7 +256,31 @@ export class Sessions {
           const image = value && typeof value === 'object' && 'image' in value ? (value as { image: never }).image : undefined
           return image ? [text, { type: 'image' as const, attachment: image }] : [text]
         } },
-        execute: (args, execution) => execute(schema.parse(args), execution.signal) }))
+        execute: async (args, execution) => {
+          const parsed = schema.parse(args)
+          const ticketId = ticketOfSession(agent.id)
+          const ledger = ticketId ? this.host.toolLedger?.(ticketId) : undefined
+          const callId = (execution as { callId?: string })?.callId ?? `${name}:${key(JSON.stringify(parsed))}`
+          if (ledger) {
+            ledger.recordStart(callId, name)
+          }
+          try {
+            const result = await execute(parsed, execution.signal)
+            if (ledger) {
+              ledger.recordCompletion(callId, true)
+            }
+            return result
+          } catch (error) {
+            if (ledger) {
+              if (execution.signal?.aborted) {
+                ledger.recordUncertain(callId)
+              } else {
+                ledger.recordCompletion(callId, false)
+              }
+            }
+            throw error
+          }
+        } }))
     }
   }
   /** Returns `sessionId`'s active model-budget retry state (`{ model_retry }`) for status listings, or `{}` when not waiting on one. */
@@ -340,7 +365,10 @@ export class Sessions {
     const allow = WORK_TOOLS.filter(name => agent.ctx.tools.get(name, parent))
     return [agent.ctx.tools.restrict({ allow }), agent.ctx.tools.guard(() => {
       const current = store.tickets.get(ticketId)
-      return !current || !liveTicket(current) ? 'Ticket ended; new work needs a new authorized ticket' : undefined
+      if (!current || !liveTicket(current)) return 'Ticket ended; new work needs a new authorized ticket'
+      const ledger = this.host.toolLedger?.(ticketId)
+      if (ledger?.hasUncertain()) return 'Uncertain tool outcome blocks execution until operator reconciliation'
+      return undefined
     }), installOutputBound(agent, () => store.tickets.get(ticketId)?.execution?.directory)]
   }
   /**
