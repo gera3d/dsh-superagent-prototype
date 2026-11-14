@@ -107,14 +107,6 @@
 }
 
 @media (max-width: 520px) {
-  .dt-worker-report {
-    width: 100%;
-    margin-left: 0;
-    margin-right: 0;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-  }
   .dt-worker-report-badge {
     display: none;
   }

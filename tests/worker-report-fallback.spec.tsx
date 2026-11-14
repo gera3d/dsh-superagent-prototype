@@ -157,6 +157,8 @@ it('aligns the fallback with composer column and theme tokens, providing bounded
     expect(STYLES_CONTENT).toContain('var(--dsw-alias-border-l2)')
     expect(STYLES_CONTENT).toContain('var(--dsw-alias-label-primary)')
     expect(STYLES_CONTENT).toContain('max-height: min(240px, 25vh)')
+    expect(STYLES_CONTENT).not.toMatch(/@media\s*\(max-width:\s*520px\)\s*\{[^}]*\.dt-worker-report\s*\{[^}]*width:\s*100%/)
+    expect(STYLES_CONTENT).not.toMatch(/@media\s*\(max-width:\s*520px\)\s*\{[^}]*\.dt-worker-report\s*\{[^}]*margin/)
     expect(STYLES_CONTENT).toContain('@media (max-width: 520px)')
     expect(STYLES_CONTENT).toContain('@media (prefers-reduced-motion: reduce)')
 
