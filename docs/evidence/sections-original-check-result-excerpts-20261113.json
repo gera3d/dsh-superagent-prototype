@@ -1,0 +1,117 @@
+[
+  {
+    "turn": 2,
+    "step": 47,
+    "lines": [
+      "tests/canonical-next-steps.spec.ts(5,23): error TS2307: Cannot find module '../../dsh-next-steps/src/index.ts' or its corresponding type declarations.",
+      "tests/fixtures/panel-server.ts(298,7): error TS2740: Type '{ 'GET state': { answer: () => { setup: { machine: { stateDir: string; promptMaxChars: number; admissionContextMaxPages: number; admissionContextTimeoutMs: number; }; problem: Setup",
+      "tests/inline-decision.spec.tsx(8,41): error TS2307: Cannot find module '../../dsh-next-steps/src/client/index.tsx' or its corresponding type declarations.",
+      "tests/specialist-integration.spec.ts(10,68): error TS2307: Cannot find module '../../dsh-next-steps/src/client/specialist-activity.ts' or its corresponding type declarations.",
+      "[ELIFECYCLE] Command failed with exit code 2.",
+      "[status: completed, exit code: 0]"
+    ]
+  },
+  {
+    "turn": 2,
+    "step": 47,
+    "lines": [
+      " Test Files  1 passed (1)",
+      "      Tests  5 passed (5)",
+      "[status: completed, exit code: 0]"
+    ]
+  },
+  {
+    "turn": 2,
+    "step": 71,
+    "lines": [
+      " Test Files  3 passed (3)",
+      "      Tests  16 passed (16)",
+      "[status: completed, exit code: 0]"
+    ]
+  },
+  {
+    "turn": 2,
+    "step": 75,
+    "lines": [
+      "tests/canonical-next-steps.spec.ts(5,23): error TS2307: Cannot find module '../../dsh-next-steps/src/index.ts' or its corresponding type declarations.",
+      "tests/inline-decision.spec.tsx(8,41): error TS2307: Cannot find module '../../dsh-next-steps/src/client/index.tsx' or its corresponding type declarations.",
+      "tests/specialist-integration.spec.ts(10,68): error TS2307: Cannot find module '../../dsh-next-steps/src/client/specialist-activity.ts' or its corresponding type declarations.",
+      "[ELIFECYCLE] Command failed with exit code 2.",
+      "[status: completed, exit code: 0]"
+    ]
+  },
+  {
+    "turn": 2,
+    "step": 78,
+    "lines": [
+      " Test Files  1 failed (1)",
+      "      Tests  3 failed | 3 passed (6)",
+      "[status: completed, exit code: 0]"
+    ]
+  },
+  {
+    "turn": 2,
+    "step": 80,
+    "lines": [
+      "\u23af\u23af\u23af\u23af\u23af\u23af\u23af Failed Tests 3 \u23af\u23af\u23af\u23af\u23af\u23af\u23af",
+      " Test Files  1 failed (1)",
+      "      Tests  3 failed | 3 passed (6)",
+      "[status: completed, exit code: 0]"
+    ]
+  },
+  {
+    "turn": 2,
+    "step": 142,
+    "lines": [
+      " Test Files  3 failed | 1 passed (4)",
+      "      Tests  3 failed | 406 passed (409)",
+      "[status: completed, exit code: 0]"
+    ]
+  },
+  {
+    "turn": 2,
+    "step": 154,
+    "lines": [
+      " Test Files  7 passed (7)",
+      "      Tests  51 passed (51)",
+      "[status: completed, exit code: 0]"
+    ]
+  },
+  {
+    "turn": 2,
+    "step": 167,
+    "lines": [
+      "tests/sections-panel.spec.tsx(18,7): error TS2741: Property 'members' is missing in type '{ id: string; project: string; position: number; name: string; icon: { name: \"zap\"; glyph: \"\u26a1\"; color: \"#fbbf2",
+      "tests/specialist-integration.spec.ts(10,68): error TS2307: Cannot find module '../../dsh-next-steps/src/client/specialist-activity.ts' or its corresponding type declarations.",
+      "[ELIFECYCLE] Command failed with exit code 2.",
+      "[status: running]"
+    ]
+  },
+  {
+    "turn": 2,
+    "step": 170,
+    "lines": [
+      "\u2714 Build complete in 15244ms",
+      "[status: completed, exit code: 0]"
+    ]
+  },
+  {
+    "turn": 2,
+    "step": 191,
+    "lines": [
+      "tests/canonical-next-steps.spec.ts(5,23): error TS2307: Cannot find module '../../dsh-next-steps/src/index.ts' or its corresponding type declarations.",
+      "tests/inline-decision.spec.tsx(8,41): error TS2307: Cannot find module '../../dsh-next-steps/src/client/index.tsx' or its corresponding type declarations.",
+      "tests/specialist-integration.spec.ts(10,68): error TS2307: Cannot find module '../../dsh-next-steps/src/client/specialist-activity.ts' or its corresponding type declarations.",
+      "[status: completed, exit code: 0]"
+    ]
+  },
+  {
+    "turn": 2,
+    "step": 195,
+    "lines": [
+      " Test Files  3 passed (3)",
+      "      Tests  23 passed (23)",
+      "[status: completed, exit code: 0]"
+    ]
+  }
+]

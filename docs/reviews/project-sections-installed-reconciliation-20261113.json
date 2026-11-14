@@ -1,0 +1,116 @@
+{
+  "observedAt": "2026-11-14T06:19:38.894406+00:00",
+  "findingId": "fbd4db89-0485-4e9d-a805-cac220390100",
+  "revision": 3,
+  "state": "blocked; sourceinstalled/APIserving, nativeUIacceptanceunverified",
+  "jobId": "finding:fbd4db89-0485-4e9d-a805-cac220390100:r1",
+  "ticketId": "ee96b8e87953f8a1debf4c809dc51a58",
+  "assignmentId": "e7c3e3b506bbeb36ee576236d76a6227",
+  "sourcePr": {
+    "number": 93,
+    "url": "https://github.com/gera3d/dsh-superagent-prototype/pull/93",
+    "state": "closed/merged",
+    "mergedBy": "gera3d",
+    "mergedAt": "2026-11-10T18:07:56Z",
+    "finalHead": "22164756a0e62a3cf538760f77ead2cdf77b5524",
+    "mergeCommit": "c1fd060dcc57ab39236b8f2a8c836642f955b98b",
+    "base": "superagent-core",
+    "reportedOldHead": "3d5bf97e6eac669c9d8962359662194ee7d6e387",
+    "finalDelta": "2216475 adds SectionStore doc comment and addsSections tab assertion to panel language test,2files/+2/-1; no new section runtime behavior. Mergecommit ancestor of currentoperatorHEAD8df6f14."
+  },
+  "savedOriginalWork": {
+    "path": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-ee96b8e87953/proto",
+    "head": "3d5bf97e6eac669c9d8962359662194ee7d6e387",
+    "clean": true,
+    "preserved": true
+  },
+  "actualOriginalTrajectory": {
+    "events": 1466,
+    "toolCalls": 214,
+    "route": "GoogleFlash/high/max65536 failedAGY_ERROR unavailablecooldown, then7recordedAnthropicSonnet5.5/max8192requests; finalturncompleted, native readyreport",
+    "checks": "Original matching result excerpts show7files/51pass(step154), final3files/23pass(step195), buildcomplete15.244s(step170). Later typeoutput(step191)3missing siblingdsh-next-steps TS2307; report acknowledged no broadqualification. Pipelineexits0 are not directunderlyingtypechecksuccess. Earlier failures preserved, no currenttest rerun or global qualification claim.",
+    "excerpts": "docs/evidence/sections-original-check-result-excerpts-20261113.json"
+  },
+  "installedAudit": {
+    "target": "/Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent",
+    "source": "7/10runtimefiles equalfinalPR byteforbyte: api.ts,SectionStore,sectionsview,clientapp,css,index,sectionspanel. 3sharedfiles differ: http.ts laterreverseproxysameOriginchange,locales.ts decisionrankersettingsadditions,route.ts decisionssettingsgroupaddition. Entire sectionsrouteblock equals finalPR. Laterguardchange observed/preserved, not newlyreviewed/approved/reverted bythisscope.",
+    "compiled": "lib/http-DEaZhUqP.js contains sectiontables/store/routes; lib/client.js containssectionsnavigation/page/APIcalls. Diskbundlepresence isnotbrowserrenderproof.",
+    "loadedApi": {
+      "method": "GET",
+      "url": "http://127.0.0.1:3082/orchestrator/api/sections?project=__codex_sections_read_only_audit__",
+      "status": 200,
+      "result": {
+        "project": "__codex_sections_read_only_audit__",
+        "structure": "none",
+        "sections": [],
+        "totals": {
+          "total": 0,
+          "working": 0,
+          "person": 0,
+          "idle": 0,
+          "ended": 0,
+          "unknown": 0,
+          "percent": 0
+        },
+        "unassigned": {
+          "total": 0,
+          "items": []
+        }
+      },
+      "limit": "Syntheticqueryidentifier ONLY, createsnothing, not arealworkspace/projectselector/nativeUIacceptancetest."
+    },
+    "liveRowsBeforeAndAfter": {
+      "section": 0,
+      "section_member": 0,
+      "section_proposal": 0,
+      "section_event": 0
+    },
+    "canonicalEvidence": "Read-only SQLitefeature_delivery search findingId/originalticket/sections/project-sections found0linkedrecords; publication-state originalticket/finding/PR93 search found0publications. No canonicalnativeacceptance/protectedpublication record located inthese boundedstores; missinghistorydoesnotnegate verifiedinstalledsource/loadedAPI.",
+    "sourceHashes": "docs/evidence/sections-installed-source-audit-20261113.json",
+    "integrationDrift": "docs/evidence/sections-integration-drift-audit-20261113.json"
+  },
+  "requirementsAssessment": [
+    {
+      "requirement": 1,
+      "evidence": "SameexistingStore/Ticketreferences;4additive organizationaltables, no executionqueue/task duplication observed in code.",
+      "status": "sourcecontractinspected"
+    },
+    {
+      "requirement": 2,
+      "evidence": "StableIDs/name/icon/members/basethread/validatedmoves in installedexactSectionStore; historicalofflinepersistence/reopen tests, noactualprojectsconfigured.",
+      "status": "historicalfixturecoverage, livepersistenceunexercised"
+    },
+    {
+      "requirement": 3,
+      "evidence": "Installedexactpanel/APIview/compiledclient andloadedemptyAPI; realworkspaceselector/base-thread/sidebar-native rendering notobserved.",
+      "status": "nativeUIverificationremaining"
+    },
+    {
+      "requirement": 4,
+      "evidence": "Inertproposal/oneuseapprove routes originalcode/headers; zeroactualsection/proposal/membership/eventsbeforeafterread; no actualtaxonomyapproved. LaterhostsameOriginguarddiff isnotblanketcurrentauthorityqualification.",
+      "status": "boundarypreserved, no realtaxonomyapplied"
+    },
+    {
+      "requirement": 5,
+      "evidence": "Pressforward/Makebetter previewonly functions execution_authorized:false, noenginecall; explicitpreview permitted byoriginalrequirement.",
+      "status": "not autonomoussectionexecution, not newdefectbyitself"
+    },
+    {
+      "requirement": 6,
+      "evidence": "Workerfixtures/historicaltests inspected, screenshots explicitlysynthetic; no newrootrun/broadnativeacceptanceclaim.",
+      "status": "remainingread-onlynativeUIandrequirementevidence review"
+    },
+    {
+      "requirement": 7,
+      "evidence": "models26/OpenAI conserved/Google5percentreserve/max3/knownroutes/cooldowns unchanged; healthready/load0.",
+      "status": "unchanged,no forcedprobe"
+    }
+  ],
+  "nextStage": {
+    "owner": "ExistingCodexcoordinator/reviewer",
+    "action": "WhenexistingnativeUIavailability isexplicitlyreturned, inspectactualSections emptyview/realworkspace selection/read-onlynavigation andcurrentauthority/evidencecontract, thenrecord genuine requirementcoverage and use protectedfindingacceptance onlyifqualified. DoNOT redeploy/remerge/dispatch merelybecausefindingblocked. No newimplementation defect established bythisaudit.",
+    "taxonomy": "Do not invent or approve ataxonomy/move realtasks asacceptancetest. Applying arealstructure laterrequires explicitone-timehumanapproval; that productactivationisnot silentlyfabricated here. No new productchoice requested now."
+  },
+  "otherState": "DiagnosticsPR115 exactqualifiedhold andComposioPR108hold unchanged; no screensreadiness arrived/noChrome/no repeatedquestion. Unapprovedclarification/separatequotaauthorityqualification retained. Fourunrelatedopenticketsidleobserved/notinspectedforaction/noqueuechanges.",
+  "limits": "Observation/documentation only. No implementation/tests/retry/dispatch/deploy/merge/restart/realprojecttaskmutations/ordinarychoice/Chrome/canonicalDBwrite/mandateorapprovalchange/nativeacceptance/settings/routes/accounts/credentials/spend/access/limit changes. Originalwork/evidence/history/usermerge preserved."
+}
