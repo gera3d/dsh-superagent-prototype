@@ -1,0 +1,4 @@
+sanitizer "api_key=\"abc\ndef ghi\""
+persistedPrivateMarker true outcome [{"stage":"merge","operationId":"f7c1f951-bee0-4569-a187-bdda4d4ad49b:merge","status":"failed","startedAt":"2026-11-14T03:17:11.532Z","detail":"PRIVATE_FIXTURE_LINE_123","category":"stage_failed","finishedAt":"2026-11-14T03:17:11.532Z"}] newAudit {"at":"2026-11-14T03:17:11.532Z","event":"stage_failed","detail":"merge: failed [op=f7c1f951-bee0-4569-a187-bdda4d4ad49b:merge]","requestId":"offline-request","phase":"execution","category":"stage_failed","cause":"stage_execution_failed"}
+(node:51398) ExperimentalWarning: Transform Types is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

@@ -1,0 +1,1 @@
+tests/publication-failure-diagnostics.spec.ts(237,25): error TS18048: 'capabilities.publish' is possibly 'undefined'.
