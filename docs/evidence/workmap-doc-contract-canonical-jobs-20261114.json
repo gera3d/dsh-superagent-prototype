@@ -1,0 +1,428 @@
+{
+  "observedAt": "2026-11-14T08:27:35.051078+00:00",
+  "items": [
+    {
+      "issue": 3,
+      "responseKeys": [
+        "key",
+        "source",
+        "title",
+        "stage",
+        "latest",
+        "lastAt",
+        "createdAt",
+        "subscriptions",
+        "tickets",
+        "pending",
+        "url",
+        "facts",
+        "context",
+        "correlated",
+        "decisions",
+        "timeline",
+        "earlier"
+      ],
+      "thread": {
+        "key": "github:3",
+        "stage": "unsubscribed",
+        "createdAt": "2026-11-03T01:01:51.479Z",
+        "lastAt": "2026-11-03T01:01:23.000Z"
+      },
+      "tickets": [],
+      "decisionFacts": [
+        {
+          "id": "88fd6df056cd8a590370072532cd501f",
+          "kind": "accept",
+          "at": "2026-11-03T01:08:34.508Z",
+          "ticketId": "f66a04077b913517d4cb5d4e98d5550c",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ]
+        },
+        {
+          "id": "9c308e7d66caca2c680519cc4551ab78",
+          "kind": "unavailable",
+          "at": "2026-11-03T01:06:18.226Z",
+          "ticketId": null,
+          "reason": [
+            {
+              "code": "policyChanged"
+            }
+          ]
+        }
+      ],
+      "ticketsFromDecision": [
+        {
+          "id": "f66a04077b913517d4cb5d4e98d5550c",
+          "state": "ended",
+          "stage": "ended",
+          "assignments": [
+            {
+              "id": "846657476d9ea411c99c0a6f21a55797",
+              "state": "ended",
+              "reportState": "ready",
+              "reportAt": "2026-11-03T01:09:48.110Z",
+              "reportSha256": "6b558c17a4225fc41eb1819dcbd29b31ce04cefee497fac325806fccccc2548b"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 5,
+      "responseKeys": [
+        "key",
+        "source",
+        "title",
+        "stage",
+        "latest",
+        "lastAt",
+        "createdAt",
+        "subscriptions",
+        "tickets",
+        "pending",
+        "url",
+        "facts",
+        "context",
+        "correlated",
+        "decisions",
+        "timeline",
+        "earlier"
+      ],
+      "thread": {
+        "key": "github:5",
+        "stage": "unsubscribed",
+        "createdAt": "2026-11-03T05:35:58.617Z",
+        "lastAt": "2026-11-03T05:35:24.000Z"
+      },
+      "tickets": [],
+      "decisionFacts": [
+        {
+          "id": "d514fc3df2246cbf1ca5b65f2adfdcbf",
+          "kind": "accept",
+          "at": "2026-11-03T05:36:01.369Z",
+          "ticketId": "fcedbda613ab366c99a1af187f29395f",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ]
+        }
+      ],
+      "ticketsFromDecision": [
+        {
+          "id": "fcedbda613ab366c99a1af187f29395f",
+          "state": "ended",
+          "stage": "ended",
+          "assignments": [
+            {
+              "id": "c639dd594bd4b6a2c59a58f9e5294e7e",
+              "state": "ended",
+              "reportState": "ready",
+              "reportAt": "2026-11-03T05:40:55.053Z",
+              "reportSha256": "bab7a6f46c652c07d81988e3cb0f7a4a318f3b888b4f9cfa5619f58f540ad53f"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 13,
+      "responseKeys": [
+        "key",
+        "source",
+        "title",
+        "stage",
+        "latest",
+        "lastAt",
+        "createdAt",
+        "subscriptions",
+        "tickets",
+        "pending",
+        "url",
+        "facts",
+        "context",
+        "correlated",
+        "decisions",
+        "timeline",
+        "earlier"
+      ],
+      "thread": {
+        "key": "github:13",
+        "stage": "unsubscribed",
+        "createdAt": "2026-11-03T07:39:42.827Z",
+        "lastAt": "2026-11-03T07:38:37.000Z"
+      },
+      "tickets": [],
+      "decisionFacts": [
+        {
+          "id": "90a05ddb2790c40793c84aa83ad9c4ec",
+          "kind": "accept",
+          "at": "2026-11-03T07:39:57.754Z",
+          "ticketId": "faadc6d1b3bfb4a8ea3d5d3fa0e9a88f",
+          "reason": [
+            {
+              "code": "said",
+              "values": {
+                "text": "Explicit request from an allowed user with concrete config targets, verification step and a named deliverable; direction is settled."
+              }
+            }
+          ]
+        }
+      ],
+      "ticketsFromDecision": [
+        {
+          "id": "faadc6d1b3bfb4a8ea3d5d3fa0e9a88f",
+          "state": "ended",
+          "stage": "ended",
+          "assignments": [
+            {
+              "id": "2d0a511dfab6ad8c445de145b8a8e6a5",
+              "state": "ended",
+              "reportState": null,
+              "reportAt": null,
+              "reportSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "id": "a02016c19e85e99a3f364c7dd1bc21a5",
+              "state": "ended",
+              "reportState": "ready",
+              "reportAt": "2026-11-03T16:26:04.397Z",
+              "reportSha256": "cd0b51862e542c00ddaff55d3d7a216334c51b3bf774ae92fbceb54882bfc2f1"
+            },
+            {
+              "id": "c07fd0efae52ba11a4f83631e63e1d36",
+              "state": "ended",
+              "reportState": "ready",
+              "reportAt": "2026-11-03T23:35:24.142Z",
+              "reportSha256": "509f6ea5a7e4dd6ff25dff282219c05433584e82331782f50f73e65cf9e9c3c7"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 16,
+      "responseKeys": [
+        "key",
+        "source",
+        "title",
+        "stage",
+        "latest",
+        "lastAt",
+        "createdAt",
+        "subscriptions",
+        "tickets",
+        "pending",
+        "url",
+        "facts",
+        "context",
+        "correlated",
+        "decisions",
+        "timeline",
+        "earlier"
+      ],
+      "thread": {
+        "key": "github:16",
+        "stage": "unsubscribed",
+        "createdAt": "2026-11-03T17:39:08.565Z",
+        "lastAt": "2026-11-03T17:38:03.000Z"
+      },
+      "tickets": [],
+      "decisionFacts": [
+        {
+          "id": "c0050ff095952d512d90c6ad17dddabe",
+          "kind": "ignore",
+          "at": "2026-11-03T17:39:24.618Z",
+          "ticketId": null,
+          "reason": [
+            {
+              "code": "said",
+              "values": {
+                "text": "Cross-module feature with a new navigation tab, new interactive decision cards, external decision-provider integration and new persistence \u2014 a new product surface and architecture beyond the small internal change a ticket covers. The operator can direct it with an explicit request."
+              }
+            }
+          ]
+        }
+      ],
+      "ticketsFromDecision": []
+    },
+    {
+      "issue": 80,
+      "responseKeys": [
+        "key",
+        "source",
+        "title",
+        "stage",
+        "latest",
+        "lastAt",
+        "createdAt",
+        "subscriptions",
+        "tickets",
+        "pending",
+        "url",
+        "facts",
+        "context",
+        "correlated",
+        "decisions",
+        "timeline",
+        "earlier"
+      ],
+      "thread": {
+        "key": "github:80",
+        "stage": "unsubscribed",
+        "createdAt": "2026-11-04T21:02:53.202Z",
+        "lastAt": "2026-11-04T21:01:53.000Z"
+      },
+      "tickets": [],
+      "decisionFacts": [
+        {
+          "id": "1c499f811d3ddd473efecc8feb97a6fd",
+          "kind": "accept",
+          "at": "2026-11-04T21:02:56.764Z",
+          "ticketId": "0e56ba0d7b8491832aee4e37db6ec2f3",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ]
+        }
+      ],
+      "ticketsFromDecision": [
+        {
+          "id": "0e56ba0d7b8491832aee4e37db6ec2f3",
+          "state": "ended",
+          "stage": "ended",
+          "assignments": [
+            {
+              "id": "6891306e23cf2f575f4371cab7c36690",
+              "state": "ended",
+              "reportState": "waiting",
+              "reportAt": "2026-11-04T21:09:58.733Z",
+              "reportSha256": "d82f2f4aefe33875a797b85d2faa7fcc16f52a09d7004012849750f307100612"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 91,
+      "responseKeys": [
+        "key",
+        "source",
+        "title",
+        "stage",
+        "latest",
+        "lastAt",
+        "createdAt",
+        "subscriptions",
+        "tickets",
+        "pending",
+        "url",
+        "facts",
+        "context",
+        "correlated",
+        "decisions",
+        "timeline",
+        "earlier"
+      ],
+      "thread": {
+        "key": "github:91",
+        "stage": "unsubscribed",
+        "createdAt": "2026-11-04T21:14:42.904Z",
+        "lastAt": "2026-11-04T21:13:55.000Z"
+      },
+      "tickets": [],
+      "decisionFacts": [
+        {
+          "id": "ef7c502e0ea0f88761e45b7dbb1a4775",
+          "kind": "accept",
+          "at": "2026-11-04T21:14:56.157Z",
+          "ticketId": "ee804f9f13cc4d7a4ad5b533c96050ae",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ]
+        }
+      ],
+      "ticketsFromDecision": [
+        {
+          "id": "ee804f9f13cc4d7a4ad5b533c96050ae",
+          "state": "ended",
+          "stage": "ended",
+          "assignments": [
+            {
+              "id": "07a87dd67644a44d8eeed602dcdb4cf0",
+              "state": "ended",
+              "reportState": "waiting",
+              "reportAt": "2026-11-04T21:33:21.479Z",
+              "reportSha256": "b2757aeecea9aee7e22b6c5290f5c7fa1e31b7ff72c140837bf2c5b59c49ca03"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 98,
+      "responseKeys": [
+        "key",
+        "source",
+        "title",
+        "stage",
+        "latest",
+        "lastAt",
+        "createdAt",
+        "subscriptions",
+        "tickets",
+        "pending",
+        "url",
+        "facts",
+        "context",
+        "correlated",
+        "decisions",
+        "timeline",
+        "earlier"
+      ],
+      "thread": {
+        "key": "github:98",
+        "stage": "unsubscribed",
+        "createdAt": "2026-11-04T21:30:02.578Z",
+        "lastAt": "2026-11-04T21:28:06.000Z"
+      },
+      "tickets": [],
+      "decisionFacts": [
+        {
+          "id": "b2cdc266f52d99b4e0d5dddae29e1d7f",
+          "kind": "accept",
+          "at": "2026-11-04T21:30:05.489Z",
+          "ticketId": "429e55656ceba2b10d555911e14ba184",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ]
+        }
+      ],
+      "ticketsFromDecision": [
+        {
+          "id": "429e55656ceba2b10d555911e14ba184",
+          "state": "ended",
+          "stage": "ended",
+          "assignments": [
+            {
+              "id": "19db3e10e60486e5d43010121f067610",
+              "state": "ended",
+              "reportState": "waiting",
+              "reportAt": "2026-11-04T21:45:48.277Z",
+              "reportSha256": "6a7e8bba41ba43e5494391ee4bf088801656de8c2c6c7554ecd7c9e1a78664fb"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "limits": "Thread projections hide ended tickets; exact ticket IDs were followed from historical admission decisions. Empty projected tickets alone was not treated as missing/no-work proof. No old choices were acted on."
+}

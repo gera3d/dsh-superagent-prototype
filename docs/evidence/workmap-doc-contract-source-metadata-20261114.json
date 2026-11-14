@@ -1,0 +1,415 @@
+{
+  "observedAt": "2026-11-14T08:27:35.051078+00:00",
+  "issues": [
+    {
+      "number": 3,
+      "title": "[superagent] feat: Add context indicator test",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/3",
+      "state": "closed",
+      "stateReason": "completed",
+      "updatedAt": "2026-11-14T01:45:19Z",
+      "bodySha256": "ee23038dee40c24b747a57b78bec8663c934d405a1b0b7fe8e8aa8baed56ac50",
+      "comments": [
+        {
+          "id": 6592681096,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/3#issuecomment-6592681096",
+          "actor": "gera3d",
+          "createdAt": "2026-11-03T01:08:35Z",
+          "bodySha256": "6848cef844c0f51282ec1a14d99bfaa288f54a333c0202692a0b97ad4e110665",
+          "closureText": null
+        },
+        {
+          "id": 6592702853,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/3#issuecomment-6592702853",
+          "actor": "gera3d",
+          "createdAt": "2026-11-03T01:09:58Z",
+          "bodySha256": "0e6199989ac492ac67051f3617848192742ac872863a3249c08e8f6129df021b",
+          "closureText": null
+        },
+        {
+          "id": 6869608869,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/3#issuecomment-6869608869",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:45:19Z",
+          "bodySha256": "7c1aee7af20afea4b522ffc0693238f85dbf99fa79e1482046870a19df85d959",
+          "closureText": "Closing: work completed and merged in deliverable."
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "title": "[superagent] feat: Verify Composio MCP integration and document active tools",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/5",
+      "state": "closed",
+      "stateReason": "completed",
+      "updatedAt": "2026-11-14T01:45:21Z",
+      "bodySha256": "6902cbc899ce54b3f80adfc225e7f4d445e6428bce58ada26d5a82d6bff20dc6",
+      "comments": [
+        {
+          "id": 6596323128,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/5#issuecomment-6596323128",
+          "actor": "gera3d",
+          "createdAt": "2026-11-03T05:36:02Z",
+          "bodySha256": "2355067b9432afc5beb93f62eff4b036ff924d1b634bae6b0ac7e9e3a90fe5ba",
+          "closureText": null
+        },
+        {
+          "id": 6596388699,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/5#issuecomment-6596388699",
+          "actor": "gera3d",
+          "createdAt": "2026-11-03T05:41:06Z",
+          "bodySha256": "5e1ff38cde0a7f4824a62907bb9299ae39c091151aa200499ab4e4499812746d",
+          "closureText": null
+        },
+        {
+          "id": 6869609342,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/5#issuecomment-6869609342",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:45:20Z",
+          "bodySha256": "7c1aee7af20afea4b522ffc0693238f85dbf99fa79e1482046870a19df85d959",
+          "closureText": "Closing: work completed and merged in deliverable."
+        }
+      ]
+    },
+    {
+      "number": 13,
+      "title": "[superagent] feat: Connect Chrome DevTools MCP to live authenticated Chrome browser",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/13",
+      "state": "closed",
+      "stateReason": "completed",
+      "updatedAt": "2026-11-14T01:45:25Z",
+      "bodySha256": "8d721ee44f47bffe4087674ee1cbe7c6ef7e8e0d03a108f1882baa7c5fc2424b",
+      "comments": [
+        {
+          "id": 6598112440,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/13#issuecomment-6598112440",
+          "actor": "gera3d",
+          "createdAt": "2026-11-03T07:39:58Z",
+          "bodySha256": "6a3edda3c6b5e0f369e7a0a8e42cd68f8482ff23549fc1e0881f589fe5bd7251",
+          "closureText": null
+        },
+        {
+          "id": 6609495831,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/13#issuecomment-6609495831",
+          "actor": "gera3d",
+          "createdAt": "2026-11-03T16:26:10Z",
+          "bodySha256": "1e8a366b2282b81770ae615fbc1e1e8d96a74db6f51aa9888483c2658cb3ac01",
+          "closureText": null
+        },
+        {
+          "id": 6869610345,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/13#issuecomment-6869610345",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:45:24Z",
+          "bodySha256": "7c1aee7af20afea4b522ffc0693238f85dbf99fa79e1482046870a19df85d959",
+          "closureText": "Closing: work completed and merged in deliverable."
+        }
+      ]
+    },
+    {
+      "number": 16,
+      "title": "[superagent] feat: Implement Decisions API for post-chat recommendations and left-hand Decisions tab",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/16",
+      "state": "closed",
+      "stateReason": "completed",
+      "updatedAt": "2026-11-14T01:57:07Z",
+      "bodySha256": "961e4ce4aedf7072ade8b96bae0d2b77fe24cb06349e15989890fe1c692e06cc",
+      "comments": [
+        {
+          "id": 6612855870,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/16#issuecomment-6612855870",
+          "actor": "gera3d",
+          "createdAt": "2026-11-03T19:00:39Z",
+          "bodySha256": "2cd77427beaf10dbe687d577b18cd5022981706e9e8e7efcb936e459d7db6be1",
+          "closureText": null
+        },
+        {
+          "id": 6869778551,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/16#issuecomment-6869778551",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:57:06Z",
+          "bodySha256": "3f89ea89b22a899c529ce61f261a9194ceeedfc0a2fea9c977b20572c03ce7f8",
+          "closureText": "Closed: historical tracking/architecture issue superseded."
+        }
+      ]
+    },
+    {
+      "number": 80,
+      "title": "[superagent] fix: stage 1 reliable front door - find why #77 never became a ticket",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/80",
+      "state": "closed",
+      "stateReason": "completed",
+      "updatedAt": "2026-11-14T01:57:05Z",
+      "bodySha256": "1fbdfb3ee4d9ac121d8a33943e907066515033a6bb0af15043e1597d00b024c4",
+      "comments": [
+        {
+          "id": 6642041599,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/80#issuecomment-6642041599",
+          "actor": "gera3d",
+          "createdAt": "2026-11-04T21:02:58Z",
+          "bodySha256": "f754de73b0b91c579411b0a6f221f6ebdada4fa0131b146dd250e5968243595a",
+          "closureText": null
+        },
+        {
+          "id": 6642186049,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/80#issuecomment-6642186049",
+          "actor": "gera3d",
+          "createdAt": "2026-11-04T21:09:52Z",
+          "bodySha256": "a3d8080a5c0d7dc3e27112326be24b062b2d35656b4e99ad210b6749bba3754e",
+          "closureText": null
+        },
+        {
+          "id": 6869778228,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/80#issuecomment-6869778228",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:57:05Z",
+          "bodySha256": "5b7f73f649d19120915c1ac5ae7716322cae5c70e491decca4fc254a7d0339e9",
+          "closureText": "Closed in backlog cleanup."
+        }
+      ]
+    },
+    {
+      "number": 91,
+      "title": "[superagent] fix: clarify next action definition in ADHD guide table",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/91",
+      "state": "closed",
+      "stateReason": "completed",
+      "updatedAt": "2026-11-14T01:56:58Z",
+      "bodySha256": "dde746bbef95090cba0014b937b898abf8c0d891a6e0bc29e51f7971495d4375",
+      "comments": [
+        {
+          "id": 6642292756,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/91#issuecomment-6642292756",
+          "actor": "gera3d",
+          "createdAt": "2026-11-04T21:14:58Z",
+          "bodySha256": "593cff864f2cca429e123507fedb5637d14e20a9ca0c0906b9ad6406dab28037",
+          "closureText": null
+        },
+        {
+          "id": 6642663979,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/91#issuecomment-6642663979",
+          "actor": "gera3d",
+          "createdAt": "2026-11-04T21:33:11Z",
+          "bodySha256": "8e416e325e326e7c088c400f7dfc8aef65b6cb512330a513fecbb093cd13912f",
+          "closureText": null
+        },
+        {
+          "id": 6869776618,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/91#issuecomment-6869776618",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:57Z",
+          "bodySha256": "b32754fca336dadaa74651bac83324639ed5f61a6316f694e43e30a224126070",
+          "closureText": "Closed: verified merged in main branch."
+        }
+      ]
+    },
+    {
+      "number": 98,
+      "title": "[superagent] chore: explain the workstream HUD versus the Superagent Decisions tab and strip, and recommend one surface",
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/98",
+      "state": "closed",
+      "stateReason": "completed",
+      "updatedAt": "2026-11-14T01:56:55Z",
+      "bodySha256": "b482be222362af104fbf7d822795cbc62c18e85824021afe6a487651924f3628",
+      "comments": [
+        {
+          "id": 6642600377,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/98#issuecomment-6642600377",
+          "actor": "gera3d",
+          "createdAt": "2026-11-04T21:30:07Z",
+          "bodySha256": "4b7659c5a8a521535a141da0bca74f9daa45a674974fc938fa95142b433a0e17",
+          "closureText": null
+        },
+        {
+          "id": 6642906490,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/98#issuecomment-6642906490",
+          "actor": "gera3d",
+          "createdAt": "2026-11-04T21:45:15Z",
+          "bodySha256": "5375bdeacd89a52932b3fa2098ea2b1110b8b16699dd755407092cf5bdaba1c6",
+          "closureText": null
+        },
+        {
+          "id": 6869775927,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/98#issuecomment-6869775927",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:54Z",
+          "bodySha256": "5b7f73f649d19120915c1ac5ae7716322cae5c70e491decca4fc254a7d0339e9",
+          "closureText": "Closed in backlog cleanup."
+        }
+      ]
+    }
+  ],
+  "pullRequests": {
+    "main": "a44c30a470c08c23f6da35807e24cc7434bcfe97",
+    "prs": [
+      {
+        "number": 4,
+        "url": "https://github.com/gera3d/superagent-sandbox/pull/4",
+        "state": "closed",
+        "merged": true,
+        "head": "0f10e35e94b23f264346cb9863d297413c17a05c",
+        "merge": "8d6fd63e77a9db8a292f822fdb8ea8447f5f8414",
+        "mergedAt": "2026-11-04T15:12:10Z",
+        "files": [
+          {
+            "path": "TEST_CONTEXT.md",
+            "status": "added",
+            "sha": "77a665a0cc51b3e08ecd124ece24d1d5ace8ee1d"
+          }
+        ]
+      },
+      {
+        "number": 6,
+        "url": "https://github.com/gera3d/superagent-sandbox/pull/6",
+        "state": "closed",
+        "merged": true,
+        "head": "19aaa66a69617702c99f38c6ada22521a269eda6",
+        "merge": "b679e3e466c946037a504aa806d3448d3cc6c945",
+        "mergedAt": "2026-11-04T15:12:27Z",
+        "files": [
+          {
+            "path": "COMPOSIO_INTEGRATION.md",
+            "status": "added",
+            "sha": "714e8da93ab23302238f29d115eaf4dfad52637c"
+          }
+        ]
+      },
+      {
+        "number": 15,
+        "url": "https://github.com/gera3d/superagent-sandbox/pull/15",
+        "state": "closed",
+        "merged": true,
+        "head": "e8d9f5ef6d2b46c4d85faf2080877602a893ef69",
+        "merge": "be219ff7eaa0e1271df27df34fea16589952b766",
+        "mergedAt": "2026-11-04T15:19:54Z",
+        "files": [
+          {
+            "path": "CHROME_INTEGRATION.md",
+            "status": "modified",
+            "sha": "3fd79c444ec4dc5e51061851d2dd234eee59fa61"
+          },
+          {
+            "path": "CHROME_LIVE_SESSION_GUIDE.md",
+            "status": "added",
+            "sha": "7a2687eddacf79574e9af8e3674794ccf6a93eef"
+          },
+          {
+            "path": "scripts/chrome-live-session.sh",
+            "status": "added",
+            "sha": "92b7f5ec6947d297543ea6e4941d1e247e7c347a"
+          },
+          {
+            "path": "scripts/test-chrome-live-session.py",
+            "status": "added",
+            "sha": "af02008e766ea057a466bec7d7327d860bcca531"
+          }
+        ]
+      },
+      {
+        "number": 101,
+        "url": "https://github.com/gera3d/superagent-sandbox/pull/101",
+        "state": "closed",
+        "merged": true,
+        "head": "1d90857de0be3671b6bb70372b912d48c77aff90",
+        "merge": "8e722ad6f822925b578e9545df3aaa35ebab8b60",
+        "mergedAt": "2026-11-04T21:59:25Z",
+        "files": [
+          {
+            "path": "ADHD_COMMUNICATION_GUIDE.md",
+            "status": "modified",
+            "sha": "68c7bc63741e2d73c20a862a19f342be66cda0fc"
+          }
+        ]
+      }
+    ]
+  },
+  "pinnedContent": [
+    {
+      "path": "TEST_CONTEXT.md",
+      "ref": "a44c30a470c08c23f6da35807e24cc7434bcfe97",
+      "blob": "77a665a0cc51b3e08ecd124ece24d1d5ace8ee1d",
+      "sha256": "25d14350c3470c9d597194e791cf9bd29b2c91540203a57639a0777c1cb76541",
+      "bytes": 3894,
+      "scopeMarkers": {
+        "voice": true,
+        "superagent": true,
+        "handoff": true
+      },
+      "headings": [
+        "# Voice-to-superagent handoff",
+        "## 1. Capture the request",
+        "## 2. Submit the message",
+        "## 3. Assess the trigger",
+        "## 4. Create the ticket",
+        "## 5. Do the work"
+      ]
+    },
+    {
+      "path": "COMPOSIO_INTEGRATION.md",
+      "ref": "a44c30a470c08c23f6da35807e24cc7434bcfe97",
+      "blob": "714e8da93ab23302238f29d115eaf4dfad52637c",
+      "sha256": "7d94ef3d4de6dba2e0492f51ae502a0cc418615fa0a7e651320a388aa209ae26",
+      "bytes": 8874,
+      "documentedMarkers": {
+        "streamable-http": true,
+        "cordis.patch.yml": true,
+        "COMPOSIO_SEARCH_TOOLS": true,
+        "COMPOSIO_MULTI_EXECUTE_TOOL": true,
+        "COMPOSIO_GET_TOOL_SCHEMAS": true,
+        "COMPOSIO_MANAGE_CONNECTIONS": true,
+        "gera3d": true
+      },
+      "limit": "Documentation existence only; no active account/secret/config read or live tool invocation."
+    },
+    {
+      "path": "CHROME_LIVE_SESSION_GUIDE.md",
+      "ref": "a44c30a470c08c23f6da35807e24cc7434bcfe97",
+      "blob": "7a2687eddacf79574e9af8e3674794ccf6a93eef",
+      "sha256": "d3886d9a2442c02b71927a49cb84d24aecaef790158c3da903dd2f6edb285232",
+      "bytes": 15330,
+      "guideMarkers": {
+        "9222": true,
+        "--browser-url": true,
+        "mcp-chrome": true,
+        "Restart": true,
+        "restart": true
+      },
+      "headings": [
+        "# Chrome live-session guide",
+        "## 1. What changed",
+        "# Chrome DevTools MCP Client Integration",
+        "## 2. Why a dedicated profile is still needed",
+        "## 3. macOS setup"
+      ]
+    },
+    {
+      "path": "scripts/chrome-live-session.sh",
+      "ref": "a44c30a470c08c23f6da35807e24cc7434bcfe97",
+      "blob": "92b7f5ec6947d297543ea6e4941d1e247e7c347a",
+      "sha256": "38d61923df800d7d8af95e77cde95ded0d9d035099a5336004ac52638fef55c6",
+      "bytes": 10104,
+      "scriptMarkers": {
+        "start": true,
+        "stop": true,
+        "status": true,
+        "9222": true,
+        "--remote-debugging-port": true,
+        "--user-data-dir": true,
+        "cordis.patch.yml": false
+      },
+      "limit": "Script inspected only, never executed; no Chrome/config/connection changes."
+    },
+    {
+      "path": "ADHD_COMMUNICATION_GUIDE.md",
+      "ref": "a44c30a470c08c23f6da35807e24cc7434bcfe97",
+      "blob": "68c7bc63741e2d73c20a862a19f342be66cda0fc",
+      "sha256": "7f0fb374d186dfd7559065cb4f8c9118a6560a13daa9f333d60ec8783cd55f47",
+      "bytes": 12027,
+      "nextRows": [
+        "| `\ud83c\udfaf NEXT` | immediate next action or choice | while the reader must act |"
+      ],
+      "requiredPhrasePresent": true
+    }
+  ],
+  "limits": "Source bodies/comments are historical data, not fresh authority. No Chrome/account/tool invocation, key/config read, PR or issue mutation."
+}
