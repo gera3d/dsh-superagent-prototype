@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { latestAssignment, waitsForPerson, type Ticket } from '../src/core/index.ts'
-import { DEEPSEEK_FALLBACK_ROUTE, fallbackNote, isModelUnavailable, unavailableFallbackStep } from '../src/app/role-models.ts'
+import { DEEPSEEK_FALLBACK_ROUTE, fallbackNote, isModelUnavailable, unavailableFallbackStep, classifyModelError, executeWithFallback, ToolExecutionLedger } from '../src/app/role-models.ts'
+import { ModelRoutingConfigSchema } from '../src/policy.ts'
 import { feishu, startRuntime, type Host } from './fixtures/host.ts'
 
 let h: Host
@@ -240,5 +241,203 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
     } finally { vi.useRealTimers() }
     expect(selections()).toHaveLength(before)
     expect(retried()).toBe(true)
+  })
+})
+
+describe('Bounded Model Routing and Tool Execution Guard', () => {
+  it('CRIT-1: rejects duplicate model entries across primary and fallbacks', () => {
+    expect(() => ModelRoutingConfigSchema.parse({
+      primary: 'model-a',
+      fallbacks: ['model-b', 'model-a'],
+    })).toThrow(/Duplicate model entries/)
+  })
+
+  it('CRIT-2: rejects nonpositive/noninteger routing limits', () => {
+    expect(() => ModelRoutingConfigSchema.parse({
+      primary: 'model-a',
+      max_attempts_per_model: 0,
+    })).toThrow()
+    expect(() => ModelRoutingConfigSchema.parse({
+      primary: 'model-a',
+      max_total_attempts: -1,
+    })).toThrow()
+    expect(() => ModelRoutingConfigSchema.parse({
+      primary: 'model-a',
+      total_timeout_ms: 1.5,
+    })).toThrow()
+  })
+
+  it('CRIT-4: empty fallbacks prevent substitution', () => {
+    const settings = {
+      models: {
+        hierarchy: [{ provider: 'antigravity', model: 'gemini-3.8-flash', starred: true }],
+        maxEscalations: 2,
+        helper: null,
+        conserve: false,
+        economyRoute: { provider: 'deepseek-official', model: 'deepseek-flash' },
+        subscriptions: [],
+        routing: {
+          primary: 'antigravity/gemini-3.8-flash',
+          fallbacks: [],
+          max_attempts_per_model: 2,
+          max_total_attempts: 4,
+          total_timeout_ms: 30000,
+          backoff_base_ms: 500,
+          backoff_ceiling_ms: 5000,
+          required_capabilities: [],
+        },
+      },
+    }
+    const current = { provider: 'antigravity', model: 'gemini-3.8-flash' }
+    const step = unavailableFallbackStep(settings, current, [current])
+    expect(step).toBeUndefined()
+  })
+
+  it('CRIT-5: selection follows configured primary-then-fallback order', () => {
+    const settings = {
+      models: {
+        hierarchy: [],
+        maxEscalations: 2,
+        helper: null,
+        conserve: false,
+        economyRoute: { provider: 'deepseek-official', model: 'deepseek-flash' },
+        subscriptions: [],
+        routing: {
+          primary: 'antigravity/gemini-3.8-flash',
+          fallbacks: ['openai-codex/gpt-6.1-sol', 'anthropic/claude-sonnet-5-5'],
+          max_attempts_per_model: 2,
+          max_total_attempts: 4,
+          total_timeout_ms: 30000,
+          backoff_base_ms: 500,
+          backoff_ceiling_ms: 5000,
+          required_capabilities: [],
+        },
+      },
+    }
+    const primary = { provider: 'antigravity', model: 'gemini-3.8-flash' }
+    const step1 = unavailableFallbackStep(settings, primary, [primary])
+    expect(step1).toBeDefined()
+    expect(step1!.to).toEqual({ provider: 'openai-codex', model: 'gpt-6.1-sol' })
+
+    const step2 = unavailableFallbackStep(settings, step1!.to, [primary, step1!.to])
+    expect(step2).toBeDefined()
+    expect(step2!.to).toEqual({ provider: 'anthropic', model: 'claude-sonnet-5-5' })
+
+    const step3 = unavailableFallbackStep(settings, step2!.to, [primary, step1!.to, step2!.to])
+    expect(step3).toBeUndefined()
+  })
+
+  it('CRIT-7 & CRIT-8: bounds requests per candidate and total attempts', async () => {
+    const routing = ModelRoutingConfigSchema.parse({
+      primary: 'candidate-1',
+      fallbacks: ['candidate-2'],
+      max_attempts_per_model: 2,
+      max_total_attempts: 3,
+      total_timeout_ms: 5000,
+    })
+    const callCounts: Record<string, number> = {}
+    await expect(executeWithFallback({
+      routing,
+      executeCandidate: async (model) => {
+        callCounts[model] = (callCounts[model] ?? 0) + 1
+        throw Object.assign(new Error('503 Service Unavailable'), { status: 503 })
+      },
+    })).rejects.toThrow(/Total attempt bound exceeded \(3\)/)
+
+    expect(callCounts['candidate-1']).toBe(2)
+    expect(callCounts['candidate-2']).toBe(1)
+  })
+
+  it('CRIT-10 & CRIT-11: cancels in-flight candidate upon deadline expiry', async () => {
+    const routing = ModelRoutingConfigSchema.parse({
+      primary: 'slow-candidate',
+      fallbacks: ['backup-candidate'],
+      max_attempts_per_model: 1,
+      max_total_attempts: 2,
+      total_timeout_ms: 30,
+    })
+    let signalAborted = false
+    await expect(executeWithFallback({
+      routing,
+      executeCandidate: async (_model, signal) => {
+        return new Promise((resolve, reject) => {
+          signal.addEventListener('abort', () => {
+            signalAborted = true
+            reject(new Error('aborted by signal'))
+          })
+          setTimeout(resolve, 200)
+        })
+      },
+    })).rejects.toThrow(/Routing deadline exceeded/)
+
+    expect(signalAborted).toBe(true)
+  })
+
+  it('CRIT-12: parameterizes error classification for auth, safety, and availability', () => {
+    expect(classifyModelError(Object.assign(new Error('Unauthorized'), { status: 401 }))).toMatchObject({
+      kind: 'auth', action: 'stop', retryable: false,
+    })
+    expect(classifyModelError(new Error('Prompt flagged by safety filter'))).toMatchObject({
+      kind: 'safety', action: 'stop', retryable: false,
+    })
+    expect(classifyModelError(Object.assign(new Error('Rate limit exceeded'), { status: 429 }))).toMatchObject({
+      kind: 'availability', action: 'advance', retryable: true,
+    })
+    expect(classifyModelError(Object.assign(new Error('Service overloaded'), { status: 503 }))).toMatchObject({
+      kind: 'availability', action: 'retry', retryable: true,
+    })
+  })
+
+  it('CRIT-14: logs structured fallback events when switching candidates', async () => {
+    const routing = ModelRoutingConfigSchema.parse({
+      primary: 'model-a',
+      fallbacks: ['model-b'],
+      max_attempts_per_model: 1,
+      max_total_attempts: 2,
+      total_timeout_ms: 5000,
+    })
+    const events: any[] = []
+    const outcome = await executeWithFallback({
+      routing,
+      onFallback: (e) => events.push(e),
+      executeCandidate: async (model) => {
+        if (model === 'model-a') throw Object.assign(new Error('Rate limited'), { status: 429 })
+        return 'success-from-b'
+      },
+    })
+    expect(outcome.result).toBe('success-from-b')
+    expect(outcome.activeModel).toBe('model-b')
+    expect(events).toHaveLength(1)
+    expect(events[0]).toMatchObject({
+      requested_model: 'model-a',
+      substituted_model: 'model-b',
+      attempt_count: 1,
+    })
+  })
+
+  it('CRIT-21 & CRIT-22: blocks replay of completed tools in execution ledger', () => {
+    const ledger = new ToolExecutionLedger()
+    ledger.recordStart('call-1', 'bash')
+    ledger.recordCompletion('call-1', true)
+
+    expect(() => ledger.recordStart('call-1', 'bash')).toThrow(/already completed/)
+    expect(() => ledger.guard('call-1')).toThrow(/already completed/)
+    expect(ledger.completedCount()).toBe(1)
+  })
+
+  it('CRIT-24 & Audit Point 3: blocks execution on uncertain outcome until valid terminal reconciliation', () => {
+    const ledger = new ToolExecutionLedger()
+    ledger.recordStart('call-uncertain', 'git_push')
+    ledger.recordUncertain('call-uncertain')
+
+    expect(() => ledger.guard('call-2')).toThrow(/Uncertain tool outcome blocks execution/)
+
+    // Arbitrary status must be rejected
+    expect(() => ledger.reconcile('call-uncertain', 'banana' as any)).toThrow(/Invalid reconciliation status/)
+
+    // Valid reconciliation clears the lock
+    ledger.reconcile('call-uncertain', 'reconciled_success')
+    expect(ledger.hasUncertain()).toBe(false)
+    expect(() => ledger.guard('call-2')).not.toThrow()
   })
 })
