@@ -1,0 +1,427 @@
+{
+  "observedAt": "2026-11-14T10:24:31.548415+00:00",
+  "scope": "Exact seven original thread admissions/ticket details; no full inbox audit or accepted-job retest",
+  "items": [
+    {
+      "issue": 102,
+      "threadKey": "github:102",
+      "stage": "unsubscribed",
+      "admissions": [
+        {
+          "id": "60646ba3abc3f102b83af07dbaa606ba",
+          "at": "2026-11-04T21:35:23.303Z",
+          "kind": "accept",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ],
+          "ticketId": "f70df4435322b025d2fa9f22e95bd8df"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "f70df4435322b025d2fa9f22e95bd8df",
+          "state": "ended",
+          "stage": "ended",
+          "ended": {
+            "at": "2026-11-13T03:05:16.875Z",
+            "by": "human",
+            "outcome": "stopped"
+          },
+          "assignments": [
+            {
+              "id": "d091e7cbc88d45ffa7a333fa03c406c4",
+              "state": "ended",
+              "report": {
+                "state": "waiting",
+                "summary": "🟢 DONE: Reproduced native submission 409 failure on Decisions card and confirmed dead-session root cause.\n⚡ DOING: Running baseline vitest suite across decision modules in worktree.\n🎯 NEXT: Apply fix to retire ended-session cards, send choices to originating sessions, and show percentages/Not-scored labels.\n\n🟢 DONE: Implemented decision live pick, ended-session card retirement, and consistent percentage/Not-scored badges with unit tests (55/55 passed).\n⚡ DOING: Building dsh-superagent distribution bundles via tsdown.\n🎯 NEXT: Verify build output and update sweep-stale-decisions.py in superagent-sandbox.",
+                "at": "2026-11-04T22:10:32.828Z"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 112,
+      "threadKey": "github:112",
+      "stage": "unsubscribed",
+      "admissions": [
+        {
+          "id": "d0c91c92badf06e4a1dec99324892055",
+          "at": "2026-11-04T21:58:43.893Z",
+          "kind": "accept",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ],
+          "ticketId": "aae289a9a2231c2a6d4fac7181f0b5df"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "aae289a9a2231c2a6d4fac7181f0b5df",
+          "state": "ended",
+          "stage": "ended",
+          "ended": {
+            "at": "2026-11-13T03:05:17.244Z",
+            "by": "human",
+            "outcome": "stopped"
+          },
+          "assignments": [
+            {
+              "id": "022722f3af50686739b78cd9368ef051",
+              "state": "ended",
+              "report": {
+                "state": "waiting",
+                "summary": "Porting the pick-and-send logic into the slim Next steps strip and exposing ranker percentage distribution from the decision record.\n\n- `🟢 DONE`: Worktrees created for **superagent-sandbox**, **dsh-superagent**, and **dsh-next-steps**; audited branches for tickets #96, #100, and #102; isolated where percentages and session link were dropped.\n- `⚡ DOING`: Implementing decision bridge staging and ranker percentage distribution in **dsh-next-steps** (`src/client/index.tsx`, `src/index.ts`).\n- `🎯 NEXT`: Write end-to-end unit tests proving pick-and-send delivery to the originating session and verifying scored vs unscored percentage badges.\n\nProceeding with the implementation now.",
+                "at": "2026-11-04T22:08:49.554Z"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 116,
+      "threadKey": "github:116",
+      "stage": "unsubscribed",
+      "admissions": [
+        {
+          "id": "8bfb4f7e4aa38da529d0b424e6645a95",
+          "at": "2026-11-05T01:31:43.659Z",
+          "kind": "accept",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ],
+          "ticketId": "499280ec5dc7b4adf0f528d2b21070b6"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "499280ec5dc7b4adf0f528d2b21070b6",
+          "state": "ended",
+          "stage": "ended",
+          "ended": {
+            "at": "2026-11-13T03:05:15.827Z",
+            "by": "human",
+            "outcome": "stopped"
+          },
+          "assignments": [
+            {
+              "id": "b3d434d4ea8a71af07f7987dd7dfb6bd",
+              "state": "ended",
+              "report": {
+                "state": "failed",
+                "summary": "LlmError: All Antigravity accounts are unavailable: no account can serve google right now (1 in cooldown) (earliest reset in 885s). Add an account, wait for reset, or run /agy clear-cooldown.",
+                "at": "2026-11-05T01:31:45.041Z"
+              }
+            },
+            {
+              "id": "f2050f0831697ca8279ee5aa40143d7e",
+              "state": "ended",
+              "report": {
+                "state": "waiting",
+                "summary": "Live fixes are committed to PRs, working tree backups are recorded, in-harness harness restarts are blocked, and review details are posted to **[#116](https://github.com/gera3d/superagent-sandbox/issues/116#issuecomment-6647746175)**.\n\n🟢 **DONE**:\n- **Backed Up Live Checkouts**: Patches and untracked archives preserved in `/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/backups/live-repair-20261105T015800Z`.\n- **Created PRs and Branches**:\n  - **[PR #12](https://github.com/gera3d/dsh-superagent-prototype/pull/12)**: `[Recovery] Client: register brand mark slot at low priority and update manifest, ready to review`\n  - **[PR #13](https://github.com/gera3d/dsh-superagent-prototype/pull/13)**: `[Recovery] Service: block agent-initiated harness restarts, ready to review`\n  - Branch **`agent/workstream-sync-repair-499280ec`** committed in **`default-workspace/dsh-workstream`** with `decisionSubmission` preserved as optional lookup.\n- **Blocked Agent Restarts**: Refuse `stop`/`restart` in **`scripts/dsh-superagent`** from inside the service tree or agent sessions, ignore `DSH_SUPERAGENT_ALLOW_SELF_RESTART` for in-harness callers, and verified with 26 passing vitest tests in `dsh-superagent` and 19 in `dsh-workstream`.\n\n⚡ **DOING**:\n- Awaiting review on **[PR #12](https://github.com/gera3d/dsh-superagent-prototype/pull/12)** and **[PR #13](https://github.com/gera3d/dsh-superagent-prototype/pull/13)**.\n\n🎯 **NEXT**:\n- Review and merge **[PR #12](https://github.com/gera3d/dsh-superagent-prototype/pull/12)** and **[PR #13](https://github.com/gera3d/dsh-superagent-prototype/pull/13)** into `superagent-core`.",
+                "at": "2026-11-05T02:14:46.090Z"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 121,
+      "threadKey": "github:121",
+      "stage": "unsubscribed",
+      "admissions": [
+        {
+          "id": "59653b650a2c9ebaa1f118a27f0734e8",
+          "at": "2026-11-05T02:06:40.317Z",
+          "kind": "accept",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ],
+          "ticketId": "b7187e7c8273a8d1fb06a848e3a2e6b3"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "b7187e7c8273a8d1fb06a848e3a2e6b3",
+          "state": "ended",
+          "stage": "ended",
+          "ended": {
+            "at": "2026-11-13T03:05:15.452Z",
+            "by": "human",
+            "outcome": "stopped"
+          },
+          "assignments": [
+            {
+              "id": "454459a173a02400428a3b9eba30ef26",
+              "state": "ended",
+              "report": {
+                "state": "waiting",
+                "summary": "Completed the pick-button 409 fix and delivered pull requests [dsh-superagent-prototype#14](https://github.com/gera3d/dsh-superagent-prototype/pull/14) and [superagent-sandbox#126](https://github.com/gera3d/superagent-sandbox/pull/126).\n\n🟢 **DONE**:\n- Added live-session choice dispatch via [`DecisionInbox.resolveWithSubmission`](file:///Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent/src/app/decision-inbox.ts) preserving staged choice and native-send database invariants.\n- Implemented ended-session retirement in [`isSessionEnded`](file:///Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent/src/app/http.ts) marking dead cards stale without deleting rows, with consistent percentage and `Not scored` badges.\n- Delivered test suites for live-session, ended-session, and stale card cases along with before and after screenshots at 1440x913 in [`reports/DECISION_PICK_BUTTON_409.md`](file:///Users/gerayeremin/src/superagent-sandbox/reports/DECISION_PICK_BUTTON_409.md).\n\n⚡ **DOING**:\n- Awaiting review and merge of PR #14 and PR #126.\n\n🎯 **NEXT**:\n- Review and merge pull requests [dsh-superagent-prototype#14](https://github.com/gera3d/dsh-superagent-prototype/pull/14) and [superagent-sandbox#126](https://github.com/gera3d/superagent-sandbox/pull/126).",
+                "at": "2026-11-05T02:23:45.965Z"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 122,
+      "threadKey": "github:122",
+      "stage": "unsubscribed",
+      "admissions": [
+        {
+          "id": "872d112126bd30d2efeee311e53f9faf",
+          "at": "2026-11-05T02:06:40.337Z",
+          "kind": "accept",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ],
+          "ticketId": "c964c10b9f23fb00dd31f4f40e416384"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "c964c10b9f23fb00dd31f4f40e416384",
+          "state": "ended",
+          "stage": "ended",
+          "ended": {
+            "at": "2026-11-13T03:05:14.676Z",
+            "by": "human",
+            "outcome": "stopped"
+          },
+          "assignments": [
+            {
+              "id": "c70e48437d590b5cf5aaad5b58a701ab",
+              "state": "ended",
+              "report": {
+                "state": "waiting",
+                "summary": "Stage 5 PR #100 conflicts have been resolved, tests verified, and the clean branch pushed to **`agent/ready-to-try-notify-add95bbfbf5a`**.\n\n🟢 **DONE**:\n* Merged **`main`** into **`agent/ready-to-try-notify-add95bbfbf5a`**, keeping both `--stats` and `--schedule` in [sweep-stale-decisions.py](file:///Users/gerayeremin/src/superagent-sandbox/scripts/sweep-stale-decisions.py).\n* Verified all test suites pass (11/11 stale-decisions, 9/9 ready-to-try, 5/5 dock-handshake, 12/12 close-the-loop, 5/5 ticket-metrics).\n* Pushed merge commit to **`origin`** and commented on PR #100 and Issue #122.\n\n⚡ **DOING**:\n* Idle, standing by for operator merge on PR #100.\n\n🎯 **NEXT**:\n* Merge PR #100 via GitHub interface or **`gh pr merge 100 --merge`**.",
+                "at": "2026-11-05T02:29:12.105Z"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 123,
+      "threadKey": "github:123",
+      "stage": "unsubscribed",
+      "admissions": [
+        {
+          "id": "b7557388054ad1ad2fcc72095725b3f7",
+          "at": "2026-11-05T02:06:40.330Z",
+          "kind": "accept",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ],
+          "ticketId": "05c4526381b196f87ea54983682796e2"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "05c4526381b196f87ea54983682796e2",
+          "state": "ended",
+          "stage": "ended",
+          "ended": {
+            "at": "2026-11-13T03:05:13.926Z",
+            "by": "human",
+            "outcome": "stopped"
+          },
+          "assignments": [
+            {
+              "id": "60cd0f8dc5de44e67a247c1d4903a30d",
+              "state": "ended",
+              "report": {
+                "state": "waiting",
+                "summary": "🟢 **DONE**: Merged `origin/superagent-core` into `agent/characters-panel-6385257ce896` and resolved all conflicts in 6 files (`http.ts`, `settings.ts`, `views/settings.ts`, `route.ts`, `policy.ts`, `panel-server.ts`).\n\n⚡ **DOING**: Running `pnpm typecheck` to verify TypeScript definitions.\n\n🎯 **NEXT**: Execute vitest test suites and verify `pnpm build`.\n\n🟢 **DONE**: Typecheck passed with zero errors (`tsc --noEmit`).\n\n⚡ **DOING**: Running vitest suites (`characters.spec.ts`, `characters-panel.spec.tsx`, `decision-card.spec.tsx`, `dock-guard.spec.tsx`, `inline-decision.spec.tsx`, `styles.spec.ts`).\n\n🎯 **NEXT**: Run `tests/character.spec.ts` and `tests/policy.spec.ts`, followed by `pnpm build`.\n\n🟢 **DONE**: `tests/policy.spec.ts` (328 tests) passed.\n\n⚡ **DOING**: Running full vitest test suite across the repository.\n\n🎯 **NEXT**: Run `pnpm build` and verify bundle artifacts.\n\n🟢 **DONE**: `branding.spec.tsx` (7 tests) passed.\n\n⚡ **DOING**: Running consolidated verification suites (all 9 PR #8 and core test files).\n\n🎯 **NEXT**: Run `pnpm build` and complete merge commit.\n\n🟢 **DONE**: Merge commit created (`ff76ceb`).\n\n⚡ **DOING**: Running end-to-end verification (`typecheck`, `build`, 9 test suites) on the committed state.\n\n🎯 **NEXT**: Push to `origin/agent/characters-panel-6385257ce896` and comment on PR #8.\n\nMerged `superagent-core` into `agent/characters-panel-6385257ce896` in `gera3d/dsh-superagent-prototype`, resolved all merge conflicts, verified clean builds and test passes, pushed the branch, and confirmed [PR #8](https://github.com/gera3d/dsh-superagen\nt-prototype/pull/8) is `MERGEABLE`.\n\n🟢 **DONE**:\n- Merged `superagent-core` into `agent/characters-panel-6385257ce896` retaining Characters work, branding, Stage 3b review, and `sidebar.brand.mark` at `priority: -1`.\n- Verified `pnpm typecheck` (0 errors), `pnpm build`, and 422 tests passing across PR #8 and core suites.\n- Pushed commit `ff76ceb` to `origin/agent/characters-panel-6385257ce896` and commented on [PR #8](https://github.com/gera3d/dsh-superagent-prototype/pull/8).\n\n⚡ **DOING**:\n- Done. Awaiting operator merge of [PR #8](https://github.com/gera3d/dsh-superagent-prototype/pull/8).\n\n🎯 **NEXT**: Operator merges [PR #8](https://github.com/gera3d/dsh-superagent-prototype/pull/8) into `superagent-core`.",
+                "at": "2026-11-05T02:33:02.753Z"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "issue": 128,
+      "threadKey": "github:128",
+      "stage": "unsubscribed",
+      "admissions": [
+        {
+          "id": "3c31358796524be94d2ee8fba6e0f831",
+          "at": "2026-11-05T02:29:54.047Z",
+          "kind": "accept",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ],
+          "ticketId": "53db7f579668fbdab06432d97ff37968"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "53db7f579668fbdab06432d97ff37968",
+          "state": "ended",
+          "stage": "ended",
+          "ended": {
+            "at": "2026-11-13T03:05:13.087Z",
+            "by": "human",
+            "outcome": "stopped"
+          },
+          "assignments": [
+            {
+              "id": "b6ad7e203d5ccfb7ee85e42b67250976",
+              "state": "ended",
+              "report": {
+                "state": "waiting",
+                "summary": "Applied single decision surface and ranker percentages from PR #127 and prototype PR #16 to the live harness checkouts.\n\n🟢 **DONE**:\n• Backed up `orchestrator.sqlite`, [dsh-next-steps](file:///Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-next-steps), and [dsh-superagent](file:///Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-superagent) to [strip-one-surface-live-20261105T023316Z](file:///Users/gerayeremin/Library/Application%20Support/dsh-desktop/harness/state/superagent/backups/strip-one-surface-live-20261105T023316Z) (`SHA256SUMS` recorded).\n• Merged changes into live checkouts and built successfully via `pnpm build` in both plugins.\n• Verified all test suites pass: `vitest run test/client.test.tsx` (6/6), `vitest run tests/inline-decision.spec.tsx tests/decision-card.spec.tsx` (55/55), and `python3 scripts/test-strip-one-surface.py` (6/6).\n\n⚡ **DOING**:\n• Live harness confirmed healthy: `scripts/dsh-superagent status` exits 0 with all subsystems `ready`.\n• Verified in live UI that ranker percentages render on scored cards, unscored cards show `Not scored`, dock owner handshake hides Agent Mini card, and empty dock leaves chat unobscured.\n\n🎯 **NEXT**:\nOpen any live session with alternatives to run the human click checklist and close issue #128.",
+                "at": "2026-11-05T02:39:32.486Z"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "deliverySearch": {
+    "scope": "Exact original seven ticket IDs only; absence is not proof of no historical deploy",
+    "matches": []
+  },
+  "backups": [
+    {
+      "path": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/backups/live-repair-20261105T015800Z",
+      "exists": true,
+      "files": [
+        {
+          "name": "dsh-superagent.patch",
+          "bytes": 1593,
+          "sha256": "e090ef88ca32f3f9ae1803aedf03365b802a65e7ef618f3748274db036a33410"
+        },
+        {
+          "name": "dsh-workstream-status.txt",
+          "bytes": 307,
+          "sha256": "335bb7940f3504cb38198591f6e425ee35a7cc98af2cd977cc67bd4de827b5ba"
+        },
+        {
+          "name": "dsh-superagent-status.txt",
+          "bytes": 97,
+          "sha256": "2676c6dcc9d7a9c399d8a08a6e37051c409120181210dc405e074580ca60fda0"
+        },
+        {
+          "name": "dsh-workstream-untracked.tar.gz",
+          "bytes": 13575,
+          "sha256": "441b832757f0264308b90fe46ec9ba00535e2b73935f4b297fb02597f0cfa79b"
+        },
+        {
+          "name": "dsh-workstream.patch",
+          "bytes": 116143,
+          "sha256": "9b5b961c6a1309e7220867d93cf6dbd8ffffa8fb6c64c96db10de744e975cec7"
+        }
+      ]
+    },
+    {
+      "path": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/backups/strip-one-surface-live-20261105T023316Z",
+      "exists": true,
+      "files": [
+        {
+          "name": "orchestrator.sqlite",
+          "bytes": 2953216,
+          "sha256": "16ba792296f9d3fef0d99861832d3b80975578b20f3b7753e1db849bf362eeac"
+        },
+        {
+          "name": "dsh-superagent.diff",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "dsh-next-steps-head.txt",
+          "bytes": 41,
+          "sha256": "28efa3490d4a152596cd134795c8e4f59e4891141523b4c3575bda40f066ab3d"
+        },
+        {
+          "name": "dsh-superagent-live.tar.gz",
+          "bytes": 7309528,
+          "sha256": "db7ac940b6b3e71c4d765b3058c5b94c4a9da64ff3b4964c0d966dcafacbd235"
+        },
+        {
+          "name": "dsh-next-steps.diff",
+          "bytes": 4232,
+          "sha256": "c9ecb895d457d30eefc4b594c6d87f9d9e491b6178d0ba1df4a06260825ed7ca"
+        },
+        {
+          "name": "dsh-superagent-status.txt",
+          "bytes": 392,
+          "sha256": "841ddc698492b8c3397ad0f0bc36b7b2c9c47641d01013b554279c0c5b6d6f5a"
+        },
+        {
+          "name": "dsh-superagent-head.txt",
+          "bytes": 41,
+          "sha256": "c52ea410b6d16ee3a2a841b61fabe17960c30d92537ee2c502bbf3cf412dbc34"
+        },
+        {
+          "name": "SHA256SUMS",
+          "bytes": 808,
+          "sha256": "6453ad960ca588ade46c9b75fe585fbefeb10d6aafbc85a160739fc70e041d1f"
+        },
+        {
+          "name": "dsh-next-steps-status.txt",
+          "bytes": 341,
+          "sha256": "caea7540dc90c1ae86cadc1badbc59fe94d51725ed53c6afdca3b5460054f4af"
+        },
+        {
+          "name": "dsh-next-steps-live.tar.gz",
+          "bytes": 2522828,
+          "sha256": "5e43b258c3ef0a50edd632f50598d316bd64681e0b3741fac2f84d79c10b9d1d"
+        }
+      ]
+    }
+  ],
+  "installedSourceReadOnly": {
+    "dsh-next-stepsHEAD": "8fe11feba6cfd4fb484b08773da1d83645dd24ad",
+    "nextStepsCommitSubject": "merge: apply single decision surface on slim strip and ranker percentages (#124)",
+    "dsh-workstreamHEAD": "66fd04560e39123b73220b67775d2a0b395648c6",
+    "workstreamOptionalBridge": "src/client/index.tsx inject [slots,locale,sessions,uiWorkspace]; decisionSubmission via optional ctx.get lookup, not hard injected",
+    "serviceGuard": "Installed scripts/dsh-superagent includes called_from_service and DSH_MCP_SESSION/ANTIGRAVITY_AGENT checks; restart/stop not invoked"
+  },
+  "actualRecentProviderReceipt": {
+    "ticketId": "0310d5fb926de996644d23a0768bf518",
+    "sessionId": "worker-0310d5fb926de996644d23a0768bf518",
+    "route": "antigravity/gemini-3.8-flash",
+    "attempts": 1,
+    "reported": 1,
+    "cost": "unavailable/noRecordedPrice",
+    "limit": "Existing diagnostic job receipt, not a new provider probe or failover qualification"
+  },
+  "liveState": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3,
+    "executorRevision": 44,
+    "modelsRevision": 26,
+    "coordinationRevision": 3,
+    "health": "all returned ready",
+    "unrelatedOpenIdleTickets": [
+      "8db3c6ac57589b65e10bca887ae6df01",
+      "ea85d9eb8a702bef3c0065d156df1e04",
+      "ff97608c4932079f4021b6b4d8ac03f4",
+      "2b13359942e59c1fcb183bef902cc7ea"
+    ],
+    "steering": "No new human readiness or clarification approval supplied in this stage; historical issue comments are not current authority"
+  }
+}
