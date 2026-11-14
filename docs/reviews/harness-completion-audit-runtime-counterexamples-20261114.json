@@ -537,5 +537,39 @@
         ]
       }
     }
+  },
+  "admittedContinuations": {
+    "at": "2026-11-14T22:41:24.529961+00:00",
+    "load": {
+      "running": 2,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "github": {
+      "state": "ready",
+      "detail": "2 notifications; next poll \u2265 60s",
+      "at": "2026-11-14T22:40:27.654Z"
+    },
+    "217": {
+      "ticket": "ff97608c4932079f4021b6b4d8ac03f4",
+      "assignment": "a0bfbb1698be8f88a0f62e05ea591015",
+      "input": {
+        "id": "a372388a0a1a1d777a4865e7a5ba95ae",
+        "at": "2026-11-14T22:40:29.459Z",
+        "readAt": "2026-11-14T22:40:29.987Z",
+        "deliveredTo": "a0bfbb1698be8f88a0f62e05ea591015"
+      }
+    },
+    "216": {
+      "ticket": "8db3c6ac57589b65e10bca887ae6df01",
+      "assignment": "83bc2d9f6b1cbebdf2c96d8bb9b2b3ef",
+      "input": {
+        "id": "964bfe665730cd1c5cd1f1fc0ce5340c",
+        "at": "2026-11-14T22:40:30.802Z",
+        "readAt": "2026-11-14T22:40:31.123Z",
+        "deliveredTo": "83bc2d9f6b1cbebdf2c96d8bb9b2b3ef"
+      }
+    },
+    "qualification": "normal GitHub intake and original assignment delivery/read verified; no new final result or provider-first-response claim; idle projections lag global managed load"
   }
 }
