@@ -242,6 +242,49 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
     expect(selections()).toHaveLength(before)
     expect(retried()).toBe(true)
   })
+
+  it('fails closed on auth or safety errors without model substitution in runtime', async () => {
+    await h.runtime.settings.save('models', { hierarchy: [gemini, sol, sonnet], maxEscalations: 2 },
+      h.runtime.store.blockRevision('models'), 'panel')
+    const one = await h.acceptedTicket(feishu('auth-fail-1', '@bot Secret audit'))
+    const agent = h.agents.get(one.sessionId)!
+    const session = (agent as unknown as { session: { append: ReturnType<typeof vi.fn> } }).session
+    const initialSelections = session.append.mock.calls.filter(([event]) => event === 'model/selection').length
+
+    // 401 Unauthorized
+    h.ctx.emit('agent/error', { agent, turn: 1, step: 1, error: Object.assign(new Error('Invalid API Key'), { status: 401 }) } as never)
+    await h.runtime.idle()
+
+    // No fallback selection event occurred
+    const afterSelections = session.append.mock.calls.filter(([event]) => event === 'model/selection').length
+    expect(afterSelections).toBe(initialSelections)
+
+    // Ticket marked failed
+    const ticket = h.runtime.store.tickets.get(one.ticket.id)!
+    expect(latestAssignment(ticket)?.report?.state).toBe('failed')
+  })
+
+  it('blocks automatic continuation when uncertain tool outcome exists in DshExecutor ledger', async () => {
+    await h.runtime.settings.save('models', { hierarchy: [gemini, sol, sonnet], maxEscalations: 2 },
+      h.runtime.store.blockRevision('models'), 'panel')
+    const one = await h.acceptedTicket(feishu('uncertain-tool-1', '@bot Critical deploy'))
+    const agent = h.agents.get(one.sessionId)!
+
+    // Mark an uncertain tool outcome in the executor ledger
+    h.runtime.executor.toolLedger(one.ticket.id).recordStart('deploy-call', 'deploy')
+    h.runtime.executor.toolLedger(one.ticket.id).recordUncertain('deploy-call')
+
+    // Simulate quota error on active route
+    h.ctx.emit('agent/error', { agent, turn: 1, step: 1, error: Object.assign(new Error('Rate limited'), { status: 429 }) } as never)
+    await h.runtime.idle()
+
+    // Automatic fallback was blocked
+    const ticket = h.runtime.store.tickets.get(one.ticket.id)!
+    const notes = ticket.inputs.filter(input => input.kind === 'note')
+    const uncertainNote = notes.find(n => n.text.includes('Uncertain tool outcome blocks automatic continuation'))
+    expect(uncertainNote).toBeDefined()
+    expect(latestAssignment(ticket)?.report?.state).toBe('failed')
+  })
 })
 
 describe('Bounded Model Routing and Tool Execution Guard', () => {
@@ -439,5 +482,27 @@ describe('Bounded Model Routing and Tool Execution Guard', () => {
     ledger.reconcile('call-uncertain', 'reconciled_success')
     expect(ledger.hasUncertain()).toBe(false)
     expect(() => ledger.guard('call-2')).not.toThrow()
+  })
+
+  it('CRIT-10 & CRIT-11: noncooperative transport ignoring signal settles at deadline and rejects late success', async () => {
+    const routing = ModelRoutingConfigSchema.parse({
+      primary: 'noncooperative-model',
+      fallbacks: [],
+      max_attempts_per_model: 1,
+      max_total_attempts: 1,
+      total_timeout_ms: 25,
+    })
+    const start = Date.now()
+    await expect(executeWithFallback({
+      routing,
+      executeCandidate: async () => {
+        // Ignores signal completely and resolves late after 150ms
+        await new Promise(r => setTimeout(r, 150))
+        return 'late-illegal-success'
+      },
+    })).rejects.toThrow(/Routing deadline exceeded/)
+    const elapsed = Date.now() - start
+    // Finite settlement: settled promptly around deadline (~25-80ms), not waiting 150ms
+    expect(elapsed).toBeLessThan(120)
   })
 })

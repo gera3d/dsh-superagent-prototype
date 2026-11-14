@@ -313,7 +313,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/index.ts` | The main plugin entry: reads the machine settings, starts the Runtime, and gives it the restart that a save of a Source's account uses |
 | `src/deployment.ts` | The plugin `Config` and `Machine`; `resolveDeployment` and `resolveFeishuBot` read the repository and the accounts from the Source settings, each CLI run as Executor shells run it; `SETUP_FIELDS` lists the Source fields setup reads. The code names no person, account or organization |
 | `src/setup.ts` | Setup problems: `SetupError`, with a code, the place that fixes it and the English text the log, the main Session and the panel share |
-| `src/economy.ts`, `src/model-routing.ts` | Portable economy default and browser-safe availability/conservation routing shared by managed requests and settings previews |
+| `src/economy.ts`, `src/model-routing.ts` | Portable economy default, browser-safe availability/conservation routing, bounded model fallback, error classification, and tool replay guards shared by managed requests and settings previews |
 | `src/policy.ts` | The Policy: the settings schemas by block, the Policy version, the gate and Mandate revalidation |
 | `src/admission.ts` | The admission table's values, each cell's options and defaults, shared with the panel |
 | `src/limits.ts` | The limits of the values a person sets, which the settings schemas check and the panel's fields offer |
@@ -541,7 +541,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/health.spec.ts` | One health entry per part, each cleared by its own next success |
 | `tests/delivery.spec.ts` | `AgentDelivery` |
 | `tests/subscription-conservation.spec.ts` | Conservation, provider availability, fail-closed resolution and saved-priority restoration |
-| `tests/retry-health.spec.ts`, `tests/role-models.spec.ts`, `tests/model-fallback.spec.ts` | Model budget retries, the models of the two roles, the escalation hierarchy and its cap, and DeepSeek flash fallback on model unavailability |
+| `tests/retry-health.spec.ts`, `tests/role-models.spec.ts`, `tests/model-fallback.spec.ts` | Model budget retries, the models of the two roles, the escalation hierarchy and its cap, bounded fallback routing, error classification, and tool replay guards on model unavailability |
 | `tests/character.spec.ts` | Stage 3 Autopilot Characters tests: senior developer character, weak proposals, and locked escalation detection |
 | `tests/runtime.spec.ts` | The whole application on a simulated DeepSeek Harness host, through tools and HTTP |
 | `tests/tools.spec.ts` | The Sessions' tools: what `orchestrator_read` reads for each role, and the shapes and checks of the other main Session tools |

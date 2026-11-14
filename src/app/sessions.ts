@@ -15,7 +15,7 @@ import type { Effects } from './effects.ts'
 import type { Variable } from './execution-environment.ts'
 import { RetryHealth } from './retry-health.ts'
 import { installOutputBound } from './tool-output.ts'
-import { defaultRoute, fallbackNote, initializeRoleModel, isModelUnavailable, installRoutingGuard, selectRoleModel, unavailableFallbackStep } from './role-models.ts'
+import { classifyModelError, defaultRoute, fallbackNote, initializeRoleModel, isModelUnavailable, installRoutingGuard, selectRoleModel, unavailableFallbackStep } from './role-models.ts'
 import { bundledSkills } from './skill-files.ts'
 import { SKILL_PREFIX, type PromptVersion, type Prompts } from './prompts.ts'
 import type { Store } from './store.ts'
@@ -137,7 +137,9 @@ export class Sessions {
     })
     ctx.on('agent/error', async ({ agent, error }) => {
       if (agent.id !== this.host.masterId || this.host.closing()) return
-      if (isModelUnavailable(error)) {
+      const classified = classifyModelError(error)
+      if (classified.action === 'stop') return
+      if (isModelUnavailable(error) || classified.action === 'advance') {
         const settings = this.host.store.settings()
         const current = (agent.session.requestHeader()?.config as RoleModel | undefined)
           ?? defaultRoute(settings, 'eval')

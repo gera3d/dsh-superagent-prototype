@@ -139,6 +139,11 @@ export type ToolExecutionStatus =
   | 'reconciled_failed'
   | 'reconciled_abandoned'
 
+/**
+ * Tracks tool call execution states across retries and model fallbacks, preventing
+ * replay of completed tools and locking execution when outcomes are uncertain until
+ * valid terminal operator reconciliation.
+ */
 export class ToolExecutionLedger {
   private records = new Map<string, { status: ToolExecutionStatus; toolName: string; timestamp: number }>()
 
@@ -284,27 +289,59 @@ export async function executeWithFallback<T>(options: DispatchOptions<T>): Promi
 
     const controller = new AbortController()
     const remainingMs = Math.max(1, deadline - now)
-    const timer = setTimeout(() => {
-      controller.abort(new Error(`In-flight request cancelled: routing deadline exceeded (${routing.total_timeout_ms}ms)`))
-    }, remainingMs)
+    let deadlineFired = false
+    let timer: NodeJS.Timeout | undefined
+
+    const deadlinePromise = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        deadlineFired = true
+        controller.abort(new Error(`In-flight request cancelled: routing deadline exceeded (${routing.total_timeout_ms}ms)`))
+        const exhaustion: ExhaustionState = {
+          exhausted: true,
+          attempted_models: Object.keys(reasons),
+          per_model_reasons: reasons,
+          stopping_bound: `total_timeout_ms (${routing.total_timeout_ms}ms)`,
+          manual_recovery_action: 'operator_retry',
+        }
+        const deadlineErr = new Error(`Routing deadline exceeded (${routing.total_timeout_ms}ms)`)
+        ;(deadlineErr as unknown as { exhaustion: ExhaustionState }).exhaustion = exhaustion
+        reject(deadlineErr)
+      }, remainingMs)
+    })
 
     totalAttempts++
     attemptCounts.set(candidate, candidateTries + 1)
 
     try {
-      const result = await executeCandidate(candidate, controller.signal)
-      clearTimeout(timer)
+      const result = await Promise.race([
+        executeCandidate(candidate, controller.signal),
+        deadlinePromise,
+      ])
+      if (timer) clearTimeout(timer)
+      const finishedAt = nowFn()
+      if (finishedAt >= deadline || deadlineFired || controller.signal.aborted) {
+        const exhaustion: ExhaustionState = {
+          exhausted: true,
+          attempted_models: Object.keys(reasons),
+          per_model_reasons: reasons,
+          stopping_bound: `total_timeout_ms (${routing.total_timeout_ms}ms)`,
+          manual_recovery_action: 'operator_retry',
+        }
+        const deadlineErr = new Error(`Routing deadline exceeded (${routing.total_timeout_ms}ms)`)
+        ;(deadlineErr as unknown as { exhaustion: ExhaustionState }).exhaustion = exhaustion
+        throw deadlineErr
+      }
       return { result, activeModel: candidate, events }
     } catch (err: unknown) {
-      clearTimeout(timer)
+      if (timer) clearTimeout(timer)
       const classified = classifyModelError(err)
       reasons[candidate] = classified.reason
 
-      if (classified.action === 'stop' && !controller.signal.aborted) {
+      if (classified.action === 'stop' && !controller.signal.aborted && !deadlineFired) {
         throw err
       }
 
-      if (controller.signal.aborted || nowFn() >= deadline) {
+      if (controller.signal.aborted || deadlineFired || nowFn() >= deadline) {
         const exhaustion: ExhaustionState = {
           exhausted: true,
           attempted_models: Object.keys(reasons),

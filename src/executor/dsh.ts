@@ -18,7 +18,7 @@ import { executionRoot, type Variable } from '../app/execution-environment.ts'
 import type { Sessions } from '../app/sessions.ts'
 import { WorktreeNameSchema } from '../app/assessment.ts'
 import { resultRelay } from '../app/notices.ts'
-import { constrainedRoute, defaultRoute, fallbackNote, isModelUnavailable, sameRoute, unavailableFallbackStep, DEEPSEEK_FALLBACK_ROUTE } from '../app/role-models.ts'
+import { classifyModelError, constrainedRoute, defaultRoute, fallbackNote, isModelUnavailable, sameRoute, ToolExecutionLedger, unavailableFallbackStep, DEEPSEEK_FALLBACK_ROUTE } from '../app/role-models.ts'
 import type { HealthEntry } from '../infra/health.ts'
 import { cancelled, collectJob, killJobs, runningJobs, stopBackground, stopSubagents, until, untilQuiet } from './background.ts'
 
@@ -233,6 +233,22 @@ export class DshExecutor implements Executor {
   private readonly slots: WorkerSlots
   /** Models already tried and found unavailable for a ticket, so subsequent fallbacks advance through ladder to DeepSeek flash. */
   private readonly unavailableRoutes = new Map<string, RoleModel[]>()
+  /** Tool execution ledgers by ticket ID to prevent tool replay and block on uncertain outcomes. */
+  readonly toolLedgers = new Map<string, ToolExecutionLedger>()
+  /** Fallback attempt counts by ticket ID for bounded model routing. */
+  private readonly fallbackAttempts = new Map<string, number>()
+  /** Fallback start timestamps by ticket ID for deadline enforcement. */
+  private readonly fallbackStartTimes = new Map<string, number>()
+
+  /** Obtains the tool execution ledger for a ticket. */
+  toolLedger(ticketId: string): ToolExecutionLedger {
+    let ledger = this.toolLedgers.get(ticketId)
+    if (!ledger) {
+      ledger = new ToolExecutionLedger()
+      this.toolLedgers.set(ticketId, ledger)
+    }
+    return ledger
+  }
   /** Transient failure counts tried so far: keyed by `assignment.id` for worker turns and `launch:<assignment.id>` for launches. */
   private readonly transient = new Map<string, number>()
   /** Assignment IDs currently waiting on a transient-failure backoff timer before resuming their worker turn. */
@@ -516,14 +532,57 @@ export class DshExecutor implements Executor {
     try { await this.selectFallback(ticket, assignment, agent, error) } finally { this.fallingBack.delete(assignment.id) }
   }
   private async selectFallback(ticket: Ticket, assignment: Assignment, agent: Agent, error: unknown): Promise<void> {
+    const ledger = this.toolLedgers.get(ticket.id)
+    if (ledger?.hasUncertain()) {
+      this.unavailableRoutes.delete(ticket.id)
+      this.fallbackAttempts.delete(ticket.id)
+      this.fallbackStartTimes.delete(ticket.id)
+      const msg = 'Uncertain tool outcome blocks automatic continuation until reconciliation or explicit operator retry authorization'
+      this.recordTicketNote(ticket.id, msg)
+      void this.background(Promise.resolve().then(() => { this.failed(ticket.id, msg) }))
+      return
+    }
+
+    const settings = this.host.store.settings()
+    const routing = settings.models.routing ?? settings.models.model_routing
+    if (routing) {
+      const nowTime = Date.now()
+      const startTime = this.fallbackStartTimes.get(ticket.id) ?? nowTime
+      if (!this.fallbackStartTimes.has(ticket.id)) this.fallbackStartTimes.set(ticket.id, startTime)
+      const attempts = (this.fallbackAttempts.get(ticket.id) ?? 0) + 1
+      this.fallbackAttempts.set(ticket.id, attempts)
+
+      if (attempts > routing.max_total_attempts) {
+        this.unavailableRoutes.delete(ticket.id)
+        this.fallbackAttempts.delete(ticket.id)
+        this.fallbackStartTimes.delete(ticket.id)
+        void this.background(Promise.resolve().then(() => {
+          this.failed(ticket.id, `All available models exhausted: Total attempt bound exceeded (${routing.max_total_attempts})`)
+        }))
+        return
+      }
+
+      if (nowTime - startTime >= routing.total_timeout_ms) {
+        this.unavailableRoutes.delete(ticket.id)
+        this.fallbackAttempts.delete(ticket.id)
+        this.fallbackStartTimes.delete(ticket.id)
+        void this.background(Promise.resolve().then(() => {
+          this.failed(ticket.id, `All available models exhausted: Routing deadline exceeded (${routing.total_timeout_ms}ms)`)
+        }))
+        return
+      }
+    }
+
     const tried = this.unavailableRoutes.get(ticket.id) ?? []
     const current = (agent.session.requestHeader()?.config as RoleModel | undefined)
       ?? ticket.escalations?.find(item => item.assignmentId === assignment.id)?.to
-      ?? defaultRoute(this.host.store.settings(), 'executor')
+      ?? defaultRoute(settings, 'executor')
     if (current && !tried.some(item => sameRoute(item, current))) tried.push(current)
-    const step = unavailableFallbackStep(this.host.store.settings(), current, tried)
+    const step = unavailableFallbackStep(settings, current, tried)
     if (!step) {
       this.unavailableRoutes.delete(ticket.id)
+      this.fallbackAttempts.delete(ticket.id)
+      this.fallbackStartTimes.delete(ticket.id)
       void this.background(Promise.resolve().then(() => { this.failed(ticket.id, `All available models exhausted: ${String(error)}`) }))
       return
     }
@@ -710,9 +769,16 @@ export class DshExecutor implements Executor {
       const ticket = this.ticketOf(agent)
       const assignment = ticket && runningAssignment(ticket)
       if (!ticket || !assignment || !liveTicket(ticket) || this.host.closing()) return
+      const classified = classifyModelError(error)
+      if (classified.action === 'stop') {
+        void this.background(Promise.resolve().then(() => {
+          this.failed(ticket.id, `Model request stopped: ${classified.reason}`)
+        }))
+        return
+      }
       // An explicit availability condition (quota, cooldown, budget, account, 429) switches route at once; a generic
       // HTTP 408/5xx or transport failure takes the same-route retry budget first, for it may pass.
-      if (switchesRoute(error)) {
+      if (classified.action === 'advance' || switchesRoute(error)) {
         await this.handleUnavailableModel(ticket, assignment, agent, error)
         return
       }
