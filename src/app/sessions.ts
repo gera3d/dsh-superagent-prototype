@@ -1,3 +1,5 @@
+const READ_ONLY_TOOLS = new Set(['orchestrator_read', 'read', 'read_image', 'job_list', 'job_output'])
+
 /** Lifecycle, prompt/tool/skill decoration, message delivery, and budget retry tracking for orchestrator and worker DSH sessions. */
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
@@ -260,18 +262,19 @@ export class Sessions {
           const parsed = schema.parse(args)
           const ticketId = ticketOfSession(agent.id)
           const ledger = ticketId ? this.host.toolLedger?.(ticketId) : undefined
+          const effectful = !READ_ONLY_TOOLS.has(name)
           const callId = (execution as { callId?: string })?.callId ?? `${name}:${key(JSON.stringify(parsed))}`
-          if (ledger) {
+          if (ledger && effectful) {
             ledger.recordStart(callId, name)
           }
           try {
             const result = await execute(parsed, execution.signal)
-            if (ledger) {
+            if (ledger && effectful) {
               ledger.recordCompletion(callId, true)
             }
             return result
           } catch (error) {
-            if (ledger) {
+            if (ledger && effectful) {
               if (execution.signal?.aborted) {
                 ledger.recordUncertain(callId)
               } else {
