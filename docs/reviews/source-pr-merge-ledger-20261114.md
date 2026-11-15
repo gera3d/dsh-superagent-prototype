@@ -1,10 +1,10 @@
 # Source PR review and merge ledger — November 14, 2026
 
-Gera explicitly authorized reviewing and merging safe source PRs. Eleven prototype PRs were merged into `superagent-core`, one at a time with GitHub expected-head protection. No administrator/force merge, branch deletion, deployment, installation, live restart or provider/account/settings change was performed.
+Gera explicitly authorized reviewing and merging safe source PRs. Eleven prototype PRs and one Sandbox PR were merged into their existing target branches, one at a time with GitHub expected-head protection. No administrator/force merge, branch deletion, deployment, installation, live restart or provider/account/settings change was performed.
 
 ## Completed source merges
 
-| PR | Reviewed head | Previous core | Merge commit | Relevant validation |
+| PR | Reviewed head | Previous target | Merge commit | Relevant validation |
 |---|---|---|---|---|
 | [#117](https://github.com/gera3d/dsh-superagent-prototype/pull/117) | [327f6347](https://github.com/gera3d/dsh-superagent-prototype/commit/327f63472d3e1b68c6dae2988b4893c57585d6fa) | [9bcc244d](https://github.com/gera3d/dsh-superagent-prototype/commit/9bcc244d17a027102b6af74270597d4fdaa8c5f4) | [d9c55407](https://github.com/gera3d/dsh-superagent-prototype/commit/d9c5540720cd572a953df0e3cdf1f3a66585731c) | Exact-head CI; combined report/environment checks included in50 passing checks. |
 | [#118](https://github.com/gera3d/dsh-superagent-prototype/pull/118) | [b179a121](https://github.com/gera3d/dsh-superagent-prototype/commit/b179a121ef754e454116702e7c969100d31d29a7) | [d9c55407](https://github.com/gera3d/dsh-superagent-prototype/commit/d9c5540720cd572a953df0e3cdf1f3a66585731c) | [e77003e6](https://github.com/gera3d/dsh-superagent-prototype/commit/e77003e6193b72098d4e8ee5fe4d7770008f91ab) | 16 focused tests; exact-head CI; prior geometry evidence retained. |
@@ -19,6 +19,8 @@ Gera explicitly authorized reviewing and merging safe source PRs. Eleven prototy
 | [#113](https://github.com/gera3d/dsh-superagent-prototype/pull/113) | `14d556eb8953a4bcb79ee0c903de03bcab90ac20` | `d782b68234fb62ab6a458f18d0d240bd0d43a172` | `a9c9e49a10999736f8b966e902c28b082b4ba71e` | Revised restoration and constructor integration independently reviewed; hosted CI43665841369 passed; clean current-base merge with expected SHA. No new local tests this pass. |
 
 | [#123](https://github.com/gera3d/dsh-superagent-prototype/pull/123) | `3ab941e2d9d71c0ef2a843d5e79214bac0fd6be4` | `e085ae7e1fa47b54369c4596847b2c5c05fea908` | `dddcaa410baa4cc62db552ea49e5c1436454902c` | Exact revised source review, genuine cache/config/discovery regressions inspected; hosted CI43670215263 passed; no new coordinator local process. Isolated module phase only. |
+
+| [Sandbox#231](https://github.com/gera3d/superagent-sandbox/pull/231) | `1aef868349b5b5b4c106f30c9b1dd187d2b0d9fb` | `eccd1e0a1b06a5b36510a831db90108c55c33762` (main) | `ae3533ceea31298d2a2890d1a94ed0f6fb1b9a42` | 10pure Python boundary and26TS domain cases independentlyPASS;13reviewed blobs unchanged; no hosted checks. Isolated source/helper phase, not native lifecycle acceptance. |
 
 PR124 is explicitly an **isolated source domain/context adapter and reusable component**. Host mounting, runtime persistence and actual handoff/recovery integration remain subsequent work. Its source merge does not complete or accept the installed brief feature. PR117/118 source merges also retain their separate installation and native verification requirements.
 
@@ -36,7 +38,6 @@ Post-merge CI is green for all first nine source merges, including PR124 run4366
 | Prototype108 / `488f8400c78d1969fede084fd39899ca342efd1c` | Remote CI failure on inventory; reviewed local correction53369320 not published. | Canonical findingc844ce8f revision21blocked, original r20 job; existing protected source-publication action remains required before exact-head CI/review. No direct push around gate. |
 | Prototype115 / `a6b754d4656e26a4813763a3bcd784e36e5857b9` | Remote CI failure on inventory; reviewed local correctiona9be5b92 unpublished. | Canonical findingf1d6590a revision12blocked, original r11 job; sanctioned protected publication/evidence path, then exact-head checks. No bypass. |
 | Prototype121 / `cee64e281ec04395e07009b05807036be6326c67` | HostedCI43674722901 SUCCESS; strict production persistence retained. REQUEST_CHANGES5909140579: AC11 uses unused helper plus mock Agent, not real SDK provider boundary. AC24 operator authority unavailable; reportwaiting/no consumedready. | Original217 continuation6889341502 requests actual SDK fixture or concrete inspected boundary limitation; no expanded API/permissions/native acceptance. |
-| Sandbox231 / `dc9ddfc5794810392b8f0f7f8fba43b07ffe015d` | Prior Python identity/duplicate/unknown-status fixes clear. REQUEST_CHANGES5908821609: malformed operations silently discarded and docs/assessment overstate runtime proof;0hosted checks. | Original218 correction6888473713; validate collection/records and align fixture-only claims. Python recovery is an importable helper, not recover CLI. Native integration deferred. |
 
 The ordinary source-merge authorization supersedes earlier generic source merge holds. It does not remove actual repository requirements or the distinct protected source-publication/native actions on the two finding lineages. No denied plugins-repository lookup, alternate identity, new credential or permission workaround was attempted.
 
@@ -72,3 +73,6 @@ PR123 post-merge CI43670612872 SUCCESS; all eleven merged source PRs have green 
 Independentfa5196e stage clears strict persistence/realistic fixture defects,13targeted checksPASS/34skipped with no overlapping process. Existing cancellation/uncertainty tests pass but their actual SDK/authorized managed-continuation coverage limits remain explicit; review5908890969 and original217 continuation6888744816. Matching nested correction input/tool/edit trajectory and03:27ended turn verified; report stillwaiting, no acceptance. No merge/deployment or provider settings change.
 
 Currentcee64e2 bounded stage: no redundant local tests on unchanged production source. Review confirms executeWithFallback has no production callsite and host.cancel is vi.fn; actual SDK AC11 remains unqualified despite green CI. AC24 unavailable boundary now accurately retained. PR metadata corrected; same217 continuation6889341502, current canonical reportwaiting. Bound provider execution and ended turn independently reconciled, no stall/restart/merge/deployment claim.
+
+
+Sandbox2311aef868 source/helper phase approved5909313953 and mergedae3533c with exact-head protection. Latest operations shape checks and honest docs clear prior findings;10pure Python +26TSdomain checks independentlyPASS, sequentially. No real DSH process/restart/restore/provider trial. All13reviewed blobs match merged source while actual current-maineccd1e0 sibling fallback artifacts are preserved. No hostedCI exists; original218/runtime/native acceptance remains separate. Original217 now reports SDK driver/authority boundaries blocked, unchangedcee64e2 not replayed. No deployment or configuration change.
