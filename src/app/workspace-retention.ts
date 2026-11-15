@@ -2,10 +2,11 @@
  * Workspace retention dry-run analysis and conservative audit manifest generation.
  *
  * Implements read-only, symlink-aware inspection of task workspace directories.
- * Strictly protects active sessions, uncommitted work, histories, reports, evidence,
- * bundles, backups, and release artifacts without performing any deletion or mutation.
+ * Strictly protects active sessions, uncommitted work, source repositories, histories,
+ * reports, evidence, bundles, backups, consumed markers, and release artifacts without
+ * performing any deletion or mutation.
  */
-import { existsSync, lstatSync, readdirSync, realpathSync, statSync } from 'node:fs'
+import { existsSync, lstatSync, readdirSync, realpathSync } from 'node:fs'
 import { basename, isAbsolute, join, relative, resolve } from 'node:path'
 import { validateContainment } from './workspace-reuse.ts'
 
@@ -24,6 +25,8 @@ export interface CandidateGitStatus {
   hasDirty: boolean
   hasIgnored: boolean
   checkAvailable: boolean
+  /** Whether directory is a full git source repository or git worktree. */
+  isSourceWorkspace?: boolean
 }
 
 export interface CandidateDependencyRef {
@@ -40,6 +43,7 @@ export interface CandidateRetainedReferences {
   hasPatches: boolean
   hasBackups: boolean
   hasFailedAttempts: boolean
+  hasConsumedMarkers: boolean
   activeOrResumable: boolean
   releaseReferences: string[]
 }
@@ -51,11 +55,13 @@ export interface WorkspaceCandidateRecord {
   owningTicket?: {
     id: string
     assignmentId?: string
-    isLive: boolean
+    isLive?: boolean
   }
   gitStatus: CandidateGitStatus
   dependencyReferences: CandidateDependencyRef
   retainedReferences: CandidateRetainedReferences
+  /** Classification of artifact: only non-source regenerable output may ever be a candidate. */
+  artifactClass: 'source_workspace' | 'regenerable_output' | 'unknown'
   decision: 'retain' | 'candidate_for_future_prune'
   reasons: string[]
 }
@@ -70,13 +76,25 @@ export interface WorkspaceRetentionManifest {
   summary: {
     retainedBytes: number
     candidatePruneBytes: number
+    sharingUncertainty: 'exact' | 'shared_filesystem_estimate' | 'unavailable'
   }
+}
+
+/** Sanitized public summary of a retention manifest containing aggregate counts only. */
+export interface SanitizedRetentionSummary {
+  version: 1
+  generatedAt: string
+  totalCandidateCount: number
+  retainedCandidateCount: number
+  provisionalCandidateCount: number
+  retentionCategoryTallies: Record<string, number>
+  designBoundaries: string[]
 }
 
 /** Options for inspecting a candidate workspace. */
 export interface WorkspaceInspectOptions {
-  /** Map of ticket ID to liveness boolean. */
-  isTicketLive?: (ticketId: string) => boolean
+  /** Map of ticket ID to liveness boolean. Returns undefined if unknown/unavailable. */
+  isTicketLive?: (ticketId: string) => boolean | undefined
   /** Active release references (e.g. delivery IDs or release hashes). */
   activeReleaseRefs?: string[]
   /** Git status provider for candidate directory (mockable for tests). */
@@ -89,7 +107,8 @@ export interface WorkspaceInspectOptions {
 
 /**
  * Checks directory contents for known retained artifacts:
- * reports, evidence, bundles, patches, backups, and failed attempts.
+ * reports, evidence, bundles, patches, backups, consumed markers, and failed attempts.
+ * Does not follow arbitrary symlinks.
  */
 export function inspectRetainedReferences(directory: string, activeReleaseRefs: string[] = []): CandidateRetainedReferences {
   let hasReports = false
@@ -98,13 +117,17 @@ export function inspectRetainedReferences(directory: string, activeReleaseRefs: 
   let hasPatches = false
   let hasBackups = false
   let hasFailedAttempts = false
+  let hasConsumedMarkers = false
   const matchedReleases: string[] = []
 
   try {
     if (existsSync(directory)) {
-      const entries = readdirSync(directory)
+      const entries = readdirSync(directory, { withFileTypes: true })
       for (const entry of entries) {
-        const lower = entry.toLowerCase()
+        // Do not traverse into nested symlink directories
+        if (entry.isSymbolicLink() && entry.name === 'node_modules') continue
+
+        const lower = entry.name.toLowerCase()
         if (lower.includes('report') || lower.endsWith('.dsh-report.json') || lower.endsWith('-pass.log') || lower.endsWith('.log')) {
           hasReports = true
         }
@@ -123,8 +146,11 @@ export function inspectRetainedReferences(directory: string, activeReleaseRefs: 
         if (lower.includes('failed') || lower.includes('attempt')) {
           hasFailedAttempts = true
         }
+        if (lower.includes('consumed') || lower.startsWith('.consumed') || lower.endsWith('.consumed')) {
+          hasConsumedMarkers = true
+        }
         for (const ref of activeReleaseRefs) {
-          if (entry.includes(ref)) {
+          if (entry.name.includes(ref)) {
             matchedReleases.push(ref)
           }
         }
@@ -142,6 +168,7 @@ export function inspectRetainedReferences(directory: string, activeReleaseRefs: 
     hasPatches,
     hasBackups,
     hasFailedAttempts,
+    hasConsumedMarkers,
     activeOrResumable: false,
     releaseReferences: matchedReleases,
   }
@@ -181,28 +208,37 @@ export function inspectDependencyReference(directory: string, allowedRoot?: stri
 
 /**
  * Evaluates retention decision for a candidate workspace.
- * Uses conservative fail-closed logic: any active work, uncommitted git status,
- * historical reports, evidence, backups, or ambiguous checks mandate 'retain'.
+ * Conservative fail-closed logic: any missing owner/liveness, active session,
+ * uncommitted git status, whole source workspace status, historical reports,
+ * evidence, consumed markers, backups, or ambiguous checks strictly mandate 'retain'.
  */
 export function evaluateRetentionCandidate(candidate: Omit<WorkspaceCandidateRecord, 'decision' | 'reasons'>): WorkspaceCandidateRecord {
   const reasons: string[] = []
 
-  // 1. Active or resumable ticket
-  if (candidate.owningTicket?.isLive) {
+  // 1. Owning ticket and liveness checks: missing or unavailable mandates retain
+  if (!candidate.owningTicket || candidate.owningTicket.isLive === undefined) {
+    reasons.push('Owning ticket or liveness status unavailable; failing closed')
+  } else if (candidate.owningTicket.isLive) {
     reasons.push('Ticket session is currently live and active')
   }
+
   if (candidate.retainedReferences.activeOrResumable) {
     reasons.push('Workspace contains active or resumable work')
   }
 
-  // 2. Git status checks: dirty, untracked, or unavailable check
+  // 2. Whole source workspace protection: clean/merged status does not make source workspaces disposable
+  if (candidate.artifactClass === 'source_workspace' || candidate.gitStatus.isSourceWorkspace) {
+    reasons.push('Full source repository/worktree workspace; source trees are not disposable based on ended/clean status alone')
+  }
+
+  // 3. Git status checks: dirty, untracked, or unavailable check
   if (!candidate.gitStatus.checkAvailable) {
     reasons.push('Git status check unavailable or ambiguous; failing closed to protect uncommitted work')
   } else if (!candidate.gitStatus.isClean || candidate.gitStatus.hasDirty || candidate.gitStatus.hasUntracked) {
     reasons.push('Uncommitted modifications or untracked changes detected in workspace')
   }
 
-  // 3. Historical artifacts: reports, logs, evidence, bundles, patches, backups, attempts
+  // 4. Historical artifacts: reports, logs, evidence, bundles, patches, backups, attempts, consumed markers
   if (candidate.retainedReferences.hasReports) {
     reasons.push('Retained diagnostic reports, test logs, or audit records present')
   }
@@ -221,24 +257,27 @@ export function evaluateRetentionCandidate(candidate: Omit<WorkspaceCandidateRec
   if (candidate.retainedReferences.hasFailedAttempts) {
     reasons.push('Historical failed attempt diagnostics present')
   }
+  if (candidate.retainedReferences.hasConsumedMarkers) {
+    reasons.push('Consumed assignment/delivery markers present')
+  }
   if (candidate.retainedReferences.releaseReferences.length > 0) {
     reasons.push(`Referenced by active release: ${candidate.retainedReferences.releaseReferences.join(', ')}`)
   }
 
-  // 4. Dependency containment
+  // 5. Dependency containment
   if (candidate.dependencyReferences.isSymlink && !candidate.dependencyReferences.isContained) {
     reasons.push('Dependency link escapes authorized containment root')
   }
 
-  // 5. Size uncertainty
+  // 6. Size and path availability
   if (candidate.measuredBytes.uncertainty === 'unavailable') {
-    reasons.push('Filesystem measurements unavailable or uncertain')
+    reasons.push('Filesystem measurements or candidate path unavailable')
   }
 
   const decision: 'retain' | 'candidate_for_future_prune' = reasons.length > 0 ? 'retain' : 'candidate_for_future_prune'
 
   if (decision === 'candidate_for_future_prune') {
-    reasons.push('No active ticket, uncommitted work, evidence, reports, or backups detected; dry-run candidate for operator review')
+    reasons.push('Pure non-source regenerable output with verified inactive state, clean git status, and no retained artifacts; provisional candidate for future review')
   }
 
   return {
@@ -250,29 +289,44 @@ export function evaluateRetentionCandidate(candidate: Omit<WorkspaceCandidateRec
 
 /**
  * Generates a full read-only WorkspaceRetentionManifest across candidate workspace directories.
+ * Input paths are processed in deterministic order.
  * Absolutely no files or directories are deleted, moved, or altered.
  */
 export function generateRetentionManifest(candidates: string[], options: WorkspaceInspectOptions = {}): WorkspaceRetentionManifest {
+  const sortedCandidates = candidates.slice().sort()
   const records: WorkspaceCandidateRecord[] = []
   let retainedBytes = 0
   let candidatePruneBytes = 0
+  let overallUncertainty: 'exact' | 'shared_filesystem_estimate' | 'unavailable' = 'exact'
 
-  for (const candidatePath of candidates) {
-    const resolvedTarget = existsSync(candidatePath) ? realpathSync(candidatePath) : candidatePath
+  for (const candidatePath of sortedCandidates) {
+    const pathExists = existsSync(candidatePath)
+    const resolvedTarget = pathExists ? realpathSync(candidatePath) : candidatePath
     const dirName = basename(candidatePath)
 
     // Parse ticket ID if dir matches convention: e.g. <name>-<ticketId>
     const match = dirName.match(/([a-f0-9]{12,64})$/i)
     const ticketId = match ? match[1] : undefined
-    const isLive = ticketId && options.isTicketLive ? options.isTicketLive(ticketId) : false
+    const isLive = ticketId && options.isTicketLive ? options.isTicketLive(ticketId) : undefined
+
+    const hasGit = pathExists && (existsSync(join(candidatePath, '.git')) || (() => { try { return lstatSync(join(candidatePath, '.git')).isFile() } catch { return false } })())
+    const isSource = Boolean(hasGit)
 
     const gitStatus: CandidateGitStatus = options.getGitStatus
       ? options.getGitStatus(candidatePath)
-      : { isClean: true, hasUntracked: false, hasDirty: false, hasIgnored: false, checkAvailable: true }
+      : { isClean: true, hasUntracked: false, hasDirty: false, hasIgnored: false, checkAvailable: pathExists, isSourceWorkspace: isSource }
 
     const measuredBytes: MeasuredBytes = options.measureBytes
       ? options.measureBytes(candidatePath)
-      : { exclusiveBytes: 0, sharedPoolBytes: 0, totalBytes: 0, uncertainty: 'exact' }
+      : pathExists
+        ? { exclusiveBytes: 0, sharedPoolBytes: 0, totalBytes: 0, uncertainty: 'exact' }
+        : { exclusiveBytes: 0, sharedPoolBytes: 0, totalBytes: 0, uncertainty: 'unavailable' }
+
+    if (measuredBytes.uncertainty === 'unavailable') {
+      overallUncertainty = 'unavailable'
+    } else if (measuredBytes.uncertainty === 'shared_filesystem_estimate' && overallUncertainty !== 'unavailable') {
+      overallUncertainty = 'shared_filesystem_estimate'
+    }
 
     const retainedRefs = inspectRetainedReferences(candidatePath, options.activeReleaseRefs)
     const depRef = inspectDependencyReference(candidatePath, options.allowedDependencyRoot)
@@ -285,6 +339,7 @@ export function generateRetentionManifest(candidates: string[], options: Workspa
       gitStatus,
       dependencyReferences: depRef,
       retainedReferences: retainedRefs,
+      artifactClass: isSource ? 'source_workspace' : 'regenerable_output',
     })
 
     records.push(evaluated)
@@ -309,41 +364,36 @@ export function generateRetentionManifest(candidates: string[], options: Workspa
     summary: {
       retainedBytes,
       candidatePruneBytes,
+      sharingUncertainty: overallUncertainty,
     },
   }
 }
 
 /**
- * Sanitizes a retention manifest for safe external reporting / publication.
- * Replaces machine-private directory prefixes with generic placeholders.
+ * Generates an aggregate public summary for public issues / PRs that completely
+ * excludes private machine paths, user names, raw individual measurements, and commit digests.
  */
-export function sanitizeManifestForPublication(
-  manifest: WorkspaceRetentionManifest,
-  machineRoot?: string
-): WorkspaceRetentionManifest {
-  const sanitizePath = (p: string): string => {
-    if (!machineRoot) {
-      // Anonymize user home directory / absolute prefix
-      return p.replace(/^\/(?:Users|home)\/[^/]+\//, '<workspace-root>/')
+export function generateSanitizedPublicSummary(manifest: WorkspaceRetentionManifest): SanitizedRetentionSummary {
+  const categoryTallies: Record<string, number> = {}
+
+  for (const record of manifest.records) {
+    for (const reason of record.reasons) {
+      categoryTallies[reason] = (categoryTallies[reason] ?? 0) + 1
     }
-    if (p.startsWith(machineRoot)) {
-      return `<workspace-root>${p.slice(machineRoot.length)}`
-    }
-    return p.replace(/^\/(?:Users|home)\/[^/]+\//, '<workspace-root>/')
   }
 
   return {
-    ...manifest,
-    records: manifest.records.map(rec => ({
-      ...rec,
-      candidatePath: sanitizePath(rec.candidatePath),
-      resolvedTarget: sanitizePath(rec.resolvedTarget),
-      dependencyReferences: {
-        ...rec.dependencyReferences,
-        nodeModulesTarget: rec.dependencyReferences.nodeModulesTarget
-          ? sanitizePath(rec.dependencyReferences.nodeModulesTarget)
-          : undefined,
-      },
-    })),
+    version: 1,
+    generatedAt: manifest.generatedAt,
+    totalCandidateCount: manifest.totalCandidates,
+    retainedCandidateCount: manifest.retainedCount,
+    provisionalCandidateCount: manifest.candidatePruneCount,
+    retentionCategoryTallies: categoryTallies,
+    designBoundaries: [
+      'Pure read-only dry-run analysis; zero filesystem deletion or moving',
+      'Whole source workspaces and git worktrees are protected unconditionally',
+      'Missing or unavailable liveness/git checks strictly fail closed',
+      'All local machine paths and private measurements excluded from public reporting',
+    ],
   }
 }

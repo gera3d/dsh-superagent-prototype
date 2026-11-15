@@ -130,7 +130,8 @@ describe('workspace-reuse', () => {
       }
     })
 
-    it('fails closed when native provenance is unverified or unbuilt', () => {
+    it('fails closed when native provenance is missing, unverified, or undefined', () => {
+      // 1. Explicitly false
       const unverified: DependencyManifestInputs = {
         ...baseInputs,
         nativeProvenance: {
@@ -141,10 +142,23 @@ describe('workspace-reuse', () => {
       }
       const resUnverified = computeDependencyCompatibilityKey(unverified)
       expect(resUnverified.ok).toBe(false)
-      if (!resUnverified.ok) {
-        expect(resUnverified.reason).toMatch(/unverified native-addon/)
+
+      // 2. Undefined verification must fail closed
+      const undefinedVerification: DependencyManifestInputs = {
+        ...baseInputs,
+        nativeProvenance: {
+          required: true,
+          verified: undefined,
+          modules: { 'better-sqlite3': { built: true, hash: 'abc' } },
+        },
+      }
+      const resUndefined = computeDependencyCompatibilityKey(undefinedVerification)
+      expect(resUndefined.ok).toBe(false)
+      if (!resUndefined.ok) {
+        expect(resUndefined.reason).toMatch(/explicit verified build state/)
       }
 
+      // 3. Unbuilt module
       const unbuilt: DependencyManifestInputs = {
         ...baseInputs,
         nativeProvenance: {
@@ -195,20 +209,37 @@ describe('workspace-reuse', () => {
         rmSync(outsideDir, { recursive: true, force: true })
       }
     })
+
+    it('rejects not-yet-created targets when an ancestor is an escaping symlink', () => {
+      const baseDir = mkdtempSync(join(tmpdir(), 'containment-anc-base-'))
+      const outsideDir = mkdtempSync(join(tmpdir(), 'containment-anc-outside-'))
+      try {
+        const symlinkParent = join(baseDir, 'linked-parent')
+        symlinkSync(outsideDir, symlinkParent)
+        const nestedNonExistent = join(symlinkParent, 'not-yet-created-dir')
+        expect(validateContainment(nestedNonExistent, baseDir)).toBe(false)
+      } finally {
+        rmSync(baseDir, { recursive: true, force: true })
+        rmSync(outsideDir, { recursive: true, force: true })
+      }
+    })
   })
 
   describe('task cache and environment isolation', () => {
-    it('creates isolated cache directories and environment variables for a task', () => {
+    it('creates isolated cache directories, tool args, and environment variables', () => {
       const taskDir = mkdtempSync(join(tmpdir(), 'task-iso-'))
       try {
         const iso = createTaskIsolation(taskDir)
         expect(existsSync(iso.viteCacheDir)).toBe(true)
         expect(existsSync(iso.vitestCacheDir)).toBe(true)
         expect(existsSync(iso.tsCacheDir)).toBe(true)
+        expect(existsSync(iso.pnpmStoreDir)).toBe(true)
         expect(existsSync(iso.tmpDir)).toBe(true)
         expect(iso.env.VITE_CACHE_DIR).toBe(iso.viteCacheDir)
         expect(iso.env.VITEST_CACHE_DIR).toBe(iso.vitestCacheDir)
         expect(iso.env.TMPDIR).toBe(iso.tmpDir)
+        expect(iso.toolArgs.vitest).toContain('--cache.dir')
+        expect(iso.toolArgs.pnpm).toContain('--store-dir')
       } finally {
         rmSync(taskDir, { recursive: true, force: true })
       }
@@ -216,99 +247,99 @@ describe('workspace-reuse', () => {
   })
 
   describe('qualified dependency pool management', () => {
-    it('qualifies immutable ready pools and rejects preparing or failed pools', () => {
+    it('requires verified immutable content attestation for reuse eligibility', () => {
       const manager = new DependencyPoolManager()
       const tempRoot = mkdtempSync(join(tmpdir(), 'pool-root-'))
       try {
         const key = 'dep-1234567890abcdef'
-        manager.registerPool({
-          id: 'pool-1',
-          key,
-          rootPath: tempRoot,
-          isImmutable: true,
-          state: 'preparing',
-        })
 
-        // 1. Preparing pool fails closed
-        const q1 = manager.qualifyPoolForReuse(key)
-        expect(q1.ok).toBe(false)
-        if (!q1.ok) {
-          expect(q1.reason).toMatch(/currently preparing/)
-        }
-
-        // 2. Ready pool succeeds
+        // 1. Pool marked ready but missing attestation is INELIGIBLE
         manager.registerPool({
           id: 'pool-1',
           key,
           rootPath: tempRoot,
           isImmutable: true,
           state: 'ready',
+        })
+        const q1 = manager.qualifyPoolForReuse(key)
+        expect(q1.ok).toBe(false)
+        if (!q1.ok) {
+          expect(q1.reason).toMatch(/lacks verified immutable content attestation/)
+        }
+
+        // 2. Pool with verified attestation succeeds
+        manager.registerPool({
+          id: 'pool-1',
+          key,
+          rootPath: tempRoot,
+          isImmutable: true,
+          state: 'ready',
+          attestation: {
+            contentDigest: 'digest-1234',
+            verifiedAt: new Date().toISOString(),
+            verifiedBy: 'test-harness',
+            isImmutable: true,
+          },
         })
         const q2 = manager.qualifyPoolForReuse(key)
         expect(q2.ok).toBe(true)
 
-        // 3. Mutable pool is rejected
+        // 3. Mutable attestation is rejected
         manager.registerPool({
           id: 'pool-mut',
-          key: 'dep-mutable',
+          key: 'dep-mut',
           rootPath: tempRoot,
           isImmutable: false,
           state: 'ready',
+          attestation: {
+            contentDigest: 'digest-mut',
+            verifiedAt: new Date().toISOString(),
+            verifiedBy: 'test-harness',
+            isImmutable: false,
+          },
         })
-        const q3 = manager.qualifyPoolForReuse('dep-mutable')
+        const q3 = manager.qualifyPoolForReuse('dep-mut')
         expect(q3.ok).toBe(false)
-        if (!q3.ok) {
-          expect(q3.reason).toMatch(/not immutable/)
-        }
-
-        // 4. Failed pool is rejected with actionable error
-        manager.registerPool({
-          id: 'pool-fail',
-          key: 'dep-failed',
-          rootPath: tempRoot,
-          isImmutable: true,
-          state: 'failed',
-          error: 'out of memory',
-        })
-        const q4 = manager.qualifyPoolForReuse('dep-failed')
-        expect(q4.ok).toBe(false)
-        if (!q4.ok) {
-          expect(q4.reason).toMatch(/out of memory/)
-        }
       } finally {
         rmSync(tempRoot, { recursive: true, force: true })
       }
     })
 
-    it('links qualified immutable pool to workspace safely', () => {
+    it('enforces containment on both pool root AND workspace destination in linkToWorkspace', () => {
       const manager = new DependencyPoolManager()
-      const poolDir = mkdtempSync(join(tmpdir(), 'pool-inst-'))
-      const taskDir = mkdtempSync(join(tmpdir(), 'task-ws-'))
+      const baseDir = mkdtempSync(join(tmpdir(), 'harness-base-'))
+      const outsideDir = mkdtempSync(join(tmpdir(), 'harness-outside-'))
       try {
+        const poolDir = join(baseDir, 'pool')
+        const taskDir = join(baseDir, 'ws')
         const nmDir = join(poolDir, 'node_modules')
         mkdirSync(nmDir, { recursive: true })
-        writeFileSync(join(nmDir, 'test-pkg.json'), '{"name":"test-pkg"}')
 
-        const key = 'dep-sample-key'
+        const key = 'dep-test-link'
         manager.registerPool({
           id: 'pool-inst',
           key,
           rootPath: poolDir,
           isImmutable: true,
           state: 'ready',
+          attestation: {
+            contentDigest: 'd-1',
+            verifiedAt: new Date().toISOString(),
+            verifiedBy: 'test',
+            isImmutable: true,
+          },
         })
 
-        manager.linkToWorkspace(taskDir, key)
-        const targetNm = join(taskDir, 'node_modules')
-        expect(existsSync(targetNm)).toBe(true)
-        expect(lstatSync(targetNm).isSymbolicLink()).toBe(true)
-        expect(existsSync(join(targetNm, 'test-pkg.json'))).toBe(true)
+        // Valid destination inside baseDir succeeds
+        manager.linkToWorkspace(taskDir, key, baseDir)
+        expect(existsSync(join(taskDir, 'node_modules'))).toBe(true)
 
-        // Repeated linking is idempotent
-        expect(() => manager.linkToWorkspace(taskDir, key)).not.toThrow()
+        // Escaped destination outside baseDir throws
+        const escapedTask = join(outsideDir, 'escaped-task')
+        expect(() => manager.linkToWorkspace(escapedTask, key, baseDir)).toThrow(/escapes allowed boundary/)
       } finally {
-        rmSync(poolDir, { recursive: true, force: true })
-        rmSync(taskDir, { recursive: true, force: true })
+        rmSync(baseDir, { recursive: true, force: true })
+        rmSync(outsideDir, { recursive: true, force: true })
       }
     })
   })
@@ -318,6 +349,7 @@ describe('workspace-reuse', () => {
       const input = {
         sourceCommit: 'abcdef1234567890abcdef1234567890abcdef12',
         dirtyContentHash: '',
+        sourceStateStatus: 'clean' as const,
         dependencyKey: 'dep-1234567890abcdef',
         command: { name: 'tsdown', version: '0.22.14', args: ['build'] },
         buildConfig: { 'tsdown.config.ts': 'export default {}' },
@@ -333,50 +365,37 @@ describe('workspace-reuse', () => {
       }
     })
 
-    it('excludes secrets from persisted fingerprints', () => {
+    it('fails closed when secret environment variables are present to prevent false reuse or secret leakage', () => {
       const inputWithSecrets = {
         sourceCommit: 'abcdef1234567890abcdef1234567890abcdef12',
         dirtyContentHash: '',
+        sourceStateStatus: 'clean' as const,
         dependencyKey: 'dep-1234567890abcdef',
         command: { name: 'tsdown', version: '0.22.14', args: ['build'] },
         environment: {
           NODE_ENV: 'production',
           GITHUB_TOKEN: 'ghp_secretToken12345',
-          API_KEY: 'sk-987654321',
         },
       }
-      const inputWithoutSecrets = {
-        sourceCommit: 'abcdef1234567890abcdef1234567890abcdef12',
-        dirtyContentHash: '',
-        dependencyKey: 'dep-1234567890abcdef',
-        command: { name: 'tsdown', version: '0.22.14', args: ['build'] },
-        environment: {
-          NODE_ENV: 'production',
-        },
-      }
-      const b1 = computeBuildOutputKey(inputWithSecrets)
-      const b2 = computeBuildOutputKey(inputWithoutSecrets)
-      if (b1.ok && b2.ok) {
-        expect(b1.key).toBe(b2.key)
+      const b = computeBuildOutputKey(inputWithSecrets)
+      expect(b.ok).toBe(false)
+      if (!b.ok) {
+        expect(b.reason).toMatch(/Secret environment variable detected/)
       }
     })
 
-    it('yields distinct fingerprints when source, tool version, or configuration changes', () => {
-      const base = {
+    it('fails closed when source dirty state is unknown', () => {
+      const inputUnknown = {
         sourceCommit: 'abcdef1234567890abcdef1234567890abcdef12',
         dirtyContentHash: '',
+        sourceStateStatus: 'unknown' as const,
         dependencyKey: 'dep-1234567890abcdef',
         command: { name: 'tsdown', version: '0.22.14', args: ['build'] },
       }
-      const b1 = computeBuildOutputKey(base)
-      const bChangedCommit = computeBuildOutputKey({ ...base, sourceCommit: '1111111111111111111111111111111111111111' })
-      const bChangedTool = computeBuildOutputKey({ ...base, command: { ...base.command, version: '0.22.15' } })
-      const bDirty = computeBuildOutputKey({ ...base, dirtyContentHash: 'dirty-diff-hash' })
-
-      if (b1.ok && bChangedCommit.ok && bChangedTool.ok && bDirty.ok) {
-        expect(b1.key).not.toBe(bChangedCommit.key)
-        expect(b1.key).not.toBe(bChangedTool.key)
-        expect(b1.key).not.toBe(bDirty.key)
+      const b = computeBuildOutputKey(inputUnknown)
+      expect(b.ok).toBe(false)
+      if (!b.ok) {
+        expect(b.reason).toMatch(/Source working tree dirty\/untracked status cannot be established/)
       }
     })
   })

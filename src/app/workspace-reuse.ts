@@ -6,7 +6,7 @@
  */
 import { createHash } from 'node:crypto'
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, symlinkSync } from 'node:fs'
-import { isAbsolute, join, resolve, relative, sep } from 'node:path'
+import { dirname, isAbsolute, join, resolve, relative, sep } from 'node:path'
 
 /** Inputs required to compute a deterministic dependency compatibility key. */
 export interface DependencyManifestInputs {
@@ -47,7 +47,7 @@ const sha256 = (content: string | Buffer): string =>
 /**
  * Computes a deterministic dependency compatibility key covering manifests, lockfile,
  * package manager, install configuration, Node ABI, platform/arch, and native provenance.
- * Fails closed with an actionable reason if any required component is missing or invalid.
+ * Fails closed with an actionable reason if any required component is missing or unverified.
  */
 export function computeDependencyCompatibilityKey(input: DependencyManifestInputs): CompatibilityKeyResult {
   if (!input) return { ok: false, reason: 'Missing dependency manifest inputs' }
@@ -82,10 +82,10 @@ export function computeDependencyCompatibilityKey(input: DependencyManifestInput
     return { ok: false, reason: 'Missing platform or architecture specification (os and arch required)' }
   }
 
-  // 6. Native addon provenance
+  // 6. Native addon provenance: must be explicitly verified
   if (input.nativeProvenance?.required) {
-    if (input.nativeProvenance.verified === false) {
-      return { ok: false, reason: 'Incompatible or unverified native-addon build provenance: modules require clean verified build state' }
+    if (input.nativeProvenance.verified !== true) {
+      return { ok: false, reason: 'Incompatible or unverified native-addon build provenance: modules require explicit verified build state' }
     }
     const modules = input.nativeProvenance.modules ?? {}
     if (Object.keys(modules).length === 0) {
@@ -150,7 +150,7 @@ export function computeDependencyCompatibilityKey(input: DependencyManifestInput
       ? {
           required: input.nativeProvenance.required,
           modules: canonicalNativeModules,
-          verified: input.nativeProvenance.verified ?? true,
+          verified: input.nativeProvenance.verified === true,
         }
       : null,
   }
@@ -160,8 +160,9 @@ export function computeDependencyCompatibilityKey(input: DependencyManifestInput
 }
 
 /**
- * Validates that a target path or symlink is strictly contained within the allowed root directory,
- * preventing directory traversal (e.g. `..`) or links escaping outside the sandbox.
+ * Validates that a target path (and its ancestors, even if target does not yet exist)
+ * is strictly contained within the allowed root directory, preventing directory traversal (e.g. `..`)
+ * or links escaping outside the sandbox.
  */
 export function validateContainment(targetPath: string, allowedRoot: string): boolean {
   try {
@@ -174,7 +175,27 @@ export function validateContainment(targetPath: string, allowedRoot: string): bo
       return false
     }
 
-    // If both exist, resolve real paths to prevent symlink escape
+    // Check existing ancestor symlinks for target path
+    let cur = resolvedTarget
+    while (cur && cur !== resolvedRoot && cur !== dirname(cur)) {
+      if (existsSync(cur)) {
+        try {
+          const lstat = lstatSync(cur)
+          if (lstat.isSymbolicLink()) {
+            const real = realpathSync(cur)
+            const realRel = relative(resolvedRoot, real)
+            if (realRel.startsWith('..') || isAbsolute(realRel)) {
+              return false
+            }
+          }
+        } catch {
+          return false
+        }
+      }
+      cur = dirname(cur)
+    }
+
+    // If both exist, resolve real paths
     if (existsSync(resolvedRoot) && existsSync(resolvedTarget)) {
       const realRoot = realpathSync(resolvedRoot)
       const realTarget = realpathSync(resolvedTarget)
@@ -190,31 +211,39 @@ export function validateContainment(targetPath: string, allowedRoot: string): bo
   }
 }
 
-/** Per-task isolated cache directories and environment variables. */
+/** Per-task isolated cache directories, arguments, and environment variables. */
 export interface TaskIsolationPaths {
   taskDir: string
   viteCacheDir: string
   vitestCacheDir: string
   tsCacheDir: string
   tmpDir: string
+  pnpmStoreDir: string
   env: Record<string, string>
+  /** Supported command-line arguments to enforce task isolation in build/test tools. */
+  toolArgs: {
+    vitest: string[]
+    pnpm: string[]
+  }
 }
 
 /**
  * Creates isolated cache, temp, and output directories for a task,
- * returning environment variables ensuring compilers, test runners, and package managers
- * do not collide or mutate shared dependencies.
+ * returning environment variables and tool flags ensuring compilers, test runners,
+ * and package managers do not collide or mutate shared dependencies.
  */
 export function createTaskIsolation(taskDir: string): TaskIsolationPaths {
   const cacheBase = join(taskDir, '.cache')
   const viteCacheDir = join(cacheBase, 'vite')
   const vitestCacheDir = join(cacheBase, 'vitest')
   const tsCacheDir = join(cacheBase, 'ts')
+  const pnpmStoreDir = join(cacheBase, 'pnpm-store')
   const tmpDir = join(taskDir, '.tmp')
 
   mkdirSync(viteCacheDir, { recursive: true })
   mkdirSync(vitestCacheDir, { recursive: true })
   mkdirSync(tsCacheDir, { recursive: true })
+  mkdirSync(pnpmStoreDir, { recursive: true })
   mkdirSync(tmpDir, { recursive: true })
 
   const env: Record<string, string> = {
@@ -224,6 +253,12 @@ export function createTaskIsolation(taskDir: string): TaskIsolationPaths {
     VITE_CACHE_DIR: viteCacheDir,
     VITEST_CACHE_DIR: vitestCacheDir,
     TS_CACHE_DIR: tsCacheDir,
+    PNPM_HOME: pnpmStoreDir,
+  }
+
+  const toolArgs = {
+    vitest: ['--cache.dir', vitestCacheDir],
+    pnpm: ['--store-dir', pnpmStoreDir],
   }
 
   return {
@@ -231,9 +266,23 @@ export function createTaskIsolation(taskDir: string): TaskIsolationPaths {
     viteCacheDir,
     vitestCacheDir,
     tsCacheDir,
+    pnpmStoreDir,
     tmpDir,
     env,
+    toolArgs,
   }
+}
+
+/** Verified immutable content attestation for a dependency pool. */
+export interface DependencyPoolAttestation {
+  /** Content digest of the immutable pool's tree or integrity receipt. */
+  contentDigest: string
+  /** Timestamp of verification. */
+  verifiedAt: string
+  /** Verified by operator or qualification provider. */
+  verifiedBy: string
+  /** Explicit verification that pool content is immutable and read-only. */
+  isImmutable: boolean
 }
 
 /** Qualified immutable dependency pool definition. */
@@ -245,6 +294,8 @@ export interface QualifiedDependencyPool {
   state: 'ready' | 'preparing' | 'failed'
   preparedAt?: string
   error?: string
+  /** Explicit immutable content attestation. */
+  attestation?: DependencyPoolAttestation
 }
 
 /** In-memory or state-backed registry for qualified dependency pools. */
@@ -268,7 +319,8 @@ export class DependencyPoolManager {
 
   /**
    * Qualifies a dependency pool for reuse by a task workspace.
-   * Fails closed if pool does not exist, is still preparing, is failed, or is not marked immutable.
+   * Fails closed if pool does not exist, is still preparing, is failed,
+   * is not marked immutable, or lacks explicit verified content attestation.
    */
   qualifyPoolForReuse(key: string, allowedRoot?: string): { ok: true; pool: QualifiedDependencyPool } | { ok: false; reason: string } {
     const pool = this.pools.get(key)
@@ -284,6 +336,9 @@ export class DependencyPoolManager {
     if (!pool.isImmutable) {
       return { ok: false, reason: 'Dependency pool is not immutable; refusing to reuse mutable tree' }
     }
+    if (!pool.attestation || pool.attestation.isImmutable !== true) {
+      return { ok: false, reason: 'Dependency pool lacks verified immutable content attestation; ineligible for reuse' }
+    }
     if (allowedRoot && !validateContainment(pool.rootPath, allowedRoot)) {
       return { ok: false, reason: `Dependency pool root escapes allowed boundary ${allowedRoot}` }
     }
@@ -291,10 +346,15 @@ export class DependencyPoolManager {
   }
 
   /**
-   * Connects a qualified immutable dependency pool to a task workspace directory by creating a symlink.
-   * Throws if pool is not qualified or if symlink would escape or overwrite non-symlink contents.
+   * Plans or connects a qualified immutable dependency pool to a task workspace directory.
+   * Validates containment of both pool AND workspace against the allowed root,
+   * checks ancestor symlinks, and verifies target directory does not overwrite existing contents.
    */
   linkToWorkspace(workspaceDir: string, key: string, allowedRoot?: string): void {
+    if (allowedRoot && !validateContainment(workspaceDir, allowedRoot)) {
+      throw new Error(`Workspace directory escapes allowed boundary ${allowedRoot}`)
+    }
+
     const qualification = this.qualifyPoolForReuse(key, allowedRoot)
     if (!qualification.ok) {
       throw new Error(`Cannot link dependency pool: ${qualification.reason}`)
@@ -333,13 +393,15 @@ export interface BuildOutputInputs {
   sourceCommit: string
   /** Hash of dirty / uncommitted working copy changes (empty string if clean). */
   dirtyContentHash?: string
+  /** Source working copy state status. If dirty state cannot be established, must be 'unknown'. */
+  sourceStateStatus?: 'clean' | 'dirty' | 'unknown'
   /** Dependency compatibility key. */
   dependencyKey: string
   /** Exact command and tool version, e.g. { name: 'tsdown', version: '0.22.14', args: ['build'] }. */
   command: { name: string; version: string; args: string[] }
   /** Build configuration map (e.g. config file path -> sha256). */
   buildConfig?: Record<string, string>
-  /** Environment variables relevant to the build (secrets will be excluded). */
+  /** Environment variables relevant to the build. */
   environment?: Record<string, string>
 }
 
@@ -347,14 +409,17 @@ const SECRET_ENV_REGEX = /(?:SECRET|TOKEN|KEY|PASS|AUTH|CRED|BEARER|JWT)/i
 
 /**
  * Computes a deterministic build output cache key.
- * Secrets are strictly excluded from the environment fingerprint.
- * Any difference in source, dirty content, dependency key, command/tool version,
- * build config, or relevant environment yields a distinct output key.
+ * Fails closed if source dirty/untracked status cannot be established,
+ * or if a secret environment variable is present in the build environment
+ * (preventing secret leakage into cache fingerprints and false cache hits).
  */
 export function computeBuildOutputKey(input: BuildOutputInputs): { ok: true; key: string } | { ok: false; reason: string } {
   if (!input) return { ok: false, reason: 'Missing build output inputs' }
   if (!input.sourceCommit || input.sourceCommit.trim() === '') {
     return { ok: false, reason: 'Missing source commit SHA' }
+  }
+  if (input.sourceStateStatus === 'unknown') {
+    return { ok: false, reason: 'Source working tree dirty/untracked status cannot be established; failing closed' }
   }
   if (!input.dependencyKey || input.dependencyKey.trim() === '') {
     return { ok: false, reason: 'Missing dependency compatibility key' }
@@ -363,20 +428,21 @@ export function computeBuildOutputKey(input: BuildOutputInputs): { ok: true; key
     return { ok: false, reason: 'Missing build command or tool version' }
   }
 
-  // Filter out any secret environment variables
-  const safeEnv: Record<string, string> = {}
+  // Check for secret environment variables: fail closed rather than ignoring changes to secrets
   if (input.environment) {
-    for (const [k, v] of Object.entries(input.environment)) {
-      if (!SECRET_ENV_REGEX.test(k)) {
-        safeEnv[k] = v
+    for (const k of Object.keys(input.environment)) {
+      if (SECRET_ENV_REGEX.test(k)) {
+        return { ok: false, reason: `Secret environment variable detected (${k}); refusing to cache build output without secret-isolated configuration` }
       }
     }
   }
 
-  const sortedEnv = Object.keys(safeEnv).sort().reduce<Record<string, string>>((acc, k) => {
-    acc[k] = safeEnv[k]!
-    return acc
-  }, {})
+  const sortedEnv = input.environment
+    ? Object.keys(input.environment).sort().reduce<Record<string, string>>((acc, k) => {
+        acc[k] = input.environment![k]!
+        return acc
+      }, {})
+    : {}
 
   const sortedConfig = input.buildConfig
     ? Object.keys(input.buildConfig).sort().reduce<Record<string, string>>((acc, k) => {

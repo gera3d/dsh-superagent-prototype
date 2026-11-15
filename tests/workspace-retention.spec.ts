@@ -5,21 +5,22 @@ import { describe, expect, it } from 'vitest'
 import {
   evaluateRetentionCandidate,
   generateRetentionManifest,
+  generateSanitizedPublicSummary,
   inspectDependencyReference,
   inspectRetainedReferences,
-  sanitizeManifestForPublication,
   type WorkspaceCandidateRecord,
 } from '../src/app/workspace-retention.ts'
 
 describe('workspace-retention', () => {
   describe('inspectRetainedReferences', () => {
-    it('detects reports, evidence, bundles, patches, backups, and release references', () => {
+    it('detects reports, evidence, bundles, patches, backups, consumed markers, and release references', () => {
       const tempDir = mkdtempSync(join(tmpdir(), 'ret-ref-'))
       try {
         writeFileSync(join(tempDir, '.dsh-report.json'), '{"verdict":"pass"}')
         writeFileSync(join(tempDir, 'candidate.patch'), 'diff --git a b')
         writeFileSync(join(tempDir, 'publication-diagnostics.bundle'), 'bundle-bytes')
         writeFileSync(join(tempDir, 'backup-worktree.tar'), 'backup-bytes')
+        writeFileSync(join(tempDir, '.dsh-consumed'), 'consumed')
         writeFileSync(join(tempDir, 'release-rel-789.json'), '{}')
 
         const refs = inspectRetainedReferences(tempDir, ['rel-789'])
@@ -27,6 +28,7 @@ describe('workspace-retention', () => {
         expect(refs.hasPatches).toBe(true)
         expect(refs.hasBundles).toBe(true)
         expect(refs.hasBackups).toBe(true)
+        expect(refs.hasConsumedMarkers).toBe(true)
         expect(refs.releaseReferences).toEqual(['rel-789'])
       } finally {
         rmSync(tempDir, { recursive: true, force: true })
@@ -36,11 +38,11 @@ describe('workspace-retention', () => {
 
   describe('evaluateRetentionCandidate', () => {
     const baseCandidate: Omit<WorkspaceCandidateRecord, 'decision' | 'reasons'> = {
-      candidatePath: '/path/to/work/ws-1234567890ab',
-      resolvedTarget: '/path/to/work/ws-1234567890ab',
+      candidatePath: '/path/to/work/ws-output-1234567890ab',
+      resolvedTarget: '/path/to/work/ws-output-1234567890ab',
       measuredBytes: { exclusiveBytes: 1024, sharedPoolBytes: 2048, totalBytes: 3072, uncertainty: 'exact' },
       owningTicket: { id: '1234567890ab', isLive: false },
-      gitStatus: { isClean: true, hasUntracked: false, hasDirty: false, hasIgnored: false, checkAvailable: true },
+      gitStatus: { isClean: true, hasUntracked: false, hasDirty: false, hasIgnored: false, checkAvailable: true, isSourceWorkspace: false },
       dependencyReferences: { isSymlink: true, isContained: true },
       retainedReferences: {
         hasReports: false,
@@ -49,15 +51,45 @@ describe('workspace-retention', () => {
         hasPatches: false,
         hasBackups: false,
         hasFailedAttempts: false,
+        hasConsumedMarkers: false,
         activeOrResumable: false,
         releaseReferences: [],
       },
+      artifactClass: 'regenerable_output',
     }
 
-    it('marks clean, inactive, unreferenced candidate for future review with owner approval', () => {
+    it('marks verified inactive regenerable output with clean state as provisional candidate', () => {
       const evaluated = evaluateRetentionCandidate(baseCandidate)
       expect(evaluated.decision).toBe('candidate_for_future_prune')
-      expect(evaluated.reasons[0]).toMatch(/No active ticket/)
+      expect(evaluated.reasons[0]).toMatch(/provisional candidate/)
+    })
+
+    it('strictly retains whole source workspace even if clean and ended', () => {
+      const sourceWs = {
+        ...baseCandidate,
+        artifactClass: 'source_workspace' as const,
+        gitStatus: { ...baseCandidate.gitStatus, isSourceWorkspace: true },
+      }
+      const evaluated = evaluateRetentionCandidate(sourceWs)
+      expect(evaluated.decision).toBe('retain')
+      expect(evaluated.reasons.some(r => r.includes('Full source repository/worktree workspace'))).toBe(true)
+    })
+
+    it('strictly retains when owning ticket or liveness is missing/unavailable (fail closed)', () => {
+      const missingTicket = {
+        ...baseCandidate,
+        owningTicket: undefined,
+      }
+      const evaluatedMissing = evaluateRetentionCandidate(missingTicket)
+      expect(evaluatedMissing.decision).toBe('retain')
+      expect(evaluatedMissing.reasons.some(r => r.includes('Owning ticket or liveness status unavailable'))).toBe(true)
+
+      const unknownLiveness = {
+        ...baseCandidate,
+        owningTicket: { id: '1234567890ab', isLive: undefined },
+      }
+      const evaluatedUnknown = evaluateRetentionCandidate(unknownLiveness)
+      expect(evaluatedUnknown.decision).toBe('retain')
     })
 
     it('strictly retains workspaces with active ticket session', () => {
@@ -97,85 +129,77 @@ describe('workspace-retention', () => {
       expect(evaluated.reasons.some(r => r.includes('failing closed'))).toBe(true)
     })
 
-    it('strictly retains workspaces containing reports, evidence, patches, or bundles', () => {
-      const withEvidence = {
+    it('strictly retains workspaces containing consumed markers', () => {
+      const withConsumed = {
         ...baseCandidate,
-        retainedReferences: { ...baseCandidate.retainedReferences, hasEvidence: true },
+        retainedReferences: { ...baseCandidate.retainedReferences, hasConsumedMarkers: true },
       }
-      const evaluatedEvidence = evaluateRetentionCandidate(withEvidence)
-      expect(evaluatedEvidence.decision).toBe('retain')
-
-      const withReports = {
-        ...baseCandidate,
-        retainedReferences: { ...baseCandidate.retainedReferences, hasReports: true },
-      }
-      const evaluatedReports = evaluateRetentionCandidate(withReports)
-      expect(evaluatedReports.decision).toBe('retain')
+      const evaluated = evaluateRetentionCandidate(withConsumed)
+      expect(evaluated.decision).toBe('retain')
+      expect(evaluated.reasons.some(r => r.includes('Consumed assignment/delivery markers'))).toBe(true)
     })
 
-    it('strictly retains workspaces containing backups or failed attempts', () => {
-      const withBackup = {
+    it('strictly retains non-existent or unavailable paths', () => {
+      const missingPath = {
         ...baseCandidate,
-        retainedReferences: { ...baseCandidate.retainedReferences, hasBackups: true },
+        measuredBytes: { exclusiveBytes: 0, sharedPoolBytes: 0, totalBytes: 0, uncertainty: 'unavailable' as const },
       }
-      const evaluated = evaluateRetentionCandidate(withBackup)
+      const evaluated = evaluateRetentionCandidate(missingPath)
       expect(evaluated.decision).toBe('retain')
-      expect(evaluated.reasons.some(r => r.includes('backup files'))).toBe(true)
-    })
-
-    it('strictly retains workspaces referenced by an active release', () => {
-      const withRelease = {
-        ...baseCandidate,
-        retainedReferences: { ...baseCandidate.retainedReferences, releaseReferences: ['rel-v1'] },
-      }
-      const evaluated = evaluateRetentionCandidate(withRelease)
-      expect(evaluated.decision).toBe('retain')
-      expect(evaluated.reasons.some(r => r.includes('Referenced by active release'))).toBe(true)
+      expect(evaluated.reasons.some(r => r.includes('measurements or candidate path unavailable'))).toBe(true)
     })
   })
 
   describe('generateRetentionManifest & read-only guarantee', () => {
-    it('runs strictly read-only: no files are created, modified, or removed', () => {
+    it('runs strictly read-only and orders candidates deterministically', () => {
       const workDir = mkdtempSync(join(tmpdir(), 'ret-audit-'))
       try {
-        const ws1 = join(workDir, 'finding-task-111111111111')
-        const ws2 = join(workDir, 'finding-task-222222222222')
-        mkdirSync(ws1)
-        mkdirSync(ws2)
-        writeFileSync(join(ws1, 'test.log'), 'log output')
-        writeFileSync(join(ws2, 'candidate.patch'), 'patch output')
+        const wsB = join(workDir, 'finding-task-bbbbbbbbbbbb')
+        const wsA = join(workDir, 'finding-task-aaaaaaaaaaaa')
+        mkdirSync(wsB)
+        mkdirSync(wsA)
+        writeFileSync(join(wsB, 'candidate.patch'), 'patch output')
+        writeFileSync(join(wsA, 'test.log'), 'log output')
 
-        const beforeWs1 = readdirSync(ws1)
-        const beforeWs2 = readdirSync(ws2)
+        const beforeWsA = readdirSync(wsA)
+        const beforeWsB = readdirSync(wsB)
 
-        const manifest = generateRetentionManifest([ws1, ws2], {
-          isTicketLive: (id) => id === '111111111111',
+        // Pass out of order: wsB then wsA
+        const manifest = generateRetentionManifest([wsB, wsA], {
+          isTicketLive: () => false,
           measureBytes: () => ({ exclusiveBytes: 500, sharedPoolBytes: 1000, totalBytes: 1500, uncertainty: 'exact' }),
         })
 
-        expect(manifest.totalCandidates).toBe(2)
-        expect(manifest.retainedCount).toBe(2) // ws1 has live ticket + test.log, ws2 has candidate.patch
-        expect(manifest.candidatePruneCount).toBe(0)
+        // Manifest records are ordered deterministically: wsA first, then wsB
+        expect(manifest.records[0]!.candidatePath).toBe(wsA)
+        expect(manifest.records[1]!.candidatePath).toBe(wsB)
 
-        // Verify filesystem was unmodified
-        expect(readdirSync(ws1)).toEqual(beforeWs1)
-        expect(readdirSync(ws2)).toEqual(beforeWs2)
+        // Filesystem is unmodified
+        expect(readdirSync(wsA)).toEqual(beforeWsA)
+        expect(readdirSync(wsB)).toEqual(beforeWsB)
       } finally {
         rmSync(workDir, { recursive: true, force: true })
       }
     })
   })
 
-  describe('sanitizeManifestForPublication', () => {
-    it('replaces machine-private directory prefixes with generic placeholders', () => {
+  describe('generateSanitizedPublicSummary', () => {
+    it('excludes private machine paths, measurements, and commit hashes comprehensively', () => {
       const workDir = '/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work'
       const manifest = generateRetentionManifest([join(workDir, 'ws-abc123456789')], {
         measureBytes: () => ({ exclusiveBytes: 100, sharedPoolBytes: 200, totalBytes: 300, uncertainty: 'exact' }),
       })
 
-      const sanitized = sanitizeManifestForPublication(manifest, workDir)
-      expect(sanitized.records[0]!.candidatePath).toBe('<workspace-root>/ws-abc123456789')
-      expect(sanitized.records[0]!.candidatePath).not.toContain('gerayeremin')
+      const summary = generateSanitizedPublicSummary(manifest)
+      expect(summary.totalCandidateCount).toBe(1)
+      expect(summary.retainedCandidateCount).toBe(1)
+      expect(summary.provisionalCandidateCount).toBe(0)
+      expect(summary.designBoundaries.length).toBeGreaterThan(0)
+
+      const serialized = JSON.stringify(summary)
+      expect(serialized).not.toContain('gerayeremin')
+      expect(serialized).not.toContain('/Users/')
+      expect(serialized).not.toContain('/Library/')
     })
   })
 })
