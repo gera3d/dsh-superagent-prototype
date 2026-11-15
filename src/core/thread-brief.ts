@@ -80,7 +80,10 @@ export interface ThreadBriefState {
   pending_proposals: ThreadBriefProposal[]
   revision_history: ThreadBriefRevision[]
   model_context?: ModelContext
+  storage_state?: BriefStorageState
 }
+
+export type BriefStorageState = 'persisted' | 'non-durable' | 'write_failed'
 
 export interface ThreadBriefView {
   thread_id: string
@@ -95,6 +98,7 @@ export interface ThreadBriefView {
   scope: ThreadBriefScopeItem[]
   pending_proposals: ThreadBriefProposal[]
   model_context: ModelContext
+  storage_state?: BriefStorageState
 }
 
 /** Owns an isolated brief revision, its proposals, evidence and continuation context. */
@@ -488,7 +492,16 @@ export class ThreadBriefManager {
         current_model: this.state.model_context?.current_model || 'unknown',
         fallback_events: JSON.parse(JSON.stringify(this.state.model_context?.fallback_events || [])),
       },
+      storage_state: this.storageState,
     }
+  }
+
+  get storageState(): BriefStorageState {
+    return this.state.storage_state ?? 'persisted'
+  }
+
+  setStorageState(status: BriefStorageState): void {
+    this.state.storage_state = status
   }
 
   /**
@@ -498,9 +511,16 @@ export class ThreadBriefManager {
   save(store: BriefStoreLike, storageKey?: string): void {
     const key = storageKey || (this.state.ticket_id ? `ticket-brief:${this.state.ticket_id}` : `thread-brief:${this.state.thread_id}`)
     if (!store.set) {
+      this.state.storage_state = 'non-durable'
       throw new Error(`Store does not support set operations for ${key}`)
     }
-    store.set(key, this.getState())
+    try {
+      store.set(key, this.getState())
+      this.state.storage_state = 'persisted'
+    } catch (err) {
+      this.state.storage_state = 'write_failed'
+      throw err
+    }
   }
 }
 
@@ -587,13 +607,31 @@ export function resolveTicketBriefManager(
   modelContext?: ModelContext
 ): ThreadBriefManager {
   const briefKey = `ticket-brief:${ticket.id}`
-  const persisted = store.get ? store.get<ThreadBriefState>(briefKey) : undefined
+  let persisted: ThreadBriefState | undefined
+  let storageState: BriefStorageState = 'persisted'
+
+  if (store.get) {
+    try {
+      persisted = store.get<ThreadBriefState>(briefKey)
+    } catch {
+      storageState = 'write_failed'
+    }
+  }
 
   let manager: ThreadBriefManager
+
   if (persisted) {
     manager = ThreadBriefManager.deserialize(persisted)
+    manager.setStorageState(storageState)
   } else {
-    const originTrigger = ticket.origin?.triggerId && store.triggers ? store.triggers.get(ticket.origin.triggerId) : undefined
+    let originTrigger: BriefTriggerLike | undefined
+    if (ticket.origin?.triggerId && store.triggers) {
+      try {
+        originTrigger = store.triggers.get(ticket.origin.triggerId)
+      } catch {
+        storageState = 'write_failed'
+      }
+    }
     const raw_request = originTrigger !== undefined ? originTrigger.text : 'unavailable'
     const objective = ticket.title || (originTrigger ? originTrigger.text.trim().split('\n')[0] : '') || 'Unspecified task'
     const inferred_scope = ticket.mandate?.scope ? [ticket.mandate.scope] : []
@@ -611,13 +649,17 @@ export function resolveTicketBriefManager(
       model_context: modelContext,
     })
 
-    if (store.set) {
+    if (!store.set) {
+      storageState = 'non-durable'
+    } else {
       try {
         manager.save(store, briefKey)
+        storageState = 'persisted'
       } catch {
-        // Storage write failed - state remains in-memory
+        storageState = 'write_failed'
       }
     }
+    manager.setStorageState(storageState)
   }
 
   // Real Ticket state classification via ticketStage
@@ -665,8 +707,8 @@ export function resolveTicketBriefManager(
 
 /**
  * Resolves or constructs the single authoritative ThreadBriefManager for a Thread.
- * Preserves verbatim initiating ask from first trigger.
- * Evaluates truthful thread state (evaluating, active, initialized).
+ * Preserves verbatim initiating ask from first trigger and canonical thread snapshot/identity.
+ * Evaluates truthful thread state (evaluating, active, dormant, unsubscribed, error).
  */
 export function resolveThreadBriefManager(
   store: BriefStoreLike,
@@ -674,28 +716,34 @@ export function resolveThreadBriefManager(
   canonicalFirstTrigger?: BriefTriggerLike | BriefTriggerLike[],
   modelContext?: ModelContext
 ): ThreadBriefManager {
-  // 3. SINGLE AUTHORITY:
-  // If thread has a subscribed ticket that exists in store, delegate to resolveTicketBriefManager
-  // to ensure ticket, thread, and sessions prompt hook share the exact same authoritative brief state.
-  const subscribedTicketId = thread.subscriptions?.find(id => store.tickets?.get(id))
-  if (subscribedTicketId) {
-    const ticket = store.tickets!.get(subscribedTicketId)
-    if (ticket) {
-      return resolveTicketBriefManager(store, ticket, modelContext)
+  const briefKey = `thread-brief:${thread.key}`
+  let persisted: ThreadBriefState | undefined
+  let storageState: BriefStorageState = 'persisted'
+
+  if (store.get) {
+    try {
+      persisted = store.get<ThreadBriefState>(briefKey)
+    } catch {
+      storageState = 'write_failed'
     }
   }
 
-  const briefKey = `thread-brief:${thread.key}`
-  const persisted = store.get ? store.get<ThreadBriefState>(briefKey) : undefined
-
   let manager: ThreadBriefManager
+
   if (persisted) {
     manager = ThreadBriefManager.deserialize(persisted)
+    manager.setStorageState(storageState)
   } else {
     const initialTrigger = Array.isArray(canonicalFirstTrigger) ? canonicalFirstTrigger[0] : canonicalFirstTrigger
-    const firstTrigger = initialTrigger
-      || (store.read?.firstTrigger ? store.read.firstTrigger(thread.key) : undefined)
-      || (store.triggers?.of ? store.triggers.of(thread.key)[0] : undefined)
+    let firstTrigger = initialTrigger
+    if (!firstTrigger) {
+      try {
+        firstTrigger = (store.read?.firstTrigger ? store.read.firstTrigger(thread.key) : undefined)
+          || (store.triggers?.of ? store.triggers.of(thread.key)[0] : undefined)
+      } catch {
+        storageState = 'write_failed'
+      }
+    }
 
     const raw_request = firstTrigger !== undefined ? firstTrigger.text : 'unavailable'
     const objective = deriveThreadTitle(store, thread, firstTrigger)
@@ -711,13 +759,17 @@ export function resolveThreadBriefManager(
       model_context: modelContext,
     })
 
-    if (store.set) {
+    if (!store.set) {
+      storageState = 'non-durable'
+    } else {
       try {
         manager.save(store, briefKey)
+        storageState = 'persisted'
       } catch {
-        // Storage write failed - state remains in-memory
+        storageState = 'write_failed'
       }
     }
+    manager.setStorageState(storageState)
   }
 
   // 2. REAL TYPES & STATE for Thread
@@ -731,16 +783,24 @@ export function resolveThreadBriefManager(
     manager.updateState('queued', 'Awaiting triage evaluation')
     ;(manager as any).state.task_status = 'open'
   } else if (thread.subscriptions && thread.subscriptions.length > 0) {
-    const tickets = thread.subscriptions.map(id => store.tickets?.get(id)).filter(Boolean)
+    let tickets: any[] = []
+    try {
+      tickets = thread.subscriptions.map(id => store.tickets?.get(id)).filter(Boolean)
+    } catch {
+      storageState = 'write_failed'
+      manager.setStorageState(storageState)
+    }
     const hasLive = tickets.some(t => !t.ended)
     if (hasLive) {
       manager.updateState('active', 'Execute thread tickets')
+      ;(manager as any).state.task_status = 'open'
     } else if (tickets.length > 0) {
       manager.updateState('dormant', 'All subscribed tickets ended')
+      ;(manager as any).state.task_status = 'closed'
     } else {
       manager.updateState('active', 'Execute thread tickets')
+      ;(manager as any).state.task_status = 'open'
     }
-    ;(manager as any).state.task_status = 'open'
   } else {
     manager.updateState('unsubscribed', 'Awaiting triage or ticket subscription')
     ;(manager as any).state.task_status = 'open'

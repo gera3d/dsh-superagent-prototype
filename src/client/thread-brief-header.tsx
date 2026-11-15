@@ -71,6 +71,13 @@ export function ThreadBriefHeader({
           <span style={{ fontSize: '11px', color: 'var(--dsw-text-muted, #888)' }}>
             [{brief.current_state}]
           </span>
+          {brief.storage_state && brief.storage_state !== 'persisted' && (
+            <Tag tone="warning">
+              <span style={{ fontSize: '11px' }} data-testid="brief-storage-state">
+                {brief.storage_state === 'write_failed' ? 'storage: write-failed' : 'storage: non-durable'}
+              </span>
+            </Tag>
+          )}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

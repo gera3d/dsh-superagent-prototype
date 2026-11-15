@@ -817,87 +817,177 @@ describe('Thread Brief Integration (ThreadPage, TicketPage & Sessions wiring)', 
       }
       const briefDormant = resolveThreadBriefManager(store, threadDormant).toView()
       expect(briefDormant.task_status).toBe('closed')
-      expect(briefDormant.current_state).toBe('ended:completed')
+      expect(briefDormant.current_state).toBe('dormant')
     } finally {
       store.close()
       rmSync(dir, { recursive: true, force: true })
     }
   })
 
-  it('3. SINGLE AUTHORITY & DURABLE STORE PERSISTENCE: thread & ticket share authoritative record, roundtrip across DB reopen', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'thread-brief-durable-'))
+  it('3. THREAD IDENTITY & SNAPSHOT PRESERVATION: multiple subscriptions [ended A, live B], evaluating/pending states, and existing thread snapshots are preserved', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'thread-brief-identity-'))
     const dbPath = join(dir, 'orchestrator.sqlite')
     let store = new Store(dbPath)
 
     try {
-      const ticket: Ticket = {
-        id: 'ticket-authority-1',
-        title: 'Evolving Task',
+      const threadKey = 'github:owner/repo:issue:100'
+      const threadTrigger: Trigger = {
+        id: 'trig-thread-canonical',
+        at: '2026-11-15T00:30:00Z',
+        source: 'github',
+        human: true,
+        actor: { source: 'github', id: 'reporter' },
+        threads: [{ source: 'github', id: 'owner/repo:issue:100' }],
+        text: 'Thread-level canonical prompt text',
+        meta: {},
+      }
+      store.triggers.save(threadTrigger)
+
+      const tEnded: Ticket = {
+        id: 't-ended-1',
+        title: 'Old Finished Ticket',
         decisionId: 'd1',
-        mandate: defaultMandate('Authority task scope'),
-        channels: [{ source: 'github', thread: 'github:owner/repo:issue:100', address: {} }],
-        assignments: [{ id: 'a1', state: 'running', createdAt: '2026-11-15T01:00:00Z' }],
+        mandate: defaultMandate('Old task scope'),
+        channels: [{ source: 'github', thread: threadKey, address: {} }],
+        assignments: [{ id: 'a1', state: 'ended', createdAt: '2026-11-15T01:00:00Z' }],
         inputs: [],
         undelivered: [],
         createdAt: '2026-11-15T01:00:00Z',
-        updatedAt: '2026-11-15T01:00:00Z',
-        origin: { triggerId: 'trig-1', triggerIds: ['trig-1'] },
+        updatedAt: '2026-11-15T01:30:00Z',
+        ended: { outcome: 'completed', at: '2026-11-15T01:30:00Z', by: 'executor' },
+        origin: { triggerId: 'trig-ended', triggerIds: ['trig-ended'] },
       }
-      store.tickets.save(ticket)
+      store.tickets.save(tEnded)
 
-      const thread: Thread = {
-        key: 'github:owner/repo:issue:100',
+      const tLive: Ticket = {
+        id: 't-live-2',
+        title: 'Active Followup Ticket',
+        decisionId: 'd2',
+        mandate: defaultMandate('Active task scope'),
+        channels: [{ source: 'github', thread: threadKey, address: {} }],
+        assignments: [{ id: 'a2', state: 'running', createdAt: '2026-11-15T02:00:00Z' }],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T02:00:00Z',
+        updatedAt: '2026-11-15T02:00:00Z',
+        origin: { triggerId: 'trig-live', triggerIds: ['trig-live'] },
+      }
+      store.tickets.save(tLive)
+
+      // Thread with subscription ordering [ended A, live B]
+      const threadMulti: Thread = {
+        key: threadKey,
         ref: { source: 'github', id: 'owner/repo:issue:100' },
-        createdAt: '2026-11-15T01:00:00Z',
-        subscriptions: [ticket.id],
+        createdAt: '2026-11-15T00:30:00Z',
+        subscriptions: ['t-ended-1', 't-live-2'],
         correlated: [],
         pending: [],
-        meta: { label: 'Issue 100' },
+        meta: { label: 'Issue 100: Multi-subscription' },
       }
-      store.threads.save(thread)
+      store.threads.save(threadMulti)
 
-      // Single Authority: thread resolves to the exact same manager/brief as its subscribed ticket
-      const ticketManager = resolveTicketBriefManager(store, ticket)
-      const threadManager = resolveThreadBriefManager(store, thread)
-      expect(ticketManager.getState().ticket_id).toBe(ticket.id)
-      expect(threadManager.getState().ticket_id).toBe(ticket.id)
+      // Thread brief MUST NOT become closed or take A's prompt; it preserves thread identity and active state
+      const briefMulti = resolveThreadBriefManager(store, threadMulti).toView()
+      expect(briefMulti.task_status).toBe('open')
+      expect(briefMulti.current_state).toBe('active')
+      expect(briefMulti.next_action).toBe('Execute thread tickets')
+      expect(briefMulti.raw_original_ask).toBe('Thread-level canonical prompt text')
 
-      // Stage and confirm proposal to advance revision to 2
-      const prop = ticketManager.stageProposal({
-        description: 'New verified criterion',
-        proposed_by: 'lead-operator',
-        added_criteria: ['Deliver functional implementation'],
+      // Evaluating thread with ended subscription remains 'evaluating', NOT closed
+      const threadEvaluating: Thread = {
+        ...threadMulti,
+        evaluating: { triggers: 1, strength: 'explicit', deadline: '2026-11-15T03:00:00Z' } as any,
+      }
+      const briefEvaluating = resolveThreadBriefManager(store, threadEvaluating).toView()
+      expect(briefEvaluating.current_state).toBe('evaluating')
+      expect(briefEvaluating.task_status).toBe('open')
+
+      // Existing snapshot preservation: advance thread brief to Rev 2, save, and ensure adding subscription retains Rev 2
+      const threadMgr = resolveThreadBriefManager(store, threadMulti)
+      const prop = threadMgr.stageProposal({
+        description: 'Thread-level verified criteria',
+        proposed_by: 'lead',
+        added_criteria: ['Thread criterion 1'],
       })
-      ticketManager.confirmProposal(prop.proposal_id, 'lead-operator')
-      expect(ticketManager.revisionId).toBe(2)
+      threadMgr.confirmProposal(prop.proposal_id, 'lead')
+      expect(threadMgr.revisionId).toBe(2)
+      threadMgr.save(store)
 
-      // Persist durably to Store KV
-      ticketManager.save(store)
-
-      // Close database and reopen to test genuine durability
+      // Reopening store and adding a new subscription does NOT overwrite the thread's stored snapshot
       store.close()
       store = new Store(dbPath)
 
-      // Reload from newly reopened SQLite database
-      const reloadedTicket = resolveTicketBriefManager(store, ticket)
-      expect(reloadedTicket.revisionId).toBe(2)
-      expect(reloadedTicket.criteria[0]?.id).toBe('CRIT-1')
-      expect(reloadedTicket.criteria[0]?.confirmed).toBe(true)
+      const threadWithMoreSubs: Thread = {
+        ...threadMulti,
+        subscriptions: ['t-ended-1', 't-live-2', 't-another-3'],
+      }
+      const reloadedThreadBrief = resolveThreadBriefManager(store, threadWithMoreSubs).toView()
+      expect(reloadedThreadBrief.revision_id).toBe(2)
+      expect(reloadedThreadBrief.criteria[0]?.id).toBe('CRIT-1')
+      expect(reloadedThreadBrief.criteria[0]?.confirmed).toBe(true)
+      expect(reloadedThreadBrief.raw_original_ask).toBe('Thread-level canonical prompt text')
 
-      const reloadedThread = resolveThreadBriefManager(store, thread)
-      expect(reloadedThread.revisionId).toBe(2)
-      expect(reloadedThread.criteria[0]?.id).toBe('CRIT-1')
-
-      // Storage write failure: closing the DB causes write to fail, preventing unpersisted claims
-      store.close()
-      expect(() => ticketManager.save(store)).toThrow()
+      // Actual threadDetail server view retains preserved Rev 2 snapshot
+      const viewHost = {
+        store,
+        sources: { find: () => ({ terms: [], threads: [] }), kind: () => undefined } as any,
+        links: { entries: () => [] } as any,
+      }
+      const detail = threadDetail(viewHost, threadKey, undefined, 10)
+      expect(detail?.brief?.revision_id).toBe(2)
+      expect(detail?.brief?.raw_original_ask).toBe('Thread-level canonical prompt text')
     } finally {
       try { store.close() } catch {}
       rmSync(dir, { recursive: true, force: true })
     }
   })
 
-  it('4. ACTUAL SESSIONS WIRING: captures registered systemPrompt.section callback from Sessions.decorate', async () => {
+  it('4. TRUTHFUL PERSISTENCE STATUS: surfaces non-durable and write-failed storage states through real resolver path', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'thread-brief-fail-'))
+    const store = new Store(join(dir, 'orchestrator.sqlite'))
+
+    try {
+      const ticket: Ticket = {
+        id: 'ticket-storage-check',
+        title: 'Storage Check Task',
+        decisionId: 'd1',
+        mandate: defaultMandate('Storage check scope'),
+        channels: [{ source: 'github', thread: 'github:owner/repo:issue:1', address: {} }],
+        assignments: [],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T01:00:00Z',
+        updatedAt: '2026-11-15T01:00:00Z',
+        origin: { triggerId: 'trig-1', triggerIds: ['trig-1'] },
+      }
+
+      // Store without set operation: surfaces storage_state = 'non-durable'
+      const storeWithoutSet = {
+        triggers: { get: () => ({ id: 'trig-1', text: 'Prompt without set' }) },
+        get: () => undefined,
+      }
+      const nonDurableBrief = resolveTicketBriefManager(storeWithoutSet as any, ticket).toView()
+      expect(nonDurableBrief.storage_state).toBe('non-durable')
+
+      // Store with failing set operation (closed database): surfaces storage_state = 'write_failed'
+      store.close()
+      const writeFailedBrief = resolveTicketBriefManager(store, ticket).toView()
+      expect(writeFailedBrief.storage_state).toBe('write_failed')
+
+      // Ensure write failure does not claim persisted reload/recovery
+      const storeReopened = new Store(join(dir, 'orchestrator.sqlite'))
+      try {
+        expect(storeReopened.get(`ticket-brief:${ticket.id}`)).toBeUndefined()
+      } finally {
+        storeReopened.close()
+      }
+    } finally {
+      try { store.close() } catch {}
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('5. ACTUAL SESSIONS WIRING: captures registered systemPrompt.section callback from Sessions.decorate', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'thread-brief-sessions-'))
     const store = new Store(join(dir, 'orchestrator.sqlite'))
     try {
@@ -1005,15 +1095,23 @@ describe('Thread Brief Integration (ThreadPage, TicketPage & Sessions wiring)', 
     }
   })
 
-  it('5. REAL COMPONENT WIRING: TicketPage & ThreadPage render authoritative brief via real PanelProvider', async () => {
+  it('6. REAL COMPONENT WIRING: renders TicketPage AND ThreadPage via real PanelProvider', async () => {
     const root = createRoot(container)
-    const mgr = ThreadBriefManager.fromRequest({
+    const ticketMgr = ThreadBriefManager.fromRequest({
       thread_id: 'thread-comp-1',
       ticket_id: 'ticket-comp-1',
-      raw_request: 'Verbatim original prompt for component test',
-      objective: 'Component Display Test',
-      inferred_scope: ['Scope line A'],
-      inferred_criteria: ['Criterion line B'],
+      raw_request: 'Verbatim original ticket prompt',
+      objective: 'Ticket Component Display',
+      inferred_scope: ['Ticket scope A'],
+      inferred_criteria: ['Ticket criterion B'],
+    })
+
+    const threadMgr = ThreadBriefManager.fromRequest({
+      thread_id: 'thread-comp-1',
+      raw_request: 'Verbatim original thread prompt',
+      objective: 'Thread Component Display',
+      inferred_scope: ['Thread scope X'],
+      inferred_criteria: ['Thread criterion Y'],
     })
 
     const call = vi.fn().mockImplementation((route: string) => {
@@ -1023,20 +1121,21 @@ describe('Thread Brief Integration (ThreadPage, TicketPage & Sessions wiring)', 
       if (route === 'GET tickets/:id') {
         return Promise.resolve(mockTicketPageData({
           id: 'ticket-comp-1',
-          title: 'Component Display Test',
-          brief: mgr.toView(),
+          title: 'Ticket Component Display',
+          brief: ticketMgr.toView(),
         }))
       }
       if (route === 'GET threads/:key') {
         return Promise.resolve(mockThreadPageData({
           key: 'thread-comp-1',
-          title: 'Component Display Test',
-          brief: mgr.toView(),
+          title: 'Thread Component Display',
+          brief: threadMgr.toView(),
         }))
       }
       return Promise.resolve({})
     })
 
+    // Test 1: Render TicketPage via real PanelProvider
     await act(async () => {
       root.render(
         <PanelProvider t={mockT} call={call}>
@@ -1049,20 +1148,42 @@ describe('Thread Brief Integration (ThreadPage, TicketPage & Sessions wiring)', 
       await new Promise(r => setTimeout(r, 10))
     })
 
-    expect(container.textContent).toContain('Component Display Test')
+    expect(container.textContent).toContain('Ticket Component Display')
     expect(container.textContent).toContain('Rev 1')
     expect(container.textContent).toContain('0/1 Criteria')
 
-    // Expand header
-    const toggleBtn = container.querySelector('[data-testid="brief-toggle-btn"]') as HTMLButtonElement
-    expect(toggleBtn).not.toBeNull()
+    // Expand header to verify verbatim ask
+    const ticketToggleBtn = container.querySelector('[data-testid="brief-toggle-btn"]') as HTMLButtonElement
+    expect(ticketToggleBtn).not.toBeNull()
     await act(async () => {
-      toggleBtn.click()
+      ticketToggleBtn.click()
+    })
+    expect(container.textContent).toContain('Verbatim original ticket prompt')
+    expect(container.textContent).toContain('Ticket scope A')
+
+    // Test 2: Render ThreadPage via real PanelProvider
+    await act(async () => {
+      root.render(
+        <PanelProvider t={mockT} call={call}>
+          <ThreadPage id="thread-comp-1" />
+        </PanelProvider>
+      )
+    })
+    await act(async () => {
+      await Promise.resolve()
+      await new Promise(r => setTimeout(r, 10))
     })
 
-    expect(container.textContent).toContain('Verbatim original prompt for component test')
-    expect(container.textContent).toContain('Scope line A')
-    expect(container.textContent).toContain('Criterion line B')
+    expect(container.textContent).toContain('Thread Component Display')
+    expect(container.textContent).toContain('Rev 1')
+
+    const threadToggleBtn = container.querySelector('[data-testid="brief-toggle-btn"]') as HTMLButtonElement
+    expect(threadToggleBtn).not.toBeNull()
+    await act(async () => {
+      threadToggleBtn.click()
+    })
+    expect(container.textContent).toContain('Verbatim original thread prompt')
+    expect(container.textContent).toContain('Thread scope X')
 
     await act(async () => {
       root.unmount()
