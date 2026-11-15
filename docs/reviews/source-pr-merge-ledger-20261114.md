@@ -1,5 +1,9 @@
 # Source PR review and merge ledger — November 14, 2026
 
+## November15 PR126 source correction
+
+PR126 independently approved5913428928 at615250a0748af4cf6f00706eef65e3044bbdf124, ordinary expected-head merged46ae88c1fbd4ac649b066e3b67e745374bb77b4e onto605cfde. All9source/test blobs unchanged; exactheadCI43769103757 SUCCESS2692pass/3skip/type/build. Real backend page and registered Sessions failure→zero-write→Rev2 recovery fixtures qualify bounded source correction. PostmergeCI43773621322 SUCCESS2692pass/3skip/type/build; original216 observation6903035012 source-only/no continuation; original216 canonicalreportwaiting, live/upstream hooks/nativeacceptance unqualified. No coordinator local tests/install/deploy/provider changes. Prior withheld rows below preserve rejected-head history.
+
 PR126 actualfeeac0aed23f393224b0b50daa0f93cb42b8328d remains unmerged after review5913221801: no-clobber/SQLite recovery cleared, but failed-read ephemeralRev1 still enters worker prompt as active authority and pagefailure fixture forges status. HostedCI43763362108 SUCCESS2692pass/3skip/type/build. Wrong fullSHA in narrative/body recorded. One same216 correction6902324645, sameassignment read22:21:08.196UTC/load1running/0queued; no coordinator local tests/live changes.
 
 PR126 b0f0ba7 remains unmerged: exactreview5912962426 REQUEST_CHANGES despite greenCI43757301856 (2692pass/3skip/type/build). Remaining KV/origin-read failure may overwrite existing brief and clear diagnostic; actual backend-to-page fixtures remain missing. One original216 correction6901465542 published; sameassignment intake verified21:16:21.693UTC/load1running/0queued. Prior first-subscription/dual-page-mount findings are cleared. No local coordinator tests or merge/live changes.
@@ -27,6 +31,8 @@ Gera explicitly authorized reviewing and merging safe source PRs. In the earlier
 | [#123](https://github.com/gera3d/dsh-superagent-prototype/pull/123) | `3ab941e2d9d71c0ef2a843d5e79214bac0fd6be4` | `e085ae7e1fa47b54369c4596847b2c5c05fea908` | `dddcaa410baa4cc62db552ea49e5c1436454902c` | Exact revised source review, genuine cache/config/discovery regressions inspected; hosted CI43670215263 passed; no new coordinator local process. Isolated module phase only. |
 
 | [Sandbox#231](https://github.com/gera3d/superagent-sandbox/pull/231) | `1aef868349b5b5b4c106f30c9b1dd187d2b0d9fb` | `eccd1e0a1b06a5b36510a831db90108c55c33762` (main) | `ae3533ceea31298d2a2890d1a94ed0f6fb1b9a42` | 10pure Python boundary and26TS domain cases independentlyPASS;13reviewed blobs unchanged; no hosted checks. Isolated source/helper phase, not native lifecycle acceptance. |
+
+| [#126](https://github.com/gera3d/dsh-superagent-prototype/pull/126) | `615250a0748af4cf6f00706eef65e3044bbdf124` | `605cfde` | `46ae88c1fbd4ac649b066e3b67e745374bb77b4e` | Independent review5913428928; exacthead43769103757 and postmerge43773621322 CI SUCCESS2692pass/3skip/type/build. Both backend page and registered Sessions failure/recovery fixtures; all9blobs unchanged. Bounded SOURCE phase, not native acceptance. |
 
 PR124 is explicitly an **isolated source domain/context adapter and reusable component**. Host mounting, runtime persistence and actual handoff/recovery integration remain subsequent work. Its source merge does not complete or accept the installed brief feature. PR117/118 source merges also retain their separate installation and native verification requirements.
 

@@ -1,5 +1,15 @@
 # PR126 independent source review
 
+## Qualified source head615250a and expected-head merge
+
+Independently approved actual `615250a0748af4cf6f00706eef65e3044bbdf124` in review [5913428928](https://github.com/gera3d/dsh-superagent-prototype/pull/126#pullrequestreview-5913428928), then ordinary expected-head merged PR126 at `46ae88c1fbd4ac649b066e3b67e745374bb77b4e`. Previous target605cfde differs from raw5435db0 in documentation only; all9 reviewed source/test blobs equal merged blobs. No admin/force/identity workaround, branch deletion or implementation change.
+
+Hosted exact-head CI43769103757 independently SUCCESS2692pass/3skip,22brief/7model-surface/type/build. BOTH real pages now consume backend-generated failed-read and recovered snapshots through real PanelProvider/fault-wrapped SQLite Store, with no hand-overwritten brief status; zero writes and recovered Rev2 criteria verified. Genuine Sessions.decorate registered callback now warns authoritative revision/criteria unavailable in non-durable fallback and restores real Rev2/criteria after successful reread. Earlier canonical origin/types/thread-own state/no-clobber fixes remain cleared. Prompt/model budget check passes. No new coordinator local tests.
+
+Original216 ticket/assignment/input lineage retained; actual outer Google request22:21:08.194UTC and returned narrative6902405002 match fullSHA and CI. Outer log has no separate nested tool results, so nested narrative is not independent execution evidence; hostedCI is independently verified. Canonical report remainswaiting/ended22:27:36.235UTC. Source approval is not report promotion or native acceptance. PR body corrected by coordinator to preserve all24criteria and distinguish isolated helper/source coverage from unavailable live mutation/confirmation/recovery (including AC8/9/10). Separate original217 SDKfixture exception/AC24/native gates unchanged.
+
+Post-merge CI43773621322 independently SUCCESS2692pass/3skip/type/build at merged46ae88c. Original216 observation [6903035012](https://github.com/gera3d/superagent-sandbox/issues/216#issuecomment-6903035012) records source review/merge/check evidence only, explicitly requesting no worker continuation/new job. Coordinator owns separate installed/native follow-through within retained gates; installation/native verification are unperformed stages. No deploy/live edit/restart/provider/routing/reserve/access/spend/dependency/issue-state changes.
+
 ## Revised headfeeac0a — prompt authority still withheld
 
 Actual fetched/GitHub/CI head `feeac0aed23f393224b0b50daa0f93cb42b8328d` remains OPEN/unmerged/raw5435db0 (later63a1f66 docs-only). Worker report6901617498 and PR body incorrectly name `feeac0a2b535faebcf0e78453f65cf45ff296fd3`; short prefix alone is insufficient. HostedCI43763362108 independently SUCCESS2692pass/3skip,22brief/7model-surface/type/build. Original correction receipt and outer Google request21:16:21.691UTC/ended21:26:26.049 match retained assignment/reportwaiting. Outer trace has nested narrative, no separate nested tool results; CI establishes tested result independently. No new coordinator local tests.
