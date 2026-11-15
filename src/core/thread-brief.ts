@@ -438,12 +438,21 @@ export class ThreadBriefManager {
    * Emphasizes objective, state, criteria status, and model fallback history.
    */
   composeContextPrompt(): string {
+    const isDurable = this.storageState === 'persisted'
+    const header = isDurable
+      ? `[Active Thread Brief Rev ${this.state.revision_id}]`
+      : `[Active Thread Brief (Ephemeral Fallback - Storage: ${this.storageState})]`
+
     const lines: string[] = [
-      `[Active Thread Brief Rev ${this.state.revision_id}]`,
+      header,
       `Objective: ${this.state.objective}`,
       `Current State: ${this.state.current_state}`,
       `Next Action: ${this.state.next_action}`,
     ]
+
+    if (!isDurable) {
+      lines.push(`Storage State: ${this.storageState} (Authoritative revision and criteria unavailable; non-durable fallback)`)
+    }
 
     if (this.state.scope && this.state.scope.length > 0) {
       lines.push(`Scope:`)
