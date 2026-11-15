@@ -240,8 +240,10 @@ export class DshExecutor implements Executor {
   private readonly fallbackAttempts = new Map<string, number>()
   /** Fallback start timestamps by ticket ID for deadline enforcement. */
   private readonly fallbackStartTimes = new Map<string, number>()
-  /** Total routing attempts across initial request, same-route retries, and candidate substitutions by ticket ID. */
-  private readonly totalAttemptCounts = new Map<string, number>()
+  /** Total routing attempts started (initial request, resumed prompt after wake, or substituted fallback prompt) by ticket ID. */
+  private readonly startedAttemptCounts = new Map<string, number>()
+  /** Total routing attempts reserved (initial request + scheduled same-route retries + fallback substitutions) by ticket ID. */
+  private readonly reservedAttemptCounts = new Map<string, number>()
 
   /** Obtains the tool execution ledger for a ticket. */
   toolLedger(ticketId: string): ToolExecutionLedger {
@@ -319,8 +321,11 @@ export class DshExecutor implements Executor {
     if (!this.fallbackStartTimes.has(ticket.id)) {
       this.fallbackStartTimes.set(ticket.id, Date.now())
     }
-    if (!this.totalAttemptCounts.has(ticket.id)) {
-      this.totalAttemptCounts.set(ticket.id, 1)
+    if (!this.startedAttemptCounts.has(ticket.id)) {
+      this.startedAttemptCounts.set(ticket.id, 1)
+    }
+    if (!this.reservedAttemptCounts.has(ticket.id)) {
+      this.reservedAttemptCounts.set(ticket.id, 1)
     }
     this.host.effects.enqueue('launch', assignment.id, { ticketId: ticket.id, assignmentId: assignment.id })
   }
@@ -547,8 +552,14 @@ export class DshExecutor implements Executor {
   /**
    * Checks whether the ticket has exceeded its total configured routing attempts (across initial request, same-route
    * retries, and candidate fallbacks) or its end-to-end routing deadline.
+   * In 'reserve' phase (called at error boundary), checks whether reserved attempts have reached max_total_attempts.
+   * In 'wake' phase (called at wake boundary), checks whether started attempts have already reached max_total_attempts.
    */
-  private checkRoutingBounds(ticket: Ticket, assignment: Assignment): { exhausted: boolean; reason?: string } {
+  private checkRoutingBounds(
+    ticket: Ticket,
+    assignment: Assignment,
+    phase: 'reserve' | 'wake' = 'reserve',
+  ): { exhausted: boolean; reason?: string } {
     const settings = this.host.store.settings()
     const routing = settings.models.routing ?? settings.models.model_routing
     if (!routing) return { exhausted: false }
@@ -559,20 +570,33 @@ export class DshExecutor implements Executor {
     const startTime = this.fallbackStartTimes.get(ticket.id) ?? defaultStart
     if (!this.fallbackStartTimes.has(ticket.id)) this.fallbackStartTimes.set(ticket.id, startTime)
 
-    const totalAttemptsSoFar = this.totalAttemptCounts.get(ticket.id)
-      ?? (1 + (this.transient.get(assignment.id) ?? 0) + (this.fallbackAttempts.get(ticket.id) ?? 0))
-
-    if (totalAttemptsSoFar >= routing.max_total_attempts) {
-      return {
-        exhausted: true,
-        reason: `All available models exhausted: Total attempt bound exceeded (${routing.max_total_attempts})`,
-      }
-    }
-
     if (nowTime - startTime >= routing.total_timeout_ms) {
       return {
         exhausted: true,
         reason: `All available models exhausted: Routing deadline exceeded (${routing.total_timeout_ms}ms)`,
+      }
+    }
+
+    const reserved = this.reservedAttemptCounts.get(ticket.id)
+      ?? (1 + (this.transient.get(assignment.id) ?? 0) + (this.fallbackAttempts.get(ticket.id) ?? 0))
+    const started = this.startedAttemptCounts.get(ticket.id)
+      ?? (1 + (this.fallbackAttempts.get(ticket.id) ?? 0))
+
+    if (phase === 'reserve') {
+      if (reserved >= routing.max_total_attempts) {
+        return {
+          exhausted: true,
+          reason: `All available models exhausted: Total attempt bound exceeded (${routing.max_total_attempts})`,
+        }
+      }
+    } else {
+      // At wake boundary, the attempt was already reserved when scheduling backoff.
+      // Check whether started attempts have already reached or exceeded the total limit.
+      if (started >= routing.max_total_attempts) {
+        return {
+          exhausted: true,
+          reason: `All available models exhausted: Total attempt bound exceeded (${routing.max_total_attempts})`,
+        }
       }
     }
 
@@ -585,6 +609,8 @@ export class DshExecutor implements Executor {
       this.unavailableRoutes.delete(ticket.id)
       this.fallbackAttempts.delete(ticket.id)
       this.fallbackStartTimes.delete(ticket.id)
+      this.startedAttemptCounts.delete(ticket.id)
+      this.reservedAttemptCounts.delete(ticket.id)
       const msg = 'Uncertain tool outcome blocks automatic continuation until reconciliation or explicit operator retry authorization'
       this.recordTicketNote(ticket.id, msg)
       void this.background(Promise.resolve().then(() => { this.failed(ticket.id, msg) }))
@@ -594,13 +620,14 @@ export class DshExecutor implements Executor {
     const settings = this.host.store.settings()
     const routing = settings.models.routing ?? settings.models.model_routing
     if (routing) {
-      const bounds = this.checkRoutingBounds(ticket, assignment)
+      const bounds = this.checkRoutingBounds(ticket, assignment, 'reserve')
       if (bounds.exhausted) {
         this.unavailableRoutes.delete(ticket.id)
         this.fallbackAttempts.delete(ticket.id)
         this.fallbackStartTimes.delete(ticket.id)
         this.transient.delete(assignment.id)
-        this.totalAttemptCounts.delete(ticket.id)
+        this.startedAttemptCounts.delete(ticket.id)
+        this.reservedAttemptCounts.delete(ticket.id)
         this.resuming.delete(assignment.id)
         this.recordTicketNote(ticket.id, bounds.reason!)
         void this.background(Promise.resolve().then(() => {
@@ -611,8 +638,9 @@ export class DshExecutor implements Executor {
 
       const priorFallbacks = this.fallbackAttempts.get(ticket.id) ?? 0
       this.fallbackAttempts.set(ticket.id, priorFallbacks + 1)
-      const currentTotal = this.totalAttemptCounts.get(ticket.id) ?? (1 + (this.transient.get(assignment.id) ?? 0) + priorFallbacks)
-      this.totalAttemptCounts.set(ticket.id, currentTotal + 1)
+      const currentReserved = this.reservedAttemptCounts.get(ticket.id)
+        ?? (1 + (this.transient.get(assignment.id) ?? 0) + priorFallbacks)
+      this.reservedAttemptCounts.set(ticket.id, currentReserved + 1)
       this.transient.delete(assignment.id)
     }
 
@@ -626,6 +654,8 @@ export class DshExecutor implements Executor {
       this.unavailableRoutes.delete(ticket.id)
       this.fallbackAttempts.delete(ticket.id)
       this.fallbackStartTimes.delete(ticket.id)
+      this.startedAttemptCounts.delete(ticket.id)
+      this.reservedAttemptCounts.delete(ticket.id)
       void this.background(Promise.resolve().then(() => { this.failed(ticket.id, `All available models exhausted: ${String(error)}`) }))
       return
     }
@@ -648,6 +678,8 @@ export class DshExecutor implements Executor {
     const requestId = `fallback:${ticket.id}:${assignment.id}:${now()}`
     try {
       await this.host.sessions.prompt(sessionId, requestId, resumeText, 'queue')
+      const currentStarted = this.startedAttemptCounts.get(ticket.id) ?? 1
+      this.startedAttemptCounts.set(ticket.id, currentStarted + 1)
     } catch {
       this.resumeAfter(ticket.id, assignment.id, error)
     }
@@ -662,8 +694,11 @@ export class DshExecutor implements Executor {
     if (!this.fallbackStartTimes.has(ticket.id)) {
       this.fallbackStartTimes.set(ticket.id, Date.now())
     }
-    if (!this.totalAttemptCounts.has(ticket.id)) {
-      this.totalAttemptCounts.set(ticket.id, 1)
+    if (!this.startedAttemptCounts.has(ticket.id)) {
+      this.startedAttemptCounts.set(ticket.id, 1)
+    }
+    if (!this.reservedAttemptCounts.has(ticket.id)) {
+      this.reservedAttemptCounts.set(ticket.id, 1)
     }
     const current = () => {
       if (this.host.closing()) throw new Error('dsh-superagent is stopping')
@@ -826,13 +861,14 @@ export class DshExecutor implements Executor {
         return
       }
       // Check total attempts and end-to-end deadline bounds before any same-route retry or candidate fallback
-      const bounds = this.checkRoutingBounds(ticket, assignment)
+      const bounds = this.checkRoutingBounds(ticket, assignment, 'reserve')
       if (bounds.exhausted) {
         this.unavailableRoutes.delete(ticket.id)
         this.fallbackAttempts.delete(ticket.id)
         this.fallbackStartTimes.delete(ticket.id)
         this.transient.delete(assignment.id)
-        this.totalAttemptCounts.delete(ticket.id)
+        this.startedAttemptCounts.delete(ticket.id)
+        this.reservedAttemptCounts.delete(ticket.id)
         this.resuming.delete(assignment.id)
         this.recordTicketNote(ticket.id, bounds.reason!)
         void this.background(Promise.resolve().then(() => {
@@ -907,8 +943,8 @@ export class DshExecutor implements Executor {
     }
     this.transient.set(key, tries + 1)
     if (ticket && routing) {
-      const currentTotal = this.totalAttemptCounts.get(ticket.id) ?? (1 + tries + (this.fallbackAttempts.get(ticket.id) ?? 0))
-      this.totalAttemptCounts.set(ticket.id, currentTotal + 1)
+      const currentReserved = this.reservedAttemptCounts.get(ticket.id) ?? (1 + tries + (this.fallbackAttempts.get(ticket.id) ?? 0))
+      this.reservedAttemptCounts.set(ticket.id, currentReserved + 1)
     }
     return true
   }
@@ -924,13 +960,14 @@ export class DshExecutor implements Executor {
       const assignment = runningAssignment(ticket)!
 
       // Enforce remaining deadline and attempt budget at the scheduled wake boundary before prompting
-      const bounds = this.checkRoutingBounds(ticket, assignment)
+      const bounds = this.checkRoutingBounds(ticket, assignment, 'wake')
       if (bounds.exhausted) {
         this.unavailableRoutes.delete(ticketId)
         this.fallbackAttempts.delete(ticketId)
         this.fallbackStartTimes.delete(ticketId)
         this.transient.delete(assignmentId)
-        this.totalAttemptCounts.delete(ticketId)
+        this.startedAttemptCounts.delete(ticketId)
+        this.reservedAttemptCounts.delete(ticketId)
         this.resuming.delete(assignmentId)
         this.recordTicketNote(ticketId, bounds.reason!)
         void this.background(Promise.resolve().then(() => {
@@ -947,6 +984,11 @@ export class DshExecutor implements Executor {
         if (!(failure instanceof Later)) throw failure
         this.after(SLOT_WAIT_MS, go); return
       }
+
+      // Retry attempt is now dispatched at host boundary: increment started attempts
+      const currentStarted = this.startedAttemptCounts.get(ticketId) ?? 1
+      this.startedAttemptCounts.set(ticketId, currentStarted + 1)
+
       const sent = this.host.sessions.prompt(sessionId, `retry:${assignmentId}:${tries}`, text, 'queue')
       void this.background(sent.finally(() => { if (waking) this.slots.free(ticketId); this.resuming.delete(assignmentId) })
         .catch(failure => { this.failed(ticketId, String(failure)) }))
@@ -984,7 +1026,8 @@ export class DshExecutor implements Executor {
       || agent.inbox?.nextTurn.length || agent.inbox?.nextStep.length) return
     // A turn that ended as turns do starts the count of passing failures again.
     this.transient.delete(idle.id)
-    this.totalAttemptCounts.delete(ticket.id)
+    this.startedAttemptCounts.delete(ticket.id)
+    this.reservedAttemptCounts.delete(ticket.id)
     this.fallbackAttempts.delete(ticket.id)
     this.fallbackStartTimes.delete(ticket.id)
     // The ticket while the Assignment that went idle runs it.

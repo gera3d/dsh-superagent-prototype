@@ -466,6 +466,57 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
     const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
     expect(lastNote?.text).toMatch(/Total attempt bound exceeded \(4\)/)
   })
+
+  it('first transient 500 under total2/per2 schedules and actually prompts exactly one final retry; subsequent failure cannot schedule a third', async () => {
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 2,
+        max_attempts_per_model: 2,
+        total_timeout_ms: 60_000,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    const one = await h.acceptedTicket(feishu('total2-per2-positive', '@bot Fix total2 per2 positive retry'))
+    const agent = h.agents.get(one.sessionId)!
+    const promptSpy = vi.spyOn(h.runtime.sessions, 'prompt')
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    try {
+      const http500 = Object.assign(new Error('Internal Server Error 500'), { status: 500 })
+
+      // First transient 500: within budget (attempt 1 failed, attempt 2 reserved)
+      h.ctx.emit('agent/error', { agent, error: http500 } as never)
+      expect((h.runtime.executor as any).resuming.size).toBe(1)
+
+      // Advance clock past backoff (15,001ms) to trigger scheduled wake
+      await vi.advanceTimersByTimeAsync(15_001)
+      await h.runtime.idle()
+
+      // Positive check: exactly one final retry was prompted at the wake boundary
+      const retryPrompts = promptSpy.mock.calls.filter(([sessionId, requestId]) =>
+        sessionId === one.sessionId && String(requestId).startsWith('retry:')
+      )
+      expect(retryPrompts).toHaveLength(1)
+
+      // Subsequent failure on final permitted attempt (attempt 2 fails)
+      h.ctx.emit('agent/error', { agent, error: http500 } as never)
+      await h.runtime.idle()
+
+      // Cannot schedule a third: resuming set remains size 0, ticket fails closed
+      expect((h.runtime.executor as any).resuming.size).toBe(0)
+      const updated = h.runtime.store.tickets.get(one.ticket.id)!
+      expect(latestAssignment(updated)?.report?.state).toBe('failed')
+      const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
+      expect(lastNote?.text).toMatch(/Total attempt bound exceeded \(2\)/)
+    } finally {
+      vi.useRealTimers()
+      promptSpy.mockRestore()
+    }
+  })
 })
 
 describe('Bounded Model Routing and Tool Execution Guard', () => {
