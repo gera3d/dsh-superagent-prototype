@@ -1,5 +1,7 @@
 # Source PR review and merge ledger — November 14, 2026
 
+PR126 actualfeeac0aed23f393224b0b50daa0f93cb42b8328d remains unmerged after review5913221801: no-clobber/SQLite recovery cleared, but failed-read ephemeralRev1 still enters worker prompt as active authority and pagefailure fixture forges status. HostedCI43763362108 SUCCESS2692pass/3skip/type/build. Wrong fullSHA in narrative/body recorded. One same216 correction6902324645, sameassignment read22:21:08.196UTC/load1running/0queued; no coordinator local tests/live changes.
+
 PR126 b0f0ba7 remains unmerged: exactreview5912962426 REQUEST_CHANGES despite greenCI43757301856 (2692pass/3skip/type/build). Remaining KV/origin-read failure may overwrite existing brief and clear diagnostic; actual backend-to-page fixtures remain missing. One original216 correction6901465542 published; sameassignment intake verified21:16:21.693UTC/load1running/0queued. Prior first-subscription/dual-page-mount findings are cleared. No local coordinator tests or merge/live changes.
 
 PR126 revised7ae5789 remains unmerged: existing review5912609440 REQUEST_CHANGES, greenCI43751786250 does not qualify first-subscription authority, swallowed resolver persistence errors or missing ThreadPage coverage. One original216 continuation6900521949 published; sameassignment intake/read verified20:11:14.956UTC, load1running/0queued. See [current review](thread-brief-pr126-independent-review.md). No additional coordinator tests/source merge/live action.
