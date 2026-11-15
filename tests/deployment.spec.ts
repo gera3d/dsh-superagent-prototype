@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Config, executable, machineOf, resolveDeployment, resolveFeishuBot, type Machine, type Probe } from '../src/deployment.ts'
+import { Config, executable, githubQuotaReset, machineOf, resolveDeployment, resolveFeishuBot, type Machine, type Probe } from '../src/deployment.ts'
 import { gitEnv } from './fixtures/git.ts'
 
 const exec = promisify(execFile)
@@ -101,7 +101,7 @@ describe('setup', () => {
 })
 
 describe('GitHub quota exhaustion', () => {
-  it.each(['gh: API rate limit exceeded for user ID 512583 (HTTP 403)',
+  it.each(['gh: API rate limit exceeded for user ID 512583 (HTTP 403)', 'gh: API rate limit already exceeded for user ID 512583.', 'gh: Too Many Requests (HTTP 429)',
     'gh: You have exceeded a secondary rate limit. Please wait before retrying (HTTP 429)'])('reports quota separately from account authentication: %s', async output => {
     const quotaProbe: Probe = async () => { throw new Error(output) }
     await expect(resolveDeployment(machine(), { repository: 'acme/widgets', cli: 'gh' }, quotaProbe, path))
@@ -120,5 +120,22 @@ describe('GitHub quota exhaustion', () => {
     const failedProbe: Probe = async () => { throw new Error(output) }
     await expect(resolveDeployment(machine(), { repository: 'acme/widgets', cli: 'gh' }, failedProbe, path))
       .rejects.toMatchObject({ code: 'agentCliSignedOut', place: 'github', values: { output } })
+  })
+})
+
+describe('GitHub quota reset lookup', () => {
+  const github = { repository: 'acme/widgets', cli: 'gh' }
+  it('reads the primary reset in milliseconds through the probe', async () => {
+    const argvs: string[][] = []
+    const reset: Probe = async argv => { argvs.push(argv); return '1794277963\n' }
+    expect(await githubQuotaReset(machine(), github, reset, path)).toBe(1794277963000)
+    expect(argvs[0]!.slice(1)).toEqual(['api', 'rate_limit', '--jq', '.resources.core.reset'])
+  })
+  it.each(['', 'null', '-5', 'soon'])('is undefined for the unreadable output %j', async output => {
+    expect(await githubQuotaReset(machine(), github, async () => output, path)).toBeUndefined()
+  })
+  it('is undefined when the probe fails or the CLI is missing', async () => {
+    expect(await githubQuotaReset(machine(), github, async () => { throw new Error('offline') }, path)).toBeUndefined()
+    expect(await githubQuotaReset(machine(), { repository: 'acme/widgets', cli: 'missing-gh' }, async () => '1', path)).toBeUndefined()
   })
 })

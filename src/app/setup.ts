@@ -1,7 +1,7 @@
 /** Probes repository and account CLIs, configures the worker execution environment and command shims, and tracks setup readiness. */
 import type { Context } from '@deepseek-ai/cordis'
 import { UserError } from '../core/index.ts'
-import { SETUP_FIELDS, resolveDeployment, resolveFeishuBot, workerProbe, type Deployment, type Machine } from '../deployment.ts'
+import { SETUP_FIELDS, githubQuotaReset, resolveDeployment, resolveFeishuBot, workerProbe, type Deployment, type Machine } from '../deployment.ts'
 import { agentVariables, applyEnvironment, verifyEnvironment, withoutDirectory, workerBin, writeEnvironment } from '../infra/environment.ts'
 import type { Settings, SettingsBlock } from '../policy.ts'
 import { SetupError, type SetupProblem } from '../setup.ts'
@@ -16,6 +16,16 @@ export interface SetupHost {
 const setupFields = (settings: Settings) =>
   JSON.stringify(Object.entries(SETUP_FIELDS).map(([id, keys]) => keys.map(key => settings.sources[id]?.config[key] ?? '')))
 export const setupChanged = (before: Settings, after: Settings): boolean => setupFields(before) !== setupFields(after)
+
+const JITTER_MS = 10_000, FIRST_BACKOFF_MS = 600_000, MAX_BACKOFF_MS = 3_600_000
+/**
+ * When to rerun setup after GitHub quota exhaustion: the primary reset plus up to 10 s of jitter, or, when the reset is unreadable or already past
+ * (the limit persists), 10 minutes doubling per consecutive failure up to 1 hour.
+ */
+export function quotaRetryAt(reset: number | undefined, now: number, failures: number, random = Math.random()): number {
+  if (reset !== undefined && reset > now) return reset + Math.ceil(random * JITTER_MS)
+  return now + Math.min(FIRST_BACKOFF_MS * 2 ** (failures - 1), MAX_BACKOFF_MS)
+}
 
 /**
  * Resolves the target repository, GitHub account, and optional Feishu bot by probing CLIs, then writes and applies the isolated git and shim environment used by worker processes.
@@ -57,6 +67,8 @@ export class Setup {
   }
   /** Defer the restart to the next macrotask so the current HTTP or tool caller receives its response first. */
   restart(): void { setTimeout(this.host.restart, 0) }
+  /** Epoch ms of the GitHub primary quota reset, undefined when unreadable. */
+  quotaReset(settings: Settings): Promise<number | undefined> { return githubQuotaReset(this.host.machine, settings.sources.github?.config, this.probe()) }
   /** Verify account CLIs for a modified source block before saving, ignoring setup errors belonging to other blocks. */
   async checkAccounts(block: SettingsBlock, settings: Settings): Promise<void> {
     const { machine } = this.host
