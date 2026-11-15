@@ -437,19 +437,23 @@ export class ThreadBriefManager {
       `Objective: ${this.state.objective}`,
       `Current State: ${this.state.current_state}`,
       `Next Action: ${this.state.next_action}`,
-      `Scope:`,
     ]
 
-    for (const s of this.state.scope) {
-      const tag = s.confirmed ? '(confirmed)' : '(inferred/unconfirmed)'
-      lines.push(`  - ${tag} ${s.text}`)
+    if (this.state.scope && this.state.scope.length > 0) {
+      lines.push(`Scope:`)
+      for (const s of this.state.scope) {
+        const tag = s.confirmed ? '(confirmed)' : '(inferred/unconfirmed)'
+        lines.push(`  - ${tag} ${s.text}`)
+      }
     }
 
-    lines.push(`Criteria:`)
-    for (const c of this.state.criteria) {
-      const authTag = c.confirmed ? '(confirmed)' : '(inferred/unconfirmed)'
-      const ev = c.evidence ? ` [Evidence: ${c.evidence.type} - ${c.evidence.summary}]` : ''
-      lines.push(`  - [${c.id}] ${authTag} (${c.status}): ${c.description}${ev}`)
+    if (this.state.criteria && this.state.criteria.length > 0) {
+      lines.push(`Criteria:`)
+      for (const c of this.state.criteria) {
+        const authTag = c.confirmed ? '(confirmed)' : '(inferred/unconfirmed)'
+        const ev = c.evidence ? ` [Evidence: ${c.evidence.type} - ${c.evidence.summary}]` : ''
+        lines.push(`  - [${c.id}] ${authTag} (${c.status}): ${c.description}${ev}`)
+      }
     }
 
     if (this.state.model_context && this.state.model_context.fallback_events && this.state.model_context.fallback_events.length > 0) {
@@ -484,4 +488,169 @@ export class ThreadBriefManager {
       },
     }
   }
+}
+
+export interface BriefTriggerLike {
+  id: string
+  text: string
+}
+
+export interface BriefTicketLike {
+  id: string
+  title: string
+  origin?: { triggerId: string; triggerIds?: string[] }
+  mandate?: { scope?: string; strength?: string }
+  channels?: unknown[]
+  ended?: { outcome: string; at: string; reason?: string }
+  attention?: { question: string }
+  stage?: string
+  assignments?: { state: string }[]
+}
+
+export interface BriefThreadLike {
+  key: string
+  title?: string
+  source?: string
+  evaluating?: unknown
+  subscriptions?: string[]
+  context?: string[]
+}
+
+export interface BriefStoreLike {
+  triggers?: {
+    get(id: string): BriefTriggerLike | undefined
+    of?(threadKey: string): BriefTriggerLike[]
+  }
+  tickets?: {
+    get(id: string): any
+  }
+  threads?: {
+    get(key: string): any
+  }
+  get?<V>(key: string): V | undefined
+  set?<V>(key: string, value: V): void
+}
+
+/**
+ * Resolves or constructs the single authoritative ThreadBriefManager for a Ticket.
+ * Preserves verbatim original ask from trigger (distinct from title).
+ * Loads persisted revisions and criteria across rereads/reloads.
+ * Does not fabricate criteria or mark criteria satisfied on ticket closure.
+ */
+export function resolveTicketBriefManager(
+  store: BriefStoreLike,
+  ticket: BriefTicketLike,
+  modelContext?: ModelContext
+): ThreadBriefManager {
+  const briefKey = `ticket-brief:${ticket.id}`
+  const persisted = store.get ? store.get<ThreadBriefState>(briefKey) : undefined
+
+  let manager: ThreadBriefManager
+  if (persisted) {
+    manager = ThreadBriefManager.deserialize(persisted)
+  } else {
+    const originTrigger = ticket.origin?.triggerId && store.triggers ? store.triggers.get(ticket.origin.triggerId) : undefined
+    const raw_request = originTrigger?.text || ticket.title || 'unavailable'
+    const objective = ticket.title || (originTrigger ? originTrigger.text.trim().split('\n')[0] : 'Unspecified task')
+    const inferred_scope = ticket.mandate?.scope ? [ticket.mandate.scope] : []
+
+    const channelRef = ticket.channels?.[0] as { thread?: string; id?: string } | undefined
+    const thread_id = channelRef?.thread || channelRef?.id || `ticket:${ticket.id}`
+
+    manager = ThreadBriefManager.fromRequest({
+      thread_id,
+      ticket_id: ticket.id,
+      raw_request,
+      objective,
+      inferred_scope,
+      inferred_criteria: [],
+      model_context: modelContext,
+    })
+
+    if (store.set) {
+      try {
+        store.set(briefKey, manager.getState())
+      } catch {
+        // storage save is non-fatal if store is read-only
+      }
+    }
+  }
+
+  // Update dynamic runtime execution state without altering confirmed criteria, revision_id, or scope
+  if (ticket.ended) {
+    manager.updateState(`ended:${ticket.ended.outcome}`, 'None (task ended)')
+    ;(manager as any).state.task_status = 'closed'
+  } else {
+    const isWorking = ticket.assignments?.some(a => a.state === 'running')
+    const stateDesc = ticket.attention ? 'attention' : (isWorking ? 'working' : (ticket.stage || 'open'))
+    const nextAct = ticket.attention?.question || (ticket.stage === 'person' ? 'Awaiting operator response' : 'Execute assignment')
+    manager.updateState(stateDesc, nextAct)
+    ;(manager as any).state.task_status = 'open'
+  }
+
+  if (modelContext) {
+    manager.updateModelContext(modelContext)
+  }
+
+  return manager
+}
+
+/**
+ * Resolves or constructs the single authoritative ThreadBriefManager for a Thread.
+ * Preserves verbatim initiating ask from first trigger.
+ * Evaluates truthful thread state (evaluating, active, initialized).
+ */
+export function resolveThreadBriefManager(
+  store: BriefStoreLike,
+  thread: BriefThreadLike,
+  timelineTriggers?: BriefTriggerLike[],
+  modelContext?: ModelContext
+): ThreadBriefManager {
+  const briefKey = `thread-brief:${thread.key}`
+  const persisted = store.get ? store.get<ThreadBriefState>(briefKey) : undefined
+
+  let manager: ThreadBriefManager
+  if (persisted) {
+    manager = ThreadBriefManager.deserialize(persisted)
+  } else {
+    const firstTrigger = timelineTriggers?.[0] || (store.triggers?.of ? store.triggers.of(thread.key)[0] : undefined)
+    const raw_request = firstTrigger?.text || thread.title || 'unavailable'
+    const objective = thread.title || (firstTrigger ? firstTrigger.text.trim().split('\n')[0] : 'Unspecified thread')
+    const inferred_scope = thread.source ? [`Execute within ${thread.source} thread parameters`] : []
+
+    manager = ThreadBriefManager.fromRequest({
+      thread_id: thread.key,
+      raw_request,
+      objective,
+      inferred_scope,
+      inferred_criteria: [],
+      model_context: modelContext,
+    })
+
+    if (store.set) {
+      try {
+        store.set(briefKey, manager.getState())
+      } catch {
+        // storage save is non-fatal if store is read-only
+      }
+    }
+  }
+
+  // Update dynamic runtime evaluation state
+  if (thread.evaluating) {
+    manager.updateState('evaluating', 'Awaiting evaluation result')
+    ;(manager as any).state.task_status = 'open'
+  } else if (thread.subscriptions && thread.subscriptions.length > 0) {
+    manager.updateState('Active', 'Execute thread tickets')
+    ;(manager as any).state.task_status = 'open'
+  } else {
+    manager.updateState('Initialized', 'Awaiting triage or ticket subscription')
+    ;(manager as any).state.task_status = 'open'
+  }
+
+  if (modelContext) {
+    manager.updateModelContext(modelContext)
+  }
+
+  return manager
 }
