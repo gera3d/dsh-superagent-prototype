@@ -383,6 +383,8 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/app/tools/executor.ts` | An Executor Session's tools |
 | `src/app/tools/composio.ts` | Nested Composio result unwrapping, batch result preservation, failure classification, and non-retryable connection error routing |
 | `src/app/tool-output.ts` | Bounds oversized shell and search output in a worker's model context while keeping the complete text in a durable file |
+| `src/app/workspace-reuse.ts` | Isolated dependency/build compatibility and qualified reuse planning; no installed runtime wiring |
+| `src/app/workspace-retention.ts` | Read-only retention candidate and sanitized aggregate planning; no cleanup authority |
 | `src/app/http.ts` | The `/orchestrator/api` routes: the same-origin check, request limits and one status per kind of failure |
 | `src/app/routes/helper.ts` | Compact Senior Developer suggestion schemas, tool-free drafting and bounded availability fallback through the shared model ladder |
 | `src/app/advice-context.ts` | Bounded recorded release goal, ownership, evidence and permission context shared by drafting, fallback and ranking. |
@@ -608,6 +610,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/deployment.spec.ts`, `tests/environment.spec.ts`, `tests/index.spec.ts` | The plugin configuration and setup, the agent's process environment, the plugin entry |
 | `tests/report-shim-identity.spec.ts` | The orchestrator_report CLI contract: pre-write validation requiring explicit ticket, assignment and turn identities |
 | `tests/service-script.spec.ts` | `scripts/dsh-superagent` against fake `ps`, `tmux` and `dsh` |
+| `tests/workspace-reuse.spec.ts`, `tests/workspace-retention.spec.ts` | Focused compatibility, synthetic qualification and conservative retention fixtures; no actual pool acceptance |
 | `tests/branding.spec.tsx` | Custom branding schema, HTTP endpoints, fail-safe fallback, and mark rendering |
 | `tests/client.spec.tsx`, `tests/navigation.spec.ts`, `tests/controls.spec.tsx` | The client plugin's registration and polling, Session navigation and route memory, the local controls, and the panel's imports, which have no cycle |
 | `tests/panel-overview.spec.tsx`, `panel-source.spec.tsx`, `panel-trigger.spec.tsx`, `panel-eval.spec.tsx`, `panel-execution.spec.tsx` | Each page of the panel, against a fake management API answered by route |
