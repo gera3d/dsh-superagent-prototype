@@ -1585,11 +1585,11 @@ describe('github quota stops the round', () => {
 
 describe('github request telemetry', () => {
   const headers = 'X-Poll-Interval: 60\r\nX-Ratelimit-Remaining: 4321\r\nX-Ratelimit-Reset: 1794613928\r\nX-Ratelimit-Resource: core'
-  const start = (store: Store | undefined, config: Record<string, unknown> = {}) => {
+  const start = (store: Store | undefined, config: Record<string, unknown> = {}, again?: ReturnType<typeof host>) => {
     const board = new HealthBoard()
     const sources = new SourceRegistry(() => SettingsSchema.parse({ sources: { github: { enabled: true, config } } }), board)
     healthOf.set(sources, board)
-    const value = host({ sources, ...store ? { store } : {} })
+    const value = again ?? host({ sources, ...store ? { store } : {} })
     const disposers: (() => unknown)[] = []
     applyGithub({ orchestrator: value, effect: (effect: () => () => unknown) => { disposers.push(effect()) } } as never)
     return { value, stop: async () => { for (const dispose of disposers) await dispose() } }
@@ -1618,6 +1618,26 @@ describe('github request telemetry', () => {
       expect(after.day.error).toBeGreaterThanOrEqual(1)
       expect(after.quota).toMatchObject({ remaining: 4321 })
       await second.stop()
+      first.value.store.close()
+    } finally { vi.useRealTimers(); vi.restoreAllMocks() }
+  })
+  it('restores stored totals once per collector, so stopping and watching again with the same Commands does not count them twice', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    try {
+      vi.spyOn(Commands.prototype, 'run').mockImplementation(async () => `HTTP/2.0 200 OK\r\n${headers}\r\n\r\n[]`)
+      const first = start(undefined)
+      await vi.waitFor(() => expect(first.value.health.github).toMatchObject({ state: 'ready' }))
+      const today = () => (first.value.health.github as { telemetry?: { day: { requests: number } } }).telemetry!.day.requests
+      expect(today()).toBe(1)
+      await first.stop()
+      // The same runtime, so the same Commands and collector, watches the Source again and makes a second request.
+      const second = start(undefined, {}, first.value)
+      await vi.waitFor(() => expect(today()).toBe(2))
+      await second.stop()
+      const third = start(undefined, {}, first.value)
+      await vi.waitFor(() => expect(today()).toBe(3))
+      expect(first.value.store.get(KV.github.telemetry)).toMatchObject({ days: expect.any(Object) })
+      await third.stop()
       first.value.store.close()
     } finally { vi.useRealTimers(); vi.restoreAllMocks() }
   })

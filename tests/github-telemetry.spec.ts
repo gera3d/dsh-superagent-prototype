@@ -11,7 +11,7 @@ const response = (status: string, body: unknown = [], headers = quota(4000)) => 
 const failure = (status: number, headers: string, stderr = `gh: failed (HTTP ${status})`) => Object.assign(new Error('x'), { code: 1, stdout: `HTTP/2.0 ${status} X\r\n${headers}\r\n\r\n{"message":"m"}`, stderr })
 function setup(now = () => Date.now()) {
   const telemetry = new GithubTelemetry(now)
-  const commands = new Commands(() => deployment, {}, new AbortController().signal, telemetry)
+  const commands = new Commands(() => deployment, {}, new AbortController().signal, undefined, telemetry)
   const run = vi.spyOn(commands, 'run')
   return { commands, run, telemetry }
 }
@@ -146,6 +146,18 @@ describe('rolling window and daily summary', () => {
     now += 4 * 86_400_000
     second.record({ caller: 'other', endpoint: 'x', outcome: '200' })
     expect(Object.keys(second.summary().days)).toEqual(['2026-11-17'])
+  })
+  it('restores only once, so a second restore on the same collector does not add the stored totals again', () => {
+    const now = Date.parse('2026-11-13T10:00:00Z')
+    const old = new GithubTelemetry(() => now)
+    old.record({ caller: 'other', endpoint: 'x', outcome: '200' })
+    const stored = JSON.parse(JSON.stringify(old.summary()))
+    const live = new GithubTelemetry(() => now)
+    live.restore(stored)
+    live.record({ caller: 'other', endpoint: 'x', outcome: '200' })
+    live.restore(stored)
+    expect(live.view().day.requests).toBe(2)
+    expect(live.summary().days['2026-11-13']!['other|x']).toMatchObject({ '200': 2 })
   })
   it('ignores a malformed stored summary and keeps its key set bounded', () => {
     const telemetry = new GithubTelemetry()

@@ -118,6 +118,7 @@ export class GithubTelemetry {
   private readonly minutes = new Map<number, Map<string, Counts>>()
   private readonly days = new Map<string, Map<string, Counts>>()
   private readonly quota = new Map<string, QuotaFacts>()
+  private restored = false
   constructor(private readonly now: () => number = Date.now) {}
 
   /** Records one call (`weight` requests) of a caller on an endpoint, with the quota headers of its response when it carried them. */
@@ -147,8 +148,14 @@ export class GithubTelemetry {
     return { days: Object.fromEntries([...this.days].map(([day, counts]) => [day, Object.fromEntries(counts)])),
       quota: Object.fromEntries(this.quota) }
   }
-  /** Restores a persisted summary after a restart, ignoring anything malformed; counts already recorded are kept and added to. */
+  /**
+   * Restores a persisted summary after a restart, ignoring anything malformed; counts already recorded are kept and added to.
+   * Only the first call takes effect: the collector outlives a Source's stop and re-watch, and by then holds the restored counts plus
+   * everything observed since, so a second restore would count the stored totals twice.
+   */
   restore(stored: unknown): void {
+    if (this.restored) return
+    this.restored = true
     if (!stored || typeof stored !== 'object') return
     const { days, quota } = stored as Partial<TelemetrySummary>
     for (const [day, counts] of Object.entries(days ?? {})) {
