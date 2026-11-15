@@ -274,6 +274,9 @@ export class Sessions {
             if (!callId) {
               throw new Error(`Canonical callId required for effectful tool ${name}; execution rejected`)
             }
+            if (ledger.hasUncertain()) {
+              throw new Error('Uncertain tool outcome blocks execution until operator reconciliation')
+            }
             ledger.recordStart(callId, name)
           }
           try {
@@ -284,10 +287,12 @@ export class Sessions {
             return result
           } catch (error) {
             if (ledger && effectful && !handled && callId) {
-              if ((error as { beforeEffect?: boolean })?.beforeEffect) {
-                ledger.recordCompletion(callId, false)
-              } else {
-                ledger.recordUncertain(callId)
+              if (ledger.record(callId)?.status !== 'uncertain') {
+                if ((error as { beforeEffect?: boolean })?.beforeEffect) {
+                  ledger.recordCompletion(callId, false)
+                } else {
+                  ledger.recordUncertain(callId)
+                }
               }
             }
             throw error
@@ -411,10 +416,12 @@ export class Sessions {
         }
         return result
       } catch (error) {
-        if ((error as { beforeEffect?: boolean })?.beforeEffect) {
-          ledger.recordCompletion(callId, false)
-        } else {
-          ledger.recordUncertain(callId)
+        if (ledger.record(callId)?.status !== 'uncertain') {
+          if ((error as { beforeEffect?: boolean })?.beforeEffect) {
+            ledger.recordCompletion(callId, false)
+          } else {
+            ledger.recordUncertain(callId)
+          }
         }
         throw error
       }

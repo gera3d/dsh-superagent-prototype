@@ -664,4 +664,94 @@ describe('Bounded Model Routing and Tool Execution Guard', () => {
     expect(cleanLedger.hasUncertain()).toBe(true)
     expect(() => cleanLedger.guard('call-next')).toThrow(/Uncertain tool outcome blocks execution/)
   })
+
+  it('ToolRuntime pre-effect persistence failure: fail closed before dispatch, zero side-effect, and reverts in-memory record', async () => {
+    const ticket = await h.acceptedTicket(feishu('pre-persist-1', '@bot Fix pre-persist fixture'))
+    const agent = h.agents.get(ticket.sessionId)!
+    const ledger = h.runtime.executor.toolLedger(ticket.ticket.id)
+
+    let effectCount = 0
+    const register = (h.runtime.sessions as any).registerTool(agent, { disposers: [] })
+    register(
+      'synthetic_effectful_pre_fail',
+      'tool with pre-effect persistence failure',
+      z.object({ cmd: z.string() }),
+      async () => {
+        effectCount++
+        return { success: true }
+      }
+    )
+
+    // Force store.set to throw synthetic persistence error
+    const originalSet = h.runtime.store.set
+    vi.spyOn(h.runtime.store, 'set').mockImplementation((key: any, val: any) => {
+      if (typeof key === 'string' && key.includes('ticket-tool-ledger')) {
+        throw new Error('synthetic persistence error: disk full or database locked')
+      }
+      return originalSet.call(h.runtime.store, key, val)
+    })
+
+    const tool = h.tools.get(ticket.sessionId)!.get('synthetic_effectful_pre_fail')!
+    await expect(tool.execute({ cmd: 'write' }, { callId: 'call-pre-fail-1', signal: new AbortController().signal } as never)).rejects.toThrow(/synthetic persistence error/)
+
+    // Invariant: Effect was NEVER dispatched
+    expect(effectCount).toBe(0)
+    // Invariant: Ledger record is reverted (deleted), not lingering in-flight or completed
+    expect(ledger.record('call-pre-fail-1')).toBeUndefined()
+    vi.restoreAllMocks()
+  })
+
+  it('ToolRuntime post-effect persistence failure: marks uncertain in-memory and blocks subsequent execution', async () => {
+    const ticket = await h.acceptedTicket(feishu('post-persist-1', '@bot Fix post-persist fixture'))
+    const agent = h.agents.get(ticket.sessionId)!
+    const ledger = h.runtime.executor.toolLedger(ticket.ticket.id)
+
+    let effectCount = 0
+    const register = (h.runtime.sessions as any).registerTool(agent, { disposers: [] })
+    register(
+      'synthetic_effectful_post_fail',
+      'tool with post-effect persistence failure',
+      z.object({ cmd: z.string() }),
+      async () => {
+        effectCount++
+        return { success: true }
+      }
+    )
+
+    // Let recordStart persist successfully, then fail on recordCompletion
+    let setCalls = 0
+    const originalSet = h.runtime.store.set
+    vi.spyOn(h.runtime.store, 'set').mockImplementation((key: any, val: any) => {
+      if (typeof key === 'string' && key.includes('ticket-tool-ledger')) {
+        setCalls++
+        if (setCalls > 1) {
+          throw new Error('synthetic post-effect persistence failure: power cut during write')
+        }
+      }
+      return originalSet.call(h.runtime.store, key, val)
+    })
+
+    const tool = h.tools.get(ticket.sessionId)!.get('synthetic_effectful_post_fail')!
+    await expect(tool.execute({ cmd: 'write' }, { callId: 'call-post-fail-1', signal: new AbortController().signal } as never)).rejects.toThrow(/synthetic post-effect persistence failure/)
+
+    // Side effect happened once
+    expect(effectCount).toBe(1)
+    // Outcome marked uncertain honestly
+    expect(ledger.record('call-post-fail-1')?.status).toBe('uncertain')
+    expect(ledger.hasUncertain()).toBe(true)
+
+    // Subsequent tool execution is strictly blocked
+    await expect(tool.execute({ cmd: 'write-2' }, { callId: 'call-post-fail-2', signal: new AbortController().signal } as never)).rejects.toThrow(/Uncertain tool outcome blocks execution/)
+
+    // Recovery test: on restart / resume, restored in-flight state marks uncertain
+    h.runtime.executor.resume()
+    const cleanLedger = new ToolExecutionLedger()
+    const stored = h.runtime.store.get(KV.sessions.toolLedgers(ticket.ticket.id))
+    expect(stored).toBeDefined()
+    cleanLedger.restore(stored as never)
+    cleanLedger.markInFlightUncertain()
+    expect(cleanLedger.hasUncertain()).toBe(true)
+    expect(() => cleanLedger.guard('call-any')).toThrow(/Uncertain tool outcome blocks execution/)
+    vi.restoreAllMocks()
+  })
 })

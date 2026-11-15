@@ -153,9 +153,7 @@ export class ToolExecutionLedger {
   }
 
   private notify(): void {
-    try {
-      this.onChange?.(this)
-    } catch {}
+    this.onChange?.(this)
   }
 
   record(toolCallId: string): { status: ToolExecutionStatus; toolName: string; timestamp: number } | undefined {
@@ -189,6 +187,9 @@ export class ToolExecutionLedger {
   }
 
   recordStart(toolCallId: string, toolName: string): void {
+    if (this.hasUncertain()) {
+      throw new Error('Uncertain tool outcome blocks execution until operator reconciliation')
+    }
     const existing = this.records.get(toolCallId)
     if (existing) {
       if (existing.status === 'in_flight') {
@@ -202,14 +203,24 @@ export class ToolExecutionLedger {
       }
     }
     this.records.set(toolCallId, { status: 'in_flight', toolName, timestamp: Date.now() })
-    this.notify()
+    try {
+      this.notify()
+    } catch (err) {
+      this.records.delete(toolCallId)
+      throw err
+    }
   }
 
   recordCompletion(toolCallId: string, success: boolean): void {
     const rec = this.records.get(toolCallId)
     if (rec) {
       rec.status = success ? 'completed' : 'failed'
-      this.notify()
+      try {
+        this.notify()
+      } catch (err) {
+        rec.status = 'uncertain'
+        throw err
+      }
     }
   }
 
@@ -234,8 +245,14 @@ export class ToolExecutionLedger {
     if (!['reconciled_success', 'reconciled_failed', 'reconciled_abandoned'].includes(finalStatus)) {
       throw new Error(`Invalid reconciliation status: ${finalStatus}`)
     }
+    const prev = rec.status
     rec.status = finalStatus
-    this.notify()
+    try {
+      this.notify()
+    } catch (err) {
+      rec.status = prev
+      throw err
+    }
   }
 
   guard(toolCallId: string): void {
