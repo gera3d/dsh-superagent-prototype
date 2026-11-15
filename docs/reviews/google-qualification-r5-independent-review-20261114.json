@@ -1,0 +1,45 @@
+{
+  "observedAt": "2026-11-14T13:40:53.456477+00:00",
+  "findingId": "f526782b-1443-4342-b811-3cba5188f455",
+  "revision": 6,
+  "state": "boundedGoogleexecutionandfinalhandoff verified; protectedacceptancepending/reportinglimits retained",
+  "job": {
+    "id": "finding:f526782b-1443-4342-b811-3cba5188f455:r5",
+    "ticketId": "d47b3cf53147e87d06b91bb3ab1b3249",
+    "assignmentId": "d7a907f5d5bc0e29b38b71fb8e989a4a"
+  },
+  "reviewer": "Codexexistingindependentreviewer",
+  "verdict": "Googleconnection returnedrealresponsesandcompletedthreeverificationphases plus consumedcanonicalfinalreadyreport on sameGoogle route. Original fullfinding isNOTaccepted; interimprogressingestion/nativebrowser/consumptionlimits explicit.",
+  "evidence": "../evidence/google-qualification-r5-20261114.json",
+  "requirements": [
+    {
+      "requirement": 1,
+      "result": "Verified for thissingleexecution: nativeouterGoogle request+allnestedmodels Google, nofallback/OpenAI; existingprimaryroute/5reserve/settingsunchanged.",
+      "limit": "No futurequota/reliability guarantee."
+    },
+    {
+      "requirement": 2,
+      "result": "Threeserialtargetroundtrips realexit0; authoritativecheckpoint/fixedhash/nonce/readback/independentrecompute reviewed. Timings fromactualnestedtool+outerrequest/progress/completion.",
+      "limit": "Additionalinspectioncommands occurred, not a3calltotal or throughputbenchmark."
+    },
+    {
+      "requirement": 3,
+      "result": "ProgressCLI/localpayload/hashobserved; finalready fullidentity/snapshothash/consumedmarker/canonicaltransitionverified.",
+      "limit": "Progressnotseparatelyobserveddelivered; shellidentityenvmissing persisted, flagsfromactualtaskcontext used. Do not claimbothcanonicalreports delivered."
+    },
+    {
+      "requirement": 4,
+      "result": "Codexindependentlyinspectedactualsessions/providerevents/source-toolresults/reportreceipt; thisattempt notfallback.",
+      "limit": "No currentnativebrowser/protectedacceptance. No demonstratednewcodeblocker corrected; reporting/allowancetiminglimits recorded, no newrepairauthorityinferred."
+    },
+    {
+      "requirement": 5,
+      "result": "GitHub/localcheckpointupdatedwithboundedcoverage/limits and oldr1/r3historyretained.",
+      "limit": "No billedprice/postrunfreshquota; no acceptancefromworkerready."
+    }
+  ],
+  "history": "Originalr1/r3Googlefailures/Sonnetfallbackreports/5reservechoice unchanged; no failedhistory rewritten.",
+  "nextOwner": "Codex: protectednativefindingevidence/requirementreview/acceptance onlyifqualified whenactualcontrolavailable; reportprogress/allowancestalenesslimitations, no automaticsecondretry/newimplementation.",
+  "unchanged": "OpenAIconserved/executor44/models26/coordination3/max3/Google5reserve/backoff/routes/accounts/credentials/access/spendconfiguration/nativegates; workmap/diagnostics115/Composio108/sections holds and unapprovedclarification/separatequota boundaries unchanged.",
+  "freshnessCaveat": "Initial native allowance was a freshly read persistedsnapshot markednonstale, NOT anupstreamquota refresh; aggregateupdated13:27:28.330Z/~7minold atprecheck13:34:33.455Z. Providerstale=false, bothwindowstalefalse; nominaleligibilityderivedfromsameprimary/status/thresholds/unchangedadaptersource, not directrawaccounteligibilitycall. Postsnapshotregressed12:49:48.954Z, aggregate/providerstaletrue withwindowstalefalse. Exact initial/post flags retained inevidence; no consumption/futureeligibility claim, no newprobe/retry. ActualGoogleexecution+finalhandoff independentlyconfirmed."
+}

@@ -1,0 +1,561 @@
+{
+  "observedAt": "2026-11-14T19:10:27.471506+00:00",
+  "authority": "Trusted user transcript forwarded unchanged: User: “OK, can you distribute tasks between the two get the two get hub repositories so that we can work through all of these issues and resolve everything with the harness and everything with a good idea”",
+  "owner": "ExistingCodexSuperagentcoordinator/independentreviewer/sharedreleaseowner; configuredUltronimplementation; GoodIdea separatelyowned/notdispatched",
+  "disk": {
+    "availableKiB": 11985816,
+    "approxGiB": 11.43,
+    "capacityUsed": "95%",
+    "policy": "No largebuild/download/clone/deletion; queueheavyprocesschecks; max3unchanged, not requirementtofill3slots"
+  },
+  "intakes": [
+    {
+      "issue": 226,
+      "stage": "subscribed",
+      "decisions": [
+        {
+          "id": "2983073f8747170942fcaa1e26706077",
+          "kind": "accept",
+          "outcome": "accept",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ],
+          "at": "2026-11-14T19:07:34.986Z",
+          "strength": "explicit",
+          "ticketId": "d504a5083010da2d76e6d6164a408bef",
+          "triggerIds": [
+            "68c806f87baae81db2564424d1a1394a"
+          ],
+          "thread": "github:226",
+          "rules": [],
+          "threadTitle": "#226 [superagent] Integrate the isolated report-identity repair with strict exactly-once reporting",
+          "preview": "This comment is written by Ryu, an automated assistant using Gera's connected GitHub account, on Gera's explicit request to distribute and work through the harn",
+          "ticketTitle": "Report-identity integration: reuse the existing narrow patch and its evidence"
+        },
+        {
+          "id": "258496d799782ba90d65a0142d4e463b",
+          "kind": "ignore",
+          "outcome": "ignore",
+          "reason": [
+            {
+              "code": "not_a_member",
+              "triggerId": "ecb9ac34ac77a033b4e815d7aa5cf1d7"
+            }
+          ],
+          "at": "2026-11-14T19:02:13.552Z",
+          "strength": "inferred",
+          "triggerIds": [
+            "ecb9ac34ac77a033b4e815d7aa5cf1d7"
+          ],
+          "thread": "github:226",
+          "rules": [],
+          "threadTitle": "#226 [superagent] Integrate the isolated report-identity repair with strict exactly-once reporting",
+          "preview": "[superagent] Integrate the isolated report-identity repair with strict exactly-once reporting @Ultron-Uplink Implement this bounded Harness-only integration und"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "d504a5083010da2d76e6d6164a408bef",
+          "state": "open",
+          "stage": "working",
+          "directory": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/report-identity-d504a5083010",
+          "sessionId": "worker-d504a5083010da2d76e6d6164a408bef",
+          "assignments": [
+            {
+              "id": "61861d64283f6f9343b04189a512e9a4",
+              "state": "running",
+              "createdAt": "2026-11-14T19:07:34.987Z",
+              "startedAt": "2026-11-14T19:07:35.769Z",
+              "ref": "worker-d504a5083010da2d76e6d6164a408bef"
+            }
+          ],
+          "usage": null
+        }
+      ]
+    },
+    {
+      "issue": 227,
+      "stage": "subscribed",
+      "decisions": [
+        {
+          "id": "124a40104958ff180f087e420314ae4d",
+          "kind": "accept",
+          "outcome": "accept",
+          "reason": [
+            {
+              "code": "explicitRouted"
+            }
+          ],
+          "at": "2026-11-14T19:07:37.161Z",
+          "strength": "explicit",
+          "ticketId": "4e351bddde9fe140791971c7a7c5cb36",
+          "triggerIds": [
+            "4ee1c7c45cedd3cf03c7c7d8e6cd2f5f"
+          ],
+          "thread": "github:227",
+          "rules": [],
+          "threadTitle": "#227 [superagent] Route prototype116 WorkerReportSummary alignment fix to the source worker",
+          "preview": "This comment is written by Ryu, an automated assistant using Gera's connected GitHub account, on Gera's explicit request to distribute and work through the harn",
+          "ticketTitle": "UI: implement the WorkerReportSum fix from prototype issue #116"
+        },
+        {
+          "id": "1397158e1e644fff24bb6e72274fdc1f",
+          "kind": "ignore",
+          "outcome": "ignore",
+          "reason": [
+            {
+              "code": "not_a_member",
+              "triggerId": "1b3a880015d0ec68710c8074c0799955"
+            }
+          ],
+          "at": "2026-11-14T19:02:13.595Z",
+          "strength": "inferred",
+          "triggerIds": [
+            "1b3a880015d0ec68710c8074c0799955"
+          ],
+          "thread": "github:227",
+          "rules": [],
+          "threadTitle": "#227 [superagent] Route prototype116 WorkerReportSummary alignment fix to the source worker",
+          "preview": "[superagent] Route prototype116 WorkerReportSummary alignment fix to the source worker @Ultron-Uplink Implement ONLY the existing source issue https://github.co"
+        }
+      ],
+      "tickets": [
+        {
+          "id": "4e351bddde9fe140791971c7a7c5cb36",
+          "state": "open",
+          "stage": "working",
+          "directory": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/worker-report-sum-4e351bddde9f",
+          "sessionId": "worker-4e351bddde9fe140791971c7a7c5cb36",
+          "assignments": [
+            {
+              "id": "82b8e50d50b5803c66beca1ed1658cce",
+              "state": "running",
+              "createdAt": "2026-11-14T19:07:37.162Z",
+              "startedAt": "2026-11-14T19:07:38.183Z",
+              "ref": "worker-4e351bddde9fe140791971c7a7c5cb36"
+            }
+          ],
+          "usage": null
+        }
+      ]
+    }
+  ],
+  "ciFinding": {
+    "id": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+    "revision": 20,
+    "state": "running",
+    "job": {
+      "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r20",
+      "ticketId": "a88c22715a939f7e151c9297e99a3675",
+      "assignmentId": "fb16c8cfe3a0d5294b5073051a7d3523"
+    },
+    "reports": [
+      {
+        "reference": "ticket/81f39e075967b209bb2da33cdeebb9ea/report/b7a29614de084f5006202e2253aecc3f",
+        "evidence": "Finding worker turn ended without a recorded status report.",
+        "at": "2026-11-10T07:58:01.166Z",
+        "nextDecision": "Inspect the blocked work report and decide the next bounded recovery step.",
+        "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r1",
+        "state": "blocked",
+        "summaryTruncated": false,
+        "originalLength": 59,
+        "reportSummarySha256": "6f05c43aac9ac34dde2a6192af771384484ee989ce7196e6432bd67e84a06be8"
+      },
+      {
+        "reference": "ticket/4b322b6ef82dfff0d1a7fc3e49de4a6b/report/29973617ee0a5a11f3660577385d686b",
+        "evidence": "🟢 DONE: Composio nested-failure handling is wired into the real `tools/post-execute` boundary. It is committed locally and not pushed.\n\n**Exact artifacts**\n- Repo: `…/work/finding-task-4b322b6ef82d/repo`, branch `agent/finding-task-4b322b6ef82d`.\n- Base `4e6ff0d19c17da8010f4884af1009b4537dba8f1`. Head `dd0e5eac9433b6c949839c6720d45c5f02e5edf8`.\n- Patch: `…/work/finding-task-4b322b6ef82d/composio-boundary.patch`, sha256 `65adea940dd23810f810d66c4250cb80b78e6e9b6876495d020a6aa427dad185`. Bundle: `composio-boundary.bundle` in the same directory.\n- 4 files changed, +489/-15. The tree is clean.\n- Trusted source is now at `848e82f`, one commit ahead of my base. The patch was not rebased onto it. Codex should apply it there, or tell me to rebase.\n\n**Findings**\n- The `unwrapComposioResult` helper was unwired. Nothing in production consumed it.\n- The only host consumption point is the Context event `tools/post-execute`. `installOutputBound` is the precedent for a listener on it.\n- Composio tools are identified by provenance: tool names of the form `mcp__<server>__*` where the server name contains `composio`.\n\n**Changes**\n- New `src/app/composio-boundary.ts`. It always awaits `next()` first and passes other tools, successes and unknown payloads through unchanged. Only a detected failure becomes a `block`, which the host turns into an `isError` result.\n- Classifications: connection_required, uncertain_completion (timeout, lost ack, or batch entries the service counted but never reported), rate_limited, action_failed, transport_failure. Completion is `failed`, `partial` or `unknown`.\n- The feedback keeps successful batch entries verbatim, with sanitized diagnostics. It redacts bearer tokens, authorization and cookie headers, api keys, JWTs, URL userinfo and long token-like strings.\n- The recovery action is stated per kind:\n  - Timeout or lost ack: do NOT resend. Check the external state or ask a person.\n  - Rate limit: wait at least the Retry-After, then retry only the failed entries, once.\n  - Auth or connection: do not retry and do not reconnect. Ask the person to authorize the app.\n- `src/app/sessions.ts` installs the listener on the main Session and on executor and subagent Sessions, next to `installOutputBound`.\n- `src/app/tools/composio.ts` changes:\n  - `CONNECTION_FAILURE_PATTERN`, `isRecord`, `extractErrorMessage` and a new `isBatchItemFailed` are exported.\n  - Raw-text connection scans now run only after a Composio failure is established. A successful payload containing \"unauthorized\" is no longer a false positive.\n  - An `error` field without Composio's `successful` flag is no longer treated as failure.\n\n**Checks**\n- `npx tsc --noEmit`: exit 0.\n- `npx tsdown` build: exit 0.\n- `npx vitest run tests/composio.spec.ts tests/composio-boundary.spec.ts tests/tool-output.spec.ts tests/tools.spec.ts tests/model-surface.spec.ts tests/specialist-profile.spec.ts`: 6 files, 87 tests passed, exit 0. I ran no broad suite.\n- New `tests/composio-boundary.spec.ts` (19 tests) runs mocked `mcp__composio__*` tools through a real `@deepseek-ai/dsh-tools` `ToolRuntime` with the installed listener. It covers:\n  - nested `successful:false`, mixed batch, `structuredContent`;\n  - rate limit with Retry-After, auth/connection;\n  - a thrown timeout, a timed-out entry in a batch, and unreported entries;\n  - secret redaction and unknown payloads;\n  - non-Composio controls (`bash`, `mcp__chrome__*`) and business text containing \"unauthorized\" or \"successful:false\", with no false positives.\n- It also drives the actual Runtime's main and worker Session `tools/post-execute` waterfall, and asserts that no `mcp__*` or Composio tool is registered for either.\n\n**Known host limits**\n- The worker allowlist `WORK_TOOLS` and the main Session allowlist contain no `mcp__*` tools, and I did not widen them. A restricted worker cannot call Composio, so the listener is inert there until a person grants an MCP tool. It applies at once to any Session that has one.\n- Live verification needs Composio access, which was forbidden. The fixtures are mocked responses only.\n- If the real MCP bridge marks a failure with `isError:true` and no Composio envelope, it is left as the host reports it.\n\n**Rollback**\nRevert `dd0e5ea`, or remove the two `installComposioBoundary(agent)` calls in `sessions.ts`.\n\n**Guardrails kept**\n- No push, merge or live-source edit.\n- No settings, provider, route, account or credential change.\n- No external API call and no Google or OpenAI probe.\n- The old `…/work/finding-task-81f39e075967` tree was untouched. Its WIP (the `CONNECTION_FAILURE_PATTERN` export) is superseded by this commit.\n\n🎯 NEXT: Codex reviews the patch and applies it onto `848e82f`.",
+        "at": "2026-11-13T13:09:22.909Z",
+        "nextDecision": "Review the linked evidence and explicitly accept or request further work.",
+        "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r3",
+        "state": "ready",
+        "summaryTruncated": false,
+        "originalLength": 4703,
+        "reportSummarySha256": "67834712ae354205aeefb4400826484186c99c456cc5ab3bcafd500dcb89c334"
+      },
+      {
+        "reference": "ticket/13e4f490b75772d3755a7e7238b37681/report/e133ad26ae3d7718d6a36a9cc1c881eb",
+        "evidence": "Native review/correction is in progress; previous ready evidence is not current. Turn 2 restart: new isolated clone at work/finding-task-13e4f490b757/repo, branch agent/finding-task-13e4f490b757, source 8882f11 + r3 candidate a578315 cherry-picked (36 baseline tests pass). Traced real bridge (dsh-mcp-client lib/index.js: name mcp__composio__<raw>, MCP isError throws -> ToolRuntime isError result; non-error returns {content,structuredContent}); profiles web+superagent both register serverName composio; managed master/worker allowlists exclude MCP, so reachable consumer is ordinary (non-managed) Sessions. Implementing the 3 review corrections now.",
+        "at": "2026-11-13T14:13:37.296Z",
+        "nextDecision": "Await fresh current-job evidence after the newer human/CI input or work progress.",
+        "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r5",
+        "state": "evidence",
+        "currencyToken": "bcc7aec00c1891e05d29092cbccef3766e60f376c6748aaf43f44e82022686c1",
+        "summaryTruncated": false,
+        "originalLength": 653,
+        "reportSummarySha256": "085c4785afaa201b31b556b630f82566b680d59a045fdaf920f9e7c6c24c81b2"
+      },
+      {
+        "reference": "ticket/13e4f490b75772d3755a7e7238b37681/report/e133ad26ae3d7718d6a36a9cc1c881eb",
+        "evidence": "INCOMPLETE-FOR-RELEASE, READY FOR CODEX EXACT-HEAD REVIEW (no PR, no push, no live edit; none requested).\n\nPATHS: clone `/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-13e4f490b757/repo`, branch `agent/finding-task-13e4f490b757`. Patch `../composio-r5.patch` (sha256 6440c95be7d6837d99ee36b842a6a2f7d065ece0e692c16841287ede212e3d7f, diff base..head); bundle `../composio-r5.bundle` (verifies; prerequisite 8882f11).\nSHAs: HEAD b189f13056817182b3d458419ebba2f3ba81f233; BASE 8882f117ec5a82c2953c70858bcd92bbc8655138 (current operator source, = 36a9df6 + status doc). Commits: a578315 = r3 candidate dd0e5ea cherry-picked unchanged (new SHA, same tree content); b189f13 = this correction. Old r1 WIP / r3 tree/patch/bundle and the original worktree untouched.\n\nREVIEW FINDINGS FIXED (src/app/composio-boundary.ts, sessions.ts):\n1. Error flag lost: ToolRuntime result for a tool returning {isError:true,content:[429]} as a value is now treated as transport failure (checks result.value.isError too). Actual remote bridge mapping traced in installed dsh-mcp-client lib/index.js: publicToolName = `mcp__<serverName>__<raw>`; an MCP isError result is THROWN (-> ToolRuntime isError result, text `Error: <body>`), otherwise returns {content, structuredContent?}. So the returned-value isError case is not produced by the real bridge but is handled defensively; the thrown case's JSON body is now parsed (first {..last } of the error text, only for error results; successful prose is never searched).\n2. Reachability: managed master/worker allowlists contain no MCP tool (unchanged). Both profiles (web, superagent cordis.patch.yml) register an `@deepseek-ai/dsh-mcp-client` plugin with serverName `composio`, so mcp__composio__* tools exist only in ORDINARY (non-managed) Sessions. Sessions.decorate previously returned early for them (limitSubagent). Added `observeComposio`: those Sessions now get only the read-only tools/post-execute listener (binding, no register/restrict/guard; test asserts neither restrict nor guard called and no mcp/composio tool registered). Master/worker/subagent wiring kept. Provenance tightened to exact `^mcp__composio__` (was any name containing composio).\n3. Partial batch dropped on error: batch is now assessed even when transport/isError; successes kept; unknown completion preserved. Recovery text rewritten per kind and scoped by entry index: rate_limited says wait >= Retry-After then retry only that entry once; uncertain says do NOT resend it/verify first; mixed batches never offer succeeded or uncertain entries (test regex-checks), connection_required = no retry, no self-reconnect, person re-authorizes; transport failure = verify before resend.\n\nTESTS (offline, mocked remote call only): new tests/composio-bridge.spec.ts (10) builds tools with the INSTALLED dsh-mcp-client createMcpToolDefinition into a real ToolRuntime: nested successful:false, mixed batch, thrown partial batch, rate limit w/ Retry-After, NO_ACTIVE_CONNECTION, timeout/lost ack (single call, sent once), mixed rate+uncertain, preserved prior success, non-Composio/business-text untouched, plus ordinary-Session decoration. Skips if host package missing (override DSH_MCP_CLIENT_ENTRY).\nCommands (cwd=clone): `pnpm --config.verify-deps-before-run=false exec vitest run tests/composio-boundary.spec.ts tests/composio-bridge.spec.ts tests/composio.spec.ts tests/tool-output.spec.ts tests/runtime-concurrency.spec.ts` -> exit 0, 5 files/112 tests pass. Reviewer's root audit spec (docs/evidence/composio-r3-root-boundary.audit.spec.ts.txt run as a temp test, removed afterwards) -> 4/4 pass (was 1/3 fail). `pnpm exec tsc --noEmit` -> exit 0. `pnpm exec tsdown` -> exit 0. No broad suite run.\n\nREMAINING / LIMITS: no live Composio call, so real remote/auth/rate-limit payload shapes and actual native reachability in a deployed ordinary chat are not proven; ordinary-Session hook depends on `agent/created` firing for those Sessions (verified only with the host fixture). Composio-owned auth, allowlists, profiles, routing, settings unchanged; no deps added. Historical helper tests are not acceptance. Review-clarification proposal untouched.\nROLLBACK: drop commit b189f13 (and a578315) — purely additive listener; src/app/tools/composio.ts helper tweaks (no business-text scanning, batch successful:false) revert with them. Release only after Codex exact-head review.",
+        "at": "2026-11-13T14:17:18.718Z",
+        "nextDecision": "Review the linked evidence and explicitly accept or request further work.",
+        "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r5",
+        "state": "ready",
+        "summaryTruncated": false,
+        "originalLength": 4432,
+        "reportSummarySha256": "95e235d55eaacf641058dcc0abfea2df2031852e2dbd7729df8e4572ebcb9c13"
+      },
+      {
+        "reference": "ticket/5cbcad514cfa6f880f483c0e0f2ae566/report/c447ef4dc4a1231ecbeddb5f2feab2d5",
+        "evidence": "Native review/correction is in progress; previous ready evidence is not current. Internal: imported r5 candidate (b189f13 as 2822fc9) into own clone work/finding-task-5cbcad514cfa/repo on top of current operator source d15a982; baseline 46 composio tests pass. Now fixing the 2 r5 review defects (ambiguous/malformed batch entries must be uncertain, not succeeded; timeout/lost-ack must dominate rate-limit wording).",
+        "at": "2026-11-13T15:01:10.964Z",
+        "nextDecision": "Await fresh current-job evidence after the newer human/CI input or work progress.",
+        "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r8",
+        "state": "evidence",
+        "currencyToken": "70a032db6411efc7a641bac8a43311008208077dadb362c5e31806f15c39ae51",
+        "summaryTruncated": false,
+        "originalLength": 416,
+        "reportSummarySha256": "55c818db9348c82a5fdf5640b57615abdcc018337e3f6e44454e8bcc8c4fbf6b"
+      },
+      {
+        "reference": "ticket/5cbcad514cfa6f880f483c0e0f2ae566/report/c447ef4dc4a1231ecbeddb5f2feab2d5",
+        "evidence": "Bounded r8 correction ready for independent review (no PR; local commit only, nothing pushed/merged/published).\n\nRepo (own clone of current operator source): /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-5cbcad514cfa/repo, branch agent/finding-task-5cbcad514cfa.\nBase (operator source, unchanged): d15a98260817c5d74a7001144f7d7602e3831906. Head: a91a27ac5d5d36511eef6d35eb004a38ea2f271e. Commits: b8233fa (r3 candidate a578315, cherry-picked), 2822fc9 (r5 candidate b189f13, cherry-picked), a91a27a (this correction; 3 files, +152/-20). Patch d15a982..HEAD: work/finding-task-5cbcad514cfa/composio-r8.patch sha256 b782835c45e15ae2e835441736f016ff161da95d29ade8aea8ec9e450bd103f5; bundle composio-r8.bundle. Original r1 WIP, r3 and r5 trees/patches/bundles untouched. node_modules is a symlink to existing deps; no installs.\n\nAlready completed earlier (preserved, replay passes): actual consumption boundary = tools/post-execute listener installed on Sessions (installComposioBoundary), provenance filter mcp__composio__ only, error-flagged values, partial batches, sanitized diagnostics, Retry-After, connection-required guidance, no auto-retry/reconnect.\n\nFixed in this stage (src/app/composio-boundary.ts):\n1. Batch accounting: in an execution batch (numeric counts, top-level successful:false, or entries with response/successful) an entry is \"succeeded\" only with explicit successful:true (own or response). Entries with response:{} / no flag, and null/malformed entries, go to new assessment.unconfirmed (index, tool_slug, reason) and count in counts.unreported; they are not promoted, not discarded, and feedback no longer says they took effect. Explicit successes are retained; top-level failure message no longer lost behind unconfirmed entries. Search/listing results (not execution batches) are not held to the flag, so no business-payload false positive.\n2. Kind precedence: timeout/lost-ack/reset/5xx gateway wording (LOST_OUTCOME) now outranks rate-limit wording; bare \"upstream\"/\"gateway\" only yield to an explicit rate limit. Retry-After is kept for rate_limited and uncertain entries, but for uncertain only as \"not before N seconds\" wait floor, with explicit \"whatever a rate limit says, do NOT resend\"; no \"did not run\"/retry-once promise. Plain rate-limit guidance retained (wait Retry-After, retry only that entry once) with wording softened to \"reported a rate limit\". Retry floor is computed per kind.\n\nTests (offline, mocked remote, no external action): added 3 pure-assessor tests (tests/composio-boundary.spec.ts) and 4 installed-bridge tests (tests/composio-bridge.spec.ts: createMcpToolDefinition -> real ToolRuntime -> listener) covering unconfirmed/malformed entries with preserved successes, single no-evidence entry, lost-ack + 429 + Retry-After, plain rate limit vs rate-limited-and-timed-out entry; existing timeout, auth/connection, partial, prior-success, unrelated non-Composio controls still pass.\nCommands/results (cwd = repo above):\n- npx vitest run tests/composio-boundary.spec.ts tests/composio-bridge.spec.ts tests/composio.spec.ts -> 3 files, 53 tests pass, exit 0\n- replay of the independent r5 audit specs (docs/evidence/composio-r5-root-uncertainty.audit.spec.ts.txt 4 tests, composio-r5-root-bridge.audit.spec.ts.txt 12 tests) as temporary copies -> 16/16 pass, exit 0; temp copies removed\n- npx tsc --noEmit -> exit 0\n- npx tsdown -> build complete, exit 0 (lib/ gitignored)\nNo broad suite run; no live acceptance claim.\n\nRemaining limits: ordinary Session fixture and installed-bridge tests with mocked remote are not proof of native chat/live Composio reachability; restricted worker allowlists contain no MCP tools and were not changed (listener only reads results). Real remote Composio payload shapes beyond the documented response.successful shape are unverified; an execution batch whose entries lack explicit success flags will be treated as uncertain (conservative). Plain 429 rate-limit still advises one retry after Retry-After (service rejection); mutating callers can still choose to verify first.\nRollback: drop commit a91a27a (or the three cherry-picked commits) / do not apply composio-r8.patch; operator source untouched. Release: Codex independent exact-head review, then the protected flow. No PR opened; no bot-review rounds; no reviewers credited.",
+        "at": "2026-11-13T15:04:06.830Z",
+        "nextDecision": "Review the linked evidence and explicitly accept or request further work.",
+        "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r8",
+        "state": "ready",
+        "summaryTruncated": false,
+        "originalLength": 4372,
+        "reportSummarySha256": "b92127d451852ffea4b5b1b0fc5d418198078247ee1c59416bb2b922a4514f72"
+      },
+      {
+        "reference": "ticket/616615804db1a90e9974258d2efb18a7/report/5681a0c034bbb1ea2c78a75dfd24f036",
+        "evidence": "Candidate for independent review, not accepted or released. No PR was opened and no branch was pushed, so no push, merge, deploy or publish by the worker. PR106 and the original tree (head 78a8f78) are untouched.\n\n**Where the code is**\n- Clone: /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-616615804db1/work, branch agent/finding-task-616615804db1.\n- Head: 3e630f84037a47a744a29632fd2f01e19f7e3b9a.\n- Base: a00e0b2c34f05516d7ac35792dfd0da62206592a (the current operator HEAD, codex/release-aware-advice).\n- Diff base..head sha256: fc2e2f8d2f851cc86cb04a4687e973908bc959ee7a4bf78925fc0bbe4f302649. It touches 5 files (+955/-21).\n- Evidence files are in ../evidence/: composio-r11.patch and composio-r11.bundle.\n- The branch is the 3 prior worker commits from PR106 (4a5bb35, 6be2a38, a733087), cherry-picked, plus one new commit.\n\n**What the prior commits already covered (not reimplemented)**\n- Classifying transport, nested, mixed and uncertain failures at the post-execute boundary.\n- Retaining successful batch entries.\n- Sanitized diagnostics, Retry-After as a wait floor, and connection-required guidance.\n- No retry of uncertain entries.\n- No allowlist widening.\n\n**The new commit 3e630f8 fixes the three review findings**\n1. **Error-only envelope.**\n   - New `isEnvelopeFailed` in src/app/tools/composio.ts, used by the unwrapper and by the boundary's single-action and batch paths.\n   - A root `error` without `successful` now counts as the service's own failure report. This holds for a string, an object, or `response.error`, in content and in structuredContent.\n   - These are not failures: `successful:true` outranks `error`; `error` of null, \"\" or false; and any `error` inside `data`.\n   - Connection and rate-limit wording still classifies such an envelope.\n   - Controls added at a real ToolRuntime.\n2. **Always-on bridge and prior-success regressions.**\n   - New always-on ToolRuntime test: an earlier success is unchanged and not re-run when a later call fails, and a batch keeps its own successes.\n   - composio-bridge.spec.ts no longer relies on one hardcoded home path. It checks DSH_MCP_CLIENT_ENTRY, ~/.npm-global, npm prefix, Homebrew and /usr/local, and skips visibly if none exists.\n   - In this run the installed bridge at ~/.npm-global/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-mcp-client was found and all 14 bridge tests ran, not skipped.\n   - Missing host coverage: no remote Composio server was reached and no live MCP transport was exercised. Only the remote `call` is mocked.\n3. **Ordinary-session binding.**\n   - Qualified the reviewer's overwrite claim. `decorate` begins with `if (bindings.has(agent)) return`, so nothing is overwritten.\n   - Replaced the `subagent:true` shortcut with an explicit `observer` flag. It is excluded from model-retry health and from the routing guard.\n   - `observeComposio` is idempotent. The prompt and routing guard are unchanged for managed Sessions, and I did not touch the `decorate` guard.\n   - New tests show:\n     - A person's chat gets only the `tools/post-execute` listener: no prompt section, restrict, guard or routing guard.\n     - Repeated `agent/created` binds once, and already-bound worker and main Sessions are not rebound.\n     - The listener is released on `agent/disposed`, a second disposal is harmless, and a recreated Session is rebound.\n\n**Checks run, all in the clone at head 3e630f8**\n- `npx tsc --noEmit` exited 0.\n- `npx vitest run tests/composio.spec.ts tests/composio-boundary.spec.ts tests/composio-bridge.spec.ts tests/runtime.spec.ts` exited 0: 4 files, 158 tests passed (17 + 27 + 14 + 100).\n- No build, broad suite or live Composio action was run. The tests are offline and mocked, so they make no live-acceptance claim.\n\n**Remaining limitations**\n- Restricted worker allowlists contain no MCP tool, so Composio is reachable only in ordinary person-owned Sessions. Hook installation in the worker and main Session is dormant until a person authorizes an MCP tool. Access was not changed.\n- Host-level end-to-end reachability against a real remote Composio MCP server is unverified.\n\n**Rollback and release**\n- Revert 3e630f8, or drop the branch.\n- Apply with `git am composio-r11.patch` on a00e0b2, or `git fetch composio-r11.bundle` into that base.\n- Release goes through the existing protected flow (Codex independent exact-head review, then protected release). The review-clarification proposal is untouched, with no setting, account, route, reserve or max3 changes.\n\n**Review-bot rounds:** none by me. The PR106 native review round (deepseek-flash, head 78a8f78) is the one addressed here.",
+        "at": "2026-11-13T16:17:17.992Z",
+        "nextDecision": "Review the linked evidence and explicitly accept or request further work.",
+        "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r11",
+        "state": "ready",
+        "summaryTruncated": false,
+        "originalLength": 4676,
+        "reportSummarySha256": "17110caf97b357c3c93023857e745f8c6f1b240af306826770450cf54280b19c"
+      },
+      {
+        "reference": "ticket/a0f19eb95830336f45c261abf5113ef1/report/a82330c1a8086953c4afb2ef6f707083",
+        "evidence": "Candidate ready for independent Codex review (no PR; local commit only, nothing pushed/merged/published).\n\nSOURCE/PATHS: own clone /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-a0f19eb95830/work (cloned from r11 work tree finding-task-616615804db1/work, origin repointed to the operator source launch-retry-release; node_modules symlinked to the existing operator deps, no installs). Old r1/r3/r5/r8/r11 trees, PR106, head 78a8f78, blocked delivery and failed native verdicts untouched.\nHEADS: r13 head d1ff2532fa82ae159bea73431264794efb992fc1; parent (r11 head) 3e630f84037a47a744a29632fd2f01e19f7e3b9a; original base a00e0b2.\nPATCH: r13-only: evidence/composio-r13.patch (format-patch file sha256 df3b1c407b1f1c653bdf851f8756b4306e7209150aadbeed445b19c3f6916874; binary diff HEAD~1 sha256 0ba1a5d671a8bec1d17f8abc84eda7cd0b65ff48a78e75ad4e2f3e497eb2e825); bundle evidence/composio-r13.bundle (3e630f8..HEAD) under the ticket dir. Cumulative a00e0b2..HEAD: binary-diff sha256 f9123f59b09f50c5538be8a6c1fc93f56e9b792e00f03a0fd1b12e0da9c58d7e, format-patch stream sha256 6fad80792669c8a18dfff6a0d95e3ce7ec0549b54abc07534124d86e2c4fb1dd.\n\nFIX (the r11 review finding): isBatchItemFailed ORed any item/response `error`, bypassing the explicit successful:true precedence of isEnvelopeFailed, so response:{successful:true,data:{id:kept},error:note} or error:{} was labelled failed, dropped from succeeded and given retry guidance. Now src/app/tools/composio.ts has one rule, envelopeOutcome(...levels) -> failed | succeeded | contradictory | unconfirmed, used by single envelopes (isEnvelopeFailed) and batch entries (batchItemOutcome / isBatchItemFailed) alike: explicit successful:false = failed; explicit successful:true = success that outranks an error note (item or response level, any error shape incl. {}); true at one level + false at the other = contradictory; no flag + non-empty error (string/object/array/true) = failed (error-only failures preserved); null/\"\"/false/{} error and business error inside data = no report; no flag no error = unconfirmed. In src/app/composio-boundary.ts the batch loop uses batchItemOutcome: succeeded entries kept exactly as returned (even with a note); contradictory entries go to `unconfirmed` with new reason 'contradictory_flags' (not succeeded, not failed, counted unreported -> uncertain_completion -> \"do NOT resend\", no retry offer); a contradictory single envelope is classified uncertain_completion/unknown. Removed the now-redundant hasSuccessEvidence helper. Retained unchanged: uncertainty/success retention, Retry-After wait floor, sanitization, exact mcp__composio__ provenance, ordinary-Session observer binding, allowlists/auth/hostpackages/settings.\n\nTESTS (all offline/mocked, root actual ToolRuntime + installed dsh-mcp-client bridge with mocked remote call; no external action):\n- `npx vitest run tests/composio-boundary.spec.ts tests/composio-bridge.spec.ts tests/composio.spec.ts` at d1ff253: exit 0, 3 files, 64 passed (bridge suite 15 tests ran, 0 skipped: installed host package found). First run had 1 failure in my own new test (over-strict /retry/ regexp matched the standard \"Retry-After\" sentence); assertion corrected, no source change; second run passed.\n- New always-on ToolRuntime regressions (describe 'batch and single envelopes follow one rule', 5 tests): completed entries with error notes (string/{}/object, flat and under response, successful on either level) retained in all-success and mixed batches and not named in recovery; table of 6 envelope shapes giving identical verdicts as single action vs batch entry (flat and response-nested); business error inside entry data not a failure; both contradiction directions -> unconfirmed/uncertain/no retry/one call only; single contradiction -> uncertain_completion; pure-assessor parity. New installed-bridge test: kept-with-note success in mixed and all-success batches + contradictory entry as unknown, remote sent once.\n- `npx tsc --noEmit -p .` exit 0. `npx tsdown --out-dir /tmp/composio-r13-build` exit 0 (build to temp dir; repo working tree clean after).\n- Not run: broad suite, live acceptance. Unit/mock tests do not prove live Composio payloads.\n\nBEHAVIOUR NOTES / LIMITS: hasErrorValue now also treats `error: true` and non-empty arrays as a failure report (previously batch used !!error, so true/array failed there; single path ignored them) — consistent in both paths; a bare numeric error is not treated as a report. Contradictory flags are deliberately treated as unknown outcome, not failed. Remaining host limits unchanged from r11: ordinary-Session fixture is not native-chat proof; restricted managed worker allowlists contain no MCP tools (not changed); real remote Composio payload shapes unobserved.\nROLLBACK: revert commit d1ff253 (or reset to 3e630f8); no config/state/schedule/provider/account changes. Release: Codex independent exact-head review, then original protected release only if qualified; no PR created.\nNo GitHub activity, reviewers or humans credited.",
+        "at": "2026-11-13T17:05:17.779Z",
+        "nextDecision": "Review the linked evidence and explicitly accept or request further work.",
+        "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r13",
+        "state": "ready",
+        "summaryTruncated": false,
+        "originalLength": 5074,
+        "reportSummarySha256": "da1f0ac086d4c3b8838659ff6412b418775da61bc61afd3a2aecebdc9f95d66e"
+      },
+      {
+        "reference": "ticket/acf97559fd76618bf9d5022091718874/report/9d7e746ad83c1a192a33e65d6ebb7702",
+        "evidence": "Native review/correction is in progress; previous ready evidence is not current. r15 started: locating r13 head d1ff2532 and trusted source to clone; will correct contradictory-flag handling when transport=true.",
+        "at": "2026-11-13T18:02:37.433Z",
+        "nextDecision": "Await fresh current-job evidence after the newer human/CI input or work progress.",
+        "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r15",
+        "state": "evidence",
+        "currencyToken": "7ca054a5e061162ec5d958a3438169309974d0f9bba50869b5a358597da26821",
+        "summaryTruncated": false,
+        "originalLength": 211,
+        "reportSummarySha256": "8f662a3b708a7679d4ef390d716c20993bd4a0a9496137a94f17250f4340fe8e"
+      },
+      {
+        "reference": "ticket/acf97559fd76618bf9d5022091718874/report/9d7e746ad83c1a192a33e65d6ebb7702",
+        "evidence": "READY (code candidate for independent Codex review; no PR/push/merge/deploy, no live Composio action, no settings/allowlist/auth/dep changes).\n\nWorkspace: /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-acf97559fd76/work (own clone of trusted launch-retry-release origin, branch agent/finding-task-acf97559fd76; node_modules symlinked to the trusted one). Old r1/r3/r5/r8/r11/r13 trees untouched.\nBASE (operator source) cc8763d03dba2ef82cdea27b86d4dd277911be66. HEAD 2daef8122c245fcc1d8235463e785123b3f60e13. r13 commits (through d1ff253) cherry-picked unchanged (src/tests identical to r13 head); r15 is one new commit on top.\nEvidence in ../evidence: composio-r15.patch (format-patch cc8763d..HEAD, sha256 1276c2c88ddd29092615fae103181052956b2092481479f75728ae78af89e8b0), composio-r15.diff (binary diff cc8763d..HEAD, sha256 f8651b5586432a6e1bcb6d3582696beb2edbc0dcc2c5bfb5db20be4ac5cff4f0), composio-r15.bundle (sha256 9f37acaf4c5431c44177923308678e7d68f5fbd21b44ab37f269003cf759894d). Cumulative patch includes the 5 r13-lineage commits + r15 commit. r15-only code delta: 3 files, +97/-3 (src/app/composio-boundary.ts, tests/composio-boundary.spec.ts, tests/composio-bridge.spec.ts).\n\nFix (reviewer's remaining static gap): in src/app/composio-boundary.ts the single-action branch computed conflicting=!transport&&contradictory, so an envelope with contradictory flags (e.g. {successful:true,response:{successful:false,error:'429 rate limit; Retry-After:30'}}) arriving via the installed bridge's thrown raw isError result, or a returned value with isError:true, was classified rate_limited and offered 'retry once'. Removed the !transport guard: contradiction now yields uncertain_completion regardless of the outer MCP/ToolRuntime error flag; original message and Retry-After kept as a wait floor only ('do NOT resend it... not before 30 seconds'), no claim the action did not run. The generic batch-level fallback had the same downgrade (batch error_count>0 + contradictory top level -> rate_limited): now uses envelopeOutcome(batchPayload,batchPayload.response) -> uncertain_completion and keeps Retry-After for waited kinds. Known batch successes stay in succeeded (completion partial, 'never repeat them'); plain non-contradictory rate limit/error-count behavior unchanged (still retryable once after the wait).\n\nTests added (mocked, offline): always-on real-ToolRuntime in composio-boundary.spec.ts: contradictory body via thrown MCP error, returned value isError:true, and successful-MCP-envelope control (no retry advice, Retry-After 30 floor, tool called exactly once); error-flagged batch keeps known successes across 3 transports; plain error-flagged rate limit still rate_limited; pure assessor for outer flags {}, isError, value.isError; batch-level fallback contradictory vs clean. Installed-bridge (createMcpToolDefinition from installed dsh-mcp-client, mocked remote) in composio-bridge.spec.ts: raw isError result thrown by bridge and success result both uncertain; plain control rate_limited; error-flagged contradictory batch keeps succeeded. Red-green: before the fix 4 new tests failed; after, all pass.\n\nCommands (cwd = work clone):\n1) npx vitest run tests/composio-boundary.spec.ts (pre-fix, new tests) -> exit 1, 4 failed/35 passed (expected red).\n2) npx vitest run tests/composio-boundary.spec.ts tests/composio-bridge.spec.ts tests/composio.spec.ts @2daef81 -> exit 0, 3 files, 73 passed, 0 skipped (installed-bridge suite ran).\n3) npx tsc --noEmit @2daef81 -> exit 0.\n4) npx tsdown @2daef81 -> exit 0; tracked tree unchanged.\nNot run: broad suite, the root r3/r5 audit replay (reviewer should rerun), any live Composio/MCP.\n\nLimits: (a) a batch with a contradicting top level that also lists an entry explicitly failed with a rate limit still classifies that entry rate_limited (explicit entry failure treated as authoritative); batch fallback applies only when no entry failed. (b) Real remote Composio payload shapes unobserved; contradictory bodies are controlled mocks. (c) Ordinary Session fixture is not native-chat proof; no live acceptance claimed. (d) Restricted worker allowlists contain no MCP tools; unchanged.\n\nRollback: discard branch agent/finding-task-acf97559fd76 or revert 2daef81 (back to r13 behavior; no state/config migration). Release: apply composio-r15.patch/bundle onto cc8763d in the protected flow after independent review.\nReview-bot rounds: none (no PR). Credits: none.",
+        "at": "2026-11-13T18:05:38.420Z",
+        "nextDecision": "Review the linked evidence and explicitly accept or request further work.",
+        "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r15",
+        "state": "ready",
+        "summaryTruncated": false,
+        "originalLength": 4486,
+        "reportSummarySha256": "c69d1fb37fbd65182cb1029834ce0a5590beb03449163540a31f04d17d7fe298"
+      },
+      {
+        "reference": "ticket/90b01f2a0531979c292f19f482df2a3e/report/9fcfa76462a763cf8289661908868ae2",
+        "evidence": "Ready for Codex independent review (no live acceptance claim). Narrow r15→r18 correction only: the native review's sanitizeDiagnostic control-class spelling.\n\nPATHS: clone /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-90b01f2a0531/work (branch r18-regex-spelling, own clone of /Users/gerayeremin/Documents/Projects/Manage-Builder/token-optimization/launch-retry-release; node_modules symlinked from r15 workspace, no installs). Evidence: ../evidence/composio-r18.{patch,diff,bundle}.\nSHAs: base a00e0b2c34f05516d7ac35792dfd0da62206592a; prior r15 head 2daef8122c245fcc1d8235463e785123b3f60e13 (fetched intact, all r15 fixes/tests kept, r15 workspace/PR106/PR107 untouched); NEW HEAD 488f8400c78d1969fede084fd39899ca342efd1c (one commit on r15, 2 files, +8/-1).\nHASHES: format-patch (1 commit) sha256 d494d83cd2c730409cd746906ade7b1f70af195d17bf92f86876c499d36ec388; binary diff r15→r18 sha256 eb3f0db6ccbce7b03f7a6617f325bcb81542a1da93e26fa0f67d5a6ab5270318; cumulative binary diff a00e0b2→HEAD sha256 53de6e678d5cf4e4455d26ccb004e7d2684e2bf41fb2fcbdcd6d1556e5f7c2e9 (differs from r15's f8651b55… as expected). Bundle a00e0b2..HEAD verified.\nCHANGE: src/app/composio-boundary.ts line 62: /[\\u0000-\\u0008\\u000b-\\u001f\\u007f]/g → /[\\x00-\\x08\\x0B-\\x1F\\x7F]/g (behavior-equivalent, exactly the explicit hex ranges the native review recommended; committed blob line confirmed via git show HEAD:… to contain this expression). Added one test in tests/composio-boundary.spec.ts: controls 00,01,08,0B,1F,7F stripped; printable text, accents/CJK, tab and newline kept as single spaces; existing credential-redaction test unchanged and passing.\nCHECKS (clone dir, head 488f840 for tests/tsc; tests/tsc ran on the identical working tree before commit): `pnpm --config.verify-deps-before-run=false exec vitest run tests/composio.spec.ts tests/composio-boundary.spec.ts tests/composio-bridge.spec.ts tests/runtime.spec.ts` exit 0, 4 files/174 tests passed (log /tmp/r18-vitest.log); `… exec tsc --noEmit` exit 0; `… exec tsdown` exit 0. Not run here: root r3/r5 audit specs (live only in the coordinator repo, not this clone) and broad suite — per instructions.\nLIMITS: native review's quoted '^'-notation line could not be traced to source (r15 report says blob already had valid unicode escapes); this change is a spelling remedy that removes dependence on that representation, not proof of the native review's cause. Ordinary-Session fixture ≠ native chat proof; no live Composio action, auth/allowlist/provider/route/setting/account/spend/max3/reserve changes; nothing pushed/merged/deployed.\nROLLBACK: drop commit 488f840 (git checkout 2daef81 for the sources) — no state/dep changes.",
+        "at": "2026-11-13T19:12:59.603Z",
+        "nextDecision": "Review the linked evidence and explicitly accept or request further work.",
+        "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r18",
+        "state": "ready",
+        "summaryTruncated": false,
+        "originalLength": 2731,
+        "reportSummarySha256": "94cfa6eeb0759d3cdb220f615cdd1bd45404c6fbd149c1e8cf232d2793629c8d"
+      }
+    ]
+  },
+  "ciTicket": {
+    "id": "a88c22715a939f7e151c9297e99a3675",
+    "state": "open",
+    "stage": "working",
+    "sessionId": "worker-a88c22715a939f7e151c9297e99a3675",
+    "directory": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-a88c22715a93",
+    "assignments": [
+      {
+        "id": "fb16c8cfe3a0d5294b5073051a7d3523",
+        "state": "running",
+        "createdAt": "2026-11-14T19:03:08.664Z",
+        "startedAt": "2026-11-14T19:03:09.363Z",
+        "ref": "worker-a88c22715a939f7e151c9297e99a3675"
+      }
+    ],
+    "usage": null
+  },
+  "load": {
+    "running": 3,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "settingsRevisions": {
+    "executor": 44,
+    "models": 26,
+    "coordination": 3
+  },
+  "reportRepair": {
+    "patchPath": "/Users/gerayeremin/.dsh/cutovers/report-repair-20261114T1836Z/report-identity.patch",
+    "patchSha256": "e87de6e2917766faa846e89999a5d71b3d17da319f17e6427d9dfcfb667a080c",
+    "patchAppliesToCurrentOperatorSource": true,
+    "files": [
+      "src/infra/environment.ts",
+      "prompts/worker.md",
+      "tests/environment.spec.ts",
+      "tests/report-shim-identity.spec.ts"
+    ],
+    "sourceSnapshot": "Heavilymodifieddbf9410, NOTcleanupstream; onlynarrowpatchallowed",
+    "claimedExistingChecks": "baseline12fail/4pass;focused51/expanded92types/buildpass; fullsuitenotrun; noCodextestrerun/deploy",
+    "evidenceHashes": {
+      "REPAIR-REPORT.md": "2d8c0e83e0494c0e32c78c7aab434e0abdba63a944da1a963199bc7c59f9f8d7",
+      "verification.json": "4639cfca6c8a0248f8d63a8e694c5dea1ffb28db1af479ea29f24bee47455593",
+      "baseline-regression.log": "1393aa1ffd2f957b983cc7a85ff91ef76bb526e8ea229cebb6c9c3c85ecb269f",
+      "focused-tests.log": "0c5901562db91cb3d1fcca241ab15927b6732355c86e18234b56cf90042277a4",
+      "report-regressions.log": "bc5338e2c166d08a640a498876f4e7ad8caf2718bc1a3d3c06f4a08ae4a04a2b",
+      "typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "build.log": "2d0f050a2a41f65c4b6331cb9a9214b194f8d98926077c7df215cbc26e14dbf4"
+    },
+    "assisted225": "Ticket7389b6fb808dfb830e45c8bdcd908f9e/assignmentb4f83894d2d55a6492a9e567129c0a89 needednativefollowupturn2; deliveredhash4ec4efa9cdeaba95. Automaticintakestart observed, NOThands-offreportingpass; nofixture225rerun."
+  },
+  "lifecycle218": {
+    "originalTicket": "2b13359942e59c1fcb183bef902cc7ea",
+    "state": "idle/existingownerpreserved",
+    "originalPR219Head": "694b1fd50077f1a0337be775c46d1c68138d6e27",
+    "merge": "ffcecf5bed4702fa038ff947211f42c4f7116f72",
+    "claimedCorrection": "8dea5d82289f37985306714f0b7b2d0feb092bc6",
+    "compareCorrectionToMain": {
+      "status": "diverged",
+      "mainAhead": 10,
+      "mainBehind": 1,
+      "mergeBase": "694b1fd50077f1a0337be775c46d1c68138d6e27",
+      "associatedPRs": []
+    },
+    "independentSourceReview": "Correctiontestblobdb89bd27411d96a22176475f19c97b8b1b6abeb1 stillimports standalonePythonmodule+sqlite/httpserver, not pinnedDSHlifecycle; no realDSHprocessacceptance established. AC7/8/10/11/12 remainexplicitupstream/dependencygaps.",
+    "next": "queuedcurrent-source/pinnedrealDSHintegration successor with external side-effect counters; no live3082/3083restart/crash. Noheavytestsnow.",
+    "queueRecord": "https://github.com/gera3d/superagent-sandbox/issues/218#issuecomment-6882689833"
+  },
+  "verificationQueueMap": [
+    {
+      "path": "patches/MODEL_FALLBACK_ROUTING.patch",
+      "blob": "ff5c0f3cb9ffd242b83ae71718c8497a4a8a959c",
+      "bytes": 10879,
+      "sha256": "e0eb0a0cc8833b23b80803d8caa5e9600e9d18537d255d1f7e6d5412e82f4169",
+      "targets": [
+        {
+          "path": "src/app/role-models.ts",
+          "installedExists": true
+        },
+        {
+          "path": "src/executor/dsh.ts",
+          "installedExists": true
+        },
+        {
+          "path": "src/policy.ts",
+          "installedExists": true
+        },
+        {
+          "path": "tests/model-fallback.spec.ts",
+          "installedExists": true
+        }
+      ],
+      "addedIdentifiers": [
+        "classifyModelError",
+        "resolveConfiguredFallback",
+        "guardToolExecution",
+        "ModelRoutingConfigSchema"
+      ]
+    },
+    {
+      "path": "patches/dsh-superagent-sound-control.patch",
+      "blob": "5a759be2e3e00517c56bed27a54ae337c77559ed",
+      "bytes": 11392,
+      "sha256": "1d4d55ef3d711a595f938a66facc097722f5077dd8896efc9aee2b4914abbfae",
+      "targets": [
+        {
+          "path": "scripts/dsh-notify",
+          "installedExists": true
+        },
+        {
+          "path": "src/app/tools/executor.ts",
+          "installedExists": true
+        },
+        {
+          "path": "tests/quiet-notifications.spec.ts",
+          "installedExists": true
+        }
+      ],
+      "addedIdentifiers": []
+    },
+    {
+      "path": "patches/THREAD_BRIEF_HOOKS.patch",
+      "blob": "96a0da000678772618b91b2f5f0fcbd90ad0d55b",
+      "bytes": 15260,
+      "sha256": "dc39569e7de9e4d2e38f2280a69715200fa3f2455b5bdce55e8b558fb3cd8af9",
+      "targets": [
+        {
+          "path": "src/app/sessions.ts",
+          "installedExists": true
+        },
+        {
+          "path": "src/client/thread-brief-header.tsx",
+          "installedExists": false
+        },
+        {
+          "path": "src/client/thread.tsx",
+          "installedExists": true
+        },
+        {
+          "path": "src/client/ticket.tsx",
+          "installedExists": true
+        }
+      ],
+      "addedIdentifiers": [
+        "ThreadBriefCriterion",
+        "ThreadBriefScopeItem",
+        "ThreadBriefProposal",
+        "FallbackEventItem",
+        "ThreadBriefView",
+        "ThreadBriefHeader"
+      ]
+    }
+  ],
+  "queueLimits": "Patchtargetexistence not proofapplied/runtimeintegration. ThreadBriefHeader targetmissing and candidate identifiersnotfound ininstalledsrc; legacyclosed215/216/217+merged219-224 doNOTestablishproductionacceptance; actualdingcauseunverified. No route/notification/setting enabled.",
+  "ciFailureEvidence": {
+    "PR108": {
+      "head": "488f8400c78d1969fede084fd39899ca342efd1c",
+      "run": "https://github.com/gera3d/dsh-superagent-prototype/actions/runs/43498773929",
+      "failure": "docs.spec inventory: modulecomposio-boundary, testscomposio-boundary/composio-bridge missingarchitectureinventory",
+      "reportedCounts": "2556passed/2failed/19skipped",
+      "provenance": "ExactlogreadbydelegatingRyu; currentcheck-runfailure independentlyconfirmed"
+    },
+    "PR115": {
+      "head": "a6b754d4656e26a4813763a3bcd784e36e5857b9",
+      "run": "https://github.com/gera3d/dsh-superagent-prototype/actions/runs/43561196679",
+      "failure": "docs.spec inventory: publication-failure-diagnostics.spec missingTestsinventory",
+      "reportedCounts": "2528passed/1failed/3skipped",
+      "provenance": "ExactlogreadbydelegatingRyu; currentcheck-runfailure independentlyconfirmed",
+      "state": "QueuedafterPR108docs007correction, nosecondoverlappingwriter"
+    }
+  },
+  "protectedAndScopeLimits": [
+    "No newfirstapproval/actorforgery, permission/config/routing/key/account/spendchange or nativegatebypass.",
+    "OriginalUltron authored226/227triggersdeniednot_a_member, nojobsfromthose. Ryu separatelypostedexactexistingrequestsONCEthroughverifiedalreadyconnectedlistedgera3daccount, transparentlyautomated. NewtriggersexplicitRoutedaccepted; noallowlist/settings/actorfield/credentials changedbythiscoordinator; originaldenialsretained. No competingretry/replacementissues.",
+    "NoGoodIdeaproductdispatch/3083livewrites/restarts; isolatedroots/pinnedplugins/history/unsentdraft retained.",
+    "OldPR105clarificationhold, originalsix/Googler6reporting+freshnesslimits, existingnativeavailabilityquestion unchanged.",
+    "One demonstratedsame-scopeoriginalComposioCIcorrection dispatchedthroughretainednativefix_nowlineage/MCPexactrevision19→20; scope unchanged and oldr18/reviewpins retained. Newheadrequiresnewreview/CI; no194focusedcheckrerun/fullbuild.",
+    "Source-ready/tests/review/CI/merged/deployed/nativeverified/accepted remain distinct. AllnewworkdraftPRonly; no silentmerge/deploy."
+  ],
+  "initialIntakesPreserved": [
+    {
+      "issue": 226,
+      "stage": "unsubscribed",
+      "decisions": [
+        {
+          "id": "258496d799782ba90d65a0142d4e463b",
+          "kind": "ignore",
+          "outcome": "ignore",
+          "reason": [
+            {
+              "code": "not_a_member",
+              "triggerId": "ecb9ac34ac77a033b4e815d7aa5cf1d7"
+            }
+          ],
+          "at": "2026-11-14T19:02:13.552Z",
+          "strength": "inferred",
+          "triggerIds": [
+            "ecb9ac34ac77a033b4e815d7aa5cf1d7"
+          ],
+          "thread": "github:226",
+          "rules": [],
+          "threadTitle": "#226 [superagent] Integrate the isolated report-identity repair with strict exactly-once reporting",
+          "preview": "[superagent] Integrate the isolated report-identity repair with strict exactly-once reporting @Ultron-Uplink Implement this bounded Harness-only integration und"
+        }
+      ]
+    },
+    {
+      "issue": 227,
+      "stage": "unsubscribed",
+      "decisions": [
+        {
+          "id": "1397158e1e644fff24bb6e72274fdc1f",
+          "kind": "ignore",
+          "outcome": "ignore",
+          "reason": [
+            {
+              "code": "not_a_member",
+              "triggerId": "1b3a880015d0ec68710c8074c0799955"
+            }
+          ],
+          "at": "2026-11-14T19:02:13.595Z",
+          "strength": "inferred",
+          "triggerIds": [
+            "1b3a880015d0ec68710c8074c0799955"
+          ],
+          "thread": "github:227",
+          "rules": [],
+          "threadTitle": "#227 [superagent] Route prototype116 WorkerReportSummary alignment fix to the source worker",
+          "preview": "[superagent] Route prototype116 WorkerReportSummary alignment fix to the source worker @Ultron-Uplink Implement ONLY the existing source issue https://github.co"
+        }
+      ]
+    }
+  ],
+  "ownerAccountHandoffs": [
+    {
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/226#issuecomment-6882719133",
+      "actor": "gera3d",
+      "at": "2026-11-14T19:06:10Z",
+      "attribution": "Automated Ryu using verifiedconnectedowneraccount onGerasexplicitrequest; not manuallyhumanwritten",
+      "outcome": "NewtriggeracceptedexplicitRouted, originalignoredtriggerpreserved"
+    },
+    {
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/227#issuecomment-6882719872",
+      "actor": "gera3d",
+      "at": "2026-11-14T19:06:13Z",
+      "attribution": "Automated Ryu using verifiedconnectedowneraccount onGerasexplicitrequest; not manuallyhumanwritten",
+      "outcome": "NewtriggeracceptedexplicitRouted, originalignoredtriggerpreserved"
+    }
+  ],
+  "actualRequestEvidence": [
+    {
+      "ticketId": "4e351bddde9fe140791971c7a7c5cb36",
+      "nestedSession": "b3b2f007-a1bd-4eab-969f-1e596a260c9f",
+      "rows": 60,
+      "lastAt": "2026-11-14T19:09:26Z",
+      "models": {
+        "gemini-3.8-flash-medium": 29
+      },
+      "binding": "Exactticket present in nestedUSER_INPUT/taskcontext; not proof finalready/acceptance"
+    },
+    {
+      "ticketId": "d504a5083010da2d76e6d6164a408bef",
+      "nestedSession": "c665e972-2688-445f-ac55-2bed3c22e994",
+      "rows": 59,
+      "lastAt": "2026-11-14T19:09:31Z",
+      "models": {
+        "gemini-3.8-flash-medium": 28
+      },
+      "binding": "Exactticket present in nestedUSER_INPUT/taskcontext; not proof finalready/acceptance"
+    },
+    {
+      "ticketId": "a88c22715a939f7e151c9297e99a3675",
+      "nestedSession": "445fcc9d-6b97-449b-a507-0343e2cd4b89",
+      "rows": 150,
+      "lastAt": "2026-11-14T19:09:29Z",
+      "models": {
+        "gemini-3.8-flash-medium": 72
+      },
+      "binding": "Exactticket present in nestedUSER_INPUT/taskcontext; not proof finalready/acceptance"
+    }
+  ]
+}

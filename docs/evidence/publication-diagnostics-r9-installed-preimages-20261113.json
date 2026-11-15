@@ -1,0 +1,20 @@
+[
+  {
+    "path": "src/app/publication.ts",
+    "baseSha256": "94983fbd77af94956a34d0823180735294a0dfb753d8a8c2c690b9fe3f8208ad",
+    "installedSha256": "94983fbd77af94956a34d0823180735294a0dfb753d8a8c2c690b9fe3f8208ad",
+    "installedMatchesReviewedBase": true
+  },
+  {
+    "path": "src/app/publication-worker.ts",
+    "baseSha256": "9cb6c961cc3132ba9e1470d6352d899ea29ad7fdf1389cb333072bf63d9ea0cd",
+    "installedSha256": "9cb6c961cc3132ba9e1470d6352d899ea29ad7fdf1389cb333072bf63d9ea0cd",
+    "installedMatchesReviewedBase": true
+  },
+  {
+    "path": "src/app/delivery-publication.ts",
+    "baseSha256": "1f62ce41f898156099be202c09cd7638719da51e8b41277d1f18ecb4852db0f6",
+    "installedSha256": "1f62ce41f898156099be202c09cd7638719da51e8b41277d1f18ecb4852db0f6",
+    "installedMatchesReviewedBase": true
+  }
+]

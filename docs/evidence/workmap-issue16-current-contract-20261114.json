@@ -1,0 +1,9 @@
+{
+  "commit": "8cffe9417f80f126da73e1c4f56a6fcdcab8bf5f",
+  "ancestorOfCurrentOperator": true,
+  "installedDecisionCoreSha256": "3ff281db4ee101bfceb8c17b05ff56b56679d5c3578bbd1edf5b4b07dd4dc8c1",
+  "installedDecisionsUI": true,
+  "decisionsTabPresent": true,
+  "currentSourceWarnsNotCalibrated": true,
+  "noLiveRankingRequest": true
+}

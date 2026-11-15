@@ -12,7 +12,9 @@ const TIMEOUT_MS = 90_000
  * Source channels and pollers inspect its code to distinguish deleted conversations from retryable failures.
  */
 export class CliError extends Error {
-  constructor(message: string, readonly code?: number, readonly exitCode?: number, readonly rate?: RateLimit) { super(message) }
+  constructor(message: string, readonly code?: number, readonly exitCode?: number, readonly rate?: RateLimit,
+    /** Seconds from the `x-poll-interval` header of a failed `gh api --include` response, when it printed one (as it does for HTTP 304). */
+    readonly pollInterval?: number) { super(message) }
 }
 /** Sanitized GitHub quota facts from a failed response: `primary` when the hourly allowance is spent, `secondary` for abuse limits and HTTP 429. */
 export interface RateLimit { kind: 'primary' | 'secondary'; resetAt?: number; retryAfter?: number }
@@ -28,6 +30,13 @@ export function rateLimit(stdout: unknown, stderr = ''): RateLimit | undefined {
   if (status === 429 || retryAfter !== undefined || /secondary rate limit/i.test(stdout + stderr)) return { kind: 'secondary', ...retryAfter !== undefined ? { retryAfter } : {}, ...reset !== undefined ? { resetAt: reset * 1000 } : {} }
   if (remaining === 0) return { kind: 'primary', ...reset !== undefined ? { resetAt: reset * 1000 } : {} }
   return undefined
+}
+/** Reads only `x-poll-interval` from the headers `gh api --include` printed on stdout before failing. */
+function pollInterval(stdout: unknown): number | undefined {
+  if (typeof stdout !== 'string') return undefined
+  const split = stdout.search(/\r?\n\r?\n/)
+  const value = Number(/^x-poll-interval:\s*(\d+)/im.exec(split < 0 ? stdout : stdout.slice(0, split))?.[1])
+  return Number.isFinite(value) && value > 0 ? value : undefined
 }
 /** Seconds to wait before polling again: until the primary reset or `retry-after` (60 s when unstated), plus up to 10 s of jitter, with long waits split into bounded sleeps by the poll loop. */
 export function cooldownSeconds(rate: RateLimit, now = Date.now(), random = Math.random()): number {
@@ -47,7 +56,8 @@ export function commandError(error: unknown, program = 'command'): Error {
     const code = parsed?.error?.code
     if (parsed?.error?.message) return new CliError(`${parsed.error.message}${code ? ` (${code})` : ''}`, code, exitCode)
     // `gh` exits non-zero on HTTP errors (such as `gh: Not Found (HTTP 404)`) and on `gh: HTTP 304`, which ETag polling relies on.
-    if (stderr) return new CliError(stderr.slice(0, 2000), Number(/\bHTTP (\d{3})\b/.exec(stderr)?.[1]) || undefined, exitCode, rateLimit('stdout' in error ? error.stdout : undefined, stderr))
+    if (stderr) return new CliError(stderr.slice(0, 2000), Number(/\bHTTP (\d{3})\b/.exec(stderr)?.[1]) || undefined, exitCode,
+      rateLimit('stdout' in error ? error.stdout : undefined, stderr), pollInterval('stdout' in error ? error.stdout : undefined))
   }
   return new CliError(`${basename(program)} ${ended(error)}`, undefined, exitCode)
 }

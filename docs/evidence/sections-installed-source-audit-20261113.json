@@ -1,0 +1,62 @@
+[
+  {
+    "path": "src/app/api.ts",
+    "installedSha256": "5620c546b72e7f7a098f456117567b85c86090823ba3e2f138569f5e8adc2c50",
+    "mergedSha256": "5620c546b72e7f7a098f456117567b85c86090823ba3e2f138569f5e8adc2c50",
+    "wholeFileEqualsFinalPR": true
+  },
+  {
+    "path": "src/app/http.ts",
+    "installedSha256": "a85f8ed7c1dbff218605a52da8aeb232316a40abd8cd026d302ce240bf2f3bde",
+    "mergedSha256": "52c0af0b2790249601e8089a8cbb5fc9e6f714c955acf7d7401b35aaeded133b",
+    "wholeFileEqualsFinalPR": false
+  },
+  {
+    "path": "src/app/sections.ts",
+    "installedSha256": "f0276f174a7fa207f6d520a10dbb1f6f3d4d14e557eccfaa7b0454e5b7df715c",
+    "mergedSha256": "f0276f174a7fa207f6d520a10dbb1f6f3d4d14e557eccfaa7b0454e5b7df715c",
+    "wholeFileEqualsFinalPR": true
+  },
+  {
+    "path": "src/app/views/sections.ts",
+    "installedSha256": "6908ba27f232585fd2a9cca6fa4e3b60c6ea0c06a7a232164a83024cecf582cd",
+    "mergedSha256": "6908ba27f232585fd2a9cca6fa4e3b60c6ea0c06a7a232164a83024cecf582cd",
+    "wholeFileEqualsFinalPR": true
+  },
+  {
+    "path": "src/client/app.tsx",
+    "installedSha256": "1876f18db15228118eaa1effadd9cfefdd30223cd05397917b0e6ec7fc5df9b3",
+    "mergedSha256": "1876f18db15228118eaa1effadd9cfefdd30223cd05397917b0e6ec7fc5df9b3",
+    "wholeFileEqualsFinalPR": true
+  },
+  {
+    "path": "src/client/client.css",
+    "installedSha256": "a72fd379dbdebcb44db110c7735ec18d2204eaa5547cfd670adff29730ae6f89",
+    "mergedSha256": "a72fd379dbdebcb44db110c7735ec18d2204eaa5547cfd670adff29730ae6f89",
+    "wholeFileEqualsFinalPR": true
+  },
+  {
+    "path": "src/client/index.tsx",
+    "installedSha256": "66aa8611640df3ee910369840e79eff3f7f7709c4b152282210ab59baedb58d4",
+    "mergedSha256": "66aa8611640df3ee910369840e79eff3f7f7709c4b152282210ab59baedb58d4",
+    "wholeFileEqualsFinalPR": true
+  },
+  {
+    "path": "src/client/locales.ts",
+    "installedSha256": "5ea1448912f645a4e2aedaf04713f209584b773f6cf6bad0aeab9b0ed03ecffc",
+    "mergedSha256": "6d7ceac0474e40a64646b4dc30af56f671e410da4a0c75f1a94676b2b09ac2de",
+    "wholeFileEqualsFinalPR": false
+  },
+  {
+    "path": "src/client/route.ts",
+    "installedSha256": "bb85cd0325b0ed8d8e6b3b7a122b031d8ad7573d4347716fe4b3734a425ba5af",
+    "mergedSha256": "37570b8c97f45e03978de4338b1ec1c957545a96a0a2f6f46b85eddec920d705",
+    "wholeFileEqualsFinalPR": false
+  },
+  {
+    "path": "src/client/sections.tsx",
+    "installedSha256": "df2aada211dbd58e8f43d17cb91096b9cff8a1b245daa1ad3d65313fd39ac34b",
+    "mergedSha256": "df2aada211dbd58e8f43d17cb91096b9cff8a1b245daa1ad3d65313fd39ac34b",
+    "wholeFileEqualsFinalPR": true
+  }
+]

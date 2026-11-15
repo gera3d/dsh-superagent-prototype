@@ -1,0 +1,39 @@
+{
+  "observedAt": "2026-11-14T02:17:01.710342+00:00",
+  "findingId": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+  "revision": 5,
+  "state": "running",
+  "job": {
+    "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r5",
+    "ticketId": "8aa87a3e4b93aadda0dcbea585001f25",
+    "assignmentId": "26223d23e7d674d3189b51af46c50d7b"
+  },
+  "priorJobs": [
+    {
+      "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r1",
+      "ticketId": "476e0cde1673d0d3278933f87ace6d8f",
+      "assignmentId": "aa513ffbcf8e4f75dceaa9b895132a1e"
+    },
+    {
+      "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r3",
+      "ticketId": "5d7c23667a52c3e9afb03ce04352024b",
+      "assignmentId": "f6b7aa4d9bf4b44a686a026885ec7326"
+    }
+  ],
+  "confirmation": {
+    "revision": 5,
+    "choiceId": "queue_next",
+    "actor": "codex-project-coordinator",
+    "at": "2026-11-14T02:16:27.666Z"
+  },
+  "reviewCommit": "9f85c3f",
+  "reviewOccurrenceLanded": true,
+  "supportedRecovery": "exactrev4 retry_scope->5 and confirm exactretainedqueue_next accepted, no override",
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "nextOwner": "Harness r5 current-source inventory and three bounded privacy/provenance/guide corrections; Codex independent review on result",
+  "limits": "Not deployed/accepted; previous rejectedr3 andr1trees/reports/artifacts unchanged. No competingimplementation/newtestfiles/livepublication/Chrome/settings/routes/credentials/access/spend/limits changed. ComposioUIhold/clarificationheld/quotaauthorityqualified unchanged."
+}

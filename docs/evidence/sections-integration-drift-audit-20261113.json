@@ -1,0 +1,12 @@
+{
+  "src/app/http.ts": {
+    "diffLines": 16
+  },
+  "src/client/locales.ts": {
+    "diffLines": 25
+  },
+  "src/client/route.ts": {
+    "diffLines": 9
+  },
+  "sectionRouteBlockEqualsFinalPR": true
+}

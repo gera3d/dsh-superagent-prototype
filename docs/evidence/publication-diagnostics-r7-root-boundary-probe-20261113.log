@@ -1,0 +1,4 @@
+{"result":{"outcome":"failed","blocker":"Publication rejected before effect: stale_pins [req=del-probe:2:publish:bb0a1f3d5abb32d1]; zero mutations executed"},"snapshotReads":3,"existingGrantStillPresent":true,"existingGrantStatus":"running"}
+(node:61235) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:61235) ExperimentalWarning: Transform Types is an experimental feature and might change at any time
