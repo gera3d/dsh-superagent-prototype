@@ -314,6 +314,9 @@ export class DshExecutor implements Executor {
   }
   /** Enqueues a `launch` effect for an accepted or resumed assignment; launches start in queue order as worker slots free up. */
   start(ticket: Ticket, assignment: Assignment): void {
+    if (!this.fallbackStartTimes.has(ticket.id)) {
+      this.fallbackStartTimes.set(ticket.id, Date.now())
+    }
     this.host.effects.enqueue('launch', assignment.id, { ticketId: ticket.id, assignmentId: assignment.id })
   }
   /** Enqueues a `delivery` effect to steer pending inputs into `ticket`'s running worker session. */
@@ -536,6 +539,42 @@ export class DshExecutor implements Executor {
     this.fallingBack.add(assignment.id)
     try { await this.selectFallback(ticket, assignment, agent, error) } finally { this.fallingBack.delete(assignment.id) }
   }
+  /**
+   * Checks whether the ticket has exceeded its total configured routing attempts (across initial request, same-route
+   * retries, and candidate fallbacks) or its end-to-end routing deadline.
+   */
+  private checkRoutingBounds(ticket: Ticket, assignment: Assignment): { exhausted: boolean; reason?: string } {
+    const settings = this.host.store.settings()
+    const routing = settings.models.routing ?? settings.models.model_routing
+    if (!routing) return { exhausted: false }
+
+    const nowTime = Date.now()
+    const createdMs = ticket.createdAt ? Date.parse(ticket.createdAt) : NaN
+    const defaultStart = !Number.isNaN(createdMs) && createdMs > 0 ? createdMs : nowTime
+    const startTime = this.fallbackStartTimes.get(ticket.id) ?? defaultStart
+    if (!this.fallbackStartTimes.has(ticket.id)) this.fallbackStartTimes.set(ticket.id, startTime)
+
+    const priorFallbacks = this.fallbackAttempts.get(ticket.id) ?? 0
+    const sameRouteRetries = this.transient.get(assignment.id) ?? 0
+    const totalAttemptsSoFar = 1 + sameRouteRetries + priorFallbacks
+
+    if (totalAttemptsSoFar >= routing.max_total_attempts) {
+      return {
+        exhausted: true,
+        reason: `All available models exhausted: Total attempt bound exceeded (${routing.max_total_attempts})`,
+      }
+    }
+
+    if (nowTime - startTime >= routing.total_timeout_ms) {
+      return {
+        exhausted: true,
+        reason: `All available models exhausted: Routing deadline exceeded (${routing.total_timeout_ms}ms)`,
+      }
+    }
+
+    return { exhausted: false }
+  }
+
   private async selectFallback(ticket: Ticket, assignment: Assignment, agent: Agent, error: unknown): Promise<void> {
     const ledger = this.toolLedgers.get(ticket.id)
     if (ledger?.hasUncertain()) {
@@ -551,35 +590,21 @@ export class DshExecutor implements Executor {
     const settings = this.host.store.settings()
     const routing = settings.models.routing ?? settings.models.model_routing
     if (routing) {
-      const nowTime = Date.now()
-      const startTime = this.fallbackStartTimes.get(ticket.id) ?? nowTime
-      if (!this.fallbackStartTimes.has(ticket.id)) this.fallbackStartTimes.set(ticket.id, startTime)
+      const bounds = this.checkRoutingBounds(ticket, assignment)
+      if (bounds.exhausted) {
+        this.unavailableRoutes.delete(ticket.id)
+        this.fallbackAttempts.delete(ticket.id)
+        this.fallbackStartTimes.delete(ticket.id)
+        this.transient.delete(assignment.id)
+        this.resuming.delete(assignment.id)
+        this.recordTicketNote(ticket.id, bounds.reason!)
+        void this.background(Promise.resolve().then(() => {
+          this.failed(ticket.id, bounds.reason!)
+        }))
+        return
+      }
 
-      // Original request counts as 1 attempt, plus any same-route retries, plus prior fallbacks
       const priorFallbacks = this.fallbackAttempts.get(ticket.id) ?? 0
-      const sameRouteRetries = this.transient.get(assignment.id) ?? 0
-      const totalAttemptsSoFar = 1 + sameRouteRetries + priorFallbacks
-
-      if (totalAttemptsSoFar >= routing.max_total_attempts) {
-        this.unavailableRoutes.delete(ticket.id)
-        this.fallbackAttempts.delete(ticket.id)
-        this.fallbackStartTimes.delete(ticket.id)
-        void this.background(Promise.resolve().then(() => {
-          this.failed(ticket.id, `All available models exhausted: Total attempt bound exceeded (${routing.max_total_attempts})`)
-        }))
-        return
-      }
-
-      if (nowTime - startTime >= routing.total_timeout_ms) {
-        this.unavailableRoutes.delete(ticket.id)
-        this.fallbackAttempts.delete(ticket.id)
-        this.fallbackStartTimes.delete(ticket.id)
-        void this.background(Promise.resolve().then(() => {
-          this.failed(ticket.id, `All available models exhausted: Routing deadline exceeded (${routing.total_timeout_ms}ms)`)
-        }))
-        return
-      }
-
       this.fallbackAttempts.set(ticket.id, priorFallbacks + 1)
     }
 
@@ -626,6 +651,9 @@ export class DshExecutor implements Executor {
     this.failed(ticketId, `The escalated model ${escalation.to.provider}/${escalation.to.model} could not be selected: ${String(error)}`)
   }
   private async launch(ticket: Ticket, assignment: Assignment): Promise<void> {
+    if (!this.fallbackStartTimes.has(ticket.id)) {
+      this.fallbackStartTimes.set(ticket.id, Date.now())
+    }
     const current = () => {
       if (this.host.closing()) throw new Error('dsh-superagent is stopping')
       if (this.host.paused()) throw new Later('Processing is paused')
@@ -786,13 +814,38 @@ export class DshExecutor implements Executor {
         }))
         return
       }
+      // Check total attempts and end-to-end deadline bounds before any same-route retry or candidate fallback
+      const bounds = this.checkRoutingBounds(ticket, assignment)
+      if (bounds.exhausted) {
+        this.unavailableRoutes.delete(ticket.id)
+        this.fallbackAttempts.delete(ticket.id)
+        this.fallbackStartTimes.delete(ticket.id)
+        this.transient.delete(assignment.id)
+        this.resuming.delete(assignment.id)
+        this.recordTicketNote(ticket.id, bounds.reason!)
+        void this.background(Promise.resolve().then(() => {
+          this.failed(ticket.id, bounds.reason!)
+        }))
+        return
+      }
+
       // An explicit availability condition (quota, cooldown, budget, account, 429) switches route at once; a generic
       // HTTP 408/5xx or transport failure takes the same-route retry budget first, for it may pass.
       if (classified.action === 'advance' || switchesRoute(error)) {
         await this.handleUnavailableModel(ticket, assignment, agent, error)
         return
       }
-      if (this.retries(assignment.id, error, ticket)) { this.resumeAfter(ticket.id, assignment.id, error); return }
+      if (this.retries(assignment.id, error, ticket)) {
+        this.resumeAfter(ticket.id, assignment.id, error)
+        return
+      }
+      // When same-route retries are exhausted for this candidate, fall back to next candidate if routing is configured
+      const settings = this.host.store.settings()
+      const routing = settings.models.routing ?? settings.models.model_routing
+      if (routing && isModelUnavailable(error)) {
+        await this.handleUnavailableModel(ticket, assignment, agent, error)
+        return
+      }
       void this.background(Promise.resolve().then(() => { this.failed(ticket.id, String(error)) }))
     }))
   }

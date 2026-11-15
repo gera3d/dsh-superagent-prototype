@@ -315,6 +315,66 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
     const later = session.append.mock.calls.filter(([e]) => e === 'model/selection').slice(before).map(([, v]) => v)
     expect(later).toHaveLength(0)
   })
+
+  it('real runtime HTTP 500 transient error respects max_total_attempts=1 without same-route retry', async () => {
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 1,
+        max_attempts_per_model: 2,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    const one = await h.acceptedTicket(feishu('http500-total-cap-1', '@bot Fix http500 total attempt cap'))
+    const agent = h.agents.get(one.sessionId)!
+
+    const http500Error = Object.assign(new Error('Internal Server Error 500'), { status: 500 })
+    h.ctx.emit('agent/error', { agent, error: http500Error } as never)
+    await h.runtime.idle()
+
+    // Must not schedule a same-route retry: resuming set must be size 0
+    expect((h.runtime.executor as any).resuming.size).toBe(0)
+
+    const updated = h.runtime.store.tickets.get(one.ticket.id)!
+    expect(latestAssignment(updated)?.report?.state).toBe('failed')
+    const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
+    expect(lastNote?.text).toMatch(/Total attempt bound exceeded \(1\)/)
+  })
+
+  it('real runtime enforces end-to-end deadline starting from first request across retries', async () => {
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 5,
+        max_attempts_per_model: 3,
+        total_timeout_ms: 30,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    const one = await h.acceptedTicket(feishu('deadline-end-to-end-1', '@bot Fix deadline end-to-end fixture'))
+    const agent = h.agents.get(one.sessionId)!
+
+    // Wait until deadline has expired since original request start
+    await new Promise(r => setTimeout(r, 60))
+
+    const http500Error = Object.assign(new Error('Internal Server Error 500'), { status: 500 })
+    h.ctx.emit('agent/error', { agent, error: http500Error } as never)
+    await h.runtime.idle()
+
+    // Resuming set must be size 0 because deadline was exceeded
+    expect((h.runtime.executor as any).resuming.size).toBe(0)
+
+    const updated = h.runtime.store.tickets.get(one.ticket.id)!
+    expect(latestAssignment(updated)?.report?.state).toBe('failed')
+    const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
+    expect(lastNote?.text).toMatch(/Routing deadline exceeded \(30ms\)/)
+  })
 })
 
 describe('Bounded Model Routing and Tool Execution Guard', () => {
