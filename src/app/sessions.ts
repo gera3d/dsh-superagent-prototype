@@ -290,12 +290,9 @@ export class Sessions {
       const current = ticket && host.store.tickets.get(ticket.id)
       const currentTurn = current ? currentTurnOf(agent) : undefined
       const briefContext = current ? (
-        `\n[Active Thread Brief Rev 1]\n` +
-        `Objective: ${current.title}\n` +
-        `Current State: ${current.ended ? 'ended' : 'open'}\n` +
-        `Next Action: ${current.ended ? 'None (ended)' : 'Execute assignment'}\n` +
-        `Scope:\n  - Mandate ${current.mandate.strength} scope\n` +
-        `Criteria:\n  - [CRIT-1] (pending): Core requirements implemented and verified\n`
+        `\n[Brief Rev 1: ${current.title}]\n` +
+        `State: ${current.ended ? 'ended' : 'open'} | Next: ${current.ended ? 'None' : 'Execute assignment'}\n` +
+        `Criteria: [CRIT-1] (pending) Core requirements verified\n`
       ) : ''
       const composed = host.prompts.compose(version.config, master ? 'orchestrator' : 'worker', current ? host.environment(current, currentTurn) : undefined)
       return `[dsh-superagent prompt revision ${version.revision}]\n${composed}\n${briefContext}${current ? mandateInstructions(current.mandate) : ''}`

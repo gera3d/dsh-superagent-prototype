@@ -651,19 +651,13 @@ describe('Thread Brief Integration (ThreadPage, TicketPage & Sessions wiring)', 
       mandate: { strength: 'autonomous' },
     }
     const briefContext = (
-      `\n[Active Thread Brief Rev 1]\n` +
-      `Objective: ${ticket.title}\n` +
-      `Current State: ${ticket.ended ? 'ended' : 'open'}\n` +
-      `Next Action: ${ticket.ended ? 'None (ended)' : 'Execute assignment'}\n` +
-      `Scope:\n  - Mandate ${ticket.mandate.strength} scope\n` +
-      `Criteria:\n  - [CRIT-1] (pending): Core requirements implemented and verified\n`
+      `\n[Brief Rev 1: ${ticket.title}]\n` +
+      `State: ${ticket.ended ? 'ended' : 'open'} | Next: ${ticket.ended ? 'None' : 'Execute assignment'}\n` +
+      `Criteria: [CRIT-1] (pending) Core requirements verified\n`
     )
 
-    expect(briefContext).toContain('[Active Thread Brief Rev 1]')
-    expect(briefContext).toContain('Objective: Make each thread purpose and definition of done obvious')
-    expect(briefContext).toContain('Current State: open')
-    expect(briefContext).toContain('Next Action: Execute assignment')
-    expect(briefContext).toContain('Scope:\n  - Mandate autonomous scope')
-    expect(briefContext).toContain('Criteria:\n  - [CRIT-1] (pending): Core requirements implemented and verified')
+    expect(briefContext).toContain('[Brief Rev 1: Make each thread purpose and definition of done obvious]')
+    expect(briefContext).toContain('State: open | Next: Execute assignment')
+    expect(briefContext).toContain('Criteria: [CRIT-1] (pending) Core requirements verified')
   })
 })
