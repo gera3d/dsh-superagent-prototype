@@ -5,7 +5,7 @@
  * immutable dependency pool reuse, and per-task cache isolation.
  */
 import { createHash } from 'node:crypto'
-import { accessSync, constants, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, symlinkSync } from 'node:fs'
+import { accessSync, constants, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, symlinkSync, writeFileSync } from 'node:fs'
 import { dirname, isAbsolute, join, resolve, relative, sep } from 'node:path'
 
 /** Inputs required to compute a deterministic dependency compatibility key. */
@@ -209,6 +209,7 @@ export interface TaskIsolationPaths {
   tsCacheDir: string
   pnpmStoreDir: string
   tmpDir: string
+  vitestConfigFile: string
   env: Record<string, string>
   /** Supported command-line arguments to enforce task isolation in build/test tools. */
   toolArgs: {
@@ -225,16 +226,21 @@ export interface TaskIsolationPaths {
 export function createTaskIsolation(taskDir: string): TaskIsolationPaths {
   const cacheBase = join(taskDir, '.cache')
   const viteCacheDir = join(cacheBase, 'vite')
-  const vitestCacheDir = join(cacheBase, 'vitest')
+  const vitestCacheDir = join(viteCacheDir, 'vitest')
   const tsCacheDir = join(cacheBase, 'ts')
   const pnpmStoreDir = join(cacheBase, 'pnpm-store')
   const tmpDir = join(taskDir, '.tmp')
+  const vitestConfigFile = join(cacheBase, 'vitest.config.mjs')
 
   mkdirSync(viteCacheDir, { recursive: true })
   mkdirSync(vitestCacheDir, { recursive: true })
   mkdirSync(tsCacheDir, { recursive: true })
   mkdirSync(pnpmStoreDir, { recursive: true })
   mkdirSync(tmpDir, { recursive: true })
+
+  // Write isolated per-job vitest configuration setting cacheDir
+  const configContent = `export default {\n  cacheDir: ${JSON.stringify(viteCacheDir)},\n}\n`
+  writeFileSync(vitestConfigFile, configContent, 'utf-8')
 
   const env: Record<string, string> = {
     TMPDIR: tmpDir,
@@ -247,7 +253,7 @@ export function createTaskIsolation(taskDir: string): TaskIsolationPaths {
   }
 
   const toolArgs = {
-    vitest: ['--cache.dir', vitestCacheDir],
+    vitest: ['--config', vitestConfigFile],
     pnpm: ['--store-dir', pnpmStoreDir],
   }
 
@@ -258,6 +264,7 @@ export function createTaskIsolation(taskDir: string): TaskIsolationPaths {
     tsCacheDir,
     pnpmStoreDir,
     tmpDir,
+    vitestConfigFile,
     env,
     toolArgs,
   }

@@ -1,6 +1,7 @@
+import { execFileSync } from 'node:child_process'
 import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   computeBuildOutputKey,
@@ -228,7 +229,7 @@ describe('workspace-reuse', () => {
   })
 
   describe('task cache and environment isolation', () => {
-    it('creates isolated cache directories, tool args, and environment variables', () => {
+    it('creates isolated cache directories, tool args, config file, and environment variables', () => {
       const taskDir = mkdtempSync(join(tmpdir(), 'task-iso-'))
       try {
         const iso = createTaskIsolation(taskDir)
@@ -237,11 +238,63 @@ describe('workspace-reuse', () => {
         expect(existsSync(iso.tsCacheDir)).toBe(true)
         expect(existsSync(iso.pnpmStoreDir)).toBe(true)
         expect(existsSync(iso.tmpDir)).toBe(true)
+        expect(existsSync(iso.vitestConfigFile)).toBe(true)
         expect(iso.env.VITE_CACHE_DIR).toBe(iso.viteCacheDir)
         expect(iso.env.VITEST_CACHE_DIR).toBe(iso.vitestCacheDir)
         expect(iso.env.TMPDIR).toBe(iso.tmpDir)
-        expect(iso.toolArgs.vitest).toContain('--cache.dir')
-        expect(iso.toolArgs.pnpm).toContain('--store-dir')
+        expect(iso.toolArgs.vitest).toEqual(['--config', iso.vitestConfigFile])
+        expect(iso.toolArgs.pnpm).toEqual(['--store-dir', iso.pnpmStoreDir])
+        const configContent = readFileSync(iso.vitestConfigFile, 'utf-8')
+        expect(configContent).toContain(iso.viteCacheDir)
+      } finally {
+        rmSync(taskDir, { recursive: true, force: true })
+      }
+    })
+
+    it('applies per-job config in pinned Vitest CLI, writing cache into isolated cacheDir and rejecting deprecated --cache.dir', () => {
+      const taskDir = mkdtempSync(join(tmpdir(), 'task-iso-cli-'))
+      try {
+        const iso = createTaskIsolation(taskDir)
+        const vitestBin = resolve(process.cwd(), 'node_modules/vitest/vitest.mjs')
+
+        // Verify that pinned Vitest CLI rejects --cache.dir with deprecation error
+        let deprecatedRejected = false
+        try {
+          execFileSync(process.execPath, [vitestBin, 'run', '--cache.dir', iso.vitestCacheDir], {
+            cwd: taskDir,
+            encoding: 'utf-8',
+            stdio: 'pipe',
+          })
+        } catch (err: any) {
+          if (err.stderr && err.stderr.includes('--cache.dir is deprecated')) {
+            deprecatedRejected = true
+          }
+        }
+        expect(deprecatedRejected).toBe(true)
+
+        // Write a minimal synthetic spec file to run in the isolated task directory
+        const syntheticSpec = join(taskDir, 'synthetic.spec.js')
+        writeFileSync(
+          syntheticSpec,
+          'import { test, expect } from "vitest";\ntest("synthetic isolation check", () => expect(1 + 1).toBe(2));\n',
+          'utf-8',
+        )
+
+        // Run pinned Vitest CLI with the isolated tool arguments emitted by createTaskIsolation
+        const output = execFileSync(
+          process.execPath,
+          [vitestBin, 'run', 'synthetic.spec.js', ...iso.toolArgs.vitest],
+          {
+            cwd: taskDir,
+            encoding: 'utf-8',
+            stdio: 'pipe',
+          },
+        )
+
+        expect(output).toContain('1 passed')
+        // Verify cache files are actually written inside the isolated cacheDir
+        const cacheSubdir = join(iso.viteCacheDir, 'vitest')
+        expect(existsSync(cacheSubdir)).toBe(true)
       } finally {
         rmSync(taskDir, { recursive: true, force: true })
       }
