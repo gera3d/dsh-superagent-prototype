@@ -224,14 +224,13 @@ export interface TaskIsolationPaths {
   }
 }
 
-const KNOWN_CONFIG_NAMES = [
-  'vitest.config.ts',
-  'vitest.config.js',
-  'vitest.config.mjs',
-  'vite.config.ts',
-  'vite.config.js',
-  'vite.config.mjs',
-]
+/** Base configuration file names in pinned Vitest discovery precedence order. */
+export const VITEST_CONFIG_NAMES = ['vitest.config', 'vite.config'] as const
+/** Configuration extensions in pinned Vitest discovery precedence order. */
+export const VITEST_CONFIG_EXTENSIONS = ['.ts', '.mts', '.cts', '.js', '.mjs', '.cjs'] as const
+export const KNOWN_CONFIG_NAMES: readonly string[] = VITEST_CONFIG_NAMES.flatMap((name) =>
+  VITEST_CONFIG_EXTENSIONS.map((ext) => `${name}${ext}`),
+)
 
 /**
  * Creates isolated cache, temp, and output directories for a task,

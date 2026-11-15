@@ -8,6 +8,7 @@ import {
   computeDependencyCompatibilityKey,
   createTaskIsolation,
   DependencyPoolManager,
+  KNOWN_CONFIG_NAMES,
   validateContainment,
   type DependencyManifestInputs,
 } from '../src/app/workspace-reuse.ts'
@@ -384,6 +385,131 @@ describe('workspace-reuse', () => {
         const hashDirs = readdirSync(iso.vitestCacheDir)
         expect(hashDirs.length).toBeGreaterThan(0)
         expect(existsSync(join(iso.vitestCacheDir, hashDirs[0]!, 'results.json'))).toBe(true)
+      } finally {
+        rmSync(taskDir, { recursive: true, force: true })
+      }
+    })
+
+    it('matches pinned Vitest configuration discovery list and precedence', () => {
+      expect(KNOWN_CONFIG_NAMES).toEqual([
+        'vitest.config.ts',
+        'vitest.config.mts',
+        'vitest.config.cts',
+        'vitest.config.js',
+        'vitest.config.mjs',
+        'vitest.config.cjs',
+        'vite.config.ts',
+        'vite.config.mts',
+        'vite.config.cts',
+        'vite.config.js',
+        'vite.config.mjs',
+        'vite.config.cjs',
+      ])
+    })
+
+    it('discovers and composes omitted extension config (vitest.config.cjs) with required setup marker', () => {
+      const taskDir = mkdtempSync(join(tmpdir(), 'task-iso-cjs-'))
+      try {
+        const vitestBin = resolve(process.cwd(), 'node_modules/vitest/vitest.mjs')
+
+        // 1. Create a setup file setting a unique runtime marker
+        const setupFile = join(taskDir, 'setup-cjs.js')
+        writeFileSync(setupFile, 'globalThis.__CJS_SETUP_RAN__ = true;\n', 'utf-8')
+
+        // 2. Base config using .cjs extension
+        const baseConfigFile = join(taskDir, 'vitest.config.cjs')
+        writeFileSync(
+          baseConfigFile,
+          `module.exports = { test: { setupFiles: [${JSON.stringify(setupFile)}] } };\n`,
+          'utf-8',
+        )
+
+        // 3. Spec file requiring the marker set by setupFiles
+        const specFile = join(taskDir, 'cjs.spec.js')
+        writeFileSync(
+          specFile,
+          'import { test, expect } from "vitest";\ntest("cjs setup ran", () => expect(globalThis.__CJS_SETUP_RAN__).toBe(true));\n',
+          'utf-8',
+        )
+
+        // 4. Create task isolation which auto-discovers vitest.config.cjs
+        const iso = createTaskIsolation(taskDir)
+        expect(existsSync(iso.vitestConfigFile)).toBe(true)
+        const configText = readFileSync(iso.vitestConfigFile, 'utf-8')
+        expect(configText).toContain(baseConfigFile)
+
+        // 5. Run pinned CLI with emitted arguments
+        const output = execFileSync(
+          process.execPath,
+          [vitestBin, 'run', 'cjs.spec.js', ...iso.toolArgs.vitest],
+          {
+            cwd: taskDir,
+            encoding: 'utf-8',
+            stdio: 'pipe',
+          },
+        )
+        expect(output).toContain('1 passed')
+        expect(existsSync(iso.vitestCacheDir)).toBe(true)
+        const hashDirs = readdirSync(iso.vitestCacheDir)
+        expect(hashDirs.length).toBeGreaterThan(0)
+        expect(existsSync(join(iso.vitestCacheDir, hashDirs[0]!, 'results.json'))).toBe(true)
+      } finally {
+        rmSync(taskDir, { recursive: true, force: true })
+      }
+    })
+
+    it('enforces config precedence order when competing configs exist, selecting vitest.config over vite.config', () => {
+      const taskDir = mkdtempSync(join(tmpdir(), 'task-iso-precedence-'))
+      try {
+        const vitestBin = resolve(process.cwd(), 'node_modules/vitest/vitest.mjs')
+
+        // 1. Competing setup files setting distinct required setup markers
+        const setupVitest = join(taskDir, 'setup-vitest.js')
+        writeFileSync(setupVitest, 'globalThis.__ACTIVE_CONFIG_MARKER__ = "vitest-config-marker";\n', 'utf-8')
+        const setupVite = join(taskDir, 'setup-vite.js')
+        writeFileSync(setupVite, 'globalThis.__ACTIVE_CONFIG_MARKER__ = "vite-config-marker";\n', 'utf-8')
+
+        // 2. Both vitest.config.js and vite.config.js exist simultaneously
+        const vitestConfigFile = join(taskDir, 'vitest.config.js')
+        writeFileSync(
+          vitestConfigFile,
+          `export default { test: { setupFiles: [${JSON.stringify(setupVitest)}] } };\n`,
+          'utf-8',
+        )
+        const viteConfigFile = join(taskDir, 'vite.config.js')
+        writeFileSync(
+          viteConfigFile,
+          `export default { test: { setupFiles: [${JSON.stringify(setupVite)}] } };\n`,
+          'utf-8',
+        )
+
+        // 3. Spec file requiring the higher-precedence vitest.config marker
+        const specFile = join(taskDir, 'precedence.spec.js')
+        writeFileSync(
+          specFile,
+          'import { test, expect } from "vitest";\ntest("precedence selects vitest over vite", () => expect(globalThis.__ACTIVE_CONFIG_MARKER__).toBe("vitest-config-marker"));\n',
+          'utf-8',
+        )
+
+        // 4. Create task isolation which must select vitest.config.js over vite.config.js
+        const iso = createTaskIsolation(taskDir)
+        expect(existsSync(iso.vitestConfigFile)).toBe(true)
+        const configText = readFileSync(iso.vitestConfigFile, 'utf-8')
+        expect(configText).toContain(vitestConfigFile)
+        expect(configText).not.toContain(viteConfigFile)
+
+        // 5. Run pinned CLI with emitted arguments
+        const output = execFileSync(
+          process.execPath,
+          [vitestBin, 'run', 'precedence.spec.js', ...iso.toolArgs.vitest],
+          {
+            cwd: taskDir,
+            encoding: 'utf-8',
+            stdio: 'pipe',
+          },
+        )
+        expect(output).toContain('1 passed')
+        expect(existsSync(iso.vitestCacheDir)).toBe(true)
       } finally {
         rmSync(taskDir, { recursive: true, force: true })
       }
