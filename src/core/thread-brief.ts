@@ -2,8 +2,8 @@
  * Thread Brief domain model and context adapter (Issue #216).
  *
  * Implements immutable verbatim original ask, explicitly unconfirmed inferred scope/criteria,
- * monotonic criterion ID allocation, staged proposals, revision history, evidence-backed
- * status transitions, and prompt/continuation context generation.
+ * monotonic criterion ID allocation across batches, proposals, and history, staged proposals,
+ * immutable isolated getters, revision history, evidence-backed status transitions, and prompt/continuation context generation.
  */
 
 export type CriterionStatus = 'pending' | 'in_progress' | 'satisfied'
@@ -106,6 +106,7 @@ export class ThreadBriefManager {
    * Factory creating a brief from a user request.
    * Preserves raw_original_ask verbatim without trimming or stripping.
    * Marks all inferred items as unconfirmed.
+   * Does NOT fabricate model routes when genuine model context is unavailable.
    */
   static fromRequest(params: {
     thread_id: string
@@ -149,10 +150,26 @@ export class ThreadBriefManager {
       pending_proposals: [],
       revision_history: [],
       model_context: params.model_context || {
-        current_model: 'deepseek/deepseek-chat',
+        current_model: 'unknown',
         fallback_events: [],
       },
     })
+  }
+
+  /**
+   * Deserializes brief manager from persisted JSON string or state object.
+   */
+  static deserialize(serialized: string | ThreadBriefState): ThreadBriefManager {
+    const parsed: ThreadBriefState = typeof serialized === 'string' ? JSON.parse(serialized) : serialized
+    return new ThreadBriefManager(parsed)
+  }
+
+  serialize(): string {
+    return JSON.stringify(this.state)
+  }
+
+  toJSON(): ThreadBriefState {
+    return this.getState()
   }
 
   getState(): ThreadBriefState {
@@ -167,25 +184,37 @@ export class ThreadBriefManager {
     return this.state.revision_id
   }
 
+  /**
+   * Read-only getter returning an isolated snapshot to prevent external
+   * tampering or bypassing evidence verification rules.
+   */
   get criteria(): ThreadBriefCriterion[] {
-    return this.state.criteria
+    return JSON.parse(JSON.stringify(this.state.criteria))
   }
 
+  /**
+   * Read-only getter returning an isolated snapshot to prevent external tampering.
+   */
   get scope(): ThreadBriefScopeItem[] {
-    return this.state.scope
+    return JSON.parse(JSON.stringify(this.state.scope))
   }
 
+  /**
+   * Read-only getter returning an isolated snapshot to prevent external tampering.
+   */
   get pendingProposals(): ThreadBriefProposal[] {
-    return this.state.pending_proposals
+    return JSON.parse(JSON.stringify(this.state.pending_proposals))
   }
 
   /**
    * Monotonically allocate next criterion ID scanning active criteria,
-   * pending proposals, and historical revisions to avoid collision.
+   * all proposals (pending, accepted, rejected), historical revisions,
+   * and any ephemeral IDs allocated within the current batch to prevent collisions.
    */
-  allocateCriterionId(): string {
+  allocateCriterionId(extraIdsInBatch: string[] = []): string {
     let maxId = 0
-    const scanId = (idStr: string) => {
+    const scanId = (idStr?: string) => {
+      if (!idStr) return
       const match = idStr.match(/^CRIT-(\d+)$/)
       if (match) {
         const num = parseInt(match[1], 10)
@@ -193,10 +222,12 @@ export class ThreadBriefManager {
       }
     }
 
+    // Active criteria
     for (const c of this.state.criteria) {
       scanId(c.id)
     }
 
+    // All staged proposals (pending, accepted, or rejected)
     for (const prop of this.state.pending_proposals) {
       if (prop.added_criteria) {
         for (const c of prop.added_criteria) {
@@ -205,10 +236,16 @@ export class ThreadBriefManager {
       }
     }
 
+    // Historical revisions
     for (const rev of this.state.revision_history) {
       for (const c of rev.criteria) {
         scanId(c.id)
       }
+    }
+
+    // Additional IDs in the currently allocated batch
+    for (const idStr of extraIdsInBatch) {
+      scanId(idStr)
     }
 
     return `CRIT-${maxId + 1}`
@@ -216,6 +253,7 @@ export class ThreadBriefManager {
 
   /**
    * Stage an unconfirmed proposal.
+   * Allocates unique monotonic IDs across the entire batch without collision.
    * Does NOT mutate active brief or bump revision.
    */
   stageProposal(params: {
@@ -231,13 +269,19 @@ export class ThreadBriefManager {
       confirmed: false,
     }))
 
-    const added_criteria: ThreadBriefCriterion[] = (params.added_criteria || []).map(description => ({
-      id: this.allocateCriterionId(),
-      description,
-      status: 'pending',
-      is_inferred: true,
-      confirmed: false,
-    }))
+    const added_criteria: ThreadBriefCriterion[] = []
+    const allocatedInBatch: string[] = []
+    for (const description of params.added_criteria || []) {
+      const id = this.allocateCriterionId(allocatedInBatch)
+      allocatedInBatch.push(id)
+      added_criteria.push({
+        id,
+        description,
+        status: 'pending',
+        is_inferred: true,
+        confirmed: false,
+      })
+    }
 
     const proposal: ThreadBriefProposal = {
       proposal_id,
@@ -250,7 +294,7 @@ export class ThreadBriefManager {
     }
 
     this.state.pending_proposals.push(proposal)
-    return proposal
+    return JSON.parse(JSON.stringify(proposal))
   }
 
   /**
@@ -301,9 +345,19 @@ export class ThreadBriefManager {
   }
 
   /**
-   * Record verified evidence for a criterion.
-   * Rejects empty or invalid evidence.
-   * Transitions status to satisfied only when valid evidence provided.
+   * Reject a staged proposal. Retains proposal in record to avoid ID reuse.
+   */
+  rejectProposal(proposalId: string): boolean {
+    const proposal = this.state.pending_proposals.find(p => p.proposal_id === proposalId)
+    if (!proposal || proposal.status !== 'pending') return false
+    proposal.status = 'rejected'
+    return true
+  }
+
+  /**
+   * Record structured evidence for a criterion.
+   * Rejects empty or invalid evidence fields.
+   * Transitions status to satisfied subject to coordinator/operator verification.
    */
   recordEvidence(criterionId: string, evidence: CriterionEvidence): { success: boolean; error?: string } {
     const criterion = this.state.criteria.find(c => c.id === criterionId)
@@ -312,11 +366,16 @@ export class ThreadBriefManager {
     }
 
     if (!evidence.reference || !evidence.reference.trim()) {
-      return { success: false, error: 'Evidence reference is required' }
+      return { success: false, error: 'Evidence reference is required and cannot be blank' }
     }
 
     if (!evidence.summary || !evidence.summary.trim()) {
-      return { success: false, error: 'Evidence summary is required' }
+      return { success: false, error: 'Evidence summary is required and cannot be blank' }
+    }
+
+    const validTypes: EvidenceType[] = ['test_result', 'artifact', 'observation']
+    if (!validTypes.includes(evidence.type)) {
+      return { success: false, error: `Invalid evidence type: ${evidence.type}` }
     }
 
     criterion.evidence = {
@@ -330,7 +389,7 @@ export class ThreadBriefManager {
   }
 
   /**
-   * Reject unverified agent claims that attempt to satisfy a criterion without evidence.
+   * Explicitly reject unverified agent claims that attempt to satisfy a criterion without evidence.
    */
   evaluateAgentClaim(criterionId: string, claimText: string): { accepted: boolean; message: string } {
     return {
@@ -340,16 +399,17 @@ export class ThreadBriefManager {
   }
 
   /**
-   * Check whether all criteria are satisfied with evidence.
-   * Agent claims do not close the task.
+   * Check whether all criteria have verified evidence recorded.
+   * Does NOT auto-accept task completion; requires explicit audit.
    */
-  canCloseTask(): { allowed: boolean; pending: string[] } {
+  canCloseTask(): { allowed: boolean; pending: string[]; requires_audit: boolean } {
     const pending = this.state.criteria
       .filter(c => c.status !== 'satisfied' || !c.evidence)
       .map(c => c.id)
     return {
       allowed: pending.length === 0,
       pending,
+      requires_audit: true,
     }
   }
 
@@ -361,7 +421,7 @@ export class ThreadBriefManager {
   updateModelContext(modelContext: Partial<ModelContext>): void {
     this.state.model_context = {
       ...this.state.model_context,
-      current_model: modelContext.current_model || this.state.model_context?.current_model || 'deepseek/deepseek-chat',
+      current_model: modelContext.current_model || this.state.model_context?.current_model || 'unknown',
       fallback_events: modelContext.fallback_events || this.state.model_context?.fallback_events || [],
     }
   }
@@ -417,7 +477,7 @@ export class ThreadBriefManager {
       scope: JSON.parse(JSON.stringify(this.state.scope)),
       pending_proposals: JSON.parse(JSON.stringify(this.state.pending_proposals)),
       model_context: {
-        current_model: this.state.model_context?.current_model || 'deepseek/deepseek-chat',
+        current_model: this.state.model_context?.current_model || 'unknown',
         fallback_events: JSON.parse(JSON.stringify(this.state.model_context?.fallback_events || [])),
       },
     }

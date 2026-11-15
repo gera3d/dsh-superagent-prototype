@@ -33,7 +33,8 @@ export function ThreadBriefHeader({
   onConfirmProposal?: (proposalId: string) => void
 }) {
   const [expanded, setExpanded] = useState(false)
-  const activeModel = currentModel || brief.model_context?.current_model || 'deepseek/deepseek-chat'
+  const activeModel = currentModel || brief.model_context?.current_model || 'unknown'
+  const isModelKnown = activeModel !== 'unknown' && activeModel !== 'unavailable'
   const events = fallbackEvents || brief.model_context?.fallback_events || []
   const proposals = brief.pending_proposals || []
   const satisfiedCount = brief.criteria.filter(c => c.status === 'satisfied').length
@@ -75,7 +76,9 @@ export function ThreadBriefHeader({
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* Dynamic Model Indicator */}
           <Tag tone={events.length > 0 ? 'warning' : 'outline'} title={`Active Model: ${activeModel}`}>
-            <span style={{ fontSize: '11px' }}>{activeModel}</span>
+            <span style={{ fontSize: '11px' }}>
+              {isModelKnown ? activeModel : 'model: unavailable'}
+            </span>
           </Tag>
 
           {/* Criteria Satisfaction Badge */}

@@ -51,6 +51,28 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
     expect(state.criteria[1].id).toBe('CRIT-2')
   })
 
+  it('Counterexample regression fix: allocates unique monotonic IDs within a single multi-item proposal batch', () => {
+    // Root counterexample from audit: fromRequest with no criteria, then stageProposal added_criteria ['first','second']
+    const mgr = ThreadBriefManager.fromRequest({
+      thread_id: 'thread-counterexample',
+      raw_request: 'Task without initial criteria',
+      inferred_criteria: [],
+    })
+
+    const proposal = mgr.stageProposal({
+      description: 'Add multiple criteria at once',
+      proposed_by: 'reviewer',
+      added_criteria: ['first', 'second', 'third'],
+    })
+
+    expect(proposal.added_criteria).toBeDefined()
+    const ids = proposal.added_criteria!.map(c => c.id)
+    expect(ids).toEqual(['CRIT-1', 'CRIT-2', 'CRIT-3'])
+    // Check uniqueness explicitly
+    const uniqueIds = new Set(ids)
+    expect(uniqueIds.size).toBe(ids.length)
+  })
+
   it('AC-2 & AC-14: monotonically allocates criterion IDs across active criteria, proposals, and history', () => {
     const mgr = ThreadBriefManager.fromRequest({
       thread_id: 'thread-1',
@@ -69,6 +91,15 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
 
     // Next allocated ID must skip CRIT-3 because it is staged in proposal
     expect(mgr.allocateCriterionId()).toBe('CRIT-4')
+
+    // Reject proposal; allocated ID must still avoid reusing CRIT-3
+    const proposal2 = mgr.stageProposal({
+      description: 'Will be rejected',
+      proposed_by: 'operator-2',
+      added_criteria: ['Proposed crit 4'],
+    })
+    mgr.rejectProposal(proposal2.proposal_id)
+    expect(mgr.allocateCriterionId()).toBe('CRIT-5')
   })
 
   it('AC-4 & AC-19: stages unconfirmed proposals without mutating active brief or bumping revision', () => {
@@ -119,6 +150,48 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
     expect(state.revision_history[0].criteria.length).toBe(1)
   })
 
+  it('Getter boundary: read-only getter snapshots prevent external mutation of internal state', () => {
+    const mgr = ThreadBriefManager.fromRequest({
+      thread_id: 'thread-immutable',
+      raw_request: 'Immutable test',
+      inferred_criteria: ['Criteria 1'],
+      inferred_scope: ['Scope 1'],
+    })
+
+    // Attempt direct mutation via getter arrays
+    const externalCriteria = mgr.criteria
+    externalCriteria[0].status = 'satisfied'
+    externalCriteria.push({
+      id: 'CRIT-FAKE',
+      description: 'Injected fake',
+      status: 'satisfied',
+      is_inferred: false,
+      confirmed: true,
+    })
+
+    const externalScope = mgr.scope
+    externalScope[0].confirmed = true
+
+    // Internal state must remain untouched
+    const freshState = mgr.getState()
+    expect(freshState.criteria.length).toBe(1)
+    expect(freshState.criteria[0].status).toBe('pending')
+    expect(freshState.criteria.some(c => c.id === 'CRIT-FAKE')).toBe(false)
+    expect(freshState.scope[0].confirmed).toBe(false)
+  })
+
+  it('Model context: represents unknown/unavailable when no genuine model context exists', () => {
+    const mgr = ThreadBriefManager.fromRequest({
+      thread_id: 'thread-no-model',
+      raw_request: 'Task without model context',
+      inferred_criteria: ['Criterion A'],
+    })
+
+    const state = mgr.getState()
+    expect(state.model_context?.current_model).toBe('unknown')
+    expect(mgr.toView().model_context.current_model).toBe('unknown')
+  })
+
   it('AC-15 & AC-16: satisfied status strictly requires valid evidence and rejects missing/empty fields', () => {
     const mgr = ThreadBriefManager.fromRequest({
       thread_id: 'thread-1',
@@ -155,7 +228,7 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
     expect(mgr.criteria[0].evidence?.reference).toBe('tests/thread-brief.spec.ts#L10-L40')
   })
 
-  it('AC-18: rejects unverified agent claims and prevents premature task closure', () => {
+  it('AC-18: rejects unverified agent claims and requires explicit audit for closure', () => {
     const mgr = ThreadBriefManager.fromRequest({
       thread_id: 'thread-1',
       raw_request: 'Complete task',
@@ -171,6 +244,7 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
     const closeCheck = mgr.canCloseTask()
     expect(closeCheck.allowed).toBe(false)
     expect(closeCheck.pending).toContain('CRIT-1')
+    expect(closeCheck.requires_audit).toBe(true)
 
     // After genuine evidence recorded:
     mgr.recordEvidence('CRIT-1', {
@@ -178,7 +252,39 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
       reference: 'evidence/receipt.json',
       summary: 'Valid delivery artifact generated',
     })
-    expect(mgr.canCloseTask().allowed).toBe(true)
+    const afterEvidence = mgr.canCloseTask()
+    expect(afterEvidence.allowed).toBe(true)
+    expect(afterEvidence.requires_audit).toBe(true) // Still subject to coordinator/operator audit
+  })
+
+  it('AC-8, AC-9, AC-10: preserves brief revisions, criteria, and proposals across serialization reload', () => {
+    const mgr = ThreadBriefManager.fromRequest({
+      thread_id: 'thread-reload',
+      ticket_id: 'ticket-reload-1',
+      raw_request: 'Raw ask to be reloaded',
+      objective: 'Reload Verification',
+      inferred_criteria: ['Crit 1'],
+    })
+
+    mgr.stageProposal({
+      description: 'Proposed update',
+      proposed_by: 'operator',
+      added_criteria: ['Crit 2'],
+    })
+    mgr.confirmProposal(mgr.pendingProposals[0].proposal_id, 'human-operator')
+
+    // Serialize
+    const serialized = mgr.serialize()
+    expect(typeof serialized).toBe('string')
+
+    // Deserialize into fresh instance
+    const restored = ThreadBriefManager.deserialize(serialized)
+    expect(restored.revisionId).toBe(2)
+    expect(restored.rawOriginalAsk).toBe('Raw ask to be reloaded')
+    expect(restored.criteria.length).toBe(2)
+    expect(restored.criteria[0].id).toBe('CRIT-1')
+    expect(restored.criteria[1].id).toBe('CRIT-2')
+    expect(restored.getState().revision_history.length).toBe(1)
   })
 
   it('AC-11, AC-12, AC-13 & AC-22, AC-23: composes context prompt with brief status and model fallback telemetry', () => {
@@ -257,7 +363,7 @@ describe('ThreadBriefHeader React Component (Issue #216 UI)', () => {
       scope: [{ text: 'Scoped to client only', is_inferred: false, confirmed: true }],
       pending_proposals: [],
       model_context: {
-        current_model: 'deepseek/deepseek-chat',
+        current_model: 'unknown',
         fallback_events: [],
       },
     }
@@ -270,6 +376,7 @@ describe('ThreadBriefHeader React Component (Issue #216 UI)', () => {
     expect(container.textContent).toContain('Rev 1')
     expect(container.textContent).toContain('Test Brief Header Component')
     expect(container.textContent).toContain('1/2 Criteria')
+    expect(container.textContent).toContain('model: unavailable') // Unknown model represented without fabricating deepseek
     expect(container.querySelector('[data-testid="brief-expanded-body"]')).toBeNull()
 
     // Click View Details to expand
