@@ -486,4 +486,32 @@ describe('ThreadBriefHeader React Component (Issue #216 UI)', () => {
       root.unmount()
     })
   })
+
+  it('Component regression: does not claim provider healthy when model context is unavailable or unobserved', async () => {
+    const root = createRoot(container)
+    const mgr = ThreadBriefManager.fromRequest({
+      thread_id: 'thread-unobserved-health',
+      raw_request: 'User ask without model routing info',
+      inferred_criteria: ['Check criteria'],
+    })
+
+    const view = mgr.toView()
+    await act(async () => {
+      root.render(<ThreadBriefHeader brief={view} />)
+    })
+
+    const toggleBtn = container.querySelector('[data-testid="brief-toggle-btn"]') as HTMLButtonElement
+    await act(async () => {
+      toggleBtn.click()
+    })
+
+    expect(container.textContent).toContain('model: unavailable')
+    expect(container.textContent).not.toContain('Primary model healthy')
+    const telemetryMsg = container.querySelector('[data-testid="fallback-telemetry-empty"]')
+    expect(telemetryMsg?.textContent).toBe('Model context unavailable; no fallback telemetry recorded.')
+
+    await act(async () => {
+      root.unmount()
+    })
+  })
 })

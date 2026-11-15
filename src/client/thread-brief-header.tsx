@@ -267,8 +267,10 @@ export function ThreadBriefHeader({
                 ))}
               </ul>
             ) : (
-              <p style={{ margin: '2px 0 0 0', fontSize: '11px', opacity: 0.6 }}>
-                Primary model healthy; no fallback events recorded.
+              <p data-testid="fallback-telemetry-empty" style={{ margin: '2px 0 0 0', fontSize: '11px', opacity: 0.6 }}>
+                {isModelKnown
+                  ? `No fallback events recorded for active model (${activeModel}).`
+                  : 'Model context unavailable; no fallback telemetry recorded.'}
               </p>
             )}
           </div>
