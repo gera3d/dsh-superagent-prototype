@@ -240,6 +240,8 @@ export class DshExecutor implements Executor {
   private readonly fallbackAttempts = new Map<string, number>()
   /** Fallback start timestamps by ticket ID for deadline enforcement. */
   private readonly fallbackStartTimes = new Map<string, number>()
+  /** Total routing attempts across initial request, same-route retries, and candidate substitutions by ticket ID. */
+  private readonly totalAttemptCounts = new Map<string, number>()
 
   /** Obtains the tool execution ledger for a ticket. */
   toolLedger(ticketId: string): ToolExecutionLedger {
@@ -316,6 +318,9 @@ export class DshExecutor implements Executor {
   start(ticket: Ticket, assignment: Assignment): void {
     if (!this.fallbackStartTimes.has(ticket.id)) {
       this.fallbackStartTimes.set(ticket.id, Date.now())
+    }
+    if (!this.totalAttemptCounts.has(ticket.id)) {
+      this.totalAttemptCounts.set(ticket.id, 1)
     }
     this.host.effects.enqueue('launch', assignment.id, { ticketId: ticket.id, assignmentId: assignment.id })
   }
@@ -554,9 +559,8 @@ export class DshExecutor implements Executor {
     const startTime = this.fallbackStartTimes.get(ticket.id) ?? defaultStart
     if (!this.fallbackStartTimes.has(ticket.id)) this.fallbackStartTimes.set(ticket.id, startTime)
 
-    const priorFallbacks = this.fallbackAttempts.get(ticket.id) ?? 0
-    const sameRouteRetries = this.transient.get(assignment.id) ?? 0
-    const totalAttemptsSoFar = 1 + sameRouteRetries + priorFallbacks
+    const totalAttemptsSoFar = this.totalAttemptCounts.get(ticket.id)
+      ?? (1 + (this.transient.get(assignment.id) ?? 0) + (this.fallbackAttempts.get(ticket.id) ?? 0))
 
     if (totalAttemptsSoFar >= routing.max_total_attempts) {
       return {
@@ -596,6 +600,7 @@ export class DshExecutor implements Executor {
         this.fallbackAttempts.delete(ticket.id)
         this.fallbackStartTimes.delete(ticket.id)
         this.transient.delete(assignment.id)
+        this.totalAttemptCounts.delete(ticket.id)
         this.resuming.delete(assignment.id)
         this.recordTicketNote(ticket.id, bounds.reason!)
         void this.background(Promise.resolve().then(() => {
@@ -606,6 +611,9 @@ export class DshExecutor implements Executor {
 
       const priorFallbacks = this.fallbackAttempts.get(ticket.id) ?? 0
       this.fallbackAttempts.set(ticket.id, priorFallbacks + 1)
+      const currentTotal = this.totalAttemptCounts.get(ticket.id) ?? (1 + (this.transient.get(assignment.id) ?? 0) + priorFallbacks)
+      this.totalAttemptCounts.set(ticket.id, currentTotal + 1)
+      this.transient.delete(assignment.id)
     }
 
     const tried = this.unavailableRoutes.get(ticket.id) ?? []
@@ -653,6 +661,9 @@ export class DshExecutor implements Executor {
   private async launch(ticket: Ticket, assignment: Assignment): Promise<void> {
     if (!this.fallbackStartTimes.has(ticket.id)) {
       this.fallbackStartTimes.set(ticket.id, Date.now())
+    }
+    if (!this.totalAttemptCounts.has(ticket.id)) {
+      this.totalAttemptCounts.set(ticket.id, 1)
     }
     const current = () => {
       if (this.host.closing()) throw new Error('dsh-superagent is stopping')
@@ -821,6 +832,7 @@ export class DshExecutor implements Executor {
         this.fallbackAttempts.delete(ticket.id)
         this.fallbackStartTimes.delete(ticket.id)
         this.transient.delete(assignment.id)
+        this.totalAttemptCounts.delete(ticket.id)
         this.resuming.delete(assignment.id)
         this.recordTicketNote(ticket.id, bounds.reason!)
         void this.background(Promise.resolve().then(() => {
@@ -889,8 +901,15 @@ export class DshExecutor implements Executor {
     const tries = this.transient.get(key) ?? 0
     const routing = ticket && (this.host.store.settings().models.routing ?? this.host.store.settings().models.model_routing)
     const maxTries = routing ? Math.min(TRANSIENT_TRIES, Math.max(0, routing.max_attempts_per_model - 1)) : TRANSIENT_TRIES
-    if (!transient(error) || tries >= maxTries) { this.transient.delete(key); return false }
+    if (!transient(error) || tries >= maxTries) {
+      if (!routing) this.transient.delete(key)
+      return false
+    }
     this.transient.set(key, tries + 1)
+    if (ticket && routing) {
+      const currentTotal = this.totalAttemptCounts.get(ticket.id) ?? (1 + tries + (this.fallbackAttempts.get(ticket.id) ?? 0))
+      this.totalAttemptCounts.set(ticket.id, currentTotal + 1)
+    }
     return true
   }
   /** Schedules a worker turn retry with exponential backoff after a transient provider or network error. */
@@ -902,6 +921,24 @@ export class DshExecutor implements Executor {
       if (this.host.closing()) return
       const ticket = this.host.store.tickets.get(ticketId)
       if (!ticket || !liveTicket(ticket) || runningAssignment(ticket)?.id !== assignmentId) { this.resuming.delete(assignmentId); return }
+      const assignment = runningAssignment(ticket)!
+
+      // Enforce remaining deadline and attempt budget at the scheduled wake boundary before prompting
+      const bounds = this.checkRoutingBounds(ticket, assignment)
+      if (bounds.exhausted) {
+        this.unavailableRoutes.delete(ticketId)
+        this.fallbackAttempts.delete(ticketId)
+        this.fallbackStartTimes.delete(ticketId)
+        this.transient.delete(assignmentId)
+        this.totalAttemptCounts.delete(ticketId)
+        this.resuming.delete(assignmentId)
+        this.recordTicketNote(ticketId, bounds.reason!)
+        void this.background(Promise.resolve().then(() => {
+          this.failed(ticketId, bounds.reason!)
+        }))
+        return
+      }
+
       // Wait while processing is paused or no wake slot is free.
       if (this.host.paused()) { this.after(SLOT_WAIT_MS, go); return }
       const sessionId = workerSessionId(ticketId)
@@ -947,6 +984,9 @@ export class DshExecutor implements Executor {
       || agent.inbox?.nextTurn.length || agent.inbox?.nextStep.length) return
     // A turn that ended as turns do starts the count of passing failures again.
     this.transient.delete(idle.id)
+    this.totalAttemptCounts.delete(ticket.id)
+    this.fallbackAttempts.delete(ticket.id)
+    this.fallbackStartTimes.delete(ticket.id)
     // The ticket while the Assignment that went idle runs it.
     const live = () => {
       const stored = this.host.store.tickets.get(ticket.id)

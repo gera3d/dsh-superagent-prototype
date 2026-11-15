@@ -375,6 +375,97 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
     const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
     expect(lastNote?.text).toMatch(/Routing deadline exceeded \(30ms\)/)
   })
+
+  it('enforces routing deadline at wake boundary, suppressing retry prompt when deadline expires during backoff', async () => {
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 5,
+        max_attempts_per_model: 2,
+        total_timeout_ms: 1000,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    const one = await h.acceptedTicket(feishu('wake-deadline-1', '@bot Fix wake deadline fixture'))
+    const agent = h.agents.get(one.sessionId)!
+    const promptSpy = vi.spyOn(h.runtime.sessions, 'prompt')
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    try {
+      const http500Error = Object.assign(new Error('Internal Server Error 500'), { status: 500 })
+      h.ctx.emit('agent/error', { agent, error: http500Error } as never)
+      // Advance clock past backoff and routing deadline (15,001ms)
+      await vi.advanceTimersByTimeAsync(15_001)
+      await h.runtime.idle()
+    } finally {
+      vi.useRealTimers()
+    }
+
+    // Expected ZERO retry prompts after the routing deadline
+    const retryPrompts = promptSpy.mock.calls.filter(([sessionId, requestId]) =>
+      sessionId === one.sessionId && String(requestId).startsWith('retry:')
+    )
+    expect(retryPrompts).toHaveLength(0)
+
+    const updated = h.runtime.store.tickets.get(one.ticket.id)!
+    expect(latestAssignment(updated)?.report?.state).toBe('failed')
+    const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
+    expect(lastNote?.text).toMatch(/Routing deadline exceeded \(1000ms\)/)
+  })
+
+  it('enforces monotonic total attempts across candidates and prevents retry after total budget reached', async () => {
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 4,
+        max_attempts_per_model: 3,
+        total_timeout_ms: 120_000,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    const one = await h.acceptedTicket(feishu('monotonic-total-4', '@bot Fix monotonic attempts across candidates'))
+    const agent = h.agents.get(one.sessionId)!
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    try {
+      const http500 = Object.assign(new Error('Internal Server Error 500'), { status: 500 })
+
+      // Attempt 1 fails: candidate 1 retry 1 scheduled
+      h.ctx.emit('agent/error', { agent, error: http500 } as never)
+      await vi.advanceTimersByTimeAsync(15_001)
+      await h.runtime.idle()
+
+      // Attempt 2 fails: candidate 1 retry 2 scheduled
+      h.ctx.emit('agent/error', { agent, error: http500 } as never)
+      await vi.advanceTimersByTimeAsync(30_001)
+      await h.runtime.idle()
+
+      // Attempt 3 fails: candidate 1 exhausted (reached per-model 3 attempts). Fallback substitution to candidate 2!
+      h.ctx.emit('agent/error', { agent, error: http500 } as never)
+      await h.runtime.idle()
+
+      // Candidate 2 is selected (attempt 4). Now emit error on candidate 2.
+      h.ctx.emit('agent/error', { agent, error: http500 } as never)
+      await h.runtime.idle()
+    } finally {
+      vi.useRealTimers()
+    }
+
+    // Monotonic accounting: 1 (initial) + 2 (candidate 1 retries) + 1 (substitution) = 4 attempts used.
+    // Real resuming set MUST be size 0: no fifth attempt or retry scheduled
+    expect((h.runtime.executor as any).resuming.size).toBe(0)
+
+    const updated = h.runtime.store.tickets.get(one.ticket.id)!
+    expect(latestAssignment(updated)?.report?.state).toBe('failed')
+    const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
+    expect(lastNote?.text).toMatch(/Total attempt bound exceeded \(4\)/)
+  })
 })
 
 describe('Bounded Model Routing and Tool Execution Guard', () => {
