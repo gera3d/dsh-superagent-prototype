@@ -101,6 +101,8 @@ export interface WorkspaceInspectOptions {
   getGitStatus?: (directory: string) => CandidateGitStatus
   /** Size measurement provider (mockable for tests). */
   measureBytes?: (directory: string) => MeasuredBytes
+  /** Explicit classification map for candidate paths. */
+  classifyArtifact?: (directory: string) => 'source_workspace' | 'regenerable_output' | 'unknown'
   /** Allowed root directory for dependency pools (containment check). */
   allowedDependencyRoot?: string
 }
@@ -209,7 +211,7 @@ export function inspectDependencyReference(directory: string, allowedRoot?: stri
 /**
  * Evaluates retention decision for a candidate workspace.
  * Conservative fail-closed logic: any missing owner/liveness, active session,
- * uncommitted git status, whole source workspace status, historical reports,
+ * uncommitted or ignored git status, whole source workspace status, historical reports,
  * evidence, consumed markers, backups, or ambiguous checks strictly mandate 'retain'.
  */
 export function evaluateRetentionCandidate(candidate: Omit<WorkspaceCandidateRecord, 'decision' | 'reasons'>): WorkspaceCandidateRecord {
@@ -229,13 +231,20 @@ export function evaluateRetentionCandidate(candidate: Omit<WorkspaceCandidateRec
   // 2. Whole source workspace protection: clean/merged status does not make source workspaces disposable
   if (candidate.artifactClass === 'source_workspace' || candidate.gitStatus.isSourceWorkspace) {
     reasons.push('Full source repository/worktree workspace; source trees are not disposable based on ended/clean status alone')
+  } else if (candidate.artifactClass !== 'regenerable_output') {
+    reasons.push('Workspace is not an explicitly verified non-source regenerable output artifact; failing closed')
   }
 
-  // 3. Git status checks: dirty, untracked, or unavailable check
+  // 3. Git status checks: dirty, untracked, ignored, or unavailable check
   if (!candidate.gitStatus.checkAvailable) {
     reasons.push('Git status check unavailable or ambiguous; failing closed to protect uncommitted work')
-  } else if (!candidate.gitStatus.isClean || candidate.gitStatus.hasDirty || candidate.gitStatus.hasUntracked) {
-    reasons.push('Uncommitted modifications or untracked changes detected in workspace')
+  } else {
+    if (!candidate.gitStatus.isClean || candidate.gitStatus.hasDirty || candidate.gitStatus.hasUntracked) {
+      reasons.push('Uncommitted modifications or untracked changes detected in workspace')
+    }
+    if (candidate.gitStatus.hasIgnored) {
+      reasons.push('Ignored or unclassified files detected in workspace; failing closed to protect unknown contents')
+    }
   }
 
   // 4. Historical artifacts: reports, logs, evidence, bundles, patches, backups, attempts, consumed markers
@@ -277,7 +286,7 @@ export function evaluateRetentionCandidate(candidate: Omit<WorkspaceCandidateRec
   const decision: 'retain' | 'candidate_for_future_prune' = reasons.length > 0 ? 'retain' : 'candidate_for_future_prune'
 
   if (decision === 'candidate_for_future_prune') {
-    reasons.push('Pure non-source regenerable output with verified inactive state, clean git status, and no retained artifacts; provisional candidate for future review')
+    reasons.push('Pure non-source regenerable output with verified inactive state, clean git status, no ignored files, and no retained artifacts; provisional candidate for future review')
   }
 
   return {
@@ -312,15 +321,14 @@ export function generateRetentionManifest(candidates: string[], options: Workspa
     const hasGit = pathExists && (existsSync(join(candidatePath, '.git')) || (() => { try { return lstatSync(join(candidatePath, '.git')).isFile() } catch { return false } })())
     const isSource = Boolean(hasGit)
 
+    // In the absence of an explicit provider, checks are UNAVAILABLE (failing closed)
     const gitStatus: CandidateGitStatus = options.getGitStatus
       ? options.getGitStatus(candidatePath)
-      : { isClean: true, hasUntracked: false, hasDirty: false, hasIgnored: false, checkAvailable: pathExists, isSourceWorkspace: isSource }
+      : { isClean: false, hasUntracked: false, hasDirty: false, hasIgnored: false, checkAvailable: false, isSourceWorkspace: isSource }
 
     const measuredBytes: MeasuredBytes = options.measureBytes
       ? options.measureBytes(candidatePath)
-      : pathExists
-        ? { exclusiveBytes: 0, sharedPoolBytes: 0, totalBytes: 0, uncertainty: 'exact' }
-        : { exclusiveBytes: 0, sharedPoolBytes: 0, totalBytes: 0, uncertainty: 'unavailable' }
+      : { exclusiveBytes: 0, sharedPoolBytes: 0, totalBytes: 0, uncertainty: 'unavailable' }
 
     if (measuredBytes.uncertainty === 'unavailable') {
       overallUncertainty = 'unavailable'
@@ -331,6 +339,9 @@ export function generateRetentionManifest(candidates: string[], options: Workspa
     const retainedRefs = inspectRetainedReferences(candidatePath, options.activeReleaseRefs)
     const depRef = inspectDependencyReference(candidatePath, options.allowedDependencyRoot)
 
+    const explicitClass = options.classifyArtifact ? options.classifyArtifact(candidatePath) : undefined
+    const artifactClass = explicitClass ?? (isSource ? 'source_workspace' : 'unknown')
+
     const evaluated = evaluateRetentionCandidate({
       candidatePath,
       resolvedTarget,
@@ -339,7 +350,7 @@ export function generateRetentionManifest(candidates: string[], options: Workspa
       gitStatus,
       dependencyReferences: depRef,
       retainedReferences: retainedRefs,
-      artifactClass: isSource ? 'source_workspace' : 'regenerable_output',
+      artifactClass,
     })
 
     records.push(evaluated)

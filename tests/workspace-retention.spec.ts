@@ -58,10 +58,21 @@ describe('workspace-retention', () => {
       artifactClass: 'regenerable_output',
     }
 
-    it('marks verified inactive regenerable output with clean state as provisional candidate', () => {
+    it('marks verified inactive regenerable output with clean state and no ignored files as provisional candidate', () => {
       const evaluated = evaluateRetentionCandidate(baseCandidate)
       expect(evaluated.decision).toBe('candidate_for_future_prune')
       expect(evaluated.reasons[0]).toMatch(/provisional candidate/)
+    })
+
+    // Regression for Counterexample 4:
+    it('strictly retains when gitStatus.hasIgnored is true (Counterexample 4)', () => {
+      const withIgnored = {
+        ...baseCandidate,
+        gitStatus: { ...baseCandidate.gitStatus, hasIgnored: true },
+      }
+      const evaluated = evaluateRetentionCandidate(withIgnored)
+      expect(evaluated.decision).toBe('retain')
+      expect(evaluated.reasons.some(r => r.includes('Ignored or unclassified files detected'))).toBe(true)
     })
 
     it('strictly retains whole source workspace even if clean and ended', () => {
@@ -167,7 +178,9 @@ describe('workspace-retention', () => {
         // Pass out of order: wsB then wsA
         const manifest = generateRetentionManifest([wsB, wsA], {
           isTicketLive: () => false,
+          getGitStatus: () => ({ isClean: true, hasUntracked: false, hasDirty: false, hasIgnored: false, checkAvailable: true, isSourceWorkspace: false }),
           measureBytes: () => ({ exclusiveBytes: 500, sharedPoolBytes: 1000, totalBytes: 1500, uncertainty: 'exact' }),
+          classifyArtifact: () => 'regenerable_output',
         })
 
         // Manifest records are ordered deterministically: wsA first, then wsB
@@ -177,6 +190,22 @@ describe('workspace-retention', () => {
         // Filesystem is unmodified
         expect(readdirSync(wsA)).toEqual(beforeWsA)
         expect(readdirSync(wsB)).toEqual(beforeWsB)
+      } finally {
+        rmSync(workDir, { recursive: true, force: true })
+      }
+    })
+
+    it('fails closed when default providers are omitted', () => {
+      const workDir = mkdtempSync(join(tmpdir(), 'ret-defaults-'))
+      try {
+        const ws = join(workDir, 'finding-task-cccccccccccc')
+        mkdirSync(ws)
+
+        // Omit getGitStatus and measureBytes
+        const manifest = generateRetentionManifest([ws])
+        expect(manifest.records[0]!.decision).toBe('retain')
+        expect(manifest.records[0]!.gitStatus.checkAvailable).toBe(false)
+        expect(manifest.records[0]!.measuredBytes.uncertainty).toBe('unavailable')
       } finally {
         rmSync(workDir, { recursive: true, force: true })
       }

@@ -27,13 +27,13 @@ export interface DependencyManifestInputs {
   platform: { os: string; arch: string }
   /**
    * Native addon build provenance.
-   * If any native dependencies exist or build is required, their provenance must be explicitly recorded.
-   * Missing, stale, or unverified provenance fails closed.
+   * Explicit verified inventory is mandatory for eligible compatibility.
+   * Absent or unverified provenance strictly fails closed.
    */
-  nativeProvenance?: {
-    required: boolean
-    modules?: Record<string, { built: boolean; hash: string }>
-    verified?: boolean
+  nativeProvenance: {
+    required?: boolean
+    modules: Record<string, { built: boolean; hash: string }>
+    verified: boolean
   }
 }
 
@@ -82,22 +82,22 @@ export function computeDependencyCompatibilityKey(input: DependencyManifestInput
     return { ok: false, reason: 'Missing platform or architecture specification (os and arch required)' }
   }
 
-  // 6. Native addon provenance: must be explicitly verified
-  if (input.nativeProvenance?.required) {
-    if (input.nativeProvenance.verified !== true) {
-      return { ok: false, reason: 'Incompatible or unverified native-addon build provenance: modules require explicit verified build state' }
+  // 6. Native addon provenance: explicit verified inventory is mandatory
+  if (!input.nativeProvenance || typeof input.nativeProvenance !== 'object') {
+    return { ok: false, reason: 'Missing native-addon build provenance: explicit verified inventory required' }
+  }
+  if (input.nativeProvenance.verified !== true) {
+    return { ok: false, reason: 'Incompatible or unverified native-addon build provenance: explicit verified build state required' }
+  }
+  if (!input.nativeProvenance.modules || typeof input.nativeProvenance.modules !== 'object') {
+    return { ok: false, reason: 'Missing native-addon modules inventory record' }
+  }
+  for (const [mod, rec] of Object.entries(input.nativeProvenance.modules)) {
+    if (!rec || !rec.built) {
+      return { ok: false, reason: `Unbuilt native module provenance: ${mod}` }
     }
-    const modules = input.nativeProvenance.modules ?? {}
-    if (Object.keys(modules).length === 0) {
-      return { ok: false, reason: 'Missing required native-addon module build records' }
-    }
-    for (const [mod, rec] of Object.entries(modules)) {
-      if (!rec.built) {
-        return { ok: false, reason: `Unbuilt native module provenance: ${mod}` }
-      }
-      if (!rec.hash || rec.hash.trim() === '') {
-        return { ok: false, reason: `Missing build hash for native module: ${mod}` }
-      }
+    if (!rec.hash || rec.hash.trim() === '') {
+      return { ok: false, reason: `Missing build hash for native module: ${mod}` }
     }
   }
 
@@ -121,12 +121,10 @@ export function computeDependencyCompatibilityKey(input: DependencyManifestInput
       }, {})
     : {}
 
-  const canonicalNativeModules = input.nativeProvenance?.modules
-    ? Object.keys(input.nativeProvenance.modules).sort().reduce<Record<string, { built: boolean; hash: string }>>((acc, key) => {
-        acc[key] = input.nativeProvenance!.modules![key]!
-        return acc
-      }, {})
-    : {}
+  const canonicalNativeModules = Object.keys(input.nativeProvenance.modules).sort().reduce<Record<string, { built: boolean; hash: string }>>((acc, key) => {
+    acc[key] = input.nativeProvenance.modules[key]!
+    return acc
+  }, {})
 
   const payload = {
     manifests: canonicalManifests,
@@ -146,13 +144,11 @@ export function computeDependencyCompatibilityKey(input: DependencyManifestInput
       os: input.platform.os,
       arch: input.platform.arch,
     },
-    nativeProvenance: input.nativeProvenance
-      ? {
-          required: input.nativeProvenance.required,
-          modules: canonicalNativeModules,
-          verified: input.nativeProvenance.verified === true,
-        }
-      : null,
+    nativeProvenance: {
+      required: input.nativeProvenance.required ?? true,
+      modules: canonicalNativeModules,
+      verified: true,
+    },
   }
 
   const serialized = JSON.stringify(payload)
@@ -165,6 +161,10 @@ export function computeDependencyCompatibilityKey(input: DependencyManifestInput
  * or links escaping outside the sandbox.
  */
 export function validateContainment(targetPath: string, allowedRoot: string): boolean {
+  if (!allowedRoot || allowedRoot.trim() === '' || !targetPath || targetPath.trim() === '') {
+    return false
+  }
+
   try {
     const resolvedRoot = resolve(allowedRoot)
     const resolvedTarget = resolve(targetPath)
@@ -217,8 +217,8 @@ export interface TaskIsolationPaths {
   viteCacheDir: string
   vitestCacheDir: string
   tsCacheDir: string
-  tmpDir: string
   pnpmStoreDir: string
+  tmpDir: string
   env: Record<string, string>
   /** Supported command-line arguments to enforce task isolation in build/test tools. */
   toolArgs: {
@@ -319,10 +319,15 @@ export class DependencyPoolManager {
 
   /**
    * Qualifies a dependency pool for reuse by a task workspace.
-   * Fails closed if pool does not exist, is still preparing, is failed,
-   * is not marked immutable, or lacks explicit verified content attestation.
+   * Requires mandatory allowedRoot boundary. Fails closed if pool does not exist,
+   * directory does not exist on disk, is still preparing, is failed,
+   * is not marked immutable, or lacks verified complete attestation.
    */
-  qualifyPoolForReuse(key: string, allowedRoot?: string): { ok: true; pool: QualifiedDependencyPool } | { ok: false; reason: string } {
+  qualifyPoolForReuse(key: string, allowedRoot: string): { ok: true; pool: QualifiedDependencyPool } | { ok: false; reason: string } {
+    if (!allowedRoot || allowedRoot.trim() === '') {
+      return { ok: false, reason: 'Missing mandatory trusted allowed root boundary' }
+    }
+
     const pool = this.pools.get(key)
     if (!pool) {
       return { ok: false, reason: `No qualified dependency pool found for key ${key}` }
@@ -336,12 +341,25 @@ export class DependencyPoolManager {
     if (!pool.isImmutable) {
       return { ok: false, reason: 'Dependency pool is not immutable; refusing to reuse mutable tree' }
     }
+    if (!validateContainment(pool.rootPath, allowedRoot)) {
+      return { ok: false, reason: `Dependency pool root escapes allowed boundary ${allowedRoot}` }
+    }
+    if (!existsSync(pool.rootPath)) {
+      return { ok: false, reason: `Dependency pool root directory does not exist on disk: ${pool.rootPath}` }
+    }
+    const nmPath = join(pool.rootPath, 'node_modules')
+    if (!existsSync(nmPath)) {
+      return { ok: false, reason: `Dependency pool is missing node_modules directory at ${nmPath}` }
+    }
     if (!pool.attestation || pool.attestation.isImmutable !== true) {
       return { ok: false, reason: 'Dependency pool lacks verified immutable content attestation; ineligible for reuse' }
     }
-    if (allowedRoot && !validateContainment(pool.rootPath, allowedRoot)) {
-      return { ok: false, reason: `Dependency pool root escapes allowed boundary ${allowedRoot}` }
+    if (!pool.attestation.contentDigest || pool.attestation.contentDigest.trim() === '' ||
+        !pool.attestation.verifiedAt || pool.attestation.verifiedAt.trim() === '' ||
+        !pool.attestation.verifiedBy || pool.attestation.verifiedBy.trim() === '') {
+      return { ok: false, reason: 'Dependency pool attestation is incomplete, empty, or unverified' }
     }
+
     return { ok: true, pool: { ...pool } }
   }
 
@@ -350,8 +368,11 @@ export class DependencyPoolManager {
    * Validates containment of both pool AND workspace against the allowed root,
    * checks ancestor symlinks, and verifies target directory does not overwrite existing contents.
    */
-  linkToWorkspace(workspaceDir: string, key: string, allowedRoot?: string): void {
-    if (allowedRoot && !validateContainment(workspaceDir, allowedRoot)) {
+  linkToWorkspace(workspaceDir: string, key: string, allowedRoot: string): void {
+    if (!allowedRoot || allowedRoot.trim() === '') {
+      throw new Error('Missing mandatory trusted allowed root boundary')
+    }
+    if (!validateContainment(workspaceDir, allowedRoot)) {
       throw new Error(`Workspace directory escapes allowed boundary ${allowedRoot}`)
     }
 
@@ -393,8 +414,8 @@ export interface BuildOutputInputs {
   sourceCommit: string
   /** Hash of dirty / uncommitted working copy changes (empty string if clean). */
   dirtyContentHash?: string
-  /** Source working copy state status. If dirty state cannot be established, must be 'unknown'. */
-  sourceStateStatus?: 'clean' | 'dirty' | 'unknown'
+  /** Source working copy state status. Must be explicitly 'clean' or 'dirty'. */
+  sourceStateStatus: 'clean' | 'dirty' | 'unknown'
   /** Dependency compatibility key. */
   dependencyKey: string
   /** Exact command and tool version, e.g. { name: 'tsdown', version: '0.22.14', args: ['build'] }. */
@@ -409,7 +430,7 @@ const SECRET_ENV_REGEX = /(?:SECRET|TOKEN|KEY|PASS|AUTH|CRED|BEARER|JWT)/i
 
 /**
  * Computes a deterministic build output cache key.
- * Fails closed if source dirty/untracked status cannot be established,
+ * Fails closed if source dirty/untracked status is missing or unknown,
  * or if a secret environment variable is present in the build environment
  * (preventing secret leakage into cache fingerprints and false cache hits).
  */
@@ -418,8 +439,11 @@ export function computeBuildOutputKey(input: BuildOutputInputs): { ok: true; key
   if (!input.sourceCommit || input.sourceCommit.trim() === '') {
     return { ok: false, reason: 'Missing source commit SHA' }
   }
-  if (input.sourceStateStatus === 'unknown') {
-    return { ok: false, reason: 'Source working tree dirty/untracked status cannot be established; failing closed' }
+  if (!input.sourceStateStatus || input.sourceStateStatus === 'unknown') {
+    return { ok: false, reason: 'Source working tree dirty/untracked status is missing or unknown; failing closed' }
+  }
+  if (input.sourceStateStatus === 'dirty' && (!input.dirtyContentHash || input.dirtyContentHash.trim() === '')) {
+    return { ok: false, reason: 'Source working copy is dirty but dirty content hash is missing' }
   }
   if (!input.dependencyKey || input.dependencyKey.trim() === '') {
     return { ok: false, reason: 'Missing dependency compatibility key' }
@@ -454,6 +478,7 @@ export function computeBuildOutputKey(input: BuildOutputInputs): { ok: true; key
   const payload = {
     sourceCommit: input.sourceCommit,
     dirtyContentHash: input.dirtyContentHash ?? '',
+    sourceStateStatus: input.sourceStateStatus,
     dependencyKey: input.dependencyKey,
     command: {
       name: input.command.name,

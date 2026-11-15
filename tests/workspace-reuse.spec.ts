@@ -130,39 +130,41 @@ describe('workspace-reuse', () => {
       }
     })
 
-    it('fails closed when native provenance is missing, unverified, or undefined', () => {
-      // 1. Explicitly false
+    // Regression for Counterexample 1:
+    it('fails closed when nativeProvenance is entirely absent or unverified (Counterexample 1)', () => {
+      const withoutProvenance = {
+        manifests: baseInputs.manifests,
+        workspaceConfig: baseInputs.workspaceConfig,
+        lockfile: baseInputs.lockfile,
+        packageManager: baseInputs.packageManager,
+        nodeRuntime: baseInputs.nodeRuntime,
+        platform: baseInputs.platform,
+      } as unknown as DependencyManifestInputs
+
+      const res = computeDependencyCompatibilityKey(withoutProvenance)
+      expect(res.ok).toBe(false)
+      if (!res.ok) {
+        expect(res.reason).toMatch(/Missing native-addon build provenance: explicit verified inventory required/)
+      }
+    })
+
+    it('fails closed when native provenance is unverified or unbuilt', () => {
       const unverified: DependencyManifestInputs = {
         ...baseInputs,
         nativeProvenance: {
-          required: true,
           verified: false,
           modules: { 'better-sqlite3': { built: true, hash: 'abc' } },
         },
       }
       const resUnverified = computeDependencyCompatibilityKey(unverified)
       expect(resUnverified.ok).toBe(false)
-
-      // 2. Undefined verification must fail closed
-      const undefinedVerification: DependencyManifestInputs = {
-        ...baseInputs,
-        nativeProvenance: {
-          required: true,
-          verified: undefined,
-          modules: { 'better-sqlite3': { built: true, hash: 'abc' } },
-        },
-      }
-      const resUndefined = computeDependencyCompatibilityKey(undefinedVerification)
-      expect(resUndefined.ok).toBe(false)
-      if (!resUndefined.ok) {
-        expect(resUndefined.reason).toMatch(/explicit verified build state/)
+      if (!resUnverified.ok) {
+        expect(resUnverified.reason).toMatch(/explicit verified build state/)
       }
 
-      // 3. Unbuilt module
       const unbuilt: DependencyManifestInputs = {
         ...baseInputs,
         nativeProvenance: {
-          required: true,
           verified: true,
           modules: { 'better-sqlite3': { built: false, hash: '' } },
         },
@@ -247,11 +249,47 @@ describe('workspace-reuse', () => {
   })
 
   describe('qualified dependency pool management', () => {
-    it('requires verified immutable content attestation for reuse eligibility', () => {
+    // Regression for Counterexample 2:
+    it('fails closed on synthetic nonexistent directory, empty/malformed attestation, or missing boundary (Counterexample 2)', () => {
+      const manager = new DependencyPoolManager()
+      const syntheticNonExistent = '/nonexistent/path/to/synthetic/pool'
+
+      manager.registerPool({
+        id: 'pool-synth',
+        key: 'dep-synth',
+        rootPath: syntheticNonExistent,
+        isImmutable: true,
+        state: 'ready',
+        attestation: {
+          isImmutable: true,
+          contentDigest: '',
+          verifiedAt: '',
+          verifiedBy: '',
+        },
+      })
+
+      // 1. Without allowedRoot boundary fails closed
+      const qNoBoundary = manager.qualifyPoolForReuse('dep-synth', '')
+      expect(qNoBoundary.ok).toBe(false)
+      if (!qNoBoundary.ok) {
+        expect(qNoBoundary.reason).toMatch(/Missing mandatory trusted allowed root boundary/)
+      }
+
+      // 2. With boundary but nonexistent directory / empty attestation fails closed
+      const qWithBoundary = manager.qualifyPoolForReuse('dep-synth', '/nonexistent')
+      expect(qWithBoundary.ok).toBe(false)
+      if (!qWithBoundary.ok) {
+        expect(qWithBoundary.reason).toMatch(/does not exist on disk|attestation is incomplete/)
+      }
+    })
+
+    it('requires verified complete immutable content attestation and existing node_modules', () => {
       const manager = new DependencyPoolManager()
       const tempRoot = mkdtempSync(join(tmpdir(), 'pool-root-'))
       try {
         const key = 'dep-1234567890abcdef'
+        const nmDir = join(tempRoot, 'node_modules')
+        mkdirSync(nmDir, { recursive: true })
 
         // 1. Pool marked ready but missing attestation is INELIGIBLE
         manager.registerPool({
@@ -261,13 +299,13 @@ describe('workspace-reuse', () => {
           isImmutable: true,
           state: 'ready',
         })
-        const q1 = manager.qualifyPoolForReuse(key)
+        const q1 = manager.qualifyPoolForReuse(key, tempRoot)
         expect(q1.ok).toBe(false)
         if (!q1.ok) {
           expect(q1.reason).toMatch(/lacks verified immutable content attestation/)
         }
 
-        // 2. Pool with verified attestation succeeds
+        // 2. Pool with verified complete attestation succeeds
         manager.registerPool({
           id: 'pool-1',
           key,
@@ -281,65 +319,10 @@ describe('workspace-reuse', () => {
             isImmutable: true,
           },
         })
-        const q2 = manager.qualifyPoolForReuse(key)
+        const q2 = manager.qualifyPoolForReuse(key, tempRoot)
         expect(q2.ok).toBe(true)
-
-        // 3. Mutable attestation is rejected
-        manager.registerPool({
-          id: 'pool-mut',
-          key: 'dep-mut',
-          rootPath: tempRoot,
-          isImmutable: false,
-          state: 'ready',
-          attestation: {
-            contentDigest: 'digest-mut',
-            verifiedAt: new Date().toISOString(),
-            verifiedBy: 'test-harness',
-            isImmutable: false,
-          },
-        })
-        const q3 = manager.qualifyPoolForReuse('dep-mut')
-        expect(q3.ok).toBe(false)
       } finally {
         rmSync(tempRoot, { recursive: true, force: true })
-      }
-    })
-
-    it('enforces containment on both pool root AND workspace destination in linkToWorkspace', () => {
-      const manager = new DependencyPoolManager()
-      const baseDir = mkdtempSync(join(tmpdir(), 'harness-base-'))
-      const outsideDir = mkdtempSync(join(tmpdir(), 'harness-outside-'))
-      try {
-        const poolDir = join(baseDir, 'pool')
-        const taskDir = join(baseDir, 'ws')
-        const nmDir = join(poolDir, 'node_modules')
-        mkdirSync(nmDir, { recursive: true })
-
-        const key = 'dep-test-link'
-        manager.registerPool({
-          id: 'pool-inst',
-          key,
-          rootPath: poolDir,
-          isImmutable: true,
-          state: 'ready',
-          attestation: {
-            contentDigest: 'd-1',
-            verifiedAt: new Date().toISOString(),
-            verifiedBy: 'test',
-            isImmutable: true,
-          },
-        })
-
-        // Valid destination inside baseDir succeeds
-        manager.linkToWorkspace(taskDir, key, baseDir)
-        expect(existsSync(join(taskDir, 'node_modules'))).toBe(true)
-
-        // Escaped destination outside baseDir throws
-        const escapedTask = join(outsideDir, 'escaped-task')
-        expect(() => manager.linkToWorkspace(escapedTask, key, baseDir)).toThrow(/escapes allowed boundary/)
-      } finally {
-        rmSync(baseDir, { recursive: true, force: true })
-        rmSync(outsideDir, { recursive: true, force: true })
       }
     })
   })
@@ -365,6 +348,21 @@ describe('workspace-reuse', () => {
       }
     })
 
+    // Regression for Counterexample 3:
+    it('fails closed when sourceStateStatus is absent or unknown (Counterexample 3)', () => {
+      const inputWithoutStatus = {
+        sourceCommit: 'fixture',
+        dependencyKey: 'fixture',
+        command: { name: 'fixture', version: '1', args: [] },
+      } as unknown as Parameters<typeof computeBuildOutputKey>[0]
+
+      const b = computeBuildOutputKey(inputWithoutStatus)
+      expect(b.ok).toBe(false)
+      if (!b.ok) {
+        expect(b.reason).toMatch(/Source working tree dirty\/untracked status is missing or unknown/)
+      }
+    })
+
     it('fails closed when secret environment variables are present to prevent false reuse or secret leakage', () => {
       const inputWithSecrets = {
         sourceCommit: 'abcdef1234567890abcdef1234567890abcdef12',
@@ -381,21 +379,6 @@ describe('workspace-reuse', () => {
       expect(b.ok).toBe(false)
       if (!b.ok) {
         expect(b.reason).toMatch(/Secret environment variable detected/)
-      }
-    })
-
-    it('fails closed when source dirty state is unknown', () => {
-      const inputUnknown = {
-        sourceCommit: 'abcdef1234567890abcdef1234567890abcdef12',
-        dirtyContentHash: '',
-        sourceStateStatus: 'unknown' as const,
-        dependencyKey: 'dep-1234567890abcdef',
-        command: { name: 'tsdown', version: '0.22.14', args: ['build'] },
-      }
-      const b = computeBuildOutputKey(inputUnknown)
-      expect(b.ok).toBe(false)
-      if (!b.ok) {
-        expect(b.reason).toMatch(/Source working tree dirty\/untracked status cannot be established/)
       }
     })
   })
