@@ -201,6 +201,12 @@ export function validateContainment(targetPath: string, allowedRoot: string): bo
   }
 }
 
+/** Options for creating task isolation paths and runner configurations. */
+export interface TaskIsolationOptions {
+  /** Optional explicit path to base Vitest / Vite config file to compose and preserve. */
+  baseConfigFile?: string
+}
+
 /** Per-task isolated cache directories, arguments, and environment variables. */
 export interface TaskIsolationPaths {
   taskDir: string
@@ -218,12 +224,23 @@ export interface TaskIsolationPaths {
   }
 }
 
+const KNOWN_CONFIG_NAMES = [
+  'vitest.config.ts',
+  'vitest.config.js',
+  'vitest.config.mjs',
+  'vite.config.ts',
+  'vite.config.js',
+  'vite.config.mjs',
+]
+
 /**
  * Creates isolated cache, temp, and output directories for a task,
  * returning environment variables and tool flags ensuring compilers, test runners,
  * and package managers do not collide or mutate shared dependencies.
+ * Composes existing effective project Vitest/Vite configuration (aliases, plugins, setupFiles, include/exclude)
+ * while directing runner and compiler caches to isolated task-local storage.
  */
-export function createTaskIsolation(taskDir: string): TaskIsolationPaths {
+export function createTaskIsolation(taskDir: string, options?: TaskIsolationOptions): TaskIsolationPaths {
   const cacheBase = join(taskDir, '.cache')
   const viteCacheDir = join(cacheBase, 'vite')
   const vitestCacheDir = join(viteCacheDir, 'vitest')
@@ -233,13 +250,51 @@ export function createTaskIsolation(taskDir: string): TaskIsolationPaths {
   const vitestConfigFile = join(cacheBase, 'vitest.config.mjs')
 
   mkdirSync(viteCacheDir, { recursive: true })
-  mkdirSync(vitestCacheDir, { recursive: true })
   mkdirSync(tsCacheDir, { recursive: true })
   mkdirSync(pnpmStoreDir, { recursive: true })
   mkdirSync(tmpDir, { recursive: true })
 
-  // Write isolated per-job vitest configuration setting cacheDir
-  const configContent = `export default {\n  cacheDir: ${JSON.stringify(viteCacheDir)},\n}\n`
+  // Determine base configuration to compose
+  let canonicalBaseConfig: string | null = null
+  if (options?.baseConfigFile) {
+    if (!existsSync(options.baseConfigFile)) {
+      throw new Error(`Base configuration file not found at ${options.baseConfigFile}; failing closed`)
+    }
+    canonicalBaseConfig = resolve(options.baseConfigFile)
+  } else {
+    for (const name of KNOWN_CONFIG_NAMES) {
+      const candidate = join(taskDir, name)
+      if (existsSync(candidate)) {
+        canonicalBaseConfig = resolve(candidate)
+        break
+      }
+    }
+  }
+
+  // Write isolated per-job vitest configuration preserving base config and enforcing isolated cacheDir
+  let configContent: string
+  if (canonicalBaseConfig) {
+    configContent = [
+      `import base from ${JSON.stringify(canonicalBaseConfig)};`,
+      'export default async (env) => {',
+      '  let configExport = base;',
+      '  if (configExport && typeof configExport === "object" && "default" in configExport) {',
+      '    configExport = configExport.default;',
+      '  }',
+      '  const resolved = typeof configExport === "function" ? await configExport(env) : await configExport;',
+      '  return {',
+      '    ...resolved,',
+      `    cacheDir: ${JSON.stringify(viteCacheDir)},`,
+      '    test: {',
+      '      ...(resolved?.test || {}),',
+      '    },',
+      '  };',
+      '};',
+      '',
+    ].join('\n')
+  } else {
+    configContent = `export default {\n  cacheDir: ${JSON.stringify(viteCacheDir)},\n}\n`
+  }
   writeFileSync(vitestConfigFile, configContent, 'utf-8')
 
   const env: Record<string, string> = {

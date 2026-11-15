@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -234,7 +234,7 @@ describe('workspace-reuse', () => {
       try {
         const iso = createTaskIsolation(taskDir)
         expect(existsSync(iso.viteCacheDir)).toBe(true)
-        expect(existsSync(iso.vitestCacheDir)).toBe(true)
+        expect(existsSync(iso.vitestCacheDir)).toBe(false)
         expect(existsSync(iso.tsCacheDir)).toBe(true)
         expect(existsSync(iso.pnpmStoreDir)).toBe(true)
         expect(existsSync(iso.tmpDir)).toBe(true)
@@ -280,6 +280,9 @@ describe('workspace-reuse', () => {
           'utf-8',
         )
 
+        // Verify that before CLI execution, no vitest cache exists
+        expect(existsSync(iso.vitestCacheDir)).toBe(false)
+
         // Run pinned Vitest CLI with the isolated tool arguments emitted by createTaskIsolation
         const output = execFileSync(
           process.execPath,
@@ -292,9 +295,106 @@ describe('workspace-reuse', () => {
         )
 
         expect(output).toContain('1 passed')
-        // Verify cache files are actually written inside the isolated cacheDir
-        const cacheSubdir = join(iso.viteCacheDir, 'vitest')
-        expect(existsSync(cacheSubdir)).toBe(true)
+        // Verify genuine cache artifacts produced by CLI execution in the isolated cache directory
+        expect(existsSync(iso.vitestCacheDir)).toBe(true)
+        const hashDirs = readdirSync(iso.vitestCacheDir)
+        expect(hashDirs.length).toBeGreaterThan(0)
+        const resultsFile = join(iso.vitestCacheDir, hashDirs[0]!, 'results.json')
+        expect(existsSync(resultsFile)).toBe(true)
+      } finally {
+        rmSync(taskDir, { recursive: true, force: true })
+      }
+    })
+
+    it('preserves and composes project config (alias, setupFiles, custom include) while isolating cacheDir in synthetic project', () => {
+      const taskDir = mkdtempSync(join(tmpdir(), 'task-iso-composed-'))
+      try {
+        const vitestBin = resolve(process.cwd(), 'node_modules/vitest/vitest.mjs')
+
+        // 1. Setup synthetic module dependencies for alias and setupFiles
+        const helperFile = join(taskDir, 'helper.js')
+        writeFileSync(helperFile, 'export const GREETING = "HELLO_SYNTHETIC_ALIAS";\n', 'utf-8')
+
+        const setupFile = join(taskDir, 'setup.js')
+        writeFileSync(setupFile, 'globalThis.__SYNTHETIC_SETUP_RAN__ = true;\n', 'utf-8')
+
+        // 2. Base project config with necessary aliases, setup files, and custom include pattern
+        const baseConfigFile = join(taskDir, 'vitest.config.js')
+        writeFileSync(
+          baseConfigFile,
+          [
+            'export default {',
+            '  resolve: {',
+            '    alias: {',
+            `      "@synthetic-helper": ${JSON.stringify(helperFile)},`,
+            '    },',
+            '  },',
+            '  test: {',
+            `    setupFiles: [${JSON.stringify(setupFile)}],`,
+            '    include: ["custom-specs/**/*.spec.js"],',
+            '  },',
+            '};',
+            '',
+          ].join('\n'),
+          'utf-8',
+        )
+
+        // 3. Test spec inside custom-specs requiring alias and setup to pass
+        const customSpecsDir = join(taskDir, 'custom-specs')
+        mkdirSync(customSpecsDir, { recursive: true })
+        const specFile = join(customSpecsDir, 'composed.spec.js')
+        writeFileSync(
+          specFile,
+          [
+            'import { test, expect } from "vitest";',
+            'import { GREETING } from "@synthetic-helper";',
+            'test("preserves alias and setupFiles while isolating cache", () => {',
+            '  expect(GREETING).toBe("HELLO_SYNTHETIC_ALIAS");',
+            '  expect(globalThis.__SYNTHETIC_SETUP_RAN__).toBe(true);',
+            '});',
+            '',
+          ].join('\n'),
+          'utf-8',
+        )
+
+        // 4. Create task isolation which auto-detects and composes the base config
+        const iso = createTaskIsolation(taskDir)
+        expect(existsSync(iso.vitestConfigFile)).toBe(true)
+        const configText = readFileSync(iso.vitestConfigFile, 'utf-8')
+        expect(configText).toContain(baseConfigFile)
+        expect(configText).toContain(iso.viteCacheDir)
+
+        // Before run, cache does not exist
+        expect(existsSync(iso.vitestCacheDir)).toBe(false)
+
+        // 5. Run Vitest with composed config
+        const output = execFileSync(
+          process.execPath,
+          [vitestBin, 'run', ...iso.toolArgs.vitest],
+          {
+            cwd: taskDir,
+            encoding: 'utf-8',
+            stdio: 'pipe',
+          },
+        )
+
+        expect(output).toContain('1 passed')
+        // Cache artifacts created strictly in isolated task cache directory
+        expect(existsSync(iso.vitestCacheDir)).toBe(true)
+        const hashDirs = readdirSync(iso.vitestCacheDir)
+        expect(hashDirs.length).toBeGreaterThan(0)
+        expect(existsSync(join(iso.vitestCacheDir, hashDirs[0]!, 'results.json'))).toBe(true)
+      } finally {
+        rmSync(taskDir, { recursive: true, force: true })
+      }
+    })
+
+    it('fails closed when explicit baseConfigFile does not exist', () => {
+      const taskDir = mkdtempSync(join(tmpdir(), 'task-iso-missing-'))
+      try {
+        expect(() =>
+          createTaskIsolation(taskDir, { baseConfigFile: '/nonexistent/path/vitest.config.js' }),
+        ).toThrow(/Base configuration file not found/)
       } finally {
         rmSync(taskDir, { recursive: true, force: true })
       }
