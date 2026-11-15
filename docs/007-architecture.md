@@ -338,6 +338,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/core/ids.ts` | `key`: ids derived from their inputs, equal for equal inputs |
 | `src/core/memory.ts` | `MemoryRepositories`: the Store's repositories in memory, in the Store's order and with its nested rollback, for domain tests |
 | `src/core/index.ts` | The core's exports |
+| `src/core/thread-brief.ts` | Isolated brief domain, revisions, evidence and continuation context; runtime persistence remains separate |
 | `src/core/decision.ts` | `evaluateDecision`: pure validation over an injected model transport; no vendor HTTP or credential access. Scores are not calibrated. |
 | `src/core/character.ts` | Autopilot character profile definitions, reviewer prompts, personas, disagreement capabilities, and locked escalation boundaries |
 | `src/core/specialist-profile.ts` | Typed specialist registry and seeds (Administrator, Senior Developer, Cloudflare Specialist); declarations only, never grants |
@@ -472,6 +473,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/draft.tsx` | Settings drafts: `draftReducer`, their states and their merge with a newer saved revision, `saveBarText`, the save bar's line, and the save bar |
 | `src/client/controls.tsx` | Local copies of DeepSeek Harness's controls, which follow its markup, keyboard behaviour and design tokens, since the bundle does not import `@deepseek-ai/dsh-client-ui-primitives`; they read no context |
 | `src/client/widgets.tsx` | The small components the pages share, which read the panel's context: sections, page heads, load states, times, links, confirmed actions, the setup check and Markdown |
+| `src/client/thread-brief-header.tsx` | Isolated compact brief component; host mounting remains a separate integration stage |
 | `src/client/rows.tsx` | The rows the pages share: a Ticket, a Thread and a Decision, a Thread's chip, and the folding of runs of automated messages |
 | `src/client/markdown.ts` | The Markdown subset of reports and questions, and the bare addresses in messages, as blocks and inline parts |
 | `src/client/text.ts` | Copy by key and the wording of domain values, reasons, senders and times |
@@ -518,6 +520,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/delivery-confirm-schema.spec.ts` | Strict typed confirmation body rejects expanded authority and arbitrary commands |
 | `tests/worker-report-fallback.spec.tsx` | Real structured report/ack/blank-final event shapes and provenance rendering, preserving nonempty replies |
 | `tests/core-engine.spec.ts` | Domain rules on in-memory repositories: receiving, Eval, fan-out, resume and stop, interrupted Assignments, the pause, Policy changes, reports and outcomes, attaching, replies, failed deliveries and dismissed problems |
+| `tests/thread-brief.spec.tsx` | Isolated brief domain and component fixtures; no installed/native acceptance claim |
 | `tests/client-guard.spec.ts` | Guards the client runtime import graph against Node built-ins and server-only modules |
 | `tests/character.spec.ts`, `tests/characters.spec.ts`, `tests/characters-panel.spec.tsx` | Autopilot character profile definitions, evaluator behaviour, and Characters settings panel |
 | `tests/branding.spec.tsx` | Custom branding mark rendering and settings configuration |
