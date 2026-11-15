@@ -1,5 +1,16 @@
 # PR126 independent source review
 
+## Revised head7ae5789 — approval withheld
+
+Exact revised head `7ae5789bc683ebd926247e089c4009c2b565001a` remains OPEN/unmerged against raw PR base `5435db0d9b900f923b331354fa9daf20ffc911b6` (`superagent-core`). Later core `cab5851` differs in documentation only. Hosted CI43751786250 SUCCESS:2691pass/3skip, typecheck/build. No new coordinator local tests or implementation. Existing exact-head REQUEST_CHANGES review5912609440 was inspected, not repeated.
+
+Canonical firstTrigger/empty-original handling, actual ticketStage mapping and the genuine Sessions.decorate registered callback are improved. Two source blockers remain: first existing subscribed ticket is selected before the thread snapshot/provenance/evaluating/pending state, and real resolver initialization still swallows storage failure or skips unavailable writes while returning an authoritative brief. A coverage regression also remains: the combined page test renders only TicketPage, not ThreadPage. Required regressions include ended-first/live-later subscriptions, ordering/evaluation/pending, existing snapshot preservation, different original asks and failed persistence through actual resolver/API reads. Restore actual ThreadPage+PanelProvider with backend-produced snapshots. Do not substitute first-live authority, invent binding or new APIs.
+
+One consolidated same216 correction [6900521949](https://github.com/gera3d/superagent-sandbox/issues/216#issuecomment-6900521949) was published after verifying load0running/0queued, original assignment idle/ended19:23:13.943Z/reportwaiting and clean worker checkout. Original ticket8db3c6ac57589b65e10bca887ae6df01 / assignment83bc2d9f6b1cbebdf2c96d8bb9b2b3ef and PR126 branch are retained. Normal intake verified: trigger `bf2eccd2de64fdd34454bf8d9b77bebb`, input `a7849dd7ab8db0e69b9ee85dd1fd3d5a`, read2026-11-15T20:11:14.956Z by the same retained assignment. Load1running/0queued/max3 at20:12:17UTC. No duplicate continuation or forced poll/restart; productive worker left intact. Pickup is not a revised result. Worker owns correction; coordinator owns returned exact-head review. All24criteria/history preserved; unavailable mutation/confirmation/recovery hooks remain blocked. No selfmerge, deploy, provider/routing/reserve/dependency or issue-state change.
+
+## Historical first-head review
+
+
 Verdict: WITHHOLD approval/merge at `25fd126539e2a08423baf58b6a4d07ba4fa2fc74`. Exact-head review5912303787 and one consolidated original216 correction6899590672 retain original scope and owner.
 
 ## Current lineage and evidence

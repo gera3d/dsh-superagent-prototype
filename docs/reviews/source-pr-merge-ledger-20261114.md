@@ -1,5 +1,7 @@
 # Source PR review and merge ledger — November 14, 2026
 
+PR126 revised7ae5789 remains unmerged: existing review5912609440 REQUEST_CHANGES, greenCI43751786250 does not qualify first-subscription authority, swallowed resolver persistence errors or missing ThreadPage coverage. One original216 continuation6900521949 published; sameassignment intake/read verified20:11:14.956UTC, load1running/0queued. See [current review](thread-brief-pr126-independent-review.md). No additional coordinator tests/source merge/live action.
+
 Gera explicitly authorized reviewing and merging safe source PRs. In the earlier independently qualified coordinator batch, eleven prototype PRs and one Sandbox PR were merged into their existing target branches, one at a time with GitHub expected-head protection. No administrator/force merge, branch deletion, deployment, installation, live restart or provider/account/settings change was performed.
 
 ## Completed source merges
