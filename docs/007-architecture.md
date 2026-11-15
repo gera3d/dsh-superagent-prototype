@@ -625,6 +625,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/finding-release-package.spec.ts` | finding release package |
 | `tests/finding-release.spec.ts` | finding release |
 | `tests/github-quota.spec.ts`, `tests/setup-quota-retry.spec.ts` | github quota, the setup retry time after quota exhaustion |
+| `tests/github-revalidate.spec.ts` | PR and check-run reads revalidated with ETag and reused on 304 |
 | `tests/legacy-delivery-card.spec.tsx` | legacy delivery card |
 | `tests/legacy-delivery-reconciliation.spec.ts` | Legacy delivery historical completion reconciliation |
 | `tests/live-attestation-coverage.spec.ts` | live attestation coverage |
