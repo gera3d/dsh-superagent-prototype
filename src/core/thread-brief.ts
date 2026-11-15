@@ -216,9 +216,9 @@ export class ThreadBriefManager {
     const scanId = (idStr?: string) => {
       if (!idStr) return
       const match = idStr.match(/^CRIT-(\d+)$/)
-      if (match) {
+      if (match && match[1]) {
         const num = parseInt(match[1], 10)
-        if (num > maxId) maxId = num
+        if (!Number.isNaN(num) && num > maxId) maxId = num
       }
     }
 
@@ -306,7 +306,7 @@ export class ThreadBriefManager {
     if (index === -1) return false
 
     const proposal = this.state.pending_proposals[index]
-    if (proposal.status !== 'pending') return false
+    if (!proposal || proposal.status !== 'pending') return false
 
     // 1. Archive current revision in history
     this.state.revision_history.push({

@@ -41,14 +41,14 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
     const state = mgr.getState()
     expect(state.objective).toBe('Bounded Feature Implementation')
     expect(state.scope.length).toBe(2)
-    expect(state.scope[0].is_inferred).toBe(true)
-    expect(state.scope[0].confirmed).toBe(false)
+    expect(state.scope[0]?.is_inferred).toBe(true)
+    expect(state.scope[0]?.confirmed).toBe(false)
 
     expect(state.criteria.length).toBe(2)
-    expect(state.criteria[0].id).toBe('CRIT-1')
-    expect(state.criteria[0].is_inferred).toBe(true)
-    expect(state.criteria[0].confirmed).toBe(false)
-    expect(state.criteria[1].id).toBe('CRIT-2')
+    expect(state.criteria[0]?.id).toBe('CRIT-1')
+    expect(state.criteria[0]?.is_inferred).toBe(true)
+    expect(state.criteria[0]?.confirmed).toBe(false)
+    expect(state.criteria[1]?.id).toBe('CRIT-2')
   })
 
   it('Counterexample regression fix: allocates unique monotonic IDs within a single multi-item proposal batch', () => {
@@ -120,8 +120,8 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
     expect(mgr.revisionId).toBe(initialRev)
     expect(mgr.criteria.length).toBe(1) // Active criteria not mutated
     expect(mgr.pendingProposals.length).toBe(1)
-    expect(mgr.pendingProposals[0].proposal_id).toBe(proposal.proposal_id)
-    expect(mgr.pendingProposals[0].status).toBe('pending')
+    expect(mgr.pendingProposals[0]?.proposal_id).toBe(proposal.proposal_id)
+    expect(mgr.pendingProposals[0]?.status).toBe('pending')
   })
 
   it('AC-20 & AC-21: operator confirmation audits revision, bumps revision_id, and records prior history', () => {
@@ -143,11 +143,11 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
     const state = mgr.getState()
     expect(state.revision_id).toBe(2)
     expect(state.criteria.length).toBe(2)
-    expect(state.criteria[1].confirmed).toBe(true) // Confirmed upon operator approval
+    expect(state.criteria[1]?.confirmed).toBe(true) // Confirmed upon operator approval
     expect(state.revision_history.length).toBe(1)
-    expect(state.revision_history[0].revision_id).toBe(1)
-    expect(state.revision_history[0].confirmed_by).toBe('operator-human')
-    expect(state.revision_history[0].criteria.length).toBe(1)
+    expect(state.revision_history[0]?.revision_id).toBe(1)
+    expect(state.revision_history[0]?.confirmed_by).toBe('operator-human')
+    expect(state.revision_history[0]?.criteria.length).toBe(1)
   })
 
   it('Getter boundary: read-only getter snapshots prevent external mutation of internal state', () => {
@@ -160,7 +160,8 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
 
     // Attempt direct mutation via getter arrays
     const externalCriteria = mgr.criteria
-    externalCriteria[0].status = 'satisfied'
+    const firstCrit = externalCriteria[0]
+    if (firstCrit) firstCrit.status = 'satisfied'
     externalCriteria.push({
       id: 'CRIT-FAKE',
       description: 'Injected fake',
@@ -170,14 +171,15 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
     })
 
     const externalScope = mgr.scope
-    externalScope[0].confirmed = true
+    const firstScope = externalScope[0]
+    if (firstScope) firstScope.confirmed = true
 
     // Internal state must remain untouched
     const freshState = mgr.getState()
     expect(freshState.criteria.length).toBe(1)
-    expect(freshState.criteria[0].status).toBe('pending')
+    expect(freshState.criteria[0]?.status).toBe('pending')
     expect(freshState.criteria.some(c => c.id === 'CRIT-FAKE')).toBe(false)
-    expect(freshState.scope[0].confirmed).toBe(false)
+    expect(freshState.scope[0]?.confirmed).toBe(false)
   })
 
   it('Model context: represents unknown/unavailable when no genuine model context exists', () => {
@@ -206,7 +208,7 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
       summary: 'Passed suite',
     })
     expect(failRef.success).toBe(false)
-    expect(mgr.criteria[0].status).toBe('pending')
+    expect(mgr.criteria[0]?.status).toBe('pending')
 
     // Attempt without summary
     const failSummary = mgr.recordEvidence('CRIT-1', {
@@ -215,7 +217,7 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
       summary: '   ',
     })
     expect(failSummary.success).toBe(false)
-    expect(mgr.criteria[0].status).toBe('pending')
+    expect(mgr.criteria[0]?.status).toBe('pending')
 
     // Valid evidence succeeds
     const success = mgr.recordEvidence('CRIT-1', {
@@ -224,8 +226,8 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
       summary: '8/8 unit tests pass deterministically',
     })
     expect(success.success).toBe(true)
-    expect(mgr.criteria[0].status).toBe('satisfied')
-    expect(mgr.criteria[0].evidence?.reference).toBe('tests/thread-brief.spec.ts#L10-L40')
+    expect(mgr.criteria[0]?.status).toBe('satisfied')
+    expect(mgr.criteria[0]?.evidence?.reference).toBe('tests/thread-brief.spec.ts#L10-L40')
   })
 
   it('AC-18: rejects unverified agent claims and requires explicit audit for closure', () => {
@@ -238,7 +240,7 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
     // Agent text claim is evaluated and rejected
     const claimResult = mgr.evaluateAgentClaim('CRIT-1', 'I have finished all criteria and verified everything.')
     expect(claimResult.accepted).toBe(false)
-    expect(mgr.criteria[0].status).toBe('pending')
+    expect(mgr.criteria[0]?.status).toBe('pending')
 
     // Task closure check
     const closeCheck = mgr.canCloseTask()
@@ -271,7 +273,9 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
       proposed_by: 'operator',
       added_criteria: ['Crit 2'],
     })
-    mgr.confirmProposal(mgr.pendingProposals[0].proposal_id, 'human-operator')
+    const firstProp = mgr.pendingProposals[0]
+    expect(firstProp).toBeDefined()
+    if (firstProp) mgr.confirmProposal(firstProp.proposal_id, 'human-operator')
 
     // Serialize
     const serialized = mgr.serialize()
@@ -282,8 +286,8 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
     expect(restored.revisionId).toBe(2)
     expect(restored.rawOriginalAsk).toBe('Raw ask to be reloaded')
     expect(restored.criteria.length).toBe(2)
-    expect(restored.criteria[0].id).toBe('CRIT-1')
-    expect(restored.criteria[1].id).toBe('CRIT-2')
+    expect(restored.criteria[0]?.id).toBe('CRIT-1')
+    expect(restored.criteria[1]?.id).toBe('CRIT-2')
     expect(restored.getState().revision_history.length).toBe(1)
   })
 
