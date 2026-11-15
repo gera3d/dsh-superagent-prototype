@@ -517,6 +517,115 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
       promptSpy.mockRestore()
     }
   })
+
+  it('AC11: in-flight routing deadline expiry invokes actual Agent cancellation and suppresses subsequent retry/fallback/tool effects', async () => {
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 3,
+        max_attempts_per_model: 2,
+        total_timeout_ms: 1000,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    const one = await h.acceptedTicket(feishu('inflight-deadline-1', '@bot Fix in-flight deadline'))
+    const agent = h.agents.get(one.sessionId)!
+    agent.status = 'running'
+    const cancelSpy = vi.spyOn(agent, 'cancel')
+    const promptSpy = vi.spyOn(h.runtime.sessions, 'prompt')
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    try {
+      // Arm deadline timer under fake timers while request is held in-flight
+      (h.runtime.executor as any).armDeadlineTimer(one.ticket.id)
+
+      // Advance clock past the in-flight routing deadline (1001ms)
+      await vi.advanceTimersByTimeAsync(1001)
+      await h.runtime.idle()
+
+      // Invariant 1: Actual Agent cancellation was invoked while request was in-flight
+      expect(cancelSpy).toHaveBeenCalledWith({ kind: 'user' }, { keepInbox: false })
+
+      // Invariant 2: Ticket marked failed with routing deadline exceeded
+      const updated = h.runtime.store.tickets.get(one.ticket.id)!
+      expect(latestAssignment(updated)?.report?.state).toBe('failed')
+      const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
+      expect(lastNote?.text).toMatch(/Routing deadline exceeded \(1000ms\)/)
+
+      // Invariant 3: Delayed error emitted after cancellation does not trigger retry or fallback
+      const delayed500 = Object.assign(new Error('Delayed HTTP 500 from cancelled provider'), { status: 500 })
+      h.ctx.emit('agent/error', { agent, error: delayed500 } as never)
+      await vi.advanceTimersByTimeAsync(15_001)
+      await h.runtime.idle()
+
+      expect((h.runtime.executor as any).resuming.size).toBe(0)
+      const lateRetryPrompts = promptSpy.mock.calls.filter(([sessionId, requestId]) =>
+        sessionId === one.sessionId && (String(requestId).startsWith('retry:') || String(requestId).startsWith('fallback:'))
+      )
+      expect(lateRetryPrompts).toHaveLength(0)
+    } finally {
+      vi.useRealTimers()
+      cancelSpy.mockRestore()
+      promptSpy.mockRestore()
+    }
+  })
+
+  it('AC24: uncertain tool outcome blocks same-route retry and prompts upon generic HTTP 500 until legitimate reconciliation/explicit authorization', async () => {
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 3,
+        max_attempts_per_model: 2,
+        total_timeout_ms: 60_000,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    const one = await h.acceptedTicket(feishu('uncertain-retry-block-1', '@bot Fix uncertain tool retry block'))
+    const agent = h.agents.get(one.sessionId)!
+    const ledger = h.runtime.executor.toolLedger(one.ticket.id)
+    const promptSpy = vi.spyOn(h.runtime.sessions, 'prompt')
+
+    // Seed a canonical uncertain tool outcome
+    ledger.recordStart('call-uncertain-tx-1', 'payment_transfer')
+    ledger.recordUncertain('call-uncertain-tx-1')
+    expect(ledger.hasUncertain()).toBe(true)
+
+    // Emit a generic transient HTTP 500 error
+    const http500 = Object.assign(new Error('Internal Server Error 500'), { status: 500 })
+    h.ctx.emit('agent/error', { agent, error: http500 } as never)
+    await h.runtime.idle()
+
+    // Invariant 1: ZERO queued retries or prompts
+    expect((h.runtime.executor as any).resuming.size).toBe(0)
+    const retryPrompts = promptSpy.mock.calls.filter(([sessionId, requestId]) =>
+      sessionId === one.sessionId && String(requestId).startsWith('retry:')
+    )
+    expect(retryPrompts).toHaveLength(0)
+
+    // Invariant 2: Ticket fails closed with explicit uncertain tool outcome note
+    const updated = h.runtime.store.tickets.get(one.ticket.id)!
+    expect(latestAssignment(updated)?.report?.state).toBe('failed')
+    const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
+    expect(lastNote?.text).toMatch(/Uncertain tool outcome blocks automatic continuation until reconciliation or explicit operator retry authorization/)
+
+    // Invariant 3: Ordinary restart / resume preserves uncertain outcome in store and in-memory
+    h.runtime.executor.resume()
+    const cleanLedger = h.runtime.executor.toolLedger(one.ticket.id)
+    expect(cleanLedger.hasUncertain()).toBe(true)
+    expect(() => cleanLedger.guard('call-any-next')).toThrow(/Uncertain tool outcome blocks execution/)
+
+    // Invariant 4: Legitimate reconciliation unblocks execution
+    cleanLedger.reconcile('call-uncertain-tx-1', 'reconciled_success')
+    expect(cleanLedger.hasUncertain()).toBe(false)
+    expect(() => cleanLedger.guard('call-unblocked-next')).not.toThrow()
+    promptSpy.mockRestore()
+  })
 })
 
 describe('Bounded Model Routing and Tool Execution Guard', () => {
