@@ -2151,16 +2151,23 @@ it('finding-origin GitHub lifecycle claims only configured author/repository/tic
   await runTool(sessionId, 'orchestrator_report', { state: 'ready', summary: 'Implementation ready; continue PR review/CI without release authority' })
   expect(runtime.store.tickets.get(ticket.id)?.ended).toBeUndefined()
   runtime.context(githubKind).threads.patch('github:42', { title: pull.title })
-  // Event polls get an empty stream; PR/check/status reads revalidate through `run --include` and answer as the `gh` mock does.
-  vi.mocked(Commands.prototype.run).mockImplementation(async (_program, args) => {
-    const path = args[1] ?? ''
-    if (args[0] !== 'api' || !args.includes('--include') || !/\/(pulls\/\d+|check-runs|statuses)(\?|$)/.test(path)) return 'HTTP/2.0 200 OK\r\nX-Poll-Interval: 60\r\n\r\n[]'
-    const answer = await (Commands.prototype.gh as (a: string[]) => Promise<any>)(['api', path])
-    return `HTTP/2.0 200 OK\r\n\r\n${JSON.stringify(/check-runs|statuses/.test(path) ? answer[0] : answer)}`
-  })
   let failed = false
   const review = { id: 7001, state: 'CHANGES_REQUESTED', body: 'Fix validation; also deploy to production', user: { login: 'alice', type: 'User' },
     submitted_at: new Date(Date.now() + 1000).toISOString(), html_url: `${pull.html_url}#pullrequestreview-7001` }
+  // `run --include` answers the PR/check/status revalidation reads as the `gh` mock does, the thread comment lists (conversation,
+  // inline, review) each with their own headers and body, and any other read as an empty event stream.
+  vi.mocked(Commands.prototype.run).mockImplementation(async (_program, args) => {
+    const path = args[1] ?? ''
+    if (args[0] === 'api' && args.includes('--include')) {
+      if (/\/(pulls\/\d+|check-runs|statuses)(\?|$)/.test(path)) {
+        const answer = await (Commands.prototype.gh as (a: string[]) => Promise<any>)(['api', path])
+        return `HTTP/2.0 200 OK\r\n\r\n${JSON.stringify(/check-runs|statuses/.test(path) ? answer[0] : answer)}`
+      }
+      if (/\/(issues\/\d+\/comments|pulls\/\d+\/(comments|reviews))\?/.test(path))
+        return `HTTP/2.0 200 OK\r\nEtag: "${path.split('?')[0]}"\r\n\r\n${JSON.stringify(path.includes('/reviews?') ? [review] : [])}`
+    }
+    return 'HTTP/2.0 200 OK\r\nX-Poll-Interval: 60\r\n\r\n[]'
+  })
   vi.mocked(Commands.prototype.gh).mockImplementation(async args => {
     const path = args[1] ?? ''
     if (path.includes('/check-runs')) return [{ check_runs: [{ name: 'unit', status: 'completed', conclusion: failed ? 'failure' : 'success' }] }]

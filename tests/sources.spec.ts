@@ -947,7 +947,7 @@ describe('github source', () => {
       const path = args[1]!.replace(/^repos\/acme\/widgets\//, '').split('?')[0]!
       if (path !== 'notifications') {
         if (path === 'issues/7') return JSON.stringify(issue(7))
-        if (path === 'issues/7/comments') return JSON.stringify(args.includes('--slurp') ? [[]] : [])
+        if (path === 'issues/7/comments') return args.includes('--include') ? 'HTTP/2.0 200 OK\r\n\r\n[]' : JSON.stringify(args.includes('--slurp') ? [[]] : [])
         throw refused(404, 'Not Found')
       }
       const call = calls.filter(each => each[1]!.includes('/notifications?') && !each.includes('--paginate')).length
