@@ -35,7 +35,8 @@ export const KV = {
     /** Consecutive startup setup checks that ended in GitHub quota exhaustion; a restart creates a new Runtime, so the backoff reads it from here. */
     quotaFailures: record<number>('setup-quota-failures') },
   /** Sessions: prompt revisions each Session has worked under, ordered oldest first; the last entry (`.at(-1)`) is its active revision. */
-  sessions: { prompts: family<number[], [session: string]>('session-prompts:') },
+  sessions: { prompts: family<number[], [session: string]>('session-prompts:'),
+    toolLedgers: family<Record<string, { status: string; toolName: string; timestamp: number }>, [ticketId: string]>('ticket-tool-ledger:') },
   /** Schema 11 migration: legacy main-Session queues imported into the effect table. */
   queues: { relays: record<{ id: string; text: string }[]>('relay-queue'), unsubscribed: record<string[]>('subscription-results'),
     prompts: record<number | null>('prompt-notification'), settings: record<number | null>('settings-notification') },

@@ -27,7 +27,7 @@ describe('availability fallback versus missing-report finalization', () => {
     ticketId = ticket.id
     prompts = []
     selected = new Promise<void>(resolve => { release = resolve })
-    executor = new DshExecutor({ store: { tickets: store.tickets, triggers: store.triggers, settings: () => store.settings(), set: store.set.bind(store),
+    executor = new DshExecutor({ store: { tickets: store.tickets, triggers: store.triggers, settings: () => store.settings(), get: store.get.bind(store), set: store.set.bind(store),
       afterCommit: store.afterCommit.bind(store), atomic: store.atomic.bind(store) }, engine, context: { get: () => undefined, agents: new Map() },
     effects: { handle: () => {}, enqueue: () => {} },
     sessions: { relay: () => {}, selectModel: async () => { await selected }, prompt: async (_id: string, _req: string, text: string) => { prompts.push(text) } },
