@@ -13,6 +13,9 @@ it('shows each Source\'s state on the Source status and opens its settings from 
   expect(document.querySelector('.dt-status-title')?.textContent).toBe(zh.statusTitle)
   expect(all('.dt-form > .dt-list > .dt-row .dt-row-name').map(title => title.textContent)).toEqual(['飞书', 'GitHub'])
   expect(all('.dt-form > .dt-list > .dt-row')[0]!.querySelector('.dt-row-meta')?.textContent).toBe('24 小时到达 12被过滤 2最近 ' + document.querySelector('.dt-row-meta time, .dt-row-meta .dt-lv:last-child .dt-lv-value')?.textContent)
+  // The GitHub Source shows the hour's worker `gh` calls beside its poller's state; the Feishu Source has none.
+  expect(all('.dt-form > .dt-list > .dt-row')[1]!.querySelector('.dt-row-meta')?.textContent).toContain(`${zh.sourceWorkerCallsLabel} 7`)
+  expect(all('.dt-form > .dt-list > .dt-row')[0]!.querySelector('.dt-row-meta')?.textContent).not.toContain(zh.sourceWorkerCallsLabel)
   expect(text()).toContain(zh['sourceState.error'])
   expect(text()).toContain('socket closed')
   expect(all('.dt-card')).toHaveLength(0)

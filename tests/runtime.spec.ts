@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from 'v
 import type { UserMessage } from '@deepseek-ai/dsh-llm'
 import { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
 import { Runtime } from '../src/app/runtime.ts'
+import { Setup } from '../src/app/setup.ts'
+import { SetupError } from '../src/setup.ts'
 import { jobRegistry } from './fixtures/host.ts'
 import { evalsHealth } from '../src/app/views/overview.ts'
 import { mandateInstructions } from '../src/executor/dsh.ts'
@@ -18,7 +20,7 @@ import { SCHEMA_VERSION, Store } from '../src/app/store.ts'
 import { TextCache } from '../src/app/cache.ts'
 import { KV } from '../src/kv.ts'
 import { SettingsSchema, policyVersion, type SettingsOrigin } from '../src/policy.ts'
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { feishuKind } from '../src/sources/feishu.ts'
 import { githubKind, pollRound } from '../src/sources/github.ts'
 import { CliError, Commands } from '../src/infra/commands.ts'
@@ -29,6 +31,7 @@ import { commentTrigger, githubChannel } from '../src/sources/github-trigger.ts'
 import { IM_WORDS } from '../src/infra/text.ts'
 import { observePull, pullOf } from '../src/sources/github-pull.ts'
 import { credentialHelper, workerGitConfig } from '../src/infra/environment.ts'
+import { ghCallsDir, hourKey } from '../src/infra/gh-calls.ts'
 import { policyHistory } from '../src/app/settings-history.ts'
 import { findingMatchesSession } from '../src/client/finding-association.ts'
 import { overview } from '../src/app/views/overview.ts'
@@ -644,6 +647,59 @@ it('syncs a Source\'s list once its plugin loads after dsh-superagent started', 
   vi.mocked(Commands.prototype.lark).mockResolvedValue({ users: [{ member_id: MEMBER, name: 'Alice' }], has_more: false })
   next.sources.register(feishuKind)
   await vi.waitFor(() => expect(next.health['sync:feishu']).toMatchObject({ state: 'ready' }))
+})
+
+it('shows the gh calls a worker made in its ticket detail and the hour\'s total on the GitHub Source, and still shows them after a restart', async () => {
+  const { ticket } = await acceptedTicket()
+  const hour = hourKey(new Date())
+  mkdirSync(ghCallsDir(directory), { recursive: true })
+  writeFileSync(join(ghCallsDir(directory), ticket.id), [`${hour}\tpr\tview`, `${hour}\tpr\tview`, `${hour}\tapi\trepos/:o/:r/issues/:n/comments`, ''].join('\n'))
+  writeFileSync(join(ghCallsDir(directory), 'another-ticket'), `${hour}\tapi\trate_limit\n`)
+  const expected = { total: 3, hours: [{ hour, count: 3 }], commands: [{ name: 'pr view', count: 2 }, { name: 'api repos/:o/:r/issues/:n/comments', count: 1 }] }
+  const calls = async () => ({ ticket: ((await api('GET', `tickets/${ticket.id}`)).body as { ghCalls: unknown }).ghCalls,
+    sources: ((await api('GET', 'sources')).body as { id: string; workerCalls?: unknown }[]).map(source => [source.id, source.workerCalls]).sort() })
+  const shown = { ticket: expected, sources: [['feishu', undefined], ['github', { hour, total: 4 }]] }
+  expect(await calls()).toEqual(shown)
+  const next = await restart()
+  await next.ready
+  expect(await calls()).toEqual(shown)
+})
+
+it.each([
+  { name: 'non-quota failure', configured: false, quota: false },
+  { name: 'quota failure', configured: false, quota: true },
+  { name: 'successful setup', configured: true, quota: false },
+])('does not resume initialization after shutdown during $name', async ({ configured, quota }) => {
+  let release!: (configured: boolean) => void
+  const pending = new Promise<boolean>(resolve => { release = resolve })
+  vi.spyOn(Setup.prototype, 'run').mockImplementation(function (this: Setup) {
+    if (quota) this.problem = new SetupError('githubRateLimited').problem
+    return pending
+  })
+  const next = await restart()
+  const ready = next.ready.then(() => undefined, (error: unknown) => error)
+  try {
+    await next.stop()
+    const settings = vi.spyOn(next.store, 'settings')
+    const writes = vi.spyOn(next.store, 'set')
+    const deletes = vi.spyOn(next.store, 'delete')
+    const quotaReset = vi.spyOn(next.setup, 'quotaReset')
+    const sessions = vi.spyOn(next.sessions, 'install')
+    const executor = vi.spyOn(next.executor, 'install')
+    controller.create.mockClear()
+    release(configured)
+    expect(await ready).toBeUndefined()
+    expect(settings).not.toHaveBeenCalled()
+    expect(writes).not.toHaveBeenCalled()
+    expect(deletes).not.toHaveBeenCalled()
+    expect(quotaReset).not.toHaveBeenCalled()
+    expect(sessions).not.toHaveBeenCalled()
+    expect(executor).not.toHaveBeenCalled()
+    expect(controller.create).not.toHaveBeenCalled()
+  } finally {
+    release(configured)
+    await ready
+  }
 })
 
 it('syncs the Feishu part of the Policy from its sync chat in place, and keeps the Policy version when only the order the chat lists changes', async () => {

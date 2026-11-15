@@ -261,7 +261,9 @@ export class Runtime extends Service implements SourceHost {
   private async initialize(): Promise<void> {
     // Register management HTTP routes before setup completes so operators can fix setup problems in the UI.
     this.disposers.push(registerHttp(this.ctx, this.httpHost()))
-    if (!await this.setup.run(this.store.settings())) return this.waitForSetup()
+    const configured = await this.setup.run(this.store.settings())
+    if (this.closing()) return
+    if (!configured) return this.waitForSetup()
     this.store.delete(KV.runtime.quotaFailures)
     this.sessions.install()
     this.executor.install()
@@ -276,6 +278,7 @@ export class Runtime extends Service implements SourceHost {
   }
   /** Mark setup pending; after GitHub quota exhaustion, also schedule the one restart that reruns setup once the quota has reset. */
   private async waitForSetup(): Promise<void> {
+    if (this.closing()) return
     let state = health('paused', 'setupPending')
     if (this.setup.problem?.code === 'githubRateLimited') {
       const reset = await this.setup.quotaReset(this.store.settings())
