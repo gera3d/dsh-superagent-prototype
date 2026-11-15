@@ -446,8 +446,9 @@ export class ThreadBriefManager {
 
     lines.push(`Criteria:`)
     for (const c of this.state.criteria) {
+      const authTag = c.confirmed ? '(confirmed)' : '(inferred/unconfirmed)'
       const ev = c.evidence ? ` [Evidence: ${c.evidence.type} - ${c.evidence.summary}]` : ''
-      lines.push(`  - [${c.id}] (${c.status}): ${c.description}${ev}`)
+      lines.push(`  - [${c.id}] ${authTag} (${c.status}): ${c.description}${ev}`)
     }
 
     if (this.state.model_context && this.state.model_context.fallback_events && this.state.model_context.fallback_events.length > 0) {

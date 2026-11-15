@@ -312,9 +312,36 @@ describe('ThreadBriefManager Domain & Context Adapter (Issue #216)', () => {
     const prompt = mgr.composeContextPrompt()
     expect(prompt).toContain('[Active Thread Brief Rev 1]')
     expect(prompt).toContain('Objective: Run safely with fallback')
-    expect(prompt).toContain('[CRIT-1] (pending): Execute safely')
+    expect(prompt).toContain('[CRIT-1] (inferred/unconfirmed) (pending): Execute safely')
     expect(prompt).toContain('Model Fallback Routing:')
     expect(prompt).toContain('google/gemini-2.5-pro -> anthropic/claude-3-5-sonnet (Rate limit 429 quota exhaustion)')
+  })
+
+  it('AC-3 & AC-11-13 authority distinction: distinguishes inferred/unconfirmed vs confirmed criteria in context prompt', () => {
+    const mgr = ThreadBriefManager.fromRequest({
+      thread_id: 'thread-authority-distinction',
+      raw_request: 'Build feature',
+      inferred_criteria: ['Identical criterion requirement'],
+    })
+
+    // Initially, criterion is inferred and visibly unconfirmed in prompt
+    const initialPrompt = mgr.composeContextPrompt()
+    expect(initialPrompt).toContain('[CRIT-1] (inferred/unconfirmed) (pending): Identical criterion requirement')
+    expect(initialPrompt).not.toContain('[CRIT-1] (confirmed)')
+
+    // Stage identical proposal and confirm it
+    const proposal = mgr.stageProposal({
+      description: 'Confirm identical requirement',
+      proposed_by: 'operator',
+      added_criteria: ['Identical criterion requirement'],
+    })
+    expect(proposal.proposal_id).toBeDefined()
+    mgr.confirmProposal(proposal.proposal_id, 'human-operator')
+
+    // After confirmation, the two otherwise identical criteria are clearly distinguished by authority tag
+    const updatedPrompt = mgr.composeContextPrompt()
+    expect(updatedPrompt).toContain('[CRIT-1] (inferred/unconfirmed) (pending): Identical criterion requirement')
+    expect(updatedPrompt).toContain('[CRIT-2] (confirmed) (pending): Identical criterion requirement')
   })
 })
 
