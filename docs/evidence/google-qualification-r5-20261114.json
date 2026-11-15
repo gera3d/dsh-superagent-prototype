@@ -1,0 +1,385 @@
+{
+  "observedAt": "2026-11-14T13:40:53.456477+00:00",
+  "preflight": {
+    "observedAt": "2026-11-14T13:34:33.455545+00:00",
+    "findingId": "f526782b-1443-4342-b811-3cba5188f455",
+    "revision": 4,
+    "scopeSha256": "95a86558daf38c305b4837f6fc924cf2ffd0dc04236126b480427fd280d52dd9",
+    "accountId": "acc_primary",
+    "isPrimary": true,
+    "quotaUpdatedAt": 1794662848330,
+    "quotaAgeMs": 425125.544921875,
+    "google": {
+      "provider": "google",
+      "family": "google",
+      "source": "antigravity",
+      "label": "Google (Gemini)",
+      "accountProvenance": "Google Antigravity (gera3d@gmail.com)",
+      "rollingWindow": {
+        "fraction": 1,
+        "resetTime": "2026-11-14T18:27:28Z",
+        "stale": false
+      },
+      "weeklyWindow": {
+        "fraction": 0.7697030305862427,
+        "resetTime": "2026-11-20T23:40:22Z",
+        "stale": false
+      },
+      "status": "available",
+      "description": "Models within this group: Gemini 4 Hydrogen, Gemini 3.8 Flash",
+      "stale": false
+    },
+    "adapterVersion": "0.4.100",
+    "adapterSha256": "b6f5c061e146cdbbb25db1e8cce9e281133eb1c252c3ddc77fc5126768902d1e",
+    "eligibility": "Available/primary/current account via installed AccountAllowanceReader; source maps disabled/auth/cooldown statuses first. Fresh rolling1 > .1 and weekly .769703 > .05, no cooldown; exact adapter source unchanged. No raw credentials read/provider call.",
+    "approval": {
+      "revision": 3,
+      "choiceId": "fix_now",
+      "actor": "codex-project-coordinator",
+      "at": "2026-11-10T07:07:19.642Z"
+    },
+    "priorJobs": [
+      {
+        "id": "finding:f526782b-1443-4342-b811-3cba5188f455:r1",
+        "ticketId": "b2efbd4f140c102b3a6a25a1fea719e7",
+        "assignmentId": "fac8f33e7410368544b4c7ac84a37aba"
+      }
+    ],
+    "currentJob": {
+      "id": "finding:f526782b-1443-4342-b811-3cba5188f455:r3",
+      "ticketId": "26b9ea4d4f5d3728e5eed7c89fa5b6dc",
+      "assignmentId": "c7b90960e755e5ceb6a4323295fe64e0"
+    },
+    "retryLimit": "One same-scope continuation in this standing stage; no loop. Backend checks exact retained approval/revision/idle state and private instruction expiry. No separate mutable retry budget field exposed. Prior attempts preserved, no active worker."
+  },
+  "originalPriorJobs": [
+    "finding:f526782b-1443-4342-b811-3cba5188f455:r1",
+    "finding:f526782b-1443-4342-b811-3cba5188f455:r3"
+  ],
+  "supportedCoordination": {
+    "actor": "codex-project-coordinator",
+    "retry": "exactr4→r5 retry_scope; privateuid0600/10minexpiry/currentapproval/retainedfix_now/idlelineage checked bysupportedbackend",
+    "confirm": "r5 retainedfix_now confirmed; original nativeaudit preserved though retryclearscurrentconfirmation",
+    "notDone": [
+      "newapproval",
+      "endedworkerrevival",
+      "scopechange",
+      "cooldownclear",
+      "forcedbelowreserveprobe",
+      "configrouteaccountkeyaccessspendchange"
+    ]
+  },
+  "currentFinding": {
+    "id": "f526782b-1443-4342-b811-3cba5188f455",
+    "revision": 6,
+    "state": "blocked",
+    "job": {
+      "id": "finding:f526782b-1443-4342-b811-3cba5188f455:r5",
+      "ticketId": "d47b3cf53147e87d06b91bb3ab1b3249",
+      "assignmentId": "d7a907f5d5bc0e29b38b71fb8e989a4a"
+    },
+    "reportsCount": 3,
+    "lastReportReference": "ticket/d47b3cf53147e87d06b91bb3ab1b3249/report/d7a907f5d5bc0e29b38b71fb8e989a4a",
+    "notAccepted": true
+  },
+  "ticket": {
+    "id": "d47b3cf53147e87d06b91bb3ab1b3249",
+    "state": "ended",
+    "stage": "ended",
+    "assignments": [
+      {
+        "id": "d7a907f5d5bc0e29b38b71fb8e989a4a",
+        "state": "ended",
+        "createdAt": "2026-11-14T13:35:11.330Z",
+        "startedAt": "2026-11-14T13:35:12.020Z",
+        "idleAt": "2026-11-14T13:37:33.600Z",
+        "report": {
+          "state": "ready",
+          "summary": "Completed bounded native Google subscription qualification for finding f526782b-1443-4342-b811-3cba5188f455:r5 on ticket d47b3cf53147e87d06b91bb3ab1b3249 / assignment d7a907f5d5bc0e29b38b71fb8e989a4a (turn 1, Gemini 3.8 Flash). Executed 3 serial real tool round trips with exit 0: (1) read authoritative Manage-Builder PROJECT_STATUS.md (SHA-256: 92dbc6205e00a7bf6c42384b33d1778ea8f7b81b94708e0321ac9a9c8301fd59) and hashed fixed string google-harness-qualification-v1 to 16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a; (2) saved local receipt qualification-receipt.json, verified read-back nonce fe711652d6b5a2d9 and hash, called progress orchestrator_report (report hash 26a1a798...); (3) independently recomputed hash via python hashlib and shasum, verified receipt, recorded completed checks and limitations. Evidence preserved in qualification-receipt.json. Limitations: provider attribution and first-response latency observable only via Codex native inspection; shell lacked DSH_SUPERAGENT_*, IDs passed explicitly; zero code/settings/credentials/routes/spend mutated; no PR or full test suite run. Ready for independent review by Codex.",
+          "at": "2026-11-14T13:37:33.604Z",
+          "hash": "381fa1fc61f888b5"
+        },
+        "endedAt": "2026-11-14T13:37:33.604Z",
+        "deliveredReportHash": "381fa1fc61f888b5",
+        "ref": "worker-d47b3cf53147e87d06b91bb3ab1b3249"
+      }
+    ],
+    "usage": {
+      "sessionId": "worker-d47b3cf53147e87d06b91bb3ab1b3249",
+      "routes": [
+        {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "attempts": 1,
+          "uncachedInputTokens": 2314,
+          "outputTokens": 743,
+          "cacheReadTokens": 61329,
+          "totalTokens": 64386
+        }
+      ],
+      "totals": {
+        "uncachedInputTokens": 2314,
+        "outputTokens": 743,
+        "totalTokens": 64386,
+        "cacheReadTokens": 61329
+      },
+      "coverage": {
+        "attempts": 1,
+        "reported": 1,
+        "cacheRead": "exact",
+        "cacheWrite": "unreported",
+        "attribution": "complete"
+      },
+      "cost": {
+        "kind": "unavailable",
+        "reason": "noRecordedPrice"
+      }
+    }
+  },
+  "sourceSession": {
+    "outerSession": "worker-d47b3cf53147e87d06b91bb3ab1b3249",
+    "outerEventsCount": 24,
+    "outerTypeCounts": {
+      "session": 1,
+      "permission/preset": 2,
+      "sandbox/mode": 2,
+      "approval/policy": 2,
+      "model/selection": 1,
+      "session/title": 1,
+      "agent/inbox/spliced": 2,
+      "turn/start": 1,
+      "step/start": 1,
+      "system/message": 1,
+      "user/message": 5,
+      "request/header": 1,
+      "request/context": 1,
+      "assistant/message": 1,
+      "step/end": 1,
+      "turn/end": 1
+    },
+    "requestAtMs": 1794663312064,
+    "requestConfig": {
+      "provider": "antigravity",
+      "model": "gemini-3.8-flash",
+      "reasoningEffort": "medium",
+      "maxTokens": 65536
+    },
+    "firstAdapterProgressChunkAtMs": 1794663318897,
+    "firstAdapterProgressChunkDelayMs": 6833,
+    "completedAtMs": 1794663453594,
+    "requestToCompletionMs": 141530,
+    "nestedSessionId": "4abac0e7-59fb-4219-a134-74cf4acdb7f2",
+    "nestedTranscriptPath": "/Users/gerayeremin/.gemini/antigravity-cli/brain/4abac0e7-59fb-4219-a134-74cf4acdb7f2/.system_generated/logs/transcript.jsonl",
+    "nestedTranscriptSha256": "2abbebdd7c2c38d6226387020ef3355c36f781c686183798e98222ce514b9ba7",
+    "nestedRows": 88,
+    "nestedModelResponses": {
+      "gemini-3.8-flash-medium": 43
+    },
+    "nestedToolCounts": {
+      "run_command": 40,
+      "manage_task": 2
+    },
+    "nestedFirstModelAt": "2026-11-14T13:35:14Z",
+    "binding": "NestedUSER_INPUT contains exactcurrentticket/assignment/scope; outermodel/request and nestedmodel agree, oneoutercompletedrequest/no fallback.",
+    "limits": "43nestedmodelresponses/40run_command+2manage_task are preparation and serialverification, not3totaltoolcalls or throughput. Canceled exploratoryfind/initialinspection retained in source; do not infer stall from24outerevents or call this cost/longrunperformance proof."
+  },
+  "serialCheckReceipts": [
+    {
+      "step_index": 72,
+      "type": "GENERIC",
+      "status": "DONE",
+      "created_at": "2026-11-14T13:36:56Z",
+      "content": "Created At: 2026-11-14T05:36:56-08:00\nCompleted At: 2026-11-14T05:36:56-08:00\nCreated At: 2026-11-14T05:36:56-08:00\nCompleted At: 2026-11-14T05:36:56-08:00\nCommand exited with code 0.\n\nCommand output:\n{\r\n  \"step\": 1,\r\n  \"input\": \"google-harness-qualification-v1\",\r\n  \"sha256\": \"16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a\",\r\n  \"timestamp\": \"2026-11-14T13:36:56.302894+00:00\",\r\n  \"ticket_id\": \"d47b3cf53147e87d06b91bb3ab1b3249\",\r\n  \"assignment_id\": \"d7a907f5d5bc0e29b38b71fb8e989a4a\",\r\n  \"trigger_id\": \"f2cf6df074bd75cedd8a52addb9b1e3d\",\r\n  \"finding_job\": \"finding:f526782b-1443-4342-b811-3cba5188f455:r5\",\r\n  \"cwd\": \"/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-d47b3cf53147\",\r\n  \"session\": \"worker-d47b3cf53147e87d06b91bb3ab1b3249\",\r\n  \"project_status_path\": \"/Users/gerayeremin/Documents/Projects/Manage-Builder/PROJECT_STATUS.md\",\r\n  \"project_status_sha256\": \"92dbc6205e00a7bf6c42384b33d1778ea8f7b81b94708e0321ac9a9c8301fd59\"\r\n}\r\n"
+    },
+    {
+      "step_index": 74,
+      "type": "GENERIC",
+      "status": "DONE",
+      "created_at": "2026-11-14T13:37:02Z",
+      "content": "Created At: 2026-11-14T05:37:02-08:00\nCompleted At: 2026-11-14T05:37:02-08:00\nCreated At: 2026-11-14T05:37:02-08:00\nCompleted At: 2026-11-14T05:37:02-08:00\nCommand exited with code 0.\n\nCommand output:\nReceipt verified locally with nonce fe711652d6b5a2d9 and hash 16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a\r\norchestrator_report exit code: 0\r\nstdout: Report recorded for delivery: state=progress\r\n.dsh-report.json content:\r\n{\r\n  \"state\": \"progress\",\r\n  \"summary\": \"Qualification progress: serial round trips 1-2 completed. Computed fixed hash 16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a on native Google Gemini 3.8 Flash worker; local receipt written and verified.\",\r\n  \"ticket_id\": \"d47b3cf53147e87d06b91bb3ab1b3249\",\r\n  \"assignment_id\": \"d7a907f5d5bc0e29b38b71fb8e989a4a\",\r\n  \"turn_id\": \"1\",\r\n  \"at\": \"2026-11-14T13:37:02.900Z\"\r\n}\r\n"
+    },
+    {
+      "step_index": 78,
+      "type": "GENERIC",
+      "status": "DONE",
+      "created_at": "2026-11-14T13:37:15Z",
+      "content": "Created At: 2026-11-14T05:37:15-08:00\nCompleted At: 2026-11-14T05:37:15-08:00\nCreated At: 2026-11-14T05:37:15-08:00\nCompleted At: 2026-11-14T05:37:15-08:00\nCommand exited with code 0.\n\nCommand output:\nUpdated qualification-receipt.json successfully.\r\n"
+    },
+    {
+      "step_index": 82,
+      "type": "GENERIC",
+      "status": "DONE",
+      "created_at": "2026-11-14T13:37:23Z",
+      "content": "Created At: 2026-11-14T05:37:23-08:00\nCompleted At: 2026-11-14T05:37:23-08:00\nCreated At: 2026-11-14T05:37:23-08:00\nCompleted At: 2026-11-14T05:37:23-08:00\nCommand exited with code 0.\n\nCommand output:\nReport recorded for delivery: state=ready\r\n"
+    }
+  ],
+  "receipt": {
+    "schema": "google-harness-qualification-receipt-v1",
+    "ticket_id": "d47b3cf53147e87d06b91bb3ab1b3249",
+    "assignment_id": "d7a907f5d5bc0e29b38b71fb8e989a4a",
+    "turn": "1",
+    "nonce": "fe711652d6b5a2d9",
+    "input": "google-harness-qualification-v1",
+    "sha256": "16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a",
+    "created_at": "2026-11-14T13:37:02.838234+00:00",
+    "workspace": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-d47b3cf53147",
+    "steps": [
+      {
+        "n": 1,
+        "tool": "bash+python3",
+        "at": "2026-11-14T13:36:56.302894+00:00",
+        "exit": 0,
+        "sha256": "16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a",
+        "project_status_path": "/Users/gerayeremin/Documents/Projects/Manage-Builder/PROJECT_STATUS.md",
+        "project_status_sha256": "92dbc6205e00a7bf6c42384b33d1778ea8f7b81b94708e0321ac9a9c8301fd59"
+      },
+      {
+        "n": 2,
+        "at": "2026-11-14T13:37:02.900Z",
+        "tool": "python3+orchestrator_report CLI",
+        "action": "receipt written and read back locally; nonce and hash verified; progress report CLI invoked",
+        "exit": 0,
+        "stdout": "Report recorded for delivery: state=progress",
+        "progress_report_file_sha256": "26a1a798bcb2ae7650c5a7b5c70509fce69b21d8bf8d25bb5c77f1a2f23f7580"
+      },
+      {
+        "n": 3,
+        "at": "2026-11-14T13:37:15.945392+00:00",
+        "action": "independent recompute python hashlib vs shasum vs receipt; record checks and limitations",
+        "python_sha256": "16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a",
+        "shasum_sha256": "16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a",
+        "match": true,
+        "exit": 0
+      }
+    ],
+    "runtime_identity": {
+      "ticket_id": "d47b3cf53147e87d06b91bb3ab1b3249",
+      "assignment_id": "d7a907f5d5bc0e29b38b71fb8e989a4a",
+      "turn": "1",
+      "session": "worker-d47b3cf53147e87d06b91bb3ab1b3249",
+      "model": "Gemini 3.8 Flash (Medium)",
+      "finding_job": "finding:f526782b-1443-4342-b811-3cba5188f455:r5"
+    },
+    "completed_checks": [
+      "Authoritative PROJECT_STATUS.md read from /Users/gerayeremin/Documents/Projects/Manage-Builder/PROJECT_STATUS.md (SHA-256: 92dbc6205e00a7bf6c42384b33d1778ea8f7b81b94708e0321ac9a9c8301fd59).",
+      "Installed reporting CLI orchestrator_report inspected and verified functional.",
+      "Round trip 1: Fixed string google-harness-qualification-v1 hashed via Python hashlib (SHA-256: 16698c2f9b29bac9c9301a07d5cb3bd2f322200f69588a727fa805618913cd1a) with exit 0.",
+      "Round trip 2: Local receipt qualification-receipt.json created, read back, verified nonce fe711652d6b5a2d9 and hash; orchestrator_report progress invoked successfully.",
+      "Round trip 3: Independent recompute with python hashlib and system shasum confirmed matching receipt hash; limitations and evidence recorded."
+    ],
+    "limitations": [
+      "Model provider execution telemetry (exact request/response events, token consumption, first-response latency) is not directly visible inside this sandbox; only Codex can independently inspect native thread provider attribution.",
+      "Shell environment lacked DSH_SUPERAGENT_* environment variables; ticket, assignment, and turn (1) were passed explicitly via CLI flags from supplied native environment.",
+      "CLI writes local .dsh-report.json; asynchronous delivery marker consumption and database state transition are handled by the coordinator.",
+      "Zero changes made to settings, routing, credentials, permissions, accounts, spending, or installed code; no provider API called directly; no test suites, PRs, or builds executed."
+    ],
+    "finalized_at": "2026-11-14T13:37:15.945755+00:00"
+  },
+  "receiptFileSha256": "e372d2c456b0c21d0eac1c765d95e2221a70b4676bf20032ac7a05077facc13f",
+  "finalReportFileSha256": "d6616b881fabf502c8659e2f3a754baeb3a4bf4fda46c612cf92ab3dcf1eaff9",
+  "finalReportSnapshotHash": "381fa1fc61f888b5",
+  "consumedMarker": {
+    "name": ".dsh-report.consumed.d47b3cf53147e87d06b91bb3ab1b3249.d7a907f5d5bc0e29b38b71fb8e989a4a.1.381fa1fc61f888b5",
+    "value": {
+      "at": 1794663443637,
+      "state": "ready",
+      "hash": "381fa1fc61f888b5"
+    },
+    "sha256": "089a67e757f9107c2b1239d1e788e7ac774b24d2b1edf4a6a14b7f9b0e7763e3"
+  },
+  "reportingLimits": {
+    "progress": "CLIexit0 and exactlocalprogresspayload/hash observed; overwritten byready beforeany separatelyobservedconsumedmarker/canonicalprogress. Notclaimingprogressdelivery.",
+    "ready": "Exactcurrentticket/assignment/turn1 plus independentlyrecomputed snapshot381fa1fc61f888b5,consumedmarker,deliveredReportHash and canonicalready/findingtransition verified.",
+    "identity": "Worker shell lacksDSH_SUPERAGENT_*; actualcurrentIDs/turn suppliedbytrustedtaskcontext and comparedtoouterturn/start/header/ticket/assignment; CLIflags used, not invented.",
+    "nativeBrowser": "Sourceactualthread/session and canonicalbackend inspected; no nativeChromeinteraction/protectedoperator-evidence/acceptance."
+  },
+  "allowanceAfter": {
+    "accountId": "acc_primary",
+    "isPrimary": true,
+    "updatedAt": 1794660588954,
+    "stale": true,
+    "google": {
+      "provider": "google",
+      "family": "google",
+      "source": "antigravity",
+      "label": "Google (Gemini)",
+      "rollingWindow": {
+        "fraction": 1,
+        "resetTime": "2026-11-14T17:49:48Z",
+        "stale": false
+      },
+      "weeklyWindow": {
+        "fraction": 0.7697030305862427,
+        "resetTime": "2026-11-20T23:40:22Z",
+        "stale": false
+      },
+      "status": "available",
+      "description": "Models within this group: Gemini 4 Hydrogen, Gemini 3.8 Flash",
+      "stale": true
+    },
+    "limit": "Timestampregressedfromprefreshtime1794662848330 topost1794660588954 and poststale=true. Weeklyfractionunchanged isnotconsumptionproof; no forcedrefresh/newproviderprobe/retry. No quota-burn inference."
+  },
+  "protectedAcceptance": "Notperformed; workerready/findingblocked6 awaitsexistingCodexreview and supportednativeevidencerequirementack/accept onlyifqualified.",
+  "allowanceFreshnessReview": {
+    "originalPreDispatchObservationPreserved": true,
+    "initialSnapshot": {
+      "accountId": "acc_primary",
+      "isPrimary": true,
+      "aggregateUpdatedAt": 1794662848330,
+      "aggregateUpdatedAtUtc": "2026-11-14T13:27:28.330000+00:00",
+      "aggregateStale": false,
+      "google": {
+        "provider": "google",
+        "family": "google",
+        "source": "antigravity",
+        "label": "Google (Gemini)",
+        "rollingWindow": {
+          "fraction": 1,
+          "resetTime": "2026-11-14T18:27:28Z",
+          "stale": false
+        },
+        "weeklyWindow": {
+          "fraction": 0.7697030305862427,
+          "resetTime": "2026-11-20T23:40:22Z",
+          "stale": false
+        },
+        "status": "available",
+        "description": "Models within this group: Gemini 4 Hydrogen, Gemini 3.8 Flash",
+        "stale": false
+      }
+    },
+    "preEligibilityReviewAt": "2026-11-14T13:34:33.455545+00:00",
+    "postSnapshot": {
+      "accountId": "acc_primary",
+      "isPrimary": true,
+      "aggregateUpdatedAt": 1794660588954,
+      "aggregateUpdatedAtUtc": "2026-11-14T12:49:48.954000+00:00",
+      "aggregateStale": true,
+      "google": {
+        "provider": "google",
+        "family": "google",
+        "source": "antigravity",
+        "label": "Google (Gemini)",
+        "rollingWindow": {
+          "fraction": 1,
+          "resetTime": "2026-11-14T17:49:48Z",
+          "stale": false
+        },
+        "weeklyWindow": {
+          "fraction": 0.7697030305862427,
+          "resetTime": "2026-11-20T23:40:22Z",
+          "stale": false
+        },
+        "status": "available",
+        "description": "Models within this group: Gemini 4 Hydrogen, Gemini 3.8 Flash",
+        "stale": true
+      }
+    },
+    "supportedInterface": "GET orchestrator/api/allowance reads localnativeAccountAllowanceReader. report() has15secondinmemorycache; readInternal() reads persistedpool.json. refresh() onlybypassescache/rereadsfile, NOT freshproviderquota request. NoPOSTrefresh/newproviderprobe used.",
+    "timestamps": "PreaggregateupdatedAt1794662848330=13:27:28.330Z; Googleprovider/aggregate/windowstale flags false; at13:34:33.455Z check snapshot~425s old under15minuteparserthreshold. AggregateupdatedAt is latestGoogle/Claude field, not independentfreshGooglefetch timestamp. PostaggregateupdatedAt1794660588954=12:49:48.954Z regressed; aggregate/providerstaletrue whilewindowstalefalse. Windowstale onlymeansresettimepassed, not freshness.",
+    "eligibilityBasis": "Pre-dispatch nominaladaptereligibility inferredfromsameprimary persistedaccount/statusavailable/providerstalefalse/rolling1/weekly.769703 plusunchanged0.4.100 adapterSHAandthresholdsource. Nativeapproval/revision/retainedchoice/expiry/idleguards independentlyaccepted; thoseguards doNOTrefreshquota orproveeligibility. ExactisAccountEligible method was source-inspected/notcalledonrawliveaccount.",
+    "notEstablished": "No providerquota refresh or independentlyfresh upstreambalance beforedispatch. Calling initialreadfresh meantnonstale localcacheunderreaderpolicy, not newupstreamquotaquery. Poststale/regressedread preventsdeducingconsumption; retainbothobservations, do not overwriteinitial.",
+    "actualOutcomeIndependentOfQuotaSnapshot": "Google-onlyresponses/realtools/finalconsumedcanonicalreport demonstrate usableexecutionfor thisboundedattempt; notfuturequota, throughputsafety, billing or progressingestion guarantee.",
+    "actionsAfterReview": "No newprobe/retry/configchange/interruption."
+  }
+}

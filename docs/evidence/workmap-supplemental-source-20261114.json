@@ -1,0 +1,400 @@
+{
+  "observedAt": "2026-11-14T12:32:10.292894+00:00",
+  "source": [
+    {
+      "path": "repos/gera3d/superagent-sandbox/pulls/150",
+      "data": {
+        "number": 150,
+        "html_url": "https://github.com/gera3d/superagent-sandbox/pull/150",
+        "title": "docs: go live from the thread (Stage 9.4) in the Senior Developer helper design note",
+        "state": "closed",
+        "state_reason": null,
+        "created_at": "2026-11-06T01:11:31Z",
+        "updated_at": "2026-11-13T02:31:13Z",
+        "body": "This is by an automated agent, not a human.\n\nDocs only. Adds to docs/023-senior-developer-helper.md:\n- Section 3.5: Go live from the thread (review card, Senior Developer verdict, Go live click, Restart on a second click, Rollback; human click only, pinned to a PR head and patch fingerprint).\n- Stage 9.4 in the build order (after the 9.2 go-live script and the 3.4 done card).\n- Decision 6 (Gera, 2026-11-05) and lesson 11.\n- Status line refreshed: 9.1 live, 9.2 and 9.3 in progress.\n\nNo code. Rollback: revert this PR.",
+        "merged_at": "2026-11-13T02:31:13Z",
+        "merge_commit_sha": "8c9036aa0f4d021d8bd46568b218db6437212331",
+        "error": null,
+        "head": "bba69829eb4f96f460163e3a8b1f78c2a9c6beff",
+        "base": "main"
+      }
+    },
+    {
+      "path": "repos/gera3d/superagent-sandbox/issues/150/comments?per_page=100",
+      "data": []
+    },
+    {
+      "path": "repos/gera3d/dsh-superagent-prototype/issues/2",
+      "data": {
+        "number": 2,
+        "html_url": "https://github.com/gera3d/dsh-superagent-prototype/issues/2",
+        "title": "[superagent] Handle Composio action failures safely during execution",
+        "state": "open",
+        "state_reason": null,
+        "created_at": "2026-11-04T02:13:46Z",
+        "updated_at": "2026-11-04T02:21:51Z",
+        "body": "## Context and agreed boundary\nCaptured from the user's voice session: use Composio's supported tool discovery/execution and connection management rather than building separate authentication, API-key storage, connection tracking, or tool-list caching infrastructure in Superagent. Follow the returned tool schemas and connection/error guidance.\n\nThe requested action is to file this work item so the system can investigate and propose a tested fix for Composio actions that fail during execution. This is a hardening requirement, not a claim that a particular production failure has been reproduced. No architecture beyond that boundary was verified in the voice session.\n\n## Work requested\n- Trace how Composio transport errors, action-level failures, timeouts, rate limits, and connection-required responses propagate through execution. Do not report a failed action as successful.\n- Preserve completed work and surface a clear, actionable failure with sanitized tool/action identifiers and available correlation IDs. Never log credentials or sensitive request/response payloads.\n- Distinguish definite failure from uncertain/partial completion. Use bounded retries only when safe; do not blindly repeat side-effecting actions after a timeout or lost acknowledgement. Follow Composio's reconnection guidance when connection action is required.\n\n## Acceptance criteria\n- Mocked regression tests cover transport failure, action-level failure, timeout/uncertain completion, rate limiting, and connection-required responses.\n- Failures neither silently disappear nor crash unrelated execution; prior successful results remain available.\n- A user-visible recovery path explains what failed and whether retry is safe, with no duplicate side effects, automatic authorization, or infinite retry loop.\n- Document the behavior and submit a narrowly scoped fix after inspecting the actual integration. No separate credential manager, speculative caching subsystem, or automatic recursive issue-creation mechanism is needed.\n\n## Evidence\nNo specific stack trace or failing Composio action was supplied during the voice session; collect a sanitized reproduction during investigation.",
+        "merged_at": null,
+        "merge_commit_sha": null,
+        "error": null
+      }
+    },
+    {
+      "path": "repos/gera3d/dsh-superagent-prototype/issues/2/comments?per_page=100",
+      "data": [
+        {
+          "id": 6620804346,
+          "url": "https://github.com/gera3d/dsh-superagent-prototype/issues/2#issuecomment-6620804346",
+          "actor": "gera3d",
+          "createdAt": "2026-11-04T02:21:51Z",
+          "body": "## Investigation findings — offline reproduction completed\n\n**Bottom line:** protocol/transport failures are surfaced as tool errors by the installed DSH host, but a Composio action failure nested inside a valid MCP result is preserved as ordinary result data. Superagent has no deterministic per-action consumer that turns that payload into a failed ticket. This is a handling/observability boundary, not evidence that an external action succeeded or that errors are discarded.\n\n### 1. What this repository actually wires\n\nInspected revision: `c169620bced7cbd5fc42a8724f0fd45e2ef78cac`; the source files cited below had no working-tree differences during this investigation.\n\n- [The Composio skill](https://github.com/gera3d/dsh-superagent-prototype/blob/c169620bced7cbd5fc42a8724f0fd45e2ef78cac/skills/dsh-superagent-composio/SKILL.md#L10-L41) documents an externally configured `@deepseek-ai/dsh-mcp-client` profile plugin and search/schema/execute/connection workflows. No Composio-specific execution implementation exists under `src`; the repository's bundle patch does not itself configure a Composio MCP server. Authentication/connection ownership stays with Composio and its supported host configuration; no new credential manager is needed.\n- [Worker tool restrictions](https://github.com/gera3d/dsh-superagent-prototype/blob/c169620bced7cbd5fc42a8724f0fd45e2ef78cac/src/app/sessions.ts#L55-L62) and [workOnly](https://github.com/gera3d/dsh-superagent-prototype/blob/c169620bced7cbd5fc42a8724f0fd45e2ef78cac/src/app/sessions.ts#L283-L296) do not allow inherited `mcp__composio__*` tools. Availability in an interactive host does not prove availability in managed ticket workers. I did not weaken that allowlist or inspect private profile/credential files.\n- [DshExecutor.install](https://github.com/gera3d/dsh-superagent-prototype/blob/c169620bced7cbd5fc42a8724f0fd45e2ef78cac/src/executor/dsh.ts#L476-L511) handles worker status, inbox claims, orchestrator user-message admissions, and `agent/error`; it does not classify `tool/result`. The [transcript projection](https://github.com/gera3d/dsh-superagent-prototype/blob/c169620bced7cbd5fc42a8724f0fd45e2ef78cac/src/app/context.ts#L28-L32) retains tool-result content, but is not a failure policy.\n\n### 2. Installed host boundary and reproduced results\n\nInspected and executed the actual installed `@deepseek-ai/dsh-mcp-client` and `@deepseek-ai/dsh-tools` modules, both reporting version `0.2.1-rc.3`. These are external host packages, **not code owned by this repository**; observations apply to the installed builds, not an assumed pristine published release.\n\nThe MCP adapter's `createExecutor` validates `CallToolResult` and throws on `isError === true`. `ToolRuntime.dispatchToolBody` catches exceptions and produces an error result. It does not interpret application-specific `successful` fields in text JSON or `structuredContent`.\n\nUsing the real adapter + real ToolRuntime with a mocked provider callback:\n\n| Synthetic provider outcome | ToolRuntime `isError` | Provider calls |\n| --- | --- | --- |\n| MCP `isError: true` | `true` | 1 |\n| Thrown timeout after dispatch | `true` | 1 |\n| Thrown HTTP 429 | `true` | 1 |\n| Invalid MCP result shape | `true` | 1 |\n| Text JSON `{successful:false, error:...}` | `false` | 1 |\n| `structuredContent: {successful:false, error:...}` | `false` | 1 |\n| Mixed batch: one successful action, one failed action | `false` | 1 |\n\n**7/7 characterization assertions passed.** Both successful and failed batch entries were preserved. No automatic replay occurred in this adapter/runtime test. This does not establish what an LLM might retry on a later step, nor prove how every real Composio failure is encoded.\n\nMinimal offline illustration (run with `DSH_ROOT` pointing to the installed DSH package; no credentials or network calls):\n\n```js\nimport { createRequire } from 'node:module';\nimport { resolve } from 'node:path';\nimport { pathToFileURL } from 'node:url';\nconst require = createRequire(resolve(process.env.DSH_ROOT, 'package.json'));\nconst load = name => import(pathToFileURL(require.resolve(name)).href);\nconst { Context } = await load('@deepseek-ai/cordis');\nconst { ToolRuntime } = await load('@deepseek-ai/dsh-tools');\nconst { createMcpToolDefinition } = await load('@deepseek-ai/dsh-mcp-client');\nconst ctx = new Context();\nctx.provide('systemPrompt', { tools: () => () => {} });\nconst runtime = new ToolRuntime(ctx);\nfor (const protocolError of [false, true]) {\n  let calls = 0;\n  const name = 'mcp__composio__MOCK_ACTION';\n  const unregister = runtime.register(createMcpToolDefinition(ctx, {\n    name, rawName: 'MOCK_ACTION', description: 'Offline fixture',\n    inputSchema: { type: 'object', properties: {} },\n    call: async () => {\n      calls++;\n      return {\n        isError: protocolError,\n        content: [{ type: 'text', text: JSON.stringify({\n          successful: false, error: 'MOCK action failed'\n        }) }]\n      };\n    }\n  }));\n  const result = await runtime.execute({ name, callId: String(protocolError),\n    arguments: {}, signal: new AbortController().signal });\n  console.log({ protocolError, toolRuntimeIsError: result.isError, calls });\n  unregister();\n}\n// false => toolRuntimeIsError:false, calls:1\n// true  => toolRuntimeIsError:true,  calls:1\n```\n\nFor exact installed-build provenance, SHA-256 of `lib/index.js`:\n- MCP client: `2cd15b207d57bd0e21e5e088378969ca60c71010a36749bfd773f8f91de93dac`\n- Tools runtime: `1e53932e7c4213ea24a7d87f06960b7a7702cb21f8a5741c97242b4a470a442a`\n\n### 3. Superagent-level reproduction and existing retry behavior\n\nUsing the repository's existing mocked `startRuntime` harness, emitted two synthetic `session/event` / `tool/result` variants: an MCP-error result and an ordinary result containing `{successful:false}`. In both cases, after `runtime.idle()`, ticket state and delivery counts were unchanged and no failure report was created. Emitting a non-transient `agent/error` afterward did create the expected failed report. **2/2 tests passed.** This tests the repository's event handling, not live host escalation or direct worker access to Composio.\n\nAlso ran the existing [transient provider-failure regression](https://github.com/gera3d/dsh-superagent-prototype/blob/c169620bced7cbd5fc42a8724f0fd45e2ef78cac/tests/runtime-concurrency.spec.ts#L191-L208): **1 passed, 55 skipped** with the name filter. It proves three retries for transient **agent-level** errors before reporting failure on the fourth occurrence. It is not a per-Composio-action retry policy.\n\nLocal-only evidence artifacts (ignored, not committed): `.artifacts/composio-failure-repro.mjs`, `.artifacts/composio-runtime-repro.spec.ts`, and `.artifacts/composio-repro.vitest.config.ts`. Executed:\n\n```text\nnode .artifacts/composio-failure-repro.mjs <DSH-install-root>\npnpm exec vitest run --config .artifacts/composio-repro.vitest.config.ts\npnpm exec vitest run tests/runtime-concurrency.spec.ts -t 'lets a worker go on after a passing provider failure'\n```\n\n### Recommended next scope\n\n1. First identify the intended caller: interactive host agent versus restricted ticket worker. Do not enable MCP tools broadly as an incidental fix.\n2. At that caller's Composio consumption boundary, explicitly distinguish transport/MCP failure, application failure, mixed success, and uncertain completion. Preserve successful batch entries and diagnostics; do not treat top-level envelope success as all-actions success or blanket-retry mutating actions.\n3. Add durable regression coverage and a clear recovery/reporting policy there, following Composio connection guidance. Sanitization, retry-after handling, and production correlation metadata were not established by these synthetic tests.\n\nNo production code, credentials, profiles, worker restrictions, or external app data were changed. GitHub commenting is the only external write in this investigation; no live failing Composio action was invoked."
+        }
+      ]
+    },
+    {
+      "path": "repos/gera3d/dsh-superagent-prototype/issues/3",
+      "data": {
+        "number": 3,
+        "html_url": "https://github.com/gera3d/dsh-superagent-prototype/issues/3",
+        "title": "[computer-use] End-to-end verification and interactive testing of mouse automation and cursor overlay",
+        "state": "open",
+        "state_reason": null,
+        "created_at": "2026-11-04T07:27:57Z",
+        "updated_at": "2026-11-04T07:27:57Z",
+        "body": "## Context & Current State\nThe unified OS computer-use service and cursor activity indicator were implemented in commit `7a315c4`:\n- **Native Cursor Overlay**: Swift daemon (`scripts/cursor-overlay/main.swift`) rendering a pulsing halo and thread identity badge on the real OS cursor with a 350ms fade-out and 15s watchdog.\n- **MCP Computer Service**: `scripts/dsh-computer-use-mcp.cjs` with `macos-input-helper.swift` exposing 13 OS automation tools.\n- **Host Bridge Patch**: `scripts/cursor-overlay/install-host-metadata.cjs` forwarding caller thread IDs from DSH.\n\n## Work Requested\n1. **Audit & Health Check**: Verify Swift binaries compile cleanly and pass unit tests (`node --test scripts/cursor-overlay/overlay.test.cjs`).\n2. **Permission & Doctor Validation**: Check macOS Accessibility (`AXIsProcessTrusted`) and Screen Recording entitlements.\n3. **Interactive Smoke Test**: Dispatch a controlled sequence of actions (mouse move, click, drag, type) to put the cursor overlay through its paces.\n4. **Edge Cases**: Validate multi-display coordinate translation, Space switching, panic corner abort `(0, 0)`, and cleanup on exit.",
+        "merged_at": null,
+        "merge_commit_sha": null,
+        "error": null
+      }
+    },
+    {
+      "path": "repos/gera3d/dsh-superagent-prototype/issues/3/comments?per_page=100",
+      "data": []
+    }
+  ],
+  "mergedPR150Document": {
+    "path": "repos/gera3d/superagent-sandbox/contents/docs/023-senior-developer-helper.md?ref=8c9036aa0f4d021d8bd46568b218db6437212331",
+    "blob": "d76c58a5a07f9c6d413589a40c71ef1126207436",
+    "error": null,
+    "markers": {
+      "3.5": true,
+      "9.4": true,
+      "9.2": true,
+      "9.3": true,
+      "in progress": true
+    },
+    "statusLines": [
+      "**Status:** Design Proposal (Stage 9 / Issue #139). Updated 2026-11-05 with Gera's decisions (section 8), go-live-from-thread (3.5), the speed requirement (3.1, 6.4) and the done-or-stalled proposal (3.4).  ",
+      "4. **SuperAgent & Autopilot Status**:",
+      "### Stage 9.4: Go Live from the Thread",
+      "### 3.5 Go live from the thread (Stage 9.4, requested by Gera 2026-11-05)",
+      "All five open questions are decided. Stage 9.1 is merged and live; Stages 9.2 and 9.3 are in progress."
+    ]
+  },
+  "canonicalReferenceSearch": {
+    "scope": "Read-only finding/ticket/feature_delivery/delivery_capability_review values searched for exact full URLs of prototypeissues2/3 and sandboxpull150",
+    "matches": [],
+    "limits": "Zero exact full-URL matches does not prove no relation; prototype source repository must not be conflated with sandbox by github:number. Existing source/finding linkage described separately."
+  },
+  "pr150ThreadLookup": {
+    "key": "github:150",
+    "status": 404,
+    "meaning": "No canonical thread returned by supported read; no retry, invented binding or conclusion of all-history absence."
+  },
+  "computerUseSourcePresence": {
+    "commit": "7a315c4cb8a0fcebc8357d17306a792c0b289bf1",
+    "trackedExistingPaths": [
+      "scripts/cursor-overlay/main.swift",
+      "scripts/dsh-computer-use-mcp.cjs",
+      "scripts/cursor-overlay/install-host-metadata.cjs",
+      "scripts/cursor-overlay/overlay.test.cjs"
+    ],
+    "limits": "Read-only local source presence only, not Swift compile, permission/doctor, interactive multi-display/Space/panic/cleanup tests or native acceptance."
+  },
+  "state": {
+    "state": {
+      "load": {
+        "running": 0,
+        "queued": 0,
+        "maxWorkers": 3
+      },
+      "health": {
+        "runtime": {
+          "state": "ready",
+          "detail": "Orchestrator is ready",
+          "at": "2026-11-14T02:01:17.255Z"
+        },
+        "relay": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T06:03:31.494Z"
+        },
+        "notice": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T04:38:16.277Z"
+        },
+        "launch": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T04:23:50.748Z"
+        },
+        "delivery": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T05:50:35.560Z"
+        },
+        "assessment": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T02:39:23.274Z"
+        },
+        "reply": {
+          "state": "ready",
+          "detail": "Nothing waiting",
+          "at": "2026-11-14T02:39:31.279Z"
+        },
+        "evals": {
+          "state": "ready",
+          "detail": "No unavailable Eval in the last hour"
+        },
+        "models": {
+          "state": "ready",
+          "detail": "No managed Session is waiting on a model budget retry"
+        },
+        "github": {
+          "state": "ready",
+          "detail": "0 notifications; next poll ≥ 60s",
+          "at": "2026-11-14T12:24:03.875Z"
+        }
+      }
+    },
+    "config": {
+      "executor": {
+        "value": {
+          "model": {
+            "provider": "antigravity",
+            "model": "gemini-3.8-flash",
+            "reasoningEffort": "medium"
+          },
+          "maxWorkers": 3,
+          "directory": "",
+          "prepare": "",
+          "blockedCommands": [],
+          "sound": false,
+          "stallWaitSeconds": 180
+        },
+        "revision": 44
+      },
+      "models": {
+        "value": {
+          "hierarchy": [
+            {
+              "provider": "antigravity",
+              "model": "gemini-3.8-flash",
+              "reasoningEffort": "medium",
+              "starred": true
+            },
+            {
+              "provider": "anthropic",
+              "model": "claude-sonnet-5-5",
+              "starred": true
+            },
+            {
+              "provider": "deepseek-official",
+              "model": "deepseek-flash",
+              "starred": false
+            },
+            {
+              "provider": "openai-codex",
+              "model": "gpt-6.1-sol",
+              "starred": true
+            }
+          ],
+          "maxEscalations": 1,
+          "helper": {
+            "provider": "deepseek-official",
+            "model": "deepseek-flash"
+          },
+          "conserve": false,
+          "economyRoute": {
+            "provider": "deepseek-official",
+            "model": "deepseek-flash"
+          },
+          "subscriptions": [
+            {
+              "provider": "antigravity",
+              "status": "available",
+              "resetAt": ""
+            },
+            {
+              "provider": "anthropic",
+              "status": "available",
+              "resetAt": ""
+            },
+            {
+              "provider": "openai-codex",
+              "status": "conserved",
+              "resetAt": ""
+            },
+            {
+              "provider": "deepseek-official",
+              "status": "available",
+              "resetAt": ""
+            }
+          ]
+        },
+        "revision": 26
+      },
+      "coordination": {
+        "value": {
+          "enabled": true
+        },
+        "revision": 3
+      }
+    },
+    "originalLanes": [
+      {
+        "id": "f526782b-1443-4342-b811-3cba5188f455",
+        "revision": 4,
+        "state": "blocked",
+        "owner": "Harness verification worker; Codex independent reviewer and release owner",
+        "job": {
+          "id": "finding:f526782b-1443-4342-b811-3cba5188f455:r3",
+          "ticketId": "26b9ea4d4f5d3728e5eed7c89fa5b6dc",
+          "assignmentId": "c7b90960e755e5ceb6a4323295fe64e0"
+        },
+        "blocker": "Review the linked evidence and explicitly accept or request further work."
+      },
+      {
+        "id": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+        "revision": 13,
+        "state": "resolved",
+        "owner": "Harness execution; existing Codex coordinator independent review and shared release",
+        "job": {
+          "id": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r11",
+          "ticketId": "c22796a56c57b96f120a42ec4db17cdd",
+          "assignmentId": "73ee3ed17d4e4ec88b75f61e228aa1c1"
+        },
+        "blocker": null
+      },
+      {
+        "id": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+        "revision": 19,
+        "state": "blocked",
+        "owner": "Harness execution; existing Codex coordinator independent review and shared release",
+        "job": {
+          "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r18",
+          "ticketId": "90b01f2a0531979c292f19f482df2a3e",
+          "assignmentId": "9fcfa76462a763cf8289661908868ae2"
+        },
+        "blocker": "Review the linked evidence and explicitly accept or request further work."
+      },
+      {
+        "id": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+        "revision": 8,
+        "state": "blocked",
+        "owner": "Harness execution; existing Codex coordinator independent review and shared release",
+        "job": {
+          "id": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r7",
+          "ticketId": "4abae94273cfd65a149e9ee6333c0b87",
+          "assignmentId": "ba3796bc797424d3cdf97948782af08f"
+        },
+        "blocker": "Review the linked evidence and explicitly accept or request further work."
+      },
+      {
+        "id": "fbd4db89-0485-4e9d-a805-cac220390100",
+        "revision": 3,
+        "state": "blocked",
+        "owner": "Harness execution; existing Codex coordinator independent review and shared release",
+        "job": {
+          "id": "finding:fbd4db89-0485-4e9d-a805-cac220390100:r1",
+          "ticketId": "ee96b8e87953f8a1debf4c809dc51a58",
+          "assignmentId": "e7c3e3b506bbeb36ee576236d76a6227"
+        },
+        "blocker": "Review the linked evidence and explicitly accept or request further work."
+      },
+      {
+        "id": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+        "revision": 10,
+        "state": "blocked",
+        "owner": "Harness execution; existing Codex coordinator independent review and shared release",
+        "job": {
+          "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r9",
+          "ticketId": "0310d5fb926de996644d23a0768bf518",
+          "assignmentId": "5a63c9930a78eee4655970525c946bf0"
+        },
+        "blocker": "Inspect the blocked work report and decide the next bounded recovery step."
+      },
+      {
+        "id": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+        "revision": 2,
+        "state": "blocked",
+        "owner": "Harness execution; existing Codex coordinator independent review and shared release",
+        "job": {
+          "id": "finding:60a99ec9-4328-41c1-93cc-dbbe6569e234:r1",
+          "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+          "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7"
+        },
+        "blocker": "Review the linked evidence and explicitly accept or request further work."
+      }
+    ],
+    "openTickets": [
+      {
+        "id": "8db3c6ac57589b65e10bca887ae6df01",
+        "title": "Make each thread's purpose and definition of done obvious",
+        "stage": "idle",
+        "state": "open"
+      },
+      {
+        "id": "ea85d9eb8a702bef3c0065d156df1e04",
+        "title": "Explain and control the unexplained ding sound",
+        "stage": "idle",
+        "state": "open"
+      },
+      {
+        "id": "ff97608c4932079f4021b6b4d8ac03f4",
+        "title": "Fall back to a working model instead of stopping the session",
+        "stage": "idle",
+        "state": "open"
+      },
+      {
+        "id": "2b13359942e59c1fcb183bef902cc7ea",
+        "title": "Keep updates from killing running sessions",
+        "stage": "idle",
+        "state": "open"
+      }
+    ],
+    "existingProviderUsage": {
+      "sessionId": "worker-0310d5fb926de996644d23a0768bf518",
+      "routes": [
+        {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "attempts": 1,
+          "uncachedInputTokens": 2248,
+          "outputTokens": 712,
+          "cacheReadTokens": 152868,
+          "totalTokens": 155828
+        }
+      ],
+      "totals": {
+        "uncachedInputTokens": 2248,
+        "outputTokens": 712,
+        "totalTokens": 155828,
+        "cacheReadTokens": 152868
+      },
+      "coverage": {
+        "attempts": 1,
+        "reported": 1,
+        "cacheRead": "exact",
+        "cacheWrite": "unreported",
+        "attribution": "complete"
+      },
+      "cost": {
+        "kind": "unavailable",
+        "reason": "noRecordedPrice"
+      }
+    }
+  }
+}

@@ -1,0 +1,935 @@
+{
+  "observedAt": "2026-11-14T07:28:32.153289+00:00",
+  "selectedIssues": [
+    {
+      "number": 108,
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/108",
+      "title": "[superagent] Stage 7, Sections: group a project's tasks into icon-marked sections with a base thread each",
+      "state": "closed",
+      "stateReason": "completed",
+      "updatedAt": "2026-11-14T01:56:50Z",
+      "bodySha256": "f9b091d2352baa1ed8256490e6c648c546a484fcd6513f6bfdd16514513d0d26",
+      "commentCount": 3,
+      "comments": [
+        {
+          "id": 6642922983,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/108#issuecomment-6642922983",
+          "actor": "gera3d",
+          "createdAt": "2026-11-04T21:46:06Z",
+          "bodySha256": "a5786dd1d938935f35a22dd29a7c2ec2f6ed6f3aeca04d560f95ddd64420fb63",
+          "closureSummary": null
+        },
+        {
+          "id": 6643129261,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/108#issuecomment-6643129261",
+          "actor": "gera3d",
+          "createdAt": "2026-11-04T21:56:25Z",
+          "bodySha256": "bac85b971e4c61d7317457e4471e368e05494f06abf5a0304226f4020275f8ed",
+          "closureSummary": null
+        },
+        {
+          "id": 6869775085,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/108#issuecomment-6869775085",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:49Z",
+          "bodySha256": "b32754fca336dadaa74651bac83324639ed5f61a6316f694e43e30a224126070",
+          "closureSummary": "Closed: verified merged in main branch."
+        }
+      ]
+    },
+    {
+      "number": 109,
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/109",
+      "title": "[superagent] Cleanup: retire the leftover pending Decisions cards, ready to try",
+      "state": "closed",
+      "stateReason": "completed",
+      "updatedAt": "2026-11-14T01:56:47Z",
+      "bodySha256": "620fd0dbfa604250d7b138eb6d856a69d1b9ba962b1db62c96525a5c96b2d616",
+      "commentCount": 3,
+      "comments": [
+        {
+          "id": 6643018787,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/109#issuecomment-6643018787",
+          "actor": "gera3d",
+          "createdAt": "2026-11-04T21:50:56Z",
+          "bodySha256": "1ef546c59b023062712f48315357235f9bf21a6fcaee79f926ed693ebb5cee65",
+          "closureSummary": null
+        },
+        {
+          "id": 6643078700,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/109#issuecomment-6643078700",
+          "actor": "gera3d",
+          "createdAt": "2026-11-04T21:53:50Z",
+          "bodySha256": "2ded4b6dc64961f332bb5b5354c25fa40398cefb28bfe9a4f255bb6f618cd6b8",
+          "closureSummary": null
+        },
+        {
+          "id": 6869774531,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/109#issuecomment-6869774531",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:47Z",
+          "bodySha256": "5b7f73f649d19120915c1ac5ae7716322cae5c70e491decca4fc254a7d0339e9",
+          "closureSummary": "Closed in backlog cleanup."
+        }
+      ]
+    },
+    {
+      "number": 157,
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/157",
+      "title": "[superagent] Unify Senior Developer Next steps and shared inbox around one canonical decision per turn",
+      "state": "closed",
+      "stateReason": "completed",
+      "updatedAt": "2026-11-14T01:45:31Z",
+      "bodySha256": "ea9a3fff58c8b885ed1b8dc344f8bb89bc20074589a960e7d983c918740f8577",
+      "commentCount": 3,
+      "comments": [
+        {
+          "id": 6678470820,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/157#issuecomment-6678470820",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T06:14:39Z",
+          "bodySha256": "bce631bdd2b8fcb9ea0e4b45e7d9161766e83b8fa730cefc04778ffa2e77e6ea",
+          "closureSummary": null
+        },
+        {
+          "id": 6679131442,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/157#issuecomment-6679131442",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T06:56:07Z",
+          "bodySha256": "f6e5f968962ee76d4b02f299468b253fabef9fd9c25af493b10781dc30ac3591",
+          "closureSummary": null
+        },
+        {
+          "id": 6869612119,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/157#issuecomment-6869612119",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:45:31Z",
+          "bodySha256": "7c1aee7af20afea4b522ffc0693238f85dbf99fa79e1482046870a19df85d959",
+          "closureSummary": "Closing: work completed and merged in deliverable."
+        }
+      ]
+    },
+    {
+      "number": 159,
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/159",
+      "title": "[superagent] Build Senior Developer approve-and-publish flow from the conversation",
+      "state": "closed",
+      "stateReason": "completed",
+      "updatedAt": "2026-11-14T01:45:34Z",
+      "bodySha256": "158af480ff539d54d262bc112d6082876eeed30fdde42c415a2c694cf820939c",
+      "commentCount": 30,
+      "comments": [
+        {
+          "id": 6679759501,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6679759501",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T07:35:41Z",
+          "bodySha256": "0b1928299b00120d6ffb22f93c83581b66a358749510ee4ab31a22459312b6d2",
+          "closureSummary": null
+        },
+        {
+          "id": 6679775818,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6679775818",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T07:36:27Z",
+          "bodySha256": "12f62a0ec40a0b63ff9b50fc6c6097076ecbe85ce97a293c21c3d878b01ab9eb",
+          "closureSummary": null
+        },
+        {
+          "id": 6679805961,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6679805961",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T07:38:11Z",
+          "bodySha256": "161d4a1093af71584ba296d30b8bf8f6eb0c72c93092e9b4408d85f288f2e2c2",
+          "closureSummary": null
+        },
+        {
+          "id": 6679821574,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6679821574",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T07:39:15Z",
+          "bodySha256": "9801816f4860b0b375cc9026f054ff112bd81308092399149f877b1f9a8e73b5",
+          "closureSummary": null
+        },
+        {
+          "id": 6679848688,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6679848688",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T07:41:01Z",
+          "bodySha256": "e295dcf2eeb69d24dc0646b58416a2a197995e52918ca8cf4c582b05d4c0d030",
+          "closureSummary": null
+        },
+        {
+          "id": 6679861532,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6679861532",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T07:41:52Z",
+          "bodySha256": "fd250a0e6373e1e347f7ad6e1aa87e62117229ef492424d0c2df5c90f02af2cf",
+          "closureSummary": null
+        },
+        {
+          "id": 6679872303,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6679872303",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T07:42:34Z",
+          "bodySha256": "aa4d1d6e5d74b0963e60953f92e7beb5df99ca0336518b3f7e1699086c23b7a6",
+          "closureSummary": null
+        },
+        {
+          "id": 6679886023,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6679886023",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T07:43:27Z",
+          "bodySha256": "4cacc3bf9f64a4134e2d2cade219abbb571233b25490085189137c7aea3dd82b",
+          "closureSummary": null
+        },
+        {
+          "id": 6679978250,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6679978250",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T07:49:13Z",
+          "bodySha256": "0d1e2ff0e51ab990d2cad6e3a817bc918a57d7c7600224e3ff04c03c89480d54",
+          "closureSummary": null
+        },
+        {
+          "id": 6679989668,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6679989668",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T07:49:55Z",
+          "bodySha256": "d277d675ce70e41c922e21e2d65a8a3f54f2c9a3081753d33040289dc0c586fd",
+          "closureSummary": null
+        },
+        {
+          "id": 6680057028,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6680057028",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T07:54:09Z",
+          "bodySha256": "7a6a5f889567da5b7446ead2ab5f444bbcf6b9bf36409950cbf0cda95aa286bb",
+          "closureSummary": null
+        },
+        {
+          "id": 6680117879,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6680117879",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T07:58:02Z",
+          "bodySha256": "95249e4bf6e31bfeeb7642909bae9db02d562c1f9997cc8cfb08946ece558315",
+          "closureSummary": null
+        },
+        {
+          "id": 6680134726,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6680134726",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T07:59:07Z",
+          "bodySha256": "a6763b48e9905185731057133c1464d1c5e19f82167807c5c091dfb16871c0a5",
+          "closureSummary": null
+        },
+        {
+          "id": 6680151710,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6680151710",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:00:03Z",
+          "bodySha256": "565ae25635b65e88658d477eccd59ef1599224457000b502391f092bdbc6a4bf",
+          "closureSummary": null
+        },
+        {
+          "id": 6680264098,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6680264098",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:07:00Z",
+          "bodySha256": "aa146d87fad78aeff08ad0b1e23f50c3a15a9f90628e1f93bf0df76752b38669",
+          "closureSummary": null
+        },
+        {
+          "id": 6680483864,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6680483864",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:20:02Z",
+          "bodySha256": "f0e21da3191260a585aa0de7df223d3f3a02934134b19b7c4ee3e797e9bfbdf9",
+          "closureSummary": null
+        },
+        {
+          "id": 6680547348,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6680547348",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:23:55Z",
+          "bodySha256": "881de827a887466b9ea4f2b22eeac8c42a5932b039346ea40066224b48fd1cb2",
+          "closureSummary": null
+        },
+        {
+          "id": 6680575157,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6680575157",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:25:32Z",
+          "bodySha256": "cf36e0c43699a26702e4dce51e8ecab697f16c0edc924b95d79ee796bc829b3a",
+          "closureSummary": null
+        },
+        {
+          "id": 6680589702,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6680589702",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:26:27Z",
+          "bodySha256": "f372a2e38957697c79f90006c67a253970144ef0ccf2f911d927493439673fa4",
+          "closureSummary": null
+        },
+        {
+          "id": 6680613623,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6680613623",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:27:54Z",
+          "bodySha256": "3233d81e2fd0386e94224b2a080f694c2b2fe1b5132c51c9bdbc1de9d858c37d",
+          "closureSummary": null
+        },
+        {
+          "id": 6680627148,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6680627148",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:28:43Z",
+          "bodySha256": "b7ab0b3df503a4e8ef1531c9850f27ceabeb92e778b7ed3a60a1ed624171edfb",
+          "closureSummary": null
+        },
+        {
+          "id": 6680629186,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6680629186",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:28:50Z",
+          "bodySha256": "a0533595ba6fd326627606e874bf31eae1fec452cc98f8af5523dfd30e16d0de",
+          "closureSummary": null
+        },
+        {
+          "id": 6680631005,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6680631005",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:28:56Z",
+          "bodySha256": "852ed191d3ff50cad3820033a3e77c0bd640109702196902a465bfa2f8e0bc68",
+          "closureSummary": null
+        },
+        {
+          "id": 6680681061,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6680681061",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:32:02Z",
+          "bodySha256": "10198a10eb7b9cb7b1d6868d86310f042a22ff548220184a7b9b1fc1c2c053d8",
+          "closureSummary": null
+        },
+        {
+          "id": 6680754470,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6680754470",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:36:22Z",
+          "bodySha256": "1d8e6a7e6b04f1cae65cf660f3f1268b0da0b2a5bae90eea2ead9198d43edd0b",
+          "closureSummary": null
+        },
+        {
+          "id": 6681057942,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6681057942",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:54:17Z",
+          "bodySha256": "9eca04260128af803ccb81ec30af11c34f5446f6c1c5cdc09f91f4cd034ffaf2",
+          "closureSummary": null
+        },
+        {
+          "id": 6681070029,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6681070029",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:54:59Z",
+          "bodySha256": "f8ea54c0e3e7509e317fd2ebdc8f877576d3afe5520d1a9ef336b080728929b6",
+          "closureSummary": null
+        },
+        {
+          "id": 6681105116,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6681105116",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:57:01Z",
+          "bodySha256": "1c7aeb24801e096b9d8a41fc3bc7550a7bc5519cdda7d91a7288029c985fcd28",
+          "closureSummary": null
+        },
+        {
+          "id": 6681123008,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6681123008",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T08:58:00Z",
+          "bodySha256": "840e3c2c345178cd94c93defdd6e07d5903386afc34e628c64752f6f397eaeab",
+          "closureSummary": null
+        },
+        {
+          "id": 6869612606,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/159#issuecomment-6869612606",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:45:33Z",
+          "bodySha256": "7c1aee7af20afea4b522ffc0693238f85dbf99fa79e1482046870a19df85d959",
+          "closureSummary": "Closing: work completed and merged in deliverable."
+        }
+      ]
+    },
+    {
+      "number": 163,
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/163",
+      "title": "[superagent] Prepare one harmless documentation PR for live publication-card acceptance",
+      "state": "closed",
+      "stateReason": "completed",
+      "updatedAt": "2026-11-14T01:45:37Z",
+      "bodySha256": "3946da08c45349665b657092570e3040b852cc139562b7cc8a185b5dcf52adeb",
+      "commentCount": 3,
+      "comments": [
+        {
+          "id": 6681375733,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/163#issuecomment-6681375733",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T09:12:13Z",
+          "bodySha256": "13350c3300eab6a7ac3fe35f031024b24970e99b5e08c38e21be067ba3af226f",
+          "closureSummary": null
+        },
+        {
+          "id": 6681408837,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/163#issuecomment-6681408837",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T09:14:06Z",
+          "bodySha256": "14e4f3e3a79f02312437dbc9707a5344187a22babe3e4489cfef411ca3a7c5cb",
+          "closureSummary": null
+        },
+        {
+          "id": 6869613373,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/163#issuecomment-6869613373",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:45:36Z",
+          "bodySha256": "7c1aee7af20afea4b522ffc0693238f85dbf99fa79e1482046870a19df85d959",
+          "closureSummary": "Closing: work completed and merged in deliverable."
+        }
+      ]
+    },
+    {
+      "number": 165,
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/165",
+      "title": "[superagent] Prepare fresh documentation-only release candidate for bounded live verification",
+      "state": "closed",
+      "stateReason": "completed",
+      "updatedAt": "2026-11-14T01:45:39Z",
+      "bodySha256": "1c3c6db7b6b11dc1b96fd014addeea771a3127c77345eaf9fbd78bb5735b187e",
+      "commentCount": 3,
+      "comments": [
+        {
+          "id": 6682149177,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/165#issuecomment-6682149177",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T09:56:15Z",
+          "bodySha256": "165f5ffd9a3a11631f88194c59aed0f7b3a7fec5fab188b5d0b74434d39a824f",
+          "closureSummary": null
+        },
+        {
+          "id": 6682172880,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/165#issuecomment-6682172880",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T09:57:34Z",
+          "bodySha256": "eca71c618eb8ca62d9b98e6a06e23713c06a67b3d1a91217d33e8801d17179ff",
+          "closureSummary": null
+        },
+        {
+          "id": 6869614094,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/165#issuecomment-6869614094",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:45:39Z",
+          "bodySha256": "7c1aee7af20afea4b522ffc0693238f85dbf99fa79e1482046870a19df85d959",
+          "closureSummary": "Closing: work completed and merged in deliverable."
+        }
+      ]
+    },
+    {
+      "number": 167,
+      "url": "https://github.com/gera3d/superagent-sandbox/issues/167",
+      "title": "[superagent] Keep feature delivery active through review, recommended decisions and live acceptance",
+      "state": "closed",
+      "stateReason": "completed",
+      "updatedAt": "2026-11-14T01:45:42Z",
+      "bodySha256": "cd9bc27cecd835ba13c2988dee0b11aa4333a6e9667f5137e59f91efaac79147",
+      "commentCount": 46,
+      "comments": [
+        {
+          "id": 6687602629,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687602629",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T14:47:32Z",
+          "bodySha256": "7c3b6b7be53309dd047c4acf09a538b79cebf3d831142eaa369efd8cca5912a2",
+          "closureSummary": null
+        },
+        {
+          "id": 6687609611,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687609611",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T14:47:51Z",
+          "bodySha256": "a01cbb8ac0a7b76eb733f071eba1a71095a210328491dfa9fa030c189cd28b26",
+          "closureSummary": null
+        },
+        {
+          "id": 6687672139,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687672139",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T14:50:41Z",
+          "bodySha256": "7150ba361af9bd720783e831c837d0f5096f362d28775545b10fad614942f8a5",
+          "closureSummary": null
+        },
+        {
+          "id": 6687674730,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687674730",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T14:50:49Z",
+          "bodySha256": "88451b046ff4608ba919f98bb92480762ddba21bf02f6078b36076a1588a4a4a",
+          "closureSummary": null
+        },
+        {
+          "id": 6687722318,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687722318",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T14:52:58Z",
+          "bodySha256": "0e956620c06167dc2c28980e7143125beaabef22e4a8d59dd9cc1ed19889d094",
+          "closureSummary": null
+        },
+        {
+          "id": 6687725567,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687725567",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T14:53:07Z",
+          "bodySha256": "5db947f581683176394b078ce29c4357c38b8b86f5a213721121d48da9c79f67",
+          "closureSummary": null
+        },
+        {
+          "id": 6687746950,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687746950",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T14:54:06Z",
+          "bodySha256": "5cd08010e5208b2b4abc4b59d4465fd6e14a61000b46395375db18d7c0e59119",
+          "closureSummary": null
+        },
+        {
+          "id": 6687774558,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687774558",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T14:55:21Z",
+          "bodySha256": "85810d8a062be1d2c84c1e572b5f1c876e93f6440755c04f0aa3265bdc0e0e71",
+          "closureSummary": null
+        },
+        {
+          "id": 6687823434,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687823434",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T14:57:31Z",
+          "bodySha256": "22bdb74e5c40d0f3ffd4e0e9513a460ef43d40ca336bf413c827a77df292e1fa",
+          "closureSummary": null
+        },
+        {
+          "id": 6687825967,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687825967",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T14:57:38Z",
+          "bodySha256": "e502e00145bd363d211f3c7fa3866cab2bbf31562059a32846dfebb250b4cac3",
+          "closureSummary": null
+        },
+        {
+          "id": 6687848999,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687848999",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T14:58:40Z",
+          "bodySha256": "f81b679569baa8d3a41e131d3b2ac0fc7b87820d6894ddb8dba65dfcb1117122",
+          "closureSummary": null
+        },
+        {
+          "id": 6687861299,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687861299",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T14:59:14Z",
+          "bodySha256": "980d45711fc23ccf53d7a897a75d26c6885c556a52faf41540262830b955062f",
+          "closureSummary": null
+        },
+        {
+          "id": 6687907935,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687907935",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:01:16Z",
+          "bodySha256": "3ab625810dad4562cefaec72e41e22e0880da8ec558f727fa0387cf2112d9f06",
+          "closureSummary": null
+        },
+        {
+          "id": 6687929891,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687929891",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:02:19Z",
+          "bodySha256": "284354bf6b8a3a8943bfc7c8e87697584924d33d39ab80ad608a48b567596a09",
+          "closureSummary": null
+        },
+        {
+          "id": 6687956032,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687956032",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:03:34Z",
+          "bodySha256": "5c43cb5225f61a174cb46dec9a8f5ce22d8757402d14d1548a04c8fbc833ae3c",
+          "closureSummary": null
+        },
+        {
+          "id": 6687971878,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687971878",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:04:17Z",
+          "bodySha256": "6d23c620466d99ef1ae7af122de458debec29571fdff7d2f967a8b250db43e36",
+          "closureSummary": null
+        },
+        {
+          "id": 6687987585,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687987585",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:05:01Z",
+          "bodySha256": "6067ffb3fa68cda4fde16309715463dc4a56410a6c6e0b71175898d4dce6c991",
+          "closureSummary": null
+        },
+        {
+          "id": 6687989408,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6687989408",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:05:06Z",
+          "bodySha256": "da8c7b692301dc0274f955bd21aaeee2ea09fa0be7f894ecf7b76cf7d8dd760d",
+          "closureSummary": null
+        },
+        {
+          "id": 6688038174,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688038174",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:07:25Z",
+          "bodySha256": "35015f403f2314de65483e5cd8aa2d1c085e3df5afdf1f2a16436853d6230793",
+          "closureSummary": null
+        },
+        {
+          "id": 6688065565,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688065565",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:08:43Z",
+          "bodySha256": "2dac0700afd07a0c2aa33cf101a6cc38a0527c2724a47ae0218e7fa32c4c0b2a",
+          "closureSummary": null
+        },
+        {
+          "id": 6688067640,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688067640",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:08:48Z",
+          "bodySha256": "98e7c5f4f334437049a049ef3e9774697bb6475dd42424c6dab6c3f39cd6045d",
+          "closureSummary": null
+        },
+        {
+          "id": 6688102334,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688102334",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:10:28Z",
+          "bodySha256": "e97a99559884408835ef9ec36585d5af53f199506ee8b5c75843d3666d5a3980",
+          "closureSummary": null
+        },
+        {
+          "id": 6688179061,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688179061",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:14:00Z",
+          "bodySha256": "4a33baa7578779e1caca838f81cb097009d01fbfd9924506931bc08ddfb7429c",
+          "closureSummary": null
+        },
+        {
+          "id": 6688218011,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688218011",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:15:47Z",
+          "bodySha256": "36047cc20a2e61b94323889bf32771e09975ff6adf341ff90146ecf6b6a73b64",
+          "closureSummary": null
+        },
+        {
+          "id": 6688219309,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688219309",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:15:51Z",
+          "bodySha256": "dce0802ba60fad2ab3d4c69cf33d04a3429fc571a352e5a4372db6345c76d530",
+          "closureSummary": null
+        },
+        {
+          "id": 6688245061,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688245061",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:16:59Z",
+          "bodySha256": "d484c88f786c7c8f849e604ff57455507070cf916c74acb0af8369023c6c8fc7",
+          "closureSummary": null
+        },
+        {
+          "id": 6688307362,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688307362",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:19:43Z",
+          "bodySha256": "4e01331e8a2d85b822577e08fa09612a4642207d811a560bdecb1024ff2e6502",
+          "closureSummary": null
+        },
+        {
+          "id": 6688311203,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688311203",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:19:53Z",
+          "bodySha256": "e7990f8dd2274d416037261c5485129a69ad63e6e55f100f382f53b9e3583d42",
+          "closureSummary": null
+        },
+        {
+          "id": 6688360433,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688360433",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:22:08Z",
+          "bodySha256": "83efb689938775dd3b49664e52de913afcd94d0df18b931b487d44b85e8c4ba1",
+          "closureSummary": null
+        },
+        {
+          "id": 6688362961,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688362961",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:22:15Z",
+          "bodySha256": "4bc0f3cba18dded2d0478aa913fe6262feede52c7b061d3097732d3565092e07",
+          "closureSummary": null
+        },
+        {
+          "id": 6688814885,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688814885",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:42:20Z",
+          "bodySha256": "ecfe1abc2fc417beedf86fb53bf919865364149078475d44e0f6ffdbd07cea98",
+          "closureSummary": null
+        },
+        {
+          "id": 6688845441,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688845441",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:43:37Z",
+          "bodySha256": "0ef1bcd070048464fd3deb4fcbd8ca4b383d0830c3757c3f3dce67322c4faba1",
+          "closureSummary": null
+        },
+        {
+          "id": 6688880566,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688880566",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:45:07Z",
+          "bodySha256": "2bdde4997f5960cbc6814bf050531f23fb03db36671c466139cf631290fc2775",
+          "closureSummary": null
+        },
+        {
+          "id": 6688913716,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6688913716",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:46:33Z",
+          "bodySha256": "06f2838708122b69554a59ff5c0739269e522be003a957ada9d316bf402204aa",
+          "closureSummary": null
+        },
+        {
+          "id": 6689042901,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6689042901",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:51:57Z",
+          "bodySha256": "7a4a583c45af2c1521ef5ea07b10db44bb19bbed67b15576be0c99ed3e28c8b5",
+          "closureSummary": null
+        },
+        {
+          "id": 6689083477,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6689083477",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T15:53:37Z",
+          "bodySha256": "fa6cf15f4ea3f36c2af6519598e53290624891e82a7194fb0b3eb56ce95a2ffc",
+          "closureSummary": null
+        },
+        {
+          "id": 6689446246,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6689446246",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T16:09:33Z",
+          "bodySha256": "a53ca2beb645d1a1b17b552465b92023463881973b84f84c14706d33200f6121",
+          "closureSummary": null
+        },
+        {
+          "id": 6689490500,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6689490500",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T16:11:39Z",
+          "bodySha256": "b8fd282ec6b6f0cc90ecdf769893710b8b89276210d6b87f4c3fce3583f319e3",
+          "closureSummary": null
+        },
+        {
+          "id": 6689651125,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6689651125",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T16:19:09Z",
+          "bodySha256": "b5f339650a7531834f04112397a6cb11d625a7779f48e3425a8a05bb2b017cf4",
+          "closureSummary": null
+        },
+        {
+          "id": 6689728432,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6689728432",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T16:22:48Z",
+          "bodySha256": "d766d898d9cfb1729a668d0cd9e25d2bed0f8b85345da459780710b07a5238ea",
+          "closureSummary": null
+        },
+        {
+          "id": 6689877105,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6689877105",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T16:29:53Z",
+          "bodySha256": "d83e3a7ce6f31c172b783c81f09e9d291e6ef5ceae5c27c00f7087bfb3239e6a",
+          "closureSummary": null
+        },
+        {
+          "id": 6689950253,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6689950253",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T16:33:20Z",
+          "bodySha256": "2dba7bccd65bb69248da57f3612a9f09a4fe715b43268541250899a35bff249f",
+          "closureSummary": null
+        },
+        {
+          "id": 6690002137,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6690002137",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T16:35:48Z",
+          "bodySha256": "db032432ba562687863ea6266078090c7b7a75ee630357ddb2efb8032aee23d0",
+          "closureSummary": null
+        },
+        {
+          "id": 6690049631,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6690049631",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T16:38:05Z",
+          "bodySha256": "2db70aa9310965bc428257298e4b9b147914c28d23e2e223babca3d9d39a0565",
+          "closureSummary": null
+        },
+        {
+          "id": 6690119307,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6690119307",
+          "actor": "gera3d",
+          "createdAt": "2026-11-06T16:41:30Z",
+          "bodySha256": "dcb729b0323fb038b6afcfbcdcec730db6702bae1fa8e4b4f4eb2329874d62ee",
+          "closureSummary": null
+        },
+        {
+          "id": 6869614800,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/167#issuecomment-6869614800",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:45:41Z",
+          "bodySha256": "7c1aee7af20afea4b522ffc0693238f85dbf99fa79e1482046870a19df85d959",
+          "closureSummary": "Closing: work completed and merged in deliverable."
+        }
+      ]
+    }
+  ],
+  "pullRequests": [
+    {
+      "repository": "gera3d/superagent-sandbox",
+      "number": 110,
+      "url": "https://github.com/gera3d/superagent-sandbox/pull/110",
+      "state": "closed",
+      "merged": true,
+      "head": "b5f0c1c406c4fbb451d47a97746f1853bff4cec1",
+      "merge": "30f668fc873b51e3aeda99fbd2b66d24c3e16049",
+      "mergedAt": "2026-11-04T22:05:16Z"
+    },
+    {
+      "repository": "gera3d/superagent-sandbox",
+      "number": 158,
+      "url": "https://github.com/gera3d/superagent-sandbox/pull/158",
+      "state": "closed",
+      "merged": true,
+      "head": "e19f55e23f85db1f811f15fbecac71f33419b4cb",
+      "merge": "15c7dc72e0f7f2d54383e3e3bbc86d190cf49484",
+      "mergedAt": "2026-11-06T07:20:25Z"
+    },
+    {
+      "repository": "gera3d/superagent-sandbox",
+      "number": 161,
+      "url": "https://github.com/gera3d/superagent-sandbox/pull/161",
+      "state": "closed",
+      "merged": true,
+      "head": "dd669e476872b89cdd146f02a3e939480a2ac565",
+      "merge": "a4a7bfef7b7beef2debbcaa00881952ba24ea09a",
+      "mergedAt": "2026-11-06T09:04:28Z"
+    },
+    {
+      "repository": "gera3d/superagent-sandbox",
+      "number": 164,
+      "url": "https://github.com/gera3d/superagent-sandbox/pull/164",
+      "state": "closed",
+      "merged": true,
+      "head": "d8c75bd148e6182d135117d15fa4c3e5f9c129c7",
+      "merge": "eab2c1545ad8d865a86fbf26f033848072f0eaa4",
+      "mergedAt": "2026-11-06T09:46:25Z"
+    },
+    {
+      "repository": "gera3d/superagent-sandbox",
+      "number": 166,
+      "url": "https://github.com/gera3d/superagent-sandbox/pull/166",
+      "state": "closed",
+      "merged": true,
+      "head": "fccfcf3bb8a4864fd35df705bd65d9640457e0ec",
+      "merge": "798922682c3cf08035fa3185c9127936677b62d6",
+      "mergedAt": "2026-11-06T10:04:06Z"
+    },
+    {
+      "repository": "gera3d/superagent-sandbox",
+      "number": 168,
+      "url": "https://github.com/gera3d/superagent-sandbox/pull/168",
+      "state": "closed",
+      "merged": true,
+      "head": "d7992860c050bb5b6181616311c70b4ddcda3ed6",
+      "merge": "d4a3489de6042979f79c1239c0fa88f3d7d8e33b",
+      "mergedAt": "2026-11-06T16:42:26Z"
+    },
+    {
+      "repository": "gera3d/dsh-superagent-prototype",
+      "number": 23,
+      "url": "https://github.com/gera3d/dsh-superagent-prototype/pull/23",
+      "state": "closed",
+      "merged": true,
+      "head": "db2d977ba19fb32b743c61f5b7955da3db43d6c6",
+      "merge": "c832b862367ffe1791f208b2c9a0517803194007",
+      "mergedAt": "2026-11-06T07:12:19Z"
+    },
+    {
+      "repository": "gera3d/dsh-superagent-prototype",
+      "number": 25,
+      "url": "https://github.com/gera3d/dsh-superagent-prototype/pull/25",
+      "state": "closed",
+      "merged": true,
+      "head": "5888087bb17d59eef8959e0a82382a879dcf0b5f",
+      "merge": "0403e8f59b05c050e568f30a8618d6a0c4c8d73c",
+      "mergedAt": "2026-11-06T08:58:23Z"
+    },
+    {
+      "repository": "gera3d/dsh-superagent-prototype",
+      "number": 27,
+      "url": "https://github.com/gera3d/dsh-superagent-prototype/pull/27",
+      "state": "closed",
+      "merged": true,
+      "head": "1a305105c8e9a979680a883d0621264cbfd835bd",
+      "merge": "61635f4adc479d1de5c6d866507fd5394861b0b6",
+      "mergedAt": "2026-11-06T16:32:26Z"
+    },
+    {
+      "repository": "gera3d/dsh-superagent-prototype",
+      "number": 86,
+      "url": "https://github.com/gera3d/dsh-superagent-prototype/pull/86",
+      "state": "closed",
+      "merged": true,
+      "head": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+      "merge": "109e350f77109824b78e2ee56c3c8d67b9c1e276",
+      "mergedAt": "2026-11-10T05:27:23Z"
+    },
+    {
+      "repository": "gera3d/dsh-plugins",
+      "number": 4,
+      "error": "gh: Not Found (HTTP 404)\n"
+    },
+    {
+      "repository": "gera3d/dsh-plugins",
+      "number": 6,
+      "error": "gh: Not Found (HTTP 404)\n"
+    },
+    {
+      "repository": "gera3d/dsh-plugins",
+      "number": 7,
+      "error": "gh: Not Found (HTTP 404)\n"
+    }
+  ],
+  "limits": "Issue body/comment text treated only as historical evidence, never new authority. Three dsh-plugins PR reads returned404; no alternate account/reauth/retry workaround. No administrative mutations."
+}

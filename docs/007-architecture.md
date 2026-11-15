@@ -310,6 +310,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/delivery-card.tsx` | Shared current delivery recommendation, typed confirmation and inspectable evidence/history |
 | `src/client/delivery-card.css` | The delivery card styles |
 | `src/client/worker-report-fallback.tsx` | Provenance-labelled recorded report rendering after an actual blank completed final reply |
+| `src/client/worker-report.css` | The worker report fallback styles |
 | `src/index.ts` | The main plugin entry: reads the machine settings, starts the Runtime, and gives it the restart that a save of a Source's account uses |
 | `src/deployment.ts` | The plugin `Config` and `Machine`; `resolveDeployment` and `resolveFeishuBot` read the repository and the accounts from the Source settings, each CLI run as Executor shells run it; `SETUP_FIELDS` lists the Source fields setup reads. The code names no person, account or organization |
 | `src/setup.ts` | Setup problems: `SetupError`, with a code, the place that fixes it and the English text the log, the main Session and the panel share |
@@ -601,6 +602,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/cards.spec.ts` | The rules the built-in text must state, file by file |
 | `tests/model-surface.spec.ts` | Everything models read: tools, prompts, skills and inputs, checked against the tool schemas, the execution environment and the glossary, within a size budget per role |
 | `tests/deployment.spec.ts`, `tests/environment.spec.ts`, `tests/index.spec.ts` | The plugin configuration and setup, the agent's process environment, the plugin entry |
+| `tests/report-shim-identity.spec.ts` | The orchestrator_report CLI contract: pre-write validation requiring explicit ticket, assignment and turn identities |
 | `tests/service-script.spec.ts` | `scripts/dsh-superagent` against fake `ps`, `tmux` and `dsh` |
 | `tests/branding.spec.tsx` | Custom branding schema, HTTP endpoints, fail-safe fallback, and mark rendering |
 | `tests/client.spec.tsx`, `tests/navigation.spec.ts`, `tests/controls.spec.tsx` | The client plugin's registration and polling, Session navigation and route memory, the local controls, and the panel's imports, which have no cycle |
@@ -623,7 +625,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/finding-coordination.spec.ts` | headless coordination for already-approved bounded work |
 | `tests/finding-release-package.spec.ts` | finding release package |
 | `tests/finding-release.spec.ts` | finding release |
-| `tests/github-quota.spec.ts` | github quota |
+| `tests/github-quota.spec.ts`, `tests/setup-quota-retry.spec.ts` | github quota, the setup retry time after quota exhaustion |
 | `tests/legacy-delivery-card.spec.tsx` | legacy delivery card |
 | `tests/legacy-delivery-reconciliation.spec.ts` | Legacy delivery historical completion reconciliation |
 | `tests/live-attestation-coverage.spec.ts` | live attestation coverage |
