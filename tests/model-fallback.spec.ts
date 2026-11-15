@@ -519,6 +519,35 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
   })
 
   it('AC11: in-flight routing deadline expiry invokes actual Agent cancellation and suppresses subsequent retry/fallback/tool effects', async () => {
+    // Part A: Qualify deterministic pending fake provider within the managed provider pipeline
+    let pipelineProviderAborted = false
+    let pipelineProviderPending = true
+    const pipelineOutcome = executeWithFallback({
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 2,
+        max_attempts_per_model: 1,
+        total_timeout_ms: 60,
+      }),
+      executeCandidate: async (_model, signal) => {
+        return new Promise<string>((_resolve, reject) => {
+          signal.addEventListener('abort', () => {
+            pipelineProviderAborted = true
+            pipelineProviderPending = false
+            reject(Object.assign(new Error('Fake provider request aborted by deadline expiry signal'), { name: 'AbortError' }))
+          })
+        })
+      },
+    })
+
+    expect(pipelineProviderPending).toBe(true)
+    expect(pipelineProviderAborted).toBe(false)
+    await expect(pipelineOutcome).rejects.toThrow(/Routing deadline exceeded/)
+    expect(pipelineProviderAborted).toBe(true)
+    expect(pipelineProviderPending).toBe(false)
+
+    // Part B: Qualify actual SDK request cancellation using original Agent.cancel at host boundary
     await h.runtime.settings.save('models', {
       hierarchy: [gemini, sonnet],
       maxEscalations: 1,
@@ -554,69 +583,38 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
     )
     const tool = h.tools.get(one.sessionId)!.get('synthetic_effectful_tool')!
 
-    // Setup deterministic pending fake provider request tied to agent cancellation
-    let providerAborted = false
-    let providerPending = true
-    const providerAbortController = new AbortController()
-    providerAbortController.signal.addEventListener('abort', () => {
-      providerAborted = true
-      providerPending = false
-    })
-    const fakeProviderRequest = new Promise((resolve, reject) => {
-      providerAbortController.signal.addEventListener('abort', () => {
-        reject(Object.assign(new Error('Fake provider request aborted by deadline expiry'), { name: 'AbortError' }))
-      })
-    })
-    const providerOutcome = fakeProviderRequest.catch(err => err)
-
-    const realCancel = agent.cancel
-    const cancelSpy = vi.fn((cause: unknown, options?: { keepInbox?: boolean }) => {
-      if (!providerAbortController.signal.aborted) {
-        providerAbortController.abort()
-        providerAborted = true
-        providerPending = false
-      }
-      return realCancel.call(agent, cause, options)
-    })
-    agent.cancel = cancelSpy as never
-
     try {
-      // In-flight fake provider request is currently pending
-      expect(providerPending).toBe(true)
-      expect(providerAborted).toBe(false)
       expect(toolEffectsCount).toBe(0)
 
       // Await natural expiration of the 100ms routing deadline timer armed during normal launch
+      // Original Agent.cancel is invoked directly by executor without any monkeypatching
       await vi.waitFor(() => {
-        expect(cancelSpy).toHaveBeenCalledWith({ kind: 'user' }, { keepInbox: false })
+        expect(agent.cancel).toHaveBeenCalledWith({ kind: 'user' }, { keepInbox: false })
       }, { timeout: 2000 })
 
-      // Invariant 1: In-flight fake provider request observed cancellation and aborted
-      expect(providerAborted).toBe(true)
-      expect(providerPending).toBe(false)
-      const err = await providerOutcome
-      expect(err).toBeInstanceOf(Error)
-      expect((err as Error).message).toMatch(/Fake provider request aborted/)
+      await (agent as unknown as { whenIdle(): Promise<void> }).whenIdle()
+      expect(agent.status).toBe('idle')
 
       await h.runtime.idle()
 
-      // Invariant 2: Ticket marked failed with routing deadline exceeded
+      // Invariant 1: Ticket marked failed with routing deadline exceeded
       const updated = h.runtime.store.tickets.get(one.ticket.id)!
       expect(latestAssignment(updated)?.report?.state).toBe('failed')
       const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
       expect(lastNote?.text).toMatch(/Routing deadline exceeded \(100ms\)/)
 
-      // Invariant 3: Zero late tool effects - completed tool effect counter strictly zero
+      // Invariant 2: Zero late tool effects - completed tool effect counter strictly zero
       const ledger = h.runtime.executor.toolLedger(one.ticket.id)
       expect(ledger.completedCount()).toBe(0)
       expect(toolEffectsCount).toBe(0)
 
       // Late tool invocation attempt with cancelled signal is aborted and rejected
-      await expect(tool.execute({ path: 'test.txt' }, { callId: 'call-late-1', signal: providerAbortController.signal } as never)).rejects.toThrow()
+      const abortedSignal = AbortSignal.abort()
+      await expect(tool.execute({ path: 'test.txt' }, { callId: 'call-late-1', signal: abortedSignal } as never)).rejects.toThrow()
       expect(ledger.completedCount()).toBe(0)
       expect(toolEffectsCount).toBe(0)
 
-      // Invariant 4: Delayed error emitted after cancellation does not trigger retry or fallback
+      // Invariant 3: Delayed error emitted after cancellation does not trigger retry or fallback
       const delayed500 = Object.assign(new Error('Delayed HTTP 500 from cancelled provider'), { status: 500 })
       h.ctx.emit('agent/error', { agent, error: delayed500 } as never)
       await h.runtime.idle()
@@ -627,7 +625,6 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
       )
       expect(lateRetryPrompts).toHaveLength(0)
     } finally {
-      agent.cancel = realCancel
       promptSpy.mockRestore()
     }
   })
@@ -660,7 +657,7 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
     h.ctx.emit('agent/error', { agent, error: http500 } as never)
     await h.runtime.idle()
 
-    // Invariant 1: ZERO queued retries or prompts
+    // Invariant 1: ZERO queued retries or prompts (fail-closed barrier verified)
     expect((h.runtime.executor as any).resuming.size).toBe(0)
     const retryPrompts = promptSpy.mock.calls.filter(([sessionId, requestId]) =>
       sessionId === one.sessionId && String(requestId).startsWith('retry:')
@@ -679,7 +676,9 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
     expect(cleanLedger.hasUncertain()).toBe(true)
     expect(() => cleanLedger.guard('call-any-next')).toThrow(/Uncertain tool outcome blocks execution/)
 
-    // Invariant 4: Legitimate reconciliation unblocks execution
+    // Invariant 4: Legitimate ledger reconciliation unblocks execution guard
+    // Note: Host-level operator reconciliation/retry authority boundary is unexposed in host surface;
+    // reported as operator_boundary_unavailable rather than claiming full host boundary qualification.
     cleanLedger.reconcile('call-uncertain-tx-1', 'reconciled_success')
     expect(cleanLedger.hasUncertain()).toBe(false)
     expect(() => cleanLedger.guard('call-unblocked-next')).not.toThrow()
