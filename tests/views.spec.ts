@@ -10,6 +10,7 @@ import { githubKind } from '../src/sources/github.ts'
 import { snapshot, threadSummary, ticketSummary, triggerView } from '../src/app/views/records.ts'
 import { basisFacts, ticketDetail, ticketList } from '../src/app/views/tickets.ts'
 import { threadDetail } from '../src/app/views/threads.ts'
+import { GithubTelemetry } from '../src/infra/github-telemetry.ts'
 import { droppedReplies, sourcesStatus } from '../src/app/views/sources.ts'
 import { overview } from '../src/app/views/overview.ts'
 import { markdown, plain } from '../src/app/views/text.ts'
@@ -184,6 +185,14 @@ it('says no Source runs when every Source is off, and states a Source missing or
   expect(problems(host).map(item => item.kind)).toContain('no-source')
   expect(Object.fromEntries(sourcesStatus(host, {}, {}).map(source => [source.id, [source.state, source.installed]])))
     .toEqual({ feishu: ['off', true], github: ['off', true], jira: ['missing', false] })
+})
+
+it('carries the GitHub request telemetry of a Source\'s health to the status view', () => {
+  const telemetry = new GithubTelemetry()
+  telemetry.record({ caller: 'poll-thread', endpoint: 'repos/:o/:r/issues/:n', outcome: '304', quota: { remaining: 4000, reset: 1794613928, resource: 'core' } })
+  const source = sourcesStatus(views(), { github: { state: 'ready', detail: 'ok', telemetry: telemetry.view() } }, {}).find(item => item.id === 'github')!
+  const part = source.health.find(item => item.name === 'github')!
+  expect(part.telemetry).toMatchObject({ hour: { requests: 1, free: 1 }, callers: [{ caller: 'poll-thread' }], quota: { remaining: 4000 } })
 })
 
 it('sends text without HTML, entity-encoded tags included, and with images named', () => {

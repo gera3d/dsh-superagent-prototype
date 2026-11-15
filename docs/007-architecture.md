@@ -422,6 +422,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/infra/gh-calls.ts` | The per-ticket counter of the worker `gh` shim: its directory, the reader of a ticket's counts by hour and command, and the hour's total across tickets |
 | `src/infra/paths.ts` | The package's root, where packaged files are |
 | `src/infra/text.ts` | Word counts and the chat message limit, `fill` and `sameName` |
+| `src/infra/github-telemetry.ts` | `GithubTelemetry`, the counts of the agent's GitHub requests by caller (`withCaller`), masked endpoint and outcome, with the last `x-ratelimit-*` values; its hourly window and persisted daily summary feed the GitHub health entry |
 | `src/infra/health.ts` | The `HealthBoard`, every part's health entry, each claimed by its one writer |
 | `src/sources/kind.ts` | The `SourceKind` protocol |
 | `src/sources/registry.ts` | `SourceRegistry` |
@@ -630,6 +631,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/finding-release.spec.ts` | finding release |
 | `tests/github-quota.spec.ts`, `tests/setup-quota-retry.spec.ts` | github quota, the setup retry time after quota exhaustion |
 | `tests/github-revalidate.spec.ts` | PR and check-run reads revalidated with ETag and reused on 304 |
+| `tests/github-telemetry.spec.ts` | github request telemetry |
 | `tests/legacy-delivery-card.spec.tsx` | legacy delivery card |
 | `tests/legacy-delivery-reconciliation.spec.ts` | Legacy delivery historical completion reconciliation |
 | `tests/live-attestation-coverage.spec.ts` | live attestation coverage |
