@@ -318,20 +318,34 @@ export async function pollRound(ctx: SourceContext, signal?: AbortSignal): Promi
 async function pollNotifications(ctx: SourceContext, round: Round): Promise<{ count: number; interval: number }> {
   const { state } = ctx
   const commands = ctx.commands.withSignal(round.signal)
-  const since = state.get(KV.github.since) ?? round.started
-  if (state.get(KV.github.since) === undefined) state.set(KV.github.since, since)
+  const known = state.get(KV.github.since)
+  const since = known ?? round.started
+  if (known === undefined) state.set(KV.github.since, since)
   const { repository } = ctx.deployment
   const path = `notifications?all=true&per_page=50&since=${encodeURIComponent(since)}`
-  const raw = await commands.api(path, '--include')
-  const split = raw.search(/\r?\n\r?\n/)
-  if (split < 0) throw new Error('GitHub returned no HTTP headers')
-  const headers = raw.slice(0, split)
-  const body = raw.slice(split).trim()
-  const asked = Number(/x-poll-interval:\s*(\d+)/i.exec(headers)?.[1] ?? 60)
-  const interval = Math.max(60, Number.isFinite(asked) ? asked : 60)
-  const notifications = /rel="next"/.test(headers)
-    ? await commands.pages(NotificationSchema, path, round.tally)
-    : validItems(NotificationSchema, z.array(z.unknown()).parse(JSON.parse(body)), round.tally)
+  const before = state.get(KV.github.notifications)
+  // Only the first page is conditional; a first run has no cursor yet, so nothing is stored to compare with.
+  const conditional = known !== undefined && before?.lastModified ? ['-H', `If-Modified-Since: ${before.lastModified}`] : []
+  let notifications: z.infer<typeof NotificationSchema>[] = []
+  let interval = Math.max(60, before?.interval ?? 60)
+  let lastModified = before?.lastModified
+  try {
+    const raw = await commands.api(path, '--include', ...conditional)
+    const split = raw.search(/\r?\n\r?\n/)
+    if (split < 0) throw new Error('GitHub returned no HTTP headers')
+    const headers = raw.slice(0, split)
+    const body = raw.slice(split).trim()
+    const asked = Number(/x-poll-interval:\s*(\d+)/i.exec(headers)?.[1] ?? 60)
+    interval = Math.max(60, Number.isFinite(asked) ? asked : 60)
+    notifications = /rel="next"/.test(headers)
+      ? await commands.pages(NotificationSchema, path, round.tally)
+      : validItems(NotificationSchema, z.array(z.unknown()).parse(JSON.parse(body)), round.tally)
+    lastModified = /^last-modified:\s*(.+)$/im.exec(headers)?.[1]?.trim()
+  } catch (error) {
+    // 304 Not Modified costs no quota and means no notifications; the rest of the round runs as usual. Any other failure keeps the stored header.
+    if (!(error instanceof CliError && error.code === 304 && conditional.length)) throw error
+    interval = Math.max(60, error.pollInterval ?? before?.interval ?? 60)
+  }
   const retries = { ...state.get(KV.github.retries) }
   // Failed items from the previous round run first, followed by newly notified items in chronological order; each is read once.
   const items = new Map(Object.entries(retries).map(([number, retry]) => [Number(number), retry]))
@@ -358,7 +372,9 @@ async function pollNotifications(ctx: SourceContext, round: Round): Promise<{ co
       delete retries[number]
     }
   }
-  ctx.atomic(() => { state.set(KV.github.since, cursorAt(round.started)); state.set(KV.github.retries, retries) })
+  // The header is stored with the cursor: stored alone, a round that stopped early would hide its unread notifications behind a 304.
+  ctx.atomic(() => { state.set(KV.github.since, cursorAt(round.started)); state.set(KV.github.retries, retries)
+    state.set(KV.github.notifications, { ...lastModified ? { lastModified } : {}, interval }) })
   return { count: notifications.length, interval }
 }
 async function readNotified(ctx: SourceContext, round: Round, number: number, item: Retry): Promise<void> {
