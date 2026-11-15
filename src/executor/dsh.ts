@@ -252,9 +252,11 @@ export class DshExecutor implements Executor {
     let ledger = this.toolLedgers.get(ticketId)
     if (!ledger) {
       ledger = new ToolExecutionLedger(updated => {
-        this.host.store.set(KV.sessions.toolLedgers(ticketId), updated.snapshot() as never)
+        if (typeof (this.host.store as any).set === 'function') {
+          (this.host.store as any).set(KV.sessions.toolLedgers(ticketId), updated.snapshot() as never)
+        }
       })
-      const saved = this.host.store.get(KV.sessions.toolLedgers(ticketId))
+      const saved = typeof (this.host.store as any).get === 'function' ? (this.host.store as any).get(KV.sessions.toolLedgers(ticketId)) : undefined
       if (saved) ledger.restore(saved as never)
       this.toolLedgers.set(ticketId, ledger)
     }
