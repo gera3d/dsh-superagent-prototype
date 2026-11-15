@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   ThreadBriefManager,
@@ -18,6 +21,18 @@ import { TicketPage } from '../src/client/ticket.tsx'
 import { ThreadPage } from '../src/client/thread.tsx'
 import { PanelProvider } from '../src/client/provider.tsx'
 import type { T } from '../src/client/text.ts'
+import { Store } from '../src/app/store.ts'
+import { threadDetail } from '../src/app/views/threads.ts'
+import { Sessions, type SessionsHost } from '../src/app/sessions.ts'
+import type { Ticket, Thread, Trigger, Mandate } from '../src/core/index.ts'
+
+const defaultMandate = (scope = 'Test scope'): Mandate => ({
+  strength: 'explicit',
+  policyVersion: 'p12345678',
+  actor: { source: 'web', id: 'u1' },
+  scope,
+  basis: { via: 'addressed', addressed: 'mention' },
+})
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -610,44 +625,396 @@ describe('Thread Brief Integration (ThreadPage, TicketPage & Sessions wiring)', 
     }
   }
 
-  it('TicketPage wiring: preserves verbatim original ask differing from title and renders via real provider', async () => {
-    const root = createRoot(container)
-    const kv = new Map<string, unknown>()
-    const syntheticStore = {
-      triggers: {
-        get: (id: string) => {
-          if (id === 'trig-1') {
-            return {
-              id: 'trig-1',
-              text: 'Very detailed verbatim ask from user\nwith multiple lines of exact instructions',
-            }
-          }
-          return undefined
+  it('1. ORIGINAL PROVENANCE: threadDetail retrieves earliest trigger outside visible page, missing origin is unavailable, empty origin is preserved', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'thread-brief-prov-'))
+    const store = new Store(join(dir, 'orchestrator.sqlite'))
+    try {
+      const threadKey = 'github:owner/repo:issue:42'
+      const thread: Thread = {
+        key: threadKey,
+        ref: { source: 'github', id: 'owner/repo:issue:42' },
+        createdAt: '2026-11-15T01:00:00Z',
+        subscriptions: [],
+        correlated: [],
+        pending: [],
+        meta: { label: 'Issue 42: Production Regression' },
+      }
+      store.threads.save(thread)
+
+      // Save two triggers: t1 is earlier (canonical origin), t2 is newer
+      const t1: Trigger = {
+        id: 'trig-orig-1',
+        at: '2026-11-15T01:00:00Z',
+        source: 'github',
+        human: true,
+        actor: { source: 'github', id: 'reporter' },
+        threads: [thread.ref],
+        text: 'Initial detailed report:\nLine 1: regression bug\nLine 2: reproduction steps',
+        meta: {},
+      }
+      const t2: Trigger = {
+        id: 'trig-orig-2',
+        at: '2026-11-15T02:00:00Z',
+        source: 'github',
+        human: true,
+        actor: { source: 'github', id: 'commenter' },
+        threads: [thread.ref],
+        text: 'Later comment on thread',
+        meta: {},
+      }
+      store.triggers.save(t1)
+      store.triggers.save(t2)
+
+      // Paginate threadDetail with limit=1: shown triggers only contain t2, but brief MUST preserve t1
+      const viewHost = {
+        store,
+        sources: { find: () => ({ terms: [], threads: [] }), kind: () => undefined } as any,
+        links: { entries: () => [] } as any,
+      }
+      const detail = threadDetail(viewHost, threadKey, undefined, 1)
+      expect(detail).toBeDefined()
+      expect(detail?.timeline.length).toBe(1)
+      expect(detail?.timeline[0]?.id).toBe('trig-orig-2') // Only newer trigger is shown on this page
+      expect(detail?.brief?.raw_original_ask).toBe('Initial detailed report:\nLine 1: regression bug\nLine 2: reproduction steps') // Earliest trigger retained!
+
+      // Missing origin: ticket with non-existent trigger ID has raw_original_ask explicitly 'unavailable', never title
+      const ticketMissingOrigin: Ticket = {
+        id: 'ticket-no-origin',
+        title: 'Title of ticket without origin',
+        decisionId: 'd1',
+        mandate: defaultMandate('Missing origin scope'),
+        channels: [],
+        assignments: [],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T01:00:00Z',
+        updatedAt: '2026-11-15T01:00:00Z',
+        origin: { triggerId: 'non-existent-trigger-id', triggerIds: [] },
+      }
+      const briefNoOrigin = resolveTicketBriefManager(store, ticketMissingOrigin)
+      expect(briefNoOrigin.rawOriginalAsk).toBe('unavailable')
+      expect(briefNoOrigin.rawOriginalAsk).not.toBe(ticketMissingOrigin.title)
+      expect(briefNoOrigin.toView().objective).toBe('Title of ticket without origin')
+
+      // Empty origin: trigger with genuine empty string is preserved as '', NOT substituted by title
+      const tEmpty: Trigger = {
+        id: 'trig-empty',
+        at: '2026-11-15T01:00:00Z',
+        source: 'github',
+        human: true,
+        actor: { source: 'github', id: 'u' },
+        threads: [thread.ref],
+        text: '',
+        meta: {},
+      }
+      store.triggers.save(tEmpty)
+      const ticketEmptyOrigin: Ticket = {
+        id: 'ticket-empty-origin',
+        title: 'Title with empty origin trigger',
+        decisionId: 'd2',
+        mandate: defaultMandate('Empty origin scope'),
+        channels: [],
+        assignments: [],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T01:00:00Z',
+        updatedAt: '2026-11-15T01:00:00Z',
+        origin: { triggerId: 'trig-empty', triggerIds: ['trig-empty'] },
+      }
+      const briefEmptyOrigin = resolveTicketBriefManager(store, ticketEmptyOrigin)
+      expect(briefEmptyOrigin.rawOriginalAsk).toBe('')
+      expect(briefEmptyOrigin.rawOriginalAsk).not.toBe(ticketEmptyOrigin.title)
+    } finally {
+      store.close()
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('2. REAL TYPES & STATE: classifies person, idle, working, and ended outcomes using core stage models', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'thread-brief-stage-'))
+    const store = new Store(join(dir, 'orchestrator.sqlite'))
+    try {
+      const baseTicket = (id: string): Ticket => ({
+        id,
+        title: `Task ${id}`,
+        decisionId: 'd1',
+        mandate: defaultMandate(`Mandate for ${id}`),
+        channels: [],
+        assignments: [],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T01:00:00Z',
+        updatedAt: '2026-11-15T01:00:00Z',
+        origin: { triggerId: 'trig-1', triggerIds: ['trig-1'] },
+      })
+
+      // Person: blocked
+      const tBlocked = baseTicket('t-blocked')
+      tBlocked.assignments = [{
+        id: 'a1', state: 'running', createdAt: '2026-11-15T01:00:00Z',
+        report: { state: 'blocked', summary: 'Missing environment secret INFISICAL_TOKEN', at: '2026-11-15T01:05:00Z' },
+      }]
+      const briefBlocked = resolveTicketBriefManager(store, tBlocked).toView()
+      expect(briefBlocked.current_state).toBe('person:blocked')
+      expect(briefBlocked.next_action).toBe('Missing environment secret INFISICAL_TOKEN')
+
+      // Person: failed
+      const tFailed = baseTicket('t-failed')
+      tFailed.assignments = [{
+        id: 'a2', state: 'running', createdAt: '2026-11-15T01:00:00Z',
+        report: { state: 'failed', summary: 'Unit test execution crashed fatally', at: '2026-11-15T01:05:00Z' },
+      }]
+      const briefFailed = resolveTicketBriefManager(store, tFailed).toView()
+      expect(briefFailed.current_state).toBe('person:failed')
+      expect(briefFailed.next_action).toBe('Unit test execution crashed fatally')
+
+      // Person: answer
+      const tAnswer = baseTicket('t-answer')
+      tAnswer.attention = { id: 'att-1', question: 'Should we deploy to staging or prod?' }
+      const briefAnswer = resolveTicketBriefManager(store, tAnswer).toView()
+      expect(briefAnswer.current_state).toBe('person:answer')
+      expect(briefAnswer.next_action).toBe('Should we deploy to staging or prod?')
+
+      // Person: delivery
+      const tDelivery = baseTicket('t-delivery')
+      tDelivery.delivery = { error: 'Webhook payload delivery timed out', at: '2026-11-15T01:05:00Z' }
+      const briefDelivery = resolveTicketBriefManager(store, tDelivery).toView()
+      expect(briefDelivery.current_state).toBe('person:delivery')
+      expect(briefDelivery.next_action).toBe('Webhook payload delivery timed out')
+
+      // Person: review (ready report)
+      const tReview = baseTicket('t-review')
+      tReview.assignments = [{
+        id: 'a3', state: 'running', createdAt: '2026-11-15T01:00:00Z',
+        report: { state: 'ready', summary: 'PR 126 ready for review', at: '2026-11-15T01:05:00Z' },
+      }]
+      const briefReview = resolveTicketBriefManager(store, tReview).toView()
+      expect(briefReview.current_state).toBe('person:review')
+      expect(briefReview.next_action).toBe('Review ready report')
+
+      // Idle: waiting for trigger
+      const tIdle = baseTicket('t-idle')
+      tIdle.assignments = [{
+        id: 'a4', state: 'running', createdAt: '2026-11-15T01:00:00Z',
+        report: { state: 'waiting', summary: 'Awaiting CI check completion', at: '2026-11-15T01:05:00Z' },
+      }]
+      const briefIdle = resolveTicketBriefManager(store, tIdle).toView()
+      expect(briefIdle.current_state).toBe('waiting')
+      expect(briefIdle.next_action).toBe('Waiting for trigger')
+
+      // Core Thread: dormant when all tickets ended
+      const tEnded = baseTicket('t-ended')
+      tEnded.ended = { at: '2026-11-15T02:00:00Z', by: 'executor', outcome: 'completed' }
+      store.tickets.save(tEnded)
+      const threadDormant: Thread = {
+        key: 'github:owner/repo:issue:99',
+        ref: { source: 'github', id: 'owner/repo:issue:99' },
+        createdAt: '2026-11-15T01:00:00Z',
+        subscriptions: ['t-ended'],
+        correlated: [],
+        pending: [],
+        meta: { label: 'Issue 99' },
+      }
+      const briefDormant = resolveThreadBriefManager(store, threadDormant).toView()
+      expect(briefDormant.task_status).toBe('closed')
+      expect(briefDormant.current_state).toBe('ended:completed')
+    } finally {
+      store.close()
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('3. SINGLE AUTHORITY & DURABLE STORE PERSISTENCE: thread & ticket share authoritative record, roundtrip across DB reopen', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'thread-brief-durable-'))
+    const dbPath = join(dir, 'orchestrator.sqlite')
+    let store = new Store(dbPath)
+
+    try {
+      const ticket: Ticket = {
+        id: 'ticket-authority-1',
+        title: 'Evolving Task',
+        decisionId: 'd1',
+        mandate: defaultMandate('Authority task scope'),
+        channels: [{ source: 'github', thread: 'github:owner/repo:issue:100', address: {} }],
+        assignments: [{ id: 'a1', state: 'running', createdAt: '2026-11-15T01:00:00Z' }],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T01:00:00Z',
+        updatedAt: '2026-11-15T01:00:00Z',
+        origin: { triggerId: 'trig-1', triggerIds: ['trig-1'] },
+      }
+      store.tickets.save(ticket)
+
+      const thread: Thread = {
+        key: 'github:owner/repo:issue:100',
+        ref: { source: 'github', id: 'owner/repo:issue:100' },
+        createdAt: '2026-11-15T01:00:00Z',
+        subscriptions: [ticket.id],
+        correlated: [],
+        pending: [],
+        meta: { label: 'Issue 100' },
+      }
+      store.threads.save(thread)
+
+      // Single Authority: thread resolves to the exact same manager/brief as its subscribed ticket
+      const ticketManager = resolveTicketBriefManager(store, ticket)
+      const threadManager = resolveThreadBriefManager(store, thread)
+      expect(ticketManager.getState().ticket_id).toBe(ticket.id)
+      expect(threadManager.getState().ticket_id).toBe(ticket.id)
+
+      // Stage and confirm proposal to advance revision to 2
+      const prop = ticketManager.stageProposal({
+        description: 'New verified criterion',
+        proposed_by: 'lead-operator',
+        added_criteria: ['Deliver functional implementation'],
+      })
+      ticketManager.confirmProposal(prop.proposal_id, 'lead-operator')
+      expect(ticketManager.revisionId).toBe(2)
+
+      // Persist durably to Store KV
+      ticketManager.save(store)
+
+      // Close database and reopen to test genuine durability
+      store.close()
+      store = new Store(dbPath)
+
+      // Reload from newly reopened SQLite database
+      const reloadedTicket = resolveTicketBriefManager(store, ticket)
+      expect(reloadedTicket.revisionId).toBe(2)
+      expect(reloadedTicket.criteria[0]?.id).toBe('CRIT-1')
+      expect(reloadedTicket.criteria[0]?.confirmed).toBe(true)
+
+      const reloadedThread = resolveThreadBriefManager(store, thread)
+      expect(reloadedThread.revisionId).toBe(2)
+      expect(reloadedThread.criteria[0]?.id).toBe('CRIT-1')
+
+      // Storage write failure: closing the DB causes write to fail, preventing unpersisted claims
+      store.close()
+      expect(() => ticketManager.save(store)).toThrow()
+    } finally {
+      try { store.close() } catch {}
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('4. ACTUAL SESSIONS WIRING: captures registered systemPrompt.section callback from Sessions.decorate', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'thread-brief-sessions-'))
+    const store = new Store(join(dir, 'orchestrator.sqlite'))
+    try {
+      const ticket: Ticket = {
+        id: 'ticket-sess-real',
+        title: 'Production Feature Implementation',
+        decisionId: 'd1',
+        mandate: defaultMandate('Must not edit executor'),
+        channels: [{ source: 'github', thread: 'github:owner/repo:issue:1', address: {} }],
+        assignments: [{ id: 'a1', state: 'running', createdAt: '2026-11-15T01:00:00Z' }],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T01:00:00Z',
+        updatedAt: '2026-11-15T01:00:00Z',
+        origin: { triggerId: 'trig-sess', triggerIds: ['trig-sess'] },
+      }
+      store.tickets.save(ticket)
+      store.triggers.save({
+        id: 'trig-sess',
+        at: '2026-11-15T01:00:00Z',
+        source: 'github',
+        human: true,
+        actor: { source: 'github', id: 'user' },
+        threads: [{ source: 'github', id: 'thread-1' }],
+        text: 'Implement authoritative brief in Sessions callback',
+        meta: {},
+      })
+
+      // Setup Sessions with mock host
+      const mockEffects = {
+        handle: vi.fn(),
+        enqueue: vi.fn(),
+        idle: vi.fn(),
+        pending: vi.fn(),
+      }
+      const mockPrompts = {
+        current: () => ({ revision: 1, config: { scope: 'test' } }),
+        version: () => ({ revision: 1, config: { scope: 'test' } }),
+        compose: (_config: any, role: string, _env: any) => `[Composed prompt for ${role}]`,
+        skills: () => [],
+      }
+      const mockContext = {
+        on: vi.fn(),
+        inject: vi.fn().mockReturnValue(Promise.resolve()),
+        agents: new Map(),
+        logger: { warn: vi.fn() },
+      } as any
+
+      const sessionsHost: SessionsHost = {
+        context: mockContext,
+        store: store as any,
+        prompts: mockPrompts as any,
+        effects: mockEffects as any,
+        health: { set: vi.fn() } as any,
+        masterId: 'master-session',
+        lifetime: new AbortController().signal,
+        closing: () => false,
+        environment: () => [],
+        tools: () => [],
+      }
+
+      const sessions = new Sessions(sessionsHost)
+
+      // Decorate worker agent for this ticket and capture registered systemPrompt section callback
+      let registeredSection: any = null
+      const workerAgent: any = {
+        id: `worker-${ticket.id}`,
+        status: 'idle',
+        session: {
+          id: `worker-${ticket.id}`,
+          snapshotEvents: () => [],
+          requestHeader: () => ({ config: { provider: 'anthropic', model: 'claude-3-5-sonnet' } }),
         },
-      },
-      get: <V,>(key: string) => kv.get(key) as V | undefined,
-      set: <V,>(key: string, value: V) => { kv.set(key, value) },
-    }
+        ctx: {
+          on: vi.fn().mockReturnValue(() => {}),
+          tools: {
+            get: vi.fn().mockReturnValue(undefined),
+            restrict: vi.fn().mockReturnValue(() => {}),
+            guard: vi.fn().mockReturnValue(() => {}),
+          },
+          systemPrompt: {
+            section: (spec: any) => {
+              registeredSection = spec
+              return () => {}
+            },
+          },
+          inject: vi.fn().mockReturnValue(Promise.resolve({ dispose: () => Promise.resolve() })),
+        },
+      }
 
-    const ticket = {
-      id: '8db3c6ac5758',
-      title: 'Short Ticket Title',
-      origin: { triggerId: 'trig-1', triggerIds: ['trig-1'] },
-      mandate: { scope: 'Autonomous mandate execution', strength: 'autonomous', policyVersion: 'p12345678', actor: { source: 'web', id: 'u1' } },
-      stage: 'Delivering',
-      state: 'open',
-      inputs: [],
-      threads: [],
-      channels: [{ id: 'ch-1' }],
-      assignments: [],
-      actions: {},
-    }
+      await (sessions as any).decorate(workerAgent)
+      expect(registeredSection).not.toBeNull()
+      expect(registeredSection.name).toBe('dsh-superagent-policy')
 
-    // Resolve authoritative brief
-    const briefMgr = resolveTicketBriefManager(syntheticStore, ticket)
-    expect(briefMgr.rawOriginalAsk).toBe('Very detailed verbatim ask from user\nwith multiple lines of exact instructions')
-    expect(briefMgr.toView().objective).toBe('Short Ticket Title')
-    expect(briefMgr.rawOriginalAsk).not.toBe(briefMgr.toView().objective)
+      // Call the ACTUAL registered callback function from Sessions.decorate
+      const promptOutput = registeredSection.text({ signal: undefined })
+      expect(promptOutput).toContain('[Active Thread Brief Rev 1]')
+      expect(promptOutput).toContain('Objective: Production Feature Implementation')
+      expect(promptOutput).toContain('Current State: working')
+      expect(promptOutput).toContain('Next Action: Execute assignment')
+      expect(promptOutput).toContain('Scope:\n  - (inferred/unconfirmed) Must not edit executor')
+    } finally {
+      store.close()
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('5. REAL COMPONENT WIRING: TicketPage & ThreadPage render authoritative brief via real PanelProvider', async () => {
+    const root = createRoot(container)
+    const mgr = ThreadBriefManager.fromRequest({
+      thread_id: 'thread-comp-1',
+      ticket_id: 'ticket-comp-1',
+      raw_request: 'Verbatim original prompt for component test',
+      objective: 'Component Display Test',
+      inferred_scope: ['Scope line A'],
+      inferred_criteria: ['Criterion line B'],
+    })
 
     const call = vi.fn().mockImplementation((route: string) => {
       if (route === 'GET state') {
@@ -655,8 +1022,16 @@ describe('Thread Brief Integration (ThreadPage, TicketPage & Sessions wiring)', 
       }
       if (route === 'GET tickets/:id') {
         return Promise.resolve(mockTicketPageData({
-          ...ticket,
-          brief: briefMgr.toView(),
+          id: 'ticket-comp-1',
+          title: 'Component Display Test',
+          brief: mgr.toView(),
+        }))
+      }
+      if (route === 'GET threads/:key') {
+        return Promise.resolve(mockThreadPageData({
+          key: 'thread-comp-1',
+          title: 'Component Display Test',
+          brief: mgr.toView(),
         }))
       }
       return Promise.resolve({})
@@ -665,7 +1040,7 @@ describe('Thread Brief Integration (ThreadPage, TicketPage & Sessions wiring)', 
     await act(async () => {
       root.render(
         <PanelProvider t={mockT} call={call}>
-          <TicketPage id="8db3c6ac5758" />
+          <TicketPage id="ticket-comp-1" />
         </PanelProvider>
       )
     })
@@ -674,307 +1049,23 @@ describe('Thread Brief Integration (ThreadPage, TicketPage & Sessions wiring)', 
       await new Promise(r => setTimeout(r, 10))
     })
 
-    // Brief header rendered with title, revision, and state
-    expect(container.textContent).toContain('Short Ticket Title')
+    expect(container.textContent).toContain('Component Display Test')
     expect(container.textContent).toContain('Rev 1')
-    expect(container.textContent).toContain('Delivering')
+    expect(container.textContent).toContain('0/1 Criteria')
 
-    // Expand header to inspect raw ask
+    // Expand header
     const toggleBtn = container.querySelector('[data-testid="brief-toggle-btn"]') as HTMLButtonElement
-    expect(toggleBtn).toBeDefined()
+    expect(toggleBtn).not.toBeNull()
     await act(async () => {
       toggleBtn.click()
     })
 
-    const body = container.querySelector('[data-testid="brief-expanded-body"]')
-    expect(body).toBeDefined()
-    expect(body?.textContent).toContain('Very detailed verbatim ask from user')
+    expect(container.textContent).toContain('Verbatim original prompt for component test')
+    expect(container.textContent).toContain('Scope line A')
+    expect(container.textContent).toContain('Criterion line B')
 
     await act(async () => {
       root.unmount()
     })
-  })
-
-  it('Persisted revision > 1 and proposal confirmation across reread/reload/context', async () => {
-    const root = createRoot(container)
-    const kv = new Map<string, unknown>()
-    const syntheticStore = {
-      triggers: {
-        get: (id: string) => (id === 'trig-persist' ? { id: 'trig-persist', text: 'Original request' } : undefined),
-      },
-      get: <V,>(key: string) => kv.get(key) as V | undefined,
-      set: <V,>(key: string, value: V) => { kv.set(key, value) },
-    }
-
-    const ticket = {
-      id: 'ticket-persist',
-      title: 'Evolving Task',
-      origin: { triggerId: 'trig-persist', triggerIds: ['trig-persist'] },
-      mandate: { scope: 'Initial scope', strength: 'autonomous', policyVersion: 'p12345678', actor: { source: 'web', id: 'u1' } },
-      stage: 'working',
-      state: 'open',
-      inputs: [],
-      threads: [],
-      channels: [{ id: 'ch-1' }],
-      assignments: [],
-      actions: {},
-    }
-
-    const manager = resolveTicketBriefManager(syntheticStore, ticket)
-    expect(manager.revisionId).toBe(1)
-
-    // Stage unconfirmed proposal
-    const prop = manager.stageProposal({
-      description: 'Add core criteria',
-      proposed_by: 'reviewer',
-      added_criteria: ['Deliver functional changes and test with vitest'],
-    })
-    expect(prop.status).toBe('pending')
-    expect(manager.revisionId).toBe(1) // Still rev 1 until confirmed
-
-    // Confirm proposal by operator
-    const confirmed = manager.confirmProposal(prop.proposal_id, 'human-operator')
-    expect(confirmed).toBe(true)
-    expect(manager.revisionId).toBe(2)
-    syntheticStore.set(`ticket-brief:${ticket.id}`, manager.getState())
-
-    // Reread/reload from store
-    const reloaded = resolveTicketBriefManager(syntheticStore, ticket)
-    expect(reloaded.revisionId).toBe(2)
-    expect(reloaded.criteria[0]?.id).toBe('CRIT-1')
-    expect(reloaded.criteria[0]?.confirmed).toBe(true)
-
-    // Render TicketPage with reloaded brief
-    const call = vi.fn().mockImplementation((route: string) => {
-      if (route === 'GET state') {
-        return Promise.resolve({ load: { running: 0 } })
-      }
-      if (route === 'GET tickets/:id') {
-        return Promise.resolve(mockTicketPageData({
-          ...ticket,
-          brief: reloaded.toView(),
-        }))
-      }
-      return Promise.resolve({})
-    })
-
-    await act(async () => {
-      root.render(
-        <PanelProvider t={mockT} call={call}>
-          <TicketPage id="ticket-persist" />
-        </PanelProvider>
-      )
-    })
-    await act(async () => {
-      await Promise.resolve()
-      await new Promise(r => setTimeout(r, 10))
-    })
-
-    expect(container.textContent).toContain('Rev 2')
-    expect(container.textContent).toContain('0/1 Criteria')
-
-    await act(async () => {
-      root.unmount()
-    })
-  })
-
-  it('Failed/cancelled endings retain unresolved criteria; satisfied requires referenced evidence', async () => {
-    const root = createRoot(container)
-    const kv = new Map<string, unknown>()
-    const syntheticStore = {
-      triggers: {
-        get: (id: string) => (id === 'trig-fail' ? { id: 'trig-fail', text: 'Task ask' } : undefined),
-      },
-      get: <V,>(key: string) => kv.get(key) as V | undefined,
-      set: <V,>(key: string, value: V) => { kv.set(key, value) },
-    }
-
-    const stoppedTicket = {
-      id: 'ticket-stopped',
-      title: 'Cancelled Task',
-      origin: { triggerId: 'trig-fail', triggerIds: ['trig-fail'] },
-      mandate: { scope: 'Initial scope', strength: 'autonomous', policyVersion: 'p12345678', actor: { source: 'web', id: 'u1' } },
-      stage: 'working',
-      state: 'ended',
-      ended: { outcome: 'stopped', at: '2026-11-15T12:00:00Z', reason: 'Aborted by operator' },
-      inputs: [],
-      threads: [],
-      channels: [{ id: 'ch-1' }],
-      assignments: [],
-      actions: {},
-    }
-
-    const manager = resolveTicketBriefManager(syntheticStore, stoppedTicket)
-    const prop = manager.stageProposal({
-      description: 'Requirements',
-      proposed_by: 'lead',
-      added_criteria: ['Unsatisfied requirement A', 'Evidence-backed requirement B'],
-    })
-    manager.confirmProposal(prop.proposal_id, 'lead')
-
-    // Reject evidence without valid reference or summary
-    const emptyRef = manager.recordEvidence('CRIT-1', { type: 'test_result', reference: '', summary: 'test' })
-    expect(emptyRef.success).toBe(false)
-    expect(manager.criteria[0]?.status).toBe('pending')
-
-    // Supply valid evidence for CRIT-2 only
-    const validEvidence = manager.recordEvidence('CRIT-2', {
-      type: 'test_result',
-      reference: 'tests/thread-brief.spec.tsx#L100',
-      summary: 'Automated test suite passing',
-    })
-    expect(validEvidence.success).toBe(true)
-    expect(manager.criteria[1]?.status).toBe('satisfied')
-
-    // Critical check: CRIT-1 MUST remain pending even though ticket ended
-    syntheticStore.set(`ticket-brief:${stoppedTicket.id}`, manager.getState())
-    const reloaded = resolveTicketBriefManager(syntheticStore, stoppedTicket)
-    expect(reloaded.toView().task_status).toBe('closed')
-    expect(reloaded.toView().current_state).toBe('ended:stopped')
-    expect(reloaded.criteria[0]?.status).toBe('pending') // Retained unresolved!
-    expect(reloaded.criteria[1]?.status).toBe('satisfied')
-
-    const call = vi.fn().mockImplementation((route: string) => {
-      if (route === 'GET state') {
-        return Promise.resolve({ load: { running: 0 } })
-      }
-      if (route === 'GET tickets/:id') {
-        return Promise.resolve(mockTicketPageData({
-          ...stoppedTicket,
-          brief: reloaded.toView(),
-        }))
-      }
-      return Promise.resolve({})
-    })
-
-    await act(async () => {
-      root.render(
-        <PanelProvider t={mockT} call={call}>
-          <TicketPage id="ticket-stopped" />
-        </PanelProvider>
-      )
-    })
-    await act(async () => {
-      await Promise.resolve()
-      await new Promise(r => setTimeout(r, 10))
-    })
-
-    // Verifies 1/2 Criteria (not falsely marked all satisfied on ticket ended!)
-    expect(container.textContent).toContain('1/2 Criteria')
-    expect(container.textContent).toContain('ended:stopped')
-
-    await act(async () => {
-      root.unmount()
-    })
-  })
-
-  it('ThreadPage wiring: renders truthful evaluating and active states via real provider', async () => {
-    const root = createRoot(container)
-    const syntheticStore = {
-      triggers: {
-        get: (id: string) => (id === 'trig-eval' ? { id: 'trig-eval', text: 'Thread trigger request' } : undefined),
-      },
-    }
-
-    const threadEvaluating = {
-      key: 'github:216',
-      title: 'Evaluating Issue',
-      evaluating: { triggers: 1, strength: 'autonomous', deadline: '2026-11-15T18:00:00Z' },
-      subscriptions: ['ticket-1'],
-      source: 'github',
-      timeline: [],
-      tickets: [],
-      decisions: [],
-      correlated: [],
-      context: [],
-    }
-
-    const evaluatingBrief = resolveThreadBriefManager(syntheticStore, threadEvaluating, [
-      { id: 'trig-eval', text: 'Thread trigger request' },
-    ]).toView()
-    expect(evaluatingBrief.current_state).toBe('evaluating')
-    expect(evaluatingBrief.next_action).toBe('Awaiting evaluation result')
-
-    const call = vi.fn().mockImplementation((route: string) => {
-      if (route === 'GET state') {
-        return Promise.resolve({ load: { running: 0 } })
-      }
-      if (route === 'GET threads/:key') {
-        return Promise.resolve(mockThreadPageData({
-          ...threadEvaluating,
-          brief: evaluatingBrief,
-        }))
-      }
-      return Promise.resolve({})
-    })
-
-    await act(async () => {
-      root.render(
-        <PanelProvider t={mockT} call={call}>
-          <ThreadPage id="github:216" />
-        </PanelProvider>
-      )
-    })
-    await act(async () => {
-      await Promise.resolve()
-      await new Promise(r => setTimeout(r, 10))
-    })
-
-    expect(container.textContent).toContain('Evaluating Issue')
-    expect(container.textContent).toContain('evaluating')
-
-    await act(async () => {
-      root.unmount()
-    })
-  })
-
-  it('Sessions prompt wiring: actual registered section callback formats authoritative brief context', () => {
-    const kv = new Map<string, unknown>()
-    const syntheticStore = {
-      triggers: {
-        get: (id: string) => (id === 'trig-sess' ? { id: 'trig-sess', text: 'Build feature safely' } : undefined),
-      },
-      get: <V,>(key: string) => kv.get(key) as V | undefined,
-      set: <V,>(key: string, value: V) => { kv.set(key, value) },
-    }
-
-    const ticket = {
-      id: 'ticket-sess',
-      title: 'Production Feature',
-      origin: { triggerId: 'trig-sess', triggerIds: ['trig-sess'] },
-      mandate: { scope: 'Restricted domain scope', strength: 'autonomous' },
-      stage: 'working',
-      assignments: [{ state: 'running' }],
-      channels: [{ id: 'ch-1' }],
-    }
-
-    const brief = resolveTicketBriefManager(syntheticStore, ticket, {
-      current_model: 'anthropic/claude-3-5-sonnet',
-      fallback_events: [
-        {
-          requested_model: 'google/gemini-2.5-pro',
-          substituted_model: 'anthropic/claude-3-5-sonnet',
-          reason: 'Rate limit 429',
-        },
-      ],
-    })
-
-    const prop = brief.stageProposal({
-      description: 'Add production criteria',
-      proposed_by: 'lead',
-      added_criteria: ['Pass regression suite'],
-    })
-    brief.confirmProposal(prop.proposal_id, 'lead')
-    syntheticStore.set(`ticket-brief:${ticket.id}`, brief.getState())
-
-    // Compose context prompt via domain manager
-    const promptContext = brief.composeContextPrompt()
-    expect(promptContext).toContain('[Active Thread Brief Rev 2]')
-    expect(promptContext).toContain('Objective: Production Feature')
-    expect(promptContext).toContain('Current State: working')
-    expect(promptContext).toContain('Next Action: Execute assignment')
-    expect(promptContext).toContain('(confirmed) (pending): Pass regression suite')
-    expect(promptContext).toContain('Model Fallback Routing:')
-    expect(promptContext).toContain('google/gemini-2.5-pro -> anthropic/claude-3-5-sonnet (Rate limit 429)')
   })
 })

@@ -5,6 +5,8 @@
  * monotonic criterion ID allocation across batches, proposals, and history, staged proposals,
  * immutable isolated getters, revision history, evidence-backed status transitions, and prompt/continuation context generation.
  */
+import { latestReport, type Ticket } from './model.ts'
+import { ticketStage } from './stage.ts'
 
 export type CriterionStatus = 'pending' | 'in_progress' | 'satisfied'
 
@@ -488,11 +490,25 @@ export class ThreadBriefManager {
       },
     }
   }
+
+  /**
+   * Persists the current brief state to store under the designated key.
+   * Throws if store.set fails or is unavailable, ensuring callers do not assume durability on write error.
+   */
+  save(store: BriefStoreLike, storageKey?: string): void {
+    const key = storageKey || (this.state.ticket_id ? `ticket-brief:${this.state.ticket_id}` : `thread-brief:${this.state.thread_id}`)
+    if (!store.set) {
+      throw new Error(`Store does not support set operations for ${key}`)
+    }
+    store.set(key, this.getState())
+  }
 }
 
 export interface BriefTriggerLike {
   id: string
   text: string
+  at?: string
+  url?: string
 }
 
 export interface BriefTicketLike {
@@ -500,20 +516,30 @@ export interface BriefTicketLike {
   title: string
   origin?: { triggerId: string; triggerIds?: string[] }
   mandate?: { scope?: string; strength?: string }
-  channels?: unknown[]
-  ended?: { outcome: string; at: string; reason?: string }
+  channels?: { thread?: string; id?: string }[]
+  ended?: { outcome: string; at: string; reason?: string; by?: string }
   attention?: { question: string }
-  stage?: string
-  assignments?: { state: string }[]
+  delivery?: { error: string; at: string }
+  assignments?: {
+    id?: string
+    state?: string
+    report?: { state?: string; summary?: string; at?: string }
+  }[]
+  inputs?: unknown[]
+  undelivered?: string[]
 }
 
 export interface BriefThreadLike {
   key: string
-  title?: string
-  source?: string
+  ref?: { source: string; id: string }
+  createdAt?: string
+  lastAt?: string
+  meta?: Record<string, unknown>
   evaluating?: unknown
   subscriptions?: string[]
   context?: string[]
+  pending?: string[]
+  correlated?: string[]
 }
 
 export interface BriefStoreLike {
@@ -523,12 +549,30 @@ export interface BriefStoreLike {
   }
   tickets?: {
     get(id: string): any
+    list?(): any[]
   }
   threads?: {
     get(key: string): any
+    list?(): any[]
+  }
+  read?: {
+    firstTrigger?(threadKeyValue: string, humanOnly?: boolean): any
+    threadTriggers?(threadKeyValue: string, limit?: number, before?: any, after?: any): any[]
   }
   get?<V>(key: string): V | undefined
   set?<V>(key: string, value: V): void
+}
+
+function deriveThreadTitle(store: BriefStoreLike, thread: BriefThreadLike, firstTrigger?: BriefTriggerLike): string {
+  const label = thread.meta?.label
+  if (typeof label === 'string' && label) return label
+  if (label && typeof (label as any).en === 'string') return (label as any).en
+  if (label && typeof (label as any).zh === 'string') return (label as any).zh
+  if (firstTrigger?.text) {
+    const trimmed = firstTrigger.text.trim().split('\n')[0] || ''
+    return trimmed.length > 80 ? `${trimmed.slice(0, 77)}...` : trimmed
+  }
+  return thread.key
 }
 
 /**
@@ -550,11 +594,11 @@ export function resolveTicketBriefManager(
     manager = ThreadBriefManager.deserialize(persisted)
   } else {
     const originTrigger = ticket.origin?.triggerId && store.triggers ? store.triggers.get(ticket.origin.triggerId) : undefined
-    const raw_request = originTrigger?.text || ticket.title || 'unavailable'
-    const objective = ticket.title || (originTrigger ? originTrigger.text.trim().split('\n')[0] : 'Unspecified task')
+    const raw_request = originTrigger !== undefined ? originTrigger.text : 'unavailable'
+    const objective = ticket.title || (originTrigger ? originTrigger.text.trim().split('\n')[0] : '') || 'Unspecified task'
     const inferred_scope = ticket.mandate?.scope ? [ticket.mandate.scope] : []
 
-    const channelRef = ticket.channels?.[0] as { thread?: string; id?: string } | undefined
+    const channelRef = ticket.channels?.[0]
     const thread_id = channelRef?.thread || channelRef?.id || `ticket:${ticket.id}`
 
     manager = ThreadBriefManager.fromRequest({
@@ -569,22 +613,46 @@ export function resolveTicketBriefManager(
 
     if (store.set) {
       try {
-        store.set(briefKey, manager.getState())
+        manager.save(store, briefKey)
       } catch {
-        // storage save is non-fatal if store is read-only
+        // Storage write failed - state remains in-memory
       }
     }
   }
 
-  // Update dynamic runtime execution state without altering confirmed criteria, revision_id, or scope
-  if (ticket.ended) {
-    manager.updateState(`ended:${ticket.ended.outcome}`, 'None (task ended)')
+  // Real Ticket state classification via ticketStage
+  const safeTicket = { assignments: [], inputs: [], undelivered: [], ...ticket } as Ticket
+  const stage = ticketStage(safeTicket)
+  if (stage.stage === 'ended') {
+    manager.updateState(`ended:${ticket.ended?.outcome ?? 'ended'}`, 'None (task ended)')
     ;(manager as any).state.task_status = 'closed'
-  } else {
-    const isWorking = ticket.assignments?.some(a => a.state === 'running')
-    const stateDesc = ticket.attention ? 'attention' : (isWorking ? 'working' : (ticket.stage || 'open'))
-    const nextAct = ticket.attention?.question || (ticket.stage === 'person' ? 'Awaiting operator response' : 'Execute assignment')
+  } else if (stage.stage === 'person') {
+    if (stage.action === 'delivery') {
+      manager.updateState('person:delivery', ticket.delivery?.error || 'Awaiting delivery recovery')
+    } else if (stage.action === 'answer') {
+      manager.updateState('person:answer', ticket.attention?.question || 'Awaiting operator response')
+    } else if (stage.action === 'review') {
+      manager.updateState('person:review', 'Review ready report')
+    } else if (stage.action === 'blocked') {
+      const rep = latestReport(safeTicket)
+      manager.updateState('person:blocked', rep?.summary || 'Awaiting operator response to unblock')
+    } else if (stage.action === 'failed') {
+      const rep = latestReport(safeTicket)
+      manager.updateState('person:failed', rep?.summary || 'Awaiting operator review of failure')
+    }
+    ;(manager as any).state.task_status = 'open'
+  } else if (stage.stage === 'idle') {
+    const rep = latestReport(safeTicket)
+    const stateDesc = rep?.state === 'waiting' ? 'waiting' : 'idle'
+    const nextAct = rep?.state === 'waiting' ? 'Waiting for trigger' : 'Idle between turns'
     manager.updateState(stateDesc, nextAct)
+    ;(manager as any).state.task_status = 'open'
+  } else if (stage.stage === 'working') {
+    if (stage.action === 'queued') {
+      manager.updateState('queued', 'Waiting for worker execution')
+    } else {
+      manager.updateState('working', 'Execute assignment')
+    }
     ;(manager as any).state.task_status = 'open'
   }
 
@@ -603,9 +671,20 @@ export function resolveTicketBriefManager(
 export function resolveThreadBriefManager(
   store: BriefStoreLike,
   thread: BriefThreadLike,
-  timelineTriggers?: BriefTriggerLike[],
+  canonicalFirstTrigger?: BriefTriggerLike | BriefTriggerLike[],
   modelContext?: ModelContext
 ): ThreadBriefManager {
+  // 3. SINGLE AUTHORITY:
+  // If thread has a subscribed ticket that exists in store, delegate to resolveTicketBriefManager
+  // to ensure ticket, thread, and sessions prompt hook share the exact same authoritative brief state.
+  const subscribedTicketId = thread.subscriptions?.find(id => store.tickets?.get(id))
+  if (subscribedTicketId) {
+    const ticket = store.tickets!.get(subscribedTicketId)
+    if (ticket) {
+      return resolveTicketBriefManager(store, ticket, modelContext)
+    }
+  }
+
   const briefKey = `thread-brief:${thread.key}`
   const persisted = store.get ? store.get<ThreadBriefState>(briefKey) : undefined
 
@@ -613,10 +692,15 @@ export function resolveThreadBriefManager(
   if (persisted) {
     manager = ThreadBriefManager.deserialize(persisted)
   } else {
-    const firstTrigger = timelineTriggers?.[0] || (store.triggers?.of ? store.triggers.of(thread.key)[0] : undefined)
-    const raw_request = firstTrigger?.text || thread.title || 'unavailable'
-    const objective = thread.title || (firstTrigger ? firstTrigger.text.trim().split('\n')[0] : 'Unspecified thread')
-    const inferred_scope = thread.source ? [`Execute within ${thread.source} thread parameters`] : []
+    const initialTrigger = Array.isArray(canonicalFirstTrigger) ? canonicalFirstTrigger[0] : canonicalFirstTrigger
+    const firstTrigger = initialTrigger
+      || (store.read?.firstTrigger ? store.read.firstTrigger(thread.key) : undefined)
+      || (store.triggers?.of ? store.triggers.of(thread.key)[0] : undefined)
+
+    const raw_request = firstTrigger !== undefined ? firstTrigger.text : 'unavailable'
+    const objective = deriveThreadTitle(store, thread, firstTrigger)
+    const sourceKind = thread.ref?.source
+    const inferred_scope = sourceKind ? [`Execute within ${sourceKind} thread parameters`] : []
 
     manager = ThreadBriefManager.fromRequest({
       thread_id: thread.key,
@@ -629,22 +713,36 @@ export function resolveThreadBriefManager(
 
     if (store.set) {
       try {
-        store.set(briefKey, manager.getState())
+        manager.save(store, briefKey)
       } catch {
-        // storage save is non-fatal if store is read-only
+        // Storage write failed - state remains in-memory
       }
     }
   }
 
-  // Update dynamic runtime evaluation state
-  if (thread.evaluating) {
+  // 2. REAL TYPES & STATE for Thread
+  if (thread.meta?.pollError) {
+    manager.updateState('error', 'Poll error recorded')
+    ;(manager as any).state.task_status = 'open'
+  } else if (thread.evaluating) {
     manager.updateState('evaluating', 'Awaiting evaluation result')
     ;(manager as any).state.task_status = 'open'
+  } else if (thread.pending && thread.pending.length > 0) {
+    manager.updateState('queued', 'Awaiting triage evaluation')
+    ;(manager as any).state.task_status = 'open'
   } else if (thread.subscriptions && thread.subscriptions.length > 0) {
-    manager.updateState('Active', 'Execute thread tickets')
+    const tickets = thread.subscriptions.map(id => store.tickets?.get(id)).filter(Boolean)
+    const hasLive = tickets.some(t => !t.ended)
+    if (hasLive) {
+      manager.updateState('active', 'Execute thread tickets')
+    } else if (tickets.length > 0) {
+      manager.updateState('dormant', 'All subscribed tickets ended')
+    } else {
+      manager.updateState('active', 'Execute thread tickets')
+    }
     ;(manager as any).state.task_status = 'open'
   } else {
-    manager.updateState('Initialized', 'Awaiting triage or ticket subscription')
+    manager.updateState('unsubscribed', 'Awaiting triage or ticket subscription')
     ;(manager as any).state.task_status = 'open'
   }
 

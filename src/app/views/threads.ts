@@ -43,7 +43,7 @@ export function threadDetail(host: ViewHost, key: string, before: string | undef
   const first = store.read.firstTrigger(key)
   const url = attribute(thread.meta.url) ?? first?.url ?? (first?.channel ? channelLink(view, first.channel).url : undefined)
   // `context` lists tickets whose Executor follows this thread for context only (messages reach them without granting authority).
-  const brief = resolveThreadBriefManager(store, thread, shown).toView()
+  const brief = resolveThreadBriefManager(store, thread, first).toView()
   return { ...threadSummary(view, thread), url, context: thread.context ?? [],
     correlated: thread.correlated.map(other => {
       const value = store.threads.get(other)
