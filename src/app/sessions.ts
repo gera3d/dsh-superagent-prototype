@@ -1,4 +1,9 @@
-const READ_ONLY_TOOLS = new Set(['orchestrator_read', 'read', 'read_image', 'job_list', 'job_output'])
+const READ_ONLY_TOOLS = new Set([
+  'orchestrator_read', 'read', 'read_image', 'glob', 'grep', 'job_list', 'job_output',
+  'web_search', 'web_fetch', 'list_subagent_models', 'list_agents',
+  'orchestrator_ack', 'orchestrator_report', 'orchestrator_thread_follow',
+  'orchestrator_thread_unrelated', 'orchestrator_trigger_handback',
+])
 
 /** Lifecycle, prompt/tool/skill decoration, message delivery, and budget retry tracking for orchestrator and worker DSH sessions. */
 import type { Context } from '@deepseek-ai/cordis'
@@ -263,22 +268,26 @@ export class Sessions {
           const ticketId = ticketOfSession(agent.id)
           const ledger = ticketId ? this.host.toolLedger?.(ticketId) : undefined
           const effectful = !READ_ONLY_TOOLS.has(name)
-          const callId = (execution as { callId?: string })?.callId ?? `${name}:${key(JSON.stringify(parsed))}`
-          if (ledger && effectful) {
+          const handled = Boolean((execution as { __ledgerHandled?: boolean })?.__ledgerHandled)
+          const callId = (execution as { callId?: string })?.callId
+          if (ledger && effectful && !handled) {
+            if (!callId) {
+              throw new Error(`Canonical callId required for effectful tool ${name}; execution rejected`)
+            }
             ledger.recordStart(callId, name)
           }
           try {
             const result = await execute(parsed, execution.signal)
-            if (ledger && effectful) {
+            if (ledger && effectful && !handled && callId) {
               ledger.recordCompletion(callId, true)
             }
             return result
           } catch (error) {
-            if (ledger && effectful) {
-              if (execution.signal?.aborted) {
-                ledger.recordUncertain(callId)
-              } else {
+            if (ledger && effectful && !handled && callId) {
+              if ((error as { beforeEffect?: boolean })?.beforeEffect) {
                 ledger.recordCompletion(callId, false)
+              } else {
+                ledger.recordUncertain(callId)
               }
             }
             throw error
@@ -372,7 +381,44 @@ export class Sessions {
       const ledger = this.host.toolLedger?.(ticketId)
       if (ledger?.hasUncertain()) return 'Uncertain tool outcome blocks execution until operator reconciliation'
       return undefined
-    }), installOutputBound(agent, () => store.tickets.get(ticketId)?.execution?.directory)]
+    }), installOutputBound(agent, () => store.tickets.get(ticketId)?.execution?.directory),
+    this.installToolLedger(agent, ticketId)]
+  }
+  private installToolLedger(agent: Agent, ticketId: string): () => void {
+    return agent.ctx.on('tools/execute', async (exec, next) => {
+      const effectful = !READ_ONLY_TOOLS.has(exec.name)
+      const ledger = this.host.toolLedger?.(ticketId)
+      if (!ledger || !effectful) return next()
+      const callId = exec.callId
+      if (!callId) {
+        throw new Error(`Canonical callId required for effectful tool ${exec.name}; execution rejected`)
+      }
+      if (ledger.hasUncertain()) {
+        throw new Error('Uncertain tool outcome blocks execution until operator reconciliation')
+      }
+      ledger.recordStart(callId, exec.name)
+      ;(exec as { __ledgerHandled?: boolean }).__ledgerHandled = true
+      try {
+        const result = await next()
+        if (result.isError) {
+          if ((result.error as { beforeEffect?: boolean })?.beforeEffect) {
+            ledger.recordCompletion(callId, false)
+          } else {
+            ledger.recordUncertain(callId)
+          }
+        } else {
+          ledger.recordCompletion(callId, true)
+        }
+        return result
+      } catch (error) {
+        if ((error as { beforeEffect?: boolean })?.beforeEffect) {
+          ledger.recordCompletion(callId, false)
+        } else {
+          ledger.recordUncertain(callId)
+        }
+        throw error
+      }
+    })
   }
   /**
    * A subagent of an Executor Session, or of one of its subagents, which runs under DSH's `standard` preset with the worker's

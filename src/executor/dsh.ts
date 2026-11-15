@@ -13,6 +13,7 @@ import type { Machine } from '../deployment.ts'
 import { runAsWorker, verifyDirectory } from '../infra/environment.ts'
 import type { RoleModel, Settings } from '../policy.ts'
 import type { Store } from '../app/store.ts'
+import { KV } from '../kv.ts'
 import { Later, type Effects } from '../app/effects.ts'
 import { executionRoot, type Variable } from '../app/execution-environment.ts'
 import type { Sessions } from '../app/sessions.ts'
@@ -81,7 +82,7 @@ export interface ExecutorHost {
   /** Where the Executor reports what happened to Assignments and Inputs. */
   readonly engine: Pick<EngineForExecutor, 'assignmentStarted' | 'inputsDelivered' | 'inputsRead' | 'turnEnded' | 'deliveryFailed' | 'report'
     | 'assignmentInterrupted'>
-  readonly store: Pick<Store, 'tickets' | 'triggers' | 'set' | 'settings' | 'atomic' | 'afterCommit'>
+  readonly store: Pick<Store, 'tickets' | 'triggers' | 'get' | 'set' | 'settings' | 'atomic' | 'afterCommit'>
   /** Durable effect queue through which launches and input deliveries run. */
   readonly effects: Pick<Effects, 'enqueue' | 'handle'>
   /** The `worker` health entry, which reports whether background worker event handling failed. */
@@ -244,7 +245,13 @@ export class DshExecutor implements Executor {
   toolLedger(ticketId: string): ToolExecutionLedger {
     let ledger = this.toolLedgers.get(ticketId)
     if (!ledger) {
-      ledger = new ToolExecutionLedger()
+      ledger = new ToolExecutionLedger(updated => {
+        try {
+          this.host.store.set(KV.sessions.toolLedgers(ticketId), updated.snapshot() as never)
+        } catch {}
+      })
+      const saved = this.host.store.get(KV.sessions.toolLedgers(ticketId))
+      if (saved) ledger.restore(saved as never)
       this.toolLedgers.set(ticketId, ledger)
     }
     return ledger
@@ -812,6 +819,7 @@ export class DshExecutor implements Executor {
         this.host.context.agents.get(workerSessionId(ticket.id) as SessionId)?.cancel({ kind: 'user' }, { keepInbox: true })
         this.stopWork(ticket.id, 'dsh-superagent restarted', true)
         this.host.engine.assignmentInterrupted(ticket.id, running.id)
+        this.toolLedger(ticket.id).markInFlightUncertain()
       }
       else if (latest?.state === 'pending' && !waitsForPerson(ticket)) this.start(ticket, latest)
     }

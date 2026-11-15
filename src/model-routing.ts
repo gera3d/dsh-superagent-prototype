@@ -146,6 +146,47 @@ export type ToolExecutionStatus =
  */
 export class ToolExecutionLedger {
   private records = new Map<string, { status: ToolExecutionStatus; toolName: string; timestamp: number }>()
+  private onChange?: (ledger: ToolExecutionLedger) => void
+
+  constructor(onChange?: (ledger: ToolExecutionLedger) => void) {
+    this.onChange = onChange
+  }
+
+  private notify(): void {
+    try {
+      this.onChange?.(this)
+    } catch {}
+  }
+
+  record(toolCallId: string): { status: ToolExecutionStatus; toolName: string; timestamp: number } | undefined {
+    return this.records.get(toolCallId)
+  }
+
+  snapshot(): Record<string, { status: ToolExecutionStatus; toolName: string; timestamp: number }> {
+    const snap: Record<string, { status: ToolExecutionStatus; toolName: string; timestamp: number }> = {}
+    for (const [id, rec] of this.records.entries()) {
+      snap[id] = { ...rec }
+    }
+    return snap
+  }
+
+  restore(snap: Record<string, { status: ToolExecutionStatus; toolName: string; timestamp: number }>): void {
+    this.records.clear()
+    for (const [id, rec] of Object.entries(snap)) {
+      this.records.set(id, { ...rec })
+    }
+  }
+
+  markInFlightUncertain(): void {
+    let changed = false
+    for (const rec of this.records.values()) {
+      if (rec.status === 'in_flight') {
+        rec.status = 'uncertain'
+        changed = true
+      }
+    }
+    if (changed) this.notify()
+  }
 
   recordStart(toolCallId: string, toolName: string): void {
     const existing = this.records.get(toolCallId)
@@ -161,16 +202,23 @@ export class ToolExecutionLedger {
       }
     }
     this.records.set(toolCallId, { status: 'in_flight', toolName, timestamp: Date.now() })
+    this.notify()
   }
 
   recordCompletion(toolCallId: string, success: boolean): void {
     const rec = this.records.get(toolCallId)
-    if (rec) rec.status = success ? 'completed' : 'failed'
+    if (rec) {
+      rec.status = success ? 'completed' : 'failed'
+      this.notify()
+    }
   }
 
   recordUncertain(toolCallId: string): void {
     const rec = this.records.get(toolCallId)
-    if (rec) rec.status = 'uncertain'
+    if (rec) {
+      rec.status = 'uncertain'
+      this.notify()
+    }
   }
 
   hasUncertain(): boolean {
@@ -187,6 +235,7 @@ export class ToolExecutionLedger {
       throw new Error(`Invalid reconciliation status: ${finalStatus}`)
     }
     rec.status = finalStatus
+    this.notify()
   }
 
   guard(toolCallId: string): void {

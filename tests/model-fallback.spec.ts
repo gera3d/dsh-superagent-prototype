@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { latestAssignment, waitsForPerson, type Ticket } from '../src/core/index.ts'
 import { DEEPSEEK_FALLBACK_ROUTE, fallbackNote, isModelUnavailable, unavailableFallbackStep, classifyModelError, executeWithFallback, ToolExecutionLedger } from '../src/app/role-models.ts'
+import { KV } from '../src/kv.ts'
 import { ModelRoutingConfigSchema } from '../src/policy.ts'
 import { feishu, startRuntime, type Host } from './fixtures/host.ts'
 
@@ -538,5 +540,128 @@ describe('Bounded Model Routing and Tool Execution Guard', () => {
     const elapsed = Date.now() - start
     // Finite settlement: settled promptly around deadline (~25-80ms), not waiting 150ms
     expect(elapsed).toBeLessThan(120)
+  })
+
+  it('Sessions.registerTool & ToolRuntime: non-abort network/lost-ack records uncertain outcome and hasUncertain is true', async () => {
+    const ticket = await h.acceptedTicket(feishu('lost-ack-1', '@bot Fix lost ack fixture'))
+    const agent = h.agents.get(ticket.sessionId)!
+    const ledger = h.runtime.executor.toolLedger(ticket.ticket.id)
+
+    let invoked = false
+    const register = (h.runtime.sessions as any).registerTool(agent, { disposers: [] })
+    register(
+      'synthetic_write_effect',
+      'synthetic tool',
+      z.object({ path: z.string() }),
+      async () => {
+        invoked = true
+        throw new Error('network timeout: connection reset by peer before ack')
+      }
+    )
+
+    const tool = h.tools.get(ticket.sessionId)!.get('synthetic_write_effect')!
+    await expect(tool.execute({ path: 'a.txt' }, { callId: 'call-lost-ack-1', signal: new AbortController().signal } as never)).rejects.toThrow(/network timeout/)
+
+    expect(invoked).toBe(true)
+    expect(ledger.hasUncertain()).toBe(true)
+    expect(ledger.record('call-lost-ack-1')?.status).toBe('uncertain')
+  })
+
+  it('Sessions.registerTool & ToolRuntime: known pre-effect rejection does not record uncertain', async () => {
+    const ticket = await h.acceptedTicket(feishu('pre-effect-1', '@bot Fix pre-effect fixture'))
+    const agent = h.agents.get(ticket.sessionId)!
+    const ledger = h.runtime.executor.toolLedger(ticket.ticket.id)
+
+    const register = (h.runtime.sessions as any).registerTool(agent, { disposers: [] })
+    register(
+      'synthetic_guarded_write',
+      'synthetic tool with pre-effect failure',
+      z.object({}),
+      async () => {
+        const err = new Error('Permission denied before effect')
+        ;(err as any).beforeEffect = true
+        throw err
+      }
+    )
+
+    const tool = h.tools.get(ticket.sessionId)!.get('synthetic_guarded_write')!
+    await expect(tool.execute({}, { callId: 'call-pre-effect-1', signal: new AbortController().signal } as never)).rejects.toThrow(/Permission denied/)
+
+    expect(ledger.hasUncertain()).toBe(false)
+    expect(ledger.record('call-pre-effect-1')?.status).toBe('failed')
+  })
+
+  it('Sessions.registerTool & ToolRuntime: successful completion records completed and prevents replay of same callId', async () => {
+    const ticket = await h.acceptedTicket(feishu('success-1', '@bot Fix success fixture'))
+    const agent = h.agents.get(ticket.sessionId)!
+    const ledger = h.runtime.executor.toolLedger(ticket.ticket.id)
+
+    const register = (h.runtime.sessions as any).registerTool(agent, { disposers: [] })
+    register(
+      'synthetic_success_write',
+      'synthetic tool succeeding',
+      z.object({ val: z.string() }),
+      async () => ({ ok: true })
+    )
+
+    const tool = h.tools.get(ticket.sessionId)!.get('synthetic_success_write')!
+    const res = await tool.execute({ val: 'test' }, { callId: 'call-success-1', signal: new AbortController().signal } as never)
+    expect(res).toMatchObject({ ok: true })
+    expect(ledger.completedCount()).toBe(1)
+    expect(ledger.record('call-success-1')?.status).toBe('completed')
+
+    // Replay of same callId is rejected
+    await expect(tool.execute({ val: 'test' }, { callId: 'call-success-1', signal: new AbortController().signal } as never)).rejects.toThrow(/already completed; replay prevented/)
+  })
+
+  it('distinct canonical callIds with identical arguments succeed without collision', async () => {
+    const ticket = await h.acceptedTicket(feishu('distinct-1', '@bot Fix distinct IDs fixture'))
+    const agent = h.agents.get(ticket.sessionId)!
+    const ledger = h.runtime.executor.toolLedger(ticket.ticket.id)
+
+    const register = (h.runtime.sessions as any).registerTool(agent, { disposers: [] })
+    register(
+      'synthetic_append',
+      'synthetic tool called multiple times',
+      z.object({ line: z.string() }),
+      async () => ({ written: true })
+    )
+
+    const tool = h.tools.get(ticket.sessionId)!.get('synthetic_append')!
+
+    // Missing callId fails closed
+    await expect(tool.execute({ line: 'no-call-id' }, { signal: new AbortController().signal } as never)).rejects.toThrow(/Canonical callId required/)
+
+    // Turn 1
+    const r1 = await tool.execute({ line: 'repeated argument' }, { callId: 'model-turn-1-call-1', signal: new AbortController().signal } as never)
+    expect(r1).toMatchObject({ written: true })
+
+    // Turn 2: identical arguments, distinct canonical callId
+    const r2 = await tool.execute({ line: 'repeated argument' }, { callId: 'model-turn-2-call-2', signal: new AbortController().signal } as never)
+    expect(r2).toMatchObject({ written: true })
+    expect(ledger.completedCount()).toBe(2)
+  })
+
+  it('persists tool uncertainty and restores across recovery to block replay', async () => {
+    const ticket = await h.acceptedTicket(feishu('persist-1', '@bot Fix persist fixture'))
+    const ledger = h.runtime.executor.toolLedger(ticket.ticket.id)
+
+    ledger.recordStart('call-restart-1', 'write')
+    expect(ledger.record('call-restart-1')?.status).toBe('in_flight')
+
+    // Simulate restart reconciliation
+    h.runtime.executor.resume()
+
+    // Host restart marks in-flight tool as uncertain
+    expect(ledger.hasUncertain()).toBe(true)
+    expect(ledger.record('call-restart-1')?.status).toBe('uncertain')
+
+    // Clean new ledger restored from store retains uncertain state
+    const cleanLedger = new ToolExecutionLedger()
+    const stored = h.runtime.store.get(KV.sessions.toolLedgers(ticket.ticket.id))
+    expect(stored).toBeDefined()
+    cleanLedger.restore(stored as never)
+    expect(cleanLedger.hasUncertain()).toBe(true)
+    expect(() => cleanLedger.guard('call-next')).toThrow(/Uncertain tool outcome blocks execution/)
   })
 })
