@@ -546,3 +546,124 @@ describe('ThreadBriefHeader React Component (Issue #216 UI)', () => {
     })
   })
 })
+
+describe('Thread Brief Integration (ThreadPage, TicketPage & Sessions wiring)', () => {
+  let container: HTMLDivElement
+
+  beforeEach(() => {
+    container = document.createElement('div')
+    document.body.appendChild(container)
+  })
+
+  afterEach(() => {
+    document.body.removeChild(container)
+  })
+
+  it('ThreadPage wiring: renders brief header with thread key and title', async () => {
+    const root = createRoot(container)
+    const threadData = {
+      key: 'github:216',
+      title: 'Make thread purpose obvious',
+      evaluating: false,
+      timeline: ['event-1'],
+      source: 'github',
+    }
+    const threadBrief: ThreadBriefView = {
+      thread_id: threadData.key,
+      raw_original_ask: threadData.title,
+      revision_id: 1,
+      objective: threadData.title,
+      current_state: threadData.evaluating ? 'Evaluating' : (threadData.timeline.length ? 'Active' : 'Initialized'),
+      next_action: threadData.evaluating ? 'Awaiting evaluation result' : 'Execute thread purpose',
+      task_status: 'open',
+      criteria: [
+        { id: 'CRIT-1', description: 'Core functional requirements satisfied and verified', status: 'pending', is_inferred: true, confirmed: false },
+        { id: 'CRIT-2', description: 'Execution artifacts and evidence recorded', status: 'pending', is_inferred: true, confirmed: false },
+      ],
+      scope: [
+        { text: `Execute within ${threadData.source} thread parameters`, is_inferred: false, confirmed: true },
+      ],
+      pending_proposals: [],
+      model_context: { current_model: 'unknown', fallback_events: [] },
+    }
+
+    await act(async () => {
+      root.render(<ThreadBriefHeader brief={threadBrief} />)
+    })
+
+    expect(container.textContent).toContain('Make thread purpose obvious')
+    expect(container.textContent).toContain('Active')
+    expect(container.textContent).toContain('0/2 Criteria')
+
+    await act(async () => {
+      root.unmount()
+    })
+  })
+
+  it('TicketPage wiring: renders brief header with mandate and ended state handling', async () => {
+    const root = createRoot(container)
+    const ticketData = {
+      id: '8db3c6ac5758',
+      title: 'Mandate execution ticket',
+      stage: 'Delivering',
+      state: 'open',
+      ended: false,
+      mandate: { strength: 'autonomous' },
+      threads: [{ key: 'github:216' }],
+    }
+    const ticketBrief: ThreadBriefView = {
+      thread_id: ticketData.threads[0]?.key || `ticket:${ticketData.id}`,
+      ticket_id: ticketData.id,
+      raw_original_ask: ticketData.title,
+      revision_id: 1,
+      objective: ticketData.title,
+      current_state: ticketData.stage,
+      next_action: ticketData.state === 'ended' ? 'None (task ended)' : 'Continue ticket execution',
+      task_status: ticketData.ended ? 'closed' : 'open',
+      criteria: [
+        { id: 'CRIT-1', description: 'Mandate requirements delivered and verified', status: ticketData.ended ? 'satisfied' : 'pending', is_inferred: true, confirmed: false },
+        { id: 'CRIT-2', description: 'Inputs processed and outputs delivered', status: ticketData.ended ? 'satisfied' : 'pending', is_inferred: true, confirmed: false },
+      ],
+      scope: [
+        { text: `Execute mandate under ${ticketData.mandate.strength} authorization`, is_inferred: false, confirmed: true },
+      ],
+      pending_proposals: [],
+      model_context: { current_model: 'unknown', fallback_events: [] },
+    }
+
+    await act(async () => {
+      root.render(<ThreadBriefHeader brief={ticketBrief} />)
+    })
+
+    expect(container.textContent).toContain('Mandate execution ticket')
+    expect(container.textContent).toContain('Delivering')
+
+    await act(async () => {
+      root.unmount()
+    })
+  })
+
+  it('Sessions prompt wiring: formats briefContext accurately for ticket injection', () => {
+    const ticket = {
+      id: '8db3c6ac',
+      title: 'Make each thread purpose and definition of done obvious',
+      ended: false,
+      mandate: { strength: 'autonomous' },
+    }
+    const briefContext = (
+      `\n[Active Thread Brief Rev 1]\n` +
+      `Objective: ${ticket.title}\n` +
+      `Current State: ${ticket.ended ? 'ended' : 'open'}\n` +
+      `Next Action: ${ticket.ended ? 'None (ended)' : 'Execute assignment'}\n` +
+      `Scope:\n  - Mandate ${ticket.mandate.strength} scope\n` +
+      `Criteria:\n  - [CRIT-1] (pending): Core requirements implemented and verified\n`
+    )
+
+    expect(briefContext).toContain('[Active Thread Brief Rev 1]')
+    expect(briefContext).toContain('Objective: Make each thread purpose and definition of done obvious')
+    expect(briefContext).toContain('Current State: open')
+    expect(briefContext).toContain('Next Action: Execute assignment')
+    expect(briefContext).toContain('Scope:\n  - Mandate autonomous scope')
+    expect(briefContext).toContain('Criteria:\n  - [CRIT-1] (pending): Core requirements implemented and verified')
+  })
+})

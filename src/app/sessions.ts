@@ -289,8 +289,16 @@ export class Sessions {
       const version = this.promptFor(agent, context.signal !== undefined)
       const current = ticket && host.store.tickets.get(ticket.id)
       const currentTurn = current ? currentTurnOf(agent) : undefined
+      const briefContext = current ? (
+        `\n[Active Thread Brief Rev 1]\n` +
+        `Objective: ${current.title}\n` +
+        `Current State: ${current.ended ? 'ended' : 'open'}\n` +
+        `Next Action: ${current.ended ? 'None (ended)' : 'Execute assignment'}\n` +
+        `Scope:\n  - Mandate ${current.mandate.strength} scope\n` +
+        `Criteria:\n  - [CRIT-1] (pending): Core requirements implemented and verified\n`
+      ) : ''
       const composed = host.prompts.compose(version.config, master ? 'orchestrator' : 'worker', current ? host.environment(current, currentTurn) : undefined)
-      return `[dsh-superagent prompt revision ${version.revision}]\n${composed}\n${current ? mandateInstructions(current.mandate) : ''}`
+      return `[dsh-superagent prompt revision ${version.revision}]\n${composed}\n${briefContext}${current ? mandateInstructions(current.mandate) : ''}`
     }, ...(master ? { complete: true } : {}) }))
     // A recreated skill scope (e.g. after the skills service restarts) starts empty, so reset `binding.skills` before rebinding.
     const skillScope = agent.ctx.inject(['skills'], scope => {
