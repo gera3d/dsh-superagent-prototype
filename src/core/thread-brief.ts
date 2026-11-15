@@ -5,6 +5,8 @@
  * monotonic criterion ID allocation across batches, proposals, and history, staged proposals,
  * immutable isolated getters, revision history, evidence-backed status transitions, and prompt/continuation context generation.
  */
+import { latestReport, type Ticket } from './model.ts'
+import { ticketStage } from './stage.ts'
 
 export type CriterionStatus = 'pending' | 'in_progress' | 'satisfied'
 
@@ -78,7 +80,10 @@ export interface ThreadBriefState {
   pending_proposals: ThreadBriefProposal[]
   revision_history: ThreadBriefRevision[]
   model_context?: ModelContext
+  storage_state?: BriefStorageState
 }
+
+export type BriefStorageState = 'persisted' | 'non-durable' | 'write_failed'
 
 export interface ThreadBriefView {
   thread_id: string
@@ -93,6 +98,7 @@ export interface ThreadBriefView {
   scope: ThreadBriefScopeItem[]
   pending_proposals: ThreadBriefProposal[]
   model_context: ModelContext
+  storage_state?: BriefStorageState
 }
 
 /** Owns an isolated brief revision, its proposals, evidence and continuation context. */
@@ -432,24 +438,37 @@ export class ThreadBriefManager {
    * Emphasizes objective, state, criteria status, and model fallback history.
    */
   composeContextPrompt(): string {
+    const isDurable = this.storageState === 'persisted'
+    const header = isDurable
+      ? `[Active Thread Brief Rev ${this.state.revision_id}]`
+      : `[Active Thread Brief (Ephemeral Fallback - Storage: ${this.storageState})]`
+
     const lines: string[] = [
-      `[Active Thread Brief Rev ${this.state.revision_id}]`,
+      header,
       `Objective: ${this.state.objective}`,
       `Current State: ${this.state.current_state}`,
       `Next Action: ${this.state.next_action}`,
-      `Scope:`,
     ]
 
-    for (const s of this.state.scope) {
-      const tag = s.confirmed ? '(confirmed)' : '(inferred/unconfirmed)'
-      lines.push(`  - ${tag} ${s.text}`)
+    if (!isDurable) {
+      lines.push(`Storage State: ${this.storageState} (Authoritative revision and criteria unavailable; non-durable fallback)`)
     }
 
-    lines.push(`Criteria:`)
-    for (const c of this.state.criteria) {
-      const authTag = c.confirmed ? '(confirmed)' : '(inferred/unconfirmed)'
-      const ev = c.evidence ? ` [Evidence: ${c.evidence.type} - ${c.evidence.summary}]` : ''
-      lines.push(`  - [${c.id}] ${authTag} (${c.status}): ${c.description}${ev}`)
+    if (this.state.scope && this.state.scope.length > 0) {
+      lines.push(`Scope:`)
+      for (const s of this.state.scope) {
+        const tag = s.confirmed ? '(confirmed)' : '(inferred/unconfirmed)'
+        lines.push(`  - ${tag} ${s.text}`)
+      }
+    }
+
+    if (this.state.criteria && this.state.criteria.length > 0) {
+      lines.push(`Criteria:`)
+      for (const c of this.state.criteria) {
+        const authTag = c.confirmed ? '(confirmed)' : '(inferred/unconfirmed)'
+        const ev = c.evidence ? ` [Evidence: ${c.evidence.type} - ${c.evidence.summary}]` : ''
+        lines.push(`  - [${c.id}] ${authTag} (${c.status}): ${c.description}${ev}`)
+      }
     }
 
     if (this.state.model_context && this.state.model_context.fallback_events && this.state.model_context.fallback_events.length > 0) {
@@ -482,6 +501,339 @@ export class ThreadBriefManager {
         current_model: this.state.model_context?.current_model || 'unknown',
         fallback_events: JSON.parse(JSON.stringify(this.state.model_context?.fallback_events || [])),
       },
+      storage_state: this.storageState,
     }
   }
+
+  get storageState(): BriefStorageState {
+    return this.state.storage_state ?? 'persisted'
+  }
+
+  setStorageState(status: BriefStorageState): void {
+    this.state.storage_state = status
+  }
+
+  /**
+   * Persists the current brief state to store under the designated key.
+   * Throws if store.set fails or is unavailable, ensuring callers do not assume durability on write error.
+   */
+  save(store: BriefStoreLike, storageKey?: string): void {
+    const key = storageKey || (this.state.ticket_id ? `ticket-brief:${this.state.ticket_id}` : `thread-brief:${this.state.thread_id}`)
+    if (!store.set) {
+      this.state.storage_state = 'non-durable'
+      throw new Error(`Store does not support set operations for ${key}`)
+    }
+    try {
+      store.set(key, this.getState())
+      this.state.storage_state = 'persisted'
+    } catch (err) {
+      this.state.storage_state = 'write_failed'
+      throw err
+    }
+  }
+}
+
+export interface BriefTriggerLike {
+  id: string
+  text: string
+  at?: string
+  url?: string
+}
+
+export interface BriefTicketLike {
+  id: string
+  title: string
+  origin?: { triggerId: string; triggerIds?: string[] }
+  mandate?: { scope?: string; strength?: string }
+  channels?: { thread?: string; id?: string }[]
+  ended?: { outcome: string; at: string; reason?: string; by?: string }
+  attention?: { question: string }
+  delivery?: { error: string; at: string }
+  assignments?: {
+    id?: string
+    state?: string
+    report?: { state?: string; summary?: string; at?: string }
+  }[]
+  inputs?: unknown[]
+  undelivered?: string[]
+}
+
+export interface BriefThreadLike {
+  key: string
+  ref?: { source: string; id: string }
+  createdAt?: string
+  lastAt?: string
+  meta?: Record<string, unknown>
+  evaluating?: unknown
+  subscriptions?: string[]
+  context?: string[]
+  pending?: string[]
+  correlated?: string[]
+}
+
+export interface BriefStoreLike {
+  triggers?: {
+    get(id: string): BriefTriggerLike | undefined
+    of?(threadKey: string): BriefTriggerLike[]
+  }
+  tickets?: {
+    get(id: string): any
+    list?(): any[]
+  }
+  threads?: {
+    get(key: string): any
+    list?(): any[]
+  }
+  read?: {
+    firstTrigger?(threadKeyValue: string, humanOnly?: boolean): any
+    threadTriggers?(threadKeyValue: string, limit?: number, before?: any, after?: any): any[]
+  }
+  get?<V>(key: string): V | undefined
+  set?<V>(key: string, value: V): void
+}
+
+function deriveThreadTitle(store: BriefStoreLike, thread: BriefThreadLike, firstTrigger?: BriefTriggerLike): string {
+  const label = thread.meta?.label
+  if (typeof label === 'string' && label) return label
+  if (label && typeof (label as any).en === 'string') return (label as any).en
+  if (label && typeof (label as any).zh === 'string') return (label as any).zh
+  if (firstTrigger?.text) {
+    const trimmed = firstTrigger.text.trim().split('\n')[0] || ''
+    return trimmed.length > 80 ? `${trimmed.slice(0, 77)}...` : trimmed
+  }
+  return thread.key
+}
+
+/**
+ * Resolves or constructs the single authoritative ThreadBriefManager for a Ticket.
+ * Preserves verbatim original ask from trigger (distinct from title).
+ * Loads persisted revisions and criteria across rereads/reloads.
+ * Does not fabricate criteria or mark criteria satisfied on ticket closure.
+ */
+export function resolveTicketBriefManager(
+  store: BriefStoreLike,
+  ticket: BriefTicketLike,
+  modelContext?: ModelContext
+): ThreadBriefManager {
+  const briefKey = `ticket-brief:${ticket.id}`
+  let persisted: ThreadBriefState | undefined
+  let storageState: BriefStorageState = 'persisted'
+  let readFailed = false
+
+  if (store.get) {
+    try {
+      persisted = store.get<ThreadBriefState>(briefKey)
+    } catch {
+      storageState = 'write_failed'
+      readFailed = true
+    }
+  }
+
+  let manager: ThreadBriefManager
+
+  if (persisted) {
+    manager = ThreadBriefManager.deserialize(persisted)
+    manager.setStorageState(storageState)
+  } else {
+    let originTrigger: BriefTriggerLike | undefined
+    let originFailed = false
+    if (ticket.origin?.triggerId && store.triggers) {
+      try {
+        originTrigger = store.triggers.get(ticket.origin.triggerId)
+      } catch {
+        storageState = 'write_failed'
+        originFailed = true
+      }
+    }
+    const raw_request = originTrigger !== undefined ? originTrigger.text : 'unavailable'
+    const objective = ticket.title || (originTrigger ? originTrigger.text.trim().split('\n')[0] : '') || 'Unspecified task'
+    const inferred_scope = ticket.mandate?.scope ? [ticket.mandate.scope] : []
+
+    const channelRef = ticket.channels?.[0]
+    const thread_id = channelRef?.thread || channelRef?.id || `ticket:${ticket.id}`
+
+    manager = ThreadBriefManager.fromRequest({
+      thread_id,
+      ticket_id: ticket.id,
+      raw_request,
+      objective,
+      inferred_scope,
+      inferred_criteria: [],
+      model_context: modelContext,
+    })
+
+    if (readFailed || originFailed) {
+      // Do not initialize or clobber storage on uncertain read / origin error.
+      // An existing record may exist in store. Keep in-memory with write_failed status.
+      storageState = 'write_failed'
+    } else if (!store.set) {
+      storageState = 'non-durable'
+    } else {
+      try {
+        manager.save(store, briefKey)
+        storageState = 'persisted'
+      } catch {
+        storageState = 'write_failed'
+      }
+    }
+    manager.setStorageState(storageState)
+  }
+
+  // Real Ticket state classification via ticketStage
+  const safeTicket = { assignments: [], inputs: [], undelivered: [], ...ticket } as Ticket
+  const stage = ticketStage(safeTicket)
+  if (stage.stage === 'ended') {
+    manager.updateState(`ended:${ticket.ended?.outcome ?? 'ended'}`, 'None (task ended)')
+    ;(manager as any).state.task_status = 'closed'
+  } else if (stage.stage === 'person') {
+    if (stage.action === 'delivery') {
+      manager.updateState('person:delivery', ticket.delivery?.error || 'Awaiting delivery recovery')
+    } else if (stage.action === 'answer') {
+      manager.updateState('person:answer', ticket.attention?.question || 'Awaiting operator response')
+    } else if (stage.action === 'review') {
+      manager.updateState('person:review', 'Review ready report')
+    } else if (stage.action === 'blocked') {
+      const rep = latestReport(safeTicket)
+      manager.updateState('person:blocked', rep?.summary || 'Awaiting operator response to unblock')
+    } else if (stage.action === 'failed') {
+      const rep = latestReport(safeTicket)
+      manager.updateState('person:failed', rep?.summary || 'Awaiting operator review of failure')
+    }
+    ;(manager as any).state.task_status = 'open'
+  } else if (stage.stage === 'idle') {
+    const rep = latestReport(safeTicket)
+    const stateDesc = rep?.state === 'waiting' ? 'waiting' : 'idle'
+    const nextAct = rep?.state === 'waiting' ? 'Waiting for trigger' : 'Idle between turns'
+    manager.updateState(stateDesc, nextAct)
+    ;(manager as any).state.task_status = 'open'
+  } else if (stage.stage === 'working') {
+    if (stage.action === 'queued') {
+      manager.updateState('queued', 'Waiting for worker execution')
+    } else {
+      manager.updateState('working', 'Execute assignment')
+    }
+    ;(manager as any).state.task_status = 'open'
+  }
+
+  if (modelContext) {
+    manager.updateModelContext(modelContext)
+  }
+
+  return manager
+}
+
+/**
+ * Resolves or constructs the single authoritative ThreadBriefManager for a Thread.
+ * Preserves verbatim initiating ask from first trigger and canonical thread snapshot/identity.
+ * Evaluates truthful thread state (evaluating, active, dormant, unsubscribed, error).
+ */
+export function resolveThreadBriefManager(
+  store: BriefStoreLike,
+  thread: BriefThreadLike,
+  canonicalFirstTrigger?: BriefTriggerLike | BriefTriggerLike[],
+  modelContext?: ModelContext
+): ThreadBriefManager {
+  const briefKey = `thread-brief:${thread.key}`
+  let persisted: ThreadBriefState | undefined
+  let storageState: BriefStorageState = 'persisted'
+  let readFailed = false
+
+  if (store.get) {
+    try {
+      persisted = store.get<ThreadBriefState>(briefKey)
+    } catch {
+      storageState = 'write_failed'
+      readFailed = true
+    }
+  }
+
+  let manager: ThreadBriefManager
+
+  if (persisted) {
+    manager = ThreadBriefManager.deserialize(persisted)
+    manager.setStorageState(storageState)
+  } else {
+    const initialTrigger = Array.isArray(canonicalFirstTrigger) ? canonicalFirstTrigger[0] : canonicalFirstTrigger
+    let firstTrigger = initialTrigger
+    let originFailed = false
+    if (!firstTrigger) {
+      try {
+        firstTrigger = (store.read?.firstTrigger ? store.read.firstTrigger(thread.key) : undefined)
+          || (store.triggers?.of ? store.triggers.of(thread.key)[0] : undefined)
+      } catch {
+        storageState = 'write_failed'
+        originFailed = true
+      }
+    }
+
+    const raw_request = firstTrigger !== undefined ? firstTrigger.text : 'unavailable'
+    const objective = deriveThreadTitle(store, thread, firstTrigger)
+    const sourceKind = thread.ref?.source
+    const inferred_scope = sourceKind ? [`Execute within ${sourceKind} thread parameters`] : []
+
+    manager = ThreadBriefManager.fromRequest({
+      thread_id: thread.key,
+      raw_request,
+      objective,
+      inferred_scope,
+      inferred_criteria: [],
+      model_context: modelContext,
+    })
+
+    if (readFailed || originFailed) {
+      // Do not initialize or clobber storage on uncertain read / origin error.
+      // An existing record may exist in store. Keep in-memory with write_failed status.
+      storageState = 'write_failed'
+    } else if (!store.set) {
+      storageState = 'non-durable'
+    } else {
+      try {
+        manager.save(store, briefKey)
+        storageState = 'persisted'
+      } catch {
+        storageState = 'write_failed'
+      }
+    }
+    manager.setStorageState(storageState)
+  }
+
+  // 2. REAL TYPES & STATE for Thread
+  if (thread.meta?.pollError) {
+    manager.updateState('error', 'Poll error recorded')
+    ;(manager as any).state.task_status = 'open'
+  } else if (thread.evaluating) {
+    manager.updateState('evaluating', 'Awaiting evaluation result')
+    ;(manager as any).state.task_status = 'open'
+  } else if (thread.pending && thread.pending.length > 0) {
+    manager.updateState('queued', 'Awaiting triage evaluation')
+    ;(manager as any).state.task_status = 'open'
+  } else if (thread.subscriptions && thread.subscriptions.length > 0) {
+    let tickets: any[] = []
+    try {
+      tickets = thread.subscriptions.map(id => store.tickets?.get(id)).filter(Boolean)
+    } catch {
+      storageState = 'write_failed'
+      manager.setStorageState(storageState)
+    }
+    const hasLive = tickets.some(t => !t.ended)
+    if (hasLive) {
+      manager.updateState('active', 'Execute thread tickets')
+      ;(manager as any).state.task_status = 'open'
+    } else if (tickets.length > 0) {
+      manager.updateState('dormant', 'All subscribed tickets ended')
+      ;(manager as any).state.task_status = 'closed'
+    } else {
+      manager.updateState('active', 'Execute thread tickets')
+      ;(manager as any).state.task_status = 'open'
+    }
+  } else {
+    manager.updateState('unsubscribed', 'Awaiting triage or ticket subscription')
+    ;(manager as any).state.task_status = 'open'
+  }
+
+  if (modelContext) {
+    manager.updateModelContext(modelContext)
+  }
+
+  return manager
 }

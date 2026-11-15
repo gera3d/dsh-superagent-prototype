@@ -37,6 +37,7 @@ import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types
 import { PromptConflict, SKILL_NAME, SKILL_PREFIX, TEAM_SECTIONS, builtInBase, builtInParts, defaultPrompts, savePrompts, type Prompts }
   from './prompts.ts'
 import { policyVersion, type Settings as PolicySettings } from '../policy.ts'
+import { resolveTicketBriefManager } from '../core/thread-brief.ts'
 import { seedProfiles } from '../core/specialist-profile.ts'
 import { SettingsConflict, effectiveAdvisorCharacter, type Settings } from './settings.ts'
 import { SetupError, type SetupProblem } from '../setup.ts'
@@ -167,7 +168,8 @@ async function ticketPage(runtime: HttpHost, id: string) {
     ? await runtime.usage.of(workerSessionId(id)) : undefined
   // The `gh` calls the worker made, counted by its shim on disk, so they survive a restart.
   const ghCalls = await readTicketCalls(runtime.machine.stateDir, id)
-  return { ...detail, environment: runtime.configured() ? runtime.ticketEnvironment(ticket) : [], ghCalls, ...usage ? { usage } : {} }
+  const brief = resolveTicketBriefManager(runtime.store, ticket).toView()
+  return { ...detail, environment: runtime.configured() ? runtime.ticketEnvironment(ticket) : [], ghCalls, ...usage ? { usage } : {}, ...brief ? { brief } : {} }
 }
 export type TicketPageView = Awaited<ReturnType<typeof ticketPage>>
 function promptsView(runtime: HttpHost, revision: number | undefined, offset: number) {

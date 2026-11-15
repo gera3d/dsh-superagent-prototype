@@ -1,17 +1,41 @@
 // @vitest-environment jsdom
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   ThreadBriefManager,
+  resolveTicketBriefManager,
+  resolveThreadBriefManager,
   type ThreadBriefCriterion,
   type ThreadBriefState,
   type CriterionEvidence,
+  type BriefStorageState,
+  type BriefStoreLike,
 } from '../src/core/thread-brief.ts'
 import {
   ThreadBriefHeader,
   type ThreadBriefView,
 } from '../src/client/thread-brief-header.tsx'
+import { TicketPage } from '../src/client/ticket.tsx'
+import { ThreadPage } from '../src/client/thread.tsx'
+import { PanelProvider } from '../src/client/provider.tsx'
+import type { T } from '../src/client/text.ts'
+import { Store } from '../src/app/store.ts'
+import { threadDetail } from '../src/app/views/threads.ts'
+import { ticketDetail } from '../src/app/views/tickets.ts'
+import { Sessions, type SessionsHost } from '../src/app/sessions.ts'
+import type { Ticket, Thread, Trigger, Mandate } from '../src/core/index.ts'
+
+const defaultMandate = (scope = 'Test scope'): Mandate => ({
+  strength: 'explicit',
+  policyVersion: 'p12345678',
+  actor: { source: 'web', id: 'u1' },
+  scope,
+  basis: { via: 'addressed', addressed: 'mention' },
+})
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -559,105 +583,931 @@ describe('Thread Brief Integration (ThreadPage, TicketPage & Sessions wiring)', 
     document.body.removeChild(container)
   })
 
-  it('ThreadPage wiring: renders brief header with thread key and title', async () => {
-    const root = createRoot(container)
-    const threadData = {
-      key: 'github:216',
-      title: 'Make thread purpose obvious',
-      evaluating: false,
-      timeline: ['event-1'],
-      source: 'github',
+  const mockT: T = ((key: string, values?: Record<string, unknown>) => {
+    if (values) {
+      return Object.entries(values).reduce((acc, [k, v]) => acc.replace(`{${k}}`, String(v)), key)
     }
-    const threadBrief: ThreadBriefView = {
-      thread_id: threadData.key,
-      raw_original_ask: threadData.title,
-      revision_id: 1,
-      objective: threadData.title,
-      current_state: threadData.evaluating ? 'Evaluating' : (threadData.timeline.length ? 'Active' : 'Initialized'),
-      next_action: threadData.evaluating ? 'Awaiting evaluation result' : 'Execute thread purpose',
-      task_status: 'open',
-      criteria: [
-        { id: 'CRIT-1', description: 'Core functional requirements satisfied and verified', status: 'pending', is_inferred: true, confirmed: false },
-        { id: 'CRIT-2', description: 'Execution artifacts and evidence recorded', status: 'pending', is_inferred: true, confirmed: false },
-      ],
-      scope: [
-        { text: `Execute within ${threadData.source} thread parameters`, is_inferred: false, confirmed: true },
-      ],
-      pending_proposals: [],
-      model_context: { current_model: 'unknown', fallback_events: [] },
-    }
+    return key
+  }) as T
 
-    await act(async () => {
-      root.render(<ThreadBriefHeader brief={threadBrief} />)
-    })
-
-    expect(container.textContent).toContain('Make thread purpose obvious')
-    expect(container.textContent).toContain('Active')
-    expect(container.textContent).toContain('0/2 Criteria')
-
-    await act(async () => {
-      root.unmount()
-    })
-  })
-
-  it('TicketPage wiring: renders brief header with mandate and ended state handling', async () => {
-    const root = createRoot(container)
-    const ticketData = {
-      id: '8db3c6ac5758',
-      title: 'Mandate execution ticket',
-      stage: 'Delivering',
+  function mockTicketPageData(overrides: Record<string, unknown> = {}): any {
+    return {
+      id: 'ticket-1',
+      title: 'Ticket title',
+      stage: 'working',
       state: 'open',
-      ended: false,
-      mandate: { strength: 'autonomous' },
-      threads: [{ key: 'github:216' }],
+      mandate: { strength: 'autonomous', policyVersion: 'p12345678', actor: { source: 'web', id: 'u1' } },
+      basis: { legacy: false, facts: [], policyVersion: 'p1' },
+      channels: [{ key: 'ch-1', title: 'Channel', label: 'Channel', url: 'https://example.com' }],
+      assignments: [],
+      inputs: [],
+      threads: [],
+      environment: [],
+      ghCalls: { total: 0, commands: [] },
+      actions: {},
+      summary: '',
+      updatedAt: '2026-11-15T10:00:00Z',
+      ...overrides,
     }
-    const ticketBrief: ThreadBriefView = {
-      thread_id: ticketData.threads[0]?.key || `ticket:${ticketData.id}`,
-      ticket_id: ticketData.id,
-      raw_original_ask: ticketData.title,
-      revision_id: 1,
-      objective: ticketData.title,
-      current_state: ticketData.stage,
-      next_action: ticketData.state === 'ended' ? 'None (task ended)' : 'Continue ticket execution',
-      task_status: ticketData.ended ? 'closed' : 'open',
-      criteria: [
-        { id: 'CRIT-1', description: 'Mandate requirements delivered and verified', status: ticketData.ended ? 'satisfied' : 'pending', is_inferred: true, confirmed: false },
-        { id: 'CRIT-2', description: 'Inputs processed and outputs delivered', status: ticketData.ended ? 'satisfied' : 'pending', is_inferred: true, confirmed: false },
-      ],
-      scope: [
-        { text: `Execute mandate under ${ticketData.mandate.strength} authorization`, is_inferred: false, confirmed: true },
-      ],
-      pending_proposals: [],
-      model_context: { current_model: 'unknown', fallback_events: [] },
+  }
+
+  function mockThreadPageData(overrides: Record<string, unknown> = {}): any {
+    return {
+      key: 'th-1',
+      title: 'Thread title',
+      source: 'github',
+      createdAt: '2026-11-15T10:00:00Z',
+      lastAt: '2026-11-15T10:00:00Z',
+      subscriptions: [],
+      tickets: [],
+      decisions: [],
+      correlated: [],
+      context: [],
+      timeline: [],
+      ...overrides,
     }
+  }
 
-    await act(async () => {
-      root.render(<ThreadBriefHeader brief={ticketBrief} />)
-    })
+  it('1. ORIGINAL PROVENANCE: threadDetail retrieves earliest trigger outside visible page, missing origin is unavailable, empty origin is preserved', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'thread-brief-prov-'))
+    const store = new Store(join(dir, 'orchestrator.sqlite'))
+    try {
+      const threadKey = 'github:owner/repo:issue:42'
+      const thread: Thread = {
+        key: threadKey,
+        ref: { source: 'github', id: 'owner/repo:issue:42' },
+        createdAt: '2026-11-15T01:00:00Z',
+        subscriptions: [],
+        correlated: [],
+        pending: [],
+        meta: { label: 'Issue 42: Production Regression' },
+      }
+      store.threads.save(thread)
 
-    expect(container.textContent).toContain('Mandate execution ticket')
-    expect(container.textContent).toContain('Delivering')
+      // Save two triggers: t1 is earlier (canonical origin), t2 is newer
+      const t1: Trigger = {
+        id: 'trig-orig-1',
+        at: '2026-11-15T01:00:00Z',
+        source: 'github',
+        human: true,
+        actor: { source: 'github', id: 'reporter' },
+        threads: [thread.ref],
+        text: 'Initial detailed report:\nLine 1: regression bug\nLine 2: reproduction steps',
+        meta: {},
+      }
+      const t2: Trigger = {
+        id: 'trig-orig-2',
+        at: '2026-11-15T02:00:00Z',
+        source: 'github',
+        human: true,
+        actor: { source: 'github', id: 'commenter' },
+        threads: [thread.ref],
+        text: 'Later comment on thread',
+        meta: {},
+      }
+      store.triggers.save(t1)
+      store.triggers.save(t2)
 
-    await act(async () => {
-      root.unmount()
-    })
+      // Paginate threadDetail with limit=1: shown triggers only contain t2, but brief MUST preserve t1
+      const viewHost = {
+        store,
+        sources: { find: () => ({ terms: [], threads: [] }), kind: () => undefined } as any,
+        links: { entries: () => [] } as any,
+      }
+      const detail = threadDetail(viewHost, threadKey, undefined, 1)
+      expect(detail).toBeDefined()
+      expect(detail?.timeline.length).toBe(1)
+      expect(detail?.timeline[0]?.id).toBe('trig-orig-2') // Only newer trigger is shown on this page
+      expect(detail?.brief?.raw_original_ask).toBe('Initial detailed report:\nLine 1: regression bug\nLine 2: reproduction steps') // Earliest trigger retained!
+
+      // Missing origin: ticket with non-existent trigger ID has raw_original_ask explicitly 'unavailable', never title
+      const ticketMissingOrigin: Ticket = {
+        id: 'ticket-no-origin',
+        title: 'Title of ticket without origin',
+        decisionId: 'd1',
+        mandate: defaultMandate('Missing origin scope'),
+        channels: [],
+        assignments: [],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T01:00:00Z',
+        updatedAt: '2026-11-15T01:00:00Z',
+        origin: { triggerId: 'non-existent-trigger-id', triggerIds: [] },
+      }
+      const briefNoOrigin = resolveTicketBriefManager(store, ticketMissingOrigin)
+      expect(briefNoOrigin.rawOriginalAsk).toBe('unavailable')
+      expect(briefNoOrigin.rawOriginalAsk).not.toBe(ticketMissingOrigin.title)
+      expect(briefNoOrigin.toView().objective).toBe('Title of ticket without origin')
+
+      // Empty origin: trigger with genuine empty string is preserved as '', NOT substituted by title
+      const tEmpty: Trigger = {
+        id: 'trig-empty',
+        at: '2026-11-15T01:00:00Z',
+        source: 'github',
+        human: true,
+        actor: { source: 'github', id: 'u' },
+        threads: [thread.ref],
+        text: '',
+        meta: {},
+      }
+      store.triggers.save(tEmpty)
+      const ticketEmptyOrigin: Ticket = {
+        id: 'ticket-empty-origin',
+        title: 'Title with empty origin trigger',
+        decisionId: 'd2',
+        mandate: defaultMandate('Empty origin scope'),
+        channels: [],
+        assignments: [],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T01:00:00Z',
+        updatedAt: '2026-11-15T01:00:00Z',
+        origin: { triggerId: 'trig-empty', triggerIds: ['trig-empty'] },
+      }
+      const briefEmptyOrigin = resolveTicketBriefManager(store, ticketEmptyOrigin)
+      expect(briefEmptyOrigin.rawOriginalAsk).toBe('')
+      expect(briefEmptyOrigin.rawOriginalAsk).not.toBe(ticketEmptyOrigin.title)
+    } finally {
+      store.close()
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 
-  it('Sessions prompt wiring: formats briefContext accurately for ticket injection', () => {
-    const ticket = {
-      id: '8db3c6ac',
-      title: 'Make each thread purpose and definition of done obvious',
-      ended: false,
-      mandate: { strength: 'autonomous' },
-    }
-    const briefContext = (
-      `\n[Brief Rev 1: ${ticket.title}]\n` +
-      `State: ${ticket.ended ? 'ended' : 'open'} | Next: ${ticket.ended ? 'None' : 'Execute assignment'}\n` +
-      `Criteria: [CRIT-1] (pending) Core requirements verified\n`
-    )
+  it('2. REAL TYPES & STATE: classifies person, idle, working, and ended outcomes using core stage models', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'thread-brief-stage-'))
+    const store = new Store(join(dir, 'orchestrator.sqlite'))
+    try {
+      const baseTicket = (id: string): Ticket => ({
+        id,
+        title: `Task ${id}`,
+        decisionId: 'd1',
+        mandate: defaultMandate(`Mandate for ${id}`),
+        channels: [],
+        assignments: [],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T01:00:00Z',
+        updatedAt: '2026-11-15T01:00:00Z',
+        origin: { triggerId: 'trig-1', triggerIds: ['trig-1'] },
+      })
 
-    expect(briefContext).toContain('[Brief Rev 1: Make each thread purpose and definition of done obvious]')
-    expect(briefContext).toContain('State: open | Next: Execute assignment')
-    expect(briefContext).toContain('Criteria: [CRIT-1] (pending) Core requirements verified')
+      // Person: blocked
+      const tBlocked = baseTicket('t-blocked')
+      tBlocked.assignments = [{
+        id: 'a1', state: 'running', createdAt: '2026-11-15T01:00:00Z',
+        report: { state: 'blocked', summary: 'Missing environment secret INFISICAL_TOKEN', at: '2026-11-15T01:05:00Z' },
+      }]
+      const briefBlocked = resolveTicketBriefManager(store, tBlocked).toView()
+      expect(briefBlocked.current_state).toBe('person:blocked')
+      expect(briefBlocked.next_action).toBe('Missing environment secret INFISICAL_TOKEN')
+
+      // Person: failed
+      const tFailed = baseTicket('t-failed')
+      tFailed.assignments = [{
+        id: 'a2', state: 'running', createdAt: '2026-11-15T01:00:00Z',
+        report: { state: 'failed', summary: 'Unit test execution crashed fatally', at: '2026-11-15T01:05:00Z' },
+      }]
+      const briefFailed = resolveTicketBriefManager(store, tFailed).toView()
+      expect(briefFailed.current_state).toBe('person:failed')
+      expect(briefFailed.next_action).toBe('Unit test execution crashed fatally')
+
+      // Person: answer
+      const tAnswer = baseTicket('t-answer')
+      tAnswer.attention = { id: 'att-1', question: 'Should we deploy to staging or prod?' }
+      const briefAnswer = resolveTicketBriefManager(store, tAnswer).toView()
+      expect(briefAnswer.current_state).toBe('person:answer')
+      expect(briefAnswer.next_action).toBe('Should we deploy to staging or prod?')
+
+      // Person: delivery
+      const tDelivery = baseTicket('t-delivery')
+      tDelivery.delivery = { error: 'Webhook payload delivery timed out', at: '2026-11-15T01:05:00Z' }
+      const briefDelivery = resolveTicketBriefManager(store, tDelivery).toView()
+      expect(briefDelivery.current_state).toBe('person:delivery')
+      expect(briefDelivery.next_action).toBe('Webhook payload delivery timed out')
+
+      // Person: review (ready report)
+      const tReview = baseTicket('t-review')
+      tReview.assignments = [{
+        id: 'a3', state: 'running', createdAt: '2026-11-15T01:00:00Z',
+        report: { state: 'ready', summary: 'PR 126 ready for review', at: '2026-11-15T01:05:00Z' },
+      }]
+      const briefReview = resolveTicketBriefManager(store, tReview).toView()
+      expect(briefReview.current_state).toBe('person:review')
+      expect(briefReview.next_action).toBe('Review ready report')
+
+      // Idle: waiting for trigger
+      const tIdle = baseTicket('t-idle')
+      tIdle.assignments = [{
+        id: 'a4', state: 'running', createdAt: '2026-11-15T01:00:00Z',
+        report: { state: 'waiting', summary: 'Awaiting CI check completion', at: '2026-11-15T01:05:00Z' },
+      }]
+      const briefIdle = resolveTicketBriefManager(store, tIdle).toView()
+      expect(briefIdle.current_state).toBe('waiting')
+      expect(briefIdle.next_action).toBe('Waiting for trigger')
+
+      // Core Thread: dormant when all tickets ended
+      const tEnded = baseTicket('t-ended')
+      tEnded.ended = { at: '2026-11-15T02:00:00Z', by: 'executor', outcome: 'completed' }
+      store.tickets.save(tEnded)
+      const threadDormant: Thread = {
+        key: 'github:owner/repo:issue:99',
+        ref: { source: 'github', id: 'owner/repo:issue:99' },
+        createdAt: '2026-11-15T01:00:00Z',
+        subscriptions: ['t-ended'],
+        correlated: [],
+        pending: [],
+        meta: { label: 'Issue 99' },
+      }
+      const briefDormant = resolveThreadBriefManager(store, threadDormant).toView()
+      expect(briefDormant.task_status).toBe('closed')
+      expect(briefDormant.current_state).toBe('dormant')
+    } finally {
+      store.close()
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('3. THREAD IDENTITY & SNAPSHOT PRESERVATION: multiple subscriptions [ended A, live B], evaluating/pending states, and existing thread snapshots are preserved', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'thread-brief-identity-'))
+    const dbPath = join(dir, 'orchestrator.sqlite')
+    let store = new Store(dbPath)
+
+    try {
+      const threadKey = 'github:owner/repo:issue:100'
+      const threadTrigger: Trigger = {
+        id: 'trig-thread-canonical',
+        at: '2026-11-15T00:30:00Z',
+        source: 'github',
+        human: true,
+        actor: { source: 'github', id: 'reporter' },
+        threads: [{ source: 'github', id: 'owner/repo:issue:100' }],
+        text: 'Thread-level canonical prompt text',
+        meta: {},
+      }
+      store.triggers.save(threadTrigger)
+
+      const tEnded: Ticket = {
+        id: 't-ended-1',
+        title: 'Old Finished Ticket',
+        decisionId: 'd1',
+        mandate: defaultMandate('Old task scope'),
+        channels: [{ source: 'github', thread: threadKey, address: {} }],
+        assignments: [{ id: 'a1', state: 'ended', createdAt: '2026-11-15T01:00:00Z' }],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T01:00:00Z',
+        updatedAt: '2026-11-15T01:30:00Z',
+        ended: { outcome: 'completed', at: '2026-11-15T01:30:00Z', by: 'executor' },
+        origin: { triggerId: 'trig-ended', triggerIds: ['trig-ended'] },
+      }
+      store.tickets.save(tEnded)
+
+      const tLive: Ticket = {
+        id: 't-live-2',
+        title: 'Active Followup Ticket',
+        decisionId: 'd2',
+        mandate: defaultMandate('Active task scope'),
+        channels: [{ source: 'github', thread: threadKey, address: {} }],
+        assignments: [{ id: 'a2', state: 'running', createdAt: '2026-11-15T02:00:00Z' }],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T02:00:00Z',
+        updatedAt: '2026-11-15T02:00:00Z',
+        origin: { triggerId: 'trig-live', triggerIds: ['trig-live'] },
+      }
+      store.tickets.save(tLive)
+
+      // Thread with subscription ordering [ended A, live B]
+      const threadMulti: Thread = {
+        key: threadKey,
+        ref: { source: 'github', id: 'owner/repo:issue:100' },
+        createdAt: '2026-11-15T00:30:00Z',
+        subscriptions: ['t-ended-1', 't-live-2'],
+        correlated: [],
+        pending: [],
+        meta: { label: 'Issue 100: Multi-subscription' },
+      }
+      store.threads.save(threadMulti)
+
+      // Thread brief MUST NOT become closed or take A's prompt; it preserves thread identity and active state
+      const briefMulti = resolveThreadBriefManager(store, threadMulti).toView()
+      expect(briefMulti.task_status).toBe('open')
+      expect(briefMulti.current_state).toBe('active')
+      expect(briefMulti.next_action).toBe('Execute thread tickets')
+      expect(briefMulti.raw_original_ask).toBe('Thread-level canonical prompt text')
+
+      // Evaluating thread with ended subscription remains 'evaluating', NOT closed
+      const threadEvaluating: Thread = {
+        ...threadMulti,
+        evaluating: { triggers: 1, strength: 'explicit', deadline: '2026-11-15T03:00:00Z' } as any,
+      }
+      const briefEvaluating = resolveThreadBriefManager(store, threadEvaluating).toView()
+      expect(briefEvaluating.current_state).toBe('evaluating')
+      expect(briefEvaluating.task_status).toBe('open')
+
+      // Existing snapshot preservation: advance thread brief to Rev 2, save, and ensure adding subscription retains Rev 2
+      const threadMgr = resolveThreadBriefManager(store, threadMulti)
+      const prop = threadMgr.stageProposal({
+        description: 'Thread-level verified criteria',
+        proposed_by: 'lead',
+        added_criteria: ['Thread criterion 1'],
+      })
+      threadMgr.confirmProposal(prop.proposal_id, 'lead')
+      expect(threadMgr.revisionId).toBe(2)
+      threadMgr.save(store)
+
+      // Reopening store and adding a new subscription does NOT overwrite the thread's stored snapshot
+      store.close()
+      store = new Store(dbPath)
+
+      const threadWithMoreSubs: Thread = {
+        ...threadMulti,
+        subscriptions: ['t-ended-1', 't-live-2', 't-another-3'],
+      }
+      const reloadedThreadBrief = resolveThreadBriefManager(store, threadWithMoreSubs).toView()
+      expect(reloadedThreadBrief.revision_id).toBe(2)
+      expect(reloadedThreadBrief.criteria[0]?.id).toBe('CRIT-1')
+      expect(reloadedThreadBrief.criteria[0]?.confirmed).toBe(true)
+      expect(reloadedThreadBrief.raw_original_ask).toBe('Thread-level canonical prompt text')
+
+      // Actual threadDetail server view retains preserved Rev 2 snapshot
+      const viewHost = {
+        store,
+        sources: { find: () => ({ terms: [], threads: [] }), kind: () => undefined } as any,
+        links: { entries: () => [] } as any,
+      }
+      const detail = threadDetail(viewHost, threadKey, undefined, 10)
+      expect(detail?.brief?.revision_id).toBe(2)
+      expect(detail?.brief?.raw_original_ask).toBe('Thread-level canonical prompt text')
+    } finally {
+      try { store.close() } catch {}
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('4. TRUTHFUL PERSISTENCE STATUS: surfaces non-durable and write-failed storage states through real resolver path', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'thread-brief-fail-'))
+    const store = new Store(join(dir, 'orchestrator.sqlite'))
+
+    try {
+      const ticket: Ticket = {
+        id: 'ticket-storage-check',
+        title: 'Storage Check Task',
+        decisionId: 'd1',
+        mandate: defaultMandate('Storage check scope'),
+        channels: [{ source: 'github', thread: 'github:owner/repo:issue:1', address: {} }],
+        assignments: [],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T01:00:00Z',
+        updatedAt: '2026-11-15T01:00:00Z',
+        origin: { triggerId: 'trig-1', triggerIds: ['trig-1'] },
+      }
+
+      // Store without set operation: surfaces storage_state = 'non-durable'
+      const storeWithoutSet = {
+        triggers: { get: () => ({ id: 'trig-1', text: 'Prompt without set' }) },
+        get: () => undefined,
+      }
+      const nonDurableBrief = resolveTicketBriefManager(storeWithoutSet as any, ticket).toView()
+      expect(nonDurableBrief.storage_state).toBe('non-durable')
+
+      // Store with failing set operation (closed database): surfaces storage_state = 'write_failed'
+      store.close()
+      const writeFailedBrief = resolveTicketBriefManager(store, ticket).toView()
+      expect(writeFailedBrief.storage_state).toBe('write_failed')
+
+      // Ensure write failure does not claim persisted reload/recovery
+      const storeReopened = new Store(join(dir, 'orchestrator.sqlite'))
+      try {
+        expect(storeReopened.get(`ticket-brief:${ticket.id}`)).toBeUndefined()
+      } finally {
+        storeReopened.close()
+      }
+
+      // FOCUSED REGRESSION 1: Ticket resolver with existing Rev 2 record when read throws but set would succeed
+      const storeReadErr = new Store(join(dir, 'orchestrator-read-err.sqlite'))
+      try {
+        const ticketWithRev2: Ticket = {
+          id: 'ticket-rev2',
+          title: 'Existing Task with Rev 2',
+          decisionId: 'd1',
+          mandate: defaultMandate('Rev 2 task scope'),
+          channels: [{ source: 'github', thread: 'github:owner/repo:issue:200', address: {} }],
+          assignments: [],
+          inputs: [],
+          undelivered: [],
+          createdAt: '2026-11-15T01:00:00Z',
+          updatedAt: '2026-11-15T01:00:00Z',
+          origin: { triggerId: 'trig-rev2', triggerIds: ['trig-rev2'] },
+        }
+        storeReadErr.triggers.save({
+          id: 'trig-rev2',
+          at: '2026-11-15T01:00:00Z',
+          source: 'github',
+          human: true,
+          actor: { source: 'github', id: 'operator' },
+          threads: [{ source: 'github', id: 'owner/repo:issue:200' }],
+          text: 'Original authoritative ask from user',
+          meta: {},
+        })
+        storeReadErr.tickets.save(ticketWithRev2)
+
+        // Create and advance initial ticket brief to Rev 2
+        const initialTicketMgr = resolveTicketBriefManager(storeReadErr, ticketWithRev2)
+        const prop = initialTicketMgr.stageProposal({
+          proposed_by: 'lead',
+          description: 'Updated objective',
+          added_criteria: ['Authoritative criterion A'],
+        })
+        initialTicketMgr.confirmProposal(prop.proposal_id, 'lead')
+        expect(initialTicketMgr.revisionId).toBe(2)
+        initialTicketMgr.save(storeReadErr)
+
+        // Verify Rev 2 record is in store
+        const storedSnapshot = storeReadErr.get<ThreadBriefState>(`ticket-brief:${ticketWithRev2.id}`)
+        expect(storedSnapshot?.revision_id).toBe(2)
+        expect(storedSnapshot?.revision_history.length).toBe(1)
+
+        // Intermittent store wrapper: store.get throws, but store.set would succeed
+        let throwOnGet = true
+        const ticketSetSpy = vi.fn((k: string, v: any) => storeReadErr.set(k, v))
+        const intermittentTicketStore: BriefStoreLike = {
+          triggers: storeReadErr.triggers,
+          tickets: storeReadErr.tickets,
+          get: (key: string) => {
+            if (throwOnGet) throw new Error('Simulated transient SQLite disk read failure')
+            return storeReadErr.get(key)
+          },
+          set: ticketSetSpy,
+        }
+
+        // Must NOT throw, must NOT call set, must NOT clobber stored Rev 2 record
+        const failedReadBrief = resolveTicketBriefManager(intermittentTicketStore, ticketWithRev2).toView()
+        expect(failedReadBrief.storage_state).toBe('write_failed')
+        expect(ticketSetSpy).not.toHaveBeenCalled()
+
+        // Verify underlying record in SQLite Store remains unmolested
+        const intactSnapshot = storeReadErr.get<ThreadBriefState>(`ticket-brief:${ticketWithRev2.id}`)
+        expect(intactSnapshot?.revision_id).toBe(2)
+        expect(intactSnapshot?.raw_original_ask).toBe('Original authoritative ask from user')
+        expect(intactSnapshot?.criteria[0]?.description).toBe('Authoritative criterion A')
+        expect(intactSnapshot?.revision_history.length).toBe(1)
+
+        // Later successful reread recovers original ask, revision 2, criteria, and history
+        throwOnGet = false
+        const recoveredTicketMgr = resolveTicketBriefManager(intermittentTicketStore, ticketWithRev2)
+        const recoveredTicketBrief = recoveredTicketMgr.toView()
+        expect(recoveredTicketBrief.storage_state).toBe('persisted')
+        expect(recoveredTicketBrief.revision_id).toBe(2)
+        expect(recoveredTicketBrief.raw_original_ask).toBe('Original authoritative ask from user')
+        expect(recoveredTicketBrief.criteria[0]?.description).toBe('Authoritative criterion A')
+        expect(recoveredTicketMgr.getState().revision_history.length).toBe(1)
+      } finally {
+        storeReadErr.close()
+      }
+
+      // FOCUSED REGRESSION 2: Thread resolver with existing Rev 2 record when read throws but set would succeed
+      const storeThreadReadErr = new Store(join(dir, 'orchestrator-thread-read-err.sqlite'))
+      try {
+        const threadKey = 'github:owner/repo:issue:300'
+        storeThreadReadErr.triggers.save({
+          id: 'trig-th-rev2',
+          at: '2026-11-15T01:00:00Z',
+          source: 'github',
+          human: true,
+          actor: { source: 'github', id: 'operator' },
+          threads: [{ source: 'github', id: 'owner/repo:issue:300' }],
+          text: 'Original thread ask from trigger',
+          meta: {},
+        })
+        const threadWithRev2: Thread = {
+          key: threadKey,
+          ref: { source: 'github', id: 'owner/repo:issue:300' },
+          createdAt: '2026-11-15T01:00:00Z',
+          subscriptions: [],
+          correlated: [],
+          pending: [],
+          meta: { label: 'Thread Rev 2' },
+        }
+
+        // Create and advance initial thread brief to Rev 2
+        const initialThreadMgr = resolveThreadBriefManager(storeThreadReadErr, threadWithRev2)
+        const threadProp = initialThreadMgr.stageProposal({
+          proposed_by: 'lead',
+          description: 'Updated thread objective',
+          added_criteria: ['Thread authoritative criterion X'],
+        })
+        initialThreadMgr.confirmProposal(threadProp.proposal_id, 'lead')
+        expect(initialThreadMgr.revisionId).toBe(2)
+        initialThreadMgr.save(storeThreadReadErr)
+
+        // Verify Rev 2 record is in store
+        const storedThreadSnapshot = storeThreadReadErr.get<ThreadBriefState>(`thread-brief:${threadKey}`)
+        expect(storedThreadSnapshot?.revision_id).toBe(2)
+        expect(storedThreadSnapshot?.revision_history.length).toBe(1)
+
+        // Intermittent store wrapper: store.get throws, but store.set would succeed
+        let throwOnThreadGet = true
+        const threadSetSpy = vi.fn((k: string, v: any) => storeThreadReadErr.set(k, v))
+        const intermittentThreadStore: BriefStoreLike = {
+          triggers: storeThreadReadErr.triggers,
+          read: storeThreadReadErr.read,
+          tickets: storeThreadReadErr.tickets,
+          get: (key: string) => {
+            if (throwOnThreadGet) throw new Error('Simulated transient SQLite disk read failure')
+            return storeThreadReadErr.get(key)
+          },
+          set: threadSetSpy,
+        }
+
+        // Must NOT throw, must NOT call set, must NOT clobber stored Rev 2 record
+        const failedReadThreadBrief = resolveThreadBriefManager(intermittentThreadStore, threadWithRev2).toView()
+        expect(failedReadThreadBrief.storage_state).toBe('write_failed')
+        expect(threadSetSpy).not.toHaveBeenCalled()
+
+        // Verify underlying record in SQLite Store remains unmolested
+        const intactThreadSnapshot = storeThreadReadErr.get<ThreadBriefState>(`thread-brief:${threadKey}`)
+        expect(intactThreadSnapshot?.revision_id).toBe(2)
+        expect(intactThreadSnapshot?.raw_original_ask).toBe('Original thread ask from trigger')
+        expect(intactThreadSnapshot?.criteria[0]?.description).toBe('Thread authoritative criterion X')
+        expect(intactThreadSnapshot?.revision_history.length).toBe(1)
+
+        // Later successful reread recovers original ask, revision 2, criteria, and history
+        throwOnThreadGet = false
+        const recoveredThreadMgr = resolveThreadBriefManager(intermittentThreadStore, threadWithRev2)
+        const recoveredThreadBrief = recoveredThreadMgr.toView()
+        expect(recoveredThreadBrief.storage_state).toBe('persisted')
+        expect(recoveredThreadBrief.revision_id).toBe(2)
+        expect(recoveredThreadBrief.raw_original_ask).toBe('Original thread ask from trigger')
+        expect(recoveredThreadBrief.criteria[0]?.description).toBe('Thread authoritative criterion X')
+        expect(recoveredThreadMgr.getState().revision_history.length).toBe(1)
+      } finally {
+        storeThreadReadErr.close()
+      }
+    } finally {
+      try { store.close() } catch {}
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('5. ACTUAL SESSIONS WIRING: captures registered systemPrompt.section callback from Sessions.decorate', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'thread-brief-sessions-'))
+    const store = new Store(join(dir, 'orchestrator.sqlite'))
+    try {
+      const ticket: Ticket = {
+        id: 'ticket-sess-real',
+        title: 'Production Feature Implementation',
+        decisionId: 'd1',
+        mandate: defaultMandate('Must not edit executor'),
+        channels: [{ source: 'github', thread: 'github:owner/repo:issue:1', address: {} }],
+        assignments: [{ id: 'a1', state: 'running', createdAt: '2026-11-15T01:00:00Z' }],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T01:00:00Z',
+        updatedAt: '2026-11-15T01:00:00Z',
+        origin: { triggerId: 'trig-sess', triggerIds: ['trig-sess'] },
+      }
+      store.tickets.save(ticket)
+      store.triggers.save({
+        id: 'trig-sess',
+        at: '2026-11-15T01:00:00Z',
+        source: 'github',
+        human: true,
+        actor: { source: 'github', id: 'user' },
+        threads: [{ source: 'github', id: 'thread-1' }],
+        text: 'Implement authoritative brief in Sessions callback',
+        meta: {},
+      })
+
+      // Advance brief to Rev 2 with confirmed criteria in Store
+      const initialTicketMgr = resolveTicketBriefManager(store, ticket)
+      const prop = initialTicketMgr.stageProposal({
+        proposed_by: 'lead',
+        description: 'Confirm strict scope',
+        added_criteria: ['Must not edit executor'],
+      })
+      initialTicketMgr.confirmProposal(prop.proposal_id, 'lead')
+      expect(initialTicketMgr.revisionId).toBe(2)
+      initialTicketMgr.save(store)
+
+      // Setup fault wrapper for transient get failure on Sessions host
+      let transientGetFail = false
+      const sessionsSetSpy = vi.fn((k: string, v: any) => store.set(k, v))
+      const faultStore: any = {
+        ...store,
+        get: (key: string) => {
+          if (transientGetFail) throw new Error('Simulated transient SQLite disk read failure')
+          return store.get(key)
+        },
+        set: sessionsSetSpy,
+        triggers: store.triggers,
+        tickets: store.tickets,
+        threads: store.threads,
+        settings: () => store.settings(),
+        read: store.read,
+      }
+
+      // Setup Sessions with mock host
+      const mockEffects = {
+        handle: vi.fn(),
+        enqueue: vi.fn(),
+        idle: vi.fn(),
+        pending: vi.fn(),
+      }
+      const mockPrompts = {
+        current: () => ({ revision: 1, config: { scope: 'test' } }),
+        version: () => ({ revision: 1, config: { scope: 'test' } }),
+        compose: (_config: any, role: string, _env: any) => `[Composed prompt for ${role}]`,
+        skills: () => [],
+      }
+      const mockContext = {
+        on: vi.fn(),
+        inject: vi.fn().mockReturnValue(Promise.resolve()),
+        agents: new Map(),
+        logger: { warn: vi.fn() },
+      } as any
+
+      const sessionsHost: SessionsHost = {
+        context: mockContext,
+        store: faultStore,
+        prompts: mockPrompts as any,
+        effects: mockEffects as any,
+        health: { set: vi.fn() } as any,
+        masterId: 'master-session',
+        lifetime: new AbortController().signal,
+        closing: () => false,
+        environment: () => [],
+        tools: () => [],
+      }
+
+      const sessions = new Sessions(sessionsHost)
+
+      // Decorate worker agent for this ticket and capture registered systemPrompt section callback
+      let registeredSection: any = null
+      const workerAgent: any = {
+        id: `worker-${ticket.id}`,
+        status: 'idle',
+        session: {
+          id: `worker-${ticket.id}`,
+          snapshotEvents: () => [],
+          requestHeader: () => ({ config: { provider: 'anthropic', model: 'claude-3-5-sonnet' } }),
+        },
+        ctx: {
+          on: vi.fn().mockReturnValue(() => {}),
+          tools: {
+            get: vi.fn().mockReturnValue(undefined),
+            restrict: vi.fn().mockReturnValue(() => {}),
+            guard: vi.fn().mockReturnValue(() => {}),
+          },
+          systemPrompt: {
+            section: (spec: any) => {
+              registeredSection = spec
+              return () => {}
+            },
+          },
+          inject: vi.fn().mockReturnValue(Promise.resolve({ dispose: () => Promise.resolve() })),
+        },
+      }
+
+      await (sessions as any).decorate(workerAgent)
+      expect(registeredSection).not.toBeNull()
+      expect(registeredSection.name).toBe('dsh-superagent-policy')
+
+      // 1. Initial healthy registered callback: produces active Rev 2 prompt output
+      const healthyPrompt = registeredSection.text({ signal: undefined })
+      expect(healthyPrompt).toContain('[Active Thread Brief Rev 2]')
+      expect(healthyPrompt).toContain('Objective: Production Feature Implementation')
+      expect(healthyPrompt).toContain('[CRIT-1] (confirmed) (pending): Must not edit executor')
+      expect(healthyPrompt).not.toContain('Storage State: write_failed')
+
+      // 2. Transient get failure: zero writes, worker told authoritative brief is unavailable/non-durable
+      transientGetFail = true
+      const failedPrompt = registeredSection.text({ signal: undefined })
+      expect(failedPrompt).toContain('[Active Thread Brief (Ephemeral Fallback - Storage: write_failed)]')
+      expect(failedPrompt).toContain('Storage State: write_failed (Authoritative revision and criteria unavailable; non-durable fallback)')
+      expect(failedPrompt).toContain('Objective: Production Feature Implementation')
+      expect(failedPrompt).toContain('Current State: working')
+      expect(failedPrompt).toContain('Next Action: Execute assignment')
+      expect(sessionsSetSpy).not.toHaveBeenCalled()
+
+      // 3. Successful reread: zero clobber of SQLite store, restores real Rev 2 context
+      transientGetFail = false
+      const recoveredPrompt = registeredSection.text({ signal: undefined })
+      expect(recoveredPrompt).toContain('[Active Thread Brief Rev 2]')
+      expect(recoveredPrompt).toContain('[CRIT-1] (confirmed) (pending): Must not edit executor')
+      expect(recoveredPrompt).not.toContain('Storage State: write_failed')
+    } finally {
+      store.close()
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('6. REAL COMPONENT WIRING: renders TicketPage AND ThreadPage via real PanelProvider consuming backend Store-generated views', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'thread-brief-comp-store-'))
+    const store = new Store(join(dir, 'orchestrator.sqlite'))
+    const root = createRoot(container)
+
+    try {
+      const threadKey = 'github:owner/repo:issue:500'
+      const ticketId = 'ticket-comp-real'
+
+      store.triggers.save({
+        id: 'trig-th-comp',
+        at: '2026-11-15T01:00:00Z',
+        source: 'github',
+        human: true,
+        actor: { source: 'github', id: 'operator' },
+        threads: [{ source: 'github', id: 'owner/repo:issue:500' }],
+        text: 'Verbatim original thread prompt from backend store',
+        meta: {},
+      })
+
+      store.triggers.save({
+        id: 'trig-tk-comp',
+        at: '2026-11-15T01:05:00Z',
+        source: 'github',
+        human: true,
+        actor: { source: 'github', id: 'operator' },
+        threads: [{ source: 'github', id: 'owner/repo:issue:500' }],
+        text: 'Verbatim original ticket prompt from backend store',
+        meta: {},
+      })
+
+      const ticket: Ticket = {
+        id: ticketId,
+        title: 'Backend Ticket Component Display',
+        decisionId: 'd1',
+        mandate: defaultMandate('Ticket scope line from mandate'),
+        channels: [{ source: 'github', thread: threadKey, address: {} }],
+        assignments: [{ id: 'a1', state: 'running', createdAt: '2026-11-15T01:10:00Z' }],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T01:10:00Z',
+        updatedAt: '2026-11-15T01:10:00Z',
+        origin: { triggerId: 'trig-tk-comp', triggerIds: ['trig-tk-comp'] },
+      }
+      store.tickets.save(ticket)
+
+      const thread: Thread = {
+        key: threadKey,
+        ref: { source: 'github', id: 'owner/repo:issue:500' },
+        createdAt: '2026-11-15T01:00:00Z',
+        subscriptions: [ticketId],
+        correlated: [],
+        pending: [],
+        meta: { label: 'Backend Thread Component Display' },
+      }
+      store.threads.save(thread)
+
+      // Advance both ticket brief and thread brief to Rev 2 with confirmed criteria in Store
+      const initialTicketMgr = resolveTicketBriefManager(store, ticket)
+      const tkProp = initialTicketMgr.stageProposal({
+        proposed_by: 'operator',
+        description: 'Add ticket criterion',
+        added_criteria: ['Ticket criterion Rev2 confirmed'],
+      })
+      initialTicketMgr.confirmProposal(tkProp.proposal_id, 'lead')
+      expect(initialTicketMgr.revisionId).toBe(2)
+      initialTicketMgr.save(store)
+
+      const initialThreadMgr = resolveThreadBriefManager(store, thread)
+      const thProp = initialThreadMgr.stageProposal({
+        proposed_by: 'operator',
+        description: 'Add thread criterion',
+        added_criteria: ['Thread criterion Rev2 confirmed'],
+      })
+      initialThreadMgr.confirmProposal(thProp.proposal_id, 'lead')
+      expect(initialThreadMgr.revisionId).toBe(2)
+      initialThreadMgr.save(store)
+
+      // Bounded fault wrapper: simulate transient read failure without clobbering store
+      let faultGet = true
+      const storeSetSpy = vi.fn((k: string, v: any) => store.set(k, v))
+      const faultStore: any = {
+        ...store,
+        get: (k: string) => {
+          if (faultGet) throw new Error('Simulated transient SQLite disk read error')
+          return store.get(k)
+        },
+        set: storeSetSpy,
+        read: store.read,
+        triggers: store.triggers,
+        tickets: store.tickets,
+        threads: store.threads,
+        settings: () => store.settings(),
+      }
+
+      // Query actual backend views generated by Store through fault wrapper
+      const viewHost: any = {
+        store: faultStore,
+        sources: { find: () => ({ terms: [], threads: [] }), kind: () => undefined },
+        links: () => ({ label: 'Channel', url: 'https://example.com' }),
+      }
+
+      const call = vi.fn().mockImplementation((route: string) => {
+        if (route === 'GET state') {
+          return Promise.resolve({ load: { running: 1 } })
+        }
+        if (route === 'GET tickets/:id') {
+          const detail = ticketDetail(viewHost, ticketId)
+          const ticketObj = faultStore.tickets.get(ticketId)
+          const brief = resolveTicketBriefManager(faultStore, ticketObj).toView()
+          return Promise.resolve({ ...detail, environment: [], ghCalls: { total: 0, commands: [] }, brief })
+        }
+        if (route === 'GET threads/:key') {
+          const detail = threadDetail(viewHost, threadKey, undefined, 10)
+          return Promise.resolve(detail)
+        }
+        return Promise.resolve({})
+      })
+
+      // PHASE 1: Transient failed-read boundary (faultGet = true)
+      // Both ThreadPage and TicketPage consume actual backend Store-generated failed-read snapshots
+      // Zero writes / no clobber guaranteed
+      await act(async () => {
+        root.render(
+          <PanelProvider t={mockT} call={call}>
+            <TicketPage key="tk-failed" id={ticketId} />
+          </PanelProvider>
+        )
+      })
+      await act(async () => {
+        await Promise.resolve()
+        await new Promise(r => setTimeout(r, 10))
+      })
+      expect(container.textContent).toContain('storage: write-failed')
+      expect(storeSetSpy).not.toHaveBeenCalled()
+
+      await act(async () => {
+        root.render(
+          <PanelProvider t={mockT} call={call}>
+            <ThreadPage key="th-failed" id={threadKey} />
+          </PanelProvider>
+        )
+      })
+      await act(async () => {
+        await Promise.resolve()
+        await new Promise(r => setTimeout(r, 10))
+      })
+      expect(container.textContent).toContain('storage: write-failed')
+      expect(storeSetSpy).not.toHaveBeenCalled()
+
+      // PHASE 2: Recovered authoritative Store read (faultGet = false)
+      // Both ThreadPage and TicketPage consume recovered Rev 2 backend Store snapshots
+      faultGet = false
+
+      await act(async () => {
+        root.render(
+          <PanelProvider t={mockT} call={call}>
+            <TicketPage key="tk-recovered" id={ticketId} />
+          </PanelProvider>
+        )
+      })
+      await act(async () => {
+        await Promise.resolve()
+        await new Promise(r => setTimeout(r, 10))
+      })
+      expect(container.textContent).toContain('Backend Ticket Component Display')
+      expect(container.textContent).toContain('Rev 2')
+      expect(container.textContent).not.toContain('storage: write-failed')
+
+      const ticketToggleBtn = container.querySelector('[data-testid="brief-toggle-btn"]') as HTMLButtonElement
+      expect(ticketToggleBtn).not.toBeNull()
+      await act(async () => {
+        ticketToggleBtn.click()
+      })
+      expect(container.textContent).toContain('Ticket criterion Rev2 confirmed')
+      expect(container.textContent).toContain('Verbatim original ticket prompt from backend store')
+
+      await act(async () => {
+        root.render(
+          <PanelProvider t={mockT} call={call}>
+            <ThreadPage key="th-recovered" id={threadKey} />
+          </PanelProvider>
+        )
+      })
+      await act(async () => {
+        await Promise.resolve()
+        await new Promise(r => setTimeout(r, 10))
+      })
+      expect(container.textContent).toContain('Backend Thread Component Display')
+      expect(container.textContent).toContain('Rev 2')
+      expect(container.textContent).not.toContain('storage: write-failed')
+
+      const threadToggleBtn = container.querySelector('[data-testid="brief-toggle-btn"]') as HTMLButtonElement
+      expect(threadToggleBtn).not.toBeNull()
+      await act(async () => {
+        threadToggleBtn.click()
+      })
+      expect(container.textContent).toContain('Thread criterion Rev2 confirmed')
+      expect(container.textContent).toContain('Verbatim original thread prompt from backend store')
+    } finally {
+      await act(async () => {
+        root.unmount()
+      })
+      try { store.close() } catch {}
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 })

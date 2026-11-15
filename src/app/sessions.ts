@@ -14,6 +14,7 @@ import type { SessionId } from '@deepseek-ai/dsh-session'
 import { dirname } from 'node:path'
 import { z } from 'zod'
 import { key, liveTicket, type Ticket } from '../core/index.ts'
+import { resolveTicketBriefManager } from '../core/thread-brief.ts'
 import { currentTurnOf, mandateInstructions, ticketOfSession } from '../executor/dsh.ts'
 import type { HealthEntry } from '../infra/health.ts'
 import type { RoleModel } from '../policy.ts'
@@ -333,11 +334,10 @@ export class Sessions {
       const version = this.promptFor(agent, context.signal !== undefined)
       const current = ticket && host.store.tickets.get(ticket.id)
       const currentTurn = current ? currentTurnOf(agent) : undefined
-      const briefContext = current ? (
-        `\n[Brief Rev 1: ${current.title}]\n` +
-        `State: ${current.ended ? 'ended' : 'open'} | Next: ${current.ended ? 'None' : 'Execute assignment'}\n` +
-        `Criteria: [CRIT-1] (pending) Core requirements verified\n`
-      ) : ''
+      const reqConfig = agent.session.requestHeader?.()?.config as RoleModel | undefined
+      const modelContext = reqConfig ? { current_model: `${reqConfig.provider}/${reqConfig.model}` } : undefined
+      const briefManager = current ? resolveTicketBriefManager(host.store, current, modelContext) : undefined
+      const briefContext = briefManager ? `\n${briefManager.composeContextPrompt()}\n` : ''
       const composed = host.prompts.compose(version.config, master ? 'orchestrator' : 'worker', current ? host.environment(current, currentTurn) : undefined)
       return `[dsh-superagent prompt revision ${version.revision}]\n${composed}\n${briefContext}${current ? mandateInstructions(current.mandate) : ''}`
     }, ...(master ? { complete: true } : {}) }))
