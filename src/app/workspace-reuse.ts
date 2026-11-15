@@ -393,42 +393,7 @@ export class DependencyPoolManager {
       return { ok: false, reason: `Dependency pool node_modules target escapes allowed boundary ${allowedRoot}` }
     }
 
-    // 3. Immutability & Qualification proof: require a trusted qualification provider or validated receipt
-    if (options?.provider) {
-      const res = options.provider.qualify(pool, key, allowedRoot)
-      if (!res.ok) {
-        return { ok: false, reason: `Trusted provider qualification rejected: ${res.reason}` }
-      }
-      return { ok: true, pool: { ...pool, receipt: res.receipt } }
-    }
-
-    if (pool.receipt) {
-      const r = pool.receipt
-      if (r.compatibilityKey !== key) {
-        return { ok: false, reason: `Pool receipt key ${r.compatibilityKey} does not match requested key ${key}` }
-      }
-      if (r.resolvedRootPath !== realpathSync(pool.rootPath)) {
-        return { ok: false, reason: 'Pool receipt resolved root does not match verified disk path' }
-      }
-      if (r.resolvedNodeModulesPath !== realNmTarget) {
-        return { ok: false, reason: 'Pool receipt resolved node_modules does not match verified target' }
-      }
-      if (r.isReadOnly !== true) {
-        return { ok: false, reason: 'Pool receipt does not verify read-only immutability' }
-      }
-      if (!r.contentDigest || r.contentDigest.trim() === '') {
-        return { ok: false, reason: 'Pool receipt lacks verified content digest' }
-      }
-      if (!r.verifiedBy || r.verifiedBy.trim() === '') {
-        return { ok: false, reason: 'Pool receipt lacks verified qualification authority' }
-      }
-      if (!r.verifiedAt || isNaN(Date.parse(r.verifiedAt)) || !/^\d{4}-\d{2}-\d{2}T/.test(r.verifiedAt)) {
-        return { ok: false, reason: 'Pool receipt has invalid or non-ISO verifiedAt date' }
-      }
-      return { ok: true, pool: { ...pool } }
-    }
-
-    // A synthetic writable directory with caller-asserted strings alone is NOT qualification
+    // 3. Immutability check on disk: writable directory must fail closed
     let isWritable = false
     try {
       accessSync(pool.rootPath, constants.W_OK)
@@ -441,16 +406,17 @@ export class DependencyPoolManager {
       return { ok: false, reason: 'Dependency pool directory is writable on disk without verified read-only isolation' }
     }
 
-    if (!pool.attestation || pool.attestation.isImmutable !== true) {
-      return { ok: false, reason: 'Dependency pool lacks verified immutable content attestation; ineligible for reuse' }
-    }
-    if (!pool.attestation.contentDigest || pool.attestation.contentDigest.trim() === '' ||
-        !pool.attestation.verifiedAt || isNaN(Date.parse(pool.attestation.verifiedAt)) || !/^\d{4}-\d{2}-\d{2}T/.test(pool.attestation.verifiedAt) ||
-        !pool.attestation.verifiedBy || pool.attestation.verifiedBy.trim() === '') {
-      return { ok: false, reason: 'Dependency pool attestation is incomplete, unverified, or has invalid date format' }
+    // 4. Require a trusted independent qualification provider; untrusted caller-supplied receipts are ineligible
+    if (!options?.provider) {
+      return { ok: false, reason: 'Dependency pool qualification requires a trusted independent read-only qualification provider; untrusted caller-supplied receipts or registrations are ineligible' }
     }
 
-    return { ok: false, reason: 'Dependency pool lacks trusted read-only qualification provider or validated receipt bound to compatibility key; caller-asserted labels are ineligible' }
+    const res = options.provider.qualify(pool, key, allowedRoot)
+    if (!res.ok) {
+      return { ok: false, reason: `Trusted provider qualification rejected: ${res.reason}` }
+    }
+
+    return { ok: true, pool: { ...pool, receipt: res.receipt } }
   }
 
   /**

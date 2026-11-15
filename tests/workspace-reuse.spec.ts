@@ -1,4 +1,4 @@
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -305,27 +305,66 @@ describe('workspace-reuse', () => {
           expect(q1.reason).toMatch(/lacks verified immutable content attestation|lacks trusted read-only qualification provider|directory is writable/)
         }
 
-        // 2. Pool with validated receipt bound to exact key and disk paths succeeds
+        // 2. Pool with trusted qualification provider and read-only mode succeeds
+        const mockProvider = {
+          qualify: (_pool: unknown, k: string, _allowed: string) => ({
+            ok: true as const,
+            receipt: {
+              compatibilityKey: k,
+              resolvedRootPath: realpathSync(tempRoot),
+              resolvedNodeModulesPath: realpathSync(nmDir),
+              contentDigest: 'digest-1234',
+              verifiedAt: new Date().toISOString(),
+              verifiedBy: 'trusted-harness-provider',
+              isReadOnly: true,
+            },
+          }),
+        }
+        chmodSync(tempRoot, 0o500)
+        const q2 = manager.qualifyPoolForReuse(key, tempRoot, { provider: mockProvider })
+        expect(q2.ok).toBe(true)
+      } finally {
+        try { chmodSync(tempRoot, 0o700) } catch {}
+        rmSync(tempRoot, { recursive: true, force: true })
+      }
+    })
+
+    // Regression for Forged Receipt on Writable Directory:
+    it('fails closed when an untrusted pool registers a matching receipt on a writable directory without a qualification provider', () => {
+      const manager = new DependencyPoolManager()
+      const allowedBase = mkdtempSync(join(tmpdir(), 'forged-pool-'))
+      try {
+        const poolRoot = join(allowedBase, 'pool')
+        const nmDir = join(poolRoot, 'node_modules')
+        mkdirSync(nmDir, { recursive: true })
+
+        const key = 'dep-forged-key'
+        // Register matching receipt fields on a writable synthetic directory
         manager.registerPool({
-          id: 'pool-1',
+          id: 'pool-forged',
           key,
-          rootPath: tempRoot,
+          rootPath: poolRoot,
           isImmutable: true,
           state: 'ready',
           receipt: {
             compatibilityKey: key,
-            resolvedRootPath: realpathSync(tempRoot),
+            resolvedRootPath: realpathSync(poolRoot),
             resolvedNodeModulesPath: realpathSync(nmDir),
-            contentDigest: 'digest-1234',
+            contentDigest: 'forged-digest-1234',
             verifiedAt: new Date().toISOString(),
-            verifiedBy: 'test-harness',
+            verifiedBy: 'untrusted-caller',
             isReadOnly: true,
           },
         })
-        const q2 = manager.qualifyPoolForReuse(key, tempRoot)
-        expect(q2.ok).toBe(true)
+
+        // With NO qualification provider, qualifyPoolForReuse strictly fails closed
+        const res = manager.qualifyPoolForReuse(key, allowedBase)
+        expect(res.ok).toBe(false)
+        if (!res.ok) {
+          expect(res.reason).toMatch(/directory is writable on disk|requires a trusted independent read-only qualification provider/)
+        }
       } finally {
-        rmSync(tempRoot, { recursive: true, force: true })
+        rmSync(allowedBase, { recursive: true, force: true })
       }
     })
 
@@ -405,9 +444,9 @@ describe('workspace-reuse', () => {
     it('admits a pool when qualified by a trusted qualification provider', () => {
       const manager = new DependencyPoolManager()
       const allowedBase = mkdtempSync(join(tmpdir(), 'provider-pool-'))
+      const poolRoot = join(allowedBase, 'pool')
+      const nmDir = join(poolRoot, 'node_modules')
       try {
-        const poolRoot = join(allowedBase, 'pool')
-        const nmDir = join(poolRoot, 'node_modules')
         mkdirSync(nmDir, { recursive: true })
 
         const key = 'dep-provider-verified'
@@ -434,9 +473,13 @@ describe('workspace-reuse', () => {
           }),
         }
 
+        chmodSync(poolRoot, 0o500)
         const res = manager.qualifyPoolForReuse(key, allowedBase, { provider: mockProvider })
         expect(res.ok).toBe(true)
       } finally {
+        try { chmodSync(poolRoot, 0o777) } catch {}
+        try { chmodSync(nmDir, 0o777) } catch {}
+        try { chmodSync(allowedBase, 0o777) } catch {}
         rmSync(allowedBase, { recursive: true, force: true })
       }
     })
