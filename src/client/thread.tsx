@@ -6,6 +6,7 @@ import { decisionMark } from './marks.ts'
 import { useAction, usePanel } from './provider.tsx'
 import { DecisionLine, Earlier, TicketLine, automatedRuns } from './rows.tsx'
 import { actorName, errorText, readableMarkers, reasonLabel, valueLabel, when, type T } from './text.ts'
+import { ThreadBriefHeader, type ThreadBriefView } from './thread-brief-header.tsx'
 import { ActionLink, ClampText, ConfirmButton, Hint, LoadState, PageHead, Section, When } from './widgets.tsx'
 
 /** Disposition tags for a Trigger; omits `ignore` (the common case) and suppresses fanout tags when every target Ticket is already listed in `subscribed`. */
@@ -125,8 +126,27 @@ export function ThreadPage({ id, target }: { id: string; target?: string }) {
     if (result.context_delivery === 'pending') notify(t('unsubscribePending'))
     await reload()
   }
+  const threadBrief: ThreadBriefView = {
+    thread_id: data.key,
+    raw_original_ask: data.title,
+    revision_id: 1,
+    objective: data.title,
+    current_state: data.evaluating ? 'Evaluating' : (data.timeline.length ? 'Active' : 'Initialized'),
+    next_action: data.evaluating ? 'Awaiting evaluation result' : 'Execute thread purpose',
+    task_status: 'open',
+    criteria: [
+      { id: 'CRIT-1', description: 'Core functional requirements satisfied and verified', status: 'pending', is_inferred: true, confirmed: false },
+      { id: 'CRIT-2', description: 'Execution artifacts and evidence recorded', status: 'pending', is_inferred: true, confirmed: false },
+    ],
+    scope: [
+      { text: `Execute within ${data.source} thread parameters`, is_inferred: false, confirmed: true },
+    ],
+    pending_proposals: [],
+    model_context: { current_model: 'unknown', fallback_events: [] },
+  }
   return <>
     <PageHead title={readableMarkers(t, data.title)}>{data.url && <ActionLink href={data.url}>{t('openOriginal')}</ActionLink>}</PageHead>
+    <ThreadBriefHeader brief={threadBrief} />
     {error && <LoadState error={error} loading={false} />}
     <div className="dt-row-meta dt-status-line">
       <span>{valueLabel(t, 'source', data.source)}</span><span>{t('threadLatest',

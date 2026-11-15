@@ -8,6 +8,7 @@ import { JobUsageSummary } from './job-usage.tsx'
 import { settingsRoute } from './route.ts'
 import { Earlier, ThreadLine, automatedRuns } from './rows.tsx'
 import { actorName, localized, readableMarkers, reasonLabel, valueLabel, when } from './text.ts'
+import { ThreadBriefHeader, type ThreadBriefView } from './thread-brief-header.tsx'
 import { ActionLink, ConfirmButton, ExternalLink, Hint, KeyValues, LabelValue, LoadState, MarkdownLite, PageHead, Section, SessionButton,
   StageMark, When } from './widgets.tsx'
 
@@ -126,6 +127,25 @@ export function TicketPage({ id }: { id: string }) {
     return reason ? t('endedAt', { time, outcome, reason }) : t('endedAtShort', { time, outcome })
   })()
   const channel = data.channels[0]
+  const ticketBrief: ThreadBriefView = {
+    thread_id: data.threads[0]?.key || `ticket:${data.id}`,
+    ticket_id: data.id,
+    raw_original_ask: data.title,
+    revision_id: 1,
+    objective: data.title,
+    current_state: data.stage,
+    next_action: data.state === 'ended' ? 'None (task ended)' : 'Continue ticket execution',
+    task_status: data.ended ? 'closed' : 'open',
+    criteria: [
+      { id: 'CRIT-1', description: 'Mandate requirements delivered and verified', status: data.ended ? 'satisfied' : 'pending', is_inferred: true, confirmed: false },
+      { id: 'CRIT-2', description: 'Inputs processed and outputs delivered', status: data.ended ? 'satisfied' : 'pending', is_inferred: true, confirmed: false },
+    ],
+    scope: [
+      { text: `Execute mandate under ${data.mandate.strength} authorization`, is_inferred: false, confirmed: true },
+    ],
+    pending_proposals: [],
+    model_context: { current_model: 'unknown', fallback_events: [] },
+  }
   return <>
     <PageHead title={data.title}>
       {opening?.url && <ActionLink href={opening.url}>{t('openThread', { source: valueLabel(t, 'source', opening.source) })}</ActionLink>}
@@ -134,6 +154,7 @@ export function TicketPage({ id }: { id: string }) {
         onConfirm={() => after(call('POST tickets/:id/retry', { id }))} />}
       {data.sessionId && <SessionButton variant="outline" sessionId={data.sessionId} />}
     </PageHead>
+    <ThreadBriefHeader brief={ticketBrief} />
     {error && <LoadState error={error} loading={false} />}
     <div className="dt-row-meta dt-status-line">
       <StageMark state={status.dot} icon={status.icon} label={status.label} />
