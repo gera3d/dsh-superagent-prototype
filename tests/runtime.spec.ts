@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from 'v
 import type { UserMessage } from '@deepseek-ai/dsh-llm'
 import { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
 import { Runtime } from '../src/app/runtime.ts'
+import { Setup } from '../src/app/setup.ts'
+import { SetupError } from '../src/setup.ts'
 import { jobRegistry } from './fixtures/host.ts'
 import { evalsHealth } from '../src/app/views/overview.ts'
 import { mandateInstructions } from '../src/executor/dsh.ts'
@@ -653,8 +655,46 @@ it('shows the gh calls a worker made in its ticket detail and the hour\'s total 
     sources: ((await api('GET', 'sources')).body as { id: string; workerCalls?: unknown }[]).map(source => [source.id, source.workerCalls]).sort() })
   const shown = { ticket: expected, sources: [['feishu', undefined], ['github', { hour, total: 4 }]] }
   expect(await calls()).toEqual(shown)
-  await restart()
+  const next = await restart()
+  await next.ready
   expect(await calls()).toEqual(shown)
+})
+
+it.each([
+  { name: 'non-quota failure', configured: false, quota: false },
+  { name: 'quota failure', configured: false, quota: true },
+  { name: 'successful setup', configured: true, quota: false },
+])('does not resume initialization after shutdown during $name', async ({ configured, quota }) => {
+  let release!: (configured: boolean) => void
+  const pending = new Promise<boolean>(resolve => { release = resolve })
+  vi.spyOn(Setup.prototype, 'run').mockImplementation(function (this: Setup) {
+    if (quota) this.problem = new SetupError('githubRateLimited').problem
+    return pending
+  })
+  const next = await restart()
+  const ready = next.ready.then(() => undefined, (error: unknown) => error)
+  try {
+    await next.stop()
+    const settings = vi.spyOn(next.store, 'settings')
+    const writes = vi.spyOn(next.store, 'set')
+    const deletes = vi.spyOn(next.store, 'delete')
+    const quotaReset = vi.spyOn(next.setup, 'quotaReset')
+    const sessions = vi.spyOn(next.sessions, 'install')
+    const executor = vi.spyOn(next.executor, 'install')
+    controller.create.mockClear()
+    release(configured)
+    expect(await ready).toBeUndefined()
+    expect(settings).not.toHaveBeenCalled()
+    expect(writes).not.toHaveBeenCalled()
+    expect(deletes).not.toHaveBeenCalled()
+    expect(quotaReset).not.toHaveBeenCalled()
+    expect(sessions).not.toHaveBeenCalled()
+    expect(executor).not.toHaveBeenCalled()
+    expect(controller.create).not.toHaveBeenCalled()
+  } finally {
+    release(configured)
+    await ready
+  }
 })
 
 it('syncs the Feishu part of the Policy from its sync chat in place, and keeps the Policy version when only the order the chat lists changes', async () => {
