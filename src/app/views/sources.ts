@@ -38,7 +38,8 @@ function sourceState(instance: SourceInstance & { installed: boolean }, parts: {
   if (parts.some(part => part.state === 'starting')) return 'starting'
   return parts.some(part => part.state === 'paused') ? 'paused' : 'ready'
 }
-export function sourcesStatus(host: ViewHost, health: HealthMap, setup: SetupState) {
+/** `workerCalls` is the number of `gh` calls workers made this UTC hour; it is shown on the GitHub Source, next to the poller's own health. */
+export function sourcesStatus(host: ViewHost, health: HealthMap, setup: SetupState, workerCalls?: { hour: string; total: number }) {
   const { store, sources } = host
   const view = snapshot(host)
   const since = dayAgo()
@@ -51,7 +52,7 @@ export function sourcesStatus(host: ViewHost, health: HealthMap, setup: SetupSta
     const { health: parts, ...named } = sourceHealth(sources, instance, health)
     const problem = problemOf(instance.id, setup)
     return { ...named, installed: instance.installed, enabled: instance.enabled, state: sourceState(instance, parts, setup), health: parts,
-      ...problem ? { problem } : {}, stats: stats[instance.id] ?? { received: 0, filtered: 0, lastAt: '' }, filtered: filtered(instance.id),
+      ...problem ? { problem } : {}, ...workerCalls && instance.kind === 'github' ? { workerCalls } : {}, stats: stats[instance.id] ?? { received: 0, filtered: 0, lastAt: '' }, filtered: filtered(instance.id),
       dropped: dropped.filter(item => item.channel.source === instance.id) }
   })
 }

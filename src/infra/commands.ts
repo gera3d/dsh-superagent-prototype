@@ -4,6 +4,7 @@ import { basename } from 'node:path'
 import { promisify } from 'node:util'
 import { z } from 'zod'
 import type { Deployment } from '../deployment.ts'
+import { currentCaller, endpointOf, GithubTelemetry, quotaHeaders, statusOf, type Outcome, type QuotaHeaders } from './github-telemetry.ts'
 
 const exec = promisify(execFile)
 const TIMEOUT_MS = 90_000
@@ -12,7 +13,11 @@ const TIMEOUT_MS = 90_000
  * Source channels and pollers inspect its code to distinguish deleted conversations from retryable failures.
  */
 export class CliError extends Error {
-  constructor(message: string, readonly code?: number, readonly exitCode?: number, readonly rate?: RateLimit) { super(message) }
+  constructor(message: string, readonly code?: number, readonly exitCode?: number, readonly rate?: RateLimit,
+    /** Seconds from the `x-poll-interval` header of a failed `gh api --include` response, when it printed one (as it does for HTTP 304). */
+    readonly pollInterval?: number,
+    /** The `x-ratelimit-*` values of a failed `gh api --include` response, when it printed all three. */
+    readonly quota?: QuotaHeaders) { super(message) }
 }
 /** Sanitized GitHub quota facts from a failed response: `primary` when the hourly allowance is spent, `secondary` for abuse limits and HTTP 429. */
 export interface RateLimit { kind: 'primary' | 'secondary'; resetAt?: number; retryAfter?: number }
@@ -28,6 +33,13 @@ export function rateLimit(stdout: unknown, stderr = ''): RateLimit | undefined {
   if (status === 429 || retryAfter !== undefined || /secondary rate limit/i.test(stdout + stderr)) return { kind: 'secondary', ...retryAfter !== undefined ? { retryAfter } : {}, ...reset !== undefined ? { resetAt: reset * 1000 } : {} }
   if (remaining === 0) return { kind: 'primary', ...reset !== undefined ? { resetAt: reset * 1000 } : {} }
   return undefined
+}
+/** Reads only `x-poll-interval` from the headers `gh api --include` printed on stdout before failing. */
+function pollInterval(stdout: unknown): number | undefined {
+  if (typeof stdout !== 'string') return undefined
+  const split = stdout.search(/\r?\n\r?\n/)
+  const value = Number(/^x-poll-interval:\s*(\d+)/im.exec(split < 0 ? stdout : stdout.slice(0, split))?.[1])
+  return Number.isFinite(value) && value > 0 ? value : undefined
 }
 /** Seconds to wait before polling again: until the primary reset or `retry-after` (60 s when unstated), plus up to 10 s of jitter, with long waits split into bounded sleeps by the poll loop. */
 export function cooldownSeconds(rate: RateLimit, now = Date.now(), random = Math.random()): number {
@@ -47,7 +59,8 @@ export function commandError(error: unknown, program = 'command'): Error {
     const code = parsed?.error?.code
     if (parsed?.error?.message) return new CliError(`${parsed.error.message}${code ? ` (${code})` : ''}`, code, exitCode)
     // `gh` exits non-zero on HTTP errors (such as `gh: Not Found (HTTP 404)`) and on `gh: HTTP 304`, which ETag polling relies on.
-    if (stderr) return new CliError(stderr.slice(0, 2000), Number(/\bHTTP (\d{3})\b/.exec(stderr)?.[1]) || undefined, exitCode, rateLimit('stdout' in error ? error.stdout : undefined, stderr))
+    if (stderr) return new CliError(stderr.slice(0, 2000), Number(/\bHTTP (\d{3})\b/.exec(stderr)?.[1]) || undefined, exitCode,
+      rateLimit('stdout' in error ? error.stdout : undefined, stderr), pollInterval('stdout' in error ? error.stdout : undefined), quotaHeaders('stdout' in error ? error.stdout : undefined))
   }
   return new CliError(`${basename(program)} ${ended(error)}`, undefined, exitCode)
 }
@@ -73,6 +86,23 @@ function membership(error: unknown): unknown {
   const hint = 'The Feishu bot is not a member of the chat. Add the bot in the chat settings, then retry.'
   return new CliError(hint, error.code, error.exitCode)
 }
+/** Bounded in-memory map from API path to the ETag and body of its last single-page 200 (or 'pages' for lists that need pagination), least recently used first; cleared on restart. */
+export class Validators {
+  private readonly entries = new Map<string, { etag: string; body: string } | 'pages'>()
+  constructor(private readonly limit = 512) {}
+  get(key: string): { etag: string; body: string } | 'pages' | undefined {
+    const entry = this.entries.get(key)
+    if (entry !== undefined) { this.entries.delete(key); this.entries.set(key, entry) }
+    return entry
+  }
+  set(key: string, entry: { etag: string; body: string } | 'pages'): void {
+    this.entries.delete(key)
+    this.entries.set(key, entry)
+    for (const oldest of this.entries.keys()) { if (this.entries.size <= this.limit) break; this.entries.delete(oldest) }
+  }
+  delete(key: string): void { this.entries.delete(key) }
+  get size(): number { return this.entries.size }
+}
 /**
  * Executes gh, lark-cli, and git subprocesses with deployment account credentials, timeouts, and abort signals.
  * Restricts GitHub API calls to the configured repository and translates CLI failures into CliError instances for Sources, MasterAssessor, Outbox, and Settings.
@@ -82,10 +112,15 @@ export class Commands {
    * @param resolved - returns the resolved deployment setup, or throws while setup is still pending.
    * @param environment - variables overriding `process.env` for every command (such as isolated git settings).
    */
-  constructor(private readonly resolved: () => Deployment, private readonly environment: Record<string, string | undefined>, private readonly signal: AbortSignal) {}
+  /** Counts of this deployment's GitHub requests; shared by every `withSignal` copy. */
+  readonly telemetry: GithubTelemetry
+  constructor(private readonly resolved: () => Deployment, private readonly environment: Record<string, string | undefined>, private readonly signal: AbortSignal,
+    private readonly validators = new Validators(), telemetry?: GithubTelemetry) { this.telemetry = telemetry ?? new GithubTelemetry() }
   get deployment(): Deployment { return this.resolved() }
   get repository(): string { return this.deployment.repository }
-  withSignal(signal?: AbortSignal): Commands { return signal ? new Commands(this.resolved, this.environment, AbortSignal.any([this.signal, signal])) : this }
+  withSignal(signal?: AbortSignal): Commands {
+    return signal ? new Commands(this.resolved, this.environment, AbortSignal.any([this.signal, signal]), this.validators, this.telemetry) : this
+  }
   async run(program: string, args: string[], cwd?: string): Promise<string> {
     try {
       const { stdout } = await exec(program, args, { cwd, signal: this.signal, timeout: TIMEOUT_MS, maxBuffer: 16 * 1024 * 1024,
@@ -94,7 +129,40 @@ export class Commands {
     } catch (error) { throw commandError(error, program) }
   }
   /** Runs the agent's GitHub CLI and parses its JSON output; callers should prefer `api`, which is restricted to the configured repository and validates output. */
-  async gh<T>(args: string[]): Promise<T> { return JSON.parse(await this.run(this.deployment.github.cli, args)) as T }
+  async gh<T>(args: string[]): Promise<T> {
+    // A slurped paginated call made one request per page; each page is one entry of the top-level array.
+    const slurped = args.includes('--paginate') && args.includes('--slurp')
+    let parsed: unknown, done = false
+    const output = await this.github(args, stdout => { parsed = JSON.parse(stdout); done = true; return slurped && Array.isArray(parsed) ? parsed.length : 1 })
+    return (done ? parsed : JSON.parse(output)) as T
+  }
+  /**
+   * Runs the agent's GitHub CLI and counts an `api` call in `telemetry` under the caller the code runs for: its masked endpoint, its outcome
+   * (from the `--include` status line when present, else the exit status) and the quota headers of the response. Makes no request of its own.
+   */
+  private async github(args: string[], weigh: (stdout: string) => number = () => 1): Promise<string> {
+    const counted = args[0] === 'api'
+    const sample = { caller: currentCaller(), endpoint: counted ? endpointOf(args) : '' }
+    let stdout: string
+    try { stdout = await this.run(this.deployment.github.cli, args) }
+    catch (error) {
+      if (counted) {
+        const code = error instanceof CliError ? error.code : undefined
+        const outcome: Outcome = code === 304 ? '304' : error instanceof CliError && (error.rate || code === 429) ? 'limited' : 'error'
+        this.telemetry.record({ ...sample, outcome, quota: error instanceof CliError ? error.quota : undefined })
+      }
+      throw error
+    }
+    if (counted) {
+      const status = statusOf(stdout)
+      // Without `--include` the status is unknown: a write is some other 2xx, a read is a plain 200.
+      const outcome: Outcome = status !== undefined ? status === 200 ? '200' : status === 304 ? '304' : '2xx' : sample.endpoint.includes(' ') ? '2xx' : '200'
+      let weight = 1
+      try { weight = weigh(stdout) } catch { /* Unreadable output counts as one request; the caller reports it. */ }
+      this.telemetry.record({ ...sample, outcome, weight, quota: quotaHeaders(stdout) })
+    }
+    return stdout
+  }
   /**
    * Calls the GitHub API on a path within the configured repository, validating JSON output when a schema is provided
    * or returning raw CLI output (such as raw files or `--include` headers) when omitted.
@@ -103,9 +171,44 @@ export class Commands {
   async api<T>(schema: z.ZodType<T>, path: string, ...flags: string[]): Promise<T>
   async api(path: string, ...flags: string[]): Promise<string>
   async api<T>(schema: z.ZodType<T> | string, ...rest: string[]): Promise<T | string> {
-    if (typeof schema === 'string') return this.run(this.deployment.github.cli, ['api', this.path(schema), ...rest])
+    if (typeof schema === 'string') return this.github(['api', this.path(schema), ...rest])
     const [path = '', ...flags] = rest
     return schema.parse(await this.gh(['api', this.path(path), ...flags]))
+  }
+  /**
+   * Reads a GitHub API path by revalidation: sends `If-None-Match` with the ETag of the last 200 and, only when GitHub
+   * answers 304 to that request now, parses the body stored from it again. A body is never reused without a 304 from this call,
+   * so the facts are as current as an unconditional read, while a 304 costs no primary quota. Any failure drops the entry.
+   * `fresh` sends no `If-None-Match`. Returns undefined, without reusing anything, when the list spans several pages
+   * (the caller then reads all pages normally); only single-page responses are remembered.
+   * @param parse - validates the decoded JSON body; called again with a new decode on every read, so callers never share objects.
+   */
+  async revalidate<T>(path: string, parse: (body: unknown) => T, options: { fresh?: boolean } = {}): Promise<T | undefined> {
+    const key = `${this.deployment.github.cli}\n${this.path(path)}`
+    const entry = this.validators.get(key)
+    if (entry === 'pages') return undefined
+    const stored = options.fresh ? undefined : entry
+    let output: string
+    try { output = await this.api(path, '--include', ...stored ? ['-H', `If-None-Match: ${stored.etag}`] : []) }
+    catch (error) {
+      this.validators.delete(key)
+      if (stored && error instanceof CliError && error.code === 304) {
+        const value = parse(JSON.parse(stored.body))
+        this.validators.set(key, stored)
+        return value
+      }
+      throw error
+    }
+    try {
+      // `gh api --include` prints the status line and headers, a blank line and the body; without them there is no ETag to keep.
+      const split = /^HTTP\/\S+\s/.test(output) ? output.search(/\r?\n\r?\n/) : -1
+      const headers = split < 0 ? '' : output.slice(0, split), body = split < 0 ? output : output.slice(split).trimStart()
+      const etag = /^etag:\s*(.+)$/im.exec(headers)?.[1]?.trim()
+      const value = parse(JSON.parse(body))
+      if (/^link:.*rel="next"/im.test(headers)) { this.validators.set(key, 'pages'); return undefined }
+      if (etag) this.validators.set(key, { etag, body })
+      return value
+    } catch (error) { this.validators.delete(key); throw error }
   }
   /** Fetches all pages of a GitHub API list within the configured repository, skipping items that fail schema validation. */
   async pages<T>(item: z.ZodType<T>, path: string, tally?: Tally): Promise<T[]> {

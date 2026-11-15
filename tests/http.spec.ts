@@ -545,6 +545,7 @@ it('gates usage reading so in-flight running tickets do not read or flush usage 
     ['t-ended', endedTicket],
   ])
   const call = serve({
+    machine: { stateDir: '/nonexistent/state' },
     usage: { of: usageOf },
     links: () => [],
     store: {

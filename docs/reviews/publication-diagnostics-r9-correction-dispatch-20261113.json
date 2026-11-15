@@ -1,0 +1,58 @@
+{
+  "observedAt": "2026-11-14T04:24:04.716011+00:00",
+  "findingId": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+  "revision": 9,
+  "state": "running",
+  "job": {
+    "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r9",
+    "ticketId": "0310d5fb926de996644d23a0768bf518",
+    "assignmentId": "5a63c9930a78eee4655970525c946bf0"
+  },
+  "priorJobs": [
+    {
+      "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r1",
+      "ticketId": "476e0cde1673d0d3278933f87ace6d8f",
+      "assignmentId": "aa513ffbcf8e4f75dceaa9b895132a1e"
+    },
+    {
+      "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r3",
+      "ticketId": "5d7c23667a52c3e9afb03ce04352024b",
+      "assignmentId": "f6b7aa4d9bf4b44a686a026885ec7326"
+    },
+    {
+      "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r5",
+      "ticketId": "8aa87a3e4b93aadda0dcbea585001f25",
+      "assignmentId": "26223d23e7d674d3189b51af46c50d7b"
+    },
+    {
+      "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r7",
+      "ticketId": "c7b6e06c5888e8e4cfbb9c8dc839b719",
+      "assignmentId": "3e5773f0f298deb03e677112cbe24682"
+    }
+  ],
+  "confirmation": {
+    "revision": 9,
+    "choiceId": "queue_next",
+    "actor": "codex-project-coordinator",
+    "at": "2026-11-14T04:23:33.406Z"
+  },
+  "reviewCommit": "409f3bf",
+  "reviewOccurrenceLanded": true,
+  "supportedActions": "exactrevision8retry_scope->9 and confirm retainedqueue_next accepted, no override",
+  "load": {
+    "running": 2,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "actualRequestConfigs": [
+    {
+      "provider": "antigravity",
+      "model": "gemini-3.8-flash",
+      "reasoningEffort": "medium",
+      "maxTokens": 65536
+    }
+  ],
+  "eligibility": "At coordination poolGoogle42.626rolling/83.234weeklypercentremaining, noGooglecooldown, >5percentfloor; models26/executor44/max3/OpenAIconservation unchanged. No forced qualification/providerprobe.",
+  "nextOwner": "Harness r9 originalscope interruptedhandoff uncertainty correction, preserve r7privacy/type/guide/current-source/trustedwork fixes; Codex independent review then protectedrelease ifqualified",
+  "limits": "Not deployment/releaseacceptance. No original66mscauseclaim. R1/r3/r5/r7trees/artifacts/reports retained; no competingimplementation/newtestfiles/Chrome/DBedit/gatebypass/hostinstall/access/spend/credentials/settings/routes/limitschange. ComposioUIhold/clarificationunapproved/quotaauthorityqualified unchanged."
+}

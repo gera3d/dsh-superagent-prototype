@@ -13,8 +13,12 @@ const PullSchema = z.looseObject({
   head: z.looseObject({ sha: z.string(), ref: z.string(), repo: z.looseObject({ full_name: z.string() }).nullish() }),
 })
 export type Pull = z.infer<typeof PullSchema> & { number: number }
-export const readPull = async (ctx: SourceContext, number: number, signal?: AbortSignal): Promise<Pull> =>
-  ({ ...await ctx.commands.withSignal(signal).api(PullSchema, `pulls/${number}`), number })
+/**
+ * Reads a PR by revalidating with its ETag, so an unchanged PR costs no quota but is exactly as current as a plain read.
+ * Pass `fresh: true` to send no `If-None-Match` header.
+ */
+export const readPull = async (ctx: SourceContext, number: number, signal?: AbortSignal, options: { fresh?: boolean } = {}): Promise<Pull> =>
+  ({ ...(await ctx.commands.withSignal(signal).revalidate(`pulls/${number}`, body => PullSchema.parse(body), options))!, number })
 const pullNumber = (thread: string): number | undefined => thread.startsWith(`${SOURCE}:`) ? Number(thread.slice(SOURCE.length + 1)) : undefined
 export const pullsOf = (ticket: Pick<Ticket, 'follows'>, open = false): number[] =>
   (ticket.follows ?? []).filter(item => !open || !item.closed).flatMap(item => pullNumber(item.thread) ?? [])

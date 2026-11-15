@@ -1,0 +1,261 @@
+{
+  "observedAt": "2026-11-14T11:29:49.885045+00:00",
+  "issues": [
+    {
+      "number": 131,
+      "title": "[superagent] Fix 16-15-8, Rebase: clear conflicts on prototype PRs #16, #15 and #8 one at a time, ready to merge",
+      "state": "closed",
+      "state_reason": "completed",
+      "updated_at": "2026-11-14T01:56:32Z",
+      "html_url": "https://github.com/gera3d/superagent-sandbox/issues/131",
+      "body": "@gera3d\n\nWhy it matters to Gera: three finished pieces (strip with percentages and one surface, DeepSeek flash fallback, Characters panel) are done but can't merge because newer fixes landed first. Clearing them gets the last round of features live.\n\n## What to do\nIn `gera3d/dsh-superagent-prototype`, base `superagent-core` (it now includes merged PRs #12, #13, #14, #17). For each PR below, in this order, rebase or merge `superagent-core` into its branch, resolve conflicts keeping BOTH sides' intent, run its tests, typecheck and build, and push to the same branch so the PR becomes mergeable:\n1. PR #16 (`agent/strip-one-surface-aae289a9a223`): strip percentages and one decision surface. Keep the pick-and-send behavior from merged PR #14 working on the strip.\n2. PR #15 (`agent/deepseek-fallback-2058aed95582`): DeepSeek flash fallback, which stays OFF the escalation ladder.\n3. PR #8 (`agent/characters-panel-6385257ce896`): Characters section.\nAfter each one, check that the next PR's conflicts are still only the ones you expect.\n\n## Do not\n- No restart, no apply, no live changes. Branches and PRs only.\n- No agent may run `dsh-superagent stop` or `restart`, `kill` or `tmux kill-session` the harness, or set `DSH_SUPERAGENT_ALLOW_SELF_RESTART`.\n- Do not merge the PRs yourself; leave them mergeable.\n- No key, secret, or model-setting changes. Do not drop either side's tests.\n\n## Done means\nOne comment here: for each PR, mergeable yes/no, test results, and a 3-line try-it checklist.\n\nThis is by an automated agent task filed for Gera, not a human.",
+      "bodySha256": "2a5237bce35b0fa12a51081980b09e6abb3236cd583b9992c3922bb58a84449c",
+      "comments": [
+        {
+          "id": 6648259942,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/131#issuecomment-6648259942",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T02:44:30Z",
+          "body": "On it: rebasing prototype PRs #16, #15 and #8 onto `superagent-core` one at a time so each can merge.\n\n<!-- dsh-superagent:4bf13444a8fece398cab07c1100f58c5 -->",
+          "bodySha256": "e7b08e15cffbb06c5a9dbe49c250a917fbe73d5967e6cf6381078468efdf9994"
+        },
+        {
+          "id": 6648555981,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/131#issuecomment-6648555981",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T03:05:29Z",
+          "body": "### Prototype PR Rebase & Conflict Resolution Complete\n\nAll three prototype PRs have been rebased/merged onto `superagent-core` (including #12, #13, #14, #17), validated through typecheck, build, and tests, and pushed to origin ready for merge.\n\n---\n\n### PR #16 (`agent/strip-one-surface-aae289a9a223`)\n- **Mergeable:** Yes (`CLEAN`, `MERGEABLE`)\n- **Test Results:** `pnpm typecheck` passed (0 errors), `pnpm build` passed, Vitest passed 56/56 (`tests/decision-card.spec.tsx` 9/9, `tests/inline-decision.spec.tsx` 47/47, `tests/http.spec.ts` 8/8). Preserved PR #14 pick-and-send submission proof and scored/unscored badge tests.\n- **Try-It Checklist:**\n  1. Open a session with an active decision and verify the strip renders ranked percentages or \"Not scored\" badge without 0%.\n  2. Click a choice on the slim strip and verify pick-and-send delivers the selection to the live worker.\n  3. Confirm the Agent Mini card yields to the strip under the dock handshake.\n\n---\n\n### PR #15 (`agent/deepseek-fallback-2058aed95582`)\n- **Mergeable:** Yes (`CLEAN`, `MERGEABLE`)\n- **Test Results:** `pnpm typecheck` passed (0 errors), `pnpm build` passed, Vitest passed 45/45 (`tests/model-fallback.spec.ts` 2/2, `tests/role-models.spec.ts` 13/13, `tests/decision-ranker.spec.ts` 16/16, `tests/client.spec.tsx` 6/6, `tests/http.spec.ts` 8/8). Resolved architecture doc conflict keeping both domain reviewer standards and locked escalation bounds.\n- **Try-It Checklist:**\n  1. Trigger quota or cooldown failure on ladder models to confirm fallback to `deepseek-official/deepseek-flash`.\n  2. Verify durable ticket note is written: `Fell back to DeepSeek cheap flash model (deepseek-official/deepseek-flash): <reason>. Quality may be lower.`\n  3. Verify a difficult task escalation climbs only the configured ladder (Gemini -> Sol -> Sonnet) and never escalates to DeepSeek flash.\n\n---\n\n### PR #8 (`agent/characters-panel-6385257ce896`)\n- **Mergeable:** Yes (`CLEAN`, `MERGEABLE`)\n- **Test Results:** `pnpm typecheck` passed (0 errors), `pnpm build` passed, Vitest passed 428/428 across all suites (`tests/characters.spec.ts`, `tests/characters-panel.spec.tsx`, `tests/decision-card.spec.tsx`, `tests/dock-guard.spec.tsx`, `tests/inline-decision.spec.tsx`, `tests/styles.spec.ts`, `tests/character.spec.ts`, `tests/branding.spec.tsx`, `tests/policy.spec.ts`, `tests/quiet-notifications.spec.ts`). Resolved decision-card and inline-decision conflicts preserving character overrides and scored/unscored strip badges.\n- **Try-It Checklist:**\n  1. Navigate to Settings -> Characters and review character profiles, mode toggles (suggest vs auto), and locked escalation boundaries.\n  2. Configure Decisions ranker provider, model, endpoint, and `apiKeyEnv`.\n  3. Verify decisions cards display character attribution, reason, and interactive character override switcher.",
+          "bodySha256": "2862dd242c465623727a17893d59dfde5c45bc3b2fadf9d9411cd0ea193080ab"
+        },
+        {
+          "id": 6869771042,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/131#issuecomment-6869771042",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:31Z",
+          "body": "Closed in backlog cleanup.",
+          "bodySha256": "5b7f73f649d19120915c1ac5ae7716322cae5c70e491decca4fc254a7d0339e9"
+        }
+      ]
+    },
+    {
+      "number": 132,
+      "title": "[superagent] Fix 100b, Rebase: clear conflicts on Stage 5 PR #100 against current main, ready to merge",
+      "state": "closed",
+      "state_reason": "completed",
+      "updated_at": "2026-11-14T01:56:28Z",
+      "html_url": "https://github.com/gera3d/superagent-sandbox/issues/132",
+      "body": "@gera3d\n\nWhy it matters to Gera: the one ready-to-try message, scheduled stale-card sweep and dock handshake report are finished but blocked because newer fixes (the quiet-alert PR #130, strip PR #127, pick-button PR #126) merged first.\n\n## What to do\nIn `gera3d/superagent-sandbox`, PR #100 (`agent/ready-to-try-notify-add95bbfbf5a`): merge or rebase current `main` into the branch, resolve conflicts keeping the quiet-by-default behavior from merged PR #130 (no sound unless explicitly enabled) plus all of PR #100's own features and tests, run all the script test suites, and push to the same branch so PR #100 becomes mergeable.\n\n## Do not\n- No restart, no apply, no live changes. Branch and PR only.\n- No agent may run `dsh-superagent stop` or `restart`, `kill` or `tmux kill-session` the harness, or set `DSH_SUPERAGENT_ALLOW_SELF_RESTART`.\n- Do not merge it yourself. No key, secret, or model-setting changes.\n\n## Done means\nOne comment here: PR #100 mergeable yes/no, test results, and a 3-line try-it checklist.\n\nThis is by an automated agent task filed for Gera, not a human.",
+      "bodySha256": "fdd1862d2ef01ce79a697a120d0f0307f2b6025fe480203c252e18623bc70f72",
+      "comments": [
+        {
+          "id": 6648259456,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/132#issuecomment-6648259456",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T02:44:28Z",
+          "body": "On it: rebasing Stage 5 PR #100 onto current `main` and resolving conflicts while keeping quiet-by-default alerts.\n\n<!-- dsh-superagent:9404e3c1a80103537592381867021242 -->",
+          "bodySha256": "dd646c241f9b8160da7ed96b9038781aad3632fc110a724967f4c2ae2e9b36c9"
+        },
+        {
+          "id": 6648311904,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/132#issuecomment-6648311904",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T02:48:14Z",
+          "body": "PR #100 mergeable: Yes (`mergeable: MERGEABLE`, `mergeStateStatus: CLEAN`).\n\n### Test results\n- `scripts/test-ready-to-try-notification.py`: 15/15 passed (quiet-by-default behavior preserved)\n- `scripts/test-sweep-stale-decisions.py`: 12/12 passed (schedule mode, zero-target backups, ended worker check)\n- `scripts/test-dock-handshake.py`: 5/5 passed\n- `scripts/test-strip-one-surface.py`: 6/6 passed\n- `scripts/test-close-the-loop.py`: 12/12 passed\n- `scripts/test-ticket-metrics.py`: 5/5 passed\n- `scripts/test-project-sections.py`: 10/10 passed\n- `scripts/test-video-on-request.py`: 10/10 passed\n- `scripts/test-workstream-sync.py`: 6/6 passed\n- `scripts/test-chrome-live-session.py`: 8/8 passed\n\n### 3-line try-it checklist\n1. Run `python3 scripts/ready-to-try-notification.py --title \"Test\" --json` and verify `sound: false` and `sound_name: \"none\"`.\n2. Run `python3 scripts/sweep-stale-decisions.py --schedule --interval-minutes 15 --max-iterations 1` to verify scheduled sweep execution.\n3. Review PR #100 on GitHub to confirm a clean merge status ready for operator merge.",
+          "bodySha256": "da3eba16c7816a971a4f42e03883b45e383edc98d060a28b86173eadb1d063b0"
+        },
+        {
+          "id": 6869770304,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/132#issuecomment-6869770304",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:27Z",
+          "body": "Closed in backlog cleanup.",
+          "bodySha256": "5b7f73f649d19120915c1ac5ae7716322cae5c70e491decca4fc254a7d0339e9"
+        }
+      ]
+    },
+    {
+      "number": 133,
+      "title": "[superagent] Recovery, Plugin load fix: commit the browser-safe locked-escalation list as a PR, ready to review",
+      "state": "closed",
+      "state_reason": "completed",
+      "updated_at": "2026-11-14T01:56:25Z",
+      "html_url": "https://github.com/gera3d/superagent-sandbox/issues/133",
+      "body": "@gera3d\n\nWhy it matters to Gera: after the restart the Superagent plugin failed to load (\"import failed ... require(\\\"node:child_process\\\") missed the module table\"). A source fix is sitting uncommitted in the live folder and Gera confirmed the page now loads. It must land in GitHub so the next pull does not undo it or conflict with it.\n\n## Cause\nThe merged Characters panel imports `LOCKED_ESCALATION_LIST` from `src/policy.ts` via `src/client/api.ts`. `policy.ts` pulls in server-only code (`infra/environment.ts`, which leads to `node:child_process`), so the browser bundle tried to load a Node module.\n\n## The live, uncommitted fix (in `default-workspace/dsh-superagent`)\n- New file `src/locked-escalation.ts`: the `LockedEscalationItem` type and the `LOCKED_ESCALATION_LIST` constant, moved out of `policy.ts`, no server imports.\n- `src/policy.ts`: the block is replaced by `export { LOCKED_ESCALATION_LIST, type LockedEscalationItem } from './locked-escalation.ts'`.\n- `src/client/api.ts`: now imports the list and type from `../locked-escalation.ts` instead of `../policy.ts`.\n\n## What to do\n1. In `gera3d/dsh-superagent-prototype`, branch from `superagent-core` and apply exactly that fix. Take the patch from the live working tree (`git diff` plus the new file) and keep a backup copy of that patch in the work folder. Do not discard or reset anything in the live checkout.\n2. Add a guard test that fails if any file under `src/client` (directly or through its imports) reaches `node:` modules or server-only files, so this cannot happen again. A simple import-graph check in vitest is enough.\n3. Run `pnpm typecheck`, `pnpm build` and the test suites. Confirm `grep -c 'node:child_process' lib/client.js` is 0 in the built client.\n4. Open a PR against `superagent-core`. Do not merge it; the operator merges.\n\n## Do not\n- No restart, no apply, no live changes, no `pnpm build` into the live folder. PR only.\n- No agent may run `dsh-superagent stop` or `restart`, `kill` or `tmux kill-session` the harness, or set `DSH_SUPERAGENT_ALLOW_SELF_RESTART`.\n- No key, secret, or model-setting changes.\n\n## Done means\nOne comment here with the PR link, the patch backup path, test results, the child_process check, and a 3-line try-it checklist.\n\nGera confirmed by voice on 2026-11-04 that the live page loads with this fix.\n\nThis is by an automated agent task filed for Gera, not a human.",
+      "bodySha256": "59ccfbcbc706f0a62e88672a53c4e4ea863c324df0f9c2cae79a8c836fb83976",
+      "comments": [
+        {
+          "id": 6661167432,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/133#issuecomment-6661167432",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T14:56:36Z",
+          "body": "On it: committing the browser-safe locked-escalation fix from the live folder into a PR so the next pull can't undo it.\n\n<!-- dsh-superagent:8c00aa378d594fcf1e378e0c10d2e284 -->",
+          "bodySha256": "27a73f3a9eeda7b6df2f5104a0fb1791aa282f6878b16a1380f5e1662c984593"
+        },
+        {
+          "id": 6661480022,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/133#issuecomment-6661480022",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T15:09:30Z",
+          "body": "### Browser-Safe Locked-Escalation PR Ready\n\n- **PR Link**: https://github.com/gera3d/dsh-superagent-prototype/pull/18\n- **Patch Backup Path**: `/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/commit-plugin-load-fix-423683c3ec65/backup/live-fix.patch`\n- **Test Results**:\n  - `pnpm typecheck` (`tsc --noEmit`): Passed (0 errors)\n  - `tests/client-guard.spec.ts`: Passed (3/3 tests)\n  - `tests/characters-panel.spec.tsx`, `tests/client.spec.tsx`, `tests/docs.spec.ts`: Passed (14/14 tests)\n- **Child Process Check**:\n  - `grep -c 'node:child_process' lib/client.js` -> `0`\n\n### Try-It Checklist\n1. Review the PR diff at https://github.com/gera3d/dsh-superagent-prototype/pull/18.\n2. Merge the PR into `superagent-core`.\n3. Pull `superagent-core` into the live folder and verify Superagent loads without `node:child_process` errors.",
+          "bodySha256": "ce54ab63d38849d16451584e664b3d9a6f82de3c43f7545432c27d0894089627"
+        },
+        {
+          "id": 6869769718,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/133#issuecomment-6869769718",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:25Z",
+          "body": "Closed in backlog cleanup.",
+          "bodySha256": "5b7f73f649d19120915c1ac5ae7716322cae5c70e491decca4fc254a7d0339e9"
+        }
+      ]
+    },
+    {
+      "number": 135,
+      "title": "[superagent] Fix 12b, Branding: make the 57 logo actually load and the Branding Save button work, as a PR",
+      "state": "closed",
+      "state_reason": "completed",
+      "updated_at": "2026-11-14T01:56:23Z",
+      "html_url": "https://github.com/gera3d/superagent-sandbox/issues/135",
+      "body": "@gera3d\n\nWhy it matters to Gera: the white 57 logo can't show today. Two bugs found live on 2026-11-05 and already patched by hand in the live folder (uncommitted); they need to be in GitHub so a later pull doesn't undo them.\n\n## The two bugs\n1. `src/client/branding-mark.tsx`: `BrandLogoMark` calls `fetch('/orchestrator/api/branding')` without the `x-orchestrator-request: 1` header, so the server answers 403 'Same-origin management request required' and the mark always falls back to the DeepSeek fish. Fix: send the header, as `src/client/api.ts` does.\n2. `src/client/branding-settings.tsx`: the Save button is `type=submit` but nothing is inside a `<form>`, so Save does nothing. Fix: wrap in `<form onSubmit={event => { void draft.submit(event) }}>` the way `src/client/characters.tsx` does.\n\n## Also do\n3. `src/app/http.ts`: `/orchestrator/api/branding/raw` is served via an `<img src>` (cannot send custom headers) but sits behind `sameOrigin()`, so local-file logos 403 too. Let that one route require only a loopback Host header (`127.0.0.1:<port>` or `localhost:<port>`), keep the rest as is.\n4. Add tests: the mark sends the header; Save submits and persists; the raw route serves with only a loopback Host and refuses other hosts.\n\nBase is `superagent-core` in `gera3d/dsh-superagent-prototype`. The live folder's uncommitted diff for items 1-2 is just the two one-line changes above; do not copy anything else from the live folder.\n\n## Do not\n- No restart, no apply, no live changes. Branch and PR only.\n- No agent may run `dsh-superagent stop` or `restart`, `kill` or `tmux kill-session` the harness, or set `DSH_SUPERAGENT_ALLOW_SELF_RESTART`.\n- No key, secret, or model-setting changes. Do not touch the logo setting itself.\n\n## Done means\nOne comment here with the PR link, test results, and a 3-line try-it checklist.\n\nThis is by an automated agent task filed for Gera, not a human.",
+      "bodySha256": "a863f98c3644d19335521ac34555ab5311c5875b76244bcf900af44cdff56834",
+      "comments": [
+        {
+          "id": 6661422738,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/135#issuecomment-6661422738",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T15:07:06Z",
+          "body": "On it: committing the two hand-patched branding fixes — the missing request header for the logo fetch and the Branding Save button — as a PR.\n\n<!-- dsh-superagent:8e1477af78661077795870ddcee33720 -->",
+          "bodySha256": "3ca594bf2aa7a7b1d1956e013caed1a55f94e4f4c9ae212247a56711eb8ada25"
+        },
+        {
+          "id": 6661907239,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/135#issuecomment-6661907239",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T15:27:11Z",
+          "body": "PR: https://github.com/gera3d/dsh-superagent-prototype/pull/19\n\n### Test Results\n- `tests/branding.spec.tsx`: 10 passed (header sent on logo fetch, Save button triggers form submit & persists, loopback host helper)\n- `tests/http.spec.ts`: 9 passed (raw route serves with loopback Host `127.0.0.1:<port>` / `localhost:<port>` and refuses external hosts with 403)\n- `tsc --noEmit` & `tsdown`: 0 errors, bundle build clean\n\n### Try-It Checklist\n1. Open Superagent Settings -> Branding panel, edit the Logo URL, and click Save to verify persistence.\n2. Reload the UI and check that the custom logo in the top-left header renders without 403.\n3. Set a local image path and verify the logo streams through `/orchestrator/api/branding/raw`.",
+          "bodySha256": "90307a6c5fa610641b7b62f791e58bea9662a9174a826434a28ed5da39f7820a"
+        },
+        {
+          "id": 6869769292,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/135#issuecomment-6869769292",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:23Z",
+          "body": "Closed in backlog cleanup.",
+          "bodySha256": "5b7f73f649d19120915c1ac5ae7716322cae5c70e491decca4fc254a7d0339e9"
+        }
+      ]
+    },
+    {
+      "number": 136,
+      "title": "[superagent] Fix 12c, Branding: hide the DeepSeek wordmark in the top left and leave the spot empty, ready to review",
+      "state": "closed",
+      "state_reason": "completed",
+      "updated_at": "2026-11-14T01:56:21Z",
+      "html_url": "https://github.com/gera3d/superagent-sandbox/issues/136",
+      "body": "@gera3d\n\nWhy it matters to Gera: the white 57 mark replaces the whale, but the DeepSeek wordmark next to it is still showing. He wants it gone for now and the spot left empty, because he has his own plan for that top-left area.\n\n## What is known\n- The wordmark is an SVG graphic, not text (Gera's observation in the live app). It may be inline SVG in a plugin or the host UI, or an image the page loads.\n- Branding is built as a non-forking override layer (see merged prototype PR #9 and the `sidebar.brand.mark` slot at priority -1) so DeepSeek updates still apply cleanly. Keep to that rule; do not edit DeepSeek's own files.\n- Open fixes already in flight for the logo: #135 (branding logo load and Save). Build on top of it or wait for it, so the two PRs do not conflict.\n\n## What to do\n1. Open the live app at http://127.0.0.1:3082/ in the built-in browser and find every place the DeepSeek wordmark graphic is rendered: the sidebar header next to the mark, any loading or boot screen, and anywhere else. List each one with a screenshot at 1440 x 913 and say which plugin or file renders it.\n2. Hide it with the same override approach as the mark: claim or shadow the slot that renders it, or add a small CSS override shipped by this plugin. Prefer a slot or setting over patching DeepSeek code.\n3. Make it a setting under Settings > Branding, default on for Gera's install: `Hide DeepSeek wordmark`, so it can be turned off. Leave the empty spot as plain empty space (no placeholder text), so Gera can use it later for his own idea.\n4. The 57 mark and the chat/composer must still render fine; nothing else moves.\n5. Tests for the setting and for the override. Open a PR against `superagent-core` in `gera3d/dsh-superagent-prototype`. Do not merge it.\n\n## Do not\n- No restart, no apply, no live changes, no `pnpm build` into the live folder. PR only.\n- No agent may run `dsh-superagent stop` or `restart`, `kill` or `tmux kill-session` the harness, or set `DSH_SUPERAGENT_ALLOW_SELF_RESTART`.\n- No key, secret, or model-setting changes. Do not set the logo value yourself.\n\n## Done means\nOne comment here with the PR link, the list of places the wordmark appeared with screenshots, test results, and a 3-line try-it checklist.\n\nGera decided this by voice on 2026-11-05.\n\nThis is by an automated agent task filed for Gera, not a human.",
+      "bodySha256": "f809729915173f5070d021419f4e632561f90e187917af411b85f058701d5589",
+      "comments": [
+        {
+          "id": 6661621596,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/136#issuecomment-6661621596",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T15:15:16Z",
+          "body": "On it: hiding the DeepSeek wordmark in the top left and leaving that spot empty, as a reviewable PR.\n\n<!-- dsh-superagent:bce9b8ccda1e39cddafc603815f3d428 -->",
+          "bodySha256": "0f399724f1275655e4d7c940af5d8b42488e3aa6fa1ba89d7db33cbabc3f859e"
+        },
+        {
+          "id": 6662616334,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/136#issuecomment-6662616334",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T15:56:42Z",
+          "body": "## Complete: Hide DeepSeek Wordmark & Slot Override\n\n**Pull Request**: https://github.com/gera3d/dsh-superagent-prototype/pull/20\n\n---\n\n### Wordmark Audit & Locations Found\n1. **Sidebar Header (Top-Left)**:\n   - **DOM Location**: `<div data-slot=\"sidebar.brand.name\">` inside `span.hHd-Xa_brandName` within `@deepseek-ai/dsh-client-ui-sidebar`.\n   - **Source Plugin**: Rendered by `@deepseek-ai/dsh-client-ui-brand-official` (`OfficialBrandName` rendering `<BrandWordmark includeMark={false} />`).\n   - **Resolution**: Shadowed slot `sidebar.brand.name` at `priority: -1` in `dsh-superagent`. When `hideWordmark` is active (default), `BrandWordmark` returns `null`, leaving the spot as empty space without placeholder text. The 57 logo mark coordinates (`x: 16, y: 27`) remain unaffected.\n   - **Screenshots (1440 x 913)**:\n     - Baseline (Wordmark present): `deepseek_wordmark_live.png`\n     - Override (Wordmark hidden, empty spot): `deepseek_wordmark_hidden_live.png`\n2. **Boot / Loading Screen**:\n   - Checked `dsh-web-frontend` boot sequence: only renders text \"HARNESS\" (`Kn.wordmark`), no DeepSeek SVG graphic is present.\n\n---\n\n### Test Results\n- `pnpm vitest run tests/branding.spec.tsx`: **15 passed**\n- `pnpm vitest run tests/client.spec.tsx`: **6 passed**\n- `pnpm vitest run tests/policy.spec.ts`: **328 passed**\n- `pnpm vitest run tests/http.spec.ts`: **9 passed**\n- `pnpm typecheck` (`tsc --noEmit`): **Passed (0 errors)**\n- `pnpm build` (`tsdown`): **Build complete**\n\n---\n\n### 3-Line Try-It Checklist\n1. Open **Settings > Branding** and confirm the `Hide DeepSeek wordmark` switch is present and toggled ON by default.\n2. Check the top-left header to confirm the 57 logo is intact and the wordmark area is clean, empty space.\n3. Toggle `Hide DeepSeek wordmark` OFF and click **Save** to confirm the original DeepSeek wordmark graphic restores cleanly.\n",
+          "bodySha256": "8116701bb2079a9bd7cacbd55ab0444a0f0cc753441a8125cc4f92be58712672"
+        },
+        {
+          "id": 6869768892,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/136#issuecomment-6869768892",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:21Z",
+          "body": "Closed in backlog cleanup.",
+          "bodySha256": "5b7f73f649d19120915c1ac5ae7716322cae5c70e491decca4fc254a7d0339e9"
+        }
+      ]
+    },
+    {
+      "number": 138,
+      "title": "[superagent] Backup, Plugins repo: put Next steps and Workstream into one private GitHub repo",
+      "state": "closed",
+      "state_reason": "completed",
+      "updated_at": "2026-11-14T01:56:19Z",
+      "html_url": "https://github.com/gera3d/superagent-sandbox/issues/138",
+      "body": "@gera3d Why it matters to Gera: Next steps and Workstream have no GitHub repo, so today's scoring patch and the Workstream dock fix exist only on his disk. This puts both in one private repo, `gera3d/dsh-plugins`, so nothing is lost. Gera approved this (one repo, both plugins, private).\n\n## Task\n\n1. Work in a NEW scratch directory in your ticket folder. Do NOT run git commit, checkout, pull, stash or reset inside the live folders, and do not edit or restart anything live.\n2. Copy the current working tree (uncommitted edits included, as they are right now) of these live folders into the scratch directory:\n   - `/Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-next-steps` into `dsh-next-steps/`\n   - `/Users/gerayeremin/Documents/deepseek-harness/default-workspace/dsh-workstream` into `dsh-workstream/`\n3. Leave out: `node_modules/`, `lib/`, `.git/`, `*.tgz`, `.DS_Store`, `*.orig`, and `dsh-next-steps/artifacts/` (screenshots). Keep `dsh-workstream/NOTE_FOR_CLAUDE.md` and `README.md` exactly as they are.\n4. Before anything is pushed, scan every file that will be uploaded for secrets (API keys, tokens, private keys, passwords, `.env` content). If anything looks like a secret, leave that file out and say so in your report.\n5. Add a root `.gitignore` (node_modules, lib, .DS_Store, *.tgz) and a short root `README.md` saying: two DSH client plugins, how each is built (`pnpm build` in each folder), and that they live in `default-workspace/` of the harness.\n6. Create the repo as PRIVATE: `gh repo create gera3d/dsh-plugins --private`. Commit with the author the instructions name or the agent account, and push `main`.\n7. Also push each plugin's existing git history from the live folders as read-only branches `history/dsh-next-steps` and `history/dsh-workstream` (use `git fetch`/`git push` from a CLONE of each folder, not from the live folder itself). Skip this step if it is not clean; it is optional.\n8. Verify: list the repo tree through `gh api` and confirm it contains `dsh-next-steps/src/index.ts`, `dsh-next-steps/src/suggest.ts`, `dsh-next-steps/src/client/index.tsx`, `dsh-workstream/src/client/index.tsx`, `dsh-workstream/src/client/app.tsx`, and `dsh-workstream/NOTE_FOR_CLAUDE.md`. Confirm the repo is private.\n9. Report on this issue: the repo URL, the file count per plugin, anything left out and why, and the secret-scan result.\n\n## Rules\n\n- Never run apply, restart, or anything that touches the live harness.\n- No key, model or setting changes.\n- Do not open a PR in any other repo.\n\n## Try it (for Gera, 3 lines)\n\n1. Open https://github.com/gera3d/dsh-plugins (it should be marked Private).\n2. You should see two folders, `dsh-next-steps` and `dsh-workstream`.\n3. Open `dsh-next-steps/src/suggest.ts` and confirm it has today's scoring edits.",
+      "bodySha256": "4ffa35241d35187a5d6f18ebf45925c0251cc48ca93513b4eea5587f83444603",
+      "comments": [
+        {
+          "id": 6668073946,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/138#issuecomment-6668073946",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T20:07:48Z",
+          "body": "On it: copying the current Next steps and Workstream working trees into one new private repo, `gera3d/dsh-plugins`, without touching the live folders.\n\n<!-- dsh-superagent:0a32d125d3b77185cb001e599a82c51b -->",
+          "bodySha256": "131647883fe874b29e0610390ef6c13b7eb710757b76fca49025f34223385f5e"
+        },
+        {
+          "id": 6668167429,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/138#issuecomment-6668167429",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T20:12:18Z",
+          "body": "### Backup Complete: Private Plugin Repository Created\n\n- **Repository**: https://github.com/gera3d/dsh-plugins (Private)\n- **Branches**: `main`, `history/dsh-next-steps`, `history/dsh-workstream`\n\n#### File Counts\n- **dsh-next-steps**: 10 files (includes today's uncommitted scoring patch in `src/suggest.ts`)\n- **dsh-workstream**: 27 files (includes dock fix edits, preserves `NOTE_FOR_CLAUDE.md` and `README.md`)\n- **Root**: 2 files (`.gitignore`, `README.md`)\n\n#### Excluded Files\n- `node_modules/` (build dependencies, reinstallable via `pnpm`)\n- `lib/` (compiled output)\n- `.git/` (live repo git metadata)\n- `*.tgz` (`dsh-workstream-0.1.0.tgz`)\n- `*.orig` (`src/suggest.ts.orig`)\n- `.DS_Store` (OS metadata)\n- `dsh-next-steps/artifacts/` (screenshots)\n\n#### Secret Scan Result\n- **Clean**: 0 tokens, API keys, passwords, or credentials detected across all files.\n\n#### Verification\n- Remote repo verified private via `gh repo view`.\n- File tree verified via `gh api repos/gera3d/dsh-plugins/git/trees/main?recursive=1` confirming all critical files including `dsh-next-steps/src/suggest.ts` and `dsh-workstream/NOTE_FOR_CLAUDE.md`.",
+          "bodySha256": "4ee19e4a48bf600d0718bfee846202a58a5e5ee69e4fba800dd6f443b04410b9"
+        },
+        {
+          "id": 6869768194,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/138#issuecomment-6869768194",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:18Z",
+          "body": "Closed in backlog cleanup.",
+          "bodySha256": "5b7f73f649d19120915c1ac5ae7716322cae5c70e491decca4fc254a7d0339e9"
+        }
+      ]
+    }
+  ],
+  "newPullRequestMetadata": [
+    {
+      "number": 18,
+      "html_url": "https://github.com/gera3d/dsh-superagent-prototype/pull/18",
+      "title": "fix(client): isolate locked-escalation list to prevent server-only imports in browser bundle",
+      "body": "Resolves https://github.com/gera3d/superagent-sandbox/issues/133\n\n### Summary\n- Extracted `LOCKED_ESCALATION_LIST` and `LockedEscalationItem` into new file `src/locked-escalation.ts`.\n- Updated `src/client/api.ts` to import from `../locked-escalation.ts` instead of `../policy.ts`.\n- Updated `src/policy.ts` to re-export `LOCKED_ESCALATION_LIST` and `LockedEscalationItem` from `./locked-escalation.ts`.\n- Added `tests/client-guard.spec.ts` to guard the client runtime import graph against importing `node:` modules or server-only files.\n- Verified `lib/client.js` has 0 occurrences of `node:child_process`.\n- Updated `docs/007-architecture.md` module and test tables.",
+      "state": "closed",
+      "merged_at": "2026-11-05T15:17:57Z",
+      "merge_commit_sha": "5aace7eb0c4b5fe4d540c2644946cd4cf749b153",
+      "head": "c1aa83e4bf533acc5797f33f91d215457982e2ca",
+      "base": "superagent-core"
+    },
+    {
+      "number": 19,
+      "html_url": "https://github.com/gera3d/dsh-superagent-prototype/pull/19",
+      "title": "fix(branding): logo fetch header, settings save form submit, and raw logo loopback host",
+      "body": "## Summary\n\nFixes custom brand logo loading and settings persistence:\n1. `src/client/branding-mark.tsx`: Send `x-orchestrator-request: 1` header when fetching `/orchestrator/api/branding` to satisfy same-origin management endpoint check.\n2. `src/client/branding-settings.tsx`: Enclose settings controls in `<form onSubmit={event => { void draft.submit(event) }}>` so the Save button (`type=submit`) triggers draft submission and persists settings.\n3. `src/app/http.ts`: Permit `/orchestrator/api/branding/raw` to serve when called from a loopback `Host` header (`127.0.0.1:<port>` or `localhost:<port>`) without requiring custom management headers, while refusing non-loopback hosts with 403.\n4. Added tests verifying mark request header, settings form submission and persistence, and loopback host handling on raw logo route.\n\nFixes https://github.com/gera3d/superagent-sandbox/issues/135",
+      "state": "closed",
+      "merged_at": "2026-11-05T15:40:10Z",
+      "merge_commit_sha": "b3a0b368b8557ad16987143ac3b7e246181b4758",
+      "head": "a1bf78205fa2b475fa266654dad34dcd7159fc48",
+      "base": "superagent-core"
+    },
+    {
+      "number": 20,
+      "html_url": "https://github.com/gera3d/dsh-superagent-prototype/pull/20",
+      "title": "feat(branding): hide deepseek wordmark in sidebar header and add setting",
+      "body": "## Summary\nImplements non-forking slot override to hide the DeepSeek SVG wordmark graphic in the top-left sidebar header while leaving the spot as clean, empty space. Adds a toggle setting under **Settings > Branding** (`Hide DeepSeek wordmark`, default ON / `true`).\n\nAddresses issue [gera3d/superagent-sandbox#136](https://github.com/gera3d/superagent-sandbox/issues/136).\n\n## Visual Evidence\n\n| Before (DeepSeek Wordmark visible) | After (Wordmark hidden, empty spot) |\n| --- | --- |\n| ![Before: DeepSeek Wordmark visible](/Users/gerayeremin/.gemini/antigravity-cli/brain/81c69048-ece3-4e75-b49b-3d24ce51135e/deepseek_wordmark_live.png) | ![After: Wordmark hidden](/Users/gerayeremin/.gemini/antigravity-cli/brain/81c69048-ece3-4e75-b49b-3d24ce51135e/deepseek_wordmark_hidden_live.png) |\n\n- **Before**: DeepSeek wordmark graphic `<svg width=\"156\" height=\"24\">` renders next to the brand logo mark in slot `sidebar.brand.name` inside `span.hHd-Xa_brandName`.\n- **After**: Wordmark slot renders empty (`null` output), leaving clean empty space. The 57 brand logo mark maintains its exact layout coordinates (`x: 16, y: 27`) and dimensions without disruption.\n\n## Wordmark Audit & Findings\n- **Location**: Top-left sidebar header in `<div data-slot=\"sidebar.brand.name\">` inside `span.hHd-Xa_brandName`.\n- **Plugin / File**: Rendered by `@deepseek-ai/dsh-client-ui-brand-official` via `OfficialBrandName` invoking `<BrandWordmark includeMark={false} />` registered on slot `sidebar.brand.name` at priority 0 in `@deepseek-ai/dsh-client-ui-sidebar`.\n- **Other areas inspected**: Full DOM traversal and boot screen (`dsh-web-frontend`) were inspected; boot screen renders text \"HARNESS\" (`Kn.wordmark`), not the DeepSeek SVG graphic. Top-left sidebar is the only occurrence of the graphic.\n\n## Changes\n1. **Slot Shadowing**: Registered `sidebar.brand.name` at `priority: -1` in `dsh-superagent`'s client entry (`src/client/index.tsx`), cleanly shadowing the official brand occupant non-invasively.\n2. **Wordmark Component**: Implemented `BrandWordmark` in `src/client/branding-mark.tsx`. Renders `null` when `hideWordmark` is `true`, or renders `<DefaultBrandWordmark />` when `false`.\n3. **Settings & Schema**:\n   - Added `hideWordmark: z.boolean().default(true)` to `BrandingConfigSchema` in `src/policy.ts`.\n   - Added switch control `Hide DeepSeek wordmark` in `src/client/branding-settings.tsx`.\n   - Added English and Chinese localization in `src/client/locales.ts`.\n\n## Verification\n- `pnpm vitest run tests/branding.spec.tsx`: 15 passed.\n- `pnpm vitest run tests/client.spec.tsx`: 6 passed.\n- `pnpm vitest run tests/policy.spec.ts`: 328 passed.\n- `pnpm vitest run tests/http.spec.ts`: 9 passed.\n- `pnpm typecheck` (`tsc --noEmit`): clean, 0 errors.\n- `pnpm build` (`tsdown`): clean build.\n",
+      "state": "closed",
+      "merged_at": "2026-11-05T15:57:21Z",
+      "merge_commit_sha": "dbf9410f07cecdb9a855bb98c42a6b105dcf73cc",
+      "head": "fd20dd70b95745608131ddae05ea7f544a0cb068",
+      "base": "superagent-core"
+    }
+  ],
+  "reusedExactPRMetadata": [
+    "workmap-runtime-seven-source-20261114.json: prototype8,16/sandbox100",
+    "workmap-routing-autopilot-source-20261114.json: prototype15"
+  ],
+  "limits": "No refetch of audited28 or denied plugin PR4/6/7; source comments are historical evidence, not new execution authority."
+}

@@ -6,6 +6,7 @@ import type { PromptVersion } from './app/prompts.ts'
 import type { SettingsVersion } from './app/store.ts'
 import type { SettingsSave } from './policy.ts'
 import type { Retry } from './sources/github.ts'
+import type { TelemetrySummary } from './infra/github-telemetry.ts'
 
 /** Key of a KV record whose value has type `V`; a plain string represents an untyped key. */
 export type Key<V> = string & { readonly __value?: V }
@@ -29,8 +30,10 @@ export const KV = {
   prompts: { revision: record<number>('prompt-revision'), version: family<PromptVersion, [revision: number]>('prompt-version:'),
     /** The built-in text of a prompt part an override was edited from, by its `base`, which shows what an upgrade changed. */
     builtIn: family<string, [base: string]>('prompt-built-in:') },
-  /** Runtime: the main Session's ID. */
-  runtime: { masterId: record<string>('master-id') },
+  /** Runtime: the main Session's ID and the setup quota backoff. */
+  runtime: { masterId: record<string>('master-id'),
+    /** Consecutive startup setup checks that ended in GitHub quota exhaustion; a restart creates a new Runtime, so the backoff reads it from here. */
+    quotaFailures: record<number>('setup-quota-failures') },
   /** Sessions: prompt revisions each Session has worked under, ordered oldest first; the last entry (`.at(-1)`) is its active revision. */
   sessions: { prompts: family<number[], [session: string]>('session-prompts:'),
     toolLedgers: family<Record<string, { status: string; toolName: string; timestamp: number }>, [ticketId: string]>('ticket-tool-ledger:') },
@@ -40,14 +43,20 @@ export const KV = {
   /** Per-Source resolved display names mapping a named ID (such as a Feishu chat ID) to its display name. */
   sources: { labels: family<Record<string, string>, [source: string]>('source-labels:') },
   /**
-   * GitHub Source: notification cursor and pending retries; per-Issue/PR read cursor shared by notification and polled reads;
+   * GitHub Source: notification cursor and pending retries; per-Issue/PR read cursor shared by notification and polled reads, with the ETag of each comment list (by kind) and the
+   * request path it belongs to;
    * per-stream cursor, start times by kind, and ETag; default-branch CI state; and per-PR CI fingerprint and revision (`revision`
    * counts reported CI changes so each produces a distinct Trigger ID).
    */
   github: { since: record<string>('github-since'), retries: record<Record<string, Retry>>('github-retry'),
+    /** The notifications list's `Last-Modified` and `x-poll-interval` from the last round that finished reading it. */
+    notifications: record<{ lastModified?: string; interval?: number }>('github-notifications'),
     cursor: family<string, [number: number]>('github-cursor:'),
+    reads: family<Record<string, { path: string; etag: string }>, [number: number]>('github-reads:'),
     stream: family<{ since: string; started: Record<string, string>; etag?: string }, [stream: string]>('github-stream:'),
     branchCi: record<{ branch?: string; failures?: string[]; revision: number }>('github-branch-ci'),
+    /** Request counts of the last days and the last `x-ratelimit-*` facts, kept so a restart does not lose them. */
+    telemetry: record<TelemetrySummary>('github-telemetry'),
     ci: family<{ fingerprint: string; revision: number }, [number: number]>('github-ci:') },
   /**
    * Feishu Source: known chats (`true` for direct messages); per-chat history cursor and active topics mapped from topic ID
