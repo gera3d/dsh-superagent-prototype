@@ -5,7 +5,7 @@
  * immutable dependency pool reuse, and per-task cache isolation.
  */
 import { createHash } from 'node:crypto'
-import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, symlinkSync } from 'node:fs'
+import { accessSync, constants, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, symlinkSync } from 'node:fs'
 import { dirname, isAbsolute, join, resolve, relative, sep } from 'node:path'
 
 /** Inputs required to compute a deterministic dependency compatibility key. */
@@ -166,24 +166,24 @@ export function validateContainment(targetPath: string, allowedRoot: string): bo
   }
 
   try {
-    const resolvedRoot = resolve(allowedRoot)
-    const resolvedTarget = resolve(targetPath)
+    const canonicalRoot = existsSync(allowedRoot) ? realpathSync(resolve(allowedRoot)) : resolve(allowedRoot)
+    const canonicalTarget = existsSync(targetPath) ? realpathSync(resolve(targetPath)) : resolve(targetPath)
 
-    // Check lexically first
-    const rel = relative(resolvedRoot, resolvedTarget)
+    // Check containment between canonical paths
+    const rel = relative(canonicalRoot, canonicalTarget)
     if (rel.startsWith('..') || isAbsolute(rel)) {
       return false
     }
 
-    // Check existing ancestor symlinks for target path
-    let cur = resolvedTarget
-    while (cur && cur !== resolvedRoot && cur !== dirname(cur)) {
+    // Check existing ancestor symlinks for target path to prevent ancestor escapes
+    let cur = resolve(targetPath)
+    while (cur && cur !== canonicalRoot && cur !== resolve(allowedRoot) && cur !== dirname(cur)) {
       if (existsSync(cur)) {
         try {
           const lstat = lstatSync(cur)
           if (lstat.isSymbolicLink()) {
             const real = realpathSync(cur)
-            const realRel = relative(resolvedRoot, real)
+            const realRel = relative(canonicalRoot, real)
             if (realRel.startsWith('..') || isAbsolute(realRel)) {
               return false
             }
@@ -193,16 +193,6 @@ export function validateContainment(targetPath: string, allowedRoot: string): bo
         }
       }
       cur = dirname(cur)
-    }
-
-    // If both exist, resolve real paths
-    if (existsSync(resolvedRoot) && existsSync(resolvedTarget)) {
-      const realRoot = realpathSync(resolvedRoot)
-      const realTarget = realpathSync(resolvedTarget)
-      const realRel = relative(realRoot, realTarget)
-      if (realRel.startsWith('..') || isAbsolute(realRel)) {
-        return false
-      }
     }
 
     return true
@@ -273,15 +263,43 @@ export function createTaskIsolation(taskDir: string): TaskIsolationPaths {
   }
 }
 
-/** Verified immutable content attestation for a dependency pool. */
-export interface DependencyPoolAttestation {
-  /** Content digest of the immutable pool's tree or integrity receipt. */
+/** Verified immutable receipt binding a dependency pool to an exact key and disk tree. */
+export interface ImmutablePoolReceipt {
+  /** Exact compatibility key this receipt binds. */
+  compatibilityKey: string
+  /** Resolved realpath of the verified pool root. */
+  resolvedRootPath: string
+  /** Resolved realpath of the verified node_modules target. */
+  resolvedNodeModulesPath: string
+  /** Content digest of the verified immutable tree. */
   contentDigest: string
-  /** Timestamp of verification. */
+  /** Valid ISO 8601 date string. */
   verifiedAt: string
-  /** Verified by operator or qualification provider. */
+  /** Trusted qualification verifier identifier. */
   verifiedBy: string
   /** Explicit verification that pool content is immutable and read-only. */
+  isReadOnly: boolean
+}
+
+/** Trusted qualification provider to independently verify and attest dependency pools. */
+export interface PoolQualificationProvider {
+  /** Inspects and verifies the pool root and its node_modules target on disk. */
+  qualify(pool: QualifiedDependencyPool, key: string, allowedRoot: string):
+    | { ok: true; receipt: ImmutablePoolReceipt }
+    | { ok: false; reason: string }
+}
+
+/** Options for qualifying a pool for reuse. */
+export interface PoolQualificationOptions {
+  /** Trusted read-only qualification provider. */
+  provider?: PoolQualificationProvider
+}
+
+/** Legacy/caller attestation interface. */
+export interface DependencyPoolAttestation {
+  contentDigest: string
+  verifiedAt: string
+  verifiedBy: string
   isImmutable: boolean
 }
 
@@ -294,8 +312,10 @@ export interface QualifiedDependencyPool {
   state: 'ready' | 'preparing' | 'failed'
   preparedAt?: string
   error?: string
-  /** Explicit immutable content attestation. */
+  /** Caller-authored attestation (untrusted without a provider or receipt). */
   attestation?: DependencyPoolAttestation
+  /** Validated receipt bound to compatibility key and real paths. */
+  receipt?: ImmutablePoolReceipt
 }
 
 /** In-memory or state-backed registry for qualified dependency pools. */
@@ -321,9 +341,14 @@ export class DependencyPoolManager {
    * Qualifies a dependency pool for reuse by a task workspace.
    * Requires mandatory allowedRoot boundary. Fails closed if pool does not exist,
    * directory does not exist on disk, is still preparing, is failed,
-   * is not marked immutable, or lacks verified complete attestation.
+   * is not marked immutable, node_modules target escapes allowed boundary,
+   * or lacks a trusted read-only qualification provider or validated receipt.
    */
-  qualifyPoolForReuse(key: string, allowedRoot: string): { ok: true; pool: QualifiedDependencyPool } | { ok: false; reason: string } {
+  qualifyPoolForReuse(
+    key: string,
+    allowedRoot: string,
+    options?: PoolQualificationOptions
+  ): { ok: true; pool: QualifiedDependencyPool } | { ok: false; reason: string } {
     if (!allowedRoot || allowedRoot.trim() === '') {
       return { ok: false, reason: 'Missing mandatory trusted allowed root boundary' }
     }
@@ -341,26 +366,91 @@ export class DependencyPoolManager {
     if (!pool.isImmutable) {
       return { ok: false, reason: 'Dependency pool is not immutable; refusing to reuse mutable tree' }
     }
+
+    // 1. Root directory containment and existence
     if (!validateContainment(pool.rootPath, allowedRoot)) {
       return { ok: false, reason: `Dependency pool root escapes allowed boundary ${allowedRoot}` }
     }
     if (!existsSync(pool.rootPath)) {
       return { ok: false, reason: `Dependency pool root directory does not exist on disk: ${pool.rootPath}` }
     }
+
+    // 2. node_modules containment (both link path AND resolved target)
     const nmPath = join(pool.rootPath, 'node_modules')
     if (!existsSync(nmPath)) {
       return { ok: false, reason: `Dependency pool is missing node_modules directory at ${nmPath}` }
     }
+    if (!validateContainment(nmPath, allowedRoot)) {
+      return { ok: false, reason: `Dependency pool node_modules escapes allowed boundary ${allowedRoot}` }
+    }
+    let realNmTarget: string
+    try {
+      realNmTarget = realpathSync(nmPath)
+    } catch {
+      return { ok: false, reason: `Failed to resolve realpath of node_modules target at ${nmPath}` }
+    }
+    if (!validateContainment(realNmTarget, allowedRoot)) {
+      return { ok: false, reason: `Dependency pool node_modules target escapes allowed boundary ${allowedRoot}` }
+    }
+
+    // 3. Immutability & Qualification proof: require a trusted qualification provider or validated receipt
+    if (options?.provider) {
+      const res = options.provider.qualify(pool, key, allowedRoot)
+      if (!res.ok) {
+        return { ok: false, reason: `Trusted provider qualification rejected: ${res.reason}` }
+      }
+      return { ok: true, pool: { ...pool, receipt: res.receipt } }
+    }
+
+    if (pool.receipt) {
+      const r = pool.receipt
+      if (r.compatibilityKey !== key) {
+        return { ok: false, reason: `Pool receipt key ${r.compatibilityKey} does not match requested key ${key}` }
+      }
+      if (r.resolvedRootPath !== realpathSync(pool.rootPath)) {
+        return { ok: false, reason: 'Pool receipt resolved root does not match verified disk path' }
+      }
+      if (r.resolvedNodeModulesPath !== realNmTarget) {
+        return { ok: false, reason: 'Pool receipt resolved node_modules does not match verified target' }
+      }
+      if (r.isReadOnly !== true) {
+        return { ok: false, reason: 'Pool receipt does not verify read-only immutability' }
+      }
+      if (!r.contentDigest || r.contentDigest.trim() === '') {
+        return { ok: false, reason: 'Pool receipt lacks verified content digest' }
+      }
+      if (!r.verifiedBy || r.verifiedBy.trim() === '') {
+        return { ok: false, reason: 'Pool receipt lacks verified qualification authority' }
+      }
+      if (!r.verifiedAt || isNaN(Date.parse(r.verifiedAt)) || !/^\d{4}-\d{2}-\d{2}T/.test(r.verifiedAt)) {
+        return { ok: false, reason: 'Pool receipt has invalid or non-ISO verifiedAt date' }
+      }
+      return { ok: true, pool: { ...pool } }
+    }
+
+    // A synthetic writable directory with caller-asserted strings alone is NOT qualification
+    let isWritable = false
+    try {
+      accessSync(pool.rootPath, constants.W_OK)
+      isWritable = true
+    } catch {
+      isWritable = false
+    }
+
+    if (isWritable) {
+      return { ok: false, reason: 'Dependency pool directory is writable on disk without verified read-only isolation' }
+    }
+
     if (!pool.attestation || pool.attestation.isImmutable !== true) {
       return { ok: false, reason: 'Dependency pool lacks verified immutable content attestation; ineligible for reuse' }
     }
     if (!pool.attestation.contentDigest || pool.attestation.contentDigest.trim() === '' ||
-        !pool.attestation.verifiedAt || pool.attestation.verifiedAt.trim() === '' ||
+        !pool.attestation.verifiedAt || isNaN(Date.parse(pool.attestation.verifiedAt)) || !/^\d{4}-\d{2}-\d{2}T/.test(pool.attestation.verifiedAt) ||
         !pool.attestation.verifiedBy || pool.attestation.verifiedBy.trim() === '') {
-      return { ok: false, reason: 'Dependency pool attestation is incomplete, empty, or unverified' }
+      return { ok: false, reason: 'Dependency pool attestation is incomplete, unverified, or has invalid date format' }
     }
 
-    return { ok: true, pool: { ...pool } }
+    return { ok: false, reason: 'Dependency pool lacks trusted read-only qualification provider or validated receipt bound to compatibility key; caller-asserted labels are ineligible' }
   }
 
   /**
@@ -368,7 +458,7 @@ export class DependencyPoolManager {
    * Validates containment of both pool AND workspace against the allowed root,
    * checks ancestor symlinks, and verifies target directory does not overwrite existing contents.
    */
-  linkToWorkspace(workspaceDir: string, key: string, allowedRoot: string): void {
+  linkToWorkspace(workspaceDir: string, key: string, allowedRoot: string, options?: PoolQualificationOptions): void {
     if (!allowedRoot || allowedRoot.trim() === '') {
       throw new Error('Missing mandatory trusted allowed root boundary')
     }
@@ -376,7 +466,7 @@ export class DependencyPoolManager {
       throw new Error(`Workspace directory escapes allowed boundary ${allowedRoot}`)
     }
 
-    const qualification = this.qualifyPoolForReuse(key, allowedRoot)
+    const qualification = this.qualifyPoolForReuse(key, allowedRoot, options)
     if (!qualification.ok) {
       throw new Error(`Cannot link dependency pool: ${qualification.reason}`)
     }

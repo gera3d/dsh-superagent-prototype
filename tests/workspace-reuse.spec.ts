@@ -291,7 +291,7 @@ describe('workspace-reuse', () => {
         const nmDir = join(tempRoot, 'node_modules')
         mkdirSync(nmDir, { recursive: true })
 
-        // 1. Pool marked ready but missing attestation is INELIGIBLE
+        // 1. Pool marked ready but missing attestation and receipt is INELIGIBLE
         manager.registerPool({
           id: 'pool-1',
           key,
@@ -302,27 +302,142 @@ describe('workspace-reuse', () => {
         const q1 = manager.qualifyPoolForReuse(key, tempRoot)
         expect(q1.ok).toBe(false)
         if (!q1.ok) {
-          expect(q1.reason).toMatch(/lacks verified immutable content attestation/)
+          expect(q1.reason).toMatch(/lacks verified immutable content attestation|lacks trusted read-only qualification provider|directory is writable/)
         }
 
-        // 2. Pool with verified complete attestation succeeds
+        // 2. Pool with validated receipt bound to exact key and disk paths succeeds
         manager.registerPool({
           id: 'pool-1',
           key,
           rootPath: tempRoot,
           isImmutable: true,
           state: 'ready',
-          attestation: {
+          receipt: {
+            compatibilityKey: key,
+            resolvedRootPath: realpathSync(tempRoot),
+            resolvedNodeModulesPath: realpathSync(nmDir),
             contentDigest: 'digest-1234',
             verifiedAt: new Date().toISOString(),
             verifiedBy: 'test-harness',
-            isImmutable: true,
+            isReadOnly: true,
           },
         })
         const q2 = manager.qualifyPoolForReuse(key, tempRoot)
         expect(q2.ok).toBe(true)
       } finally {
         rmSync(tempRoot, { recursive: true, force: true })
+      }
+    })
+
+    // Regression for New Synthetic Boundary Check 1:
+    it('rejects pool when node_modules is a symlink targeting outside allowedRoot (New Check 1)', () => {
+      const manager = new DependencyPoolManager()
+      const allowedBase = mkdtempSync(join(tmpdir(), 'allowed-root-'))
+      const outsideDir = mkdtempSync(join(tmpdir(), 'outside-target-'))
+      try {
+        const poolRoot = join(allowedBase, 'pool')
+        mkdirSync(poolRoot, { recursive: true })
+        const externalNm = join(outsideDir, 'external_nm')
+        mkdirSync(externalNm, { recursive: true })
+        symlinkSync(externalNm, join(poolRoot, 'node_modules'))
+
+        manager.registerPool({
+          id: 'pool-sym-escape',
+          key: 'dep-escape',
+          rootPath: poolRoot,
+          isImmutable: true,
+          state: 'ready',
+          receipt: {
+            compatibilityKey: 'dep-escape',
+            resolvedRootPath: realpathSync(poolRoot),
+            resolvedNodeModulesPath: realpathSync(externalNm),
+            contentDigest: 'digest-1',
+            verifiedAt: new Date().toISOString(),
+            verifiedBy: 'test-harness',
+            isReadOnly: true,
+          },
+        })
+
+        const res = manager.qualifyPoolForReuse('dep-escape', allowedBase)
+        expect(res.ok).toBe(false)
+        if (!res.ok) {
+          expect(res.reason).toMatch(/node_modules (?:target )?escapes allowed boundary/)
+        }
+      } finally {
+        rmSync(allowedBase, { recursive: true, force: true })
+        rmSync(outsideDir, { recursive: true, force: true })
+      }
+    })
+
+    // Regression for New Synthetic Boundary Check 2:
+    it('rejects writable synthetic directory with self-asserted nonempty attestation strings (New Check 2)', () => {
+      const manager = new DependencyPoolManager()
+      const allowedBase = mkdtempSync(join(tmpdir(), 'writable-pool-'))
+      try {
+        const poolRoot = join(allowedBase, 'pool')
+        mkdirSync(join(poolRoot, 'node_modules'), { recursive: true })
+
+        // Caller self-asserts attestation strings, with verifiedAt='not-a-date' on a writable directory
+        manager.registerPool({
+          id: 'pool-writable',
+          key: 'dep-writable',
+          rootPath: poolRoot,
+          isImmutable: true,
+          state: 'ready',
+          attestation: {
+            contentDigest: 'some-hash',
+            verifiedAt: 'not-a-date',
+            verifiedBy: 'untrusted-caller',
+            isImmutable: true,
+          },
+        })
+
+        const res = manager.qualifyPoolForReuse('dep-writable', allowedBase)
+        expect(res.ok).toBe(false)
+        if (!res.ok) {
+          expect(res.reason).toMatch(/writable|invalid or non-ISO verifiedAt date|lacks trusted read-only qualification provider/)
+        }
+      } finally {
+        rmSync(allowedBase, { recursive: true, force: true })
+      }
+    })
+
+    it('admits a pool when qualified by a trusted qualification provider', () => {
+      const manager = new DependencyPoolManager()
+      const allowedBase = mkdtempSync(join(tmpdir(), 'provider-pool-'))
+      try {
+        const poolRoot = join(allowedBase, 'pool')
+        const nmDir = join(poolRoot, 'node_modules')
+        mkdirSync(nmDir, { recursive: true })
+
+        const key = 'dep-provider-verified'
+        manager.registerPool({
+          id: 'pool-prov',
+          key,
+          rootPath: poolRoot,
+          isImmutable: true,
+          state: 'ready',
+        })
+
+        const mockProvider = {
+          qualify: (_pool: unknown, k: string, _allowed: string) => ({
+            ok: true as const,
+            receipt: {
+              compatibilityKey: k,
+              resolvedRootPath: realpathSync(poolRoot),
+              resolvedNodeModulesPath: realpathSync(nmDir),
+              contentDigest: 'sha256-verified-digest',
+              verifiedAt: new Date().toISOString(),
+              verifiedBy: 'trusted-harness-provider',
+              isReadOnly: true,
+            },
+          }),
+        }
+
+        const res = manager.qualifyPoolForReuse(key, allowedBase, { provider: mockProvider })
+        expect(res.ok).toBe(true)
+      } finally {
+        rmSync(allowedBase, { recursive: true, force: true })
       }
     })
   })
