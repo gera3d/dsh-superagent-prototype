@@ -24,17 +24,19 @@ PR124 is explicitly an **isolated source domain/context adapter and reusable com
 
 Post-merge CI is green for all first nine source merges, including PR124 run43665870503. PR113 reviewed-head CI passed; its new post-merge check remains pending verification. Source merge is not installation or native acceptance.
 
-## Withheld source PRs and exact next owner
+## Current nine open source PR dispositions
 
-| PR / reviewed source | Reason withheld | Next owner / stage |
+| PR / exact head | Current checks and disposition | Next owner / gate |
 |---|---|---|
-| Prototype103 / a579ae68;104 /9fac827d | Superseded failed output-bounding attempts; replacement candidates are not simply ancestry to merge together. | Retain failed history; do not merge these as implementation. |
-| Prototype105 /8936bcf7 | Concrete notice-only tail-loss edge and an unresolved intended-behavior clarification/protected review hold. Error-output passthrough is a distinct existing requirement. | Coordinator retains the clarification gate; no reinterpretation or speculative error truncation. |
-| Prototype106 /78a8f788;107 /2daef812 | Superseded Composio attempts;106 misclassifies successful/error-note entries and107 is an ancestor of108. | Preserve history; qualify the corrected108 lineage instead. |
-| Prototype108 /488f8400 | Remote CI fails missing inventory. Reviewed three-row correction53369320 remains local behind the existing protected source-publication action. | Existing finding/source publication owner; publish through that actual supported action, then exact-head CI/review before merge. No direct push around it. |
-| Prototype115 /a6b754d4 | Remote CI fails inventory. Reviewed correctiona9be5b92 remains unpublished behind its existing protected source-publication flow. | Existing finding/source publication owner; retain one-use/current-head protections. Historical native failure cause and deployment remain separate. |
-| Prototype121 /5412f8c | Previous wake/cross-candidate failures now pass, but exact source still reserves an attempt then rejects that final permitted retry at the wake (`count >= cap`). [Change request](https://github.com/gera3d/dsh-superagent-prototype/pull/121#pullrequestreview-5908534885). | Original217/runtime owner; same-job correction6887874043 posted for positive final-attempt regression and preserved bounds/durability checks, awaiting verified normal intake. The latest positive-path finding is static source review, not a new executed test. |
-| Sandbox231 /859828a6 | New returned candidate requires delta/current-base review; prior842492b0 failures remain historical evidence, not a verdict on this revised head. | Original218 owns implementation; coordinator reviews full Python/TS/evidence integration. No installed/native recovery acceptance. |
+| Prototype103 / `a579ae682a4c7b3f424d024808d3cc25fa9164d6` | CI failure; superseded output-bounding attempt. Do not approve or merge. | Preserve history; reviewed replacement lineage remains held. Connected reviewer is also author, so no self-approval or alternate identity. |
+| Prototype104 / `9fac827da9ed6a373296cf4caed5deaf2bfb93d1` | CI failure; superseded output-bounding attempt. Do not approve or merge. | Preserve history; no self-approval or identity workaround. |
+| Prototype105 / `8936bcf7e412642cd50965721e6e3342e645e145` | CI failure; concrete notice-only tail-loss issue plus unresolved intended-behavior clarification hold. | Coordinator retains clarification boundary. Error passthrough is separate; no speculative truncation or self-approval. |
+| Prototype106 / `78a8f78892e029dda9720ae069464f44b95e5b4a` | CI failure; superseded Composio attempt with success/error-note classification defects. | Preserve history; qualify108 instead; no self-approval. |
+| Prototype107 / `2daef8122c245fcc1d8235463e785123b3f60e13` | CI failure; superseded ancestor of108. | Preserve history; no blanket approval or obsolete merge. |
+| Prototype108 / `488f8400c78d1969fede084fd39899ca342efd1c` | Remote CI failure on inventory; reviewed local correction53369320 not published. | Canonical findingc844ce8f revision21blocked, original r20 job; existing protected source-publication action remains required before exact-head CI/review. No direct push around gate. |
+| Prototype115 / `a6b754d4656e26a4813763a3bcd784e36e5857b9` | Remote CI failure on inventory; reviewed local correctiona9be5b92 unpublished. | Canonical findingf1d6590a revision12blocked, original r11 job; sanctioned protected publication/evidence path, then exact-head checks. No bypass. |
+| Prototype121 / `30ac76c01ddf0dc0be426a5ed22f39264f22d536` | Hosted CI43670842369 SUCCESS, but REQUEST_CHANGES5908788267 remains on optional production persistence/durability regression; timer/managed-reconciliation evidence also incomplete. | Original217 owner actively correcting;6888329082 read03:10:32UTC, latest6888353555 read receipt pending at census. Preserve strict production KV guard; adapt realistic fixture. No duplicate writer or green-CI acceptance. |
+| Sandbox231 / `dc9ddfc5794810392b8f0f7f8fba43b07ffe015d` | Revised Python recovery correction returned;0hosted checks is not passed CI. Prior828dbaf Python findings require current-delta independent review. | Existing218 owner ended03:12:54UTC; independent reviewer examines current source/evidence. Keep runtime/native integration deferred, no duplicate implementation/testing. |
 
 The ordinary source-merge authorization supersedes earlier generic source merge holds. It does not remove actual repository requirements or the distinct protected source-publication/native actions on the two finding lineages. No denied plugins-repository lookup, alternate identity, new credential or permission workaround was attempted.
 
