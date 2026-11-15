@@ -310,6 +310,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/delivery-card.tsx` | Shared current delivery recommendation, typed confirmation and inspectable evidence/history |
 | `src/client/delivery-card.css` | The delivery card styles |
 | `src/client/worker-report-fallback.tsx` | Provenance-labelled recorded report rendering after an actual blank completed final reply |
+| `src/client/worker-report.css` | The worker report fallback styles |
 | `src/index.ts` | The main plugin entry: reads the machine settings, starts the Runtime, and gives it the restart that a save of a Source's account uses |
 | `src/deployment.ts` | The plugin `Config` and `Machine`; `resolveDeployment` and `resolveFeishuBot` read the repository and the accounts from the Source settings, each CLI run as Executor shells run it; `SETUP_FIELDS` lists the Source fields setup reads. The code names no person, account or organization |
 | `src/setup.ts` | Setup problems: `SetupError`, with a code, the place that fixes it and the English text the log, the main Session and the panel share |
@@ -337,6 +338,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/core/ids.ts` | `key`: ids derived from their inputs, equal for equal inputs |
 | `src/core/memory.ts` | `MemoryRepositories`: the Store's repositories in memory, in the Store's order and with its nested rollback, for domain tests |
 | `src/core/index.ts` | The core's exports |
+| `src/core/thread-brief.ts` | Isolated brief domain, revisions, evidence and continuation context; runtime persistence remains separate |
 | `src/core/decision.ts` | `evaluateDecision`: pure validation over an injected model transport; no vendor HTTP or credential access. Scores are not calibrated. |
 | `src/core/character.ts` | Autopilot character profile definitions, reviewer prompts, personas, disagreement capabilities, and locked escalation boundaries |
 | `src/core/specialist-profile.ts` | Typed specialist registry and seeds (Administrator, Senior Developer, Cloudflare Specialist); declarations only, never grants |
@@ -417,6 +419,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/executor/background.ts` | A worker's background work in DeepSeek Harness, the shell jobs its Session owns (`ctx.jobs`) and its subagents (`ctx.subagents`): `runningJobs`, `untilQuiet`, `killJobs`, `collectJobs`, `stopSubagents`, `stopBackground`, `until`, and `cancelled`, the workers whose turn a stop of their subagents cancelled |
 | `src/infra/commands.ts` | `Commands`, the CLI transport: `run`; `api` and `pages`, limited to the configured repository and validated; `lark` as the bot; `git`. `CliError` carries the code a command's output reports, such as a GitHub HTTP status, and a command that prints nothing fails with how it ended, never with its arguments; `validItems` skips and counts the malformed items of a list |
 | `src/infra/environment.ts` | The agent's process environment: command shims, the git configuration and credential helper, `runAsWorker`, and the checks of the environment and of a Ticket's directory |
+| `src/infra/gh-calls.ts` | The per-ticket counter of the worker `gh` shim: its directory, the reader of a ticket's counts by hour and command, and the hour's total across tickets |
 | `src/infra/paths.ts` | The package's root, where packaged files are |
 | `src/infra/text.ts` | Word counts and the chat message limit, `fill` and `sameName` |
 | `src/infra/health.ts` | The `HealthBoard`, every part's health entry, each claimed by its one writer |
@@ -470,6 +473,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/draft.tsx` | Settings drafts: `draftReducer`, their states and their merge with a newer saved revision, `saveBarText`, the save bar's line, and the save bar |
 | `src/client/controls.tsx` | Local copies of DeepSeek Harness's controls, which follow its markup, keyboard behaviour and design tokens, since the bundle does not import `@deepseek-ai/dsh-client-ui-primitives`; they read no context |
 | `src/client/widgets.tsx` | The small components the pages share, which read the panel's context: sections, page heads, load states, times, links, confirmed actions, the setup check and Markdown |
+| `src/client/thread-brief-header.tsx` | Isolated compact brief component; host mounting remains a separate integration stage |
 | `src/client/rows.tsx` | The rows the pages share: a Ticket, a Thread and a Decision, a Thread's chip, and the folding of runs of automated messages |
 | `src/client/markdown.ts` | The Markdown subset of reports and questions, and the bare addresses in messages, as blocks and inline parts |
 | `src/client/text.ts` | Copy by key and the wording of domain values, reasons, senders and times |
@@ -516,6 +520,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/delivery-confirm-schema.spec.ts` | Strict typed confirmation body rejects expanded authority and arbitrary commands |
 | `tests/worker-report-fallback.spec.tsx` | Real structured report/ack/blank-final event shapes and provenance rendering, preserving nonempty replies |
 | `tests/core-engine.spec.ts` | Domain rules on in-memory repositories: receiving, Eval, fan-out, resume and stop, interrupted Assignments, the pause, Policy changes, reports and outcomes, attaching, replies, failed deliveries and dismissed problems |
+| `tests/thread-brief.spec.tsx` | Isolated brief domain and component fixtures; no installed/native acceptance claim |
 | `tests/client-guard.spec.ts` | Guards the client runtime import graph against Node built-ins and server-only modules |
 | `tests/character.spec.ts`, `tests/characters.spec.ts`, `tests/characters-panel.spec.tsx` | Autopilot character profile definitions, evaluator behaviour, and Characters settings panel |
 | `tests/branding.spec.tsx` | Custom branding mark rendering and settings configuration |
@@ -600,6 +605,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/cards.spec.ts` | The rules the built-in text must state, file by file |
 | `tests/model-surface.spec.ts` | Everything models read: tools, prompts, skills and inputs, checked against the tool schemas, the execution environment and the glossary, within a size budget per role |
 | `tests/deployment.spec.ts`, `tests/environment.spec.ts`, `tests/index.spec.ts` | The plugin configuration and setup, the agent's process environment, the plugin entry |
+| `tests/report-shim-identity.spec.ts` | The orchestrator_report CLI contract: pre-write validation requiring explicit ticket, assignment and turn identities |
 | `tests/service-script.spec.ts` | `scripts/dsh-superagent` against fake `ps`, `tmux` and `dsh` |
 | `tests/branding.spec.tsx` | Custom branding schema, HTTP endpoints, fail-safe fallback, and mark rendering |
 | `tests/client.spec.tsx`, `tests/navigation.spec.ts`, `tests/controls.spec.tsx` | The client plugin's registration and polling, Session navigation and route memory, the local controls, and the panel's imports, which have no cycle |
@@ -622,7 +628,8 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/finding-coordination.spec.ts` | headless coordination for already-approved bounded work |
 | `tests/finding-release-package.spec.ts` | finding release package |
 | `tests/finding-release.spec.ts` | finding release |
-| `tests/github-quota.spec.ts` | github quota |
+| `tests/github-quota.spec.ts`, `tests/setup-quota-retry.spec.ts` | github quota, the setup retry time after quota exhaustion |
+| `tests/github-revalidate.spec.ts` | PR and check-run reads revalidated with ETag and reused on 304 |
 | `tests/legacy-delivery-card.spec.tsx` | legacy delivery card |
 | `tests/legacy-delivery-reconciliation.spec.ts` | Legacy delivery historical completion reconciliation |
 | `tests/live-attestation-coverage.spec.ts` | live attestation coverage |

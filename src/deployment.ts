@@ -13,7 +13,7 @@ const reason = (error: unknown): string => error instanceof Error ? error.messag
 /** Quota exhaustion is not evidence that the configured account is signed out. */
 function githubQuotaError(error: unknown): SetupError | undefined {
   const output = reason(error)
-  return /\b(?:API rate limit exceeded|secondary rate limit|rate limit exceeded)\b/i.test(output)
+  return /\b(?:API rate limit (?:already )?exceeded|secondary rate limit|rate limit (?:already )?exceeded)\b|\(HTTP 429\)/i.test(output)
     ? new SetupError('githubRateLimited', { output }) : undefined
 }
 const absolute = (description: string) => s.string().pattern(/^\//).description(`${description} Absolute path.`)
@@ -82,6 +82,14 @@ export function workerProbe(subprocess: SubprocessRuntime, stateDir: string, cwd
 }
 
 const GithubUser = z.object({ login: z.string().regex(/^[A-Za-z0-9-]+$/), id: z.number().int().positive() })
+/** Primary quota reset (epoch ms) read from `gh api rate_limit`, which does not count against the quota; undefined when it cannot be read. */
+export async function githubQuotaReset(machine: Machine, github: unknown, probe: Probe, path = process.env.PATH ?? ''): Promise<number | undefined> {
+  try {
+    const cli = executable(GithubAccountsSchema.parse(github ?? {}).cli ?? '', path, workerBin(machine.stateDir))
+    const reset = Number((await probe([cli, 'api', 'rate_limit', '--jq', '.resources.core.reset'])).trim())
+    return Number.isSafeInteger(reset) && reset > 0 ? reset * 1000 : undefined
+  } catch { return undefined /* The caller falls back to a timed backoff. */ }
+}
 const RepositoryAccess = z.object({ name: z.string().regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/), push: z.boolean().nullable() })
 function parsed<T>(schema: z.ZodType<T>, text: string): T | undefined {
   let value: unknown

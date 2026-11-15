@@ -648,6 +648,7 @@ describe('github source', () => {
       }
       if (path === 'notifications') return JSON.stringify([[notification(12)], [notification(13)]])
       if (/^issues\/\d+$/.test(path)) return JSON.stringify(issue(Number(path.split('/')[1]), { created_at: '2026-08-01T00:00:00Z' }))
+      if (args.includes('--include')) return 'HTTP/2.0 200 OK\r\n\r\n[]'
       return JSON.stringify(args.includes('--slurp') ? [[]] : [])
     })
     expect(await pollRound(h)).toBe(120)
@@ -935,6 +936,101 @@ describe('github source', () => {
     expect(bare(reads)).toEqual(['notifications', 'issues/9', 'pulls/9', 'issues/9/comments', 'pulls/9/comments', 'pulls/9/reviews'])
     expect(h.receive.mock.calls.map(([trigger]) => trigger)).toEqual([expect.objectContaining({ text: 'APPROVED review of commit abc',
       meta: expect.objectContaining({ isPr: true }) })])
+    h.store.close()
+  })
+  const headed = (...lines: string[]) => lines.join('\r\n')
+  /** The notifications list answers as `reply` says (default 200, empty, `Last-Modified` stamped); every other read is recorded, and Issue 7 is gone unless routed. */
+  function listed(h: ReturnType<typeof host>, reply: (args: string[], call: number) => string | Error) {
+    const calls: string[][] = []
+    vi.spyOn(h.commands, 'run').mockImplementation(async (_program, args) => {
+      calls.push(args)
+      const path = args[1]!.replace(/^repos\/acme\/widgets\//, '').split('?')[0]!
+      if (path !== 'notifications') {
+        if (path === 'issues/7') return JSON.stringify(issue(7))
+        if (path === 'issues/7/comments') return args.includes('--include') ? 'HTTP/2.0 200 OK\r\n\r\n[]' : JSON.stringify(args.includes('--slurp') ? [[]] : [])
+        throw refused(404, 'Not Found')
+      }
+      const call = calls.filter(each => each[1]!.includes('/notifications?') && !each.includes('--paginate')).length
+      const value = reply(args, call)
+      if (value instanceof Error) throw value
+      return args.includes('--paginate') ? '[[]]' : value
+    })
+    const lists = () => calls.filter(args => args[1]!.includes('/notifications?'))
+    const others = () => calls.filter(args => !args[1]!.includes('/notifications?'))
+    return { lists, others }
+  }
+  const stamped = (modified: string, ...more: string[]) => headed('HTTP/2.0 200 OK', `Last-Modified: ${modified}`, ...more, '', '[]')
+  const unmodified = (...headers: string[]) => commandError({ stderr: 'gh: HTTP 304', code: 1, stdout: headed('HTTP/2.0 304 Not Modified', ...headers, '', '') })
+  const FIRST = 'Fri, 13 Nov 2026 01:00:00 GMT'
+  const SECOND = 'Fri, 13 Nov 2026 02:00:00 GMT'
+  it('stores the notifications Last-Modified and interval from a 200 and sends it as If-Modified-Since on the next first-page read', async () => {
+    const h = host()
+    h.store.set('github-since', '2026-09-08T00:00:00.000Z')
+    const { lists } = listed(h, (_args, call) => stamped(call === 1 ? FIRST : SECOND, 'X-Poll-Interval: 90'))
+    expect(await pollRound(h)).toBe(90)
+    expect(lists()[0]).not.toContain(`If-Modified-Since: ${FIRST}`)
+    expect(lists()[0]!.join(' ')).not.toContain('If-Modified-Since')
+    expect(h.store.get('github-notifications')).toEqual({ lastModified: FIRST, interval: 90 })
+    await pollRound(h)
+    expect(lists()[1]).toEqual(expect.arrayContaining(['-H', `If-Modified-Since: ${FIRST}`]))
+    expect(h.store.get('github-notifications')).toEqual({ lastModified: SECOND, interval: 90 })
+    h.store.close()
+  })
+  it('sends no condition on a first run without a cursor, and none on the later pages of a paged list', async () => {
+    const h = host()
+    h.store.set('github-notifications', { lastModified: FIRST, interval: 60 })
+    const { lists } = listed(h, () => stamped(SECOND, 'Link: <https://api.github.com/x?page=2>; rel="next"'))
+    await pollRound(h)
+    expect(lists()[0]!.join(' ')).not.toContain('If-Modified-Since')
+    // The cursor now exists, so the next round is conditional on its first page only; its paged read has no condition.
+    await pollRound(h)
+    const [first, ...rest] = lists().slice(-2)
+    expect(first).toEqual(expect.arrayContaining(['-H', `If-Modified-Since: ${SECOND}`]))
+    expect(rest[0]).toContain('--paginate')
+    expect(rest[0]!.join(' ')).not.toContain('If-Modified-Since')
+    h.store.close()
+  })
+  it('treats 304 as no notifications: no item reads, the cursor still advances and the interval from the 304 headers is honoured', async () => {
+    const h = host()
+    h.store.set('github-since', '2026-09-08T00:00:00.000Z')
+    h.store.set('github-notifications', { lastModified: FIRST, interval: 60 })
+    const { lists, others } = listed(h, () => unmodified('X-Poll-Interval: 120'))
+    const interval = await pollRound(h)
+    expect(lists()).toHaveLength(1)
+    expect(others()).toEqual([])
+    expect(interval).toBe(120)
+    expect(h.store.get('github-since')).not.toBe('2026-09-08T00:00:00.000Z')
+    // The stored header is kept, and the interval is remembered for a 304 that does not carry one.
+    expect(h.store.get('github-notifications')).toEqual({ lastModified: FIRST, interval: 120 })
+    expect(h.health.github).toMatchObject({ state: 'ready', detail: expect.stringContaining('0 notifications; next poll ≥ 120s') })
+    vi.mocked(h.commands.run).mockImplementation(async () => { throw unmodified() })
+    expect(await pollRound(h)).toBe(120)
+    h.store.close()
+  })
+  it('retries failed items on a 304 round and clears them once they read', async () => {
+    const h = host()
+    h.store.set('github-since', '2026-09-08T00:00:00.000Z')
+    h.store.set('github-notifications', { lastModified: FIRST, interval: 60 })
+    h.store.set('github-retry', { 7: { since: '2026-09-07T00:00:00.000Z', pr: false, failedAt: '2026-09-08T00:00:00.000Z', attempts: 1 } })
+    const { others } = listed(h, () => unmodified('X-Poll-Interval: 60'))
+    await pollRound(h)
+    expect(others().map(args => args[1]!.replace(/^repos\/acme\/widgets\//, '').split('?')[0])).toEqual(['issues/7', 'issues/7/comments'])
+    expect(h.store.get('github-retry')).toEqual({})
+    expect(h.store.get('github-cursor:7')).toBeDefined()
+    h.store.close()
+  })
+  it('keeps the old Last-Modified, the cursor and the retries when the notifications read fails', async () => {
+    const h = host()
+    h.store.set('github-since', '2026-09-08T00:00:00.000Z')
+    h.store.set('github-notifications', { lastModified: FIRST, interval: 60 })
+    listed(h, () => refused(500, 'Server Error'))
+    await expect(pollRound(h)).rejects.toThrow()
+    expect(h.store.get('github-notifications')).toEqual({ lastModified: FIRST, interval: 60 })
+    expect(h.store.get('github-since')).toBe('2026-09-08T00:00:00.000Z')
+    // A 304 without a stored condition is not a Not Modified answer to ours, so it fails the round like any other error.
+    h.store.delete('github-notifications')
+    vi.mocked(h.commands.run).mockImplementation(async () => { throw unmodified() })
+    await expect(pollRound(h)).rejects.toMatchObject({ code: 304 })
     h.store.close()
   })
   it('moves no read position when the Source is turned off during a read', async () => {
@@ -1252,7 +1348,7 @@ describe('observing the GitHub repository', () => {
       if (bare === 'pulls/comments') return listed(answers.reviewComments)
       if (bare === '') return JSON.stringify({ default_branch: 'main' })
       if (bare === 'commits/main') return JSON.stringify({ sha: answers.branch!.sha })
-      if (bare.endsWith('/check-runs')) return JSON.stringify([{ check_runs: answers.branch!.checks }])
+      if (bare.endsWith('/check-runs')) return args.includes('--include') ? `HTTP/2.0 200 OK\r\n\r\n${JSON.stringify({ check_runs: answers.branch!.checks })}` : JSON.stringify([{ check_runs: answers.branch!.checks }])
       return JSON.stringify(args.includes('--slurp') ? [[]] : [])
     })
     return calls
@@ -1517,4 +1613,172 @@ it('root quota: last observed stream quota prevents default-branch CI reads',asy
  const limited=commandError({code:1,stderr:'gh: API rate limit exceeded (HTTP 403)',stdout:['HTTP/2.0 403 Forbidden','X-Ratelimit-Remaining: 0','X-Ratelimit-Reset: 1794285000','','{}'].join(String.fromCharCode(13,10))})
  const reads=github(h,{notifications:[],'issues/comments':[],'pulls/comments':limited,'':{default_branch:'main'},'commits/main':{sha:'abc'}})
  try{await expect(pollRound(h)).rejects.toThrow();expect(reads).toHaveLength(3);expect(reads).not.toContain('')}finally{h.store.close()}
+})
+
+describe('github thread comment polls', () => {
+  interface Listed { items: unknown[]; etag: string; next?: boolean; fail?: Error }
+  interface Call { path: string; sent?: string; answer: 200 | 304 | 'error' }
+  const comment = (id: number, at: string, login = 'bob') => ({ id, body: `comment ${id}`, user: { login, type: 'User' }, created_at: at, updated_at: at,
+    html_url: `https://github.com/acme/widgets/issues/7#issuecomment-${id}` })
+  /** GitHub's comment lists by path (without the query): a request carrying the list's current ETag is answered 304. */
+  function server(h: ReturnType<typeof host>, lists: Record<string, Listed>): Call[] {
+    const calls: Call[] = []
+    vi.spyOn(h.commands, 'run').mockImplementation(async (_program, args) => {
+      const full = args[1]!.replace(/^repos\/acme\/widgets\//, '')
+      const path = full.split('?')[0]!
+      const sent = args.find(arg => arg.startsWith('If-None-Match: '))?.slice('If-None-Match: '.length)
+      if (path === 'pulls/7') return JSON.stringify(openPull(7))
+      const list = lists[path] ?? { items: [], etag: '"empty"' }
+      if (list.fail) { calls.push({ path: full, ...sent ? { sent } : {}, answer: 'error' }); throw list.fail }
+      if (sent && sent === list.etag) { calls.push({ path: full, sent, answer: 304 }); throw commandError({ stderr: 'gh: HTTP 304', code: 1 }) }
+      calls.push({ path: full, ...sent ? { sent } : {}, answer: 200 })
+      if (args.includes('--paginate')) return JSON.stringify([list.items])
+      return `HTTP/2.0 200 OK\r\nEtag: ${list.etag}\r\n${list.next ? 'Link: <https://api.github.com/x?page=2>; rel="next"\r\n' : ''}\r\n${JSON.stringify(list.items)}`
+    })
+    return calls
+  }
+  const save = (h: ReturnType<typeof host>, number: number, isPr = false) => h.store.threads.save({ key: `github:${number}`,
+    ref: { source: 'github', id: String(number) }, createdAt: '2026-09-01T00:00:00Z', lastAt: new Date().toISOString(), subscriptions: ['t'],
+    correlated: [], pending: [], meta: { number, isPr, title: 'Login fails' } })
+  const cursor = (h: ReturnType<typeof host>, number = 7) => h.store.get<string>(`github-cursor:${number}`)
+  /** Triggers the Source handed over, by ID: re-reading an item repeats the same Trigger, which the Engine deduplicates. */
+  const delivered = (h: ReturnType<typeof host>) => [...new Set(h.receive.mock.calls.map(([trigger]) => trigger.id))]
+  const counted = (calls: Call[]) => calls.filter(call => call.answer !== 304).length
+
+  it('moves the cursor only when a newer item was read, and answers an unchanged list with 304 and no change', async () => {
+    const h = host()
+    save(h, 7)
+    const lists = { 'issues/7/comments': { items: [comment(1, '2026-09-02T00:00:00Z')], etag: '"a"' } }
+    const calls = server(h, lists)
+    await pollGithubThreads(h)
+    const first = cursor(h)
+    expect(first).toBe(cursorAt('2026-09-02T00:00:00Z'))
+    expect(h.receive).toHaveBeenCalledTimes(1)
+    // The cursor moved, so the next request has a new URL and carries no ETag; it stores one.
+    await pollGithubThreads(h)
+    expect(calls.map(call => call.sent)).toEqual([undefined, undefined])
+    expect(cursor(h)).toBe(first)
+    // From now on the URL repeats and the list is unchanged.
+    const received = h.receive.mock.calls.length
+    await pollGithubThreads(h)
+    await pollGithubThreads(h)
+    expect(calls.map(call => call.answer)).toEqual([200, 200, 304, 304])
+    // A 304 hands nothing over.
+    expect(h.receive).toHaveBeenCalledTimes(received)
+    expect(calls.at(-1)!.sent).toBe('"a"')
+    expect(new Set(calls.slice(1).map(call => call.path)).size).toBe(1)
+    expect(cursor(h)).toBe(first)
+    expect(delivered(h)).toHaveLength(1)
+    h.store.close()
+  })
+  it('moves the cursor once on a new comment and resets the ETag, delivering each comment once', async () => {
+    const h = host()
+    save(h, 7)
+    const lists: Record<string, Listed> = { 'issues/7/comments': { items: [comment(1, '2026-09-02T00:00:00Z')], etag: '"a"' } }
+    const calls = server(h, lists)
+    for (let round = 0; round < 3; round++) await pollGithubThreads(h)
+    expect(calls.map(call => call.answer)).toEqual([200, 200, 304])
+    lists['issues/7/comments'] = { items: [comment(1, '2026-09-02T00:00:00Z'), comment(2, '2026-09-03T00:00:00Z')], etag: '"b"' }
+    await pollGithubThreads(h)
+    // The stored ETag no longer matches the list, so the read is a full one at the same URL.
+    expect(calls.at(-1)).toMatchObject({ answer: 200, sent: '"a"' })
+    expect(cursor(h)).toBe(cursorAt('2026-09-03T00:00:00Z'))
+    await pollGithubThreads(h)
+    await pollGithubThreads(h)
+    expect(calls.slice(-2).map(call => call.answer)).toEqual([200, 304])
+    expect(calls.at(-1)!.sent).toBe('"b"')
+    expect([...new Set(h.receive.mock.calls.map(([trigger]) => trigger.text))]).toEqual(['comment 1', 'comment 2'])
+    h.store.close()
+  })
+  it('leaves the cursor and the ETag as they were when a read fails', async () => {
+    const h = host()
+    save(h, 7)
+    const lists: Record<string, Listed> = { 'issues/7/comments': { items: [comment(1, '2026-09-02T00:00:00Z')], etag: '"a"' } }
+    const calls = server(h, lists)
+    for (let round = 0; round < 3; round++) await pollGithubThreads(h)
+    const before = { cursor: cursor(h), reads: h.store.get('github-reads:7') }
+    expect(before.reads).toEqual({ conversation: { path: expect.stringContaining('since='), etag: '"a"' } })
+    lists['issues/7/comments'] = { items: [comment(1, '2026-09-02T00:00:00Z'), comment(2, '2026-09-04T00:00:00Z')], etag: '"b"',
+      fail: refused(500, 'Server Error') }
+    await pollGithubThreads(h)
+    expect(calls.at(-1)).toMatchObject({ answer: 'error', sent: '"a"' })
+    expect(h.store.threads.get('github:7')!.meta.pollError).toContain('500')
+    expect({ cursor: cursor(h), reads: h.store.get('github-reads:7') }).toEqual(before)
+    h.store.close()
+  })
+  it('does not store an ETag when delivery stops partway, so the list is read again', async () => {
+    const h = host()
+    save(h, 7)
+    const lists: Record<string, Listed> = { 'issues/7/comments': { items: [comment(1, '2026-09-02T00:00:00Z')], etag: '"a"' } }
+    const calls = server(h, lists)
+    h.receive.mockRejectedValueOnce(new Error('store unavailable'))
+    await pollGithubThreads(h)
+    expect(cursor(h)).toBeUndefined()
+    expect(h.store.get('github-reads:7')).toBeUndefined()
+    await pollGithubThreads(h)
+    expect(h.receive).toHaveBeenCalledTimes(2)
+    expect(calls.map(call => call.sent)).toEqual([undefined, undefined])
+    h.store.close()
+  })
+  it('reads a list of several pages in full every round and never skips it', async () => {
+    const h = host()
+    save(h, 7)
+    const lists: Record<string, Listed> = { 'issues/7/comments': { items: [comment(1, '2026-09-02T00:00:00Z')], etag: '"a"', next: true } }
+    const calls = server(h, lists)
+    for (let round = 0; round < 4; round++) await pollGithubThreads(h)
+    expect(calls.every(call => call.answer === 200 && call.sent === undefined)).toBe(true)
+    // Each round reads the first page, then all pages.
+    expect(calls).toHaveLength(8)
+    expect(h.store.get('github-reads:7')).toEqual({})
+    expect(delivered(h)).toHaveLength(1)
+    h.store.close()
+  })
+  it('sends the ETag of a PR\'s three lists, including the reviews, whose URL has no since', async () => {
+    const h = host()
+    save(h, 7, true)
+    const lists: Record<string, Listed> = {
+      'issues/7/comments': { items: [comment(1, '2026-09-02T00:00:00Z')], etag: '"c"' },
+      'pulls/7/comments': { items: [], etag: '"i"' },
+      'pulls/7/reviews': { items: [{ id: 9, state: 'APPROVED', commit_id: 'abc', user: { login: 'carol', type: 'User' }, submitted_at: '2026-09-02T01:00:00Z' }], etag: '"r"' },
+    }
+    const calls = server(h, lists)
+    for (let round = 0; round < 3; round++) await pollGithubThreads(h)
+    const last = calls.slice(-3)
+    expect(last.map(call => [call.path.split('?')[0], call.answer, call.sent])).toEqual([
+      ['issues/7/comments', 304, '"c"'], ['pulls/7/comments', 304, '"i"'], ['pulls/7/reviews', 304, '"r"']])
+    expect(calls.find(call => call.path.startsWith('pulls/7/reviews') && call.answer === 200 && call.sent)).toBeUndefined()
+    expect([...new Set(h.receive.mock.calls.map(([trigger]) => trigger.text))]).toEqual(['comment 1', 'APPROVED review of commit abc'])
+    expect(cursor(h)).toBe(cursorAt('2026-09-02T01:00:00Z'))
+    h.store.close()
+  })
+  it('costs no counted request per round for idle subscribed Issue Threads after the first rounds', async () => {
+    const h = host()
+    const numbers = [11, 12, 13, 14, 15, 16, 17, 18]
+    const lists: Record<string, Listed> = {}
+    for (const number of numbers) {
+      save(h, number)
+      lists[`issues/${number}/comments`] = { items: number % 2 ? [comment(number, '2026-09-02T00:00:00Z')] : [], etag: `"e${number}"` }
+    }
+    const calls = server(h, lists)
+    // The first round reads everything; the second repeats it for the Threads whose cursor moved.
+    await pollGithubThreads(h)
+    expect(counted(calls)).toBe(numbers.length)
+    await pollGithubThreads(h)
+    const settled = calls.length
+    for (let round = 0; round < 5; round++) await pollGithubThreads(h)
+    const idle = calls.slice(settled)
+    expect(idle).toHaveLength(5 * numbers.length)
+    expect(counted(idle)).toBe(0)
+    h.store.close()
+  })
+  it('still treats a deleted (410) Thread as it did: the round names it and does not fail', async () => {
+    const h = host()
+    save(h, 7)
+    server(h, { 'issues/7/comments': { items: [], etag: '"a"', fail: refused(410, 'Gone') } })
+    await pollGithubThreads(h)
+    expect(h.store.threads.get('github:7')!.meta.pollError).toContain('410')
+    expect(cursor(h)).toBeUndefined()
+    expect(h.store.get('github-reads:7')).toBeUndefined()
+    h.store.close()
+  })
 })

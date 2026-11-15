@@ -95,6 +95,7 @@ export interface ThreadBriefView {
   model_context: ModelContext
 }
 
+/** Owns an isolated brief revision, its proposals, evidence and continuation context. */
 export class ThreadBriefManager {
   private state: ThreadBriefState
 

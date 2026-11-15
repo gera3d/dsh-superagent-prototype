@@ -571,5 +571,20 @@
       }
     },
     "qualification": "normal GitHub intake and original assignment delivery/read verified; no new final result or provider-first-response claim; idle projections lag global managed load"
+  },
+  "computerUseReportContinuation": {
+    "comment": 6885353209,
+    "ticket": "2a41e73ae44770aab984df13ca978a79",
+    "scope": "report-only handoff of already completed noninteractive audit; no repeated compile/tests/preflight or native input",
+    "status": "pending normal intake at final read; not dispatched/consumed or accepted",
+    "readAt": "2026-11-14T22:45:44.529398+00:00",
+    "canonicalStage": "idle",
+    "latestInputs": [],
+    "load": {
+      "running": 2,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "nextOwner": "original229 worker only when intake admits; Codex verifies exact identity-bound report; interactive gate unchanged"
   }
 }
