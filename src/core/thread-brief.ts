@@ -609,12 +609,14 @@ export function resolveTicketBriefManager(
   const briefKey = `ticket-brief:${ticket.id}`
   let persisted: ThreadBriefState | undefined
   let storageState: BriefStorageState = 'persisted'
+  let readFailed = false
 
   if (store.get) {
     try {
       persisted = store.get<ThreadBriefState>(briefKey)
     } catch {
       storageState = 'write_failed'
+      readFailed = true
     }
   }
 
@@ -625,11 +627,13 @@ export function resolveTicketBriefManager(
     manager.setStorageState(storageState)
   } else {
     let originTrigger: BriefTriggerLike | undefined
+    let originFailed = false
     if (ticket.origin?.triggerId && store.triggers) {
       try {
         originTrigger = store.triggers.get(ticket.origin.triggerId)
       } catch {
         storageState = 'write_failed'
+        originFailed = true
       }
     }
     const raw_request = originTrigger !== undefined ? originTrigger.text : 'unavailable'
@@ -649,7 +653,11 @@ export function resolveTicketBriefManager(
       model_context: modelContext,
     })
 
-    if (!store.set) {
+    if (readFailed || originFailed) {
+      // Do not initialize or clobber storage on uncertain read / origin error.
+      // An existing record may exist in store. Keep in-memory with write_failed status.
+      storageState = 'write_failed'
+    } else if (!store.set) {
       storageState = 'non-durable'
     } else {
       try {
@@ -719,12 +727,14 @@ export function resolveThreadBriefManager(
   const briefKey = `thread-brief:${thread.key}`
   let persisted: ThreadBriefState | undefined
   let storageState: BriefStorageState = 'persisted'
+  let readFailed = false
 
   if (store.get) {
     try {
       persisted = store.get<ThreadBriefState>(briefKey)
     } catch {
       storageState = 'write_failed'
+      readFailed = true
     }
   }
 
@@ -736,12 +746,14 @@ export function resolveThreadBriefManager(
   } else {
     const initialTrigger = Array.isArray(canonicalFirstTrigger) ? canonicalFirstTrigger[0] : canonicalFirstTrigger
     let firstTrigger = initialTrigger
+    let originFailed = false
     if (!firstTrigger) {
       try {
         firstTrigger = (store.read?.firstTrigger ? store.read.firstTrigger(thread.key) : undefined)
           || (store.triggers?.of ? store.triggers.of(thread.key)[0] : undefined)
       } catch {
         storageState = 'write_failed'
+        originFailed = true
       }
     }
 
@@ -759,7 +771,11 @@ export function resolveThreadBriefManager(
       model_context: modelContext,
     })
 
-    if (!store.set) {
+    if (readFailed || originFailed) {
+      // Do not initialize or clobber storage on uncertain read / origin error.
+      // An existing record may exist in store. Keep in-memory with write_failed status.
+      storageState = 'write_failed'
+    } else if (!store.set) {
       storageState = 'non-durable'
     } else {
       try {

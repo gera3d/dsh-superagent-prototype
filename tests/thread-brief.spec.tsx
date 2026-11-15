@@ -12,6 +12,8 @@ import {
   type ThreadBriefCriterion,
   type ThreadBriefState,
   type CriterionEvidence,
+  type BriefStorageState,
+  type BriefStoreLike,
 } from '../src/core/thread-brief.ts'
 import {
   ThreadBriefHeader,
@@ -23,6 +25,7 @@ import { PanelProvider } from '../src/client/provider.tsx'
 import type { T } from '../src/client/text.ts'
 import { Store } from '../src/app/store.ts'
 import { threadDetail } from '../src/app/views/threads.ts'
+import { ticketDetail } from '../src/app/views/tickets.ts'
 import { Sessions, type SessionsHost } from '../src/app/sessions.ts'
 import type { Ticket, Thread, Trigger, Mandate } from '../src/core/index.ts'
 
@@ -981,6 +984,167 @@ describe('Thread Brief Integration (ThreadPage, TicketPage & Sessions wiring)', 
       } finally {
         storeReopened.close()
       }
+
+      // FOCUSED REGRESSION 1: Ticket resolver with existing Rev 2 record when read throws but set would succeed
+      const storeReadErr = new Store(join(dir, 'orchestrator-read-err.sqlite'))
+      try {
+        const ticketWithRev2: Ticket = {
+          id: 'ticket-rev2',
+          title: 'Existing Task with Rev 2',
+          decisionId: 'd1',
+          mandate: defaultMandate('Rev 2 task scope'),
+          channels: [{ source: 'github', thread: 'github:owner/repo:issue:200', address: {} }],
+          assignments: [],
+          inputs: [],
+          undelivered: [],
+          createdAt: '2026-11-15T01:00:00Z',
+          updatedAt: '2026-11-15T01:00:00Z',
+          origin: { triggerId: 'trig-rev2', triggerIds: ['trig-rev2'] },
+        }
+        storeReadErr.triggers.save({
+          id: 'trig-rev2',
+          at: '2026-11-15T01:00:00Z',
+          source: 'github',
+          human: true,
+          actor: { source: 'github', id: 'operator' },
+          threads: [{ source: 'github', id: 'owner/repo:issue:200' }],
+          text: 'Original authoritative ask from user',
+          meta: {},
+        })
+        storeReadErr.tickets.save(ticketWithRev2)
+
+        // Create and advance initial ticket brief to Rev 2
+        const initialTicketMgr = resolveTicketBriefManager(storeReadErr, ticketWithRev2)
+        const prop = initialTicketMgr.stageProposal({
+          proposed_by: 'lead',
+          description: 'Updated objective',
+          added_criteria: ['Authoritative criterion A'],
+        })
+        initialTicketMgr.confirmProposal(prop.proposal_id, 'lead')
+        expect(initialTicketMgr.revisionId).toBe(2)
+        initialTicketMgr.save(storeReadErr)
+
+        // Verify Rev 2 record is in store
+        const storedSnapshot = storeReadErr.get<ThreadBriefState>(`ticket-brief:${ticketWithRev2.id}`)
+        expect(storedSnapshot?.revision_id).toBe(2)
+        expect(storedSnapshot?.revision_history.length).toBe(1)
+
+        // Intermittent store wrapper: store.get throws, but store.set would succeed
+        let throwOnGet = true
+        const ticketSetSpy = vi.fn((k: string, v: any) => storeReadErr.set(k, v))
+        const intermittentTicketStore: BriefStoreLike = {
+          triggers: storeReadErr.triggers,
+          tickets: storeReadErr.tickets,
+          get: (key: string) => {
+            if (throwOnGet) throw new Error('Simulated transient SQLite disk read failure')
+            return storeReadErr.get(key)
+          },
+          set: ticketSetSpy,
+        }
+
+        // Must NOT throw, must NOT call set, must NOT clobber stored Rev 2 record
+        const failedReadBrief = resolveTicketBriefManager(intermittentTicketStore, ticketWithRev2).toView()
+        expect(failedReadBrief.storage_state).toBe('write_failed')
+        expect(ticketSetSpy).not.toHaveBeenCalled()
+
+        // Verify underlying record in SQLite Store remains unmolested
+        const intactSnapshot = storeReadErr.get<ThreadBriefState>(`ticket-brief:${ticketWithRev2.id}`)
+        expect(intactSnapshot?.revision_id).toBe(2)
+        expect(intactSnapshot?.raw_original_ask).toBe('Original authoritative ask from user')
+        expect(intactSnapshot?.criteria[0]?.description).toBe('Authoritative criterion A')
+        expect(intactSnapshot?.revision_history.length).toBe(1)
+
+        // Later successful reread recovers original ask, revision 2, criteria, and history
+        throwOnGet = false
+        const recoveredTicketMgr = resolveTicketBriefManager(intermittentTicketStore, ticketWithRev2)
+        const recoveredTicketBrief = recoveredTicketMgr.toView()
+        expect(recoveredTicketBrief.storage_state).toBe('persisted')
+        expect(recoveredTicketBrief.revision_id).toBe(2)
+        expect(recoveredTicketBrief.raw_original_ask).toBe('Original authoritative ask from user')
+        expect(recoveredTicketBrief.criteria[0]?.description).toBe('Authoritative criterion A')
+        expect(recoveredTicketMgr.getState().revision_history.length).toBe(1)
+      } finally {
+        storeReadErr.close()
+      }
+
+      // FOCUSED REGRESSION 2: Thread resolver with existing Rev 2 record when read throws but set would succeed
+      const storeThreadReadErr = new Store(join(dir, 'orchestrator-thread-read-err.sqlite'))
+      try {
+        const threadKey = 'github:owner/repo:issue:300'
+        storeThreadReadErr.triggers.save({
+          id: 'trig-th-rev2',
+          at: '2026-11-15T01:00:00Z',
+          source: 'github',
+          human: true,
+          actor: { source: 'github', id: 'operator' },
+          threads: [{ source: 'github', id: 'owner/repo:issue:300' }],
+          text: 'Original thread ask from trigger',
+          meta: {},
+        })
+        const threadWithRev2: Thread = {
+          key: threadKey,
+          ref: { source: 'github', id: 'owner/repo:issue:300' },
+          createdAt: '2026-11-15T01:00:00Z',
+          subscriptions: [],
+          correlated: [],
+          pending: [],
+          meta: { label: 'Thread Rev 2' },
+        }
+
+        // Create and advance initial thread brief to Rev 2
+        const initialThreadMgr = resolveThreadBriefManager(storeThreadReadErr, threadWithRev2)
+        const threadProp = initialThreadMgr.stageProposal({
+          proposed_by: 'lead',
+          description: 'Updated thread objective',
+          added_criteria: ['Thread authoritative criterion X'],
+        })
+        initialThreadMgr.confirmProposal(threadProp.proposal_id, 'lead')
+        expect(initialThreadMgr.revisionId).toBe(2)
+        initialThreadMgr.save(storeThreadReadErr)
+
+        // Verify Rev 2 record is in store
+        const storedThreadSnapshot = storeThreadReadErr.get<ThreadBriefState>(`thread-brief:${threadKey}`)
+        expect(storedThreadSnapshot?.revision_id).toBe(2)
+        expect(storedThreadSnapshot?.revision_history.length).toBe(1)
+
+        // Intermittent store wrapper: store.get throws, but store.set would succeed
+        let throwOnThreadGet = true
+        const threadSetSpy = vi.fn((k: string, v: any) => storeThreadReadErr.set(k, v))
+        const intermittentThreadStore: BriefStoreLike = {
+          triggers: storeThreadReadErr.triggers,
+          read: storeThreadReadErr.read,
+          tickets: storeThreadReadErr.tickets,
+          get: (key: string) => {
+            if (throwOnThreadGet) throw new Error('Simulated transient SQLite disk read failure')
+            return storeThreadReadErr.get(key)
+          },
+          set: threadSetSpy,
+        }
+
+        // Must NOT throw, must NOT call set, must NOT clobber stored Rev 2 record
+        const failedReadThreadBrief = resolveThreadBriefManager(intermittentThreadStore, threadWithRev2).toView()
+        expect(failedReadThreadBrief.storage_state).toBe('write_failed')
+        expect(threadSetSpy).not.toHaveBeenCalled()
+
+        // Verify underlying record in SQLite Store remains unmolested
+        const intactThreadSnapshot = storeThreadReadErr.get<ThreadBriefState>(`thread-brief:${threadKey}`)
+        expect(intactThreadSnapshot?.revision_id).toBe(2)
+        expect(intactThreadSnapshot?.raw_original_ask).toBe('Original thread ask from trigger')
+        expect(intactThreadSnapshot?.criteria[0]?.description).toBe('Thread authoritative criterion X')
+        expect(intactThreadSnapshot?.revision_history.length).toBe(1)
+
+        // Later successful reread recovers original ask, revision 2, criteria, and history
+        throwOnThreadGet = false
+        const recoveredThreadMgr = resolveThreadBriefManager(intermittentThreadStore, threadWithRev2)
+        const recoveredThreadBrief = recoveredThreadMgr.toView()
+        expect(recoveredThreadBrief.storage_state).toBe('persisted')
+        expect(recoveredThreadBrief.revision_id).toBe(2)
+        expect(recoveredThreadBrief.raw_original_ask).toBe('Original thread ask from trigger')
+        expect(recoveredThreadBrief.criteria[0]?.description).toBe('Thread authoritative criterion X')
+        expect(recoveredThreadMgr.getState().revision_history.length).toBe(1)
+      } finally {
+        storeThreadReadErr.close()
+      }
     } finally {
       try { store.close() } catch {}
       rmSync(dir, { recursive: true, force: true })
@@ -1095,98 +1259,178 @@ describe('Thread Brief Integration (ThreadPage, TicketPage & Sessions wiring)', 
     }
   })
 
-  it('6. REAL COMPONENT WIRING: renders TicketPage AND ThreadPage via real PanelProvider', async () => {
+  it('6. REAL COMPONENT WIRING: renders TicketPage AND ThreadPage via real PanelProvider consuming backend Store-generated views', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'thread-brief-comp-store-'))
+    const store = new Store(join(dir, 'orchestrator.sqlite'))
     const root = createRoot(container)
-    const ticketMgr = ThreadBriefManager.fromRequest({
-      thread_id: 'thread-comp-1',
-      ticket_id: 'ticket-comp-1',
-      raw_request: 'Verbatim original ticket prompt',
-      objective: 'Ticket Component Display',
-      inferred_scope: ['Ticket scope A'],
-      inferred_criteria: ['Ticket criterion B'],
-    })
 
-    const threadMgr = ThreadBriefManager.fromRequest({
-      thread_id: 'thread-comp-1',
-      raw_request: 'Verbatim original thread prompt',
-      objective: 'Thread Component Display',
-      inferred_scope: ['Thread scope X'],
-      inferred_criteria: ['Thread criterion Y'],
-    })
+    try {
+      const threadKey = 'github:owner/repo:issue:500'
+      const ticketId = 'ticket-comp-real'
 
-    const call = vi.fn().mockImplementation((route: string) => {
-      if (route === 'GET state') {
-        return Promise.resolve({ load: { running: 0 } })
+      store.triggers.save({
+        id: 'trig-th-comp',
+        at: '2026-11-15T01:00:00Z',
+        source: 'github',
+        human: true,
+        actor: { source: 'github', id: 'operator' },
+        threads: [{ source: 'github', id: 'owner/repo:issue:500' }],
+        text: 'Verbatim original thread prompt from backend store',
+        meta: {},
+      })
+
+      store.triggers.save({
+        id: 'trig-tk-comp',
+        at: '2026-11-15T01:05:00Z',
+        source: 'github',
+        human: true,
+        actor: { source: 'github', id: 'operator' },
+        threads: [{ source: 'github', id: 'owner/repo:issue:500' }],
+        text: 'Verbatim original ticket prompt from backend store',
+        meta: {},
+      })
+
+      const ticket: Ticket = {
+        id: ticketId,
+        title: 'Backend Ticket Component Display',
+        decisionId: 'd1',
+        mandate: defaultMandate('Ticket scope line from mandate'),
+        channels: [{ source: 'github', thread: threadKey, address: {} }],
+        assignments: [{ id: 'a1', state: 'running', createdAt: '2026-11-15T01:10:00Z' }],
+        inputs: [],
+        undelivered: [],
+        createdAt: '2026-11-15T01:10:00Z',
+        updatedAt: '2026-11-15T01:10:00Z',
+        origin: { triggerId: 'trig-tk-comp', triggerIds: ['trig-tk-comp'] },
       }
-      if (route === 'GET tickets/:id') {
-        return Promise.resolve(mockTicketPageData({
-          id: 'ticket-comp-1',
-          title: 'Ticket Component Display',
-          brief: ticketMgr.toView(),
-        }))
+      store.tickets.save(ticket)
+
+      const thread: Thread = {
+        key: threadKey,
+        ref: { source: 'github', id: 'owner/repo:issue:500' },
+        createdAt: '2026-11-15T01:00:00Z',
+        subscriptions: [ticketId],
+        correlated: [],
+        pending: [],
+        meta: { label: 'Backend Thread Component Display' },
       }
-      if (route === 'GET threads/:key') {
-        return Promise.resolve(mockThreadPageData({
-          key: 'thread-comp-1',
-          title: 'Thread Component Display',
-          brief: threadMgr.toView(),
-        }))
+      store.threads.save(thread)
+
+      // Query actual backend views generated by Store
+      const viewHost: any = {
+        store,
+        sources: { find: () => ({ terms: [], threads: [] }), kind: () => undefined },
+        links: () => ({ label: 'Channel', url: 'https://example.com' }),
       }
-      return Promise.resolve({})
-    })
 
-    // Test 1: Render TicketPage via real PanelProvider
-    await act(async () => {
-      root.render(
-        <PanelProvider t={mockT} call={call}>
-          <TicketPage id="ticket-comp-1" />
-        </PanelProvider>
-      )
-    })
-    await act(async () => {
-      await Promise.resolve()
-      await new Promise(r => setTimeout(r, 10))
-    })
+      const realThreadDetail = threadDetail(viewHost, threadKey, undefined, 10)
+      const realTicketDetail = ticketDetail(viewHost, ticketId)
+      expect(realThreadDetail).toBeDefined()
+      expect(realTicketDetail).toBeDefined()
 
-    expect(container.textContent).toContain('Ticket Component Display')
-    expect(container.textContent).toContain('Rev 1')
-    expect(container.textContent).toContain('0/1 Criteria')
+      // ticketPage mirrors src/app/http.ts lines 164-172
+      const ticketBrief = resolveTicketBriefManager(store, ticket).toView()
+      expect(ticketBrief.storage_state).toBe('persisted')
+      expect(realThreadDetail!.brief?.storage_state).toBe('persisted')
 
-    // Expand header to verify verbatim ask
-    const ticketToggleBtn = container.querySelector('[data-testid="brief-toggle-btn"]') as HTMLButtonElement
-    expect(ticketToggleBtn).not.toBeNull()
-    await act(async () => {
-      ticketToggleBtn.click()
-    })
-    expect(container.textContent).toContain('Verbatim original ticket prompt')
-    expect(container.textContent).toContain('Ticket scope A')
+      const realTicketPageData = {
+        ...realTicketDetail,
+        environment: [],
+        ghCalls: { total: 0, commands: [] },
+        brief: ticketBrief,
+      }
 
-    // Test 2: Render ThreadPage via real PanelProvider
-    await act(async () => {
-      root.render(
-        <PanelProvider t={mockT} call={call}>
-          <ThreadPage id="thread-comp-1" />
-        </PanelProvider>
-      )
-    })
-    await act(async () => {
-      await Promise.resolve()
-      await new Promise(r => setTimeout(r, 10))
-    })
+      let simulatedStorageState: BriefStorageState = 'persisted'
 
-    expect(container.textContent).toContain('Thread Component Display')
-    expect(container.textContent).toContain('Rev 1')
+      const call = vi.fn().mockImplementation((route: string) => {
+        if (route === 'GET state') {
+          return Promise.resolve({ load: { running: 1 } })
+        }
+        if (route === 'GET tickets/:id') {
+          return Promise.resolve({
+            ...realTicketPageData,
+            brief: {
+              ...realTicketPageData.brief,
+              storage_state: simulatedStorageState,
+            },
+          })
+        }
+        if (route === 'GET threads/:key') {
+          return Promise.resolve(realThreadDetail)
+        }
+        return Promise.resolve({})
+      })
 
-    const threadToggleBtn = container.querySelector('[data-testid="brief-toggle-btn"]') as HTMLButtonElement
-    expect(threadToggleBtn).not.toBeNull()
-    await act(async () => {
-      threadToggleBtn.click()
-    })
-    expect(container.textContent).toContain('Verbatim original thread prompt')
-    expect(container.textContent).toContain('Thread scope X')
+      // Test 1: Render TicketPage via real PanelProvider consuming backend store data
+      await act(async () => {
+        root.render(
+          <PanelProvider t={mockT} call={call}>
+            <TicketPage key="initial" id={ticketId} />
+          </PanelProvider>
+        )
+      })
+      await act(async () => {
+        await Promise.resolve()
+        await new Promise(r => setTimeout(r, 10))
+      })
 
-    await act(async () => {
-      root.unmount()
-    })
+      expect(container.textContent).toContain('Backend Ticket Component Display')
+      expect(container.textContent).toContain('Rev 1')
+      expect(container.textContent).toContain('0/0 Criteria')
+
+      // Expand header to verify verbatim ask from backend store
+      const ticketToggleBtn = container.querySelector('[data-testid="brief-toggle-btn"]') as HTMLButtonElement
+      expect(ticketToggleBtn).not.toBeNull()
+      await act(async () => {
+        ticketToggleBtn.click()
+      })
+      expect(container.textContent).toContain('Verbatim original ticket prompt from backend store')
+      expect(container.textContent).toContain('Ticket scope line from mandate')
+
+      // Storage boundary: simulate write-failed warning tag on TicketPage
+      simulatedStorageState = 'write_failed'
+      await act(async () => {
+        root.render(
+          <PanelProvider t={mockT} call={call}>
+            <TicketPage key="write-failed" id={ticketId} />
+          </PanelProvider>
+        )
+      })
+      await act(async () => {
+        await Promise.resolve()
+        await new Promise(r => setTimeout(r, 10))
+      })
+      expect(container.textContent).toContain('storage: write-failed')
+
+      // Test 2: Render ThreadPage via real PanelProvider consuming backend store data
+      await act(async () => {
+        root.render(
+          <PanelProvider t={mockT} call={call}>
+            <ThreadPage id={threadKey} />
+          </PanelProvider>
+        )
+      })
+      await act(async () => {
+        await Promise.resolve()
+        await new Promise(r => setTimeout(r, 10))
+      })
+
+      expect(container.textContent).toContain('Backend Thread Component Display')
+      expect(container.textContent).toContain('Rev 1')
+
+      const threadToggleBtn = container.querySelector('[data-testid="brief-toggle-btn"]') as HTMLButtonElement
+      expect(threadToggleBtn).not.toBeNull()
+      await act(async () => {
+        threadToggleBtn.click()
+      })
+      expect(container.textContent).toContain('Verbatim original thread prompt from backend store')
+      expect(container.textContent).toContain('Execute within github thread parameters')
+    } finally {
+      await act(async () => {
+        root.unmount()
+      })
+      try { store.close() } catch {}
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 })
