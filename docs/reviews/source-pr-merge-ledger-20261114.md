@@ -26,7 +26,7 @@ PR124 is explicitly an **isolated source domain/context adapter and reusable com
 
 Post-merge CI is green for all first nine source merges, including PR124 run43665870503. PR113 reviewed-head CI passed; its new post-merge check remains pending verification. Source merge is not installation or native acceptance.
 
-## Current nine open source PR dispositions
+## Current withheld source PR dispositions
 
 | PR / exact head | Current checks and disposition | Next owner / gate |
 |---|---|---|
