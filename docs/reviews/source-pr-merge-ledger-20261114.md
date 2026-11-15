@@ -1,6 +1,6 @@
 # Source PR review and merge ledger — November 14, 2026
 
-Gera explicitly authorized reviewing and merging safe source PRs. Eleven prototype PRs and one Sandbox PR were merged into their existing target branches, one at a time with GitHub expected-head protection. No administrator/force merge, branch deletion, deployment, installation, live restart or provider/account/settings change was performed.
+Gera explicitly authorized reviewing and merging safe source PRs. In the earlier independently qualified coordinator batch, eleven prototype PRs and one Sandbox PR were merged into their existing target branches, one at a time with GitHub expected-head protection. No administrator/force merge, branch deletion, deployment, installation, live restart or provider/account/settings change was performed.
 
 ## Completed source merges
 
@@ -37,7 +37,6 @@ Post-merge CI is green for all first nine source merges, including PR124 run4366
 | Prototype107 / `2daef8122c245fcc1d8235463e785123b3f60e13` | CI failure; superseded ancestor of108. | Preserve history; no blanket approval or obsolete merge. |
 | Prototype108 / `488f8400c78d1969fede084fd39899ca342efd1c` | Remote CI failure on inventory; reviewed local correction53369320 not published. | Canonical findingc844ce8f revision21blocked, original r20 job; existing protected source-publication action remains required before exact-head CI/review. No direct push around gate. |
 | Prototype115 / `a6b754d4656e26a4813763a3bcd784e36e5857b9` | Remote CI failure on inventory; reviewed local correctiona9be5b92 unpublished. | Canonical findingf1d6590a revision12blocked, original r11 job; sanctioned protected publication/evidence path, then exact-head checks. No bypass. |
-| Prototype121 / `cee64e281ec04395e07009b05807036be6326c67` | HostedCI43674722901 SUCCESS; strict production persistence retained. REQUEST_CHANGES5909140579: AC11 uses unused helper plus mock Agent, not real SDK provider boundary. AC24 operator authority unavailable; reportwaiting/no consumedready. | Original217 continuation6889341502 requests actual SDK fixture or concrete inspected boundary limitation; no expanded API/permissions/native acceptance. |
 
 The ordinary source-merge authorization supersedes earlier generic source merge holds. It does not remove actual repository requirements or the distinct protected source-publication/native actions on the two finding lineages. No denied plugins-repository lookup, alternate identity, new credential or permission workaround was attempted.
 
@@ -82,3 +81,8 @@ Original218 append-only source observation6889963507 now records independent rev
 Original218 observation6889963507 delivered/read05:53:42UTC on original retained assignment; canonical trigger77d336c58a042e377b8dbfb0b8f4451c, reportwaiting. Original217 new observation6890607302 narrows SDK limitation to worker-fixture absence/version compatibility: actual sanctioned installed loop source contains factory, real Agent cancellation and request-signal adapter path. Coherent installed-tree synthetic adapter fixture is a reviewable option, not executed/qualified. Testkit manifest declaration is not installed directory evidence. No new test/provider/module execution/job/install/live change; original authority/native/report gates retained.
 
 Authority closure: installed SDK discovery/observation6890607302 is read-only, not approval to import/execute/reuse dependencies. Standing scope prohibits reuse; one bounded proposal is prepared at docs/reviews/fallback-installed-sdk-fixture-proposal.md for explicit owner approval. No worker dispatch/test/package import/copy/link/install. Original218 observation delivery/read and trajectory confirmed, current0running/0queued, reportwaiting/native gates retained.
+
+
+## Outside source changes reconciled November15
+
+Outside worker merged prototype1211da9195→c04ea54 and1252ad22b8→5af4777, exactsource/postmerge CI green. These are not additional coordinator approvals or native acceptance;121retains source qualification/report gates,125has newly recorded hardcoded/fabricated brief state and mirrored-test coverage defects. Details and original observation6898133493: docs/reviews/outside-source-reconciliation-20261115.md. App-generated OWNER-labelled comments do not approve the precise parked SDKreuse exception. Original reportswaiting and protected/native gates remain; no new implementation/test/deployment/closure action by reconciliation.
