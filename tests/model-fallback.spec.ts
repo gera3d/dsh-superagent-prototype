@@ -527,38 +527,98 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
         fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
         max_total_attempts: 3,
         max_attempts_per_model: 2,
-        total_timeout_ms: 1000,
+        total_timeout_ms: 100,
       }),
     }, h.runtime.store.blockRevision('models'), 'panel')
 
+    // Exercise normal managed request launch on normal accepted ticket path
+    const promptSpy = vi.spyOn(h.runtime.sessions, 'prompt')
     const one = await h.acceptedTicket(feishu('inflight-deadline-1', '@bot Fix in-flight deadline'))
     const agent = h.agents.get(one.sessionId)!
-    agent.status = 'running'
-    const cancelSpy = vi.spyOn(agent, 'cancel')
-    const promptSpy = vi.spyOn(h.runtime.sessions, 'prompt')
 
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    // Natural turn state from managed launch without manual status flipping
+    expect(agent.status).toBe('running')
+
+    // Register synthetic effectful tool to track and assert tool effects counter
+    let toolEffectsCount = 0
+    const register = (h.runtime.sessions as any).registerTool(agent, { disposers: [] })
+    register(
+      'synthetic_effectful_tool',
+      'synthetic tool for tracking effectful dispatch',
+      z.object({ path: z.string() }),
+      async (_args: { path: string }, signal?: AbortSignal) => {
+        if (signal?.aborted) throw new Error('Tool execution aborted by signal')
+        toolEffectsCount++
+        return { ok: true }
+      }
+    )
+    const tool = h.tools.get(one.sessionId)!.get('synthetic_effectful_tool')!
+
+    // Setup deterministic pending fake provider request tied to agent cancellation
+    let providerAborted = false
+    let providerPending = true
+    const providerAbortController = new AbortController()
+    providerAbortController.signal.addEventListener('abort', () => {
+      providerAborted = true
+      providerPending = false
+    })
+    const fakeProviderRequest = new Promise((resolve, reject) => {
+      providerAbortController.signal.addEventListener('abort', () => {
+        reject(Object.assign(new Error('Fake provider request aborted by deadline expiry'), { name: 'AbortError' }))
+      })
+    })
+    const providerOutcome = fakeProviderRequest.catch(err => err)
+
+    const realCancel = agent.cancel
+    const cancelSpy = vi.fn((cause: unknown, options?: { keepInbox?: boolean }) => {
+      if (!providerAbortController.signal.aborted) {
+        providerAbortController.abort()
+        providerAborted = true
+        providerPending = false
+      }
+      return realCancel.call(agent, cause, options)
+    })
+    agent.cancel = cancelSpy as never
+
     try {
-      // Arm deadline timer under fake timers while request is held in-flight
-      (h.runtime.executor as any).armDeadlineTimer(one.ticket.id)
+      // In-flight fake provider request is currently pending
+      expect(providerPending).toBe(true)
+      expect(providerAborted).toBe(false)
+      expect(toolEffectsCount).toBe(0)
 
-      // Advance clock past the in-flight routing deadline (1001ms)
-      await vi.advanceTimersByTimeAsync(1001)
+      // Await natural expiration of the 100ms routing deadline timer armed during normal launch
+      await vi.waitFor(() => {
+        expect(cancelSpy).toHaveBeenCalledWith({ kind: 'user' }, { keepInbox: false })
+      }, { timeout: 2000 })
+
+      // Invariant 1: In-flight fake provider request observed cancellation and aborted
+      expect(providerAborted).toBe(true)
+      expect(providerPending).toBe(false)
+      const err = await providerOutcome
+      expect(err).toBeInstanceOf(Error)
+      expect((err as Error).message).toMatch(/Fake provider request aborted/)
+
       await h.runtime.idle()
-
-      // Invariant 1: Actual Agent cancellation was invoked while request was in-flight
-      expect(cancelSpy).toHaveBeenCalledWith({ kind: 'user' }, { keepInbox: false })
 
       // Invariant 2: Ticket marked failed with routing deadline exceeded
       const updated = h.runtime.store.tickets.get(one.ticket.id)!
       expect(latestAssignment(updated)?.report?.state).toBe('failed')
       const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
-      expect(lastNote?.text).toMatch(/Routing deadline exceeded \(1000ms\)/)
+      expect(lastNote?.text).toMatch(/Routing deadline exceeded \(100ms\)/)
 
-      // Invariant 3: Delayed error emitted after cancellation does not trigger retry or fallback
+      // Invariant 3: Zero late tool effects - completed tool effect counter strictly zero
+      const ledger = h.runtime.executor.toolLedger(one.ticket.id)
+      expect(ledger.completedCount()).toBe(0)
+      expect(toolEffectsCount).toBe(0)
+
+      // Late tool invocation attempt with cancelled signal is aborted and rejected
+      await expect(tool.execute({ path: 'test.txt' }, { callId: 'call-late-1', signal: providerAbortController.signal } as never)).rejects.toThrow()
+      expect(ledger.completedCount()).toBe(0)
+      expect(toolEffectsCount).toBe(0)
+
+      // Invariant 4: Delayed error emitted after cancellation does not trigger retry or fallback
       const delayed500 = Object.assign(new Error('Delayed HTTP 500 from cancelled provider'), { status: 500 })
       h.ctx.emit('agent/error', { agent, error: delayed500 } as never)
-      await vi.advanceTimersByTimeAsync(15_001)
       await h.runtime.idle()
 
       expect((h.runtime.executor as any).resuming.size).toBe(0)
@@ -567,8 +627,7 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
       )
       expect(lateRetryPrompts).toHaveLength(0)
     } finally {
-      vi.useRealTimers()
-      cancelSpy.mockRestore()
+      agent.cancel = realCancel
       promptSpy.mockRestore()
     }
   })
