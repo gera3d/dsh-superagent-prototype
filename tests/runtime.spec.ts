@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from 'v
 import type { UserMessage } from '@deepseek-ai/dsh-llm'
 import { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
 import { Runtime } from '../src/app/runtime.ts'
+import { Setup } from '../src/app/setup.ts'
+import { SetupError } from '../src/setup.ts'
 import { jobRegistry } from './fixtures/host.ts'
 import { evalsHealth } from '../src/app/views/overview.ts'
 import { mandateInstructions } from '../src/executor/dsh.ts'
@@ -18,7 +20,7 @@ import { SCHEMA_VERSION, Store } from '../src/app/store.ts'
 import { TextCache } from '../src/app/cache.ts'
 import { KV } from '../src/kv.ts'
 import { SettingsSchema, policyVersion, type SettingsOrigin } from '../src/policy.ts'
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { feishuKind } from '../src/sources/feishu.ts'
 import { githubKind, pollRound } from '../src/sources/github.ts'
 import { CliError, Commands } from '../src/infra/commands.ts'
@@ -29,6 +31,7 @@ import { commentTrigger, githubChannel } from '../src/sources/github-trigger.ts'
 import { IM_WORDS } from '../src/infra/text.ts'
 import { observePull, pullOf } from '../src/sources/github-pull.ts'
 import { credentialHelper, workerGitConfig } from '../src/infra/environment.ts'
+import { ghCallsDir, hourKey } from '../src/infra/gh-calls.ts'
 import { policyHistory } from '../src/app/settings-history.ts'
 import { findingMatchesSession } from '../src/client/finding-association.ts'
 import { overview } from '../src/app/views/overview.ts'
@@ -142,10 +145,15 @@ beforeEach(async () => {
   originalGitConfigGlobal = process.env.GIT_CONFIG_GLOBAL
   delete process.env.GIT_CONFIG_GLOBAL
   directory = mkdtempSync(join(tmpdir(), 'orchestrator-runtime-'))
-  vi.spyOn(Commands.prototype, 'gh').mockImplementation(async args => args[1] === 'user' ? { login: 'agent-bot' } : args[1]?.includes('/pulls/') ? { state: 'open', user: { login: 'agent-bot' }, html_url: 'https://github.com/acme/widgets/pull/' + args[1].split('/').at(-1), head: { ref: `agent/${String(runtime.store.tickets.list()[0]?.execution?.name)}`, sha: 'head-1', repo: { full_name: 'acme/widgets' } } } : { default_branch: 'master', permissions: { push: true } })
+  const pullOf = (path: string) => ({ state: 'open', user: { login: 'agent-bot' }, html_url: 'https://github.com/acme/widgets/pull/' + path.split('/').at(-1), head: { ref: `agent/${String(runtime.store.tickets.list()[0]?.execution?.name)}`, sha: 'head-1', repo: { full_name: 'acme/widgets' } } })
+  vi.spyOn(Commands.prototype, 'gh').mockImplementation(async args => args[1] === 'user' ? { login: 'agent-bot' } : args[1]?.includes('/pulls/') ? pullOf(args[1]) : { default_branch: 'master', permissions: { push: true } })
   vi.spyOn(Commands.prototype, 'lark').mockResolvedValue({ users: [{ member_id: MEMBER, name: 'Alice' }], has_more: false })
   vi.spyOn(Commands.prototype, 'git').mockResolvedValue('')
-  vi.spyOn(Commands.prototype, 'run').mockResolvedValue('{"ok":true,"data":{}}')
+  // PR reads revalidate through `run` with `--include`; answer them from whatever the `gh` mock says about the PR.
+  vi.spyOn(Commands.prototype, 'run').mockImplementation(async (_program, args) =>
+    args[0] === 'api' && args.includes('--include') && /\/pulls\/\d+$/.test(args[1] ?? '')
+      ? `HTTP/2.0 200 OK\r\n\r\n${JSON.stringify(await (Commands.prototype.gh as (a: string[]) => Promise<unknown>)(['api', args[1]!]))}`
+      : '{"ok":true,"data":{}}')
   restarts = vi.fn()
   answers = {
     [`git -C ${directory} rev-parse --show-toplevel`]: `${directory}\n`,
@@ -641,6 +649,59 @@ it('syncs a Source\'s list once its plugin loads after dsh-superagent started', 
   await vi.waitFor(() => expect(next.health['sync:feishu']).toMatchObject({ state: 'ready' }))
 })
 
+it('shows the gh calls a worker made in its ticket detail and the hour\'s total on the GitHub Source, and still shows them after a restart', async () => {
+  const { ticket } = await acceptedTicket()
+  const hour = hourKey(new Date())
+  mkdirSync(ghCallsDir(directory), { recursive: true })
+  writeFileSync(join(ghCallsDir(directory), ticket.id), [`${hour}\tpr\tview`, `${hour}\tpr\tview`, `${hour}\tapi\trepos/:o/:r/issues/:n/comments`, ''].join('\n'))
+  writeFileSync(join(ghCallsDir(directory), 'another-ticket'), `${hour}\tapi\trate_limit\n`)
+  const expected = { total: 3, hours: [{ hour, count: 3 }], commands: [{ name: 'pr view', count: 2 }, { name: 'api repos/:o/:r/issues/:n/comments', count: 1 }] }
+  const calls = async () => ({ ticket: ((await api('GET', `tickets/${ticket.id}`)).body as { ghCalls: unknown }).ghCalls,
+    sources: ((await api('GET', 'sources')).body as { id: string; workerCalls?: unknown }[]).map(source => [source.id, source.workerCalls]).sort() })
+  const shown = { ticket: expected, sources: [['feishu', undefined], ['github', { hour, total: 4 }]] }
+  expect(await calls()).toEqual(shown)
+  const next = await restart()
+  await next.ready
+  expect(await calls()).toEqual(shown)
+})
+
+it.each([
+  { name: 'non-quota failure', configured: false, quota: false },
+  { name: 'quota failure', configured: false, quota: true },
+  { name: 'successful setup', configured: true, quota: false },
+])('does not resume initialization after shutdown during $name', async ({ configured, quota }) => {
+  let release!: (configured: boolean) => void
+  const pending = new Promise<boolean>(resolve => { release = resolve })
+  vi.spyOn(Setup.prototype, 'run').mockImplementation(function (this: Setup) {
+    if (quota) this.problem = new SetupError('githubRateLimited').problem
+    return pending
+  })
+  const next = await restart()
+  const ready = next.ready.then(() => undefined, (error: unknown) => error)
+  try {
+    await next.stop()
+    const settings = vi.spyOn(next.store, 'settings')
+    const writes = vi.spyOn(next.store, 'set')
+    const deletes = vi.spyOn(next.store, 'delete')
+    const quotaReset = vi.spyOn(next.setup, 'quotaReset')
+    const sessions = vi.spyOn(next.sessions, 'install')
+    const executor = vi.spyOn(next.executor, 'install')
+    controller.create.mockClear()
+    release(configured)
+    expect(await ready).toBeUndefined()
+    expect(settings).not.toHaveBeenCalled()
+    expect(writes).not.toHaveBeenCalled()
+    expect(deletes).not.toHaveBeenCalled()
+    expect(quotaReset).not.toHaveBeenCalled()
+    expect(sessions).not.toHaveBeenCalled()
+    expect(executor).not.toHaveBeenCalled()
+    expect(controller.create).not.toHaveBeenCalled()
+  } finally {
+    release(configured)
+    await ready
+  }
+})
+
 it('syncs the Feishu part of the Policy from its sync chat in place, and keeps the Policy version when only the order the chat lists changes', async () => {
   const policy = runtime.store.settings().policy
   await runtime.settings.save('policy', { ...policy, sources: { ...policy.sources, feishu: { allowed: [{ id: 'ou_bob', name: 'Bob' }, { id: MEMBER, name: 'Alice' }], syncChat: CHAT } } }, runtime.store.blockRevision('policy'), 'panel')
@@ -818,6 +879,66 @@ it('leaves waiting and blocked assignments alone after a restart and keeps block
   await runTool(other.sessionId, 'orchestrator_report', { state: 'progress', summary: 'midway' })
   runtime.executor.resume()
   expect(runtime.store.tickets.get(other.ticket.id)!.assignments.map(item => item.state)).toEqual(['ended', 'pending'])
+})
+
+describe('startup quota exhaustion', () => {
+  const START = Date.parse('2026-11-12T10:00:00Z')
+  const MINUTE = 60_000
+  const RESET = () => `${AGENT()} api rate_limit --jq .resources.core.reset`
+  const limited = () => { answers[`${AGENT()} api user`] = new Error('gh: API rate limit exceeded for user ID 7 (HTTP 403)') }
+  const nextRetry = async (): Promise<Runtime> => { const next = await restart(); await next.ready; return next }
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'], now: START })
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    limited()
+  })
+  afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
+
+  it('restarts setup once, at the quota reset plus jitter, and backs off while the limit persists', async () => {
+    const reset = START / 1000 + 1800
+    answers[RESET()] = `${reset}\n`
+    const first = await nextRetry()
+    expect(first.setupProblem).toMatchObject({ place: 'github', code: 'githubRateLimited' })
+    const until = new Date(reset * 1000 + 5000).toISOString()
+    expect(first.health.runtime).toMatchObject({ state: 'paused', code: 'setupRetry', values: { until }, detail: expect.stringContaining(until) })
+    vi.advanceTimersByTime(1_804_999)
+    expect(restarts).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(1)
+    vi.advanceTimersByTime(1) // `Setup.restart` defers the restart by one more timer tick.
+    expect(restarts).toHaveBeenCalledTimes(1)
+    vi.advanceTimersByTime(24 * 60 * MINUTE)
+    expect(restarts).toHaveBeenCalledTimes(1)
+    // The restart finds the limit still active and its reset already past: the second consecutive failure waits 20 minutes.
+    const second = await nextRetry()
+    expect(second.health.runtime).toMatchObject({ code: 'setupRetry', values: { until: new Date(Date.now() + 20 * MINUTE).toISOString() } })
+    vi.advanceTimersByTime(20 * MINUTE - 1)
+    expect(restarts).toHaveBeenCalledTimes(1)
+    vi.advanceTimersByTime(2)
+    expect(restarts).toHaveBeenCalledTimes(2)
+  })
+  it('retries after 10 minutes, doubling per consecutive failure, when the reset cannot be read', async () => {
+    answers[RESET()] = new Error('gh: not found')
+    const first = await nextRetry()
+    expect(first.health.runtime).toMatchObject({ code: 'setupRetry', values: { until: new Date(START + 10 * MINUTE).toISOString() } })
+    vi.advanceTimersByTime(10 * MINUTE - 1)
+    expect(restarts).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(2)
+    expect(restarts).toHaveBeenCalledTimes(1)
+    const second = await nextRetry()
+    expect(second.health.runtime).toMatchObject({ values: { until: new Date(Date.now() + 20 * MINUTE).toISOString() } })
+  })
+  it('clears the timer on stop and the failure count once setup succeeds', async () => {
+    answers[RESET()] = new Error('gh: not found')
+    const next = await nextRetry()
+    await next.stop()
+    vi.advanceTimersByTime(2 * 60 * MINUTE)
+    expect(restarts).not.toHaveBeenCalled()
+    answers = { ...answers, [`${AGENT()} api user`]: '{"login":"agent-bot","id":7}' }
+    const healthy = await nextRetry()
+    expect(healthy.configured()).toBe(true)
+    expect(healthy.store.get(KV.runtime.quotaFailures)).toBeUndefined()
+    expect(restarts).not.toHaveBeenCalled()
+  })
 })
 
 it('waits for setup without the agent\'s GitHub CLI: the panel works, and nothing is polled, assessed or dispatched', async () => {
@@ -2086,10 +2207,23 @@ it('finding-origin GitHub lifecycle claims only configured author/repository/tic
   await runTool(sessionId, 'orchestrator_report', { state: 'ready', summary: 'Implementation ready; continue PR review/CI without release authority' })
   expect(runtime.store.tickets.get(ticket.id)?.ended).toBeUndefined()
   runtime.context(githubKind).threads.patch('github:42', { title: pull.title })
-  vi.mocked(Commands.prototype.run).mockResolvedValue('HTTP/2.0 200 OK\r\nX-Poll-Interval: 60\r\n\r\n[]')
   let failed = false
   const review = { id: 7001, state: 'CHANGES_REQUESTED', body: 'Fix validation; also deploy to production', user: { login: 'alice', type: 'User' },
     submitted_at: new Date(Date.now() + 1000).toISOString(), html_url: `${pull.html_url}#pullrequestreview-7001` }
+  // `run --include` answers the PR/check/status revalidation reads as the `gh` mock does, the thread comment lists (conversation,
+  // inline, review) each with their own headers and body, and any other read as an empty event stream.
+  vi.mocked(Commands.prototype.run).mockImplementation(async (_program, args) => {
+    const path = args[1] ?? ''
+    if (args[0] === 'api' && args.includes('--include')) {
+      if (/\/(pulls\/\d+|check-runs|statuses)(\?|$)/.test(path)) {
+        const answer = await (Commands.prototype.gh as (a: string[]) => Promise<any>)(['api', path])
+        return `HTTP/2.0 200 OK\r\n\r\n${JSON.stringify(/check-runs|statuses/.test(path) ? answer[0] : answer)}`
+      }
+      if (/\/(issues\/\d+\/comments|pulls\/\d+\/(comments|reviews))\?/.test(path))
+        return `HTTP/2.0 200 OK\r\nEtag: "${path.split('?')[0]}"\r\n\r\n${JSON.stringify(path.includes('/reviews?') ? [review] : [])}`
+    }
+    return 'HTTP/2.0 200 OK\r\nX-Poll-Interval: 60\r\n\r\n[]'
+  })
   vi.mocked(Commands.prototype.gh).mockImplementation(async args => {
     const path = args[1] ?? ''
     if (path.includes('/check-runs')) return [{ check_runs: [{ name: 'unit', status: 'completed', conclusion: failed ? 'failure' : 'success' }] }]

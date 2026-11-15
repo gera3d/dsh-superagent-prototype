@@ -310,6 +310,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/client/delivery-card.tsx` | Shared current delivery recommendation, typed confirmation and inspectable evidence/history |
 | `src/client/delivery-card.css` | The delivery card styles |
 | `src/client/worker-report-fallback.tsx` | Provenance-labelled recorded report rendering after an actual blank completed final reply |
+| `src/client/worker-report.css` | The worker report fallback styles |
 | `src/index.ts` | The main plugin entry: reads the machine settings, starts the Runtime, and gives it the restart that a save of a Source's account uses |
 | `src/deployment.ts` | The plugin `Config` and `Machine`; `resolveDeployment` and `resolveFeishuBot` read the repository and the accounts from the Source settings, each CLI run as Executor shells run it; `SETUP_FIELDS` lists the Source fields setup reads. The code names no person, account or organization |
 | `src/setup.ts` | Setup problems: `SetupError`, with a code, the place that fixes it and the English text the log, the main Session and the panel share |
@@ -381,6 +382,8 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/app/tools/executor.ts` | An Executor Session's tools |
 | `src/app/tools/composio.ts` | Nested Composio result unwrapping, batch result preservation, failure classification, and non-retryable connection error routing |
 | `src/app/tool-output.ts` | Bounds oversized shell and search output in a worker's model context while keeping the complete text in a durable file |
+| `src/app/workspace-reuse.ts` | Isolated dependency/build compatibility and qualified reuse planning; no installed runtime wiring |
+| `src/app/workspace-retention.ts` | Read-only retention candidate and sanitized aggregate planning; no cleanup authority |
 | `src/app/http.ts` | The `/orchestrator/api` routes: the same-origin check, request limits and one status per kind of failure |
 | `src/app/routes/helper.ts` | Compact Senior Developer suggestion schemas, tool-free drafting and bounded availability fallback through the shared model ladder |
 | `src/app/advice-context.ts` | Bounded recorded release goal, ownership, evidence and permission context shared by drafting, fallback and ranking. |
@@ -417,6 +420,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/executor/background.ts` | A worker's background work in DeepSeek Harness, the shell jobs its Session owns (`ctx.jobs`) and its subagents (`ctx.subagents`): `runningJobs`, `untilQuiet`, `killJobs`, `collectJobs`, `stopSubagents`, `stopBackground`, `until`, and `cancelled`, the workers whose turn a stop of their subagents cancelled |
 | `src/infra/commands.ts` | `Commands`, the CLI transport: `run`; `api` and `pages`, limited to the configured repository and validated; `lark` as the bot; `git`. `CliError` carries the code a command's output reports, such as a GitHub HTTP status, and a command that prints nothing fails with how it ended, never with its arguments; `validItems` skips and counts the malformed items of a list |
 | `src/infra/environment.ts` | The agent's process environment: command shims, the git configuration and credential helper, `runAsWorker`, and the checks of the environment and of a Ticket's directory |
+| `src/infra/gh-calls.ts` | The per-ticket counter of the worker `gh` shim: its directory, the reader of a ticket's counts by hour and command, and the hour's total across tickets |
 | `src/infra/paths.ts` | The package's root, where packaged files are |
 | `src/infra/text.ts` | Word counts and the chat message limit, `fill` and `sameName` |
 | `src/infra/health.ts` | The `HealthBoard`, every part's health entry, each claimed by its one writer |
@@ -600,7 +604,9 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/cards.spec.ts` | The rules the built-in text must state, file by file |
 | `tests/model-surface.spec.ts` | Everything models read: tools, prompts, skills and inputs, checked against the tool schemas, the execution environment and the glossary, within a size budget per role |
 | `tests/deployment.spec.ts`, `tests/environment.spec.ts`, `tests/index.spec.ts` | The plugin configuration and setup, the agent's process environment, the plugin entry |
+| `tests/report-shim-identity.spec.ts` | The orchestrator_report CLI contract: pre-write validation requiring explicit ticket, assignment and turn identities |
 | `tests/service-script.spec.ts` | `scripts/dsh-superagent` against fake `ps`, `tmux` and `dsh` |
+| `tests/workspace-reuse.spec.ts`, `tests/workspace-retention.spec.ts` | Focused compatibility, synthetic qualification and conservative retention fixtures; no actual pool acceptance |
 | `tests/branding.spec.tsx` | Custom branding schema, HTTP endpoints, fail-safe fallback, and mark rendering |
 | `tests/client.spec.tsx`, `tests/navigation.spec.ts`, `tests/controls.spec.tsx` | The client plugin's registration and polling, Session navigation and route memory, the local controls, and the panel's imports, which have no cycle |
 | `tests/panel-overview.spec.tsx`, `panel-source.spec.tsx`, `panel-trigger.spec.tsx`, `panel-eval.spec.tsx`, `panel-execution.spec.tsx` | Each page of the panel, against a fake management API answered by route |
@@ -622,7 +628,8 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/finding-coordination.spec.ts` | headless coordination for already-approved bounded work |
 | `tests/finding-release-package.spec.ts` | finding release package |
 | `tests/finding-release.spec.ts` | finding release |
-| `tests/github-quota.spec.ts` | github quota |
+| `tests/github-quota.spec.ts`, `tests/setup-quota-retry.spec.ts` | github quota, the setup retry time after quota exhaustion |
+| `tests/github-revalidate.spec.ts` | PR and check-run reads revalidated with ETag and reused on 304 |
 | `tests/legacy-delivery-card.spec.tsx` | legacy delivery card |
 | `tests/legacy-delivery-reconciliation.spec.ts` | Legacy delivery historical completion reconciliation |
 | `tests/live-attestation-coverage.spec.ts` | live attestation coverage |

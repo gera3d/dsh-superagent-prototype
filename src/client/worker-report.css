@@ -1,0 +1,119 @@
+/* Centered conversation dock fallback card, matching Senior Developer controls and theme tokens. */
+.dt-worker-report {
+  box-sizing: border-box;
+  flex: none;
+  width: calc(100% - var(--dsh-composer-side-clearance, 24px) * 2);
+  max-width: var(--dsh-composer-card-max-width, 840px);
+  min-width: 0;
+  margin: 0 auto 6px;
+  padding: 10px 12px;
+  background: var(--dsw-alias-bg-layer-1);
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: var(--dsw-radius-md, 8px);
+  color: var(--dsw-alias-label-secondary);
+  font-family: var(--dsw-font-family, inherit);
+  font-size: 12px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.dt-worker-report *,
+.dt-worker-report *::before,
+.dt-worker-report *::after {
+  box-sizing: border-box;
+}
+
+.dt-worker-report-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+  margin-bottom: 4px;
+}
+
+.dt-worker-report-header > svg {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.dt-worker-report-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+}
+
+.dt-worker-report-badge {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.dt-worker-report-provenance {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.dt-worker-report-body {
+  max-height: min(240px, 25vh);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 8px 10px;
+  background: var(--dsw-alias-bg-layer-2, rgba(127, 127, 127, 0.08));
+  border: 1px solid var(--dsw-alias-border-l1, var(--dsw-alias-border-l2));
+  border-radius: var(--dsw-radius-sm, 6px);
+  color: var(--dsw-alias-label-primary);
+  font-family: var(--dsw-font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.dt-worker-report-body:focus-visible {
+  outline: var(--dsw-focus-ring-width, 2px) solid var(--dsw-focus-ring-color);
+  outline-offset: 1px;
+}
+
+.dt-worker-report-footer {
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.dt-worker-report-footer p {
+  margin: 0;
+}
+
+.dt-worker-report-footer a {
+  color: var(--dsw-alias-state-business-primary);
+  text-decoration: none;
+}
+
+.dt-worker-report-footer a:hover {
+  text-decoration: underline;
+}
+
+.dt-worker-report-footer a:focus-visible {
+  outline: var(--dsw-focus-ring-width, 2px) solid var(--dsw-focus-ring-color);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.dt-worker-report-footer code {
+  font-size: 11px;
+}
+
+@media (max-width: 520px) {
+  .dt-worker-report-badge {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dt-worker-report-body {
+    scroll-behavior: auto;
+  }
+}
