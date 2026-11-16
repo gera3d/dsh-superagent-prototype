@@ -149,3 +149,91 @@ it('keeps the whole pointer and the status when the pointer is so long the full 
     expect(bounded.endsWith(status)).toBe(true)
   }
 })
+
+it('[controlled synthetic] preserves complete terminal status or falls back to original text across long-pointer boundary p=3900..4080', () => {
+  const status = '[status: completed, exit code: 137]'
+  const text = `${numbered(120)}\n${status}`
+  let lostCount = 0
+  for (let p = 3900; p <= 4080; p++) {
+    const pointer = `/${'p'.repeat(p)}.txt`
+    const bounded = boundOutput(text, pointer)
+    if (bounded !== text) {
+      expect(bytes(bounded)).toBeLessThanOrEqual(OUTPUT_BYTES)
+      expect(bounded.split('\n').length).toBeLessThanOrEqual(OUTPUT_LINES)
+      expect(bounded).toContain(`Complete text: ${pointer}`)
+      expect(bounded.endsWith(status)).toBe(true)
+      expect(bounded).not.toMatch(/\. Read it with offset\/limit or grep it\.\]$/)
+    } else {
+      expect(bounded).toBe(text)
+    }
+  }
+  expect(lostCount).toBe(0)
+})
+
+it('[controlled synthetic] multi-byte UTF-8 and single oversized line preserve complete terminal status or fall back to original text', () => {
+  const status = '[status: completed, exit code: 137]'
+  // Exact boundaries where notice fits budget but leaves limited/no room for terminal status
+  for (const p of [3937, 3940, 3945, 4001, 4020, 4030, 4050]) {
+    const pointer = `/${'p'.repeat(p)}.txt`
+
+    // Single oversized line
+    const single = `${'x'.repeat(20000)}${status}`
+    const boundedSingle = boundOutput(single, pointer)
+    if (boundedSingle !== single) {
+      expect(bytes(boundedSingle)).toBeLessThanOrEqual(OUTPUT_BYTES)
+      expect(boundedSingle).toContain(`Complete text: ${pointer}`)
+      expect(boundedSingle.endsWith(status)).toBe(true)
+    } else {
+      expect(boundedSingle).toBe(single)
+    }
+
+    // Multi-byte UTF-8
+    const utf8 = `${Array.from({ length: 120 }, (_, i) => `行${i} ${'错'.repeat(30)}`).join('\n')}\n${status}`
+    const boundedUtf8 = boundOutput(utf8, pointer)
+    if (boundedUtf8 !== utf8) {
+      expect(bytes(boundedUtf8)).toBeLessThanOrEqual(OUTPUT_BYTES)
+      expect(boundedUtf8).toContain(`Complete text: ${pointer}`)
+      expect(boundedUtf8.endsWith(status)).toBe(true)
+    } else {
+      expect(boundedUtf8).toBe(utf8)
+    }
+  }
+})
+
+it('[controlled synthetic] leaves original output whole when compact cannot fit the complete terminal status', () => {
+  const status = '[status: completed, exit code: 137]'
+  // At pointer lengths where even compact leaves no room for complete status marker (34 bytes),
+  // pre-fix compact shifted terminal tail down to partial suffix. Post-fix preserves complete status or leaves text unchanged.
+  for (const p of [4035, 4040, 4060]) {
+    const pointer = `/${'p'.repeat(p)}.txt`
+    for (const text of [`${numbered(120)}\n${status}`, `${'x'.repeat(20000)}${status}`]) {
+      const bounded = boundOutput(text, pointer)
+      expect(bounded).toBe(text)
+    }
+  }
+})
+
+it('[native filesystem] listener post-execute boundary preserves complete terminal status, saves durable full text, and passes errors whole', async () => {
+  const dir = temp(), run = listener(dir)
+  const status = '[status: completed, exit code: 137]'
+  const text = `${numbered(120)}\n${status}`
+
+  // Successful oversized tool call
+  const decision = await run('bash', text)
+  expect(decision.kind).toBe('accept')
+  const body = decision.content![0]!.text
+  expect(bytes(body)).toBeLessThanOrEqual(OUTPUT_BYTES)
+  expect(body.endsWith(status)).toBe(true)
+  expect(body).toContain(OUTPUT_DIRECTORY)
+
+  // Full durable file saved and verifiable
+  const [file] = readdirSync(join(dir, OUTPUT_DIRECTORY))
+  expect(readFileSync(join(dir, OUTPUT_DIRECTORY, file!), 'utf8')).toBe(text)
+
+  // Full isError passthrough: errors are passed whole and never saved
+  const errText = `${numbered(120)}\n[error: critical fault]`
+  const errDecision = await run('bash', errText, { kind: 'accept' }, undefined, true)
+  expect(errDecision).toEqual({ kind: 'accept' })
+  // No second file saved for error
+  expect(readdirSync(join(dir, OUTPUT_DIRECTORY))).toHaveLength(1)
+})

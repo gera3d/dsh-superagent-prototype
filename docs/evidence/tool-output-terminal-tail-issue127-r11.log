@@ -1,0 +1,20 @@
+=== Issue #127 (r11) Deterministic Verification Suite ===
+
+--- Suite 1: Failing-before vs Passing-after Long Pointer Probe (p = 3900..4080) ---
+Total probed pointer cases: 181 (p=3900..4080)
+Pre-fix (761f030) lost terminal status cases: 132
+Post-fix (r11) lost terminal status cases: 0
+Post-fix complete status preserved within budget: 97
+Post-fix truthful fallback to original text (budget exhausted): 84
+PASS: Suite 1 verified.
+
+--- Suite 2: Exact Boundary Probe (Singleline & Multi-byte UTF-8) ---
+PASS: Suite 2 verified.
+
+--- Suite 3: Compact Fallback Truthful Preservation ---
+PASS: Suite 3 verified.
+
+--- Suite 4: Post-Execute Listener Boundary & Durable Storage ---
+PASS: Suite 4 verified.
+
+=== ALL SUITES PASSED (exit code: 0) ===
