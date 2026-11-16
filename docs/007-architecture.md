@@ -532,6 +532,9 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/stage.spec.ts` | The Ticket stages, row by row |
 | `tests/policy.spec.ts` | Source scope, the gate, the admission table, Mandate revalidation, the Policy version, settings migrations and assessment outcomes |
 | `tests/tool-output.spec.ts` | Oversized shell and search output bounded in the worker's model context with the complete text kept in a durable file |
+| `tests/replay-output-bound.spec.ts` | Offline replay script over Session records: estimates savings and reproduces edge cases |
+| `tests/tool-output-runtime.spec.ts` | Output bounding at the tool registry post-execute boundary |
+| `tests/tool-output-sessions.spec.ts` | Output bounding installed across worker, subagent, and main Sessions |
 | `tests/registry.spec.ts` | `SourceRegistry`: instances, validation, Policy parts, Channels and Thread context |
 | `tests/sources.spec.ts` | The Feishu and GitHub Sources on a `SourceContext`: translation, polls and read positions, the pull request rules, health |
 | `tests/commands.spec.ts` | CLI calls as the deployment's accounts, the Channels' answers, and repository-scoped GitHub calls |
