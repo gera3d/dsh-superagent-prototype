@@ -548,6 +548,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/followups.spec.ts` | A person's follow-up on a Ticket's Thread: its notice to the main Session, the tools that act on it, what a burst costs; a worker's hand-back and context follow, and the main Session's note |
 | `tests/health.spec.ts` | One health entry per part, each cleared by its own next success |
 | `tests/delivery.spec.ts` | `AgentDelivery` |
+| `tests/publication-failure-diagnostics.spec.ts` | Bounded, allowlisted publication phase and category diagnostics, and uncertain handoff state kept for operator reconciliation instead of replay |
 | `tests/subscription-conservation.spec.ts` | Conservation, provider availability, fail-closed resolution and saved-priority restoration |
 | `tests/retry-health.spec.ts`, `tests/role-models.spec.ts`, `tests/model-fallback.spec.ts` | Model budget retries, the models of the two roles, the escalation hierarchy and its cap, bounded fallback routing, error classification, and tool replay guards on model unavailability |
 | `tests/character.spec.ts` | Stage 3 Autopilot Characters tests: senior developer character, weak proposals, and locked escalation detection |
