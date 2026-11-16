@@ -1,5 +1,8 @@
 # Refreshed PR105/108 source review and post-merge correction
 
+**Issue127 r11 SOURCE qualified and merged — November16,04:29UTC:** [Exact review and evidence](issue127-r11-source-review-20261115.md). PR128 head6b02fbf qualified by one 1,086-case synthetic before/after probe (787baseline suffixloss/0candidate/0replacement violations) plus hostedCI43804075659 SUCCESS2774pass/19skip/type/build, helper17/ToolRuntime13/Sessions3/replay5. COMMENT5915053051 avoids selfapproval; ordinary expected-head mergee78e3f4 onto569f840, all3candidateblobs match. PostCI43804409798 SUCCESS2774pass/19skip/typesbuild. SupportedMCP source observation retained on originalfindingrev12blocked/load0/0; no retry/acceptance. Missingworker-script log remains unverified testimony. Originalr7/r9/r11/findingrev12blocked history preserved; SOURCE merge is not native acceptance. No deploy/restart/provider/settings/reserve/access/spend/SDKreuse. Next native package/review/Publish/install/liveproof remains separate; original216integration still not dispatched.
+
+
 Latest#127 returned-work stage: [r9 candidate review/r11 recovery](issue127-r9-returned-review-20261115.md). r9 returned real committed8f10f09 but independent helper probe proves34partial-terminal cases remain. No source publication/merge. Supported original-finding r11 successor d922ab81/249dbc39 actualGoogle pickup03:26:50.654UTC, old attempts preserved.
 
 November15Pacific / November16,2026. Existing explicit owner GitHub review/merge instructions authorize ordinary independent expected-head SOURCE decisions. They do not supply native Publish/installation/acceptance authority. No new local coordinator/reviewer tests or implementation.
