@@ -381,6 +381,7 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `src/app/tools/tool.ts` | The `Tool` type, `readTool`, the `orchestrator_read` of both roles, and `AcknowledgementSchema` |
 | `src/app/tools/main.ts` | The main Session's tools |
 | `src/app/tools/executor.ts` | An Executor Session's tools |
+| `src/app/composio-boundary.ts` | Tools/post-execute listener for Composio actions: failure reclassification, batch result preservation, and non-retryable connection routing |
 | `src/app/tools/composio.ts` | Nested Composio result unwrapping, batch result preservation, failure classification, and non-retryable connection error routing |
 | `src/app/tool-output.ts` | Bounds oversized shell and search output in a worker's model context while keeping the complete text in a durable file |
 | `src/app/workspace-reuse.ts` | Isolated dependency/build compatibility and qualified reuse planning; no installed runtime wiring |
@@ -558,6 +559,8 @@ Some generic modules still refer directly to GitHub or Feishu:
 | `tests/runtime.spec.ts` | The whole application on a simulated DeepSeek Harness host, through tools and HTTP |
 | `tests/tools.spec.ts` | The Sessions' tools: what `orchestrator_read` reads for each role, and the shapes and checks of the other main Session tools |
 | `tests/composio.spec.ts` | Nested Composio result unwrapping, single/batch failure classification, diagnostic result preservation, and non-retryable auth/connection routing |
+| `tests/composio-boundary.spec.ts` | Composio failure classification at the tools/post-execute boundary across single and batch outcomes |
+| `tests/composio-bridge.spec.ts` | Composio MCP client bridge and installed definition contract |
 | `tests/decision-live-smoke.spec.ts` | Live smoke validation for decision flows |
 | `tests/native-composer-send-observer.spec.ts` | Native composer send observer event verification |
 | `tests/runtime-concurrency.spec.ts` | Work that overlaps: Triggers during a pass, Tickets that change during deliveries and launches |
