@@ -1,5 +1,8 @@
 # DeepSeek Harness project status
 
+**Original216 returned integration WITHHELD — November16UTC:** [Independent review](docs/reviews/original216-returned-integration-review-20261115.md). Realpublished8eda4e8 contains9filepatch/evidence; freshpreimage/postimage hashes and actualdryrun match. NestedCLI22passing tests ran olderSOURCEcheckout, notinstalledartifact, with prohibiteddependencyreuse; criteria mapping substitutesoriginal24, no genuinereadyreceipt/reportWAITING. ONE same-retained-owner correction6909184037 published; no duplicateimplementation/newjob/nativeaction. NextHarness216 truthfulcriteria/evidence/report correction, Codexreturnedreview; no qualifiedpackage/install/deploy.
+
+
 **Original216 installed-base integration pickup — November16,05:27UTC:** [Bounded stage](docs/reviews/original216-installed-base-integration-r1-20261115.md). Fresh9preimage/absence checks and existingpacket index match; sameOPENticket8db3c6ac/RUNNINGassignment83bc2d9f, retainedmandate6870288598. ONE implementationcontinuation6908141359 admitted/input6da0c41b/trigger e33d5371 read05:27:54.528, load1running/0queued/max3. Harness owns isolated brief-only installed-base artifact; Codex returnedartifact/report review. No newcandidate/checkresult/nativeacceptance claimed. Privateinstructions/receipts staylocal. No installedmutation/SDKreuse/worktree/build/restart/provider/settings/access/spend/ordinarychoices; original24criteria/nativehooks/binding/217exceptions remain explicit.
 
 
