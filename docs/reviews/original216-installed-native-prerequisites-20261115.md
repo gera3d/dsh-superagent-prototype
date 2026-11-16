@@ -1,5 +1,7 @@
 # Original216 installed/native prerequisites after PR126 source merge
 
+Follow-up milestone: [Concrete blocked review packet prepared](original216-package-preparation-r1-20261115.md), rather than repeated census. It captures exact preimages/source references/criteria and rollback/report/binding blockers, without runnable manifest or live mutation.
+
 Read-only checkpoint: November15,2026 Pacific (November16,00:20UTC). Source qualification and merge remain complete; this pass did not repeat review, tests or merge.
 
 ## Later worker traffic corrected
