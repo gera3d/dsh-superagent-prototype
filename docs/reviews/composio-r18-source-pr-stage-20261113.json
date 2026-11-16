@@ -1,0 +1,26 @@
+{
+  "at": "2026-11-13T20:10:29.447301+00:00",
+  "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+  "revision": 19,
+  "job": {
+    "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r18",
+    "ticketId": "90b01f2a0531979c292f19f482df2a3e",
+    "assignmentId": "9fcfa76462a763cf8289661908868ae2"
+  },
+  "head": "488f8400c78d1969fede084fd39899ca342efd1c",
+  "pr": 108,
+  "branch": "agent/finding-task-90b01f2a0531",
+  "baseBranch": "superagent-core",
+  "actualDiffBase": "cc8763d03dba2ef82cdea27b86d4dd277911be66",
+  "patchSha256": "a9599c1902699d81fc8467ad042b43c047ba13d8a1befc1500c969eaa435e5cf",
+  "qualification": "194checks/rootboundedreviewpassed; actual PRdiff/source sanitizer exactmatch",
+  "stage": "SourcePRopen, native independent review/check/package/Publish/deployment/acceptance NOT started",
+  "blocker": "Native UI screenavailability pending one asyncquestion; active otherproject not disturbed; isolatedbrowsernone/MCP no release action",
+  "nextOwner": "Codex native Release preparation/review/gates on exactPR108 when screenavailable",
+  "limits": "No externalComposioaction, no access/settings/route/newfeature changes; priorfailedverdicts preserved and clarificationheld",
+  "load": {
+    "running": 0,
+    "queued": 0,
+    "maxWorkers": 3
+  }
+}

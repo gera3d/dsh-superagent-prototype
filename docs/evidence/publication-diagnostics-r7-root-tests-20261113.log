@@ -1,0 +1,13 @@
+
+ RUN  v4.1.8 /private/tmp/publication-diagnostics-r7-review-0vqpl67u
+
+
+ Test Files  4 passed (4)
+      Tests  46 passed (46)
+   Start at  20:19:15
+   Duration  19.93s (transform 4.29s, setup 0ms, import 6.92s, tests 29.51s, environment 2ms)
+
+(node:60921) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:60937) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

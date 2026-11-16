@@ -1,0 +1,280 @@
+{
+  "observedAt": "2026-11-14T12:32:10.292894+00:00",
+  "findingId": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+  "revision": 2,
+  "state": "Documentation review package prepared; originalfinding blocked/unaccepted; no native verification/acceptance recorded",
+  "job": {
+    "id": "finding:60a99ec9-4328-41c1-93cc-dbbe6569e234:r1",
+    "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+    "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7"
+  },
+  "originalScopeSha256": "3ca95cc629487bcec0d338c02957fb884a2b251cf9dad5ae0fbeda43fc56958e",
+  "originalRequirements": [
+    {
+      "id": 1,
+      "originalRequirement": "Classify each inspected item as completed/accepted, completed narrower scope, superseded, genuinely unfinished, blocked or unverified; provide exact evidence and explicit coverage.",
+      "boundedDocumentationReview": "Historical34 across five immutable auditindexes plus three supplementalrecords and explicitplugin/PR92limits; every inspecteditem hasclassification, exactscope and unknowns.",
+      "evidence": "fiveAuditIndexes; supplementalClassifications; docs/evidence/workmap-supplemental-source-20261114.json",
+      "assessment": "Documented with explicit scope and retained unknowns; not a native acknowledgment or finding acceptance."
+    },
+    {
+      "id": 2,
+      "originalRequirement": "Use one clearly identified current checkpoint and label older contradictory snapshots as history without deleting failed evidence or user decisions.",
+      "boundedDocumentationReview": "OneCURRENT checkpoint/historyreadingrule; earlierauditparagraphs and originalarchivebody kept; failed/retracted/userchoice evidence retained.",
+      "evidence": "PROJECT_STATUS.md CURRENT/historyboundary; docs/evidence/work-map-reconciliation-20261110.md",
+      "assessment": "Documented with explicit scope and retained unknowns; not a native acknowledgment or finding acceptance."
+    },
+    {
+      "id": 3,
+      "originalRequirement": "Include all six overnight findings with original IDs/owners/stages and preserve Google qualification as blocked until real eligibility returns above the unchanged reserve.",
+      "boundedDocumentationReview": "Allsix original findingIDs/currentrevisions/jobs/owners/stages and separateGooglequalification re-read; Googlefindingr4blocked/unaccepted, no forcedtrial; lateractualGoogleusage notretroactiveacceptance.",
+      "evidence": "docs/evidence/workmap-supplemental-source-20261114.json state.originalLanes and existingProviderUsage; PROJECT_STATUS.md originalsix table",
+      "assessment": "Documented with explicit scope and retained unknowns; not a native acknowledgment or finding acceptance."
+    },
+    {
+      "id": 4,
+      "originalRequirement": "Do not read a PR merge or ended worker as live completion; preserve original unknown pins and historical reconciliation receipts.",
+      "boundedDocumentationReview": "Merge/workerend/cleanupclosures explicitly separated from nativeacceptance; preserve #84PASSretraction, failed164/166/168publications, Composiofailedverdicts, otherunknownpins.",
+      "evidence": "fiveAuditIndexes; supplementalClassifications prototypeissue2; originalarchive retained",
+      "assessment": "Documented with explicit scope and retained unknowns; not a native acknowledgment or finding acceptance."
+    },
+    {
+      "id": 5,
+      "originalRequirement": "Return reviewable documentation diffs and a list of proposed administrative closures for owner review; perform no external administrative mutation.",
+      "boundedDocumentationReview": "Reviewabledocumentationcommits; no newadministrativeclosure needed:34historicalissues alreadyclosed,PR150alreadymerged, prototype2/3remainopen. Noexternaladminmutation.",
+      "evidence": "administrativeDispositions; immutableauditcommits; shared/localcheckpoint",
+      "assessment": "Documented with explicit scope and retained unknowns; not a native acknowledgment or finding acceptance."
+    },
+    {
+      "id": 6,
+      "originalRequirement": "Coordinate with current shared-release owner so stale documentation snapshots cannot overwrite newer concurrent milestones.",
+      "boundedDocumentationReview": "SoleexistingCodex sharedreleaseowner; cleanbaselinea8c9f3e; currentmilestonebuiltontop, finalremote/mirrorequalitycheckedbeforeobservation.",
+      "evidence": "coordinationEvidence; originalcanonicalfindingobservation pinned finalcommit",
+      "assessment": "Documented with explicit scope and retained unknowns; not a native acknowledgment or finding acceptance."
+    },
+    {
+      "id": 7,
+      "originalRequirement": "Keep OpenAI conserved and the5%Google reserve, existing max3/cooldowns/routes and every protected approval gate unchanged.",
+      "boundedDocumentationReview": "Executor44/models26/coordination3 max3/OpenAIconserved/Google5reserve/backoff/routes/nativegates unchanged; no providerprobe/config/access/spend/limitchange.",
+      "evidence": "docs/evidence/workmap-supplemental-source-20261114.json state.config; boundaries",
+      "assessment": "Documented with explicit scope and retained unknowns; not a native acknowledgment or finding acceptance."
+    }
+  ],
+  "fiveAuditIndexes": [
+    {
+      "commit": "56919bf09187c0b1b414d24f6f4bf1ed53ab410c",
+      "path": "docs/reviews/workmap-seven-historical-items-audit-20261113.json",
+      "entries": [
+        108,
+        109,
+        157,
+        159,
+        163,
+        165,
+        167
+      ],
+      "sha256": "f539ebe09282859006002a53fa28653556d34d6aeccb10aab00de7660b26e78c"
+    },
+    {
+      "commit": "4d9f3b1ccd4034bf8b45ec59aa6b25686516bbb9",
+      "path": "docs/reviews/workmap-doc-contract-seven-audit-20261114.json",
+      "entries": [
+        3,
+        5,
+        13,
+        16,
+        80,
+        91,
+        98
+      ],
+      "sha256": "b001cb6e265e4c69b73698974aca13ad9c93310da33299cc07d0badae7488e3f"
+    },
+    {
+      "commit": "0981afa6be93012068d39acb4e85e33151881f3f",
+      "path": "docs/reviews/workmap-routing-autopilot-seven-audit-20261114.json",
+      "entries": [
+        11,
+        14,
+        54,
+        84,
+        86,
+        87,
+        117
+      ],
+      "sha256": "35bda0af113d2c37cac12aadb104c10bc1ca03be9d203e5ab92046b4bbbaf415"
+    },
+    {
+      "commit": "64d1302e50a024217754b276894590c1d7b9b232",
+      "path": "docs/reviews/workmap-runtime-seven-audit-20261114.json",
+      "entries": [
+        102,
+        112,
+        116,
+        121,
+        122,
+        123,
+        128
+      ],
+      "sha256": "87ad6ccf4fbd3f056bef666a2e38268fa9f8ecffa4763647a2420e3ac14f09df"
+    },
+    {
+      "commit": "a8c9f3ef2a5c56b277419b9faf4f91f2db0e37ea",
+      "path": "docs/reviews/workmap-final-six-audit-20261114.json",
+      "entries": [
+        131,
+        132,
+        133,
+        135,
+        136,
+        138
+      ],
+      "sha256": "e90a7d9911781dba45d04276fbdeda2ef7fa2f4673aa3c283aa69a9bc5826d2d"
+    }
+  ],
+  "historicalCoverage": {
+    "total": 34,
+    "uniqueEntries": [
+      3,
+      5,
+      11,
+      13,
+      14,
+      16,
+      54,
+      80,
+      84,
+      86,
+      87,
+      91,
+      98,
+      102,
+      108,
+      109,
+      112,
+      116,
+      117,
+      121,
+      122,
+      123,
+      128,
+      131,
+      132,
+      133,
+      135,
+      136,
+      138,
+      157,
+      159,
+      163,
+      165,
+      167
+    ],
+    "classificationCompleteIncludingUnknowns": true,
+    "notClaimed": [
+      "allfeaturesaccepted",
+      "currentbacklogsize34",
+      "freshfullinventory",
+      "allruntimechecks",
+      "globalautonomy",
+      "workmapnativeacceptance"
+    ]
+  },
+  "supplementalClassifications": [
+    {
+      "item": "sandboxPR150",
+      "classification": "completed narrower historical documentation merge; old open-PR disposition superseded",
+      "source": "https://github.com/gera3d/superagent-sandbox/pull/150",
+      "evidence": [
+        "Head bba69829eb4f96f460163e3a8b1f78c2a9c6beff merged Nov13T02:31:13Z at8c9036aa0f4d021d8bd46568b218db6437212331; no comments.",
+        "Exact merged docs/023-senior-developer-helper.md blobd76c58a5a07f9c6d413589a40c71ef1126207436 contains3.5/9.4 plus old9.2/9.3 in-progress line."
+      ],
+      "limits": "Historical design status is not current release state. No new merge-versus-close decision needed; no documentation rewrite in sandbox/code publish/restart authorization inferred. Canonical thread GET404/fullURL matchnone is boundedunknown, not invented job identity."
+    },
+    {
+      "item": "prototypeissue2",
+      "classification": "genuinely unfinished native integration/release, with bounded reviewed successor candidate",
+      "source": "https://github.com/gera3d/dsh-superagent-prototype/issues/2",
+      "evidence": [
+        "Open issue requests error propagation, sanitized correlation, uncertain-completion/no-duplicate-side-effect handling through supported Composio; no separate credential manager/caching.",
+        "Historical offline investigation comment6620804346 atsourcec169620bced7cbd5fc42a8724f0fd45e2ef78cac distinguishes transport error from application-level ordinary data;7adapter/2runtime/1filteredretry characterization tests, no externalaction or productionfix.",
+        "Archived originalbatch maps issue2 to originalpriority2 c844ce8f-7c80-407c-a237-9dd53d62f3c3. Current canonicalr19blocked, r18ticket90b01f2a0531979c292f19f482df2a3e/assignment9fcfa76462a763cf8289661908868ae2. Existing independentreview athead488f8400c78d1969fede084fd39899ca342efd1c, actualbasecc8763d03dba2ef82cdea27b86d4dd277911be66,194existingchecks/7files (not rerun); sourcePR108 pending native stage."
+      ],
+      "limits": "Do not label historical characterization an implemented productionfix or current194checks nativeacceptance. OriginalfailedPR106/107/nativeverdicts/deniedleases preserved in existing review. No newauth/allowlist/externalComposioaction/retry/reviewoverride/newworker; Codex owns existing protectednative review/release whenactualavailable."
+    },
+    {
+      "item": "prototypeissue3",
+      "classification": "unverified end-to-end computer-use request; source present, no verified runtime outcome",
+      "source": "https://github.com/gera3d/dsh-superagent-prototype/issues/3",
+      "evidence": [
+        "Open issue with zero comments asks compile/unit, Accessibility/ScreenRecording doctor, interactive cursor/mouse actions, multi-display/Spaces/paniccorner/cleanup.",
+        "Source commit7a315c4cb8a0fcebc8357d17306a792c0b289bf1 resolves locally and four referenced source/test paths exist tracked. This supersedes archived untracked-file description for those paths only."
+      ],
+      "limits": "No exact-fullURL canonical record found; do not assign sandboxgithub:3 ticket to this prototypeissue. No evidence tests/permissions/nativeactions passed; not part originalsix implementationbatch. Keepopen/unverified. Originalworkmap scope onlyclassifies; no newjob/compilation/test/accessibilitypermission/OSinput/hostpatch/newscopeauthority."
+    },
+    {
+      "item": "pluginrepositoryopenmetadata/privacy/originalbyteequivalence",
+      "classification": "explicit unverified visibility/identity limits retained; historical/local evidence only",
+      "evidence": [
+        "PriorconfiguredpluginPR4/6/7 reads returned404; not retried. Originalpluginbackup local snapshotec224abb/tree39/historyrefs retained in final-six audit.",
+        "Archived mainpin d4f5c3e7acebfa9d340fd0c0c7a8addd0293a7e7 and old0openissues/PRs claim remain historical, not fresh global inventory."
+      ],
+      "limits": "No account/credential/transport/access change, private-status requalification, fresh secret-scan or originalnote/readme byte-equivalence claimed. Classification can document unknown; no forced repair or release acceptance derived."
+    },
+    {
+      "item": "prototypePR92",
+      "classification": "previously inspected narrower merged successor for14; current efficiency qualification remainsheld",
+      "evidence": [
+        "Use routing/autopilot audit0981afa: PR92mergedfd7a282, changed-filelist/sourcepresence only; originalnumeric/heartbeat goals notproven.",
+        "Currentpriority3 e1dfd442-bb88-409e-bef0-b2db569dca79 revision8blocked, PR105head8936bcf7e412642cd50965721e6e3342e645e145 and unapprovedprotectedclarification held."
+      ],
+      "limits": "No re-fetch/re-review/retest/newclarificationchoice or acceptance here; retainedknownscope is sufficient for documentation classification."
+    }
+  ],
+  "administrativeDispositions": {
+    "execute": [],
+    "proposedClosures": [],
+    "keepExistingStates": [
+      "All34historicalissuesalreadyclosed",
+      "sandboxPR150alreadymerged",
+      "prototypeissues2/3remainopen"
+    ],
+    "reason": "No new administrative mutation or decision needed to reflect observed states. Openunderlyingworkremainswithits existingowner/authority."
+  },
+  "nativeReviewPreparation": {
+    "findingId": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+    "expectedRevision": 2,
+    "originalJob": {
+      "id": "finding:60a99ec9-4328-41c1-93cc-dbbe6569e234:r1",
+      "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+      "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7"
+    },
+    "originalReadyReportReference": "ticket/ecc57b7b6ef827705bb7ebe881718a88/report/cfd1d36113d7f3cd3fc2c8d7f639edd7",
+    "originalReadyReportState": "ready",
+    "originalReadyReportIsNotNewVerifiedEvidence": true,
+    "evidenceDocument": "docs/reviews/workmap-final-requirements-review-20261114.json",
+    "reviewSequence": [
+      "Whenactualnativecontrolavailable, inspect originalfinding/currentrevision and thisboundedrequirementmap.",
+      "Use supportednative Record operator-reviewed evidence for the originaljob with durablecommit-pinnedreference and documentation-onlyverificationlimits; no syntheticbinding or falseproductiontestclaim.",
+      "Select resulting explicitlyverified current-job report and acknowledge exactsevenrequirements onlyif personallyqualified, then protectedfindingacceptance throughnativecontrol.",
+      "Ifnativegate unavailable or evidence selection/scopecannotbequalified, leaveblocked; do not use retry_scope, ordinarychoice, rawAPI or DBwrites as substitute."
+    ],
+    "currentBlocker": "No new screen-readiness or clarification approval supplied. No nativeevidence record/selection/ack/acceptance occurred; originalreadiness question remains pending, not repeated.",
+    "unknownPolicy": "Explicitmetadataunknowns are classified, not forced into access/secret-scan equivalence; native reviewer must assess bounded documentation scope, not claim underlyingworkcomplete."
+  },
+  "coordinationEvidence": {
+    "baseline": "a8c9f3ef2a5c56b277419b9faf4f91f2db0e37ea",
+    "owner": "existingCodexcoordinator/sharedreleaseowner",
+    "worker": "originalendedjobpreserved; nonewdispatch",
+    "activeWorkers": 0,
+    "queuedWorkers": 0,
+    "unrelatedIdleTickets": "fourunchanged",
+    "continuousExecutionBetweenPasses": false
+  },
+  "boundaries": [
+    "No tests/implementation/newjobs/replay/acceptedjobreopen/ordinarychoice/taxonomy/rawretirement/DBwrites/issuePRmutations/comments/Chrome/permissions/providerprobe/config/routes/keys/access/spend/limits/nativegatechange.",
+    "OpenAI conserved/Google5reserve/max3/authenticbackoff retained.",
+    "DiagnosticsPR115/ComposioPR108/sectionsnativeholds, unapprovedclarification and separatequotaauthority unchanged.",
+    "No deniedpluginmetadataretry; no stalehistoricalstep replay or inferrednativeapproval."
+  ],
+  "nextOwner": "Codex: nativebounded originalfinding review/evidence/ack/acceptance onlywhen actualgateavailable and fullyqualified. UnderlyingComposio/efficiency/computeruse/sections work retains distinctexisting stages/authority; do not recreate workers from this audit."
+}

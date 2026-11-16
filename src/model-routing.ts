@@ -1,6 +1,6 @@
 /** Shared, browser-safe routing policy. No credentials or host services. */
 import { ECONOMY_ROUTE } from './economy.ts'
-import type { RoleModel, Settings, SubscriptionAvailability } from './policy.ts'
+import type { ModelCandidate, ModelRoutingConfig, RoleModel, Settings, SubscriptionAvailability } from './policy.ts'
 
 /** The two job types whose default model an existing settings block names: assessment (Eval) and execution (Executor). */
 export type JobType = 'eval' | 'executor'
@@ -87,6 +87,377 @@ export function isModelUnavailable(error: unknown): boolean {
   const text = error instanceof Error ? `${error.name} ${error.message} ${String(code ?? '')}` : String(error)
   const lower = text.toLowerCase()
   return UNAVAILABLE_PATTERNS.some(pat => lower.includes(pat))
+}
+
+export type ModelErrorAction = 'advance' | 'retry' | 'stop'
+
+export interface ClassifiedError {
+  kind: 'availability' | 'auth' | 'safety' | 'client' | 'unknown'
+  action: ModelErrorAction
+  retryable: boolean
+  reason: string
+}
+
+const AUTH_PATTERNS = ['unauthorized', 'invalid_api_key', 'invalid api key', 'authentication', 'forbidden', 'access_denied']
+const SAFETY_PATTERNS = ['safety', 'content_filter', 'content filter', 'moderation', 'harmful', 'policy violation', 'blocked']
+
+export function classifyModelError(error: unknown): ClassifiedError {
+  if (!error) return { kind: 'unknown', action: 'stop', retryable: false, reason: 'Empty error' }
+  const status = (error as { status?: unknown })?.status
+  const code = String((error as { code?: unknown })?.code ?? '')
+  const message = error instanceof Error ? error.message : String(error)
+  const text = `${error instanceof Error ? error.name : ''} ${message} ${code}`.toLowerCase()
+
+  if (status === 401 || status === 403 || AUTH_PATTERNS.some(p => text.includes(p))) {
+    return { kind: 'auth', action: 'stop', retryable: false, reason: message || 'Authentication failed' }
+  }
+  if (SAFETY_PATTERNS.some(p => text.includes(p))) {
+    return { kind: 'safety', action: 'stop', retryable: false, reason: message || 'Safety or content policy rejection' }
+  }
+  if (status === 400 || text.includes('context_length_exceeded') || text.includes('bad_request')) {
+    return { kind: 'client', action: 'stop', retryable: false, reason: message || 'Client error' }
+  }
+  if (isModelUnavailable(error)) {
+    const immediateSwitch = typeof status === 'number' && status === 429
+      || /quota|cooldown|budget/i.test(text)
+    return {
+      kind: 'availability',
+      action: immediateSwitch ? 'advance' : 'retry',
+      retryable: true,
+      reason: message || 'Model unavailable',
+    }
+  }
+  return { kind: 'unknown', action: 'stop', retryable: false, reason: message || 'Unknown error' }
+}
+
+export type ToolExecutionStatus =
+  | 'in_flight'
+  | 'completed'
+  | 'uncertain'
+  | 'failed'
+  | 'reconciled_success'
+  | 'reconciled_failed'
+  | 'reconciled_abandoned'
+
+/**
+ * Tracks tool call execution states across retries and model fallbacks, preventing
+ * replay of completed tools and locking execution when outcomes are uncertain until
+ * valid terminal operator reconciliation.
+ */
+export class ToolExecutionLedger {
+  private records = new Map<string, { status: ToolExecutionStatus; toolName: string; timestamp: number }>()
+  private onChange?: (ledger: ToolExecutionLedger) => void
+
+  constructor(onChange?: (ledger: ToolExecutionLedger) => void) {
+    this.onChange = onChange
+  }
+
+  private notify(): void {
+    this.onChange?.(this)
+  }
+
+  record(toolCallId: string): { status: ToolExecutionStatus; toolName: string; timestamp: number } | undefined {
+    return this.records.get(toolCallId)
+  }
+
+  snapshot(): Record<string, { status: ToolExecutionStatus; toolName: string; timestamp: number }> {
+    const snap: Record<string, { status: ToolExecutionStatus; toolName: string; timestamp: number }> = {}
+    for (const [id, rec] of this.records.entries()) {
+      snap[id] = { ...rec }
+    }
+    return snap
+  }
+
+  restore(snap: Record<string, { status: ToolExecutionStatus; toolName: string; timestamp: number }>): void {
+    this.records.clear()
+    for (const [id, rec] of Object.entries(snap)) {
+      this.records.set(id, { ...rec })
+    }
+  }
+
+  markInFlightUncertain(): void {
+    let changed = false
+    for (const rec of this.records.values()) {
+      if (rec.status === 'in_flight') {
+        rec.status = 'uncertain'
+        changed = true
+      }
+    }
+    if (changed) this.notify()
+  }
+
+  recordStart(toolCallId: string, toolName: string): void {
+    if (this.hasUncertain()) {
+      throw new Error('Uncertain tool outcome blocks execution until operator reconciliation')
+    }
+    const existing = this.records.get(toolCallId)
+    if (existing) {
+      if (existing.status === 'in_flight') {
+        throw new Error(`Tool call ${toolCallId} is already in-flight; duplicate execution prevented`)
+      }
+      if (existing.status === 'completed' || existing.status === 'reconciled_success') {
+        throw new Error(`Tool call ${toolCallId} already completed; replay prevented`)
+      }
+      if (existing.status === 'uncertain') {
+        throw new Error(`Tool call ${toolCallId} has uncertain outcome; execution blocked until reconciliation`)
+      }
+    }
+    this.records.set(toolCallId, { status: 'in_flight', toolName, timestamp: Date.now() })
+    try {
+      this.notify()
+    } catch (err) {
+      this.records.delete(toolCallId)
+      throw err
+    }
+  }
+
+  recordCompletion(toolCallId: string, success: boolean): void {
+    const rec = this.records.get(toolCallId)
+    if (rec) {
+      rec.status = success ? 'completed' : 'failed'
+      try {
+        this.notify()
+      } catch (err) {
+        rec.status = 'uncertain'
+        throw err
+      }
+    }
+  }
+
+  recordUncertain(toolCallId: string): void {
+    const rec = this.records.get(toolCallId)
+    if (rec) {
+      rec.status = 'uncertain'
+      this.notify()
+    }
+  }
+
+  hasUncertain(): boolean {
+    for (const rec of this.records.values()) {
+      if (rec.status === 'uncertain') return true
+    }
+    return false
+  }
+
+  reconcile(toolCallId: string, finalStatus: 'reconciled_success' | 'reconciled_failed' | 'reconciled_abandoned'): void {
+    const rec = this.records.get(toolCallId)
+    if (!rec) throw new Error(`Unknown tool call: ${toolCallId}`)
+    if (!['reconciled_success', 'reconciled_failed', 'reconciled_abandoned'].includes(finalStatus)) {
+      throw new Error(`Invalid reconciliation status: ${finalStatus}`)
+    }
+    const prev = rec.status
+    rec.status = finalStatus
+    try {
+      this.notify()
+    } catch (err) {
+      rec.status = prev
+      throw err
+    }
+  }
+
+  guard(toolCallId: string): void {
+    if (this.hasUncertain()) {
+      throw new Error('Uncertain tool outcome blocks execution until operator reconciliation')
+    }
+    const rec = this.records.get(toolCallId)
+    if (rec && (rec.status === 'completed' || rec.status === 'reconciled_success')) {
+      throw new Error(`Tool call ${toolCallId} has already completed; replay is forbidden`)
+    }
+  }
+
+  completedCount(): number {
+    let count = 0
+    for (const rec of this.records.values()) {
+      if (rec.status === 'completed' || rec.status === 'reconciled_success') count++
+    }
+    return count
+  }
+}
+
+export interface FallbackEvent {
+  requested_model: string
+  substituted_model: string
+  reason: string
+  attempt_count: number
+  timestamp: number
+}
+
+export interface ExhaustionState {
+  exhausted: boolean
+  attempted_models: string[]
+  per_model_reasons: Record<string, string>
+  stopping_bound: string
+  manual_recovery_action: string
+}
+
+export function candidateToRoute(settings: Pick<Settings, 'models'>, candidate: ModelCandidate): RoleModel {
+  if (typeof candidate !== 'string') return plainRoute(candidate)
+  if (candidate.includes('/')) {
+    const slash = candidate.indexOf('/')
+    return { provider: candidate.slice(0, slash), model: candidate.slice(slash + 1) }
+  }
+  const match = settings.models.hierarchy.find(entry => entry.model === candidate)
+  if (match) return plainRoute(match)
+  return { provider: 'deepseek-official', model: candidate }
+}
+
+export interface DispatchOptions<T> {
+  routing: ModelRoutingConfig
+  settings?: Pick<Settings, 'models'>
+  executeCandidate: (model: string, signal: AbortSignal) => Promise<T>
+  onFallback?: (event: FallbackEvent) => void
+  nowFn?: () => number
+}
+
+export async function executeWithFallback<T>(options: DispatchOptions<T>): Promise<{
+  result: T
+  activeModel: string
+  events: FallbackEvent[]
+  exhaustion?: ExhaustionState
+}> {
+  const { routing, executeCandidate, onFallback, nowFn = Date.now } = options
+  const startTime = nowFn()
+  const deadline = startTime + routing.total_timeout_ms
+  const candidateKeys = [routing.primary, ...routing.fallbacks].map(c => typeof c === 'string' ? c : `${c.provider}/${c.model}`)
+  const attemptCounts = new Map<string, number>()
+  const reasons: Record<string, string> = {}
+  const events: FallbackEvent[] = []
+  let totalAttempts = 0
+  let candidateIndex = 0
+
+  while (candidateIndex < candidateKeys.length) {
+    const candidate = candidateKeys[candidateIndex]!
+    const candidateTries = attemptCounts.get(candidate) ?? 0
+
+    if (candidateTries >= routing.max_attempts_per_model) {
+      candidateIndex++
+      continue
+    }
+
+    if (totalAttempts >= routing.max_total_attempts) {
+      const exhaustion: ExhaustionState = {
+        exhausted: true,
+        attempted_models: Object.keys(reasons),
+        per_model_reasons: reasons,
+        stopping_bound: `max_total_attempts (${routing.max_total_attempts})`,
+        manual_recovery_action: 'operator_retry',
+      }
+      const err = new Error(`Total attempt bound exceeded (${routing.max_total_attempts})`)
+      ;(err as unknown as { exhaustion: ExhaustionState }).exhaustion = exhaustion
+      throw err
+    }
+
+    const now = nowFn()
+    if (now >= deadline) {
+      const exhaustion: ExhaustionState = {
+        exhausted: true,
+        attempted_models: Object.keys(reasons),
+        per_model_reasons: reasons,
+        stopping_bound: `total_timeout_ms (${routing.total_timeout_ms}ms)`,
+        manual_recovery_action: 'operator_retry',
+      }
+      const err = new Error(`Routing deadline exceeded (${routing.total_timeout_ms}ms)`)
+      ;(err as unknown as { exhaustion: ExhaustionState }).exhaustion = exhaustion
+      throw err
+    }
+
+    const controller = new AbortController()
+    const remainingMs = Math.max(1, deadline - now)
+    let deadlineFired = false
+    let timer: NodeJS.Timeout | undefined
+
+    const deadlinePromise = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        deadlineFired = true
+        controller.abort(new Error(`In-flight request cancelled: routing deadline exceeded (${routing.total_timeout_ms}ms)`))
+        const exhaustion: ExhaustionState = {
+          exhausted: true,
+          attempted_models: Object.keys(reasons),
+          per_model_reasons: reasons,
+          stopping_bound: `total_timeout_ms (${routing.total_timeout_ms}ms)`,
+          manual_recovery_action: 'operator_retry',
+        }
+        const deadlineErr = new Error(`Routing deadline exceeded (${routing.total_timeout_ms}ms)`)
+        ;(deadlineErr as unknown as { exhaustion: ExhaustionState }).exhaustion = exhaustion
+        reject(deadlineErr)
+      }, remainingMs)
+    })
+
+    totalAttempts++
+    attemptCounts.set(candidate, candidateTries + 1)
+
+    try {
+      const result = await Promise.race([
+        executeCandidate(candidate, controller.signal),
+        deadlinePromise,
+      ])
+      if (timer) clearTimeout(timer)
+      const finishedAt = nowFn()
+      if (finishedAt >= deadline || deadlineFired || controller.signal.aborted) {
+        const exhaustion: ExhaustionState = {
+          exhausted: true,
+          attempted_models: Object.keys(reasons),
+          per_model_reasons: reasons,
+          stopping_bound: `total_timeout_ms (${routing.total_timeout_ms}ms)`,
+          manual_recovery_action: 'operator_retry',
+        }
+        const deadlineErr = new Error(`Routing deadline exceeded (${routing.total_timeout_ms}ms)`)
+        ;(deadlineErr as unknown as { exhaustion: ExhaustionState }).exhaustion = exhaustion
+        throw deadlineErr
+      }
+      return { result, activeModel: candidate, events }
+    } catch (err: unknown) {
+      if (timer) clearTimeout(timer)
+      const classified = classifyModelError(err)
+      reasons[candidate] = classified.reason
+
+      if (classified.action === 'stop' && !controller.signal.aborted && !deadlineFired) {
+        throw err
+      }
+
+      if (controller.signal.aborted || deadlineFired || nowFn() >= deadline) {
+        const exhaustion: ExhaustionState = {
+          exhausted: true,
+          attempted_models: Object.keys(reasons),
+          per_model_reasons: reasons,
+          stopping_bound: `total_timeout_ms (${routing.total_timeout_ms}ms)`,
+          manual_recovery_action: 'operator_retry',
+        }
+        const deadlineErr = new Error(`Routing deadline exceeded (${routing.total_timeout_ms}ms)`)
+        ;(deadlineErr as unknown as { exhaustion: ExhaustionState }).exhaustion = exhaustion
+        throw deadlineErr
+      }
+
+      if (classified.action === 'retry' && (attemptCounts.get(candidate) ?? 0) < routing.max_attempts_per_model) {
+        continue
+      }
+
+      candidateIndex++
+      if (candidateIndex < candidateKeys.length) {
+        const nextCandidate = candidateKeys[candidateIndex]!
+        const event: FallbackEvent = {
+          requested_model: candidate,
+          substituted_model: nextCandidate,
+          reason: classified.reason,
+          attempt_count: attemptCounts.get(candidate) ?? 1,
+          timestamp: nowFn(),
+        }
+        events.push(event)
+        if (onFallback) onFallback(event)
+      }
+    }
+  }
+
+  const exhaustion: ExhaustionState = {
+    exhausted: true,
+    attempted_models: Object.keys(reasons),
+    per_model_reasons: reasons,
+    stopping_bound: 'candidates_exhausted',
+    manual_recovery_action: 'operator_retry',
+  }
+  const err = new Error('All candidate models exhausted')
+  ;(err as unknown as { exhaustion: ExhaustionState }).exhaustion = exhaustion
+  throw err
 }
 
 /** The route itself, without the hierarchy's presentation flags. */
@@ -211,6 +582,37 @@ export function unavailableFallbackStep(
   // Conserve mode has one sanctioned route. If it fails, surface the failure instead of silently spending a parked
   // subscription, so availability never becomes implicit capability escalation.
   if (conservationActive(settings)) return undefined
+
+  const routing = settings.models.routing ?? settings.models.model_routing
+  if (routing) {
+    if (routing.fallbacks.length === 0) {
+      return undefined // AC4: Empty fallbacks prevent substitution
+    }
+    const candidates = [routing.primary, ...routing.fallbacks].map(c => candidateToRoute(settings, c))
+    const eligible = candidates.filter(route => !routeSkipReason(settings, route))
+    const hasTried = (route: RoleModel) => triedRoutes.some(item => sameRoute(item, route))
+
+    if (current) {
+      const currentIndex = eligible.findIndex(item => sameRoute(item, current))
+      if (currentIndex >= 0) {
+        for (let i = currentIndex + 1; i < eligible.length; i++) {
+          if (!hasTried(eligible[i]!)) {
+            const isDeepSeek = /deepseek/i.test(`${eligible[i]!.provider} ${eligible[i]!.model}`)
+            return { from: current, to: eligible[i]!, isDeepSeekFlash: isDeepSeek }
+          }
+        }
+      }
+    }
+
+    for (const candidate of eligible) {
+      if ((!current || !sameRoute(current, candidate)) && !hasTried(candidate)) {
+        const isDeepSeek = /deepseek/i.test(`${candidate.provider} ${candidate.model}`)
+        return { from: current ?? undefined, to: candidate, isDeepSeekFlash: isDeepSeek }
+      }
+    }
+    return undefined
+  }
+
   // Parked providers are excluded from every automatic fallback, not only from the ladder's top.
   const ladder = settings.models.hierarchy.map(plainRoute).filter(route => !routeSkipReason(settings, route))
   const hasTried = (route: RoleModel) => triedRoutes.some(item => sameRoute(item, route))

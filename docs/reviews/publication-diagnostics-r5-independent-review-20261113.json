@@ -1,0 +1,48 @@
+{
+  "observedAt": "2026-11-14T03:19:36.985623+00:00",
+  "findingId": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+  "revision": 6,
+  "state": "blocked",
+  "jobId": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r5",
+  "ticketId": "8aa87a3e4b93aadda0dcbea585001f25",
+  "assignmentId": "26223d23e7d674d3189b51af46c50d7b",
+  "verdict": "correction_required; no release",
+  "head": "b693a4b26cfc9ab78e7e1d89062da18a542377d4",
+  "base": "a93c76f87d776b64d609caedcf6622286dc5e3fa",
+  "source": "New trusted jobrepo cloned actual current local operator source; clean head/5changedfiles; originalr1/r3trees preserved. Configuredgh-agent exactbranchopenPR query returned none. Patch1368366774d38ffe6cef75bba96b742f5dad8b792877ddcf024d007da5c225e6/bundlecc1805357c555cefd0a20f091498ba6f7534c43a26c2d689c778bbeef6e0529c hashes match report.",
+  "improvements": "Current-local-source provenance fixed; audit cause/detail new paths now use fixed categories/IDs; historical66mscause explicitly UNPROVEN, syntheticcases distinguished and blanketretryremoved.",
+  "rootChecks": {
+    "fixtureEnvironment": "Separate exact-head no-hardlink reviewclone /private/tmp/publication-diagnostics-r5-review-tq96j14d using existing operator node_modules symlink; original candidate has no installed node_modules. No packages installed, originalworktreeunchanged, no implementation/newtestfiles byCodex. Initial directcandidatevitest unavailable; reviewcopy avoids modifying original.",
+    "existingTests": "44tests/4files passed exit0,19.94s: publication-failure-diagnostics,delivery-publication,publication-worker,publication. Existing specs only.",
+    "typecheck": "tsc --noEmit exit2; tests/publication-failure-diagnostics.spec.ts(237,25) TS18048 capabilities.publish possibly undefined. Newcandidatefile introduces this error; no build attempted while qualification fails.",
+    "privacyProbe": "Direct exactcandidate PublicationService offline in-memory persistence/adapter; synthetic error PRIVATE_FIXTURE_LINE_123 remains in persisted outcomes[0].detail after failed merge, even though newaudit uses fixed category. sanitizeDiagnosticMessage(api_key=\"abc\\ndef ghi\") leaves entire multiline quoted secret unchanged. No actualprovider/requestpayloads/secrets or livepublication used.",
+    "logs": [
+      "docs/evidence/publication-diagnostics-r5-root-tests-20261113.log",
+      "docs/evidence/publication-diagnostics-r5-root-types-20261113.log",
+      "docs/evidence/publication-diagnostics-r5-root-privacy-probe-20261113.log"
+    ]
+  },
+  "blockers": [
+    {
+      "file": "src/app/publication.ts",
+      "area": "PublicationService.act success/failure outcome.detail assignments",
+      "issue": "Arbitrary outcome detail still newly flows through best-effort regexsanitizer into canonical publication document; freeform/private plain text survives and multilinequotedapi_key leaks. Sanitizer cannot prove arbitrary message absence. Fixed audit cause alone does not meet original privacy requirement or guide noarbitraryexceptiontext claim.",
+      "correction": "Use fixed allowlisted safe status/detail/cause for diagnostic persistence in these newly modified paths (including outcome detail and exposed classification messages); do not persist arbitrary adapter/error/provider/request text. Keep existing operational IDs/pins and relevant stage status. Remove broad sanitizer privacy guarantee or make it truly bounded; no more denylist-only privacy solution. Offline actualservice tests must assert saved document/output excludes multilinequotedsecret/plainprivatecontent and rawstructuredpayload."
+    },
+    {
+      "file": "tests/publication-failure-diagnostics.spec.ts",
+      "line": 237,
+      "issue": "Newtest TS18048 capabilities.publish possiblyundefined",
+      "correction": "Narrow/check known capability properly; run exact-head focused tests plus fulltypecheck and relevantbuild, report actualexits; no unrelated changes."
+    }
+  ],
+  "trajectory": {
+    "outerEvents": 24,
+    "actualRequest": "antigravity/gemini-3.8-flash medium/max65536, turncompleted",
+    "outerToolCalls": 0,
+    "interpretation": "Zerooutercalls NOT no-work evidence: realclone/commit/patch/bundle/testlogs verified independently; nestedwork serialized byadapter. Canonicalreport isblocked despite readyprose/file. No ready acceptance or nativeflow qualification inferred."
+  },
+  "runtimeEligibility": "Models26unchanged OpenAI conserved/max3. Pool Google ~48.77rolling/~84.93weekly remaining, noGooglecooldown, above5percentfloor. One unrelated executorworking/threeopenidle tickets observed, leftuntouched, not scopedreviewed or dispatched.",
+  "nextOwner": "Harness bounded samefinding correction under retainedoriginalapproval ifguardspermit; Codexindependentreview. No sourcePR/release/deploy/acceptance for rejectedr5.",
+  "constraints": "No changes toscope/requirements/telemetry/access/hostpackages/credentials/account/spend/modelroutes/limits/Google5reserve; no livepublication/restart/workermerge/revival/DBwrite/nativegatebypass. ComposioUIhold/clarificationunapproved/quotaPR109-114authorityqualified unchanged."
+}

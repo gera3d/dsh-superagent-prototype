@@ -1,3 +1,10 @@
+const READ_ONLY_TOOLS = new Set([
+  'orchestrator_read', 'read', 'read_image', 'glob', 'grep', 'job_list', 'job_output',
+  'web_search', 'web_fetch', 'list_subagent_models', 'list_agents',
+  'orchestrator_ack', 'orchestrator_report', 'orchestrator_thread_follow',
+  'orchestrator_thread_unrelated', 'orchestrator_trigger_handback',
+])
+
 /** Lifecycle, prompt/tool/skill decoration, message delivery, and budget retry tracking for orchestrator and worker DSH sessions. */
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
@@ -7,6 +14,7 @@ import type { SessionId } from '@deepseek-ai/dsh-session'
 import { dirname } from 'node:path'
 import { z } from 'zod'
 import { key, liveTicket, type Ticket } from '../core/index.ts'
+import { resolveTicketBriefManager } from '../core/thread-brief.ts'
 import { currentTurnOf, mandateInstructions, ticketOfSession } from '../executor/dsh.ts'
 import type { HealthEntry } from '../infra/health.ts'
 import type { RoleModel } from '../policy.ts'
@@ -15,7 +23,7 @@ import type { Effects } from './effects.ts'
 import type { Variable } from './execution-environment.ts'
 import { RetryHealth } from './retry-health.ts'
 import { installOutputBound } from './tool-output.ts'
-import { defaultRoute, fallbackNote, initializeRoleModel, isModelUnavailable, installRoutingGuard, selectRoleModel, unavailableFallbackStep } from './role-models.ts'
+import { classifyModelError, defaultRoute, fallbackNote, initializeRoleModel, isModelUnavailable, installRoutingGuard, selectRoleModel, ToolExecutionLedger, unavailableFallbackStep } from './role-models.ts'
 import { bundledSkills } from './skill-files.ts'
 import { SKILL_PREFIX, type PromptVersion, type Prompts } from './prompts.ts'
 import type { Store } from './store.ts'
@@ -33,6 +41,7 @@ export interface SessionsHost {
   readonly health: HealthEntry
   readonly masterId: string
   readonly lifetime: AbortSignal
+  readonly toolLedger?: (ticketId: string) => ToolExecutionLedger | undefined
   closing(): boolean
   /** Execution environment variables for `ticket`, rendered into its worker's system prompt. */
   environment(ticket: Ticket, turn?: number | string): Variable[]
@@ -137,7 +146,9 @@ export class Sessions {
     })
     ctx.on('agent/error', async ({ agent, error }) => {
       if (agent.id !== this.host.masterId || this.host.closing()) return
-      if (isModelUnavailable(error)) {
+      const classified = classifyModelError(error)
+      if (classified.action === 'stop') return
+      if (isModelUnavailable(error) || classified.action === 'advance') {
         const settings = this.host.store.settings()
         const current = (agent.session.requestHeader()?.config as RoleModel | undefined)
           ?? defaultRoute(settings, 'eval')
@@ -253,7 +264,41 @@ export class Sessions {
           const image = value && typeof value === 'object' && 'image' in value ? (value as { image: never }).image : undefined
           return image ? [text, { type: 'image' as const, attachment: image }] : [text]
         } },
-        execute: (args, execution) => execute(schema.parse(args), execution.signal) }))
+        execute: async (args, execution) => {
+          const parsed = schema.parse(args)
+          const ticketId = ticketOfSession(agent.id)
+          const ledger = ticketId ? this.host.toolLedger?.(ticketId) : undefined
+          const effectful = !READ_ONLY_TOOLS.has(name)
+          const handled = Boolean((execution as { __ledgerHandled?: boolean })?.__ledgerHandled)
+          const callId = (execution as { callId?: string })?.callId
+          if (ledger && effectful && !handled) {
+            if (!callId) {
+              throw new Error(`Canonical callId required for effectful tool ${name}; execution rejected`)
+            }
+            if (ledger.hasUncertain()) {
+              throw new Error('Uncertain tool outcome blocks execution until operator reconciliation')
+            }
+            ledger.recordStart(callId, name)
+          }
+          try {
+            const result = await execute(parsed, execution.signal)
+            if (ledger && effectful && !handled && callId) {
+              ledger.recordCompletion(callId, true)
+            }
+            return result
+          } catch (error) {
+            if (ledger && effectful && !handled && callId) {
+              if (ledger.record(callId)?.status !== 'uncertain') {
+                if ((error as { beforeEffect?: boolean })?.beforeEffect) {
+                  ledger.recordCompletion(callId, false)
+                } else {
+                  ledger.recordUncertain(callId)
+                }
+              }
+            }
+            throw error
+          }
+        } }))
     }
   }
   /** Returns `sessionId`'s active model-budget retry state (`{ model_retry }`) for status listings, or `{}` when not waiting on one. */
@@ -289,8 +334,12 @@ export class Sessions {
       const version = this.promptFor(agent, context.signal !== undefined)
       const current = ticket && host.store.tickets.get(ticket.id)
       const currentTurn = current ? currentTurnOf(agent) : undefined
+      const reqConfig = agent.session.requestHeader?.()?.config as RoleModel | undefined
+      const modelContext = reqConfig ? { current_model: `${reqConfig.provider}/${reqConfig.model}` } : undefined
+      const briefManager = current ? resolveTicketBriefManager(host.store, current, modelContext) : undefined
+      const briefContext = briefManager ? `\n${briefManager.composeContextPrompt()}\n` : ''
       const composed = host.prompts.compose(version.config, master ? 'orchestrator' : 'worker', current ? host.environment(current, currentTurn) : undefined)
-      return `[dsh-superagent prompt revision ${version.revision}]\n${composed}\n${current ? mandateInstructions(current.mandate) : ''}`
+      return `[dsh-superagent prompt revision ${version.revision}]\n${composed}\n${briefContext}${current ? mandateInstructions(current.mandate) : ''}`
     }, ...(master ? { complete: true } : {}) }))
     // A recreated skill scope (e.g. after the skills service restarts) starts empty, so reset `binding.skills` before rebinding.
     const skillScope = agent.ctx.inject(['skills'], scope => {
@@ -338,8 +387,50 @@ export class Sessions {
     const allow = WORK_TOOLS.filter(name => agent.ctx.tools.get(name, parent))
     return [agent.ctx.tools.restrict({ allow }), agent.ctx.tools.guard(() => {
       const current = store.tickets.get(ticketId)
-      return !current || !liveTicket(current) ? 'Ticket ended; new work needs a new authorized ticket' : undefined
-    }), installOutputBound(agent, () => store.tickets.get(ticketId)?.execution?.directory)]
+      if (!current || !liveTicket(current)) return 'Ticket ended; new work needs a new authorized ticket'
+      const ledger = this.host.toolLedger?.(ticketId)
+      if (ledger?.hasUncertain()) return 'Uncertain tool outcome blocks execution until operator reconciliation'
+      return undefined
+    }), installOutputBound(agent, () => store.tickets.get(ticketId)?.execution?.directory),
+    this.installToolLedger(agent, ticketId)]
+  }
+  private installToolLedger(agent: Agent, ticketId: string): () => void {
+    return agent.ctx.on('tools/execute', async (exec, next) => {
+      const effectful = !READ_ONLY_TOOLS.has(exec.name)
+      const ledger = this.host.toolLedger?.(ticketId)
+      if (!ledger || !effectful) return next()
+      const callId = exec.callId
+      if (!callId) {
+        throw new Error(`Canonical callId required for effectful tool ${exec.name}; execution rejected`)
+      }
+      if (ledger.hasUncertain()) {
+        throw new Error('Uncertain tool outcome blocks execution until operator reconciliation')
+      }
+      ledger.recordStart(callId, exec.name)
+      ;(exec as { __ledgerHandled?: boolean }).__ledgerHandled = true
+      try {
+        const result = await next()
+        if (result.isError) {
+          if ((result.error as { beforeEffect?: boolean })?.beforeEffect) {
+            ledger.recordCompletion(callId, false)
+          } else {
+            ledger.recordUncertain(callId)
+          }
+        } else {
+          ledger.recordCompletion(callId, true)
+        }
+        return result
+      } catch (error) {
+        if (ledger.record(callId)?.status !== 'uncertain') {
+          if ((error as { beforeEffect?: boolean })?.beforeEffect) {
+            ledger.recordCompletion(callId, false)
+          } else {
+            ledger.recordUncertain(callId)
+          }
+        }
+        throw error
+      }
+    })
   }
   /**
    * A subagent of an Executor Session, or of one of its subagents, which runs under DSH's `standard` preset with the worker's

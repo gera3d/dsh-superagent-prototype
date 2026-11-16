@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { latestAssignment, waitsForPerson, type Ticket } from '../src/core/index.ts'
-import { DEEPSEEK_FALLBACK_ROUTE, fallbackNote, isModelUnavailable, unavailableFallbackStep } from '../src/app/role-models.ts'
+import { DEEPSEEK_FALLBACK_ROUTE, fallbackNote, isModelUnavailable, unavailableFallbackStep, classifyModelError, executeWithFallback, ToolExecutionLedger } from '../src/app/role-models.ts'
+import { KV } from '../src/kv.ts'
+import { ModelRoutingConfigSchema } from '../src/policy.ts'
 import { feishu, startRuntime, type Host } from './fixtures/host.ts'
 
 let h: Host
@@ -240,5 +243,884 @@ describe('Models Fallback Rules (DeepSeek flash fallback vs Escalation ladder)',
     } finally { vi.useRealTimers() }
     expect(selections()).toHaveLength(before)
     expect(retried()).toBe(true)
+  })
+
+  it('fails closed on auth or safety errors without model substitution in runtime', async () => {
+    await h.runtime.settings.save('models', { hierarchy: [gemini, sol, sonnet], maxEscalations: 2 },
+      h.runtime.store.blockRevision('models'), 'panel')
+    const one = await h.acceptedTicket(feishu('auth-fail-1', '@bot Secret audit'))
+    const agent = h.agents.get(one.sessionId)!
+    const session = (agent as unknown as { session: { append: ReturnType<typeof vi.fn> } }).session
+    const initialSelections = session.append.mock.calls.filter(([event]) => event === 'model/selection').length
+
+    // 401 Unauthorized
+    h.ctx.emit('agent/error', { agent, turn: 1, step: 1, error: Object.assign(new Error('Invalid API Key'), { status: 401 }) } as never)
+    await h.runtime.idle()
+
+    // No fallback selection event occurred
+    const afterSelections = session.append.mock.calls.filter(([event]) => event === 'model/selection').length
+    expect(afterSelections).toBe(initialSelections)
+
+    // Ticket marked failed
+    const ticket = h.runtime.store.tickets.get(one.ticket.id)!
+    expect(latestAssignment(ticket)?.report?.state).toBe('failed')
+  })
+
+  it('blocks automatic continuation when uncertain tool outcome exists in DshExecutor ledger', async () => {
+    await h.runtime.settings.save('models', { hierarchy: [gemini, sol, sonnet], maxEscalations: 2 },
+      h.runtime.store.blockRevision('models'), 'panel')
+    const one = await h.acceptedTicket(feishu('uncertain-tool-1', '@bot Critical deploy'))
+    const agent = h.agents.get(one.sessionId)!
+
+    // Mark an uncertain tool outcome in the executor ledger
+    h.runtime.executor.toolLedger(one.ticket.id).recordStart('deploy-call', 'deploy')
+    h.runtime.executor.toolLedger(one.ticket.id).recordUncertain('deploy-call')
+
+    // Simulate quota error on active route
+    h.ctx.emit('agent/error', { agent, turn: 1, step: 1, error: Object.assign(new Error('Rate limited'), { status: 429 }) } as never)
+    await h.runtime.idle()
+
+    // Automatic fallback was blocked
+    const ticket = h.runtime.store.tickets.get(one.ticket.id)!
+    const notes = ticket.inputs.filter(input => input.kind === 'note')
+    const uncertainNote = notes.find(n => n.text.includes('Uncertain tool outcome blocks automatic continuation'))
+    expect(uncertainNote).toBeDefined()
+    expect(latestAssignment(ticket)?.report?.state).toBe('failed')
+  })
+
+  it('real runtime honors total one-attempt limit even when another fallback is eligible', async () => {
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 1,
+        max_attempts_per_model: 1,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    const one = await h.acceptedTicket(feishu('review-no-substitution', '@bot Fix isolated audit fixture'))
+    const agent = h.agents.get(one.sessionId)!
+    const session = (agent as unknown as { session: { append: ReturnType<typeof vi.fn> } }).session
+    const before = session.append.mock.calls.filter(([e]) => e === 'model/selection').length
+
+    h.ctx.emit('agent/error', { agent, error: Object.assign(new Error('Google quota exhausted'), { status: 429 }) } as never)
+    await h.runtime.idle()
+    for (let i = 0; i < 10; i++) {
+      await new Promise(resolve => setImmediate(resolve))
+      await h.runtime.idle()
+    }
+
+    const later = session.append.mock.calls.filter(([e]) => e === 'model/selection').slice(before).map(([, v]) => v)
+    expect(later).toHaveLength(0)
+  })
+
+  it('real runtime HTTP 500 transient error respects max_total_attempts=1 without same-route retry', async () => {
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 1,
+        max_attempts_per_model: 2,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    const one = await h.acceptedTicket(feishu('http500-total-cap-1', '@bot Fix http500 total attempt cap'))
+    const agent = h.agents.get(one.sessionId)!
+
+    const http500Error = Object.assign(new Error('Internal Server Error 500'), { status: 500 })
+    h.ctx.emit('agent/error', { agent, error: http500Error } as never)
+    await h.runtime.idle()
+
+    // Must not schedule a same-route retry: resuming set must be size 0
+    expect((h.runtime.executor as any).resuming.size).toBe(0)
+
+    const updated = h.runtime.store.tickets.get(one.ticket.id)!
+    expect(latestAssignment(updated)?.report?.state).toBe('failed')
+    const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
+    expect(lastNote?.text).toMatch(/Total attempt bound exceeded \(1\)/)
+  })
+
+  it('real runtime enforces end-to-end deadline starting from first request across retries', async () => {
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 5,
+        max_attempts_per_model: 3,
+        total_timeout_ms: 30,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    const one = await h.acceptedTicket(feishu('deadline-end-to-end-1', '@bot Fix deadline end-to-end fixture'))
+    const agent = h.agents.get(one.sessionId)!
+
+    // Wait until deadline has expired since original request start
+    await new Promise(r => setTimeout(r, 60))
+
+    const http500Error = Object.assign(new Error('Internal Server Error 500'), { status: 500 })
+    h.ctx.emit('agent/error', { agent, error: http500Error } as never)
+    await h.runtime.idle()
+
+    // Resuming set must be size 0 because deadline was exceeded
+    expect((h.runtime.executor as any).resuming.size).toBe(0)
+
+    const updated = h.runtime.store.tickets.get(one.ticket.id)!
+    expect(latestAssignment(updated)?.report?.state).toBe('failed')
+    const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
+    expect(lastNote?.text).toMatch(/Routing deadline exceeded \(30ms\)/)
+  })
+
+  it('enforces routing deadline at wake boundary, suppressing retry prompt when deadline expires during backoff', async () => {
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 5,
+        max_attempts_per_model: 2,
+        total_timeout_ms: 1000,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    const one = await h.acceptedTicket(feishu('wake-deadline-1', '@bot Fix wake deadline fixture'))
+    const agent = h.agents.get(one.sessionId)!
+    const promptSpy = vi.spyOn(h.runtime.sessions, 'prompt')
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    try {
+      const http500Error = Object.assign(new Error('Internal Server Error 500'), { status: 500 })
+      h.ctx.emit('agent/error', { agent, error: http500Error } as never)
+      // Advance clock past backoff and routing deadline (15,001ms)
+      await vi.advanceTimersByTimeAsync(15_001)
+      await h.runtime.idle()
+    } finally {
+      vi.useRealTimers()
+    }
+
+    // Expected ZERO retry prompts after the routing deadline
+    const retryPrompts = promptSpy.mock.calls.filter(([sessionId, requestId]) =>
+      sessionId === one.sessionId && String(requestId).startsWith('retry:')
+    )
+    expect(retryPrompts).toHaveLength(0)
+
+    const updated = h.runtime.store.tickets.get(one.ticket.id)!
+    expect(latestAssignment(updated)?.report?.state).toBe('failed')
+    const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
+    expect(lastNote?.text).toMatch(/Routing deadline exceeded \(1000ms\)/)
+  })
+
+  it('enforces monotonic total attempts across candidates and prevents retry after total budget reached', async () => {
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 4,
+        max_attempts_per_model: 3,
+        total_timeout_ms: 120_000,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    const one = await h.acceptedTicket(feishu('monotonic-total-4', '@bot Fix monotonic attempts across candidates'))
+    const agent = h.agents.get(one.sessionId)!
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    try {
+      const http500 = Object.assign(new Error('Internal Server Error 500'), { status: 500 })
+
+      // Attempt 1 fails: candidate 1 retry 1 scheduled
+      h.ctx.emit('agent/error', { agent, error: http500 } as never)
+      await vi.advanceTimersByTimeAsync(15_001)
+      await h.runtime.idle()
+
+      // Attempt 2 fails: candidate 1 retry 2 scheduled
+      h.ctx.emit('agent/error', { agent, error: http500 } as never)
+      await vi.advanceTimersByTimeAsync(30_001)
+      await h.runtime.idle()
+
+      // Attempt 3 fails: candidate 1 exhausted (reached per-model 3 attempts). Fallback substitution to candidate 2!
+      h.ctx.emit('agent/error', { agent, error: http500 } as never)
+      await h.runtime.idle()
+
+      // Candidate 2 is selected (attempt 4). Now emit error on candidate 2.
+      h.ctx.emit('agent/error', { agent, error: http500 } as never)
+      await h.runtime.idle()
+    } finally {
+      vi.useRealTimers()
+    }
+
+    // Monotonic accounting: 1 (initial) + 2 (candidate 1 retries) + 1 (substitution) = 4 attempts used.
+    // Real resuming set MUST be size 0: no fifth attempt or retry scheduled
+    expect((h.runtime.executor as any).resuming.size).toBe(0)
+
+    const updated = h.runtime.store.tickets.get(one.ticket.id)!
+    expect(latestAssignment(updated)?.report?.state).toBe('failed')
+    const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
+    expect(lastNote?.text).toMatch(/Total attempt bound exceeded \(4\)/)
+  })
+
+  it('first transient 500 under total2/per2 schedules and actually prompts exactly one final retry; subsequent failure cannot schedule a third', async () => {
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 2,
+        max_attempts_per_model: 2,
+        total_timeout_ms: 60_000,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    const one = await h.acceptedTicket(feishu('total2-per2-positive', '@bot Fix total2 per2 positive retry'))
+    const agent = h.agents.get(one.sessionId)!
+    const promptSpy = vi.spyOn(h.runtime.sessions, 'prompt')
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    try {
+      const http500 = Object.assign(new Error('Internal Server Error 500'), { status: 500 })
+
+      // First transient 500: within budget (attempt 1 failed, attempt 2 reserved)
+      h.ctx.emit('agent/error', { agent, error: http500 } as never)
+      expect((h.runtime.executor as any).resuming.size).toBe(1)
+
+      // Advance clock past backoff (15,001ms) to trigger scheduled wake
+      await vi.advanceTimersByTimeAsync(15_001)
+      await h.runtime.idle()
+
+      // Positive check: exactly one final retry was prompted at the wake boundary
+      const retryPrompts = promptSpy.mock.calls.filter(([sessionId, requestId]) =>
+        sessionId === one.sessionId && String(requestId).startsWith('retry:')
+      )
+      expect(retryPrompts).toHaveLength(1)
+
+      // Subsequent failure on final permitted attempt (attempt 2 fails)
+      h.ctx.emit('agent/error', { agent, error: http500 } as never)
+      await h.runtime.idle()
+
+      // Cannot schedule a third: resuming set remains size 0, ticket fails closed
+      expect((h.runtime.executor as any).resuming.size).toBe(0)
+      const updated = h.runtime.store.tickets.get(one.ticket.id)!
+      expect(latestAssignment(updated)?.report?.state).toBe('failed')
+      const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
+      expect(lastNote?.text).toMatch(/Total attempt bound exceeded \(2\)/)
+    } finally {
+      vi.useRealTimers()
+      promptSpy.mockRestore()
+    }
+  })
+
+  it('AC11: in-flight routing deadline expiry invokes actual Agent cancellation and suppresses subsequent retry/fallback/tool effects', async () => {
+    // Part A: Qualify deterministic pending fake provider within the managed provider pipeline
+    let pipelineProviderAborted = false
+    let pipelineProviderPending = true
+    const pipelineOutcome = executeWithFallback({
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 2,
+        max_attempts_per_model: 1,
+        total_timeout_ms: 60,
+      }),
+      executeCandidate: async (_model, signal) => {
+        return new Promise<string>((_resolve, reject) => {
+          signal.addEventListener('abort', () => {
+            pipelineProviderAborted = true
+            pipelineProviderPending = false
+            reject(Object.assign(new Error('Fake provider request aborted by deadline expiry signal'), { name: 'AbortError' }))
+          })
+        })
+      },
+    })
+
+    expect(pipelineProviderPending).toBe(true)
+    expect(pipelineProviderAborted).toBe(false)
+    await expect(pipelineOutcome).rejects.toThrow(/Routing deadline exceeded/)
+    expect(pipelineProviderAborted).toBe(true)
+    expect(pipelineProviderPending).toBe(false)
+
+    // Part B: Qualify actual SDK request cancellation using original Agent.cancel at host boundary
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 3,
+        max_attempts_per_model: 2,
+        total_timeout_ms: 100,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    // Exercise normal managed request launch on normal accepted ticket path
+    const promptSpy = vi.spyOn(h.runtime.sessions, 'prompt')
+    const one = await h.acceptedTicket(feishu('inflight-deadline-1', '@bot Fix in-flight deadline'))
+    const agent = h.agents.get(one.sessionId)!
+
+    // Natural turn state from managed launch without manual status flipping
+    expect(agent.status).toBe('running')
+
+    // Register synthetic effectful tool to track and assert tool effects counter
+    let toolEffectsCount = 0
+    const register = (h.runtime.sessions as any).registerTool(agent, { disposers: [] })
+    register(
+      'synthetic_effectful_tool',
+      'synthetic tool for tracking effectful dispatch',
+      z.object({ path: z.string() }),
+      async (_args: { path: string }, signal?: AbortSignal) => {
+        if (signal?.aborted) throw new Error('Tool execution aborted by signal')
+        toolEffectsCount++
+        return { ok: true }
+      }
+    )
+    const tool = h.tools.get(one.sessionId)!.get('synthetic_effectful_tool')!
+
+    try {
+      expect(toolEffectsCount).toBe(0)
+
+      // Await natural expiration of the 100ms routing deadline timer armed during normal launch
+      // Original Agent.cancel is invoked directly by executor without any monkeypatching
+      await vi.waitFor(() => {
+        expect(agent.cancel).toHaveBeenCalledWith({ kind: 'user' }, { keepInbox: false })
+      }, { timeout: 2000 })
+
+      await (agent as unknown as { whenIdle(): Promise<void> }).whenIdle()
+      expect(agent.status).toBe('idle')
+
+      await h.runtime.idle()
+
+      // Invariant 1: Ticket marked failed with routing deadline exceeded
+      const updated = h.runtime.store.tickets.get(one.ticket.id)!
+      expect(latestAssignment(updated)?.report?.state).toBe('failed')
+      const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
+      expect(lastNote?.text).toMatch(/Routing deadline exceeded \(100ms\)/)
+
+      // Invariant 2: Zero late tool effects - completed tool effect counter strictly zero
+      const ledger = h.runtime.executor.toolLedger(one.ticket.id)
+      expect(ledger.completedCount()).toBe(0)
+      expect(toolEffectsCount).toBe(0)
+
+      // Late tool invocation attempt with cancelled signal is aborted and rejected
+      const abortedSignal = AbortSignal.abort()
+      await expect(tool.execute({ path: 'test.txt' }, { callId: 'call-late-1', signal: abortedSignal } as never)).rejects.toThrow()
+      expect(ledger.completedCount()).toBe(0)
+      expect(toolEffectsCount).toBe(0)
+
+      // Invariant 3: Delayed error emitted after cancellation does not trigger retry or fallback
+      const delayed500 = Object.assign(new Error('Delayed HTTP 500 from cancelled provider'), { status: 500 })
+      h.ctx.emit('agent/error', { agent, error: delayed500 } as never)
+      await h.runtime.idle()
+
+      expect((h.runtime.executor as any).resuming.size).toBe(0)
+      const lateRetryPrompts = promptSpy.mock.calls.filter(([sessionId, requestId]) =>
+        sessionId === one.sessionId && (String(requestId).startsWith('retry:') || String(requestId).startsWith('fallback:'))
+      )
+      expect(lateRetryPrompts).toHaveLength(0)
+    } finally {
+      promptSpy.mockRestore()
+    }
+  })
+
+  it('AC24: uncertain tool outcome blocks same-route retry and prompts upon generic HTTP 500 until legitimate reconciliation/explicit authorization', async () => {
+    await h.runtime.settings.save('models', {
+      hierarchy: [gemini, sonnet],
+      maxEscalations: 1,
+      routing: ModelRoutingConfigSchema.parse({
+        primary: { provider: gemini.provider, model: gemini.model },
+        fallbacks: [{ provider: sonnet.provider, model: sonnet.model }],
+        max_total_attempts: 3,
+        max_attempts_per_model: 2,
+        total_timeout_ms: 60_000,
+      }),
+    }, h.runtime.store.blockRevision('models'), 'panel')
+
+    const one = await h.acceptedTicket(feishu('uncertain-retry-block-1', '@bot Fix uncertain tool retry block'))
+    const agent = h.agents.get(one.sessionId)!
+    const ledger = h.runtime.executor.toolLedger(one.ticket.id)
+    const promptSpy = vi.spyOn(h.runtime.sessions, 'prompt')
+
+    // Seed a canonical uncertain tool outcome
+    ledger.recordStart('call-uncertain-tx-1', 'payment_transfer')
+    ledger.recordUncertain('call-uncertain-tx-1')
+    expect(ledger.hasUncertain()).toBe(true)
+
+    // Emit a generic transient HTTP 500 error
+    const http500 = Object.assign(new Error('Internal Server Error 500'), { status: 500 })
+    h.ctx.emit('agent/error', { agent, error: http500 } as never)
+    await h.runtime.idle()
+
+    // Invariant 1: ZERO queued retries or prompts (fail-closed barrier verified)
+    expect((h.runtime.executor as any).resuming.size).toBe(0)
+    const retryPrompts = promptSpy.mock.calls.filter(([sessionId, requestId]) =>
+      sessionId === one.sessionId && String(requestId).startsWith('retry:')
+    )
+    expect(retryPrompts).toHaveLength(0)
+
+    // Invariant 2: Ticket fails closed with explicit uncertain tool outcome note
+    const updated = h.runtime.store.tickets.get(one.ticket.id)!
+    expect(latestAssignment(updated)?.report?.state).toBe('failed')
+    const lastNote = updated.inputs.filter(i => i.kind === 'note').at(-1)
+    expect(lastNote?.text).toMatch(/Uncertain tool outcome blocks automatic continuation until reconciliation or explicit operator retry authorization/)
+
+    // Invariant 3: Ordinary restart / resume preserves uncertain outcome in store and in-memory
+    h.runtime.executor.resume()
+    const cleanLedger = h.runtime.executor.toolLedger(one.ticket.id)
+    expect(cleanLedger.hasUncertain()).toBe(true)
+    expect(() => cleanLedger.guard('call-any-next')).toThrow(/Uncertain tool outcome blocks execution/)
+
+    // Invariant 4: Legitimate ledger reconciliation unblocks execution guard
+    // Note: Host-level operator reconciliation/retry authority boundary is unexposed in host surface;
+    // reported as operator_boundary_unavailable rather than claiming full host boundary qualification.
+    cleanLedger.reconcile('call-uncertain-tx-1', 'reconciled_success')
+    expect(cleanLedger.hasUncertain()).toBe(false)
+    expect(() => cleanLedger.guard('call-unblocked-next')).not.toThrow()
+    promptSpy.mockRestore()
+  })
+})
+
+describe('Bounded Model Routing and Tool Execution Guard', () => {
+  it('CRIT-1: rejects duplicate model entries across primary and fallbacks', () => {
+    expect(() => ModelRoutingConfigSchema.parse({
+      primary: 'model-a',
+      fallbacks: ['model-b', 'model-a'],
+    })).toThrow(/Duplicate model entries/)
+  })
+
+  it('CRIT-2: rejects nonpositive/noninteger routing limits', () => {
+    expect(() => ModelRoutingConfigSchema.parse({
+      primary: 'model-a',
+      max_attempts_per_model: 0,
+    })).toThrow()
+    expect(() => ModelRoutingConfigSchema.parse({
+      primary: 'model-a',
+      max_total_attempts: -1,
+    })).toThrow()
+    expect(() => ModelRoutingConfigSchema.parse({
+      primary: 'model-a',
+      total_timeout_ms: 1.5,
+    })).toThrow()
+  })
+
+  it('CRIT-4: empty fallbacks prevent substitution', () => {
+    const settings = {
+      models: {
+        hierarchy: [{ provider: 'antigravity', model: 'gemini-3.8-flash', starred: true }],
+        maxEscalations: 2,
+        helper: null,
+        conserve: false,
+        economyRoute: { provider: 'deepseek-official', model: 'deepseek-flash' },
+        subscriptions: [],
+        routing: {
+          primary: 'antigravity/gemini-3.8-flash',
+          fallbacks: [],
+          max_attempts_per_model: 2,
+          max_total_attempts: 4,
+          total_timeout_ms: 30000,
+          backoff_base_ms: 500,
+          backoff_ceiling_ms: 5000,
+          required_capabilities: [],
+        },
+      },
+    }
+    const current = { provider: 'antigravity', model: 'gemini-3.8-flash' }
+    const step = unavailableFallbackStep(settings, current, [current])
+    expect(step).toBeUndefined()
+  })
+
+  it('CRIT-5: selection follows configured primary-then-fallback order', () => {
+    const settings = {
+      models: {
+        hierarchy: [],
+        maxEscalations: 2,
+        helper: null,
+        conserve: false,
+        economyRoute: { provider: 'deepseek-official', model: 'deepseek-flash' },
+        subscriptions: [],
+        routing: {
+          primary: 'antigravity/gemini-3.8-flash',
+          fallbacks: ['openai-codex/gpt-6.1-sol', 'anthropic/claude-sonnet-5-5'],
+          max_attempts_per_model: 2,
+          max_total_attempts: 4,
+          total_timeout_ms: 30000,
+          backoff_base_ms: 500,
+          backoff_ceiling_ms: 5000,
+          required_capabilities: [],
+        },
+      },
+    }
+    const primary = { provider: 'antigravity', model: 'gemini-3.8-flash' }
+    const step1 = unavailableFallbackStep(settings, primary, [primary])
+    expect(step1).toBeDefined()
+    expect(step1!.to).toEqual({ provider: 'openai-codex', model: 'gpt-6.1-sol' })
+
+    const step2 = unavailableFallbackStep(settings, step1!.to, [primary, step1!.to])
+    expect(step2).toBeDefined()
+    expect(step2!.to).toEqual({ provider: 'anthropic', model: 'claude-sonnet-5-5' })
+
+    const step3 = unavailableFallbackStep(settings, step2!.to, [primary, step1!.to, step2!.to])
+    expect(step3).toBeUndefined()
+  })
+
+  it('CRIT-7 & CRIT-8: bounds requests per candidate and total attempts', async () => {
+    const routing = ModelRoutingConfigSchema.parse({
+      primary: 'candidate-1',
+      fallbacks: ['candidate-2'],
+      max_attempts_per_model: 2,
+      max_total_attempts: 3,
+      total_timeout_ms: 5000,
+    })
+    const callCounts: Record<string, number> = {}
+    await expect(executeWithFallback({
+      routing,
+      executeCandidate: async (model) => {
+        callCounts[model] = (callCounts[model] ?? 0) + 1
+        throw Object.assign(new Error('503 Service Unavailable'), { status: 503 })
+      },
+    })).rejects.toThrow(/Total attempt bound exceeded \(3\)/)
+
+    expect(callCounts['candidate-1']).toBe(2)
+    expect(callCounts['candidate-2']).toBe(1)
+  })
+
+  it('CRIT-10 & CRIT-11: cancels in-flight candidate upon deadline expiry', async () => {
+    const routing = ModelRoutingConfigSchema.parse({
+      primary: 'slow-candidate',
+      fallbacks: ['backup-candidate'],
+      max_attempts_per_model: 1,
+      max_total_attempts: 2,
+      total_timeout_ms: 30,
+    })
+    let signalAborted = false
+    await expect(executeWithFallback({
+      routing,
+      executeCandidate: async (_model, signal) => {
+        return new Promise((resolve, reject) => {
+          signal.addEventListener('abort', () => {
+            signalAborted = true
+            reject(new Error('aborted by signal'))
+          })
+          setTimeout(resolve, 200)
+        })
+      },
+    })).rejects.toThrow(/Routing deadline exceeded/)
+
+    expect(signalAborted).toBe(true)
+  })
+
+  it('CRIT-12: parameterizes error classification for auth, safety, and availability', () => {
+    expect(classifyModelError(Object.assign(new Error('Unauthorized'), { status: 401 }))).toMatchObject({
+      kind: 'auth', action: 'stop', retryable: false,
+    })
+    expect(classifyModelError(new Error('Prompt flagged by safety filter'))).toMatchObject({
+      kind: 'safety', action: 'stop', retryable: false,
+    })
+    expect(classifyModelError(Object.assign(new Error('Rate limit exceeded'), { status: 429 }))).toMatchObject({
+      kind: 'availability', action: 'advance', retryable: true,
+    })
+    expect(classifyModelError(Object.assign(new Error('Service overloaded'), { status: 503 }))).toMatchObject({
+      kind: 'availability', action: 'retry', retryable: true,
+    })
+  })
+
+  it('CRIT-14: logs structured fallback events when switching candidates', async () => {
+    const routing = ModelRoutingConfigSchema.parse({
+      primary: 'model-a',
+      fallbacks: ['model-b'],
+      max_attempts_per_model: 1,
+      max_total_attempts: 2,
+      total_timeout_ms: 5000,
+    })
+    const events: any[] = []
+    const outcome = await executeWithFallback({
+      routing,
+      onFallback: (e) => events.push(e),
+      executeCandidate: async (model) => {
+        if (model === 'model-a') throw Object.assign(new Error('Rate limited'), { status: 429 })
+        return 'success-from-b'
+      },
+    })
+    expect(outcome.result).toBe('success-from-b')
+    expect(outcome.activeModel).toBe('model-b')
+    expect(events).toHaveLength(1)
+    expect(events[0]).toMatchObject({
+      requested_model: 'model-a',
+      substituted_model: 'model-b',
+      attempt_count: 1,
+    })
+  })
+
+  it('CRIT-21 & CRIT-22: blocks replay of completed tools in execution ledger', () => {
+    const ledger = new ToolExecutionLedger()
+    ledger.recordStart('call-1', 'bash')
+    ledger.recordCompletion('call-1', true)
+
+    expect(() => ledger.recordStart('call-1', 'bash')).toThrow(/already completed/)
+    expect(() => ledger.guard('call-1')).toThrow(/already completed/)
+    expect(ledger.completedCount()).toBe(1)
+  })
+
+  it('prevents a second start while identical tool outcome remains in flight', () => {
+    const ledger = new ToolExecutionLedger()
+    ledger.recordStart('effect-1', 'write')
+    expect(() => ledger.recordStart('effect-1', 'write')).toThrow(/already in-flight/)
+  })
+
+  it('CRIT-24 & Audit Point 3: blocks execution on uncertain outcome until valid terminal reconciliation', () => {
+    const ledger = new ToolExecutionLedger()
+    ledger.recordStart('call-uncertain', 'git_push')
+    ledger.recordUncertain('call-uncertain')
+
+    expect(() => ledger.guard('call-2')).toThrow(/Uncertain tool outcome blocks execution/)
+
+    // Arbitrary status must be rejected
+    expect(() => ledger.reconcile('call-uncertain', 'banana' as any)).toThrow(/Invalid reconciliation status/)
+
+    // Valid reconciliation clears the lock
+    ledger.reconcile('call-uncertain', 'reconciled_success')
+    expect(ledger.hasUncertain()).toBe(false)
+    expect(() => ledger.guard('call-2')).not.toThrow()
+  })
+
+  it('CRIT-10 & CRIT-11: noncooperative transport ignoring signal settles at deadline and rejects late success', async () => {
+    const routing = ModelRoutingConfigSchema.parse({
+      primary: 'noncooperative-model',
+      fallbacks: [],
+      max_attempts_per_model: 1,
+      max_total_attempts: 1,
+      total_timeout_ms: 25,
+    })
+    const start = Date.now()
+    await expect(executeWithFallback({
+      routing,
+      executeCandidate: async () => {
+        // Ignores signal completely and resolves late after 150ms
+        await new Promise(r => setTimeout(r, 150))
+        return 'late-illegal-success'
+      },
+    })).rejects.toThrow(/Routing deadline exceeded/)
+    const elapsed = Date.now() - start
+    // Finite settlement: settled promptly around deadline (~25-80ms), not waiting 150ms
+    expect(elapsed).toBeLessThan(120)
+  })
+
+  it('Sessions.registerTool & ToolRuntime: non-abort network/lost-ack records uncertain outcome and hasUncertain is true', async () => {
+    const ticket = await h.acceptedTicket(feishu('lost-ack-1', '@bot Fix lost ack fixture'))
+    const agent = h.agents.get(ticket.sessionId)!
+    const ledger = h.runtime.executor.toolLedger(ticket.ticket.id)
+
+    let invoked = false
+    const register = (h.runtime.sessions as any).registerTool(agent, { disposers: [] })
+    register(
+      'synthetic_write_effect',
+      'synthetic tool',
+      z.object({ path: z.string() }),
+      async () => {
+        invoked = true
+        throw new Error('network timeout: connection reset by peer before ack')
+      }
+    )
+
+    const tool = h.tools.get(ticket.sessionId)!.get('synthetic_write_effect')!
+    await expect(tool.execute({ path: 'a.txt' }, { callId: 'call-lost-ack-1', signal: new AbortController().signal } as never)).rejects.toThrow(/network timeout/)
+
+    expect(invoked).toBe(true)
+    expect(ledger.hasUncertain()).toBe(true)
+    expect(ledger.record('call-lost-ack-1')?.status).toBe('uncertain')
+  })
+
+  it('Sessions.registerTool & ToolRuntime: known pre-effect rejection does not record uncertain', async () => {
+    const ticket = await h.acceptedTicket(feishu('pre-effect-1', '@bot Fix pre-effect fixture'))
+    const agent = h.agents.get(ticket.sessionId)!
+    const ledger = h.runtime.executor.toolLedger(ticket.ticket.id)
+
+    const register = (h.runtime.sessions as any).registerTool(agent, { disposers: [] })
+    register(
+      'synthetic_guarded_write',
+      'synthetic tool with pre-effect failure',
+      z.object({}),
+      async () => {
+        const err = new Error('Permission denied before effect')
+        ;(err as any).beforeEffect = true
+        throw err
+      }
+    )
+
+    const tool = h.tools.get(ticket.sessionId)!.get('synthetic_guarded_write')!
+    await expect(tool.execute({}, { callId: 'call-pre-effect-1', signal: new AbortController().signal } as never)).rejects.toThrow(/Permission denied/)
+
+    expect(ledger.hasUncertain()).toBe(false)
+    expect(ledger.record('call-pre-effect-1')?.status).toBe('failed')
+  })
+
+  it('Sessions.registerTool & ToolRuntime: successful completion records completed and prevents replay of same callId', async () => {
+    const ticket = await h.acceptedTicket(feishu('success-1', '@bot Fix success fixture'))
+    const agent = h.agents.get(ticket.sessionId)!
+    const ledger = h.runtime.executor.toolLedger(ticket.ticket.id)
+
+    const register = (h.runtime.sessions as any).registerTool(agent, { disposers: [] })
+    register(
+      'synthetic_success_write',
+      'synthetic tool succeeding',
+      z.object({ val: z.string() }),
+      async () => ({ ok: true })
+    )
+
+    const tool = h.tools.get(ticket.sessionId)!.get('synthetic_success_write')!
+    const res = await tool.execute({ val: 'test' }, { callId: 'call-success-1', signal: new AbortController().signal } as never)
+    expect(res).toMatchObject({ ok: true })
+    expect(ledger.completedCount()).toBe(1)
+    expect(ledger.record('call-success-1')?.status).toBe('completed')
+
+    // Replay of same callId is rejected
+    await expect(tool.execute({ val: 'test' }, { callId: 'call-success-1', signal: new AbortController().signal } as never)).rejects.toThrow(/already completed; replay prevented/)
+  })
+
+  it('distinct canonical callIds with identical arguments succeed without collision', async () => {
+    const ticket = await h.acceptedTicket(feishu('distinct-1', '@bot Fix distinct IDs fixture'))
+    const agent = h.agents.get(ticket.sessionId)!
+    const ledger = h.runtime.executor.toolLedger(ticket.ticket.id)
+
+    const register = (h.runtime.sessions as any).registerTool(agent, { disposers: [] })
+    register(
+      'synthetic_append',
+      'synthetic tool called multiple times',
+      z.object({ line: z.string() }),
+      async () => ({ written: true })
+    )
+
+    const tool = h.tools.get(ticket.sessionId)!.get('synthetic_append')!
+
+    // Missing callId fails closed
+    await expect(tool.execute({ line: 'no-call-id' }, { signal: new AbortController().signal } as never)).rejects.toThrow(/Canonical callId required/)
+
+    // Turn 1
+    const r1 = await tool.execute({ line: 'repeated argument' }, { callId: 'model-turn-1-call-1', signal: new AbortController().signal } as never)
+    expect(r1).toMatchObject({ written: true })
+
+    // Turn 2: identical arguments, distinct canonical callId
+    const r2 = await tool.execute({ line: 'repeated argument' }, { callId: 'model-turn-2-call-2', signal: new AbortController().signal } as never)
+    expect(r2).toMatchObject({ written: true })
+    expect(ledger.completedCount()).toBe(2)
+  })
+
+  it('persists tool uncertainty and restores across recovery to block replay', async () => {
+    const ticket = await h.acceptedTicket(feishu('persist-1', '@bot Fix persist fixture'))
+    const ledger = h.runtime.executor.toolLedger(ticket.ticket.id)
+
+    ledger.recordStart('call-restart-1', 'write')
+    expect(ledger.record('call-restart-1')?.status).toBe('in_flight')
+
+    // Simulate restart reconciliation
+    h.runtime.executor.resume()
+
+    // Host restart marks in-flight tool as uncertain
+    expect(ledger.hasUncertain()).toBe(true)
+    expect(ledger.record('call-restart-1')?.status).toBe('uncertain')
+
+    // Clean new ledger restored from store retains uncertain state
+    const cleanLedger = new ToolExecutionLedger()
+    const stored = h.runtime.store.get(KV.sessions.toolLedgers(ticket.ticket.id))
+    expect(stored).toBeDefined()
+    cleanLedger.restore(stored as never)
+    expect(cleanLedger.hasUncertain()).toBe(true)
+    expect(() => cleanLedger.guard('call-next')).toThrow(/Uncertain tool outcome blocks execution/)
+  })
+
+  it('ToolRuntime pre-effect persistence failure: fail closed before dispatch, zero side-effect, and reverts in-memory record', async () => {
+    const ticket = await h.acceptedTicket(feishu('pre-persist-1', '@bot Fix pre-persist fixture'))
+    const agent = h.agents.get(ticket.sessionId)!
+    const ledger = h.runtime.executor.toolLedger(ticket.ticket.id)
+
+    let effectCount = 0
+    const register = (h.runtime.sessions as any).registerTool(agent, { disposers: [] })
+    register(
+      'synthetic_effectful_pre_fail',
+      'tool with pre-effect persistence failure',
+      z.object({ cmd: z.string() }),
+      async () => {
+        effectCount++
+        return { success: true }
+      }
+    )
+
+    // Force store.set to throw synthetic persistence error
+    const originalSet = h.runtime.store.set
+    vi.spyOn(h.runtime.store, 'set').mockImplementation((key: any, val: any) => {
+      if (typeof key === 'string' && key.includes('ticket-tool-ledger')) {
+        throw new Error('synthetic persistence error: disk full or database locked')
+      }
+      return originalSet.call(h.runtime.store, key, val)
+    })
+
+    const tool = h.tools.get(ticket.sessionId)!.get('synthetic_effectful_pre_fail')!
+    await expect(tool.execute({ cmd: 'write' }, { callId: 'call-pre-fail-1', signal: new AbortController().signal } as never)).rejects.toThrow(/synthetic persistence error/)
+
+    // Invariant: Effect was NEVER dispatched
+    expect(effectCount).toBe(0)
+    // Invariant: Ledger record is reverted (deleted), not lingering in-flight or completed
+    expect(ledger.record('call-pre-fail-1')).toBeUndefined()
+    vi.restoreAllMocks()
+  })
+
+  it('ToolRuntime post-effect persistence failure: marks uncertain in-memory and blocks subsequent execution', async () => {
+    const ticket = await h.acceptedTicket(feishu('post-persist-1', '@bot Fix post-persist fixture'))
+    const agent = h.agents.get(ticket.sessionId)!
+    const ledger = h.runtime.executor.toolLedger(ticket.ticket.id)
+
+    let effectCount = 0
+    const register = (h.runtime.sessions as any).registerTool(agent, { disposers: [] })
+    register(
+      'synthetic_effectful_post_fail',
+      'tool with post-effect persistence failure',
+      z.object({ cmd: z.string() }),
+      async () => {
+        effectCount++
+        return { success: true }
+      }
+    )
+
+    // Let recordStart persist successfully, then fail on recordCompletion
+    let setCalls = 0
+    const originalSet = h.runtime.store.set
+    vi.spyOn(h.runtime.store, 'set').mockImplementation((key: any, val: any) => {
+      if (typeof key === 'string' && key.includes('ticket-tool-ledger')) {
+        setCalls++
+        if (setCalls > 1) {
+          throw new Error('synthetic post-effect persistence failure: power cut during write')
+        }
+      }
+      return originalSet.call(h.runtime.store, key, val)
+    })
+
+    const tool = h.tools.get(ticket.sessionId)!.get('synthetic_effectful_post_fail')!
+    await expect(tool.execute({ cmd: 'write' }, { callId: 'call-post-fail-1', signal: new AbortController().signal } as never)).rejects.toThrow(/synthetic post-effect persistence failure/)
+
+    // Side effect happened once
+    expect(effectCount).toBe(1)
+    // Outcome marked uncertain honestly
+    expect(ledger.record('call-post-fail-1')?.status).toBe('uncertain')
+    expect(ledger.hasUncertain()).toBe(true)
+
+    // Subsequent tool execution is strictly blocked
+    await expect(tool.execute({ cmd: 'write-2' }, { callId: 'call-post-fail-2', signal: new AbortController().signal } as never)).rejects.toThrow(/Uncertain tool outcome blocks execution/)
+
+    // Recovery test: on restart / resume, restored in-flight state marks uncertain
+    h.runtime.executor.resume()
+    const cleanLedger = new ToolExecutionLedger()
+    const stored = h.runtime.store.get(KV.sessions.toolLedgers(ticket.ticket.id))
+    expect(stored).toBeDefined()
+    cleanLedger.restore(stored as never)
+    cleanLedger.markInFlightUncertain()
+    expect(cleanLedger.hasUncertain()).toBe(true)
+    expect(() => cleanLedger.guard('call-any')).toThrow(/Uncertain tool outcome blocks execution/)
+    vi.restoreAllMocks()
   })
 })

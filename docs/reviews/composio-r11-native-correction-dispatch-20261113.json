@@ -1,0 +1,47 @@
+{
+  "at": "2026-11-13T16:11:16.045639+00:00",
+  "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+  "revision": 11,
+  "state": "running",
+  "job": {
+    "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r11",
+    "ticketId": "616615804db1a90e9974258d2efb18a7",
+    "assignmentId": "5681a0c034bbb1ea2c78a75dfd24f036"
+  },
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "prior": "r8 ended ready, staged78a8f78/PR106 nativefailed/deliveryrev7blocked and automatic correction denied; all preserved",
+  "authority": "Supported retained-human-approval samefinding retry10->11/confirm; no lease override/policy or access change",
+  "nextOwner": "Harness bounded correction, Codex exact review/protected release if qualified",
+  "limits": "No deploy/acceptance/liveexternalComposio action or settings/access/hostpackageschange",
+  "nestedActivity": {
+    "events": 98,
+    "toolCalls": 12,
+    "tools": [
+      "orchestrator_read",
+      "orchestrator_read",
+      "orchestrator_read",
+      "orchestrator_read",
+      "bash",
+      "bash",
+      "bash",
+      "bash",
+      "job_output",
+      "bash"
+    ],
+    "routes": [
+      {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "medium"
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5"
+      }
+    ]
+  }
+}

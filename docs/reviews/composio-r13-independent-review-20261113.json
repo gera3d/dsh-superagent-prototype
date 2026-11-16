@@ -1,0 +1,33 @@
+{
+  "at": "2026-11-13T18:01:16.176772+00:00",
+  "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+  "revision": 14,
+  "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r13",
+  "ticketId": "a0f19eb95830336f45c261abf5113ef1",
+  "assignmentId": "a82330c1a8086953c4afb2ef6f707083",
+  "head": "d1ff2532fa82ae159bea73431264794efb992fc1",
+  "base": "a00e0b2c34f05516d7ac35792dfd0da62206592a",
+  "cumulativeBinaryDiffSha256": "f9123f59b09f50c5538be8a6c1fc93f56e9b792e00f03a0fd1b12e0da9c58d7e",
+  "r13FormatPatchSha256": "df3b1c407b1f1c653bdf851f8756b4306e7209150aadbeed445b19c3f6916874",
+  "verdict": "CHANGES REQUIRED; no new sourcePR/native review/package/publish/deploy/acceptance attempted",
+  "verifiedProgress": [
+    "Unified batch/single envelope outcome preserves explicit successes with notes and classifies contradictory flags as unknown for normal successful MCP envelopes.",
+    "184existingchecks/7files pass exit0, worker suite +reused prior independent audits; no new Codex implementation/test. Existing installedbridge tests ran.",
+    "Current b8b3040 source/test/package/lock unchanged from candidatebase a00e0b2; scoped fetched comparison only docs/evidence differs.",
+    "Matching worker trajectory350events/51toolcalls, Sonnet after Googleunavailability, structured ready report completed."
+  ],
+  "checks": {
+    "metadata": "docs/evidence/composio-r13-root-targeted.json",
+    "log": "docs/evidence/composio-r13-root-targeted.log",
+    "limits": "Offline mockedremote only; pureassessor vs realToolRuntime/installedbridge vs stand-in Session lifecycle distinguished. No broad suite/liveexternalComposio/nativechatproof."
+  },
+  "remainingStaticReview": {
+    "path": "src/app/composio-boundary.ts",
+    "line": 226,
+    "issue": "Single-envelope conflicting flag is computed with !transport. Actual installed MCP client throws text on isError:true, so transport=true suppresses contradiction handling for that real bridge path. For mocked raw MCP isError:true with JSON body {successful:true,response:{successful:false,error:429 rate limit; Retry-After:30}}, payload is parsed, envelopeOutcome is contradictory but conflicting=false, kindOf chooses rate_limited, completion becomes failed and rate recovery offers retryonce. That is unknown mutation completion, not safe rejection. Equivalent successful-MCP body is treated unknown; the mismatch violates no retry of uncertain outcomes. This is source/controlflow reasoning, NOT a new executed failingtest or observed livepayload.",
+    "required": "Retain contradiction uncertainty independent of outer MCP/ToolRuntime error flag, while preserving original isError metadata, known successes and Retry-After as wait floor only. Harness covers both installedbridge isError:true throw and defensive returned-value isError:true plus normal envelope controls with mockedremote; no externalactions/accesschanges. Also ensure generic batch-level fallback does not downgrade contradiction to safe retry."
+  },
+  "preserved": "All originalr1/r3/r5/r8/r11/r13 work/evidence/commits/bundles; PR106 nativefailure/delivery7/deniedautocorrection preserved; acceptedPR96/usermerges/unapprovedclarificationheld unchanged.",
+  "authority": "Original approved priority2 samefinding bounded correction, no policy/access/deniedlease override, no provider/settings/auth/toolallowlists/hostpackages/spend/reserve/max3/schedulechange.",
+  "nextOwner": "Harness samefinding correction; Codex returned exactheadreview/originalprotectedrelease ifqualified"
+}

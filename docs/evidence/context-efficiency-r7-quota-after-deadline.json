@@ -1,0 +1,18 @@
+{
+  "at": "2026-11-13T10:53:34.189406+00:00",
+  "exit": 0,
+  "status": "HTTP/2.0 200 OK",
+  "core": {
+    "limit": 5000,
+    "used": 142,
+    "remaining": 4858,
+    "reset": 1794570761
+  },
+  "graphql": {
+    "limit": 5000,
+    "used": 5,
+    "remaining": 4995,
+    "reset": 1794568292
+  },
+  "retryAfter": []
+}

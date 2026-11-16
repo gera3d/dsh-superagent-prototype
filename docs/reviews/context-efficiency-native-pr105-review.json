@@ -1,0 +1,38 @@
+{
+  "provider": "deepseek-official / deepseek-flash",
+  "verdict": {
+    "verdict": "failed",
+    "findings": [
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 105,
+        "headSha": "8936bcf7e412642cd50965721e6e3342e645e145",
+        "path": "src/app/tool-output.ts",
+        "line": 133,
+        "severity": "high",
+        "message": "The hook returns early whenever result.isError is true, so oversized failing bash/grep/job output is never bounded and no durable copy is saved; a failing build or test with large output still floods the model context. That misses the requirement to bound oversized stdout while retaining error/exit information. Bound error results too (save full text, keep the diagnostic/exit tail, emit the truncation notice) instead of exempting every error."
+      },
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 105,
+        "headSha": "8936bcf7e412642cd50965721e6e3342e645e145",
+        "path": "src/app/tool-output.ts",
+        "line": 146,
+        "severity": "medium",
+        "message": "When a saved path is long enough that the compact notice leaves no room for the last-line tail, compact() returns just the notice, and this acceptance check still passes because it verifies only bytes, line count and pointer. The original result is then replaced without its exit/status information. Make compact report that it kept no tail and leave the original unchanged in that case (or require the retained tail in this check)."
+      },
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 105,
+        "headSha": "8936bcf7e412642cd50965721e6e3342e645e145",
+        "path": "docs/evidence/context-efficiency-r7-typecheck.log",
+        "line": 1,
+        "severity": "low",
+        "message": "This typecheck evidence file is empty, so it cannot show that the pinned SHA typechecks; the change therefore lacks the claimed typecheck baseline/regression evidence. Add the command and its output (including exit status), or remove the empty artifact."
+      }
+    ],
+    "rationale": "Batch 1/1 gera3d/dsh-superagent-prototype#105@8936bcf7e412: The PR has strong test coverage and detailed measurement, but it fails key intake requirements: all isError results bypass the bound, so large failing output can still flood context without a durable copy, and the compact fallback can silently accept a notice-only replacement that drops exit/status data for near-limit pointers. The empty typecheck evidence also weakens the claimed baseline."
+  },
+  "fingerprint": "af4d118f892abd4773ba013d26322e6eb2ffdac40666b41a07940528982364f7",
+  "bindingFingerprint": "b8ca52b462c22775586465e7883460b17d441a7d8efdc69f549332037046245e"
+}

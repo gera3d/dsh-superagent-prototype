@@ -1,0 +1,163 @@
+{
+  "observedAt": "2026-11-14T09:28:46.502155+00:00",
+  "findingId": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+  "revision": 2,
+  "state": "blocked/unaccepted; documentation audit partial",
+  "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+  "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7",
+  "scope": "Original priority6 bounded historical routing/autopilot seven-item reconciliation only",
+  "coverage": {
+    "historicalTotal": 34,
+    "newlyReconciled": [
+      11,
+      14,
+      54,
+      84,
+      86,
+      87,
+      117
+    ],
+    "priorReconciledNotRepeated": [
+      3,
+      5,
+      13,
+      16,
+      80,
+      91,
+      98,
+      108,
+      109,
+      157,
+      159,
+      163,
+      165,
+      167
+    ],
+    "cumulative": [
+      3,
+      5,
+      11,
+      13,
+      14,
+      16,
+      54,
+      80,
+      84,
+      86,
+      87,
+      91,
+      98,
+      108,
+      109,
+      117,
+      157,
+      159,
+      163,
+      165,
+      167
+    ],
+    "cumulativeCount": 21,
+    "remainingExplicit": [
+      102,
+      112,
+      116,
+      121,
+      122,
+      123,
+      128,
+      131,
+      132,
+      133,
+      135,
+      136,
+      138
+    ],
+    "remainingCount": 13,
+    "supplementalUnknowns": [
+      "sandbox PR150",
+      "prototype issues2/3",
+      "other plugin repository open metadata"
+    ],
+    "supplementalPrototypePR92": "Metadata/merge and changed-file list inspected only as successor evidence for #14; not separate full qualification"
+  },
+  "items": [
+    {
+      "issue": 11,
+      "classification": "narrower delivered documentation; old full integration verification incomplete/superseded",
+      "evidence": [
+        "Sandbox PR12 merged 156f5a762ead7c135a762ec183a46da75e46e634; MULTI_MODEL_INTEGRATION.md exists on main at exact blob in source evidence.",
+        "Original a0846a5ddcaa3af6ceddc1a6d063fd0b assignment f48800a122ea9c228d143861e9ca2bb7 was blocked for keys; later 429 failure and review report preserved. Review says PR contained only documentation, with local profile changes outside it."
+      ],
+      "limits": "Historical request for API keys is not a current action or authority. Current user prefers subscriptions and conserves OpenAI. Anthropic executed later work; no fresh OpenAI provider/key/catalog test or all-profile acceptance was performed."
+    },
+    {
+      "issue": 14,
+      "classification": "original inferred ticket dropped; successor merged narrower output bounds; latest broader correction held",
+      "evidence": [
+        "Original a537a8e9d1face97c61f3a5f758ec315 / ba94d11ef0cdb1e2fde5cde071139189 dropped for cross-module behavioral scope; no original implementation.",
+        "Prototype PR92 is now merged fd7a2828993aa0285e4fa0df6c481fe1cfffcc95 (ancestor of operator HEAD), superseding archived map description active draft. Eight changed files include tool-output bound, session hook, measurement/replay scripts, prompt edits and tests. Installed tool-output.ts inspected read-only.",
+        "TOKEN_OPTIMIZATION_GUIDE.md remains 404 at sandbox/main. Priority3 finding e1dfd442-bb88-409e-bef0-b2db569dca79 revision8 blocked; source PR105 open at 8936bcf7e412642cd50965721e6e3342e645e145; protected review-clarification proposal unapproved."
+      ],
+      "limits": "Merged bounds are not proof original <1M/ticket or <4500-token targets, progress heartbeat, full logs/error preservation or all invariants pass. Prior review failure preserved. No rerun, new clarification approval, native review override or deployment in this audit."
+    },
+    {
+      "issue": 54,
+      "classification": "narrower historical backlog review/guide delivered; not global unattended acceptance",
+      "evidence": [
+        "PR59 merged 87474a1e00b80ac22c67731126ccd41e14847247; original 839b41ca4534bb0748214bd59bda0119 has ready then waiting follow-up reports. PR45/70/72/74/88 merged at exact pins in metadata.",
+        "Revision comment 6634070949 replaces conflicting initial instructions: reuse ready/human_action and existing reviewer, avoid redundant tests, person merges, worker cannot switch itself into Creator, use apply runbook.",
+        "Pass1 reports 18 PASS and PR46 FAIL; apply blocked for Creator uncertainty. Pass2 reports three PASS and proposed merges; metadata now shows all three merged."
+      ],
+      "limits": "Old recommendations to create apply issues conflicted with revision and are preserved as historical disagreement, not replayed. No current bulk merge/install/creative-mode or global-autopilot authority. Later bounded accepted flows and opt-in conversation autopilot do not prove all-backlog seamless autonomy."
+    },
+    {
+      "issue": 84,
+      "classification": "unverified acceptance claim explicitly retracted; historical test incomplete",
+      "evidence": [
+        "PASS comment 6642334497 counted acknowledgements and admission as hands-off completion. Canonical 285d13274376fc73c9a46c4d706c5a72 / 5eb27a724a8826846a88992182628623 repeats premature PASS while saying workers still executing.",
+        "Correction comment 6642538502 explicitly says only #89 had PR97; #90–#93 queued/not started, acknowledgement not ready-to-try notification.",
+        "Issue closed later in backlog cleanup, canonical ticket stopped Nov13; neither action supplies missing acceptance measurements."
+      ],
+      "limits": "Do not promote 55–65s admission measurements or acknowledgement counts to five completed unattended jobs/one-ready-notification acceptance. No new five-request trial and no inference from later unrelated accepted release."
+    },
+    {
+      "issue": 86,
+      "classification": "completed historical read-only model audit; recommendations superseded by current routing",
+      "evidence": [
+        "Report comment 6642572928 includes requested role matrix and proposed headroom changes. f4e5b0ece92588ea8bf10ae940e654a1 / 58e168961f291d1ec079e299b3432cd3 waiting report delivered; ended/stopped is historical, not active review worker.",
+        "Related PR49 default restore doc and PR94 character slice merged, exact pins in metadata. Current live settings verified executor44/models26/coordination3; current settings differ materially from historical revision24."
+      ],
+      "limits": "Historical Gemini-high/every-role and loosen-cap recommendations are not current changes. OpenAI conserved, maxEscalations1/maxWorkers3 and Google5% floor retained. No keys, role defaults, new quota/model request or headroom/cost claim inferred."
+    },
+    {
+      "issue": 87,
+      "classification": "superseded historical tracker; no standalone implementation assignment",
+      "evidence": [
+        "Canonical thread admission ignore, consistent with tracking-only instruction. Historical stage progress links PR88/94/95/100/110 now merged at exact pins. Closure explicitly historical tracking/architecture superseded.",
+        "Tracker repeats #84 premature PASS; correction must take precedence. Stage7 PR110 is design/mockup/POC, not native sections acceptance. Reuse installed sections audit 04f6e9f762ca3602b1954897370b6888743c2759."
+      ],
+      "limits": "Authoritative current project/finding queue replaces old tracker/watcher/load snapshot. No timer, npm/cache operation, issue closure, stage rerun or new taxonomy action. Sections installed/API-serving remains native-unaccepted."
+    },
+    {
+      "issue": 117,
+      "classification": "merged availability-fallback implementation; historical ladder superseded; no fresh failover qualification",
+      "evidence": [
+        "Prototype PR15 merged 9d3801ed16693f969df254542ce48fadd0486bbc; sandbox129 doc merged 4424af3eaa94cd5f3e59ae32f58ae26ccd422f58. Exact provider/model deepseek-official/deepseek-flash.",
+        "Original 2058aed955828815517bf48b2bb49a02 first assignment failed Google unavailable; successor d9f6a15a0082ebebae6655e8cef2cfdc reports 43 targeted tests and source delivery. Failed attempt preserved.",
+        "Current installed unavailableFallbackStep inspected read-only: skips conserved/exhausted subscriptions, chooses eligible hierarchy routes, economy last; separate difficulty escalation. Current settings Google→Sonnet→DeepSeek with OpenAI parked."
+      ],
+      "limits": "Historical Gemini→OpenAI→Claude/cap2 is not current policy. Original task prohibited live restart/apply; merge/source and historical tests alone do not prove native acceptance or fresh real quota-failover. Silent hanging connection may not signal unavailability. No cooldown-clear, forced trial, reserve or routing change."
+    }
+  ],
+  "evidence": [
+    "../evidence/workmap-routing-autopilot-source-20261114.json",
+    "../evidence/workmap-routing-autopilot-canonical-20261114.json"
+  ],
+  "boundaries": [
+    "All seven source issues already closed; closure is not acceptance. No issue/PR comments or administrative changes.",
+    "Original proposal/history, rejected review, user decisions, tickets and assignments preserved. No worker dispatch, implementation, tests, replay, ordinary choices, raw advice retirement or canonical DB writes.",
+    "DiagnosticsPR115/ComposioPR108 native-release and sections native-acceptance holds unchanged; no screen readiness or clarification approval supplied. No Chrome use or repeated question.",
+    "OpenAI conserved, Google5%reserve, maxWorkers3, backoff, existing source gates/native protected review/Publish/acceptance unchanged. No routes/settings/access/credentials/spend change or provider probe."
+  ],
+  "nextOwner": "Codex: remaining13 exact historical entries in next bounded slice, then supplemental unknowns; workmap not accepted by count alone."
+}

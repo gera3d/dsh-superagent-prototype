@@ -1,0 +1,13 @@
+diff --git a/src/app/tools/composio.ts b/src/app/tools/composio.ts
+index 846ee6e..006e930 100644
+--- a/src/app/tools/composio.ts
++++ b/src/app/tools/composio.ts
+@@ -79,7 +79,7 @@ export function isComposioConnectionError(error: unknown): error is ComposioConn
+     || (typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'COMPOSIO_CONNECTION_REQUIRED')
+ }
+ 
+-const CONNECTION_FAILURE_PATTERN = /(?:connection required|no active connection|authorization required|unauthorized|not connected|connect your account|auth(?:entication)? (?:required|failed)|invalid (?:token|api[-_ ]?key)|token expired|connection (?:is )?(?:not active|inactive|expired)|re-?authenticate|NO_ACTIVE_CONNECTION|AUTH_REQUIRED)/i
++export const CONNECTION_FAILURE_PATTERN = /(?:connection required|no active connection|authorization required|unauthorized|not connected|connect your account|auth(?:entication)? (?:required|failed)|invalid (?:token|api[-_ ]?key)|token expired|connection (?:is )?(?:not active|inactive|expired)|re-?authenticate|NO_ACTIVE_CONNECTION|AUTH_REQUIRED)/i
+ 
+ export interface UnwrapComposioOptions {
+   /** If true, throws ComposioConnectionError immediately when an auth/connection failure is detected */

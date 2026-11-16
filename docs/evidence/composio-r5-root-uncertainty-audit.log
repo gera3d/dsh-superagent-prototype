@@ -1,0 +1,69 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/coordinator/lane2-r5-review/code
+
+ ❯ tests/root-composio-uncertainty.audit.spec.ts (4 tests | 3 failed) 29ms
+     × does not claim an incomplete batch entry succeeded 12ms
+     × does not claim malformed batch entries are fully accounted for 1ms
+     × does not recommend retry after sending when error also mentions rate limiting 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/root-composio-uncertainty.audit.spec.ts > independent uncertainty boundary > does not claim an incomplete batch entry succeeded
+AssertionError: expected [ { index: +0, …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "index": 0,
++     "response": {},
++     "tool_slug": "GITHUB_CREATE_ISSUE",
++   },
++ ]
+
+ ❯ tests/root-composio-uncertainty.audit.spec.ts:12:23
+     10|  it('does not claim an incomplete batch entry succeeded',()=>{
+     11|   const a=run({successful:false,data:{total_count:2,results:[{index:0,…
+     12|   expect(a.succeeded).toEqual([])
+       |                       ^
+     13|   expect(a.kinds).toContain('uncertain_completion')
+     14|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/root-composio-uncertainty.audit.spec.ts > independent uncertainty boundary > does not claim malformed batch entries are fully accounted for
+AssertionError: expected 0 to be greater than 0
+ ❯ tests/root-composio-uncertainty.audit.spec.ts:17:31
+     15|  it('does not claim malformed batch entries are fully accounted for',(…
+     16|   const a=run({successful:false,data:{total_count:2,results:[null,{ind…
+     17|   expect(a.counts.unreported).toBeGreaterThan(0)
+       |                               ^
+     18|   expect(a.kinds).toContain('uncertain_completion')
+     19|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/root-composio-uncertainty.audit.spec.ts > independent uncertainty boundary > does not recommend retry after sending when error also mentions rate limiting
+AssertionError: expected 'failed' to be 'unknown' // Object.is equality
+
+Expected: "unknown"
+Received: "failed"
+
+ ❯ tests/root-composio-uncertainty.audit.spec.ts:22:24
+     20|  it('does not recommend retry after sending when error also mentions r…
+     21|   const a=run({successful:false,error:'429 upstream rate limit; reques…
+     22|   expect(a.completion).toBe('unknown')
+       |                        ^
+     23|   expect(composioFeedback(a)).not.toContain('so it did not run')
+     24|  })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  06:57:07
+   Duration  544ms (transform 103ms, setup 0ms, import 134ms, tests 29ms, environment 0ms)
+

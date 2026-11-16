@@ -1,0 +1,19 @@
+{
+  "command": [
+    "pnpm",
+    "--config.verify-deps-before-run=false",
+    "exec",
+    "vitest",
+    "run",
+    "tests/composio.spec.ts",
+    "tests/composio-boundary.spec.ts",
+    "tests/composio-bridge.spec.ts",
+    "tests/runtime.spec.ts",
+    "tests/root-composio-r3-root-boundary.audit.spec.ts",
+    "tests/root-composio-r5-root-uncertainty.audit.spec.ts",
+    "tests/root-composio-r5-root-bridge.audit.spec.ts"
+  ],
+  "head": "2daef8122c245fcc1d8235463e785123b3f60e13",
+  "exitCode": 0,
+  "at": "2026-11-13T19:02:12.705383+00:00"
+}

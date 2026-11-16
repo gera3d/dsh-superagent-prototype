@@ -1,0 +1,13 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Documents/Projects/Manage-Builder/overnight-batch-20261110/coordinator/lane2-r5-review/code
+
+(node:24582) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24583) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  06:57:34
+   Duration  4.14s (transform 4.42s, setup 0ms, import 6.00s, tests 1.08s, environment 0ms)
+

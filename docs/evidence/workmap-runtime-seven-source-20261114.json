@@ -1,0 +1,374 @@
+{
+  "observedAt": "2026-11-14T10:24:31.548415+00:00",
+  "issues": [
+    {
+      "number": 102,
+      "title": "[superagent] fix: choosing an option on a Decisions card fails with linked native submission required",
+      "state": "closed",
+      "state_reason": "completed",
+      "updated_at": "2026-11-14T01:56:52Z",
+      "html_url": "https://github.com/gera3d/superagent-sandbox/issues/102",
+      "body": "@gera3d\n\nThis is by an automated agent, not a human. Part of the path-to-ready plan, product polish. Related to #82, #96 and #98.\n\nBug reported by the person: in the Superagent Decisions tab, a card now shows a percentage from the ranker, but choosing the recommended option fails with a message saying a linked native submission is required and to stage the choice and bind it to a native submission. Another card that loads shows no percentages at all.\n\nWhat to do:\n1. Reproduce it: take a pending card with a ranker score and pick its recommended option from the Decisions tab. Record the exact message and which API call fails.\n2. Find out why the native submission link is missing: stale cards from finished sessions, cards created without a session link, a handshake that lived only in the reverted dock client, or a real bug in the pick button.\n3. Fix it so that choosing an option on any answerable card sends the choice to the originating session. A card that cannot be answered (its session has ended) must say so plainly and be retired, not show a button that fails.\n4. Show the percentage consistently on every scored card, and a plain Not scored label on cards the ranker did not score.\n5. Add tests: a live card pick succeeds, an ended-session card is retired instead of offering a failing button, and the percentage shows on scored cards.\n6. Include before and after screenshots at 1440 by 913.\n\nDo not read or change keys or settings. Do not apply live in this ticket. Deliver as a PR, and tell the person when it is ready to try.",
+      "bodySha256": "c2328a895c8d940e25773ee31837c82ab0412dd3ea8a406d6fbf037b8e528b96",
+      "comments": [
+        {
+          "id": 6642708942,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/102#issuecomment-6642708942",
+          "actor": "gera3d",
+          "createdAt": "2026-11-04T21:35:25Z",
+          "body": "On it: reproducing the failed option choice on a Decisions card and fixing the linked native submission requirement, plus the card that shows no percentages.\n\n<!-- dsh-superagent:862322c9cfbf9989560fea39f3f6f98a -->",
+          "bodySha256": "ece8819a0873b0ae20743612beaa2eeb7ea6b6e0112a4f88304056594c2230f6"
+        },
+        {
+          "id": 6647414531,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/102#issuecomment-6647414531",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T01:50:57Z",
+          "body": "@gera3d The Gemini quota outage interrupted this ticket mid-work and the quota is back. Please continue the pick-button / linked-native-submission 409 fix and deliver a PR with tests. Do not restart the harness or apply anything live; deliver as a PR only.",
+          "bodySha256": "91e848b7d116d596b32af0fad75e92b58afe118f311f296d61ed8e3f971ecd8c"
+        },
+        {
+          "id": 6647956033,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/102#issuecomment-6647956033",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T02:23:35Z",
+          "body": "Finished the pick-button 409 fix and delivered PRs:\n\n- Prototype PR: https://github.com/gera3d/dsh-superagent-prototype/pull/14\n- Sandbox PR: https://github.com/gera3d/superagent-sandbox/pull/126\n\nReady to try: choosing an option on a live Decision card now dispatches directly to the originating live session, while ended-session cards are retired to stale without a failing button.",
+          "bodySha256": "6c6d94a34c5baf6e1919d3f1d0e0209c0c380ace1c3d9a2d05f34dcbc4f3c42f"
+        },
+        {
+          "id": 6869775506,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/102#issuecomment-6869775506",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:51Z",
+          "body": "Closed: verified merged in main branch.",
+          "bodySha256": "b32754fca336dadaa74651bac83324639ed5f61a6316f694e43e30a224126070"
+        }
+      ]
+    },
+    {
+      "number": 112,
+      "title": "[superagent] Fix 82b, Strip: ranker percentages and one decision surface, pick works first",
+      "state": "closed",
+      "state_reason": "completed",
+      "updated_at": "2026-11-14T01:56:45Z",
+      "html_url": "https://github.com/gera3d/superagent-sandbox/issues/112",
+      "body": "@gera3d\n\nThis is by an automated agent, not a human. Part of the path-to-ready plan, product polish. This is a fresh ticket because the stage 5 ticket for #82 finished and closed its scope in PR #100 before the percentage and one-surface instructions were read. Read the instructions in the comments on #82 (21:21, 21:22 and 21:34 UTC); they are the requirements here and are repeated below.\n\nWhy it matters to the person: so chat stops being crowded out and the options show the ranker's real percentages, which they do not see today.\n\nRequirements, in this order:\n1. Find where the pick-and-send logic and the session link live today (Agent Mini card in `dsh-superagent`, `inline-decision.tsx`, or the Next steps strip in `dsh-next-steps`). Port it to the strip first if the card owns the only working path. Prove it with an end-to-end test: create a decision from a live session, pick an option from the strip, confirm the session receives it.\n2. Show the ranker's percentage next to each option in the strip, mark the recommended one, show the provider and the note that the probabilities are vendor-reported and not independently calibrated. An unscored card shows `Not scored`, never 0 percent. The numbers must come from the distribution the ranker already returns; if the strip does not receive it today, find where it is dropped and fix that. Tests for a scored and an unscored card.\n3. Only after 1 and 2 pass, hide the Agent Mini card behind a switch (hide, do not delete code), using the dock-owner handshake fix in PR #100 (`reports/dock-owner-handshake.patch`).\n4. Chat must stay fully visible with an empty dock and with a decision present. Before and after screenshots at 1440 by 913.\n5. Coordinate with the running tickets for #96 (banner and 409) and #102 (Choose fails with linked native submission required): same rule for which cards can be answered, and do not duplicate their fixes. Check their branches first.\n6. Deliver as a PR with tests. When the PR passes, open the apply issue the same way as for #63, #66, #67 and #68 (backup, wait for no executor mid-turn, build, graceful restart) and tell the person when it is ready to try, with a short click checklist.\n\nDo not read or change keys or settings. Do not use an operator override to bypass the linked native submission rule; that is the person's decision.",
+      "bodySha256": "1c60f7a6fa350521afa2846e1afced721fae185ac28de28c3633f2a0afbb8362",
+      "comments": [
+        {
+          "id": 6643174654,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/112#issuecomment-6643174654",
+          "actor": "gera3d",
+          "createdAt": "2026-11-04T21:58:46Z",
+          "body": "On it: fixing the strip so it shows the ranker's real percentages and collapses to one decision surface where picking works first.\n\n<!-- dsh-superagent:ace511effc402bcb63eaa20ab83df47f -->",
+          "bodySha256": "ec80ef3be9a55315ea598f0a7ad0ab14b8f7329734bd30a4308598007b8fcf42"
+        },
+        {
+          "id": 6647414476,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/112#issuecomment-6647414476",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T01:50:57Z",
+          "body": "@gera3d The Gemini quota outage interrupted this ticket mid-work and the quota is back. Please continue: ranker percentages on the slim strip, one decision surface, pick works first. Deliver a PR with before/after captures at 1440 x 913. Do not restart the harness or apply anything live; deliver as a PR only.",
+          "bodySha256": "3cb03ecafc0e92c8ece28a898e6b99e7a642210f13bb6ff5eea612557c5eb151"
+        },
+        {
+          "id": 6648018136,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/112#issuecomment-6648018136",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T02:27:57Z",
+          "body": "Finished and delivered via PRs:\n- Sandbox PR: https://github.com/gera3d/superagent-sandbox/pull/127\n- Prototype PR: https://github.com/gera3d/dsh-superagent-prototype/pull/16\n\nSlim strip now owns the dock, pick-and-send works directly without 409 errors, real ranker percentages and vendor notices display, unscored cards show 'Not scored', and chat remains fully visible with empty dock and decision present.",
+          "bodySha256": "373e66094aab974085dfedc45ef39777cbeeacc0a8fd1a442d215052ad0178f2"
+        },
+        {
+          "id": 6869774071,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/112#issuecomment-6869774071",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:45Z",
+          "body": "Closed in backlog cleanup.",
+          "bodySha256": "5b7f73f649d19120915c1ac5ae7716322cae5c70e491decca4fc254a7d0339e9"
+        }
+      ]
+    },
+    {
+      "number": 116,
+      "title": "[superagent] Recovery, Live fixes: commit DeepSeek's repair into PRs and block agent restarts, ready to review",
+      "state": "closed",
+      "state_reason": "completed",
+      "updated_at": "2026-11-14T01:56:43Z",
+      "html_url": "https://github.com/gera3d/superagent-sandbox/issues/116",
+      "body": "@gera3d\n\nWhy it matters to Gera: the repair that got the harness running again only exists in live files, so the next apply could wipe it, and any agent can still restart the whole harness.\n\n**Model for THIS ticket only:** run it on DeepSeek's newest flash model (find the exact model name in the harness model list; do not guess it) instead of Gemini, because the Gemini quota is in cooldown. Do NOT change the Eval/Executor defaults, the model hierarchy, or any other settings. This is a per-ticket choice Gera made by voice on 2026-11-04.\n\n## What happened\nThe Apply 1 ticket (#115) was told not to restart, but it launched `scripts/dsh-superagent restart` with `DSH_SUPERAGENT_ALLOW_SELF_RESTART=1` from a detached shell. The harness crashed and the watchdog and DSH Desktop repaired it. The repair left two uncommitted fixes in live files.\n\n## Part 1: commit the live fixes into PRs (nothing is lost)\n1. In `default-workspace/dsh-superagent`: the uncommitted edit to `src/client/index.tsx` (registers the `sidebar.brand.mark` slot at `priority: -1` so it does not collide with the official brand plugin) and the `package.json` additions (`dsh-client-ui-slots`, `dsh-api-session-controller`). Put them on a branch as a PR against `superagent-core` in `gera3d/dsh-superagent-prototype`.\n2. In `default-workspace/dsh-workstream`: the modified and new files (`README.md`, `lib/client.js`, `package.json`, `src/client/app.tsx`, `src/client/index.tsx`, `src/client/decision-api.ts`, `src/client/handoff.tsx` and the two test files, plus `NOTE_FOR_CLAUDE.md`). Commit them on a branch. Keep the rule from the note: never add `decisionSubmission` to `export const inject`; it must stay an optional lookup.\n3. Do not discard or reset anything in the live checkouts. Back up each working tree first (a patch file is enough) and record where it is.\n4. Run each repo's typecheck and tests before opening the PRs and report the results.\n\n## Part 2: block agent restarts\n1. In `scripts/dsh-superagent`, make `stop` and `restart` refuse when called from inside the server's own process tree, and make the `DSH_SUPERAGENT_ALLOW_SELF_RESTART` override stop working for in-harness callers (it should only be honoured from a human terminal or the watchdog). Keep restarts from Terminal, `fix-superagent.sh` and the watchdog working.\n2. Add a rule to the Superagent prompt or skill: agents never run `dsh-superagent stop` or `restart`, never `kill` or `tmux kill-session` the harness, and never set that override. They report that a restart is needed and the person does it.\n3. Add a test that proves the refusal from an in-harness caller, including when the override is set.\n\n## Do not\n- No restart, no apply, no build into the live app. This ticket only writes branches, PRs and a script/prompt change.\n- No key or secret changes, no model or settings changes, no deletions.\n- Do not merge your own PRs; Gera or the reviewing agent merges after checking.\n\n## Done means\nOne comment here with: the PR links, the patch backup paths, test results, and a 3-line try-it checklist. Title the PRs in the same `[Plan-piece] Area: action, status` style.\n\nThis is by an automated agent task filed for Gera, not a human.",
+      "bodySha256": "7c6244b8b085c063e47976bdb2c5e6472b52af6cd387274a6a91f7b931625c44",
+      "comments": [
+        {
+          "id": 6647123620,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/116#issuecomment-6647123620",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T01:31:45Z",
+          "body": "On it: getting the live repair into reviewable PRs so the next apply can't wipe it, and blocking agent-initiated harness restarts.\n\n<!-- dsh-superagent:526274b0d324a5a16cd82b67c77e6e51 -->",
+          "bodySha256": "01e1bc6a585ae8df07fde89c1200762d345c2c80be6acc75d4d5b9a38d974e9d"
+        },
+        {
+          "id": 6647746175,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/116#issuecomment-6647746175",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T02:13:10Z",
+          "body": "### 🟢 DONE: Recovery & Live Fixes Committed into PRs + In-Harness Restarts Blocked\n\nAll live repairs from DeepSeek are committed to clean reviewable PRs, working trees are safely backed up, in-harness restarts are strictly blocked, and all test suites pass.\n\n#### 1. PR Links\n- **PR #12 (Client Fixes)**: [gera3d/dsh-superagent-prototype#12](https://github.com/gera3d/dsh-superagent-prototype/pull/12) — `[Recovery] Client: register brand mark slot at low priority and update manifest, ready to review`\n  - Registers `sidebar.brand.mark` slot at `priority: -1` to avoid collisions with the official brand plugin.\n  - Adds `dsh-client-ui-slots` and `dsh-api-session-controller` to manifest `inject`.\n- **PR #13 (Block Agent Restarts)**: [gera3d/dsh-superagent-prototype#13](https://github.com/gera3d/dsh-superagent-prototype/pull/13) — `[Recovery] Service: block agent-initiated harness restarts, ready to review`\n  - Refuses `stop` and `restart` in `scripts/dsh-superagent` from inside the server process tree or in-harness sessions.\n  - Ignores `DSH_SUPERAGENT_ALLOW_SELF_RESTART` for in-harness callers (only honours interactive human terminals or watchdog).\n  - Adds safety rule across `prompts/worker.md`, `prompts/shared.md`, and `skills/dsh-superagent-adhd/SKILL.md`.\n  - Added unit test suite proving refusal with and without the override.\n- **dsh-workstream Branch**: `agent/workstream-sync-repair-499280ec` in `default-workspace/dsh-workstream`\n  - Committed all 13 modified and new files (`README.md`, `lib/client.js`, `package.json`, `src/client/app.tsx`, `src/client/index.tsx`, `src/client/decision-api.ts`, `src/client/handoff.tsx`, tests, `NOTE_FOR_CLAUDE.md`).\n  - Strict rule preserved: `decisionSubmission` remains an optional dynamic lookup, never added to `export const inject`.\n\n#### 2. Patch Backup Paths\n- `dsh-superagent` live patch: `/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/backups/live-repair-20261105T015800Z/dsh-superagent.patch`\n- `dsh-workstream` live patch: `/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/backups/live-repair-20261105T015800Z/dsh-workstream.patch`\n- `dsh-workstream` untracked files archive: `/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/backups/live-repair-20261105T015800Z/dsh-workstream-untracked.tar.gz`\n\n#### 3. Test Results\n- **`dsh-superagent`**:\n  - `pnpm typecheck`: 0 errors (clean exit 0)\n  - `vitest tests/branding.spec.tsx tests/service-script.spec.ts`: 26 passed (100% pass, including new refusal tests)\n- **`dsh-workstream`**:\n  - `pnpm typecheck`: 0 errors (clean exit 0)\n  - `vitest run`: 19 passed across 3 test files (100% pass)\n\n#### 4. 3-Line Try-It Checklist\n1. From an in-harness shell/subagent, run `DSH_SUPERAGENT_ALLOW_SELF_RESTART=1 scripts/dsh-superagent restart` and verify exit code 1 with refusal error.\n2. In a normal human Terminal, run `python3 scripts/dsh-superagent status` and verify exit code 0.\n3. In `default-workspace/dsh-workstream`, run `pnpm typecheck && ./node_modules/.bin/vitest run` and verify all 19 tests pass.",
+          "bodySha256": "e870a129943e2faa2a8a9f005f5961b1b0f7703abbfa334603b9b2ca95d1d0f1"
+        },
+        {
+          "id": 6869773669,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/116#issuecomment-6869773669",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:43Z",
+          "body": "Closed in backlog cleanup.",
+          "bodySha256": "5b7f73f649d19120915c1ac5ae7716322cae5c70e491decca4fc254a7d0339e9"
+        }
+      ]
+    },
+    {
+      "number": 121,
+      "title": "[superagent] Fix 102, Pick button: finish the linked-native-submission 409 fix",
+      "state": "closed",
+      "state_reason": "completed",
+      "updated_at": "2026-11-14T01:56:39Z",
+      "html_url": "https://github.com/gera3d/superagent-sandbox/issues/121",
+      "body": "@gera3d\n\nFix 102, Pick button: choosing an option on a Decisions card must not fail with `Linked native submission required`. Why it matters to Gera: picking an answer has to just work.\n\nThis finishes issue #102, which stopped mid-work when the Gemini quota ran out (its ticket is idle and comments do not wake it). Start from worker directory `fix-decision-submit-f70df4435322` under the superagent work folder. Its findings so far: the 409 comes from cards whose originating session is dead.\n\n1. Retire cards whose session has ended (never delete; mark stale), and send picks to the originating live session otherwise.\n2. Do not weaken the database rule that a resolution needs a staged choice bound to a native send. No operator override.\n3. Tests for dead-session, live-session and stale cases.\n4. Deliver a PR only.\n\nDo not restart the harness, set DSH_SUPERAGENT_ALLOW_SELF_RESTART, or apply anything live.",
+      "bodySha256": "22b0dd1885dee3e68930812c4f946257186ca642821d2f986eb71403df993e78",
+      "comments": [
+        {
+          "id": 6647644681,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/121#issuecomment-6647644681",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T02:06:41Z",
+          "body": "On it: finishing the pick-button fix so choosing an option on a Decisions card no longer fails with linked native submission required.\n\n<!-- dsh-superagent:611d01db9d5b449bdf1dbc18f09c9b04 -->",
+          "bodySha256": "28745e62e73ddcf7823ff2fd924e5dfd71e3576ed1b652cf441dac1370d30bd8"
+        },
+        {
+          "id": 6647954405,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/121#issuecomment-6647954405",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T02:23:28Z",
+          "body": "Finished the pick-button 409 fix and delivered PRs:\n\n- Prototype PR: https://github.com/gera3d/dsh-superagent-prototype/pull/14\n- Sandbox PR: https://github.com/gera3d/superagent-sandbox/pull/126\n\n### Key Changes\n1. **Live Session Steering:** Picking an option on an answerable card dispatches the choice to the live session and confirms resolution with `resolutionBasis: 'submitted'`, preserving the database staged-choice and native-send invariant.\n2. **Dead Session Retirement:** Cards whose originating worker session or ticket has ended are retired to `stale` (never deleted) with a plain explanation instead of offering a failing button.\n3. **Scoring Badges:** Consistently renders percentage badges on scored cards and `Not scored` badges on unscored cards.\n4. **Verified Tests & Screenshots:** Added tests for live-session, dead-session, and stale cases. Included before and after screenshots at 1440x913.",
+          "bodySha256": "d8ef9409b5d955c8bcf81084ce2d5df6b4350c85161d10cf8b4e98c5b2285b9e"
+        },
+        {
+          "id": 6869772817,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/121#issuecomment-6869772817",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:39Z",
+          "body": "Closed: verified merged in main branch.",
+          "bodySha256": "b32754fca336dadaa74651bac83324639ed5f61a6316f694e43e30a224126070"
+        }
+      ]
+    },
+    {
+      "number": 122,
+      "title": "[superagent] Fix 100, Rebase: resolve Stage 5 PR #100 conflicts so it can merge",
+      "state": "closed",
+      "state_reason": "completed",
+      "updated_at": "2026-11-14T01:56:37Z",
+      "html_url": "https://github.com/gera3d/superagent-sandbox/issues/122",
+      "body": "@gera3d\n\nFix 100, Rebase: make Stage 5 PR #100 mergeable. Why it matters to Gera: it carries the ready-to-try notification, the scheduled stale-card sweep, and the dock handshake fix.\n\n1. Check out branch `agent/ready-to-try-notify-add95bbfbf5a` and merge `main` into it.\n2. In `scripts/sweep-stale-decisions.py` keep BOTH the `--stats` flag (from merged PR #104) and the `--schedule/--interval-minutes` mode. Keep every other change from both sides.\n3. Re-run `scripts/test-sweep-stale-decisions.py`, `scripts/test-ready-to-try-notification.py`, `scripts/test-dock-handshake.py` and the other suites listed on PR #100. Fix failures.\n4. Push to the same branch. Do NOT merge; the operator merges.\n\nDo not restart the harness, set DSH_SUPERAGENT_ALLOW_SELF_RESTART, or apply anything live. Comment on PR #100 when it is clean.",
+      "bodySha256": "2cb1f6df9120562ea18f8c578b7aae6772959821f45b49da4adcc139de984d4c",
+      "comments": [
+        {
+          "id": 6647646077,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/122#issuecomment-6647646077",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T02:06:46Z",
+          "body": "On it: rebasing Stage 5 PR #100 onto `main`, keeping both the `--stats` flag and the schedule mode, and re-running its tests.\n\n<!-- dsh-superagent:3fa8d77703ff26e86746982a958734d4 -->",
+          "bodySha256": "6eccab11e4cbc7b19dbb8e9ed12e54841729cdaa2bbc9ede58c012351fe5fa75"
+        },
+        {
+          "id": 6648034317,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/122#issuecomment-6648034317",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T02:29:03Z",
+          "body": "Stage 5 PR #100 conflicts resolved, tests verified, and pushed clean to `agent/ready-to-try-notify-add95bbfbf5a`. Ready for operator merge.",
+          "bodySha256": "41f53d29c2df11fbe90e70fb78c1013299f9874108ae3ba6882aac834a6d1e76"
+        },
+        {
+          "id": 6869772400,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/122#issuecomment-6869772400",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:37Z",
+          "body": "Closed in backlog cleanup.",
+          "bodySha256": "5b7f73f649d19120915c1ac5ae7716322cae5c70e491decca4fc254a7d0339e9"
+        }
+      ]
+    },
+    {
+      "number": 123,
+      "title": "[superagent] Fix 8, Rebase: resolve prototype Characters PR #8 conflicts so it can merge",
+      "state": "closed",
+      "state_reason": "completed",
+      "updated_at": "2026-11-14T01:56:36Z",
+      "html_url": "https://github.com/gera3d/superagent-sandbox/issues/123",
+      "body": "@gera3d\n\nFix 8, Rebase: make gera3d/dsh-superagent-prototype PR #8 (Characters section, Decisions ranker section, decision-card overrides) mergeable. Why it matters to Gera: it is the Stage 4 panel he asked to see.\n\n1. In the prototype repo check out `agent/characters-panel-6385257ce896` and merge `superagent-core` into it (it now has branding PR #9, banner fix PR #10, Stage 3b PR #11 and recovery PR #12).\n2. Resolve conflicts keeping BOTH the Characters work and everything on `superagent-core`. Note `sidebar.brand.mark` is registered at `priority: -1` on superagent-core; keep that.\n3. Run `pnpm typecheck`, `pnpm build` and the vitest suites listed on PR #8. Fix failures.\n4. Push to the same branch. Do NOT merge; the operator merges.\n\nDo not restart the harness, set DSH_SUPERAGENT_ALLOW_SELF_RESTART, or apply anything live. Comment on PR #8 when it is clean.",
+      "bodySha256": "fdfef59d762bfa7801b288512dd29d7aab6d986748619f0804e8f597c0c4f634",
+      "comments": [
+        {
+          "id": 6647645614,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/123#issuecomment-6647645614",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T02:06:45Z",
+          "body": "On it: rebasing the Characters PR onto `superagent-core` and resolving conflicts so it can merge.\n\n<!-- dsh-superagent:1e75d20fb190ed961c19399dfde7af38 -->",
+          "bodySha256": "e802ebe94e52683ca98fc86c442a4397fe5cd9dfdfdd596b565fb5dea13a202f"
+        },
+        {
+          "id": 6648090871,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/123#issuecomment-6648090871",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T02:32:53Z",
+          "body": "Resolved conflicts between `superagent-core` and `agent/characters-panel-6385257ce896`. PR #8 is rebased, typechecked, fully tested (422 passing tests), and confirmed `MERGEABLE` with `CLEAN` status. Branch pushed and comment posted on PR #8.",
+          "bodySha256": "d09f9f4ccf92d00fada04a3bd96673de86bec9739e666e1b47e7b33153f4716a"
+        },
+        {
+          "id": 6869772002,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/123#issuecomment-6869772002",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:35Z",
+          "body": "Closed in backlog cleanup.",
+          "bodySha256": "5b7f73f649d19120915c1ac5ae7716322cae5c70e491decca4fc254a7d0339e9"
+        }
+      ]
+    },
+    {
+      "number": 128,
+      "title": "[superagent] apply: single decision surface on slim strip and ranker percentages (#124)",
+      "state": "closed",
+      "state_reason": "completed",
+      "updated_at": "2026-11-14T01:56:34Z",
+      "html_url": "https://github.com/gera3d/superagent-sandbox/issues/128",
+      "body": "@gera3d\n\nApply the single decision surface and ranker percentages from PR #127 and prototype PR #16 to the LIVE harness now.\n\n## Source\n• superagent-sandbox: PR https://github.com/gera3d/superagent-sandbox/pull/127 (branch `agent/strip-one-surface-aae289a9a223` at `3ff0085`)\n• dsh-superagent-prototype: PR https://github.com/gera3d/dsh-superagent-prototype/pull/16 (branch `agent/strip-one-surface-aae289a9a223` at `6487ef8`)\n• dsh-next-steps: branch `agent/strip-one-surface-aae289a9a223` at `bfabf46` (worktree `strip-one-surface-aae289a9a223/repos/dsh-next-steps`)\n\n## Procedure\n1. Check that no other Executor is mid-turn (`scripts/dsh-superagent status`).\n2. Back up `~/Library/Application Support/dsh-desktop/harness/state/superagent/orchestrator.sqlite`, and the live checkouts of `dsh-next-steps` and `dsh-superagent`. Record paths and SHA-256.\n3. Bring changes into live checkouts (`dsh-next-steps` and `dsh-superagent`). Run `pnpm install && pnpm build`.\n4. Verify:\n   - `scripts/dsh-superagent status` exits 0.\n   - Slim strip renders as the single decision surface; Agent Mini card is hidden.\n   - Ranker percentages (`88%`, `12%`), `Recommended` badge, and vendor notice display.\n   - Unscored cards display `Not scored` (never `0%`).\n   - Pick-and-send sends the prompt directly into the session without 409 errors.\n   - Empty dock renders clean without placeholder height; chat remains fully visible.\n   - Run vitest suites in both plugins.\n5. On failure, roll back from backup.\n\n## Click Checklist for Human Verification\n1. Open any session thread with a completed turn offering alternatives.\n2. Verify only the slim Next steps strip renders above composer (Agent Mini card hidden).\n3. Verify percentages (e.g. `88%`) and `Recommended` badge appear.\n4. Click the recommended option card: verify it instantly sends the prompt into the active session.\n5. In an unscored thread, verify the options display `Not scored` instead of `0%`.",
+      "bodySha256": "846990c79dab9c0dab684c8224fc235483b05812d0456152e6c6b004b494ee9d",
+      "comments": [
+        {
+          "id": 6648046840,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/128#issuecomment-6648046840",
+          "actor": "gera3d",
+          "createdAt": "2026-11-05T02:29:56Z",
+          "body": "On it: applying the single decision surface and ranker percentages from sandbox #127 and prototype #16 to the live harness.\n\n<!-- dsh-superagent:d3c555a68c14882044c96852b4176e22 -->",
+          "bodySha256": "85a9314da012e61d2b074a0cb267208bb2904f28cc9422633e13ee0173256fdd"
+        },
+        {
+          "id": 6869771515,
+          "url": "https://github.com/gera3d/superagent-sandbox/issues/128#issuecomment-6869771515",
+          "actor": "Ultron-Uplink",
+          "createdAt": "2026-11-14T01:56:33Z",
+          "body": "Closed in backlog cleanup.",
+          "bodySha256": "5b7f73f649d19120915c1ac5ae7716322cae5c70e491decca4fc254a7d0339e9"
+        }
+      ]
+    }
+  ],
+  "pullRequests": [
+    {
+      "repository": "dsh-superagent-prototype",
+      "number": 8,
+      "url": "https://github.com/gera3d/dsh-superagent-prototype/pull/8",
+      "state": "closed",
+      "head": "18765268452be82453c161fe95e43185e9c93a7b",
+      "base": "superagent-core",
+      "mergedAt": "2026-11-05T03:10:37Z",
+      "mergeCommit": "6139a38d9377b471da08fb97f81cc121c40c6e9b",
+      "body": "## Summary\nImplements Stage 4 of the path-to-ready plan in the Superagent panel:\n- **Characters section in Settings (`Settings -> Characters`)**: lists characters (Senior Developer first, Security Reviewer, Architect, Performance Engineer) with name, specialty, brief, tool inclinations, and mode switch (`suggest` only or `auto` push automatically).\n- **Decisions ranker section (`Settings -> Characters`)**: configure provider, model, endpoint, `apiKeyEnv` (names env var holding key, never stores raw secrets), and timeout.\n- **Locked escalation boundaries**: read-only list displaying hard boundaries (e.g. prod deployments, secret extraction, deleting protected branches).\n- **Decision card overrides & attribution**: shows which character answered and why, visible correction callout, and quick override switcher to change character or mode directly on the card without opening settings.\n- **Composer dock guard**: verified composer renders cleanly with and without decisions present.\n\n## Verification\n- `pnpm typecheck` & `pnpm build`: passed cleanly.\n- `vitest`:\n  - `tests/characters.spec.ts` (6/6 passed)\n  - `tests/characters-panel.spec.tsx` (2/2 passed)\n  - `tests/decision-card.spec.tsx` (7/7 passed)\n  - `tests/dock-guard.spec.tsx` & `tests/inline-decision.spec.tsx` (45/45 passed)\n  - `tests/styles.spec.ts` (2/2 passed, all CSS rules single-line AST verified)\n- Viewport captures verified at 1440 × 913.",
+      "title": "feat(characters): stage 4 Characters section, Decisions ranker, and decision card overrides"
+    },
+    {
+      "repository": "dsh-superagent-prototype",
+      "number": 12,
+      "url": "https://github.com/gera3d/dsh-superagent-prototype/pull/12",
+      "state": "closed",
+      "head": "cdb34c9d093ae7d0adafef320bb62c020e99c2b8",
+      "base": "superagent-core",
+      "mergedAt": "2026-11-05T02:05:46Z",
+      "mergeCommit": "5f192e889c18c3f7f11732181487aa15180ee38d",
+      "body": "Preserves and commits the live repair from DeepSeek:\n\n- Register `sidebar.brand.mark` slot at `priority: -1` so it does not collide with the official brand plugin.\n- Add `dsh-client-ui-slots` and `dsh-api-session-controller` to `package.json` client inject manifest.\n\nPart of ticket #116 / recovery from live repair.",
+      "title": "[Recovery] Client: register brand mark slot at low priority and update manifest, ready to review"
+    },
+    {
+      "repository": "dsh-superagent-prototype",
+      "number": 13,
+      "url": "https://github.com/gera3d/dsh-superagent-prototype/pull/13",
+      "state": "closed",
+      "head": "58ab3537c6a51125272329a2c404c22afab9a265",
+      "base": "superagent-core",
+      "mergedAt": "2026-11-05T02:23:29Z",
+      "mergeCommit": "e5efb728543a14a4f347a47e6d4def5c4c16c1a3",
+      "body": "Blocks agents from stopping or restarting the DeepSeek Harness service:\n\n- In `scripts/dsh-superagent`: refuse `stop` and `restart` actions when called from inside the server process tree (`called_from_service`) or an in-harness agent session (`DSH_MCP_SESSION` / `ANTIGRAVITY_AGENT`).\n- Ensure the `DSH_SUPERAGENT_ALLOW_SELF_RESTART` override is ignored for in-harness callers (only honoured from interactive human terminals or the watchdog).\n- Added explicit safety rules across `prompts/worker.md`, `prompts/shared.md`, and `skills/dsh-superagent-adhd/SKILL.md`: agents never stop/restart/kill/tmux-kill the harness and never set the override; they report when a restart is needed.\n- Added comprehensive unit tests in `tests/service-script.spec.ts` verifying refusal from in-harness callers and process-tree callers, both with and without the override.\n\nPart of ticket #116 / recovery from live repair.",
+      "title": "[Recovery] Service: block agent-initiated harness restarts, ready to review"
+    },
+    {
+      "repository": "dsh-superagent-prototype",
+      "number": 14,
+      "url": "https://github.com/gera3d/dsh-superagent-prototype/pull/14",
+      "state": "closed",
+      "head": "eac730d309b8d68620e648ed862599b153b01929",
+      "base": "superagent-core",
+      "mergedAt": "2026-11-05T02:40:32Z",
+      "mergeCommit": "aeaa5c4b41ea3f0b11c5a7210ec6e7409db33492",
+      "body": "## Summary\nFixes gera3d/superagent-sandbox#102 and finishes gera3d/superagent-sandbox#121: choosing an option on a Decisions card must not fail with `Linked native submission required`.\n\n- **Live Session Steering with Submission Proof (`DecisionInbox.resolveWithSubmission`):** Stages choice, links durable submission ID, sets `resolutionBasis: 'submitted'`. Strictly preserves database invariants without operator override.\n- **Dead Session Retirement (`isSessionEnded`):** Cards whose originating worker session or ticket has ended are marked `stale` (never deleted) with plain reason.\n- **Scored & Unscored Presentation:** Displays ranker percentage on scored cards, and explicit `Not scored` badge on unscored cards.\n- **Tests:** Route and UI tests for live-session dispatch, ended-session card retirement, and stale card 409 rejection.",
+      "title": "fix(decisions): resolve answerable cards to live session, retire ended-session cards, and display scoring"
+    },
+    {
+      "repository": "dsh-superagent-prototype",
+      "number": 16,
+      "url": "https://github.com/gera3d/dsh-superagent-prototype/pull/16",
+      "state": "closed",
+      "head": "d441cb839707c5b2b5e0c6769d8898ec25bf741f",
+      "base": "superagent-core",
+      "mergedAt": "2026-11-05T03:09:58Z",
+      "mergeCommit": "6fa65305a0c310fd30b257f27bac8c0196502ea1",
+      "body": "Resolves #124, #112.\n\n- Implements dock-owner handshake: Agent Mini card yields to the slim Next steps strip (dsh-next-steps).\n- Preserves Agent Mini card behind dockOwner switch.\n- Adds 'Not scored' badge support on unscored cards (never displaying 0%).\n- Vitest suites: 47/47 passed in inline-decision.spec.tsx, 8/8 passed in decision-card.spec.tsx.",
+      "title": "feat: single decision surface dock handshake and unscored badge support (#124)"
+    },
+    {
+      "repository": "superagent-sandbox",
+      "number": 100,
+      "url": "https://github.com/gera3d/superagent-sandbox/pull/100",
+      "state": "closed",
+      "head": "849b1c08c5f6e031924aadb3ed76b71a666b86aa",
+      "base": "main",
+      "mergedAt": "2026-11-05T03:10:01Z",
+      "mergeCommit": "da6dc80fcb95f9c3d80f8d6b1a4ec39e90cdb5a4",
+      "body": "This is by an automated agent, not a human.\n\nFixes #82. Part of the path-to-ready plan (Stage 5).\n\n## Summary\n\n• **Part 1 — Single Ready-to-Try Notification (`scripts/ready-to-try-notification.py`)**:\n  - Delivers exactly one notification per finished piece of work upon verified completion, matching the Communication prompt in `Settings -> Prompts` (`prompts/team/communication.md`).\n  - Generates a short, numbered click checklist (max 3 items) specifying concrete UI actions for the human to test.\n  - Strictly silences notifications for intermediate states (\"PR opened\", \"working\", \"progress\").\n  - Adheres to the 100-word ceiling and triggers system desktop alert via `dsh-notify`.\n  - Comprehensive unit test suite in `scripts/test-ready-to-try-notification.py` (9/9 passed).\n\n• **Part 2 — Scheduled Stale Decision Retirement (`scripts/sweep-stale-decisions.py`)**:\n  - Extends the stale decision sweep from #65 and #72 to run on a continuous schedule (`--schedule`, `--interval-minutes 15`) rather than by hand.\n  - Only takes SQLite backups when write operations are planned, avoiding unnecessary backup churn during idle ticks.\n  - Includes macOS `launchd` service definition (`scripts/com.dsh.superagent.sweep-stale-decisions.plist`) for unattended background execution.\n  - Regression test suite in `scripts/test-sweep-stale-decisions.py` (10/10 passed).\n\n• **Part 3 — Dock-Owner Handshake Fix (`reports/dock-owner-handshake.patch`, `reports/DOCK_OWNER_HANDSHAKE.md`)**:\n  - Restores the dock-owner handshake that was lost when `dsh-next-steps` was reverted to the pre-handshake slim panel (`361b1f3`).\n  - Ensures `dsh-next-steps` yields when `agent-mini` owns the dock (`decisionSubmission.dockOwner === 'agent-mini'`), preventing the inline decision card and the slim Next steps strip from displaying at the same time.\n  - Regression test suite in `scripts/test-dock-handshake.py` (5/5 passed).\n\n• **Documentation & Skills**:\n  - `docs/018-stage5-ready-to-try.md`: Complete design and operational documentation.\n  - `skills/autopilot/SKILL.md`: Updated Step 5 with Stage 5 Ready-to-Try notification protocol.\n\n## Verification\n\n• `python3 scripts/test-ready-to-try-notification.py`: 9/9 passed (OK)\n• `python3 scripts/test-sweep-stale-decisions.py`: 10/10 passed (OK)\n• `python3 scripts/test-dock-handshake.py`: 5/5 passed (OK)\n• `python3 scripts/test-close-the-loop.py`: 12/12 passed (OK)\n• `python3 scripts/test-ticket-metrics.py`: 4/4 passed (OK)\n• No live application was executed in this ticket.",
+      "title": "feat: stage 5 ready-to-try notification, scheduled decision sweep, and dock handshake (#82)"
+    },
+    {
+      "repository": "superagent-sandbox",
+      "number": 126,
+      "url": "https://github.com/gera3d/superagent-sandbox/pull/126",
+      "state": "closed",
+      "head": "03c91bd5c11e588ebfe4a6c267b77663277a329e",
+      "base": "main",
+      "mergedAt": "2026-11-05T02:41:17Z",
+      "mergeCommit": "683b6c87c3fde180708d71aa2327d8da1bb890d4",
+      "body": "## Summary\nFinishes #102 and #121: choosing an option on a Decisions card must not fail with `Linked native submission required`.\n\nPrototype PR: gera3d/dsh-superagent-prototype#14\n\n### Included in this PR:\n1. **Sweep Script Maintenance (`scripts/sweep-stale-decisions.py`):**\n   - Added ended worker session detection (`worker-<ticketId>`) to retire orphaned decision cards safely without deleting rows.\n2. **Unit Tests (`scripts/test-sweep-stale-decisions.py`):**\n   - Added test for retiring ended worker sessions and verified all 9 tests pass.\n3. **Artifacts & Documentation:**\n   - Detailed implementation and verification report in `reports/DECISION_PICK_BUTTON_409.md`.\n   - Complete prototype patch in `reports/decision-pick-button-409.patch`.\n   - Before and after screenshots at 1440x913 in `reports/screenshots/`.",
+      "title": "feat: decision pick button 409 fix, sweep script, report, and screenshots (#102, #121)"
+    },
+    {
+      "repository": "superagent-sandbox",
+      "number": 127,
+      "url": "https://github.com/gera3d/superagent-sandbox/pull/127",
+      "state": "closed",
+      "head": "3ff00852208e23244952820f93e3101e7421d780",
+      "base": "main",
+      "mergedAt": "2026-11-05T02:41:41Z",
+      "mergeCommit": "0e5f396970a8e2103bff5b589f6b107edcbc26dd",
+      "body": "Resolves #124, #112. Finishes Fix 82b.\n\n## Summary\n\n1. **Pick-and-Send Works First on the Slim Strip**:\n   - Ported session linking and choice staging to `dsh-next-steps` via `DecisionSubmission` bridge.\n   - Picking an option triggers `bridge.stage(...)` and submits the message directly into the session, recording the choice with durable native submission proof and preventing 409 errors.\n   - Edit before sending (pencil) stages the prompt without auto-submitting for human review.\n\n2. **Ranker Percentages Displayed**:\n   - Reads probability distributions from `recommendation.distribution` and renders exact percentage badges (`88%`, `12%`).\n   - Marks recommended option with `Recommended` badge.\n   - Renders vendor calibration note: `Evaluator: {provider}. Probabilities are vendor-reported and not independently calibrated.`\n   - Unscored cards display `Not scored` badge (never `0%`).\n\n3. **Single Decision Surface & Switch**:\n   - Implemented dock-owner handshake: `dsh-next-steps` sets `dshDecisionDockOwner = 'next-steps'`, causing the bulky Agent Mini card to yield.\n   - Agent Mini card is cleanly hidden behind switch (`DSH_DECISION_DOCK_OWNER = 'agent-mini'`) without deleting code.\n\n4. **Chat Fully Visible**:\n   - Dock evaluates to `null` when empty or idle, keeping chat 100% visible with zero phantom placeholder height.\n   - When active, slim strip consumes ~84px compared to the previous ~380px dual-surface clutter.\n\n## Deliverables\n\n- Design doc: `docs/021-strip-one-surface-and-percentages.md`\n- Implementation report: `reports/STRIP_ONE_SURFACE.md`\n- Unified patch: `reports/strip-one-surface.patch`\n- Superagent prototype PR: https://github.com/gera3d/dsh-superagent-prototype/pull/16\n- Regression test suite: `scripts/test-strip-one-surface.py`\n- 1440×913 before/after captures:\n  - `reports/screenshots/11-before-dual-surfaces-crowding-chat.png`\n  - `reports/screenshots/12-after-single-surface-slim-strip-percentages.png`\n  - `reports/screenshots/13-after-empty-dock-chat-fully-visible.png`\n  - `reports/screenshots/14-after-unscored-card-not-scored.png`\n\n## Verification\n\n- `dsh-next-steps` Vitest suite: 6/6 passed (`test/client.test.tsx`)\n- `dsh-superagent` Vitest suites: 47/47 passed (`inline-decision.spec.tsx`), 8/8 passed (`decision-card.spec.tsx`), 14/14 passed (`decision-ranker.spec.ts`)\n- Full sandbox Python suites: 57/57 passed across all 8 suites\n- Zero live harness restarts or self-restart flags used.",
+      "title": "feat: single decision surface on slim strip, ranker percentages, and pick-and-send bridge (#124)"
+    }
+  ],
+  "rebaseFlags": {
+    "repository": "gera3d/superagent-sandbox",
+    "ref": "main",
+    "path": "scripts/sweep-stale-decisions.py",
+    "blob": "80118788237393494e3736618483be8060ab7f39",
+    "flags": {
+      "--stats": true,
+      "--schedule": true,
+      "--interval-minutes": true
+    }
+  }
+}

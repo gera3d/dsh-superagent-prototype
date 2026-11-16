@@ -1,0 +1,37 @@
+{
+  "at": "2026-11-13T14:58:25.275087+00:00",
+  "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+  "findingRevision": 7,
+  "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r5",
+  "ticketId": "13e4f490b75772d3755a7e7238b37681",
+  "assignmentId": "e133ad26ae3d7718d6a36a9cc1c881eb",
+  "head": "b189f13056817182b3d458419ebba2f3ba81f233",
+  "base": "8882f117ec5a82c2953c70858bcd92bbc8655138",
+  "patchSha256": "6440c95be7d6837d99ee36b842a6a2f7d065ece0e692c16841287ede212e3d7f",
+  "verdict": "CHANGES REQUIRED; no integration/package/publish/deploy/acceptance attempted",
+  "verifiedProgress": [
+    "Original r3 root audit replay plus worker installed-bridge suite:14 tests pass, no skip reported. Original three defects corrected.",
+    "Read installed dsh-mcp-client publicToolName and createExecutor: namespace mcp__server__raw; isError throws extracted text, nonerror returns content/structuredContent. Both installed web/superagent profiles register serverName composio. This is local source/config evidence, not live invocation.",
+    "Inspected matching nested trajectory: Google failed availability, Sonnet selected, second turn completed. Structured native ready report recorded. No productive worker left."
+  ],
+  "newAudit": {
+    "pureAssessor": "1positive/3failed: incomplete response:{} becomes succeeded; null entry with total_count2 is neither accounted unknown nor uncertain; mixed429+timeout-after-sending becomes failed rather than unknown.",
+    "installedBridge": "1positive/2failed/9deselected: installed createMcpToolDefinition -> real ToolRuntime -> candidate listener, only remote call mocked. Same incomplete-entry false success and combined429/timeout unsafe retry classification reproduced.",
+    "commands": [
+      "pnpm --config.verify-deps-before-run=false exec vitest run tests/root-composio-uncertainty.audit.spec.ts",
+      "pnpm --config.verify-deps-before-run=false exec vitest run tests/root-composio-bridge.audit.spec.ts -t \"root audit|re-classifies a nested\"",
+      "pnpm --config.verify-deps-before-run=false exec vitest run tests/root-composio-boundary.audit.spec.ts tests/composio-bridge.spec.ts"
+    ],
+    "exitMetadata": "Vitest output records failing/passing results; enclosing shell cat exited0, raw Vitest exit codes not separately captured. Do not report enclosing shell0 as tests passed.",
+    "files": [
+      "docs/evidence/composio-r5-root-uncertainty-audit.log",
+      "docs/evidence/composio-r5-root-bridge-audit.log",
+      "docs/evidence/composio-r5-root-r3-replay-and-bridge.log",
+      "docs/evidence/composio-r5-root-uncertainty.audit.spec.ts.txt",
+      "docs/evidence/composio-r5-root-bridge.audit.spec.ts.txt"
+    ]
+  },
+  "correction": "Success must require affirmative completion evidence; missing/malformed/ambiguous entries stay unknown and retained. Timeout/lost acknowledgement must dominate rate-limit words and never assert not-run/retry-safe without explicit nonexecution proof. Preserve successful entries and Retry-After; no automatic remote actions. Correct original approved boundary scope only.",
+  "limits": "Offline/mock failures only. Real registry/installed bridge tests distinct from stand-in ordinary Session lifecycle/pure assessor. No real external Composio action, native chat reachability or deployment verified. All host access/allowlists/accounts/auth/packages/routes/settings/reserve/max3 unchanged. Existing user approvals and original r1/r3/r5 history preserved; PR96/user merges untouched; clarification proposal unapproved.",
+  "nextOwner": "Harness same-finding bounded correction under retained native approval; Codex reviews corrected immutable head before original protected release."
+}

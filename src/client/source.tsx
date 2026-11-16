@@ -111,6 +111,7 @@ function SourceRow({ source }: { source: SourceStatusRow }) {
         {received > 0 && <LabelValue label={t('sourceReceivedLabel')}
           value={received} />}{filtered > 0 && <LabelValue label={t('sourceFilteredLabel')} value={filtered} />}
         {lastAt && <LabelValue label={t('sourceLatestLabel')} value={when(lastAt, t('lang'))} />}
+        {source.workerCalls && <LabelValue label={t('sourceWorkerCallsLabel')} value={source.workerCalls.total} />}
       </div>
       {problem && <p className="dt-error">
         <SetupMessage problem={problem} lead /> <button type="button" className="dt-textlink"

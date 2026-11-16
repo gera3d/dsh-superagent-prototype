@@ -98,6 +98,29 @@ export const SubscriptionAvailabilitySchema = z.object({
   resetAt: z.string().trim().max(100).refine(value => value === '' || !Number.isNaN(Date.parse(value)), 'An ISO date-time or empty').default(''),
 }).strict()
 export type SubscriptionAvailability = z.infer<typeof SubscriptionAvailabilitySchema>
+
+export const ModelCandidateSchema = z.union([
+  z.string().trim().min(1),
+  RoleModelSchema,
+])
+export type ModelCandidate = z.infer<typeof ModelCandidateSchema>
+
+export const ModelRoutingConfigSchema = z.object({
+  primary: ModelCandidateSchema,
+  fallbacks: z.array(ModelCandidateSchema).default([]),
+  max_attempts_per_model: z.number().int().min(1).default(2),
+  max_total_attempts: z.number().int().min(1).default(4),
+  total_timeout_ms: z.number().int().min(1).default(30000),
+  backoff_base_ms: z.number().int().min(1).default(500),
+  backoff_ceiling_ms: z.number().int().min(1).default(5000),
+  required_capabilities: z.array(z.string().trim().min(1)).default([]),
+}).strict().refine(val => {
+  const toKey = (c: ModelCandidate) => typeof c === 'string' ? c : `${c.provider}/${c.model}`
+  const all = [val.primary, ...val.fallbacks].map(toKey)
+  return new Set(all).size === all.length
+}, 'Duplicate model entries in routing config')
+export type ModelRoutingConfig = z.infer<typeof ModelRoutingConfigSchema>
+
 /**
  * The shared model hierarchy and its escalation bound. `hierarchy` runs cheapest and weakest to strongest; escalation
  * walks it after the job type's default model, skipping parked providers and DeepSeek routes, and a ticket gets at most one
@@ -114,6 +137,8 @@ export const ModelsConfigSchema = z.object({
   economyRoute: RoleModelSchema.default(() => ({ ...ECONOMY_ROUTE })),
   subscriptions: z.array(SubscriptionAvailabilitySchema).max(LIMITS.subscriptions.max)
     .refine(entries => new Set(entries.map(entry => entry.provider)).size === entries.length, 'Duplicate provider marks').default([]),
+  routing: ModelRoutingConfigSchema.optional(),
+  model_routing: ModelRoutingConfigSchema.optional(),
 }).strict()
 export type ModelsConfig = z.infer<typeof ModelsConfigSchema>
 

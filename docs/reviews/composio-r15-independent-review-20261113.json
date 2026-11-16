@@ -1,0 +1,24 @@
+{
+  "at": "2026-11-13T19:02:59.636034+00:00",
+  "findingId": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+  "findingRevision": 17,
+  "jobId": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r15",
+  "ticketId": "acf97559fd76618bf9d5022091718874",
+  "assignmentId": "9d7e746ad83c1a192a33e65d6ebb7702",
+  "head": "2daef8122c245fcc1d8235463e785123b3f60e13",
+  "base": "cc8763d03dba2ef82cdea27b86d4dd277911be66",
+  "binaryDiffSha256": "f8651b5586432a6e1bcb6d3582696beb2edbc0dcc2c5bfb5db20be4ac5cff4f0",
+  "formatPatchSha256": "1276c2c88ddd29092615fae103181052956b2092481479f75728ae78af89e8b0",
+  "verdict": "Independent bounded code review passed; eligible for original protected native review/check/package. NOT deployment/native external acceptance.",
+  "currentSource": "Fetched trusted localorigin codex/release-aware-advice; current ceb3444 differs from cc8763d only outside src/tests/package/lock. No implementation integration changes needed; worker work/ clean trusted localorigin.",
+  "checks": {
+    "result": "193existingchecks/7files passed exit0, current worker specs/runtime plus reused r3/r5 independentaudits; installedbridge ran. No new Codex implementation/test.",
+    "metadata": "docs/evidence/composio-r15-root-targeted.json",
+    "log": "docs/evidence/composio-r15-root-targeted.log"
+  },
+  "review": "!transport guard removed; contradictory single flags now unknown across successful MCP, real MCPisError throw and returned-value error. Genericbatchfallback contradiction safe, knownsuccesses retained and RetryAfterwaitfloor preserved. Explicitentry failure remains authoritative for that entry even if top level contradictory, with no resend of succeeded/unconfirmed entries. Ordinaryobserver/provenance/auth/allowlist/routing protections retained.",
+  "trajectory": "242events/37toolcalls; structured readyreport, Sonnet afterGoogleunavailable, completed. Canonical attribution31Anthropicrequests reported/32attempts total; price unavailable, no inferred billed cost/allowance burn.",
+  "coverage": "Offline/mockremote; installedbridge+realToolRuntime/pureassessor/stand-in ordinarySession distinct. No real remoteComposio action or payload observed, actual deployednativehook not proven, no broad suite/general reliability claim.",
+  "preserved": "Originalr1/r3/r5/r8/r11/r13/r15 jobs/reports/patches/bundles; PR106nativefailed/delivery7/deniedlease/acceptedPR96/usermerges/unapprovedclarificationheld. No settings/providers/routes/accounts/access/auth/toolallowlists/hostpackages/deps/spend/reserve/max3/schedulechange.",
+  "nextOwner": "Codex original native review/check/package, exact-head rollback/protectedPublish/deploy/nativeproof/evidenceselection/accept onlyif gates pass."
+}
