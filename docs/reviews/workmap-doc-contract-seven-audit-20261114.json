@@ -1,0 +1,139 @@
+{
+  "observedAt": "2026-11-14T08:27:35.051078+00:00",
+  "observedLocal": "2026-11-14 00:27 PST",
+  "findingId": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+  "revision": 2,
+  "state": "blocked/unaccepted; documentation audit partial",
+  "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+  "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7",
+  "scope": "Exactly original nextdoc/contractslice; documentation/reconciliation only",
+  "coverage": {
+    "historicalTotal": 34,
+    "newlyReconciled": [
+      3,
+      5,
+      13,
+      16,
+      80,
+      91,
+      98
+    ],
+    "priorReconciledNotRepeated": [
+      108,
+      109,
+      157,
+      159,
+      163,
+      165,
+      167
+    ],
+    "cumulative": [
+      3,
+      5,
+      13,
+      16,
+      80,
+      91,
+      98,
+      108,
+      109,
+      157,
+      159,
+      163,
+      165,
+      167
+    ],
+    "cumulativeCount": 14,
+    "remainingExplicit": [
+      11,
+      14,
+      54,
+      84,
+      86,
+      87,
+      102,
+      112,
+      116,
+      117,
+      121,
+      122,
+      123,
+      128,
+      131,
+      132,
+      133,
+      135,
+      136,
+      138
+    ],
+    "remainingCount": 20,
+    "supplementalNotAudited": [
+      "sandboxPR150",
+      "prototypeissues2/3",
+      "prototypePR92",
+      "otherpluginrepoopenmetadata"
+    ],
+    "notes": "All7newselectedalreadyclosed byUltron-Uplink atNov14T01:45-01:57UTC; noclosurebythispass. Historical34 isnotcurrentbacklogcount. Unknownlimits arepartofclassification, nothiddencompletion."
+  },
+  "items": [
+    {
+      "issue": 3,
+      "originalClassification": "C",
+      "classification": "completed documentation scope",
+      "evidence": "Originalbody requests TEST_CONTEXT.md onagent/test-context, not a runtimecontextindicator. PR4merged8d6fd63e/head0f10e35e, singlefile; pinnedmainsourcea44c30a4 retains exactblob77a665a0 andvoice/handoffworkflow headings. Canonicaladmission88fd6d...\u2192ticketf66a040... assignment846657...endedready. EarlierpolicyChangeddecision9c308... preserved, not newauthority.",
+      "limits": "Document delivered; no newruntimewidget/fullpipeline qualification inferred. No closure needed, alreadyclosed."
+    },
+    {
+      "issue": 5,
+      "originalClassification": "C",
+      "classification": "completed narrower documentation; live integration claim historical/unverified now",
+      "evidence": "PR6mergedb679e3e4, COMPOSIO_INTEGRATION.md exactblob714e8da9 retained inpinnedmain. Documentsstreamable-http/cordis config/fourrequested toolnames/useridentifier. Canonicalticketfcedbda... assignmentc639dd...endedready, comment6596388699 reports historicalliveendpointverification.",
+      "limits": "No currentComposioaccount/toolrequest or credentialread. Documentation isnot productionaction-failure qualification; existingpriority2PR108nativehold unchanged. No newaccount/accessscope."
+    },
+    {
+      "issue": 13,
+      "originalClassification": "C(PRscope),liveeffectV",
+      "classification": "completed narrower launcher/documentation and reported historical service attachment; exact-default-window/current native readiness unverified",
+      "evidence": "PR15mergedbe219ff7/head e8d9f5ef, fourguide/launcher/testfiles, no committedprofilefiles. Canonicalticketfaadc6d... retains3endedassignments inclinitialnoreport, ready a020... andlaterready c07fd0...Nov3T23:35:24.142Z. Laterreport states profileeditsoutside repo applied andserviceMCPchild17723 alreadyconnected127.0.0.1:9222; it supersedes earlierrestartpendinglimitation. Launcher/guide inpinnedmainhashmatch.",
+      "limits": "Reportedhistoricalauthenticateddebugsession is a point-in-timecopiedprofile, not exactnormaldefaultChrome window; guide notesdifferentautoConnectalternative. No actualcurrentChrome/debugger/socket/configprobe or script execution, no restart/accesschange. ExistingUIquestion not answered by this oldreport."
+    },
+    {
+      "issue": 16,
+      "originalClassification": "C",
+      "classification": "superseded historical architecture; bounded current implementation presence verified",
+      "evidence": "Initialcanonicaladmission c0050ff... isIGNORE for newarchitecture, not an acceptedworker; preserved. Laterimplementationcommit8cffe9417f80f126da73e1c4f56a6fcdcab8bf5f is ancestorcurrentoperator. Installeddecisioncore/Decisionspage/route exist. Currentcore+UI explicitly model-reported/notcalibrated; olddocs012/comment1197pass/calibratedclaims arehistorical, no freshqualifiedmodelorfullnativeworkflow claim. Closingcomment6869778551 explicitlyhistoricaltracking/architecturesuperseded.",
+      "limits": "No newrankingrequest, modelroutechange, re-admission or choicesubmission. Latercanonicalcontracts/acceptedscopes retained; no need resurrectoldarchitectureissue."
+    },
+    {
+      "issue": 80,
+      "originalClassification": "C",
+      "classification": "completed bounded read-only report; current intake performance not established",
+      "evidence": "Reportcomment6642186049 contains requested foursections andtenissue timingrows [85,84,83,82,81,80,79,78,77,75]. Exactcanonicaltrigger28c7d961... at20:16:50Z anddecision524eb6e8... at20:53:22.949Z persist; kindunavailable/reasontimeout/threadgithub77/eval6e5e8... matches report. Investigationticket0e56ba.../assignment689130...endedwithwaitingreport.",
+      "limits": "Historicalreport recommendation torequeue/revertEval isnot currentactionauthority. No requeue/newbenchmark/providerprobe; tenelapsedmeasurements/16.5minuteexploratorycause not independentlyrecomputed inthisslice andnot pureLLMinferenceSLA. Ended/waitingreportnot anactiveblocker."
+    },
+    {
+      "issue": 91,
+      "originalClassification": "C",
+      "classification": "completed exact documentation wording",
+      "evidence": "PR101merged8e722ad6/head1d90857d, onefile. CurrentpinnedmainADHD_COMMUNICATION_GUIDE.md blob68c7bc63 equalsPRfile; intact3-colMarkdownrow reads NEXT | immediate next action or choice | while the reader must act. Canonicalticketee804.../assignment07a87... endedwaitinghistoricallyforPRreview.",
+      "limits": "Requestedcopyandtablemarkup checked; no freshbrowserrender/testexecution/runtime change. Oldwaitingreport doesnotmeanresume codework."
+    },
+    {
+      "issue": 98,
+      "originalClassification": "C",
+      "classification": "completed report/recommendation-only scope",
+      "evidence": "Originalexplicitreport-onlybody; comment6642906490 contains8848characters, sections coveringHUD,Decisions,Nextsteps,Mini,overlap,recommendation,missingnativesubmission andbefore/afterlayout. Canonicalticket429e556.../assignment19db3...endedwaiting afterdeliveringreport.",
+      "limits": "Oldrecommendationsareproposals, not approvedUIchanges or newauthority. In particular operator_override/rawcardretirement/layoutremoval mustnot be executedfromthishistory; latercontracts/prioracceptedrecords remain authoritative. No currentinbox/UIre-audit/choices/cleanup performed."
+    }
+  ],
+  "sourceEvidence": [
+    "docs/evidence/workmap-doc-contract-source-metadata-20261114.json",
+    "docs/evidence/workmap-doc-contract-canonical-jobs-20261114.json",
+    "docs/evidence/workmap-issue16-current-contract-20261114.json",
+    "docs/evidence/workmap-issue80-timeout-receipt-20261114.json"
+  ],
+  "priorEvidence": "docs/reviews/workmap-seven-historical-items-audit-20261113.json retainedwithoutre-audit; deniedpluginPR4/6/7 not retried. Original archivedworkerproposal/body/heading-onlycorrection preserved.",
+  "nextOwner": "ExistingCodexindependentreviewer: nextremainingoriginalslice [11,14,54,84,86,87,117], thenremaining13/supplementalunknowns. No newHarnessdispatch or nativeacceptanceuntiloriginalrequirements actuallycovered.",
+  "currentConditions": "No running/queued executors;4unrelatedopenidletickets leftalone. Healthready isnotcompletion. Models26/OpenAI conserved/Google5floor/max3/currentroutes/backoff unchanged; no newproviderrequest/probe. No freshscreenreadiness/clarificationapproval; diagnostics115/Composio108/sectionsnativeholds remain.",
+  "constraints": "No issuePRclosure/comment/rawadviceretirement/ordinarychoice/taxonomymutation/acceptedjobreopen/dispatch/implementation/tests/canonicalDBwrites/nativeacceptance/Chrome/debugger/config/route/access/spend/credentials/limitschange. Oldreport/cause/pin/approvalhistorypreserved; nohistoricalproposal convertedtoauthority orcalibratedprobability guarantee. Scope owner/release owner unchanged; no continuouscoordinationbetweenpasses."
+}

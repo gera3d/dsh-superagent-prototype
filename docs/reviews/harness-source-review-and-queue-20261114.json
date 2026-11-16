@@ -1,0 +1,541 @@
+{
+  "observedAt": "2026-11-14T20:23:48.707817+00:00",
+  "kind": "independent-source-review-and-bounded-continuations-not-release",
+  "state": {
+    "setup": {
+      "machine": {
+        "stateDir": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent",
+        "promptMaxChars": 100000,
+        "admissionContextMaxPages": 10,
+        "admissionContextTimeoutMs": 15000
+      },
+      "problem": null,
+      "feishuProblem": null,
+      "accounts": {
+        "repository": "gera3d/superagent-sandbox",
+        "agent": "Ultron-Uplink",
+        "feishu": null
+      }
+    },
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "masterId": "orchestrator-core",
+    "paused": false,
+    "health": {
+      "runtime": {
+        "state": "ready",
+        "detail": "Orchestrator is ready",
+        "at": "2026-11-14T18:08:56.965Z"
+      },
+      "relay": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T19:53:46.758Z"
+      },
+      "notice": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T19:44:20.027Z"
+      },
+      "launch": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T19:47:44.224Z"
+      },
+      "delivery": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T19:44:21.478Z"
+      },
+      "assessment": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T19:39:28.574Z"
+      },
+      "reply": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T19:39:32.390Z"
+      },
+      "evals": {
+        "state": "ready",
+        "detail": "No unavailable Eval in the last hour"
+      },
+      "models": {
+        "state": "ready",
+        "detail": "No managed Session is waiting on a model budget retry"
+      },
+      "github": {
+        "state": "ready",
+        "detail": "1 notifications; next poll \u2265 60s",
+        "at": "2026-11-14T20:17:04.912Z"
+      }
+    }
+  },
+  "limits": [
+    "No merge/deployment/restart/live edits/native acceptance",
+    "Existing dependencies only; no installs/downloads/large clones/full builds/deletion",
+    "OpenAI conserved; Google5 percent reserve; maxWorkers3 unchanged",
+    "Native publication holds and unapproved clarification retained"
+  ],
+  "reviews": {
+    "117": {
+      "head": "ec2e020521f3f4e4bbddb880918d96477b897c2c",
+      "canonicalConsumedHash": "216ec116fcb8a6e5",
+      "review": "prompt semantics retained; only inventory row fails CI",
+      "ci": {
+        "run": 43633602959,
+        "pass": 2532,
+        "fail": 1,
+        "skip": 3,
+        "failure": "docs007 missing tests/report-shim-identity.spec.ts"
+      },
+      "continuationComment": 6883630043
+    },
+    "118": {
+      "head": "a363fa13619f7a7f0bddfa7a6cd902d3914acf96",
+      "canonicalConsumedHash": "1b9467e1df19a476",
+      "geometry": {
+        "head": "a363fa13619f7a7f0bddfa7a6cd902d3914acf96",
+        "cssSha256": "4d6b109bc6500fadb6b6fce6d2065bf098b38325f2e4d25634cdaa0483d10009",
+        "kind": "isolated-headless-css-fixture-not-native-mounted-Harness-acceptance",
+        "fixture": "/private/tmp/report-layout-final-0h2wsk3k/fixture.html",
+        "rows": [
+          {
+            "theme": "light",
+            "kind": "short",
+            "viewport": 500,
+            "reportLeft": 24,
+            "reportWidth": 452,
+            "composerLeft": 24,
+            "composerWidth": 452,
+            "bodyClientHeight": 34,
+            "bodyScrollHeight": 34,
+            "overflow": "auto"
+          },
+          {
+            "theme": "light",
+            "kind": "long",
+            "viewport": 500,
+            "reportLeft": 24,
+            "reportWidth": 452,
+            "composerLeft": 24,
+            "composerWidth": 452,
+            "bodyClientHeight": 176,
+            "bodyScrollHeight": 6028,
+            "overflow": "auto"
+          },
+          {
+            "theme": "dark",
+            "kind": "short",
+            "viewport": 500,
+            "reportLeft": 24,
+            "reportWidth": 452,
+            "composerLeft": 24,
+            "composerWidth": 452,
+            "bodyClientHeight": 34,
+            "bodyScrollHeight": 34,
+            "overflow": "auto"
+          },
+          {
+            "theme": "dark",
+            "kind": "long",
+            "viewport": 500,
+            "reportLeft": 24,
+            "reportWidth": 452,
+            "composerLeft": 24,
+            "composerWidth": 452,
+            "bodyClientHeight": 176,
+            "bodyScrollHeight": 6028,
+            "overflow": "auto"
+          },
+          {
+            "theme": "light",
+            "kind": "short",
+            "viewport": 1200,
+            "reportLeft": 180,
+            "reportWidth": 840,
+            "composerLeft": 180,
+            "composerWidth": 840,
+            "bodyClientHeight": 34,
+            "bodyScrollHeight": 34,
+            "overflow": "auto"
+          },
+          {
+            "theme": "light",
+            "kind": "long",
+            "viewport": 1200,
+            "reportLeft": 180,
+            "reportWidth": 840,
+            "composerLeft": 180,
+            "composerWidth": 840,
+            "bodyClientHeight": 176,
+            "bodyScrollHeight": 2968,
+            "overflow": "auto"
+          },
+          {
+            "theme": "dark",
+            "kind": "short",
+            "viewport": 1200,
+            "reportLeft": 180,
+            "reportWidth": 840,
+            "composerLeft": 180,
+            "composerWidth": 840,
+            "bodyClientHeight": 34,
+            "bodyScrollHeight": 34,
+            "overflow": "auto"
+          },
+          {
+            "theme": "dark",
+            "kind": "long",
+            "viewport": 1200,
+            "reportLeft": 180,
+            "reportWidth": 840,
+            "composerLeft": 180,
+            "composerWidth": 840,
+            "bodyClientHeight": 176,
+            "bodyScrollHeight": 2968,
+            "overflow": "auto"
+          }
+        ]
+      },
+      "ci": {
+        "run": 43633602740,
+        "pass": 2519,
+        "fail": 1,
+        "skip": 3,
+        "failure": "docs007 missing src/client/worker-report.css"
+      },
+      "next": "serialized inventory row after117 docs writer seals; native combined stack/session switching still unverified"
+    },
+    "108": {
+      "localHead": "53369320ab0da142f1fa84fd58de82b559aa71ba",
+      "githubHead": "488f8400c78d1969fede084fd39899ca342efd1c",
+      "review": "clean three inventory rows only; runtime unchanged; unpublished/native publication pending"
+    },
+    "115": {
+      "issue": 119,
+      "localHead": "a9be5b92369fd5e2f80f92e43c89211b4139c19b",
+      "githubHead": "a6b754d4656e26a4813763a3bcd784e36e5857b9",
+      "review": "clean one inventory row only; six docs tests worker log reviewed; canonical blocked/missing turn remains; unpublished/native publication pending"
+    },
+    "228": {
+      "head": "dd98484a218db79912a969ee0656a1c4be4a60a6",
+      "independentTests": {
+        "command": "node --experimental-strip-types --test test/host.test.mjs",
+        "pass": 24,
+        "fail": 0,
+        "exit": 0
+      },
+      "gaps": [
+        "local ready report lacks assignment_id; canonical waiting",
+        "retryAfterMs returned but ignored by client fixed1200ms timer",
+        "publish400 branch needs actual test; lost-response single-record assertion"
+      ],
+      "continuationComment": 6883658084,
+      "nativeRootCause": "unverified"
+    },
+    "229": {
+      "review": "read audit and non-prompting doctor source; compiled binary hashes match report; did not rerun binaries or interact with desktop",
+      "overlaySha256": "ef899e21c1ce1bb3dc43c1b17dad6cbd1e715a259ebf7ff2883d70e4723bbbb9",
+      "helperSha256": "948a2f067f896d352f202195726564d3c0466eca38ebbf6c82c69ed543203e7d",
+      "reportGap": "canonical waiting, no local report; permission result applies to worker doctor process only, not Chrome/CUA/current future process",
+      "remaining": "controlled interactive/native and multi-display gates; not authorized in this continuation"
+    }
+  },
+  "continuations": {
+    "215": {
+      "comment": 6883630220,
+      "scope": "isolated sound adapter/mock audio only; executor wiring hunk deferred",
+      "actualDingCause": "UNVERIFIED"
+    },
+    "217": {
+      "comment": 6883630464,
+      "scope": "bounded actual runtime model fallback slice; no quota probes or live config",
+      "exclusiveOwner": "session/executor/model-routing source files"
+    },
+    "216": {
+      "status": "coordinator queue behind217",
+      "next": "small real current-source brief/header/context integration; preserve24criteria"
+    },
+    "218": {
+      "status": "coordinator queue behind217/216 session ownership",
+      "next": "actual isolated lifecycle integration; heavy process tests not authorized until isolated safe target"
+    },
+    "120": {
+      "canonical": "https://github.com/gera3d/dsh-superagent-prototype/issues/120",
+      "status": "coordinator queue behind217 executor ownership",
+      "next": "verify sanctioned adoption API; if absent narrow audited authorized adoption successor; no branch rename/new productPR/DB writes"
+    }
+  },
+  "dispatchAccounting": "Comments posted once, not proof of worker pickup. At20:22:22UTC last live state remained0running/0queued; old215 working projection conflicts with global load. No capacity increase or duplicate dispatch.",
+  "followThrough": {
+    "at": "2026-11-14T20:28:09.779166+00:00",
+    "117": {
+      "finalHead": "327f63472d3e1b68c6dae2988b4893c57585d6fa",
+      "delta": "one docs007 test inventory row; reviewed clean",
+      "canonicalConsumed": "0287c9296aa8a329",
+      "workerFocusedTests": 97,
+      "finalHeadCI": {
+        "total_count": 1,
+        "check_runs": [
+          {
+            "id": 132576774419,
+            "name": "check",
+            "node_id": "CR_kwDOVgvv3s8AAAAe3jEJEw",
+            "head_sha": "327f63472d3e1b68c6dae2988b4893c57585d6fa",
+            "external_id": "f2f583d5-6265-550d-812f-61e9efb50de4",
+            "url": "https://api.github.com/repos/gera3d/dsh-superagent-prototype/check-runs/132576774419",
+            "html_url": "https://github.com/gera3d/dsh-superagent-prototype/actions/runs/43637289605/job/132576774419",
+            "details_url": "https://github.com/gera3d/dsh-superagent-prototype/actions/runs/43637289605/job/132576774419",
+            "status": "completed",
+            "conclusion": "success",
+            "started_at": "2026-11-14T20:24:04Z",
+            "completed_at": "2026-11-14T20:26:43Z",
+            "output": {
+              "title": null,
+              "summary": null,
+              "text": null,
+              "annotations_count": 2,
+              "annotations_url": "https://api.github.com/repos/gera3d/dsh-superagent-prototype/check-runs/132576774419/annotations"
+            },
+            "check_suite": {
+              "id": 118151899345
+            },
+            "app": {
+              "id": 15368,
+              "client_id": "Iv1.05c79e9ad1f6bdfa",
+              "slug": "github-actions",
+              "node_id": "MDM6QXBwMTUzNjg=",
+              "owner": {
+                "login": "github",
+                "id": 9919,
+                "node_id": "MDEyOk9yZ2FuaXphdGlvbjk5MTk=",
+                "avatar_url": "https://avatars.githubusercontent.com/u/9919?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github",
+                "html_url": "https://github.com/github",
+                "followers_url": "https://api.github.com/users/github/followers",
+                "following_url": "https://api.github.com/users/github/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github/subscriptions",
+                "organizations_url": "https://api.github.com/users/github/orgs",
+                "repos_url": "https://api.github.com/users/github/repos",
+                "events_url": "https://api.github.com/users/github/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github/received_events",
+                "type": "Organization",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "name": "GitHub Actions",
+              "description": "Automate your workflow from idea to production",
+              "external_url": "https://help.github.com/en/actions",
+              "html_url": "https://github.com/apps/github-actions",
+              "created_at": "2018-07-30T09:30:17Z",
+              "updated_at": "2026-06-18T16:17:48Z",
+              "permissions": {
+                "actions": "write",
+                "administration": "read",
+                "artifact_metadata": "write",
+                "attestations": "write",
+                "checks": "write",
+                "code_quality": "write",
+                "contents": "write",
+                "copilot_requests": "write",
+                "deployments": "write",
+                "discussions": "write",
+                "drives": "write",
+                "issues": "write",
+                "merge_queues": "write",
+                "metadata": "read",
+                "models": "read",
+                "packages": "write",
+                "pages": "write",
+                "pull_requests": "write",
+                "repository_hooks": "write",
+                "repository_projects": "write",
+                "security_events": "write",
+                "statuses": "write",
+                "vulnerability_alerts": "read"
+              },
+              "events": [
+                "branch_protection_rule",
+                "check_run",
+                "check_suite",
+                "create",
+                "delete",
+                "deployment",
+                "deployment_status",
+                "discussion",
+                "discussion_comment",
+                "fork",
+                "gollum",
+                "issues",
+                "issue_comment",
+                "label",
+                "merge_group",
+                "milestone",
+                "page_build",
+                "public",
+                "pull_request",
+                "pull_request_review",
+                "pull_request_review_comment",
+                "push",
+                "registry_package",
+                "release",
+                "repository",
+                "repository_dispatch",
+                "status",
+                "watch",
+                "workflow_dispatch",
+                "workflow_run"
+              ]
+            },
+            "pull_requests": [
+              {
+                "url": "https://api.github.com/repos/gera3d/dsh-superagent-prototype/pulls/117",
+                "id": 5315231826,
+                "number": 117,
+                "head": {
+                  "ref": "agent/report-identity-d504a5083010",
+                  "sha": "327f63472d3e1b68c6dae2988b4893c57585d6fa",
+                  "repo": {
+                    "id": 1443622878,
+                    "url": "https://api.github.com/repos/gera3d/dsh-superagent-prototype",
+                    "name": "dsh-superagent-prototype"
+                  }
+                },
+                "base": {
+                  "ref": "superagent-core",
+                  "sha": "5718336d3b9cb4a90fb5794e51be4f215d0fb839",
+                  "repo": {
+                    "id": 1443622878,
+                    "url": "https://api.github.com/repos/gera3d/dsh-superagent-prototype",
+                    "name": "dsh-superagent-prototype"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "stage": "reviewed source with successful CI; not merged/installed/accepted"
+    },
+    "227": {
+      "nextDocumentationComment": 6883711948,
+      "status": "released serialized docs ownership after226 sealed; pending normal intake"
+    },
+    "215": {
+      "returnedHead": "22501f75312bb62246969c3853bb04ba00c3cc76",
+      "review": "REJECTED for host-sound-disable bypass",
+      "reproduction": {
+        "hostSoundEnabled": false,
+        "persistentMuted": false,
+        "actualIsMuted": false,
+        "expectedIsMuted": true,
+        "exit": 1,
+        "playedAudio": false
+      },
+      "report": "latest local file reuses consumed turn3; canonical waiting",
+      "correctionComment": 6883725886,
+      "scope": "same adapter, deterministic mute truth table and actual current report identity; no real audio"
+    },
+    "228": {
+      "returnedHead": "a688da0037c5603ab7b853e976be663e746b953f",
+      "review": "delta read: finite validated retry delay and bounded invalid cache; final focused evidence still worker-attributed",
+      "canonicalConsumed": "8559aa92fc05b4f7",
+      "workerTests": {
+        "vitest": 205,
+        "node": 35,
+        "contract": 17
+      },
+      "sourcePR": "DENIED: GraphQL Could not resolve to a Repository with the name gera3d/dsh-plugins. (repository)",
+      "action": "stopped source PR creation; no credential switch or repeated denied lookup; local branch/candidate preserved"
+    },
+    "runtime": {
+      "at": "2026-11-14T20:27:14.495263+00:00",
+      "state": {
+        "setup": {
+          "machine": {
+            "stateDir": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent",
+            "promptMaxChars": 100000,
+            "admissionContextMaxPages": 10,
+            "admissionContextTimeoutMs": 15000
+          },
+          "problem": null,
+          "feishuProblem": null,
+          "accounts": {
+            "repository": "gera3d/superagent-sandbox",
+            "agent": "Ultron-Uplink",
+            "feishu": null
+          }
+        },
+        "load": {
+          "running": 1,
+          "queued": 0,
+          "maxWorkers": 3
+        },
+        "masterId": "orchestrator-core",
+        "paused": false,
+        "health": {
+          "runtime": {
+            "state": "ready",
+            "detail": "Orchestrator is ready",
+            "at": "2026-11-14T18:08:56.965Z"
+          },
+          "relay": {
+            "state": "ready",
+            "detail": "Nothing waiting",
+            "at": "2026-11-14T20:27:00.884Z"
+          },
+          "notice": {
+            "state": "ready",
+            "detail": "Nothing waiting",
+            "at": "2026-11-14T20:27:00.886Z"
+          },
+          "launch": {
+            "state": "ready",
+            "detail": "Nothing waiting",
+            "at": "2026-11-14T20:22:27.019Z"
+          },
+          "delivery": {
+            "state": "ready",
+            "detail": "Nothing waiting",
+            "at": "2026-11-14T20:22:29.705Z"
+          },
+          "assessment": {
+            "state": "ready",
+            "detail": "Nothing waiting",
+            "at": "2026-11-14T19:39:28.574Z"
+          },
+          "reply": {
+            "state": "ready",
+            "detail": "Nothing waiting",
+            "at": "2026-11-14T20:27:11.137Z"
+          },
+          "evals": {
+            "state": "ready",
+            "detail": "No unavailable Eval in the last hour"
+          },
+          "models": {
+            "state": "ready",
+            "detail": "No managed Session is waiting on a model budget retry"
+          },
+          "github": {
+            "state": "ready",
+            "detail": "5 notifications; next poll \u2265 60s",
+            "at": "2026-11-14T20:22:24.702Z"
+          }
+        }
+      }
+    },
+    "originalFindingsObservations": {
+      "composio": "coordinator-composio-local-doc-correction-review-20261114; revision21 blocked unchanged",
+      "diagnostics": "coordinator-diagnostics-local-doc-correction-review-20261114; revision12 blocked unchanged"
+    }
+  }
+}

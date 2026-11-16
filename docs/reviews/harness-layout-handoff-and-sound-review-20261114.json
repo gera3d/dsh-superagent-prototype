@@ -1,0 +1,209 @@
+{
+  "at": "2026-11-14T21:35:19.440202+00:00",
+  "scope": "one returned correction review stage, no dispatch or release",
+  "checkpointBefore": "c4a96a8abd825ab65e28a70847efcf1e655fb1d2",
+  "runtime": {
+    "setup": {
+      "machine": {
+        "stateDir": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent",
+        "promptMaxChars": 100000,
+        "admissionContextMaxPages": 10,
+        "admissionContextTimeoutMs": 15000
+      },
+      "problem": null,
+      "feishuProblem": null,
+      "accounts": {
+        "repository": "gera3d/superagent-sandbox",
+        "agent": "Ultron-Uplink",
+        "feishu": null
+      }
+    },
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "masterId": "orchestrator-core",
+    "paused": false,
+    "health": {
+      "runtime": {
+        "state": "ready",
+        "detail": "Orchestrator is ready",
+        "at": "2026-11-14T18:08:56.965Z"
+      },
+      "relay": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T20:49:10.636Z"
+      },
+      "notice": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T20:49:10.638Z"
+      },
+      "launch": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T20:27:46.674Z"
+      },
+      "delivery": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T20:38:22.389Z"
+      },
+      "assessment": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T19:39:28.574Z"
+      },
+      "reply": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-14T20:27:11.137Z"
+      },
+      "evals": {
+        "state": "ready",
+        "detail": "No unavailable Eval in the last hour"
+      },
+      "models": {
+        "state": "ready",
+        "detail": "No managed Session is waiting on a model budget retry"
+      },
+      "github": {
+        "state": "ready",
+        "detail": "0 notifications; next poll \u2265 60s",
+        "at": "2026-11-14T21:31:21.634Z"
+      }
+    }
+  },
+  "settings": {
+    "executorRevision": 44,
+    "modelsRevision": 26,
+    "coordinationRevision": 3,
+    "maxWorkers": 3,
+    "OpenAI": "conserved",
+    "GoogleReserve": "5 percent unchanged; no provider probe",
+    "hierarchy": [
+      "antigravity/gemini-3.8-flash",
+      "anthropic/claude-sonnet-5-5",
+      "deepseek-official/deepseek-flash",
+      "openai-codex/gpt-6.1-sol conserved/excluded"
+    ]
+  },
+  "layout227": {
+    "ticket": "4e351bddde9fe140791971c7a7c5cb36",
+    "assignment": "9f067394e1e0a1f1a490a6181063956d",
+    "state": "ended-ready",
+    "head": "b179a121ef754e454116702e7c969100d31d29a7",
+    "pr": 118,
+    "ci": "success",
+    "report": {
+      "turn": "4",
+      "replyToTrigger": "8f9b0abbc62a6d717b7d037bb55bbc2f",
+      "consumedHash": "2823f44f1694378c",
+      "canonicalDeliveredHash": "2823f44f1694378c",
+      "at": "2026-11-14T20:49:10.490Z"
+    },
+    "review": "source unchanged from already reviewed final inventory-only commit; current file/marker/canonical identity now agree. Old failed turn1/trigger evidence preserved; no manual stripping/rewrite.",
+    "next": "Codex protected native review/release and mounted report+delivery+nextsteps/session-switch proof; existing screen availability unanswered"
+  },
+  "sound215": {
+    "ticket": "ea85d9eb8a702bef3c0065d156df1e04",
+    "assignment": "e15c580285253bae62479fea93b009e8",
+    "head": "f084a01dadabbb1efb4b557516fbb3047b76c657",
+    "base": "dbf9410f07cecdb9a855bb98c42a6b105dcf73cc",
+    "previousHead": "8ef70b746eb1f9382073313322ef7a153bf3f142",
+    "gitClean": true,
+    "independentReview": "hoisted vi.mock binds before adapter import; actual execFile path/args/call counts asserted; injected runner test verifies default runner not called; progress/unknown states dispatch0; host/global/event mute dominance retained; no mute mutation flags/afplay",
+    "rootTest": {
+      "command": "./node_modules/.bin/vitest run tests/sound-adapter.spec.ts",
+      "exit": 0,
+      "pass": 14,
+      "fail": 0,
+      "testFiles": 1,
+      "durationMs": 274,
+      "realAudio": false,
+      "realNotification": false
+    },
+    "workerCountQualification": "worker reported19/19; actual root Vitest execution counts14tests. Root14 is authoritative for this review; worker15Python tests not rerun.",
+    "canonicalReport": {
+      "state": "progress",
+      "turn": 6,
+      "consumedHash": "16140ce0fb2bd387",
+      "canonicalDeliveredHash": "16140ce0fb2bd387"
+    },
+    "next": "adapter correction qualified only; serialize executor wiring after217 exact-head runtime review; actual ding/live source/integration/native acceptance unverified"
+  },
+  "fallback217": {
+    "ticket": "ff97608c4932079f4021b6b4d8ac03f4",
+    "assignment": "a0bfbb1698be8f88a0f62e05ea591015",
+    "head": "82424ccbc7e6746d1b617ca3f0f20e8351095213",
+    "pr": 121,
+    "ci": "success",
+    "state": "idle waiting; no consumed ready report",
+    "sourceDeltaRead": "classifyModelError now imported in Sessions/DshExecutor; ledger accessor and optional configured attempt/deadline checks added; actual runtime qualification not completed in this pass",
+    "remaining": "independent final runtime/uncertain-tool/provider-guard/deadline review and actual identity-bound report. Keep shared runtime ownership; do not treat green CI as coverage of24criteria.",
+    "noNewCorrection": true
+  },
+  "otherLanes": {
+    "117": "327f63472d3e1b68c6dae2988b4893c57585d6fa unchanged, draftopen/green/protected native pending",
+    "108": "local53369320ab0da142f1fa84fd58de82b559aa71ba unchanged; finding21blocked; native publication hold",
+    "115": "locala9be5b92369fd5e2f80f92e43c89211b4139c19b unchanged; finding12blocked; native publication hold",
+    "228": "ended-ready consumed8559aa92fc05b4f7; prior plugin repository denial retained, not retried",
+    "216": "idle waiting; serialized behind217",
+    "218": "idle waiting; serialized behind217",
+    "120": "canonical sourceissue tracked, dependency queue behind217 executor ownership; no new routing task",
+    "229": "idle waiting; no desktop input/interactive permission assumed"
+  },
+  "trajectoryCoverage": {
+    "227": {
+      "sessionId": "worker-4e351bddde9fe140791971c7a7c5cb36",
+      "routes": [
+        {
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash",
+          "attempts": 5,
+          "uncachedInputTokens": 14944,
+          "outputTokens": 4180,
+          "cacheReadTokens": 861032,
+          "totalTokens": 880156
+        }
+      ],
+      "totals": {
+        "uncachedInputTokens": 14944,
+        "outputTokens": 4180,
+        "totalTokens": 880156,
+        "cacheReadTokens": 861032
+      },
+      "coverage": {
+        "attempts": 5,
+        "reported": 5,
+        "cacheRead": "exact",
+        "cacheWrite": "unreported",
+        "attribution": "complete"
+      },
+      "cost": {
+        "kind": "unavailable",
+        "reason": "noRecordedPrice"
+      }
+    },
+    "215": {
+      "inputReadAt": "2026-11-14T20:38:22.224Z",
+      "idleAt": "2026-11-14T20:43:55.527Z",
+      "providerRequestUsage": "not provided by current ticket read; no claim of request/provider coverage"
+    },
+    "217": {
+      "inputReadAt": "2026-11-14T20:38:22.291Z",
+      "idleAt": "2026-11-14T20:47:08.104Z",
+      "providerRequestUsage": "not provided by current ticket read; no claim of request/provider coverage"
+    }
+  },
+  "bounds": {
+    "diskAvailableKiB": 12852020,
+    "noNewCommentsOrTasks": true,
+    "noNativeAvailabilityAnswer": true,
+    "noReleaseOrConfigAccessSpendChanges": true,
+    "noLargeBuildInstallDownloadCloneDeletion": true,
+    "unchangedOldFailuresAndNativeGates": true
+  }
+}

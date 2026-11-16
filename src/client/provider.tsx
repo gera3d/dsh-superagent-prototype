@@ -26,8 +26,8 @@ export interface PanelData {
   /** Incremented each time dsh-superagent recovers from a restart so dependent views refetch. */
   restarts: number
 }
-const Panel = createContext<PanelContext | undefined>(undefined)
-const PanelState = createContext<PanelData | undefined>(undefined)
+export const Panel = createContext<PanelContext | undefined>(undefined)
+export const PanelState = createContext<PanelData | undefined>(undefined)
 export function usePanel(): PanelContext {
   const value = useContext(Panel)
   if (!value) throw new Error('dsh-superagent page rendered outside its panel')
@@ -71,15 +71,15 @@ function Toast({ text, onDone, holdMs = 3000 }: { text: string; onDone: () => vo
 }
 const stay = () => {}
 const noSession = async () => {}
-export function PanelProvider({ t, interval = 5000, openSession = noSession, navigate = stay, back = stay, backLabel = '', children }: {
-  t: T; interval?: number; openSession?: (sessionId: string) => Promise<void>; navigate?: PanelContext['navigate']; back?: () => void
+export function PanelProvider({ t, call: customCall, interval = 5000, openSession = noSession, navigate = stay, back = stay, backLabel = '', children }: {
+  t: T; call?: Call; interval?: number; openSession?: (sessionId: string) => Promise<void>; navigate?: PanelContext['navigate']; back?: () => void
   backLabel?: string
   children: ReactNode
 }) {
   // Read the current translator via ref so locale changes do not recreate `call` and restart polling.
   const copy = useRef(t)
   copy.current = t
-  const call = useMemo(() => caller(() => messages(copy.current)), [])
+  const call = useMemo(() => customCall ?? caller(() => messages(copy.current)), [customCall])
   const [toast, setToast] = useState<{ text: string; id: number }>()
   const notify = useCallback((text: string) => setToast({ text, id: Date.now() }), [])
   // Poll at 1s during a restart until the server goes down and answers again, or time out after 30s if the restart completed between polls.
@@ -98,7 +98,7 @@ export function PanelProvider({ t, interval = 5000, openSession = noSession, nav
   }, [restarting])
   const context = useMemo(() => ({ t, call, navigate, back, backLabel, openSession, notify, restart }), [t, call, navigate, back, backLabel,
     openSession, notify, restart])
-  const data = useMemo(() => ({ state, error, reload, setup: state?.setup, running: state?.load.running ?? 0, restarts }), [state, error,
+  const data = useMemo(() => ({ state, error, reload, setup: state?.setup, running: state?.load?.running ?? 0, restarts }), [state, error,
     reload, restarts])
   return <Panel.Provider value={context}><PanelState.Provider value={data}>
     <style>{STYLES}</style>

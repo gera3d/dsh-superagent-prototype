@@ -6,6 +6,8 @@ import { findingMatchesSession } from './finding-association.ts'
 import type { SessionEventLike } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { ConversationNodeDefinitionInput, ConversationViewDefinition, ConversationViewNode } from '@deepseek-ai/dsh-client-ui-conversation/client'
+import { Icon } from './controls.tsx'
+import STYLES from './worker-report.css?raw'
 
 export const WORKER_REPORT_TARGET = 'superagent-worker-report'
 export interface WorkerReport { summary: string; callId: string; reportSeq: number; finalSeq: number }
@@ -85,11 +87,16 @@ export function workerReportView(): ConversationViewDefinition {
   } }
 }
 export function WorkerReportSummary({ report, children }: { report: WorkerReport; children?: React.ReactNode }) {
-  return <section aria-label="Worker report" data-report-seq={report.reportSeq}>
-    <strong>Worker report</strong>
-    <p>The final assistant reply was blank. This is the recorded worker report, not accepted delivery.</p>
-    <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{report.summary}</div>
-    {children}
+  return <section className="dt-worker-report" aria-label="Worker report" data-report-seq={report.reportSeq}>
+    <style>{STYLES}</style>
+    <div className="dt-worker-report-header">
+      <Icon name="review" size={14} />
+      <strong className="dt-worker-report-title">Worker report</strong>
+      <span className="dt-worker-report-badge">Recorded fallback</span>
+    </div>
+    <p className="dt-worker-report-provenance">The final assistant reply was blank. This is the recorded worker report, not accepted delivery.</p>
+    <div className="dt-worker-report-body" tabIndex={0} role="region" aria-label="Worker report content" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{report.summary}</div>
+    {children && <div className="dt-worker-report-footer">{children}</div>}
   </section>
 }
 const call = caller(() => ({ offline: 'Delivery service is offline.', notRunning: 'Delivery service is not running.',
@@ -114,7 +121,7 @@ export function WorkerReportFallback({ ctx, sessionId, running, removed }: {
   const source = useMemo(() => ctx.uiConversation.binding(sessionId).target(WORKER_REPORT_TARGET), [ctx, sessionId])
   const report = useSyncExternalStore<WorkerReport | null | undefined>(source.subscribe, source.getSnapshot, source.getSnapshot)
   if (running || removed || !report) return null
-  return <WorkerReportSummary report={report}>
+  return <WorkerReportSummary key={sessionId} report={report}>
     <DeliveryLink sessionId={sessionId} />
   </WorkerReportSummary>
 }

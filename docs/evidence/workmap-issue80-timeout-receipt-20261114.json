@@ -1,0 +1,25 @@
+{
+  "observedAt": "2026-11-14T08:27:35.051078+00:00",
+  "receipt": {
+    "id": "524eb6e8820f0eaa70c3d3ad1f5d64c0",
+    "evalId": "6e5e8eb9282ac572d367d21fa6595908",
+    "threadKey": "github:77",
+    "triggerIds": [
+      "28c7d9613194875494afde70eb28590c"
+    ],
+    "at": "2026-11-04T20:53:22.949Z",
+    "kind": "unavailable",
+    "reason": [
+      {
+        "code": "timeout"
+      }
+    ],
+    "strength": "explicit",
+    "trigger": {
+      "id": "28c7d9613194875494afde70eb28590c",
+      "at": "2026-11-04T20:16:50.000Z",
+      "source": "github"
+    }
+  },
+  "limits": "Historical exact timeout verified only. No requeue, eval benchmark, model request or settings change; report ten timings are not independently re-measured or an inference-latency SLA."
+}
