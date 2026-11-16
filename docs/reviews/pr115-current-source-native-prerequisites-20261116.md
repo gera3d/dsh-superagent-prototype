@@ -1,5 +1,8 @@
 # PR115 current merged-source qualification and native prerequisites
 
+**PR115 native path inspected: BLOCKED_CAPABILITY — November16Pacific:** [Exact installed gates and one bounded option](pr115-protected-native-action-boundary-20261116.md). Originalfindingblocked12/currentr11endedreportblocked; typedinbox0choices/no associateddelivery. FindingreleaseUI absent withoutready evidence; server independentlyrequiresstructuredassignmentREADY, so sourceCI/operatorverifiedobservation cannotpromoteit. Currentjoblocala9be differsoutsideMerged5de; existingpath seeksOPENexactworkerPR, notadoption. Laterpresetcreatesworktree/dependencylinks forbiddeninthisstage; trustedrunnerstillPR96. No nativeclick/oldgrantreplay/profileoverride/ordinarychoice/newjob. One explicit protectedcurrent-source-adoption capability/environment option recorded for Gera; NOTapproved/implemented/dispatched. Codexnextreview/releaseowner; no repeatedquestion/sourcechecks. Chromeotherprojectleftuntouched.
+
+
 November16,2026 Pacific. Bounded independent review of the actual outside source merge; no repeated implementation/test run or source merge.
 
 ## Exact source verdict: QUALIFIED
