@@ -1,5 +1,8 @@
 # DeepSeek Harness project status
 
+**Original216 R2 evidence CLEARED; prerequisite BLOCKED — November16UTC:** [Exact disposition and one bounded option](docs/reviews/original216-r2-evidence-disposition-20261115.md). Publishedf5f7a43 restores24verbatimcriteria/allnativeunresolved, retracts wrongtarget22tests/prohibitedreusequalification, truthfullyrecords currentreporttransportwaiting. MatchingnestedR2reads/evidencecommit inspected; no newtests/reportcall. Unchanged9fileartifact/dryrun retained, no repeat. Exactinstalled-artifactcheckcontext and genuinecurrentreport/nativebinding remainunestablished; deliveryrev2emptyrefs/unconfirmedrequirements/noauthorities. No further evidence-only prompt. Proposed finite fixture/dependencyexception needs Gera; Codex owns prerequisite review, originalHarness216 implementation. No newdispatch/package/nativeaction/deploy; load0/0max3.
+
+
 **Original216 returned integration WITHHELD — November16UTC:** [Independent review](docs/reviews/original216-returned-integration-review-20261115.md). Realpublished8eda4e8 contains9filepatch/evidence; freshpreimage/postimage hashes and actualdryrun match. NestedCLI22passing tests ran olderSOURCEcheckout, notinstalledartifact, with prohibiteddependencyreuse; criteria mapping substitutesoriginal24, no genuinereadyreceipt/reportWAITING. ONE same-retained-owner correction6909184037 admitted/inputd78089ac/trigger064ce31e read06:32:40.279UTC, load1running/0queued/max3; no revisedresult yet/no duplicateimplementation/newjob/nativeaction. NextHarness216 truthfulcriteria/evidence/report correction, Codexreturnedreview; no qualifiedpackage/install/deploy.
 
 
