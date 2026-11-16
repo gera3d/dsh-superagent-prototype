@@ -1,0 +1,32 @@
+# Refreshed PR105/108 source review and post-merge correction
+
+November15Pacific / November16,2026. Existing explicit owner GitHub review/merge instructions authorize ordinary independent expected-head SOURCE decisions. They do not supply native Publish/installation/acceptance authority. No new local coordinator/reviewer tests or implementation.
+
+## PR108 qualified source merge
+
+- Exacthead0b93397315eae1dc948b1b41ce1c7cd2701298d0, reviewedtargete57d551805c2b370d5683262fda4ef6a726f6af9. ExactCI43788323210 SUCCESS2745pass/19skip/type/build;40boundary/17helper checks pass; installed-bridge17cases has16skipped. Historical194local checks are not a new head attestation.
+- Missing3architecture inventory rows are published and green. Boundary/helper and both Composio test blobs are unchanged from488f840. Current-base Sessions preserves ordinary observer-only permissions/prompt/routing, idempotent disposal, restricted managed tools, primary-worker raw/child-scoped ledger IDs and uncertainty/replay checks. Ordinary-session recovery guidance is not a hard ledger lock. Second independent code review agrees.
+- Review5914269499 APPROVE, then ordinary expected-head merge761f03006c1e1f8cd8770c7f6d90d795e8aa2b6e. Target moved during review: firstparent66cc2293e41a67926ed44dcce1cb8007039af975 is outsidePR105merge. All5Composio production/test blobs equal reviewedhead; docs007 additionally contains3PR105test rows. PostmergeCI43790366723 SUCCESS2770pass/19skip/type/build. Combined source inherits the known105tail bug; greenCI does not cover that edge.
+- Original Composio findingc844ce8f-7c80-407c-a237-9dd53d62f3c3 remainsrevision21blocked/r20. Old source inventory/unpublished-head hold is historical after actual published refreshedhead; outsidepush proves no native authority. Protected native review/check/package/Publish/rollback/install/liveverification/evidence/acceptance still require current exact-artifact controls. No old native grant promoted/replayed, no deployment/access/settings/SDK reuse.
+
+## PR105 outside merge preserves an unresolved defect
+
+Sourcehead0e783e38f4c1d0885147257f3360677bb722e34a CI43788411167 SUCCESS2729pass/3skip/type/build (13tooloutput/13runtime/3Sessions/5replay). Output module equals rejected8936bcf exactly. Concrete notice-fits-but-tail-does-not defect remains: build(room) passes byte/line limits with an empty terminal tail; compact fallback is skipped and install guard checks only pointer/size. It is exported-helper boundary evidence, not proof of a nativeMac filesystem path failure.
+
+Coordinator withheld source approval in COMMENTreview5914269299, not self-approval: connected reviewergera3d also authored thisPR. Another actor merged105 at66cc2293e41a67926ed44dcce1cb8007039af975 onNovember16,02:08:36UTC through recordedgera3daccount. Account metadata does not identify a person/assistant. This fact supersedes earlier unmerged disposition but not the defect/review. No revert/rollback or deployment was performed. PR bodies now state exact heads/base/check limits/outside merge instead of historical pins.
+
+Tracking [Prototype#127](https://github.com/gera3d/dsh-superagent-prototype/issues/127) was created by the parent under separately supplied explicit owner issue-creation evidence; no duplicate issue was made here. It preserves fullisError passthrough and requests only successful-output terminal preservation with focused helper/registered-boundary regressions, saved-text/replay identity guards and honest native-versus-controlled limits. The error-scope clarification capability remains unapproved; no original requirement/review/budget is rewritten.
+
+## Supported same-lineage continuation and actual pickup
+
+Originalr7ticket4abae94273cfd65a149e9ee6333c0b87/assignmentba3796bc797424d3cdf97948782af08f is ended/completed, retryfalse. It was not resumed or edited. Native audit retains local-operator fix_now approvalNovember10,07:52:53.380 and no deferral. Currentcoordinationenabled/revision3; no new firstapproval inferred.
+
+The connected catalog did not expose Harness, so the already-installed dsh-superagent-control0.2.0 supported stdio MCP bridge was used. No new server configuration/account/access or browser headers. Supported observe_finding appended one stable original-problem occurrencepostmerge-pr105-tail-loss-source-correction-issue127 with execution_authorizedfalse and immutable scope/requirements retained. Supported coordinate_finding validated separate private current-uid/mode0600 exactrevision instructions:
+
+1. retry_scope originalblockedrevision8→9/awaiting_decision at02:29:35.416UTC; four priorjobs retained. Advice failed JSON parsing; no choice was invented or edited.
+2. confirmrevision9 retainedfix_now at02:30:06.322UTC. Native validator matched prior approved choice and lineage; queued then dispatched at02:30:06.917UTC.
+3. Actual canonical successor jobfinding:e1dfd442-bb88-409e-bef0-b2db569dca79:r9, ticket4c7b17a4bd05eea59b2a8a0e4910ce84, assignmentacdefe043befee416ab48434d929e0b7 started02:30:07.741UTC. Actual outerGoogleFlash request02:30:07.785UTC/requestseq18 verifies execution, not just issue creation/coordinator activity. Initialuserseq13 carries trigger5c00859cbebcdf5cfc6c67c8df649196 and native full-context read pointers; canonical thread confirms #127/specific correction occurrence in full source request. No claim that every unobserved nested tool read or test completed. One running/zero queued; old job/native failures retained.
+
+Harness owns correction in the sanctioned successor; Codex owns returned independent exact-head review/CI/source merge ifqualified. Require failing-before/passing-after proof at fitting-notice/absent-terminal boundary through helper and registeredpostexecute/Sessions path, terminal retained or originalunchanged with truthful fallback diagnostic, fullisError unchanged, savedfulltext/retrieval/UTF8/line/singleline/ledger/replay guards. No reimplementation of completed prompt/replay/corpus work, new review-context API, full localbuild/suite/dependencyreuse/providerprobe/OpenAIexecution/liveedit/deploy/restart/nativePublish/acceptance. One local targetedprocess total, existing routes/reserve/settings/max3 preserved. Productive worker left intact; no result/fix/acceptance yet.
+
+Private MCP instruction/result/request receipts retained locally. Canonical observation and supported retry/confirmation audit are authoritative; this source checkpoint does not promote evidence or native acceptance.

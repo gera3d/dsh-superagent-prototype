@@ -1,5 +1,9 @@
 # Source PR review and merge ledger — November 14, 2026
 
+## November15 refreshed105/108 dispositions
+
+[Exact refreshed source and #127 continuation record](refreshed-pr105-108-source-review-20261115.md).108head0b933973 source-approved5914269499 and expected-head merged761f030; exactCI2745/19skip, postmerge43790366723 SUCCESS2770/19skip/type/build. Actualfirstparent is outside105merge66cc229 (02:08:36UTC recordedgera3daccount), not earlierreviewede57target; all5Composiocode/testblobs unchanged, docsadds3testrows.105was withheld/no selfapproval but is actually merged with unresolved terminal-tail defect; do not replay old unmerged disposition. Dedicated127/retainedfindingrev9 successor4c7b17a4/acdefe04 actualGooglepickup02:30:07.785 verified via supportedMCP/nativeapprovallineage; originalr7/history unchanged. No new localtests/deploy/nativeacceptance. Older disposition rows below are historical.
+
 ## November15 PR126 source correction
 
 PR126 independently approved5913428928 at615250a0748af4cf6f00706eef65e3044bbdf124, ordinary expected-head merged46ae88c1fbd4ac649b066e3b67e745374bb77b4e onto605cfde. All9source/test blobs unchanged; exactheadCI43769103757 SUCCESS2692pass/3skip/type/build. Real backend page and registered Sessions failure→zero-write→Rev2 recovery fixtures qualify bounded source correction. PostmergeCI43773621322 SUCCESS2692pass/3skip/type/build; original216 observation6903035012 source-only/no continuation; original216 canonicalreportwaiting, live/upstream hooks/nativeacceptance unqualified. No coordinator local tests/install/deploy/provider changes. Prior withheld rows below preserve rejected-head history.
@@ -34,11 +38,13 @@ Gera explicitly authorized reviewing and merging safe source PRs. In the earlier
 
 | [#126](https://github.com/gera3d/dsh-superagent-prototype/pull/126) | `615250a0748af4cf6f00706eef65e3044bbdf124` | `605cfde` | `46ae88c1fbd4ac649b066e3b67e745374bb77b4e` | Independent review5913428928; exacthead43769103757 and postmerge43773621322 CI SUCCESS2692pass/3skip/type/build. Both backend page and registered Sessions failure/recovery fixtures; all9blobs unchanged. Bounded SOURCE phase, not native acceptance. |
 
+| [#108](https://github.com/gera3d/dsh-superagent-prototype/pull/108) | `0b93397315eae1dc948b1b41ce1c7cd2701298d0` | `66cc2293e41a67926ed44dcce1cb8007039af975` (target advanced after e57 review) | `761f03006c1e1f8cd8770c7f6d90d795e8aa2b6e` | Review5914269499; CI43788323210 and post43790366723 green. All5Composio code/testblobs match; docs3rows from outside105. Known105defect remains tracked127; source-only, no native acceptance. |
+
 PR124 is explicitly an **isolated source domain/context adapter and reusable component**. Host mounting, runtime persistence and actual handoff/recovery integration remain subsequent work. Its source merge does not complete or accept the installed brief feature. PR117/118 source merges also retain their separate installation and native verification requirements.
 
 Post-merge CI is green for all first nine source merges, including PR124 run43665870503. PR113 reviewed-head CI passed; its new post-merge check remains pending verification. Source merge is not installation or native acceptance.
 
-## Current withheld source PR dispositions
+## Historical withheld source PR dispositions (November14)
 
 | PR / exact head | Current checks and disposition | Next owner / gate |
 |---|---|---|
