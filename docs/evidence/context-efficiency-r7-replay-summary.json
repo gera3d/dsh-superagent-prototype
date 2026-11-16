@@ -1,0 +1,59 @@
+{
+ "recorded": {
+  "limits": {
+   "OUTPUT_LINES": 100,
+   "OUTPUT_BYTES": 4096,
+   "tools": [
+    "bash",
+    "pwsh",
+    "job_output",
+    "job_list",
+    "grep",
+    "glob"
+   ]
+  },
+  "results": 644,
+  "boundedResults": 68,
+  "beforeBytes": 1043327,
+  "afterBytes": 771843,
+  "worstBoundedBytes": 4095,
+  "overLimit": 0,
+  "errorsAltered": 0,
+  "tailLost": 0,
+  "retrievalMismatch": 0,
+  "savedFiles": 68,
+  "beforeTokensApprox": 260832,
+  "afterTokensApprox": 192961,
+  "savedPct": 26,
+  "note": "bytes/4 estimate of model-facing tool-result text only; excludes quota, cost and cache pricing"
+ },
+ "synthetic": {
+  "limits": {
+   "OUTPUT_LINES": 100,
+   "OUTPUT_BYTES": 4096,
+   "tools": [
+    "bash",
+    "pwsh",
+    "job_output",
+    "job_list",
+    "grep",
+    "glob"
+   ]
+  },
+  "results": 8,
+  "boundedResults": 5,
+  "beforeBytes": 356584,
+  "afterBytes": 153047,
+  "worstBoundedBytes": 4094,
+  "overLimit": 0,
+  "errorsAltered": 0,
+  "tailLost": 0,
+  "retrievalMismatch": 0,
+  "savedFiles": 5,
+  "beforeTokensApprox": 89146,
+  "afterTokensApprox": 38262,
+  "savedPct": 57.1,
+  "note": "bytes/4 estimate of model-facing tool-result text only; excludes quota, cost and cache pricing"
+ },
+ "syntheticOutputSha256": "7cbf2c867e19513609e1a4d33390a8fa0b4a6594c434af77c7074e25248ddcc6"
+}

@@ -8,6 +8,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { vi, type Mock } from 'vitest'
 import type { UserMessage } from '@deepseek-ai/dsh-llm'
+import { createScope } from '@deepseek-ai/dsh-scope'
+import { ToolRuntime, defineTool } from '@deepseek-ai/dsh-tools'
 import { Runtime } from '../../src/app/runtime.ts'
 import { Store } from '../../src/app/store.ts'
 import { SettingsSchema } from '../../src/policy.ts'
@@ -131,8 +133,11 @@ export function subagentRuntime(agents: Map<string, FakeAgent>) {
   return { service, settle, spawn, live: (id: string) => !!children.get(id)?.live }
 }
 
-/** @param seed - writes to the database before the Runtime opens it, such as records an earlier version stored. */
-export async function startRuntime(seed?: (store: Store) => void) {
+/**
+ * @param seed - writes to the database before the Runtime opens it, such as records an earlier version stored.
+ * @param options - `realTools` names the Sessions whose tool registry is the installed ToolRuntime rather than a recording stand-in.
+ */
+export async function startRuntime(seed?: (store: Store) => void, options: { realTools?: (sessionId: string) => boolean } = {}) {
   const directory = mkdtempSync(join(tmpdir(), 'orchestrator-host-'))
   const AGENT = join(directory, 'agent-gh'), BOT = join(directory, 'lark-bot')
   const repository = { default_branch: 'master', permissions: { push: true } }
@@ -174,9 +179,23 @@ export async function startRuntime(seed?: (store: Store) => void) {
       const sessionTools = new Map<string, RegisteredTool>()
       tools.set(sessionId, sessionTools)
       const register = (tool: RegisteredTool) => { sessionTools.set(tool.name, tool); return () => sessionTools.delete(tool.name) }
-      agentCtx.reflect.provide('tools', { register, get: () => undefined, restrict: vi.fn(() => () => {}), guard: vi.fn(() => () => {}) })
+      const real = options.realTools?.(sessionId) === true
+      agentCtx.reflect.provide('systemPrompt', { section: () => () => {}, ...(real ? { tools: () => () => {} } : {}) })
+      if (real) {
+        // The preset's global tools, each returning the text it is given (or failing with it), which restrictions may name.
+        const runtime = new ToolRuntime(agentCtx)
+        const registerTool = runtime.register.bind(runtime)
+        for (const name of ['skill', 'bash', 'read', 'read_image', 'grep', 'glob', 'job_output', 'job_list', 'job_kill', 'web_search']) {
+          runtime.register(defineTool({ name, description: 'Isolated fixture: returns the text it is given, no actual command',
+            parameters: { text: { type: 'string', required: true }, fail: { type: 'boolean' } },
+            output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value as string }] },
+            execute: async args => { const a = args as { text: string; fail?: boolean }; if (a.fail) throw new Error(a.text); return a.text } }))
+        }
+        // What Sessions registers afterwards (its own tools) is also kept where `runTool` finds it.
+        runtime.register = (tool: never) => { sessionTools.set((tool as RegisteredTool).name, tool); return registerTool(tool) }
+      }
+      else agentCtx.reflect.provide('tools', { register, get: () => undefined, restrict: vi.fn(() => () => {}), guard: vi.fn(() => () => {}) })
       agentCtx.reflect.provide('skills', { register: () => () => {} })
-      agentCtx.reflect.provide('systemPrompt', { section: () => () => {} })
       const inbox = { nextTurn: [] as UserMessage[], nextStep: [] as UserMessage[],
         // A pending message taken out, as DSH's inbox does by its id.
         remove: (id: string) => [inbox.nextTurn, inbox.nextStep].some(list => {
@@ -228,6 +247,8 @@ export async function startRuntime(seed?: (store: Store) => void) {
         get status() { return status }, set status(next: string) { status = next; if (next === 'idle') for (const wake of idle.splice(0)) wake() },
         // Once its turn ended, as DSH's does.
         whenIdle: () => status === 'idle' ? Promise.resolve() : new Promise<void>(resolve => { idle.push(resolve) }) } as never)
+      // The host hands an agent a context scoped to it, which the installed ToolRuntime requires of a restriction.
+      if (real) { const agent = agents.get(sessionId)! as unknown as { ctx: Context }; agent.ctx = createScope(agentCtx, agent).ctx }
     }),
     selectModel: vi.fn(async () => {}), resolveAgent: vi.fn(resolveDefault), rename: vi.fn(async () => {}),
     prompt: vi.fn(() => { throw new Error('Plugin delivery must not use user RPC') }),

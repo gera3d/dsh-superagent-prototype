@@ -15,7 +15,7 @@ import { dirname } from 'node:path'
 import { z } from 'zod'
 import { key, liveTicket, type Ticket } from '../core/index.ts'
 import { resolveTicketBriefManager } from '../core/thread-brief.ts'
-import { currentTurnOf, mandateInstructions, ticketOfSession } from '../executor/dsh.ts'
+import { currentTurnOf, mandateInstructions, ticketOfSession, workerSessionId } from '../executor/dsh.ts'
 import type { HealthEntry } from '../infra/health.ts'
 import type { RoleModel } from '../policy.ts'
 import { AgentDelivery, messageId } from './delivery.ts'
@@ -399,13 +399,14 @@ export class Sessions {
       const effectful = !READ_ONLY_TOOLS.has(exec.name)
       const ledger = this.host.toolLedger?.(ticketId)
       if (!ledger || !effectful) return next()
-      const callId = exec.callId
-      if (!callId) {
+      const rawCallId = exec.callId
+      if (!rawCallId) {
         throw new Error(`Canonical callId required for effectful tool ${exec.name}; execution rejected`)
       }
       if (ledger.hasUncertain()) {
         throw new Error('Uncertain tool outcome blocks execution until operator reconciliation')
       }
+      const callId = agent.id === workerSessionId(ticketId) ? rawCallId : `${agent.id}:${rawCallId}`
       ledger.recordStart(callId, exec.name)
       ;(exec as { __ledgerHandled?: boolean }).__ledgerHandled = true
       try {

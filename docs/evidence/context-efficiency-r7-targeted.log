@@ -1,0 +1,36 @@
+
+ RUN  v4.1.8 /Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent/work/finding-task-4abae94273cf/work
+
+(node:34585) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/replay-output-bound.spec.ts (5 tests) 1818ms
+   ✓ reports zeros for an empty invocation instead of failing on the missing output directory  366ms
+   ✓ reports savedFiles 0 for a recorded session whose results are all under the limit  377ms
+   ✓ reports savedFiles 0 for a session whose only oversized results are errors, and leaves them whole  354ms
+   ✓ still bounds and saves a successful oversized result, keeping the status tail and the retrievable full text  352ms
+   ✓ the controlled synthetic corpus keeps an oversized error whole (S4) alongside bounded successes  367ms
+(node:34594) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/model-surface.spec.ts (7 tests) 929ms
+ ✓ tests/tool-output.spec.ts (13 tests) 1493ms
+   ✓ keeps the limits and the end of the text for any mix of long lines, wide characters and long pointers  1285ms
+(node:34606) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/tool-output-sessions.spec.ts (3 tests) 889ms
+   ✓ bounds a worker's oversized bash output into its ticket directory, keeps an error whole and keeps both of two look-alike calls  510ms
+ ✓ tests/tools.spec.ts (26 tests) 5440ms
+   ✓ reads the lists, a ticket, a decision, the settings, the prompts and the models as resources  517ms
+   ✓ answers every routing tool in one shape: the decision it recorded, why, and the ticket card  582ms
+   ✓ routes several triggers in one call, in order, and answers a refused or failed item without undoing the others  312ms
+   ✓ shows a candidate with its thread's tickets open first, the tickets it reached, those its text names, and a short next step  324ms
+   ✓ tells the main Session of the settings, prompts, requeues and unsubscriptions others made, never of its own  300ms
+ ✓ tests/tool-output-runtime.spec.ts (13 tests) 215ms
+(node:34621) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/prompts.spec.ts (18 tests) 314ms
+
+ Test Files  7 passed (7)
+      Tests  85 passed (85)
+   Start at  02:03:18
+   Duration  10.37s (transform 2.76s, setup 0ms, import 6.18s, tests 11.10s, environment 4ms)
+
