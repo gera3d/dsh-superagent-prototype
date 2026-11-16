@@ -1,0 +1,173 @@
+{
+  "observedAt": "2026-11-14T10:24:31.548415+00:00",
+  "findingId": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+  "revision": 2,
+  "state": "blocked/unaccepted; documentation audit partial",
+  "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+  "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7",
+  "scope": "Original priority6 next historical runtime/rebase seven-item audit; documentation/reconciliation only",
+  "coverage": {
+    "historicalTotal": 34,
+    "newlyReconciled": [
+      102,
+      112,
+      116,
+      121,
+      122,
+      123,
+      128
+    ],
+    "priorReconciledNotRepeated": [
+      3,
+      5,
+      11,
+      13,
+      14,
+      16,
+      54,
+      80,
+      84,
+      86,
+      87,
+      91,
+      98,
+      108,
+      109,
+      117,
+      157,
+      159,
+      163,
+      165,
+      167
+    ],
+    "cumulative": [
+      3,
+      5,
+      11,
+      13,
+      14,
+      16,
+      54,
+      80,
+      84,
+      86,
+      87,
+      91,
+      98,
+      102,
+      108,
+      109,
+      112,
+      116,
+      117,
+      121,
+      122,
+      123,
+      128,
+      157,
+      159,
+      163,
+      165,
+      167
+    ],
+    "cumulativeCount": 28,
+    "remainingExplicit": [
+      131,
+      132,
+      133,
+      135,
+      136,
+      138
+    ],
+    "remainingCount": 6,
+    "supplementalUnknowns": [
+      "sandbox PR150",
+      "prototype issues2/3",
+      "other plugin repository open metadata"
+    ],
+    "prototypePR92Limit": "Previously inspected metadata/change list only; not full independent qualification"
+  },
+  "items": [
+    {
+      "issue": 102,
+      "classification": "narrower merged source delivery, finished by follow-up121; original native outcome unverified",
+      "evidence": [
+        "Original f70df4435322b025d2fa9f22e95bd8df / d091e7cbc88d45ffa7a333fa03c406c4 waiting report mixed implemented55-test claim with build still running; not acceptance.",
+        "Completion comment6647956033 points to same prototype14/sandbox126 as issue121. Both merged: aeaa5c4b41ea3f0b11c5a7210ec6e7409db33492 and683b6c87c3fde180708d71aa2327d8da1bb890d4; prototype merge ancestor of current operator HEAD."
+      ],
+      "limits": "Do not duplicate same fix as separate unfinished implementation. No direct protected delivery/native acceptance linked to this original ticket found in exact-ID search. Historical screenshot/test claims are not a fresh browser run. Staged-choice/native-send proof remains required; no override/replay."
+    },
+    {
+      "issue": 112,
+      "classification": "narrower merged strip/percentage source delivery; application tracked separately128",
+      "evidence": [
+        "Original aae289a9a2231c2a6d4fac7181f0b5df /022722f3af50686739b78cd9368ef051 waiting report stopped during implementation. Later comment6648018136 links completed sandbox127/prototype16.",
+        "Sandbox127 merge0e5f396970a8e2103bff5b589f6b107edcbc26dd; prototype16 merge6fa65305a0c310fd30b257f27bac8c0196502ea1 is current ancestor. Source body documents stage/send proof, distribution badges, not-calibrated notice, optional Agent Mini dock ownership and empty dock."
+      ],
+      "limits": "Current audit does not exercise real pick-and-send, screenshots or all-surface reliability. Old PR-only scope explicitly prohibited apply/restart. Use128 for historical application evidence, not assume worker end or source merge is protected acceptance."
+    },
+    {
+      "issue": 116,
+      "classification": "narrower recovery source/backup delivered; installed guard and optional dependency inspected, historical test claims not rerun",
+      "evidence": [
+        "Original499280ec5dc7b4adf0f528d2b21070b6 firstb3d434d4ea8a71af07f7987dd7dfb6bd failed Google cooldown; successor f2050f0831697ca8279ee5aa40143d7e waiting report and comment6647746175 deliver recovery PRs and workstream branch.",
+        "Prototype12 merge5f192e889c18c3f7f11732181487aa15180ee38d and13 mergee5efb728543a14a4f347a47e6d4def5c4c16c1a3 are current ancestors. Installed service source retains in-service/session restart checks.",
+        "Original backup directory still exists with hashed superagent.patch/workstream.patch/untracked archive. Installed dsh-workstream HEAD66fd04560e39123b73220b67775d2a0b395648c6 preserves decisionSubmission as optional ctx.get, not hard inject."
+      ],
+      "limits": "Original exact workstream branch commit pin/remote PR was not located in this bounded slice; current HEAD does not reconstruct original branch acceptance. No restart/stop/override/service test command or credential/model change executed. Historical45test/type claims remain attributed, not current safety proof. Old clear-cooldown error suggestion is not authority."
+    },
+    {
+      "issue": 121,
+      "classification": "completed bounded PR-only continuation of102; no native acceptance inferred",
+      "evidence": [
+        "b7187e7c8273a8d1fb06a848e3a2e6b3 /454459a173a02400428a3b9eba30ef26 waiting report and comment6647954405 delivered prototype14/sandbox126; both verified merged at exact metadata pins.",
+        "Report specifies resolveWithSubmission/resolutionBasis submitted, ended session/ticket retirement to stale without deletion, scored/unscored badges, fixture/screenshots."
+      ],
+      "limits": "Same implementation as102, not separate new release. Historical no-apply/no-restart rule retained. No raw stale-card retirement, synthetic submission, operator override or all-future pick guarantee. Current source lineage is verified; exact original native click acceptance remains unverified."
+    },
+    {
+      "issue": 122,
+      "classification": "completed bounded rebase/push task; merge confirmed, daemon/runtime acceptance separate",
+      "evidence": [
+        "Original c964c10b9f23fb00dd31f4f40e416384 /c70e48437d590b5cf5aaad5b58a701ab reports same-branch main merge, both stats/schedule retained, historical suites11/9/5/12/5 passing.",
+        "Sandbox100 later merged da6dc80fcb95f9c3d80f8d6b1a4ec39e90cdb5a4. Current main sweep-stale-decisions.py blob80118788237393494e3736618483be8060ab7f39 contains --stats,--schedule,--interval-minutes."
+      ],
+      "limits": "Original merge suggestion is completed history; no need to repeat merge/rebase/tests. PR body older counts10/9/5/12/4 differ from successor report and remain historical, not recomputed. Source flags/merged PR do not prove a running launchd daemon or authorize timer re-enable/raw sweep."
+    },
+    {
+      "issue": 123,
+      "classification": "completed bounded Characters rebase/push task; settings semantics and native acceptance separate",
+      "evidence": [
+        "05c4526381b196f87ea54983682796e2 /60cd0f8dc5de44e67a247c1d4903a30d reports mergeff76ceb, clean type/build and422tests on merged branch; source comment6648090871 says mergeable/clean.",
+        "Prototype8 now merged6139a38d9377b471da08fb97f81cc121c40c6e9b, finalhead18765268452be82453c161fe95e43185e9c93a7b. Merge is current operator ancestor. PR body describes Characters/ranker/attribution/dock scope."
+      ],
+      "limits": "Do not rebase/merge again. Historical422tests on reported intermediate pin are not exact-final/current rerun proof. Source merge does not certify all later Settings/recommendation wiring or native UI acceptance; no current character/settings mutation."
+    },
+    {
+      "issue": 128,
+      "classification": "historical live-apply report with installed lineage/backup evidence; original native click acceptance unverified",
+      "evidence": [
+        "Original53db7f579668fbdab06432d97ff37968 /b6ad7e203d5ccfb7ee85e42b67250976 waiting report says applied/build61vitest+6python, healthy/live UI, then explicitly asks human click checklist.",
+        "dsh-next-steps installed HEAD8fe11feba6cfd4fb484b08773da1d83645dd24ad subject applies single decision surface. Prototype16 merge is current ancestor; sandbox127 merged.",
+        "Original strip-one-surface-live-20261105T023316Z backup exists, DB/archive/preimage files hashed in evidence. Narrow exact-ticket native-delivery/capability search found no linked protected acceptance."
+      ],
+      "limits": "Historical ready report or existence of backup/installed commit does not prove final click checklist completed or all current threads work. Missing record does not negate source or reported application. No new live apply/build/restart/choice/send/screenshot/browser test/raw retirement in this audit; later accepted feature histories not reopened or generalized."
+    }
+  ],
+  "evidence": [
+    "../evidence/workmap-runtime-seven-source-20261114.json",
+    "../evidence/workmap-runtime-seven-canonical-20261114.json"
+  ],
+  "administrativeClosures": {
+    "proposed": [],
+    "reason": "All seven already closed before this pass; no further closure proposed or executed."
+  },
+  "boundaries": [
+    "No new human screen readiness or protected clarification approval. Native diagnostics115/Composio108/sections holds unchanged.",
+    "No provider trial/config/route/key/access/spend/limit change; OpenAI conserved/Google5reserve/max3/authenticbackoff preserved. Actual existing Google request usage observed, not fresh qualification/cost proof.",
+    "No implementation/tests/newjobs/acceptedjob reopening/replay/ordinarychoice/taxonomy/rawstorage retirement/canonical DB writes/issue or PR mutations/comments/Chrome/native acceptance.",
+    "Original finding revision2 blocked; immutable scope/requirements/identity/failedattempts/userchoices/archivebody/history preserved. Worker end, stopped status, closure and source merge are not acceptance.",
+    "Exact original seven ticket-ID search in native delivery/capability records had zero matches; bounded absence is not all-history nonexistence."
+  ],
+  "nextOwner": "Codex: remaining six historical entries [131,132,133,135,136,138], then supplemental unknowns; do not accept by coverage count alone."
+}

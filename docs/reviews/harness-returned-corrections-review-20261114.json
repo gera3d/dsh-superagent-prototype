@@ -1,0 +1,145 @@
+{
+  "at": "2026-11-14T20:39:36.444208+00:00",
+  "kind": "returned-source-exact-head-review-no-release",
+  "layout": {
+    "issue": 227,
+    "sourceIssue": 116,
+    "pr": 118,
+    "head": "b179a121ef754e454116702e7c969100d31d29a7",
+    "review": "clean single docs007 Modules inventory row only; CSS unchanged from independently measured a363fa1",
+    "githubCI": "success",
+    "canonical": "assignment9f067394e1e0a1f1a490a6181063956d still waiting; local ready turn1/reply trigger698d... not consumed; no stripping or identity rewrite",
+    "reportOnlyCorrectionComment": 6883862613,
+    "remaining": "identity-bound consumption, then protected native report/delivery/nextsteps/session-switch proof"
+  },
+  "sound": {
+    "issue": 215,
+    "head": "8ef70b746eb1f9382073313322ef7a153bf3f142",
+    "previousHead": "22501f75312bb62246969c3853bb04ba00c3cc76",
+    "review": "host disable/global mute/event mute dominate; dispatch no longer persists --mute/--unmute",
+    "rootPureFunctionChecks": {
+      "pass": 4,
+      "fail": 0,
+      "audioPlayed": false
+    },
+    "testGap": "static module import before in-test vi.doMock and no actual mockExec invocation assertions do not prove mocked/exercised subprocess boundary; did not run potentially unmocked dispatch suite",
+    "canonicalConsumedProgress": "0944d989cff9e11d turn5; progress not complete integratedready",
+    "correctionComment": 6883862189,
+    "remaining": "proper subprocess mocks/assertions; serialized executor wiring after217; actual ding cause unverified"
+  },
+  "fallback": {
+    "issue": 217,
+    "pr": 121,
+    "head": "bf343f66e5aa28fc04f200c502dc690d592e9eff",
+    "review": "REJECTED runtime integration claim: executeWithFallback/ToolExecutionLedger defined only in helper module and direct tests; no callers in actual Sessions/Executor. Routing schema is not read by real request paths. Abort-only helper returns late success without deadline recheck and cannot force settlement of noncooperative transport.",
+    "ci": {
+      "run": 43637831812,
+      "job": 132578469563,
+      "pass": 2526,
+      "fail": 1,
+      "skip": 3,
+      "failure": "class-docs.spec.ts missing class JSDoc"
+    },
+    "correctionComment": 6883862363,
+    "remaining": "same owner/PR real runtime hook and deterministic transport/clock tests; preserve guards and defaults; no provider requests",
+    "canonical": "waiting; new helper report did not become consumed ready"
+  },
+  "current": {
+    "runtime": {
+      "at": "2026-11-14T20:38:37.838637+00:00",
+      "state": {
+        "setup": {
+          "machine": {
+            "stateDir": "/Users/gerayeremin/Library/Application Support/dsh-desktop/harness/state/superagent",
+            "promptMaxChars": 100000,
+            "admissionContextMaxPages": 10,
+            "admissionContextTimeoutMs": 15000
+          },
+          "problem": null,
+          "feishuProblem": null,
+          "accounts": {
+            "repository": "gera3d/superagent-sandbox",
+            "agent": "Ultron-Uplink",
+            "feishu": null
+          }
+        },
+        "load": {
+          "running": 3,
+          "queued": 0,
+          "maxWorkers": 3
+        },
+        "masterId": "orchestrator-core",
+        "paused": false,
+        "health": {
+          "runtime": {
+            "state": "ready",
+            "detail": "Orchestrator is ready",
+            "at": "2026-11-14T18:08:56.965Z"
+          },
+          "relay": {
+            "state": "ready",
+            "detail": "Nothing waiting",
+            "at": "2026-11-14T20:38:22.447Z"
+          },
+          "notice": {
+            "state": "ready",
+            "detail": "Nothing waiting",
+            "at": "2026-11-14T20:27:00.886Z"
+          },
+          "launch": {
+            "state": "ready",
+            "detail": "Nothing waiting",
+            "at": "2026-11-14T20:27:46.674Z"
+          },
+          "delivery": {
+            "state": "ready",
+            "detail": "Nothing waiting",
+            "at": "2026-11-14T20:38:22.389Z"
+          },
+          "assessment": {
+            "state": "ready",
+            "detail": "Nothing waiting",
+            "at": "2026-11-14T19:39:28.574Z"
+          },
+          "reply": {
+            "state": "ready",
+            "detail": "Nothing waiting",
+            "at": "2026-11-14T20:27:11.137Z"
+          },
+          "evals": {
+            "state": "ready",
+            "detail": "No unavailable Eval in the last hour"
+          },
+          "models": {
+            "state": "ready",
+            "detail": "No managed Session is waiting on a model budget retry"
+          },
+          "github": {
+            "state": "ready",
+            "detail": "0 notifications; next poll \u2265 60s",
+            "at": "2026-11-14T20:33:04.204Z"
+          }
+        }
+      }
+    },
+    "intake": "all three correction inputs admitted20:38:22UTC and delivered/read by original assignments; no duplicates",
+    "assignments": {
+      "215": "e15c580285253bae62479fea93b009e8",
+      "217": "a0bfbb1698be8f88a0f62e05ea591015",
+      "227": "9f067394e1e0a1f1a490a6181063956d"
+    }
+  },
+  "holds": {
+    "117": "final327f634 green CI; protected native stage pending, unanswered availability question not repeated",
+    "108115": "local inventory corrections reviewed/unpublished/native holds unchanged",
+    "228": "plugin sourcePR repository denial preserved, no denied lookup retry or account substitution",
+    "216218120": "coordinator dependency queue behind217 runtime ownership",
+    "computerUse": "noninteractive preflight only, no OS input/permission changes"
+  },
+  "invariants": [
+    "No merge/deployment/restart/live edits/config/accounts/credentials/access/deletion/new spending",
+    "No broad test/build repetition or downloads/installs/large clones",
+    "maxWorkers3; OpenAI conserved; Google5% reserve/cooldowns unchanged",
+    "Native gates and original report/trigger identity checks preserved"
+  ]
+}

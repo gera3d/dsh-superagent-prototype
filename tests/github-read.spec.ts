@@ -21,18 +21,23 @@ it('rejects unsupported or escaping paths without making a request', async () =>
 })
 
 it('reads checks across pages and canonicalizes the latest status per context', async () => {
-  vi.spyOn(commands, 'gh').mockResolvedValue([{ check_runs: [{ name: 'z', status: 'completed', conclusion: 'success' }] }, { check_runs: [{ name: 'a', status: 'in_progress', conclusion: null }] }])
+  const run = vi.spyOn(commands, 'run').mockImplementation(async (_program, args) => args.includes('--include')
+    ? `HTTP/2.0 200 OK\r\nLink: <https://api.github.com/next>; rel="next"\r\n\r\n${JSON.stringify(args[1]!.includes('/check-runs') ? { check_runs: [] } : [])}`
+    : JSON.stringify([{ check_runs: [{ name: 'z', status: 'completed', conclusion: 'success' }] }, { check_runs: [{ name: 'a', status: 'in_progress', conclusion: null }] }]))
   vi.spyOn(commands, 'pages').mockResolvedValue([{ context: 'build', state: 'success' }, { context: 'build', state: 'failure' }])
-  const result = await pullChecks(commands, 'abc')
+  const result = await pullChecks(commands, 'paged')
   expect(result.checks.map((check: { name: string }) => check.name)).toEqual(['a', 'z'])
   expect(result.statuses).toEqual([{ context: 'build', state: 'success' }])
+  expect(run).toHaveBeenCalledTimes(3)
 })
 
 it('reads any requested PR’s CI on demand without restricting the author', async () => {
-  const gh = vi.spyOn(commands, 'gh').mockResolvedValueOnce({ head: { sha: 'abc' }, user: { login: 'another-author' } }).mockResolvedValueOnce([{ check_runs: [] }])
-  vi.spyOn(commands, 'pages').mockResolvedValue([])
+  const gh = vi.spyOn(commands, 'gh').mockResolvedValueOnce({ head: { sha: 'abc' }, user: { login: 'another-author' } })
+  const run = vi.spyOn(commands, 'run').mockImplementation(async (_program, args) =>
+    `HTTP/2.0 200 OK\r\n\r\n${JSON.stringify(args[1]!.includes('/check-runs') ? { check_runs: [] } : [])}`)
   expect(await readGithub(commands, 'github/pulls/123/checks')).toEqual({ head: 'abc', checks: [], statuses: [] })
-  expect(gh).toHaveBeenCalledTimes(2)
+  expect(gh).toHaveBeenCalledTimes(1)
+  expect(run).toHaveBeenCalledTimes(2)
 })
 
 /** Fake GitHub REST API pull request review comment payload. */

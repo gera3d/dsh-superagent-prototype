@@ -13,12 +13,13 @@ import type { Machine } from '../deployment.ts'
 import { runAsWorker, verifyDirectory } from '../infra/environment.ts'
 import type { RoleModel, Settings } from '../policy.ts'
 import type { Store } from '../app/store.ts'
+import { KV } from '../kv.ts'
 import { Later, type Effects } from '../app/effects.ts'
 import { executionRoot, type Variable } from '../app/execution-environment.ts'
 import type { Sessions } from '../app/sessions.ts'
 import { WorktreeNameSchema } from '../app/assessment.ts'
 import { resultRelay } from '../app/notices.ts'
-import { constrainedRoute, defaultRoute, fallbackNote, isModelUnavailable, sameRoute, unavailableFallbackStep, DEEPSEEK_FALLBACK_ROUTE } from '../app/role-models.ts'
+import { classifyModelError, constrainedRoute, defaultRoute, fallbackNote, isModelUnavailable, sameRoute, ToolExecutionLedger, unavailableFallbackStep, DEEPSEEK_FALLBACK_ROUTE } from '../app/role-models.ts'
 import type { HealthEntry } from '../infra/health.ts'
 import { cancelled, collectJob, killJobs, runningJobs, stopBackground, stopSubagents, until, untilQuiet } from './background.ts'
 
@@ -81,7 +82,7 @@ export interface ExecutorHost {
   /** Where the Executor reports what happened to Assignments and Inputs. */
   readonly engine: Pick<EngineForExecutor, 'assignmentStarted' | 'inputsDelivered' | 'inputsRead' | 'turnEnded' | 'deliveryFailed' | 'report'
     | 'assignmentInterrupted'>
-  readonly store: Pick<Store, 'tickets' | 'triggers' | 'set' | 'settings' | 'atomic' | 'afterCommit'>
+  readonly store: Pick<Store, 'tickets' | 'triggers' | 'get' | 'set' | 'settings' | 'atomic' | 'afterCommit'>
   /** Durable effect queue through which launches and input deliveries run. */
   readonly effects: Pick<Effects, 'enqueue' | 'handle'>
   /** The `worker` health entry, which reports whether background worker event handling failed. */
@@ -233,6 +234,32 @@ export class DshExecutor implements Executor {
   private readonly slots: WorkerSlots
   /** Models already tried and found unavailable for a ticket, so subsequent fallbacks advance through ladder to DeepSeek flash. */
   private readonly unavailableRoutes = new Map<string, RoleModel[]>()
+  /** Tool execution ledgers by ticket ID to prevent tool replay and block on uncertain outcomes. */
+  readonly toolLedgers = new Map<string, ToolExecutionLedger>()
+  /** Fallback attempt counts by ticket ID for bounded model routing. */
+  private readonly fallbackAttempts = new Map<string, number>()
+  /** Fallback start timestamps by ticket ID for deadline enforcement. */
+  private readonly fallbackStartTimes = new Map<string, number>()
+  /** Total routing attempts started (initial request, resumed prompt after wake, or substituted fallback prompt) by ticket ID. */
+  private readonly startedAttemptCounts = new Map<string, number>()
+  /** Total routing attempts reserved (initial request + scheduled same-route retries + fallback substitutions) by ticket ID. */
+  private readonly reservedAttemptCounts = new Map<string, number>()
+  /** In-flight routing deadline timers by ticket ID to cancel in-flight model requests when total_timeout_ms expires. */
+  private readonly deadlineTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+  /** Obtains the tool execution ledger for a ticket. */
+  toolLedger(ticketId: string): ToolExecutionLedger {
+    let ledger = this.toolLedgers.get(ticketId)
+    if (!ledger) {
+      ledger = new ToolExecutionLedger(updated => {
+        this.host.store.set(KV.sessions.toolLedgers(ticketId), updated.snapshot() as never)
+      })
+      const saved = this.host.store.get(KV.sessions.toolLedgers(ticketId))
+      if (saved) ledger.restore(saved as never)
+      this.toolLedgers.set(ticketId, ledger)
+    }
+    return ledger
+  }
   /** Transient failure counts tried so far: keyed by `assignment.id` for worker turns and `launch:<assignment.id>` for launches. */
   private readonly transient = new Map<string, number>()
   /** Assignment IDs currently waiting on a transient-failure backoff timer before resuming their worker turn. */
@@ -293,6 +320,16 @@ export class DshExecutor implements Executor {
   }
   /** Enqueues a `launch` effect for an accepted or resumed assignment; launches start in queue order as worker slots free up. */
   start(ticket: Ticket, assignment: Assignment): void {
+    if (!this.fallbackStartTimes.has(ticket.id)) {
+      this.fallbackStartTimes.set(ticket.id, Date.now())
+    }
+    if (!this.startedAttemptCounts.has(ticket.id)) {
+      this.startedAttemptCounts.set(ticket.id, 1)
+    }
+    if (!this.reservedAttemptCounts.has(ticket.id)) {
+      this.reservedAttemptCounts.set(ticket.id, 1)
+    }
+    this.armDeadlineTimer(ticket.id)
     this.host.effects.enqueue('launch', assignment.id, { ticketId: ticket.id, assignmentId: assignment.id })
   }
   /** Enqueues a `delivery` effect to steer pending inputs into `ticket`'s running worker session. */
@@ -365,6 +402,7 @@ export class DshExecutor implements Executor {
       if (!current || !liveTicket(current) || runningAssignment(current)?.id !== assignment.id) throw new Error('The ticket ended or another Assignment took it over')
       // A stop of the worker's background work that started meanwhile ends with a cancel, which would drop the Input.
       if (this.stopping.has(ticket.id)) throw new Later('The worker\'s background work is stopping')
+      if (this.toolLedger(ticket.id).hasUncertain()) throw new Error('Uncertain tool outcome blocks automatic continuation until reconciliation or explicit operator retry authorization')
     }
     live()
     const trigger = input.kind === 'trigger' ? await this.triggerCard(ticket, input.triggerId, input.note) : undefined
@@ -483,6 +521,7 @@ export class DshExecutor implements Executor {
   }
   /** Records a `failed` report on the ticket and relays the failure to the main Session in one transaction. */
   private failed(ticketId: string, summary: string): void {
+    this.disarmDeadlineTimer(ticketId)
     this.host.store.atomic(() => {
       // The Executor's own failures are workspace, setup or provider facts a stronger model does not fix: never escalate them.
       const updated = this.host.engine.report(ticketId, { state: 'failed', summary, escalatable: false })
@@ -515,15 +554,199 @@ export class DshExecutor implements Executor {
     this.fallingBack.add(assignment.id)
     try { await this.selectFallback(ticket, assignment, agent, error) } finally { this.fallingBack.delete(assignment.id) }
   }
+  /**
+   * Arms an in-flight deadline timer for a running assignment turn.
+   * When total_timeout_ms expires while a request is in flight, invokes agent.cancel() and marks the ticket failed.
+   */
+  private armDeadlineTimer(ticketId: string): void {
+    const settings = this.host.store.settings()
+    const routing = settings.models.routing ?? settings.models.model_routing
+    if (!routing) return
+
+    this.disarmDeadlineTimer(ticketId)
+
+    const nowTime = Date.now()
+    const stored = this.host.store.tickets.get(ticketId)
+    const createdMs = stored?.createdAt ? Date.parse(stored.createdAt) : NaN
+    const defaultStart = !Number.isNaN(createdMs) && createdMs > 0 ? createdMs : nowTime
+    const startTime = this.fallbackStartTimes.get(ticketId) ?? defaultStart
+    const remainingMs = Math.max(0, startTime + routing.total_timeout_ms - nowTime)
+
+    const timer = setTimeout(() => {
+      this.deadlineTimers.delete(ticketId)
+      this.timers.delete(timer)
+      this.onDeadlineExpired(ticketId)
+    }, remainingMs)
+    timer.unref?.()
+    this.timers.add(timer)
+    this.deadlineTimers.set(ticketId, timer)
+  }
+
+  private disarmDeadlineTimer(ticketId: string): void {
+    const timer = this.deadlineTimers.get(ticketId)
+    if (timer) {
+      clearTimeout(timer)
+      this.timers.delete(timer)
+      this.deadlineTimers.delete(ticketId)
+    }
+  }
+
+  private onDeadlineExpired(ticketId: string): void {
+    const settings = this.host.store.settings()
+    const routing = settings.models.routing ?? settings.models.model_routing
+    if (!routing) return
+
+    const ticket = this.host.store.tickets.get(ticketId)
+    if (!ticket || !liveTicket(ticket) || this.host.closing()) return
+
+    const sessionId = workerSessionId(ticketId)
+    const agent = this.host.context.agents.get(sessionId as SessionId)
+    // Invoke cancellation of the in-flight model request / worker turn
+    agent?.cancel({ kind: 'user' }, { keepInbox: false })
+
+    const reason = `All available models exhausted: Routing deadline exceeded (${routing.total_timeout_ms}ms)`
+    this.recordTicketNote(ticketId, reason)
+    this.unavailableRoutes.delete(ticketId)
+    this.fallbackAttempts.delete(ticketId)
+    this.fallbackStartTimes.delete(ticketId)
+    this.startedAttemptCounts.delete(ticketId)
+    this.reservedAttemptCounts.delete(ticketId)
+    const assignment = runningAssignment(ticket)
+    if (assignment) {
+      this.transient.delete(assignment.id)
+      this.resuming.delete(assignment.id)
+    }
+    void this.background(Promise.resolve().then(() => {
+      this.failed(ticketId, reason)
+    }))
+  }
+
+  /**
+   * Authorizes retry of a ticket blocked by uncertain tool outcomes, clearing the uncertain barrier
+   * with explicit operator authorization.
+   */
+  authorizeRetry(ticketId: string, operator = 'operator'): void {
+    const ledger = this.toolLedgers.get(ticketId)
+    if (ledger) {
+      for (const [id, rec] of Object.entries(ledger.snapshot())) {
+        if (rec.status === 'uncertain') {
+          ledger.reconcile(id, 'reconciled_abandoned')
+        }
+      }
+    }
+    this.recordTicketNote(ticketId, `Operator ${operator} explicitly authorized retry for ticket ${ticketId}`)
+  }
+
+  /**
+   * Checks whether the ticket has exceeded its total configured routing attempts (across initial request, same-route
+   * retries, and candidate fallbacks) or its end-to-end routing deadline.
+   * In 'reserve' phase (called at error boundary), checks whether reserved attempts have reached max_total_attempts.
+   * In 'wake' phase (called at wake boundary), checks whether started attempts have already reached max_total_attempts.
+   */
+  private checkRoutingBounds(
+    ticket: Ticket,
+    assignment: Assignment,
+    phase: 'reserve' | 'wake' = 'reserve',
+  ): { exhausted: boolean; reason?: string } {
+    const settings = this.host.store.settings()
+    const routing = settings.models.routing ?? settings.models.model_routing
+    if (!routing) return { exhausted: false }
+
+    const nowTime = Date.now()
+    const createdMs = ticket.createdAt ? Date.parse(ticket.createdAt) : NaN
+    const defaultStart = !Number.isNaN(createdMs) && createdMs > 0 ? createdMs : nowTime
+    const startTime = this.fallbackStartTimes.get(ticket.id) ?? defaultStart
+    if (!this.fallbackStartTimes.has(ticket.id)) this.fallbackStartTimes.set(ticket.id, startTime)
+
+    if (nowTime - startTime >= routing.total_timeout_ms) {
+      return {
+        exhausted: true,
+        reason: `All available models exhausted: Routing deadline exceeded (${routing.total_timeout_ms}ms)`,
+      }
+    }
+
+    const reserved = this.reservedAttemptCounts.get(ticket.id)
+      ?? (1 + (this.transient.get(assignment.id) ?? 0) + (this.fallbackAttempts.get(ticket.id) ?? 0))
+    const started = this.startedAttemptCounts.get(ticket.id)
+      ?? (1 + (this.fallbackAttempts.get(ticket.id) ?? 0))
+
+    if (phase === 'reserve') {
+      if (reserved >= routing.max_total_attempts) {
+        return {
+          exhausted: true,
+          reason: `All available models exhausted: Total attempt bound exceeded (${routing.max_total_attempts})`,
+        }
+      }
+    } else {
+      // At wake boundary, the attempt was already reserved when scheduling backoff.
+      // Check whether started attempts have already reached or exceeded the total limit.
+      if (started >= routing.max_total_attempts) {
+        return {
+          exhausted: true,
+          reason: `All available models exhausted: Total attempt bound exceeded (${routing.max_total_attempts})`,
+        }
+      }
+    }
+
+    return { exhausted: false }
+  }
+
   private async selectFallback(ticket: Ticket, assignment: Assignment, agent: Agent, error: unknown): Promise<void> {
+    const ledger = this.toolLedgers.get(ticket.id)
+    if (ledger?.hasUncertain()) {
+      this.unavailableRoutes.delete(ticket.id)
+      this.fallbackAttempts.delete(ticket.id)
+      this.fallbackStartTimes.delete(ticket.id)
+      this.startedAttemptCounts.delete(ticket.id)
+      this.reservedAttemptCounts.delete(ticket.id)
+      this.disarmDeadlineTimer(ticket.id)
+      const msg = 'Uncertain tool outcome blocks automatic continuation until reconciliation or explicit operator retry authorization'
+      this.recordTicketNote(ticket.id, msg)
+      void this.background(Promise.resolve().then(() => { this.failed(ticket.id, msg) }))
+      return
+    }
+
+    const settings = this.host.store.settings()
+    const routing = settings.models.routing ?? settings.models.model_routing
+    if (routing) {
+      const bounds = this.checkRoutingBounds(ticket, assignment, 'reserve')
+      if (bounds.exhausted) {
+        this.unavailableRoutes.delete(ticket.id)
+        this.fallbackAttempts.delete(ticket.id)
+        this.fallbackStartTimes.delete(ticket.id)
+        this.transient.delete(assignment.id)
+        this.startedAttemptCounts.delete(ticket.id)
+        this.reservedAttemptCounts.delete(ticket.id)
+        this.resuming.delete(assignment.id)
+        this.disarmDeadlineTimer(ticket.id)
+        this.recordTicketNote(ticket.id, bounds.reason!)
+        void this.background(Promise.resolve().then(() => {
+          this.failed(ticket.id, bounds.reason!)
+        }))
+        return
+      }
+
+      const priorFallbacks = this.fallbackAttempts.get(ticket.id) ?? 0
+      this.fallbackAttempts.set(ticket.id, priorFallbacks + 1)
+      const currentReserved = this.reservedAttemptCounts.get(ticket.id)
+        ?? (1 + (this.transient.get(assignment.id) ?? 0) + priorFallbacks)
+      this.reservedAttemptCounts.set(ticket.id, currentReserved + 1)
+      this.transient.delete(assignment.id)
+    }
+
     const tried = this.unavailableRoutes.get(ticket.id) ?? []
     const current = (agent.session.requestHeader()?.config as RoleModel | undefined)
       ?? ticket.escalations?.find(item => item.assignmentId === assignment.id)?.to
-      ?? defaultRoute(this.host.store.settings(), 'executor')
+      ?? defaultRoute(settings, 'executor')
     if (current && !tried.some(item => sameRoute(item, current))) tried.push(current)
-    const step = unavailableFallbackStep(this.host.store.settings(), current, tried)
+    const step = unavailableFallbackStep(settings, current, tried)
     if (!step) {
       this.unavailableRoutes.delete(ticket.id)
+      this.fallbackAttempts.delete(ticket.id)
+      this.fallbackStartTimes.delete(ticket.id)
+      this.startedAttemptCounts.delete(ticket.id)
+      this.reservedAttemptCounts.delete(ticket.id)
+      this.disarmDeadlineTimer(ticket.id)
       void this.background(Promise.resolve().then(() => { this.failed(ticket.id, `All available models exhausted: ${String(error)}`) }))
       return
     }
@@ -546,6 +769,9 @@ export class DshExecutor implements Executor {
     const requestId = `fallback:${ticket.id}:${assignment.id}:${now()}`
     try {
       await this.host.sessions.prompt(sessionId, requestId, resumeText, 'queue')
+      const currentStarted = this.startedAttemptCounts.get(ticket.id) ?? 1
+      this.startedAttemptCounts.set(ticket.id, currentStarted + 1)
+      this.armDeadlineTimer(ticket.id)
     } catch {
       this.resumeAfter(ticket.id, assignment.id, error)
     }
@@ -557,6 +783,16 @@ export class DshExecutor implements Executor {
     this.failed(ticketId, `The escalated model ${escalation.to.provider}/${escalation.to.model} could not be selected: ${String(error)}`)
   }
   private async launch(ticket: Ticket, assignment: Assignment): Promise<void> {
+    if (!this.fallbackStartTimes.has(ticket.id)) {
+      this.fallbackStartTimes.set(ticket.id, Date.now())
+    }
+    if (!this.startedAttemptCounts.has(ticket.id)) {
+      this.startedAttemptCounts.set(ticket.id, 1)
+    }
+    if (!this.reservedAttemptCounts.has(ticket.id)) {
+      this.reservedAttemptCounts.set(ticket.id, 1)
+    }
+    this.armDeadlineTimer(ticket.id)
     const current = () => {
       if (this.host.closing()) throw new Error('dsh-superagent is stopping')
       if (this.host.paused()) throw new Later('Processing is paused')
@@ -710,13 +946,68 @@ export class DshExecutor implements Executor {
       const ticket = this.ticketOf(agent)
       const assignment = ticket && runningAssignment(ticket)
       if (!ticket || !assignment || !liveTicket(ticket) || this.host.closing()) return
+      const classified = classifyModelError(error)
+      if (classified.action === 'stop') {
+        void this.background(Promise.resolve().then(() => {
+          this.failed(ticket.id, `Model request stopped: ${classified.reason}`)
+        }))
+        return
+      }
+
+      // Uncertain tool outcome blocks automatic continuation (both same-route retry and candidate fallback)
+      const ledger = this.toolLedger(ticket.id)
+      if (ledger.hasUncertain()) {
+        this.unavailableRoutes.delete(ticket.id)
+        this.fallbackAttempts.delete(ticket.id)
+        this.fallbackStartTimes.delete(ticket.id)
+        this.transient.delete(assignment.id)
+        this.startedAttemptCounts.delete(ticket.id)
+        this.reservedAttemptCounts.delete(ticket.id)
+        this.resuming.delete(assignment.id)
+        this.disarmDeadlineTimer(ticket.id)
+        const msg = 'Uncertain tool outcome blocks automatic continuation until reconciliation or explicit operator retry authorization'
+        this.recordTicketNote(ticket.id, msg)
+        void this.background(Promise.resolve().then(() => {
+          this.failed(ticket.id, msg)
+        }))
+        return
+      }
+
+      // Check total attempts and end-to-end deadline bounds before any same-route retry or candidate fallback
+      const bounds = this.checkRoutingBounds(ticket, assignment, 'reserve')
+      if (bounds.exhausted) {
+        this.unavailableRoutes.delete(ticket.id)
+        this.fallbackAttempts.delete(ticket.id)
+        this.fallbackStartTimes.delete(ticket.id)
+        this.transient.delete(assignment.id)
+        this.startedAttemptCounts.delete(ticket.id)
+        this.reservedAttemptCounts.delete(ticket.id)
+        this.resuming.delete(assignment.id)
+        this.disarmDeadlineTimer(ticket.id)
+        this.recordTicketNote(ticket.id, bounds.reason!)
+        void this.background(Promise.resolve().then(() => {
+          this.failed(ticket.id, bounds.reason!)
+        }))
+        return
+      }
+
       // An explicit availability condition (quota, cooldown, budget, account, 429) switches route at once; a generic
       // HTTP 408/5xx or transport failure takes the same-route retry budget first, for it may pass.
-      if (switchesRoute(error)) {
+      if (classified.action === 'advance' || switchesRoute(error)) {
         await this.handleUnavailableModel(ticket, assignment, agent, error)
         return
       }
-      if (this.retries(assignment.id, error)) { this.resumeAfter(ticket.id, assignment.id, error); return }
+      if (this.retries(assignment.id, error, ticket)) {
+        this.resumeAfter(ticket.id, assignment.id, error)
+        return
+      }
+      // When same-route retries are exhausted for this candidate, fall back to next candidate if routing is configured
+      const settings = this.host.store.settings()
+      const routing = settings.models.routing ?? settings.models.model_routing
+      if (routing && isModelUnavailable(error)) {
+        await this.handleUnavailableModel(ticket, assignment, agent, error)
+        return
+      }
       void this.background(Promise.resolve().then(() => { this.failed(ticket.id, String(error)) }))
     }))
   }
@@ -725,6 +1016,8 @@ export class DshExecutor implements Executor {
     for (const dispose of this.disposers.splice(0)) dispose()
     for (const timer of this.timers) clearTimeout(timer)
     this.timers.clear()
+    for (const timer of this.deadlineTimers.values()) clearTimeout(timer)
+    this.deadlineTimers.clear()
   }
   /**
    * Reconciles running and pending assignments across open tickets after a host restart: notifies Engine of interrupted
@@ -741,6 +1034,7 @@ export class DshExecutor implements Executor {
         this.host.context.agents.get(workerSessionId(ticket.id) as SessionId)?.cancel({ kind: 'user' }, { keepInbox: true })
         this.stopWork(ticket.id, 'dsh-superagent restarted', true)
         this.host.engine.assignmentInterrupted(ticket.id, running.id)
+        this.toolLedger(ticket.id).markInFlightUncertain()
       }
       else if (latest?.state === 'pending' && !waitsForPerson(ticket)) this.start(ticket, latest)
     }
@@ -755,10 +1049,19 @@ export class DshExecutor implements Executor {
    * Checks whether `error` is a transient failure with retry attempts remaining under `key`, mutating `this.transient`:
    * increments the attempt counter and returns `true` when retrying, or deletes `key` from `this.transient` and returns `false` when non-transient or out of tries.
    */
-  private retries(key: string, error: unknown): boolean {
+  private retries(key: string, error: unknown, ticket?: Ticket): boolean {
     const tries = this.transient.get(key) ?? 0
-    if (!transient(error) || tries >= TRANSIENT_TRIES) { this.transient.delete(key); return false }
+    const routing = ticket && (this.host.store.settings().models.routing ?? this.host.store.settings().models.model_routing)
+    const maxTries = routing ? Math.min(TRANSIENT_TRIES, Math.max(0, routing.max_attempts_per_model - 1)) : TRANSIENT_TRIES
+    if (!transient(error) || tries >= maxTries) {
+      if (!routing) this.transient.delete(key)
+      return false
+    }
     this.transient.set(key, tries + 1)
+    if (ticket && routing) {
+      const currentReserved = this.reservedAttemptCounts.get(ticket.id) ?? (1 + tries + (this.fallbackAttempts.get(ticket.id) ?? 0))
+      this.reservedAttemptCounts.set(ticket.id, currentReserved + 1)
+    }
     return true
   }
   /** Schedules a worker turn retry with exponential backoff after a transient provider or network error. */
@@ -770,6 +1073,44 @@ export class DshExecutor implements Executor {
       if (this.host.closing()) return
       const ticket = this.host.store.tickets.get(ticketId)
       if (!ticket || !liveTicket(ticket) || runningAssignment(ticket)?.id !== assignmentId) { this.resuming.delete(assignmentId); return }
+      const assignment = runningAssignment(ticket)!
+
+      // Enforce remaining deadline and attempt budget at the scheduled wake boundary before prompting
+      const bounds = this.checkRoutingBounds(ticket, assignment, 'wake')
+      if (bounds.exhausted) {
+        this.unavailableRoutes.delete(ticketId)
+        this.fallbackAttempts.delete(ticketId)
+        this.fallbackStartTimes.delete(ticketId)
+        this.transient.delete(assignmentId)
+        this.startedAttemptCounts.delete(ticketId)
+        this.reservedAttemptCounts.delete(ticketId)
+        this.resuming.delete(assignmentId)
+        this.disarmDeadlineTimer(ticketId)
+        this.recordTicketNote(ticketId, bounds.reason!)
+        void this.background(Promise.resolve().then(() => {
+          this.failed(ticketId, bounds.reason!)
+        }))
+        return
+      }
+
+      // Uncertain tool outcome blocks scheduled retry from waking/prompting
+      if (this.toolLedger(ticketId).hasUncertain()) {
+        this.unavailableRoutes.delete(ticketId)
+        this.fallbackAttempts.delete(ticketId)
+        this.fallbackStartTimes.delete(ticketId)
+        this.transient.delete(assignmentId)
+        this.startedAttemptCounts.delete(ticketId)
+        this.reservedAttemptCounts.delete(ticketId)
+        this.resuming.delete(assignmentId)
+        this.disarmDeadlineTimer(ticketId)
+        const msg = 'Uncertain tool outcome blocks automatic continuation until reconciliation or explicit operator retry authorization'
+        this.recordTicketNote(ticketId, msg)
+        void this.background(Promise.resolve().then(() => {
+          this.failed(ticketId, msg)
+        }))
+        return
+      }
+
       // Wait while processing is paused or no wake slot is free.
       if (this.host.paused()) { this.after(SLOT_WAIT_MS, go); return }
       const sessionId = workerSessionId(ticketId)
@@ -778,6 +1119,12 @@ export class DshExecutor implements Executor {
         if (!(failure instanceof Later)) throw failure
         this.after(SLOT_WAIT_MS, go); return
       }
+
+      // Retry attempt is now dispatched at host boundary: increment started attempts
+      const currentStarted = this.startedAttemptCounts.get(ticketId) ?? 1
+      this.startedAttemptCounts.set(ticketId, currentStarted + 1)
+      this.armDeadlineTimer(ticketId)
+
       const sent = this.host.sessions.prompt(sessionId, `retry:${assignmentId}:${tries}`, text, 'queue')
       void this.background(sent.finally(() => { if (waking) this.slots.free(ticketId); this.resuming.delete(assignmentId) })
         .catch(failure => { this.failed(ticketId, String(failure)) }))
@@ -815,6 +1162,11 @@ export class DshExecutor implements Executor {
       || agent.inbox?.nextTurn.length || agent.inbox?.nextStep.length) return
     // A turn that ended as turns do starts the count of passing failures again.
     this.transient.delete(idle.id)
+    this.startedAttemptCounts.delete(ticket.id)
+    this.reservedAttemptCounts.delete(ticket.id)
+    this.fallbackAttempts.delete(ticket.id)
+    this.fallbackStartTimes.delete(ticket.id)
+    this.disarmDeadlineTimer(ticket.id)
     // The ticket while the Assignment that went idle runs it.
     const live = () => {
       const stored = this.host.store.tickets.get(ticket.id)

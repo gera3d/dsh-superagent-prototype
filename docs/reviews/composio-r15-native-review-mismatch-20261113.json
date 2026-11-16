@@ -1,0 +1,76 @@
+{
+  "provider": "deepseek-official / deepseek-flash",
+  "verdict": {
+    "verdict": "failed",
+    "findings": [
+      {
+        "repository": "gera3d/dsh-superagent-prototype",
+        "pr": 107,
+        "headSha": "2daef8122c245fcc1d8235463e785123b3f60e13",
+        "path": "src/app/composio-boundary.ts",
+        "line": 62,
+        "severity": "high",
+        "message": "The first replacement in sanitizeDiagnostic uses caret notation (\\^@, \\^H, \\^_) as if it were control-character syntax, which JavaScript regexes do not support. `/[\\^@-\\^H\\u000b-\\^_\\u007f]/g` parses as the ranges U+0040\u2013U+005E and U+000B\u2013U+005E plus U+005F/U+007F, so every space, digit, uppercase letter, underscore and most punctuation is already replaced by a space before the redaction passes run. Diagnostics are destroyed (\"POST /v3/execute failed: 401 Unauthorized\" becomes \"v execute failed Unauthorized\"), the credential patterns for `Authorization:` headers, `Bearer` tokens, JWTs and URL userinfo no longer match on the mangled text (so secrets such as `hunter2` survive as `hunter`), and the test `redacts credentials, headers, tokens and URL userinfo but keeps the diagnostic readable` fails its `toContain('POST /v3/execute failed: 401 Unauthorized')` assertion. Use a real control-character class such as /[\\x00-\\x08\\x0B-\\x1F\\x7F]/g."
+      }
+    ],
+    "rationale": "Batch 1/1 gera3d/dsh-superagent-prototype#107@2daef8122c24: The boundary wiring, classification, retry/uncertainty policy and allowlists check out: installComposioBoundary is registered on the master, worker (workOnly) and ordinary-Session paths, the worker/main allowlists are unchanged (no MCP name added), the observer binding skips retry-health and routing guard without change, nested successful:false/mixed batches are re-classified, successes are retained, timeouts/lost acknowledgements are reported as unknown with no resend, Retry-After is only a wait floor for unknown outcomes, and the regression suites drive a real ToolRuntime (plus the installed MCP bridge when present). However the new sanitizeDiagnostic control-character strip is malformed: its caret-notation class parses as printable ranges, mangling diagnostics before redaction and defeating header/token/URL-userinfo redaction, and the accompanying sanitization test cannot pass as written. That defect blocks acceptance until fixed."
+  },
+  "result": {
+    "outcome": "failed",
+    "evidence": [
+      {
+        "id": "independent-review:auto-acf97559fd76618bf9d5022091718874:3:review:cd1e37ac28ef9924",
+        "kind": "review",
+        "bindings": {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "sourceIssue": 107,
+          "baseSha": "fb977da21e7595af754c3ed1e3118ef74eb50b10",
+          "headSha": "2daef8122c245fcc1d8235463e785123b3f60e13",
+          "environment": "installed local Harness superagent",
+          "refs": [
+            {
+              "repository": "gera3d/dsh-superagent-prototype",
+              "pr": 107,
+              "headSha": "2daef8122c245fcc1d8235463e785123b3f60e13",
+              "baseSha": "fb977da21e7595af754c3ed1e3118ef74eb50b10"
+            }
+          ]
+        },
+        "recordedAt": "2026-11-13T19:05:51.960Z",
+        "reference": "sqlite:delivery_capability_review/auto-acf97559fd76618bf9d5022091718874%3A3%3Areview%3Acd1e37ac28ef9924",
+        "outcome": "failed"
+      }
+    ]
+  },
+  "batches": [
+    {
+      "repository": "gera3d/dsh-superagent-prototype",
+      "pr": 107,
+      "headSha": "2daef8122c245fcc1d8235463e785123b3f60e13",
+      "diffSha256": "7b2fad845456670d9b2ef2b85eec704a3833cd883d36f7ecb19b0190f9c4447d",
+      "verdict": "failed",
+      "rationale": "The boundary wiring, classification, retry/uncertainty policy and allowlists check out: installComposioBoundary is registered on the master, worker (workOnly) and ordinary-Session paths, the worker/main allowlists are unchanged (no MCP name added), the observer binding skips retry-health and routing guard without change, nested successful:false/mixed batches are re-classified, successes are retained, timeouts/lost acknowledgements are reported as unknown with no resend, Retry-After is only a wait floor for unknown outcomes, and the regression suites drive a real ToolRuntime (plus the installed MCP bridge when present). However the new sanitizeDiagnostic control-character strip is malformed: its caret-notation class parses as printable ranges, mangling diagnostics before redaction and defeating header/token/URL-userinfo redaction, and the accompanying sanitization test cannot pass as written. That defect blocks acceptance until fixed.",
+      "provider": "deepseek-official / deepseek-flash"
+    }
+  ],
+  "at": "2026-11-13T19:09:19.432892+00:00",
+  "deliveryId": "auto-acf97559fd76618bf9d5022091718874",
+  "deliveryRevision": 7,
+  "state": "blocked",
+  "head": "2daef8122c245fcc1d8235463e785123b3f60e13",
+  "patchSha256": "f8651b5586432a6e1bcb6d3582696beb2edbc0dcc2c5bfb5db20be4ac5cff4f0",
+  "sourcePr": 107,
+  "automaticCorrectionBlocker": "Original mandate is no longer authorized; correction authority is missing",
+  "sourceReviewMismatch": {
+    "committedLine": "  let out = text.replace(/[\\u0000-\\u0008\\u000b-\\u001f\\u007f]/g, ' ')",
+    "worktreeMatchesCommittedBytes": true,
+    "sourceContainsLiteralControlBytes": false,
+    "storedNativeReviewPatchLine": "+  let out = text.replace(/[\\^@-\\^H\\u000b-\\^_\\u007f]/g, ' ')",
+    "finding": "Stored review diff has backslash-caret notation where committed blob/worktree have literal Unicode escapes. Raw diff integrity differs at this line; native reviewer correctly flags the text supplied to it, but that is not the regex executed by passing tests. Origin of transformation not yet attributed to GitHub/CLI/transport. Do not override verdict or claim high issue reproduced in source.",
+    "testEvidence": "193existingchecks pass exit0, includes exact sanitization test. No new Codex tests/implementation.",
+    "boundedNext": "Harness may spell the same control range with explicit hex escapes as requested by native review, retaining behavior/readability/redaction. Requalify exact committed/file/native review representation, complete tests and native gates. Do not edit reviewer payload/cache/failed record or expand review infrastructure."
+  },
+  "rootQualification": "193tests passed; native review later failed. Native package/types/build/publish/install/restart/acceptance not reached. Read-only git apply --check installedsource exit0 and preimage hashes recorded.",
+  "preserved": "Allr1/r3/r5/r8/r11/r13/r15history, PR106/PR107 failednativeverdicts/blocked deliveries/automatic correction authority stops preserved; acceptedPR96/usermerges/clarificationproposalheld unchanged.",
+  "nextOwner": "Harness original samefinding code spelling correction under retained human approval; Codex independent exacthead/native protected flow onlyifqualified. No permission/policy or deniedlease override, access/auth/settings/hostpackage changes."
+}

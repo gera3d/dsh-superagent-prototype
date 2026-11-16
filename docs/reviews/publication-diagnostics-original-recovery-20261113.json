@@ -1,0 +1,116 @@
+{
+  "observedAt": "2026-11-14T01:14:26.005173+00:00",
+  "findingId": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+  "revision": 3,
+  "state": "running",
+  "job": {
+    "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r3",
+    "ticketId": "5d7c23667a52c3e9afb03ce04352024b",
+    "assignmentId": "f6b7aa4d9bf4b44a686a026885ec7326"
+  },
+  "originalJobPreserved": [
+    {
+      "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r1",
+      "ticketId": "476e0cde1673d0d3278933f87ace6d8f",
+      "assignmentId": "aa513ffbcf8e4f75dceaa9b895132a1e"
+    }
+  ],
+  "supportedActions": [
+    "coordinate_finding retry_scope exact revision2 ->3",
+    "coordinate_finding confirm revision3 exact retained choice queue_next"
+  ],
+  "confirmation": {
+    "revision": 3,
+    "choiceId": "queue_next",
+    "actor": "codex-project-coordinator",
+    "at": "2026-11-14T01:13:07.493Z"
+  },
+  "load": {
+    "running": 1,
+    "queued": 0,
+    "maxWorkers": 3
+  },
+  "modelsRevision": 26,
+  "models": {
+    "hierarchy": [
+      {
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash",
+        "reasoningEffort": "medium",
+        "starred": true
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-sonnet-5-5",
+        "starred": true
+      },
+      {
+        "provider": "deepseek-official",
+        "model": "deepseek-flash",
+        "starred": false
+      },
+      {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "starred": true
+      }
+    ],
+    "maxEscalations": 1,
+    "helper": {
+      "provider": "deepseek-official",
+      "model": "deepseek-flash"
+    },
+    "conserve": false,
+    "economyRoute": {
+      "provider": "deepseek-official",
+      "model": "deepseek-flash"
+    },
+    "subscriptions": [
+      {
+        "provider": "antigravity",
+        "status": "available",
+        "resetAt": ""
+      },
+      {
+        "provider": "anthropic",
+        "status": "available",
+        "resetAt": ""
+      },
+      {
+        "provider": "openai-codex",
+        "status": "conserved",
+        "resetAt": ""
+      },
+      {
+        "provider": "deepseek-official",
+        "status": "available",
+        "resetAt": ""
+      }
+    ]
+  },
+  "googlePool": [
+    {
+      "enabled": true,
+      "authRequired": null,
+      "googleCooldown": null,
+      "googleQuota": {
+        "remainingFraction": 0.7559755444526672,
+        "resetTime": "2026-11-14T04:40:22Z",
+        "weeklyFraction": 0.928909182548523,
+        "weeklyResetTime": "2026-11-20T23:40:22Z",
+        "description": "Models within this group: Gemini Flash, Gemini Pro",
+        "updatedAt": 1794617393903
+      }
+    }
+  ],
+  "actualRequest": {
+    "provider": "antigravity",
+    "model": "gemini-3.8-flash",
+    "maxTokens": 65536,
+    "evidence": "matching worker session request/header.config and request/context observed;21events, no completed response/report yet"
+  },
+  "requirement": "Inventory CURRENT operator source in new trusted isolated work/local-origin clone; reuse existing diagnostics before adding only missing original approved sanitized phase/cause coverage. Existing IDs/audit facilities, offline fixtures only. Preserve original old tree, exact confirmations/pins/one-use approval/idempotence, OpenAI conservation/Google5percentreserve/max3/backoff. No raw payloads/secrets/telemetry expansion/new access/spend/credentials/settings/routes/live publication/merge/deploy/restart by worker. Exact committed head/base/hash, focused checks and native structured report for Codex independent review. No original66mscause inference.",
+  "nextOwner": "Harness implementation/current-source inventory; Codex independent review on structured result",
+  "otherTracks": "Composio remains held pending same native UI availability question; clarification proposal unapproved; quotaPR109-114 observational/authority-qualified, unchanged",
+  "limits": "Recovery dispatched, not implementation/test/release acceptance. No Codex implementation/tests, forced provider probe, Chrome or new permission. Native pool data is dated allowance observation, not successful Google response qualification."
+}

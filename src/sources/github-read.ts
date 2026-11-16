@@ -56,12 +56,18 @@ export async function readRepositoryPath(commands: Commands, path: string, kind:
   return entries.map(entry => entry.name).filter(name => !name.startsWith('.') && name !== 'node_modules').sort().join('\n')
 }
 
-/** Reads check runs and commit statuses for a commit without emitting a trigger. */
-export async function pullChecks(commands: Commands, head: string, tally?: Tally): Promise<CiSnapshot> {
+/**
+ * Reads check runs and commit statuses for a commit without emitting a trigger. Both lists are revalidated with their ETag
+ * (a 304 reuses the body stored from the earlier 200, see `Commands.revalidate`) and read normally when they span several pages;
+ * `fresh` skips the conditional header.
+ */
+export async function pullChecks(commands: Commands, head: string, tally?: Tally, options: { fresh?: boolean } = {}): Promise<CiSnapshot> {
   const page = z.looseObject({ check_runs: z.array(z.unknown()) })
-  const pages = await commands.api(z.array(page), `commits/${head}/check-runs?per_page=100`, '--paginate', '--slurp')
+  const first = await commands.revalidate(`commits/${head}/check-runs?per_page=100`, body => page.parse(body), options)
+  const pages = first ? [first] : await commands.api(z.array(page), `commits/${head}/check-runs?per_page=100`, '--paginate', '--slurp')
   const runs = validItems(CheckSchema, pages.flatMap(page => page.check_runs), tally)
-  const statuses = await commands.pages(StatusSchema, `commits/${head}/statuses?per_page=100`, tally)
+  const listed = await commands.revalidate(`commits/${head}/statuses?per_page=100`, body => z.array(z.unknown()).parse(body), options)
+  const statuses = listed ? validItems(StatusSchema, listed, tally) : await commands.pages(StatusSchema, `commits/${head}/statuses?per_page=100`, tally)
   const latest = new Map<string, string>()
   for (const status of statuses) if (!latest.has(status.context)) latest.set(status.context, status.state)
   const checks = runs.map(({ name, status, conclusion }) => ({ name, status, conclusion }))

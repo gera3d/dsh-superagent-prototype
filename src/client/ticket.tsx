@@ -8,6 +8,7 @@ import { JobUsageSummary } from './job-usage.tsx'
 import { settingsRoute } from './route.ts'
 import { Earlier, ThreadLine, automatedRuns } from './rows.tsx'
 import { actorName, localized, readableMarkers, reasonLabel, valueLabel, when } from './text.ts'
+import { ThreadBriefHeader } from './thread-brief-header.tsx'
 import { ActionLink, ConfirmButton, ExternalLink, Hint, KeyValues, LabelValue, LoadState, MarkdownLite, PageHead, Section, SessionButton,
   StageMark, When } from './widgets.tsx'
 
@@ -134,6 +135,7 @@ export function TicketPage({ id }: { id: string }) {
         onConfirm={() => after(call('POST tickets/:id/retry', { id }))} />}
       {data.sessionId && <SessionButton variant="outline" sessionId={data.sessionId} />}
     </PageHead>
+    {data.brief && <ThreadBriefHeader brief={data.brief} />}
     {error && <LoadState error={error} loading={false} />}
     <div className="dt-row-meta dt-status-line">
       <StageMark state={status.dot} icon={status.icon} label={status.label} />
@@ -174,6 +176,12 @@ export function TicketPage({ id }: { id: string }) {
           variable.description)}>
           <td className="dt-mono">{variable.key}</td><td className="dt-mono">{variable.value || <span
             className="dt-hint">{t('empty')}</span>}</td>
+        </tr>)}</tbody></table>
+      </Details>}
+      {data.ghCalls.total > 0 && <Details icon="settings" title={`${t('ghCallsTitle')} · ${data.ghCalls.total}`}>
+        <Hint>{t('ghCallsHint')}</Hint>
+        <table className="dt-table"><tbody>{data.ghCalls.commands.map(item => <tr key={item.name}>
+          <td className="dt-mono">{item.name}</td><td className="dt-mono">{item.count}</td>
         </tr>)}</tbody></table>
       </Details>}
       <Details icon="message" title={t('term.channel')}>

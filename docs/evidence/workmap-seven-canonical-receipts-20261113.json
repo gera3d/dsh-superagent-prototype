@@ -1,0 +1,251 @@
+{
+  "observedAt": "2026-11-14T07:28:32.153289+00:00",
+  "originalTwo109": {
+    "targets": [
+      {
+        "id": "chat-1d45344d4db7980cdfa274e841e5ccf6",
+        "present": true,
+        "status": "stale"
+      },
+      {
+        "id": "chat-3cd343fc98ef777b45fc204f73750afa",
+        "present": true,
+        "status": "stale"
+      }
+    ],
+    "backupExists": true,
+    "backupSha256": "f3aa5f45a65f4e2ec1321e43b5751beb336b1fd95d98c28c6c939a2e2a204d89",
+    "matchesOriginalComment": true
+  },
+  "canonical157BoundedSubmission": {
+    "id": "chat-edced19b93692011e5f2f838f21bc8ea",
+    "status": "resolved",
+    "sourceMessageId": "64eb3078-a68b-404c-a4b7-5a73caba05f3",
+    "sourceTurn": 2,
+    "sourceSeq": 29,
+    "resolutionBasis": "submitted",
+    "resolvedChoice": "revise-explanation",
+    "resolvedAt": 1793949529671,
+    "resolutionRevision": 4,
+    "submittedMessageId": "055e598f-fec8-414c-a567-754b07e5c868",
+    "submittedSeq": 36
+  },
+  "accepted159": {
+    "id": "sandbox-159-browser",
+    "state": "accepted",
+    "revision": 4,
+    "stage": "accepted",
+    "bindings": {
+      "repository": "gera3d/superagent-sandbox",
+      "sourceIssue": 159,
+      "baseSha": "15c7dc72e0f7f2d54383e3e3bbc86d190cf49484",
+      "headSha": "f73f8228e46ecd768ac7f910ca16f7dc332fdaf5",
+      "refs": [
+        {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "pr": 25,
+          "headSha": "5888087bb17d59eef8959e0a82382a879dcf0b5f"
+        },
+        {
+          "repository": "gera3d/dsh-superagent-prototype",
+          "pr": 26,
+          "headSha": "4461d3ff3e473d42feff6dff8fc376438a737a79"
+        },
+        {
+          "repository": "gera3d/dsh-plugins",
+          "pr": 6,
+          "headSha": "562b0b792f634ac2d36cb9b14ca2cb4fcee3dce5"
+        }
+      ]
+    },
+    "evidence": [
+      {
+        "id": "sandbox-162-implementation",
+        "kind": "implementation",
+        "outcome": "passed",
+        "reference": "https://github.com/gera3d/superagent-sandbox/blob/f73f8228e46ecd768ac7f910ca16f7dc332fdaf5/reports/approve-publish-159/README.md",
+        "recordedAt": "2026-11-06T09:34:23Z",
+        "supersedes": null
+      },
+      {
+        "id": "sandbox-164-publication-failed",
+        "kind": "publication",
+        "outcome": "failed",
+        "reference": "https://github.com/gera3d/superagent-sandbox/pull/164",
+        "recordedAt": "2026-11-06T10:10:54.359956+00:00",
+        "supersedes": null
+      },
+      {
+        "id": "sandbox-164-rollback",
+        "kind": "rollback",
+        "outcome": "passed",
+        "reference": "https://github.com/gera3d/superagent-sandbox/pull/164",
+        "recordedAt": "2026-11-06T10:10:54.359956+00:00",
+        "supersedes": null
+      },
+      {
+        "id": "sandbox-166-publication-failed",
+        "kind": "publication",
+        "outcome": "failed",
+        "reference": "https://github.com/gera3d/superagent-sandbox/pull/166",
+        "recordedAt": "2026-11-06T10:10:54.359956+00:00",
+        "supersedes": null
+      },
+      {
+        "id": "sandbox-166-rollback",
+        "kind": "rollback",
+        "outcome": "passed",
+        "reference": "https://github.com/gera3d/superagent-sandbox/pull/166",
+        "recordedAt": "2026-11-06T10:10:54.359956+00:00",
+        "supersedes": null
+      },
+      {
+        "id": "native-current-descendant-publication-170",
+        "kind": "publication",
+        "outcome": "passed",
+        "reference": "https://github.com/gera3d/superagent-sandbox/issues/169#issuecomment-6690704504",
+        "recordedAt": "2026-11-06T17:09:25.123926+00:00",
+        "supersedes": [
+          "sandbox-164-publication-failed",
+          "sandbox-164-rollback",
+          "sandbox-166-publication-failed",
+          "sandbox-166-rollback"
+        ]
+      },
+      {
+        "id": "native-current-descendant-one-click-170",
+        "kind": "verification",
+        "outcome": "passed",
+        "reference": "https://github.com/gera3d/superagent-sandbox/issues/169#issuecomment-6690704504",
+        "recordedAt": "2026-11-06T17:09:25.123926+00:00",
+        "supersedes": null
+      }
+    ],
+    "acceptanceAudit": [
+      {
+        "at": "2026-11-06T17:13:01.855Z",
+        "event": "confirmed:accept:local_operator:orchestrator-http:sandbox-159-browser:3:sandbox-159-browser:3:accept:c8e5fe6eb8e62f49",
+        "actor": "local-operator",
+        "actionId": "sandbox-159-browser:3:accept:c8e5fe6eb8e62f49"
+      }
+    ]
+  },
+  "acceptedLaterHandoff": {
+    "id": "auto-86635beac41a7b1cb43ddace32aab11d",
+    "state": "accepted",
+    "revision": 21,
+    "stage": "accepted",
+    "release": {
+      "findingId": "45251448-f4b9-41aa-8886-86ade8950b11",
+      "findingRevision": 18,
+      "jobId": "finding:45251448-f4b9-41aa-8886-86ade8950b11:r17",
+      "ticketId": "86635beac41a7b1cb43ddace32aab11d",
+      "assignmentId": "387889e30fde71e5ed3d09ed9bc21f4c",
+      "branch": "agent/finding-task-86635beac41a",
+      "prNumber": 86,
+      "headSha": "41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef",
+      "patchSha256": "23a04741687f4b9b91c01e0b7612171a55059e0e9c7f1f7e2666a0a7793f4861",
+      "preparedAt": "2026-11-10T04:35:23.217Z"
+    },
+    "evidence": [
+      {
+        "id": "publication:cfa9cf8c-1844-40bf-935f-0bcfd60649ae:2026-11-10T05:28:30.327Z:publication",
+        "kind": "publication",
+        "outcome": "passed",
+        "reference": "publication:cfa9cf8c-1844-40bf-935f-0bcfd60649ae",
+        "recordedAt": "2026-11-10T05:28:30.327Z"
+      },
+      {
+        "id": "publication:cfa9cf8c-1844-40bf-935f-0bcfd60649ae:2026-11-10T05:28:30.327Z:verification",
+        "kind": "verification",
+        "outcome": "passed",
+        "reference": "publication:cfa9cf8c-1844-40bf-935f-0bcfd60649ae#verify:verify completed for pinned head 41bae0ab0297d7b4b43a1a3f1b0bf74f7d0af4ef; configured HTTP release verification only, browser acceptance not performed",
+        "recordedAt": "2026-11-10T05:28:30.260Z"
+      },
+      {
+        "id": "operator-live:auto-86635beac41a7b1cb43ddace32aab11d:18:d084afb6da593d8f",
+        "kind": "verification",
+        "outcome": "passed",
+        "reference": "https://github.com/gera3d/dsh-superagent-prototype/blob/aeda00a5697ee8366a9561325600e3f1c9198e0e/docs/reviews/thread-handoff-actual-native-flow.md",
+        "recordedAt": "2026-11-10T05:43:23.059Z"
+      }
+    ],
+    "acceptanceAudit": [
+      {
+        "at": "2026-11-10T05:52:34.253Z",
+        "event": "confirmed:accept:local_operator:orchestrator-http:auto-86635beac41a7b1cb43ddace32aab11d:20:auto-86635beac41a7b1cb43ddace32aab11d:20:accept:6e613a2715f83e02",
+        "actor": "local-operator",
+        "actionId": "auto-86635beac41a7b1cb43ddace32aab11d:20:accept:6e613a2715f83e02"
+      }
+    ]
+  },
+  "originalSixCurrent": [
+    {
+      "id": "dd8d3ab1-7941-43f2-b498-4a82a27c9bb2",
+      "title": "Recover failed independent review after the implementation worker ended",
+      "revision": 13,
+      "state": "resolved",
+      "job": {
+        "id": "finding:dd8d3ab1-7941-43f2-b498-4a82a27c9bb2:r11",
+        "ticketId": "c22796a56c57b96f120a42ec4db17cdd",
+        "assignmentId": "73ee3ed17d4e4ec88b75f61e228aa1c1"
+      }
+    },
+    {
+      "id": "c844ce8f-7c80-407c-a237-9dd53d62f3c3",
+      "title": "Finish production integration of Composio action failure handling",
+      "revision": 19,
+      "state": "blocked",
+      "job": {
+        "id": "finding:c844ce8f-7c80-407c-a237-9dd53d62f3c3:r18",
+        "ticketId": "90b01f2a0531979c292f19f482df2a3e",
+        "assignmentId": "9fcfa76462a763cf8289661908868ae2"
+      }
+    },
+    {
+      "id": "e1dfd442-bb88-409e-bef0-b2db569dca79",
+      "title": "Measure and reduce worker prompt and tool-output waste",
+      "revision": 8,
+      "state": "blocked",
+      "job": {
+        "id": "finding:e1dfd442-bb88-409e-bef0-b2db569dca79:r7",
+        "ticketId": "4abae94273cfd65a149e9ee6333c0b87",
+        "assignmentId": "ba3796bc797424d3cdf97948782af08f"
+      }
+    },
+    {
+      "id": "fbd4db89-0485-4e9d-a805-cac220390100",
+      "title": "Build the first integrated project sections increment",
+      "revision": 3,
+      "state": "blocked",
+      "job": {
+        "id": "finding:fbd4db89-0485-4e9d-a805-cac220390100:r1",
+        "ticketId": "ee96b8e87953f8a1debf4c809dc51a58",
+        "assignmentId": "e7c3e3b506bbeb36ee576236d76a6227"
+      }
+    },
+    {
+      "id": "f1d6590a-5aff-4b9a-9440-65033a5c250f",
+      "title": "Add sanitized publication phase and failure diagnostics",
+      "revision": 10,
+      "state": "blocked",
+      "job": {
+        "id": "finding:f1d6590a-5aff-4b9a-9440-65033a5c250f:r9",
+        "ticketId": "0310d5fb926de996644d23a0768bf518",
+        "assignmentId": "5a63c9930a78eee4655970525c946bf0"
+      }
+    },
+    {
+      "id": "60a99ec9-4328-41c1-93cc-dbbe6569e234",
+      "title": "Reconcile current project status and historical open backlog",
+      "revision": 2,
+      "state": "blocked",
+      "job": {
+        "id": "finding:60a99ec9-4328-41c1-93cc-dbbe6569e234:r1",
+        "ticketId": "ecc57b7b6ef827705bb7ebe881718a88",
+        "assignmentId": "cfd1d36113d7f3cd3fc2c8d7f639edd7"
+      }
+    }
+  ],
+  "limits": "Read-only receipt checks, not re-running accepted qualification/native flow. Accepted scopes/history remain immutable; old ordinary choices were not selected. No full issue scope acceptance inferred from merges/counts."
+}

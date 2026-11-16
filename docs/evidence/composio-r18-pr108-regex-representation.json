@@ -1,0 +1,8 @@
+{
+  "head": "488f8400c78d1969fede084fd39899ca342efd1c",
+  "pr": 108,
+  "sourceLine": "  let out = text.replace(/[\\x00-\\x08\\x0B-\\x1F\\x7F]/g, ' ')",
+  "prDiffLine": "  let out = text.replace(/[\\x00-\\x08\\x0B-\\x1F\\x7F]/g, ' ')",
+  "exactMatch": true,
+  "coverage": "Configured gh-agent PRfiles response matches committed source line; native model review payload still pending"
+}

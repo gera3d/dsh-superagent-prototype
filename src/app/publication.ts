@@ -34,12 +34,118 @@ export interface PublicationAuthority {
 export interface PublicationInstructionProof {
   recordPath: string; recordSha256: string; reference: string; instruction: string
 }
+export type PublicationDiagnosticPhase = 'confirmation' | 'validation' | 'enqueue' | 'execution'
+export type PublicationFailureCategory =
+  | 'before_effect_rejection'
+  | 'stale_pins'
+  | 'authority_mismatch'
+  | 'canonical_ticket_changed'
+  | 'idempotency_conflict'
+  | 'concurrency_blocked'
+  | 'pre_enqueue_binding_failed'
+  | 'worker_launch_failed'
+  | 'stage_failed'
+  | 'execution_interrupted'
+  | 'rollback_outcome'
+
+export type PublicationFailureCause =
+  | 'stale_configuration_pins'
+  | 'authority_missing_or_mismatched'
+  | 'canonical_ticket_or_decision_changed'
+  | 'idempotency_key_reused'
+  | 'concurrency_grant_active'
+  | 'interrupted_grant_pending_reconciliation'
+  | 'pre_enqueue_binding_serialization_failed'
+  | 'worker_launch_process_failed'
+  | 'stage_execution_failed'
+  | 'execution_interrupted_unknown_outcome'
+  | 'rollback_completed'
+  | 'rollback_failed'
+  | 'before_effect_rejected'
+
+export function sanitizeDiagnosticMessage(message: unknown): string {
+  if (typeof message !== 'string') message = message instanceof Error ? message.message : String(message ?? '')
+  let text = (message as string).trim()
+  if (!text) return 'Unknown error'
+  text = text.replace(/:\/\/[^/:]+:[^/@]+@/g, '://[REDACTED_CREDENTIALS]@')
+  text = text.replace(/\b(?:gh[pousr]_[A-Za-z0-9_]{16,}|Bearer\s+[A-Za-z0-9\-._~+/]+=*|sk-[a-zA-Z0-9]{20,}|key-[a-zA-Z0-9]{16,})\b/gi, '[REDACTED_SECRET]')
+  text = text.replace(/((?:authorization|token|secret|password|api[_-]?key)\s*[:=]\s*)(["'])(?:(?!\2)[\s\S])*?\2/gi, '$1$2[REDACTED]$2')
+  text = text.replace(/((?:authorization|token|secret|password|api[_-]?key)\s*[:=]\s*)(?:Bearer\s+)?[^\s,;"']+/gi, '$1[REDACTED]')
+  text = text.replace(/(\b(?:raw\s+provider\s+response|raw\s+response|provider\s+response|payload|body|data)\s*:\s*)(\{[\s\S]*?\}|\[[\s\S]*?\])/gi, '$1[REDACTED_PAYLOAD]')
+  text = text.replace(/\{[^{}]*\}/g, '[REDACTED_PAYLOAD]')
+  text = text.replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/gi, '[REDACTED_EMAIL]')
+  text = text.replace(/(?:customer(?:Email|Id|Name)?|private(?:Content)?|content)\s*[:=]\s*(?:["'][^"']*["']|[^\s,;}]+)/gi, '[REDACTED_CONTENT]')
+  if (text.length > 500) text = text.slice(0, 497) + '...'
+  return text
+}
+
+const ALLOWED_STAGE_DETAILS = new Set([
+  'merge', 'apply', 'build', 'restart', 'verify', 'rollback',
+  'merge succeeded', 'merge complete', 'merge failed',
+  'apply succeeded', 'apply complete', 'apply failed',
+  'build succeeded', 'build complete', 'build failed', 'Build failed',
+  'restart succeeded', 'restart complete', 'restart failed',
+  'verify succeeded', 'verify complete', 'verify failed',
+  'rollback completed clean', 'rollback succeeded', 'rollback complete', 'rollback failed',
+])
+
+export function safeStageDetail(raw: unknown, stage: PublicationStage, status: 'succeeded' | 'failed', category?: PublicationFailureCategory, operationId?: string): string {
+  const str = typeof raw === 'string' ? raw.trim() : (raw instanceof Error ? raw.message.trim() : '')
+  if (str && ALLOWED_STAGE_DETAILS.has(str)) return str
+  if (status === 'succeeded') return `${stage}: succeeded${operationId ? ` [op=${operationId}]` : ''}`
+  return `${stage}: failed${category ? ` (${category})` : ''}${operationId ? ` [op=${operationId}]` : ''}`
+}
+
+export function classifyPublicationError(error: unknown): {
+  category: PublicationFailureCategory
+  status: number
+  cause: PublicationFailureCause
+  message: string
+} {
+  const msg = error instanceof Error ? error.message : String(error ?? '')
+  const status = error instanceof PublicationError ? error.status : 500
+  let category: PublicationFailureCategory = 'before_effect_rejection'
+  let cause: PublicationFailureCause = 'before_effect_rejected'
+
+  if (/stale|changed|mismatch/i.test(msg) && /pins|configuration|manifest|card|review/i.test(msg)) {
+    category = 'stale_pins'
+    cause = 'stale_configuration_pins'
+  } else if (/idempotency|reused/i.test(msg)) {
+    category = 'idempotency_conflict'
+    cause = 'idempotency_key_reused'
+  } else if (/binding|capture|pre-enqueue/i.test(msg)) {
+    category = 'pre_enqueue_binding_failed'
+    cause = 'pre_enqueue_binding_serialization_failed'
+  } else if (/authority|permission|forbidden|approval/i.test(msg) && !/ticket/i.test(msg)) {
+    category = 'authority_mismatch'
+    cause = 'authority_missing_or_mismatched'
+  } else if (/canonical|ticket/i.test(msg)) {
+    category = 'canonical_ticket_changed'
+    cause = 'canonical_ticket_or_decision_changed'
+  } else if (/interrupted.*reconciliation/i.test(msg)) {
+    category = 'concurrency_blocked'
+    cause = 'interrupted_grant_pending_reconciliation'
+  } else if (/in progress|interrupted|unsettled|locked|busy/i.test(msg)) {
+    category = 'concurrency_blocked'
+    cause = 'concurrency_grant_active'
+  } else if (/worker launch/i.test(msg)) {
+    category = 'worker_launch_failed'
+    cause = 'worker_launch_process_failed'
+  }
+  const message = `${category}: ${cause}`
+  return { category, status, cause, message }
+}
+
 export interface PublicationOutcome {
   stage: PublicationStage; operationId: string; status: 'running' | 'succeeded' | 'failed' | 'interrupted'
   startedAt: string; finishedAt?: string; detail?: string
+  category?: PublicationFailureCategory
 }
 export interface PublicationAudit {
   at: string; event: string; detail: string; requestId?: string; actorId?: string; authorityKind?: PublicationAuthority['kind']
+  phase?: PublicationDiagnosticPhase
+  category?: PublicationFailureCategory
+  cause?: PublicationFailureCause | string
 }
 export interface PublicationSnapshot extends PublicationPrepareInput {
   id: string
@@ -100,8 +206,9 @@ export class PublicationService {
       let recovered = false
       for (const p of Object.values(d.publications)) for (const o of p.outcomes) if (o.status === 'running') {
         o.status = 'interrupted'; o.finishedAt = this.at(); o.detail = 'Process interrupted; outcome unknown. No automatic replay.'
+        o.category = 'execution_interrupted'
         p.status = 'interrupted'; p.updatedAt = this.at()
-        p.audit.push({ at: this.at(), event: 'interrupted', detail: `${o.stage}: outcome unknown; explicit reconciliation/rollback required` })
+        p.audit.push({ at: this.at(), event: 'interrupted', detail: `${o.stage}: outcome unknown; explicit reconciliation/rollback required`, phase: 'execution', category: 'execution_interrupted', cause: 'execution_interrupted_unknown_outcome' })
         recovered = true
       }
       if (recovered) this.options.store.save(d)
@@ -153,7 +260,7 @@ export class PublicationService {
         // Safe new canonical decision/release: archive the old immutable binding and its entire audit trail.
       }
       const p: PublicationSnapshot = { ...input, id: randomUUID(), status: 'prepared', createdAt: this.at(), updatedAt: this.at(), outcomes: [], audit: [], requests: {} }
-      p.audit.push({ at: this.at(), event: 'prepared', detail: 'Pinned repository, PR, head and sha256 patch; no authority granted' })
+      p.audit.push({ at: this.at(), event: 'prepared', detail: 'Pinned repository, PR, head and sha256 patch; no authority granted', phase: 'validation' })
       d.publications[p.id] = p; d.tickets[p.ticketId] = p.id
       await this.gate(p, 'prepare', d)
       this.options.store.save(d)
@@ -224,7 +331,7 @@ export class PublicationService {
       if (p.ticketId !== input.ticketId || p.conversationId !== input.conversationId) throw new PublicationError(403, 'Publication conversation binding mismatch')
       if (!authority || authority.authorized !== true || !['human_click', 'operator_instruction'].includes(authority.kind) || !validKey(authority.actorId)
         || authority.ticketId !== p.ticketId || authority.conversationId !== p.conversationId || authority.publicationId !== p.id || authority.action !== input.action) {
-        p.audit.push({ at: this.at(), event: 'authority_denied', detail: 'Missing explicit bound human/operator authority', requestId: input.requestId })
+        p.audit.push({ at: this.at(), event: 'authority_denied', detail: 'Missing explicit bound human/operator authority', requestId: input.requestId, phase: 'validation', category: 'authority_mismatch', cause: 'authority_missing_or_mismatched' })
         this.options.store.save(d)
         throw new PublicationError(403, 'Explicit bound human/operator authority required')
       }
@@ -253,7 +360,7 @@ export class PublicationService {
       if (input.action === 'rollback' && !p.outcomes.some(o => o.stage !== 'rollback')) throw new PublicationError(409, 'Nothing to roll back')
       if (input.action === 'rollback' && p.outcomes.some(o => o.stage === 'rollback')) throw new PublicationError(409, 'Rollback already attempted; reconcile its outcome before any further operation')
       p.requests[input.requestId] = { action: input.action, actorId: authority.actorId }
-      p.audit.push({ at: this.at(), event: 'authorized', detail: input.action, requestId: input.requestId, actorId: authority.actorId, authorityKind: authority.kind })
+      p.audit.push({ at: this.at(), event: 'authorized', detail: input.action, requestId: input.requestId, actorId: authority.actorId, authorityKind: authority.kind, phase: 'confirmation' })
       this.options.store.save(d)
       const stages: PublicationStage[] = input.action === 'publish' ? ['apply', 'build', 'restart', 'verify'] : [input.action]
       for (const stage of stages) {
@@ -262,23 +369,38 @@ export class PublicationService {
         if (input.action !== 'rollback' && !await this.gate(p, input.action, d)) { this.options.store.save(d); return clone(p) }
         if (authority.isCurrent && !authority.isCurrent()) {
           p.status = 'blocked'; p.updatedAt = this.at()
-          p.audit.push({ at: this.at(), event: 'authority_invalidated', detail: 'Canonical ticket/decision changed before effect', requestId: input.requestId })
+          p.audit.push({ at: this.at(), event: 'authority_invalidated', detail: 'Canonical ticket/decision changed before effect', requestId: input.requestId, phase: 'execution', category: 'canonical_ticket_changed', cause: 'canonical_ticket_or_decision_changed' })
           this.options.store.save(d); return clone(p)
         }
         const o: PublicationOutcome = { stage, operationId: `${p.id}:${stage}`, status: 'running', startedAt: this.at() }
         p.outcomes.push(o); p.updatedAt = this.at()
-        p.audit.push({ at: this.at(), event: 'stage_started', detail: stage, requestId: input.requestId })
+        p.audit.push({ at: this.at(), event: 'stage_started', detail: stage, requestId: input.requestId, phase: 'execution' })
         this.options.store.save(d) // write-ahead: a crash from here is unknown, NEVER blindly retried
         const processes = this.trackProcesses(d, stage)
         try {
           this.options.signal?.throwIfAborted()
           const result = await this.options.adapter.perform(stage, { repository: p.repository, prNumber: p.prNumber, headSha: p.headSha, patchSha256: p.patchSha256 }, o.operationId, this.options.signal, processes.onSpawn)
           this.options.signal?.throwIfAborted()
-          o.status = 'succeeded'; o.detail = result.detail
-        } catch (error) { o.status = 'failed'; o.detail = error instanceof Error ? error.message : String(error); p.status = 'failed' }
+          o.status = 'succeeded'
+          if (stage === 'rollback') o.category = 'rollback_outcome'
+          o.detail = safeStageDetail(result.detail, stage, 'succeeded', o.category, o.operationId)
+        } catch (error) {
+          o.status = 'failed'
+          o.category = stage === 'rollback' ? 'rollback_outcome' : 'stage_failed'
+          o.detail = safeStageDetail(error, stage, 'failed', o.category, o.operationId)
+          p.status = 'failed'
+        }
         finally { processes.settled() }
         o.finishedAt = this.at(); p.updatedAt = this.at()
-        p.audit.push({ at: this.at(), event: `stage_${o.status}`, detail: `${stage}: ${o.detail ?? ''}`, requestId: input.requestId })
+        p.audit.push({
+          at: this.at(),
+          event: `stage_${o.status}`,
+          detail: `${stage}: ${o.status === 'succeeded' ? 'succeeded' : 'failed'} [op=${o.operationId}]`,
+          requestId: input.requestId,
+          phase: 'execution',
+          category: o.status === 'failed' ? (stage === 'rollback' ? 'rollback_outcome' : 'stage_failed') : (stage === 'rollback' ? 'rollback_outcome' : undefined),
+          cause: o.status === 'failed' ? (stage === 'rollback' ? 'rollback_failed' : 'stage_execution_failed') : (stage === 'rollback' ? 'rollback_completed' : undefined),
+        })
         if (o.status === 'succeeded') {
           if (stage === 'merge') p.status = 'merged'
           if (stage === 'verify') p.status = 'published'

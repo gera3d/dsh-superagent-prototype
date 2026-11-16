@@ -1,0 +1,26 @@
+   ✓ prepares a strict hash-pinned release and propagates timeout 300000 without applying it  1780ms
+   ✓ prepares a strict hash-pinned release and propagates timeout 900000 without applying it  1581ms
+   ✓ rejects preparation timeout outside supported bounds: -1  553ms
+   ✓ rejects preparation timeout outside supported bounds: 0  888ms
+   ✓ rejects preparation timeout outside supported bounds: 999  661ms
+   ✓ rejects preparation timeout outside supported bounds: 900001  1228ms
+   ✓ patch parser distinguishes ordinary source from actual metadata  1285ms
+   ✓ patch parser distinguishes own guard literals from actual metadata  1194ms
+   ✓ patch parser distinguishes context literal from actual metadata  1159ms
+   ✓ patch parser distinguishes removed source literal from actual metadata  1133ms
+   ✓ patch parser distinguishes binary metadata from actual metadata  702ms
+   ✓ patch parser distinguishes binary-files metadata from actual metadata  937ms
+   ✓ patch parser distinguishes rename-from metadata from actual metadata  1148ms
+   ✓ patch parser distinguishes rename-to metadata from actual metadata  978ms
+   ✓ patch parser distinguishes deletion metadata from actual metadata  837ms
+   ✓ patch parser distinguishes old-mode metadata from actual metadata  712ms
+   ✓ patch parser distinguishes new-mode metadata from actual metadata  748ms
+   ✓ rejects a healthy old HTTP listener without the exact release identity  6419ms
+   ✓ refuses rollback that would overwrite post-apply operator edits  2413ms
+
+ Test Files  9 passed (9)
+      Tests  112 passed (112)
+   Start at  00:05:46
+   Duration  57.29s (transform 4.99s, setup 0ms, import 10.22s, tests 79.53s, environment 2ms)
+
+[status: completed, exit code: 0]

@@ -1,5 +1,6 @@
 /** Thread list, timeline detail, cross-entity search, and decision list views. */
 import { threadKey, type Thread, type Ticket, type Trigger } from '../../core/index.ts'
+import { resolveThreadBriefManager } from '../../core/thread-brief.ts'
 import type { ThreadFilter } from '../api.ts'
 import type { TextCache } from '../cache.ts'
 import { awaitingEval, channelLink, dayAgo, decisionView, newestFirst, page, snapshot, threadSummary, threadTitle, ticketLine,
@@ -42,6 +43,7 @@ export function threadDetail(host: ViewHost, key: string, before: string | undef
   const first = store.read.firstTrigger(key)
   const url = attribute(thread.meta.url) ?? first?.url ?? (first?.channel ? channelLink(view, first.channel).url : undefined)
   // `context` lists tickets whose Executor follows this thread for context only (messages reach them without granting authority).
+  const brief = resolveThreadBriefManager(store, thread, first).toView()
   return { ...threadSummary(view, thread), url, context: thread.context ?? [],
     correlated: thread.correlated.map(other => {
       const value = store.threads.get(other)
@@ -49,7 +51,8 @@ export function threadDetail(host: ViewHost, key: string, before: string | undef
     }),
     tickets: thread.subscriptions.flatMap(id => { const ticket = store.tickets.get(id); return ticket ? [ticketLine(view, ticket)] : [] }),
     decisions: decisions.slice().reverse().map(decision => decisionView(view, decision)),
-    timeline: shown.map(trigger => triggerView(view, trigger, decisions)), earlier: more ? `${shown[0]!.at}|${shown[0]!.id}` : null }
+    timeline: shown.map(trigger => triggerView(view, trigger, decisions)), earlier: more ? `${shown[0]!.at}|${shown[0]!.id}` : null,
+    ...brief ? { brief } : {} }
 }
 export type ThreadDetailView = NonNullable<ReturnType<typeof threadDetail>>
 /**
