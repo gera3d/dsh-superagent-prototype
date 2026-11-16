@@ -30,15 +30,17 @@ function fit(line: string, budget: number, end = false): string {
 /**
  * The fallback for a pointer so long that the full notice leaves no room: the sizes, the whole `file` pointer and as much of the
  * end of `text` as then fits, so the exit code or status marker is kept and the pointer is never cut. When even this exceeds the
- * limits (a file name of several kilobytes), the caller must not use it; `installOutputBound` then leaves the result unchanged.
+ * limits or leaves no room for the complete terminal status, compact returns undefined and `installOutputBound` leaves the result unchanged.
  */
-function compact(text: string, lines: string[], file: string): string {
+function compact(text: string, lines: string[], file: string): string | undefined {
   const head = `[output bounded: ${lines.length} lines, ${bytes(text)} bytes. Complete text: ${file}]`
-  const room = OUTPUT_BYTES - bytes(head) - 2
-  // Only the end of the last line, as much as fits: a status marker is read from its start, so it is never cut into by a head.
-  const end = Array.from(lines.at(-1)!).slice(-END_CHARS)
-  while (end.length && bytes(end.join('')) + 3 > room) end.shift()
-  return end.length ? `${head}\n…${end.join('')}` : head
+  const lastLine = lines.findLast(l => l.length > 0) ?? lines.at(-1) ?? ''
+  const reqTail = Array.from(lastLine).slice(-END_CHARS).join('')
+  if (!reqTail.length && !lines.some(l => l.length > 0)) {
+    return bytes(head) <= OUTPUT_BYTES ? head : undefined
+  }
+  const res = `${head}\n…${reqTail}`
+  return (bytes(res) <= OUTPUT_BYTES && res.split('\n').length <= OUTPUT_LINES) ? res : undefined
 }
 
 /**
@@ -51,19 +53,24 @@ function compact(text: string, lines: string[], file: string): string {
 export function boundOutput(text: string, file: string): string {
   const lines = text.split('\n')
   if (lines.length <= OUTPUT_LINES && bytes(text) <= OUTPUT_BYTES) return text
+  const lastLine = lines.findLast(l => l.length > 0) ?? lines.at(-1) ?? ''
+  const reqTail = Array.from(lastLine).slice(-END_CHARS).join('')
   const notice = (omitted: number) => `[output bounded: ${lines.length} lines, ${bytes(text)} bytes; ${omitted} lines omitted, lines over ${LINE_CHARS} characters cut. `
     + `Complete text: ${file}. Read it with offset/limit or grep it.]`
-  const build = (room: number): string => {
+  const build = (room: number): string | undefined => {
     // The tail is chosen first, so the last lines (exit code, status marker) are always kept; the head takes what remains.
     // Each line costs its bytes and a newline.
     const head: string[] = [], tail: string[] = []
     let tailUsed = 0, start = lines.length
     // A text of one line has no head: its only line is also its last, so it is cut with its end kept like any last line.
     for (let at = lines.length - 1; at >= (lines.length === 1 ? 0 : 1) && tail.length < OUTPUT_LINES / 2 - 1; at--) {
-      const kept = fit(lines[at]!, Math.floor(room * (1 - HEAD_SHARE)) - tailUsed - 1, at === lines.length - 1)
+      const isTerminal = (at === lines.length - 1 || lines.slice(at + 1).every(l => l.length === 0))
+      const kept = fit(lines[at]!, Math.floor(room * (1 - HEAD_SHARE)) - tailUsed - 1, isTerminal)
       if (!kept && lines[at]) break
+      if (isTerminal && reqTail.length && !kept.endsWith(reqTail)) break
       tail.unshift(kept); tailUsed += bytes(kept) + 1; start = at
     }
+    if (reqTail.length && (!tail.length || !tail.at(-1)?.endsWith(reqTail))) return undefined
     let used = 0
     for (let at = 0; at < start && head.length < HEAD_LINES; at++) {
       const kept = fit(lines[at]!, room - tailUsed - used - 1)
@@ -74,12 +81,12 @@ export function boundOutput(text: string, file: string): string {
   }
   // The notice is budgeted at its longest (every line omitted); the check below guards the limits against any miscount.
   let room = OUTPUT_BYTES - bytes(notice(lines.length)) - 2
-  for (;;) {
+  while (room >= 0) {
     const result = build(room)
-    if (bytes(result) <= OUTPUT_BYTES && result.split('\n').length <= OUTPUT_LINES) return result
-    room -= Math.max(16, bytes(result) - OUTPUT_BYTES)
-    if (room < 0) return compact(text, lines, file)
+    if (result && bytes(result) <= OUTPUT_BYTES && result.split('\n').length <= OUTPUT_LINES) return result
+    room -= Math.max(16, (result ? bytes(result) : 0) - OUTPUT_BYTES)
   }
+  return compact(text, lines, file) ?? text
 }
 
 /** What identifies one tool call across Sessions, subagents, turns, retries and restarts. */
@@ -142,8 +149,14 @@ export function installOutputBound(agent: { ctx: Context; id?: string }, directo
         ...(exec.rootCallId === undefined ? {} : { rootCallId: String(exec.rootCallId) }) }
       const file = await save(join(root, OUTPUT_DIRECTORY), outputFileName(identity, text), text)
       const bounded = boundOutput(text, file)
-      // A replacement that breaks a limit or lost the pointer (a path of several kilobytes) is worth less than the original text.
-      if (bytes(bounded) > OUTPUT_BYTES || bounded.split('\n').length > OUTPUT_LINES || !bounded.includes(`Complete text: ${file}`)) return decision
+      // A replacement that breaks a limit, lost the pointer, or failed to preserve the complete terminal tail/status is rejected; original decision kept.
+      const lastLine = text.split('\n').findLast(l => l.length > 0) ?? text.split('\n').at(-1) ?? ''
+      const reqTail = Array.from(lastLine).slice(-END_CHARS).join('')
+      if (bounded === text || bytes(bounded) > OUTPUT_BYTES || bounded.split('\n').length > OUTPUT_LINES
+        || !bounded.includes(`Complete text: ${file}`)
+        || bounded.endsWith(`Complete text: ${file}. Read it with offset/limit or grep it.]`)
+        || bounded.endsWith(`Complete text: ${file}]`)
+        || (reqTail.length > 0 && !bounded.endsWith(reqTail))) return decision
       return { ...decision, content: [{ type: 'text', text: bounded }] }
     } catch { return decision }
   })
