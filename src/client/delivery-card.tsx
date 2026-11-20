@@ -173,7 +173,7 @@ export function DeliveryCard({ item, onConfirm, onRecheck, onReconcile, onPrepar
       {!!d.work.replaces?.length && <p>Active replacement for {d.work.replaces.map(id => `worker-${id}`).join(', ')}.</p>}
     </section>}
     {packaging && !isHistorical && !d.acceptance && <p role="status">Harness is running exact-head checks and preparing the release package. No action is needed yet; the protected publish confirmation appears here after preparation succeeds.</p>}
-    {d.scopeBinding && !!d.handoff && d.work?.state !== 'owned' && d.work?.state !== 'superseded' && !d.historicalCompletion && item.status === 'pending' && !item.invalidation && <HandoffPanel d={d} onPrepare={onPrepare} />}
+    {d.scopeBinding && !!d.handoff && d.work?.state !== 'owned' && d.work?.state !== 'superseded' && !d.historicalCompletion && item.status !== 'resolved' && !item.invalidation && <HandoffPanel d={d} onPrepare={onPrepare} />}
     {!!d.awaitingOperatorEvidence?.length && item.status === 'pending' && !item.invalidation && <EvidencePanel d={d} onEvidence={onEvidence} />}
     {d.blocker && !d.work && !d.historicalCompletion && <p role="status">Blocked: {d.blocker}</p>}
     {recommendation ? <aside aria-label="Senior Developer recommendation"><strong>{endorsed ? `Senior Developer recommends: ${action!.label}` : 'Senior Developer recommends waiting'}</strong><p>{recommendation.rationale}</p><small>{recommendation.provider} · {recommendation.recordedAt}</small></aside>

@@ -245,6 +245,18 @@ async function main() {
   ok(seen.filter(x => x.method !== 'GET').length === writeCount, 'typed decision guards send no mutation')
   decisions.pop()
 
+  decisions.push({ id: 'dd-action', status: 'pending', actionMode: 'feature_delivery', delivery: { id: 'd-act', nextAction: { id: 'act' } }, choices: [{ id: 'act', label: 'Act' }] })
+  t = await s.call('dismiss_decision', { id: 'dd-action' }); ok(t.isError && /typed finding/.test(t.text), 'generic dismissal refuses delivery with action')
+  decisions.pop()
+
+  decisions.push({ id: 'dd-blocked', status: 'pending', actionMode: 'feature_delivery', delivery: { id: 'd-blk', blocker: 'Need input' }, choices: [] })
+  t = await s.call('dismiss_decision', { id: 'dd-blocked' }); ok(t.isError && /typed finding/.test(t.text), 'generic dismissal refuses blocked delivery')
+  decisions.pop()
+
+  decisions.push({ id: 'dd-actionless', status: 'stale', actionMode: 'feature_delivery', delivery: { id: 'd-al' }, choices: [] })
+  t = await s.call('dismiss_decision', { id: 'dd-actionless' }); ok(!t.isError, 'generic dismissal allows action-less delivery card')
+  decisions.pop()
+
   console.log('\naudit log')
   const lines = fs.readFileSync(audit, 'utf8').trim().split('\n').map(l => JSON.parse(l))
   ok(lines.length >= 5, 'writes are audited', `lines=${lines.length}`)

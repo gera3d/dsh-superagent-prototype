@@ -147,7 +147,10 @@ async function api(method, rel, { query, body } = {}) {
   if (matched.restarts && !ALLOW_RESTART) throw new Failure('This route restarts the dsh-superagent service. Agents restarting their own host caused the earlier stop/start churn, so it is off. Set DSH_MCP_ALLOW_RESTART=1 to allow it.', 403)
   // Every tool, including the generic escape hatch, shares this typed-action boundary.
   const decisionMutation = method !== 'GET' && rel.match(/^decisions\/([^/]+)\/(?:resolve|dismiss|restart|stage|submission|discard-staging)$/)
-  if (decisionMutation) ordinaryDecision(await findDecision(decodeURIComponent(decisionMutation[1])))
+  if (decisionMutation) {
+    const op = rel.match(/\/([^/]+)$/)?.[1]
+    ordinaryDecision(await findDecision(decodeURIComponent(decisionMutation[1])), op)
+  }
   const url = new URL(`/orchestrator/api/${rel}`, BASE)
   for (const [k, v] of Object.entries(query || {})) if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, String(v))
   const payload = body === undefined ? undefined : JSON.stringify(body)
@@ -259,9 +262,14 @@ const findingFields = {
   existingDeliveryId: findingText(512), sourceIssue: { type: 'integer', minimum: 1 }, sessionId: findingText(512),
 }
 const findingSchema = obj(findingFields, ['dedupKey', 'title', 'problem', 'scope', 'owner', 'kind', 'requirements', 'repository', 'occurrence'])
-function ordinaryDecision(item) {
-  if (item.finding || item.delivery || item.lifecycle || ['finding_triage', 'feature_delivery', 'ticket_lifecycle'].includes(item.actionMode))
+function ordinaryDecision(item, op) {
+  if (item.finding || item.delivery || item.lifecycle || ['finding_triage', 'feature_delivery', 'ticket_lifecycle'].includes(item.actionMode)) {
+    const isDelivery = Boolean(item.delivery || item.actionMode === 'feature_delivery')
+    const hasAction = (item.choices && item.choices.length > 0) || Boolean(item.delivery?.nextAction)
+    const hasBlocker = Boolean(item.delivery?.blocker || item.delivery?.state === 'blocked')
+    if (op === 'dismiss' && isDelivery && !hasAction && !hasBlocker) return item
     throw new Failure('This is a typed finding/delivery decision. Review and confirm its current action in the harness; generic operations grant no execution or approval.', 409)
+  }
   return item
 }
 
@@ -364,7 +372,7 @@ const TOOLS = [
     } },
   { name: 'dismiss_decision', write: true, annotations: WR(true, true), description: 'Dismiss a decision without choosing (POST decisions/:id/dismiss).',
     inputSchema: obj({ id: idProp('Decision id') }, ['id']),
-    async run(args) { const id = need(args, 'id', 'id'); ordinaryDecision(await findDecision(id)); return slim(await api('POST', `decisions/${seg(id)}/dismiss`, { body: {} }), 4, 20, 500) } },
+    async run(args) { const id = need(args, 'id', 'id'); ordinaryDecision(await findDecision(id), 'dismiss'); return slim(await api('POST', `decisions/${seg(id)}/dismiss`, { body: {} }), 4, 20, 500) } },
   { name: 'restart_decision', write: true, annotations: WR(false, false),
     description: 'Start a fresh linked decision from a resolved one, keeping the original choice in history (POST decisions/:id/restart).',
     inputSchema: obj({ id: idProp('Resolved decision id'), session_id: idProp('Session the new decision belongs to') }, ['id', 'session_id']),
