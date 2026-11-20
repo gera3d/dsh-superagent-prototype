@@ -21,13 +21,19 @@ export function deliveryDecision(delivery: Delivery): PendingDecisionItem {
   const action = isHistorical || packaging ? undefined : delivery.nextAction
   const model = action && delivery.recommendation?.actionId === action.id && delivery.recommendation.kind === action.kind && delivery.recommendation.fingerprint === action.fingerprint ? delivery.recommendation : undefined
   const terminal = ['accepted', 'cancelled', 'abandoned'].includes(delivery.state)
+  const isScopeNotice = Boolean(delivery.scopeBinding && (delivery.blocker === delivery.scopeBinding.reason || delivery.blocker?.includes('Operator-confirmed delivery scope') || delivery.blocker?.includes('acceptance requirements are missing')))
+  const hasRealBlocker = !terminal && !isHistorical && Boolean(delivery.blocker && !isScopeNotice)
+  const hasAction = !terminal && !isHistorical && Boolean(action)
+  const isActionless = !hasAction && !hasRealBlocker
+  const staleReason = delivery.historicalCompletion?.caption ?? delivery.work?.nextStep ?? (packaging ? 'Release packaging in progress; no user action yet.' : `${delivery.stage}: ${delivery.state}`)
   return {
     id: `delivery-${delivery.id}`, ticketId: delivery.workers[0],
     ...(delivery.workers[0] ? { sessionId: `worker-${delivery.workers[0]}` } : {}),
     ticketTitle: delivery.title, trigger: 'Durable feature delivery',
-    status: isHistorical ? 'stale' : terminal ? 'resolved' : 'pending', actionMode: 'feature_delivery', delivery,
-    ...(isHistorical ? { staleReason: delivery.historicalCompletion?.caption ?? delivery.work?.nextStep } : {}),
-    urgency: isHistorical ? 'low' : delivery.state === 'blocked' ? 'medium' : 'low',
+    status: terminal ? 'resolved' : isHistorical || isActionless || packaging ? 'stale' : 'pending',
+    actionMode: 'feature_delivery', delivery,
+    ...(isHistorical || isActionless || packaging ? { staleReason } : {}),
+    urgency: isHistorical || isActionless || packaging ? 'low' : hasRealBlocker ? 'medium' : 'low',
     createdAt: Date.parse(delivery.audit[0]?.at ?? '') || 0,
     context: delivery.historicalCompletion ? delivery.historicalCompletion.caption : delivery.work ? `${delivery.work.state}; owner: ${delivery.work.owner}; ${delivery.work.progress ?? ''} ${delivery.work.nextStep}` : delivery.blocker ?? `${delivery.stage}: ${delivery.state}; owner: ${delivery.owner}`,
     question: packaging ? 'Harness: run exact-head checks and prepare release; no user action yet' : delivery.historicalCompletion ? delivery.historicalCompletion.caption : delivery.work?.nextStep ?? delivery.blocker ?? action?.label ?? `${delivery.stage}: ${delivery.state}`,
@@ -174,6 +180,35 @@ export interface DeliveryRuntimeOptions {
   recommend?: (delivery: Delivery, action: DeliveryAction) => Promise<NonNullable<Delivery['recommendation']>>
 }
 
+export function reconcileDeliveries(store: DeliveryStore, tickets?: { get(id: string): Ticket | undefined } | Pick<Store, 'tickets'>): Delivery[] {
+  const ticketGetter = tickets && ('tickets' in tickets && tickets.tickets ? (id: string) => tickets.tickets.get(id) : 'get' in tickets ? (tickets as { get(id: string): Ticket | undefined }).get.bind(tickets) : undefined)
+  const results: Delivery[] = []
+  for (const delivery of store.list()) {
+    if (delivery.historicalCompletion || ['accepted', 'cancelled', 'abandoned'].includes(delivery.state)) {
+      results.push(delivery)
+      continue
+    }
+    if (ticketGetter && delivery.workers.length) {
+      const workerTickets = delivery.workers.map(w => ticketGetter(workerTicket(w)) ?? ticketGetter(w)).filter(Boolean) as Ticket[]
+      const allEnded = workerTickets.length === delivery.workers.length && workerTickets.every(t => t.ended)
+      if (allEnded) {
+        const eventMarker = 'reconcile:worker-ended'
+        if (delivery.audit.some(a => a.event === eventMarker)) {
+          results.push(delivery)
+          continue
+        }
+        const updated = store.compareAndSwap(delivery.id, delivery.revision, d => {
+          d.audit.push({ at: new Date().toISOString(), event: eventMarker, actor: 'delivery-runtime' })
+        })
+        results.push(updated)
+        continue
+      }
+    }
+    results.push(delivery)
+  }
+  return results
+}
+
 /** Owns bounded delivery passes independently of the worker-ticket lifecycle. */
 export class FeatureDeliveryRuntime {
   readonly store: DeliveryStore
@@ -185,6 +220,7 @@ export class FeatureDeliveryRuntime {
   constructor(readonly tickets: Pick<Store, 'db' | 'tickets'>, capabilities: DeliveryCapabilityAdapters = {}, private readonly options: DeliveryRuntimeOptions = {}) {
     this.signal = options.lifetime ? AbortSignal.any([options.lifetime, this.stopping.signal]) : this.stopping.signal
     this.store = new DeliveryStore(tickets.db)
+    reconcileDeliveries(this.store, this.tickets)
     this.coordinator = new DeliveryCoordinator(this.store, {
       implement: {
         execute: async lease => {

@@ -608,7 +608,33 @@ function routes(runtime: HttpHost, ctx: Context, inbox: () => DecisionInbox, pro
     'POST decisions/:id/stage': async ({ params, body }) => stageDecision(ctx, inbox(), params.id, DecisionStageRequest.parse(await body())),
     'POST decisions/:id/submission': async ({ params, body }) => submitDecision(ctx, inbox(), params.id, DecisionSubmissionRequest.parse(await body())),
     'POST decisions/:id/discard-staging': async ({ params, body }) => inbox().discardStaging(params.id, DecisionDiscardRequest.parse(await body()).attemptId),
-    'POST decisions/:id/dismiss': ({ params }) => { runtime.engine.dismiss(params.id); return { dismissed: true } },
+    'POST decisions/:id/dismiss': ({ params }) => {
+      if (params.id.startsWith('delivery-') && runtime.deliveries) {
+        const deliveryId = params.id.slice('delivery-'.length)
+        const delivery = runtime.deliveries.store.get(deliveryId)
+        if (delivery) {
+          const hasAction = Boolean(delivery.nextAction)
+          const hasBlocker = Boolean(delivery.blocker || delivery.state === 'blocked')
+          if (hasAction || hasBlocker) {
+            throw new InboxError(409, 'This is a typed finding/delivery decision. Review and confirm its current action in the harness; generic operations grant no execution or approval.')
+          }
+          runtime.deliveries.store.compareAndSwap(delivery.id, delivery.revision, d => {
+            d.state = 'abandoned'
+            d.audit.push({ at: new Date().toISOString(), event: 'operator-dismissed', actor: 'local-operator' })
+          })
+          const stored = inbox().get(params.id)
+          if (stored) inbox().invalidate(stored, 'Dismissed by operator.')
+          return { dismissed: true }
+        }
+      }
+      const stored = inbox().get(params.id)
+      if (stored) {
+        inbox().invalidate(stored, 'Dismissed by operator.')
+        return { dismissed: true }
+      }
+      runtime.engine.dismiss(params.id)
+      return { dismissed: true }
+    },
     'GET tickets': ({ query }) => {
       const { state, offset, limit } = TicketsQuery.parse(query)
       return ticketList(views(runtime), state, offset, limit)
