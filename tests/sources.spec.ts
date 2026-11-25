@@ -886,6 +886,32 @@ describe('github source', () => {
     expect(h.store.decisions.byThread('github:12').map(decision => decision.triggerIds)).toEqual([[key('github-issue', '12')]])
     h.store.close()
   })
+  it('still captures an Issue created 10 seconds before round 1 when its notification arrives in round 2 (#130)', async () => {
+    const h = host()
+    const createdBeforeRound1 = new Date(Date.now() - 10_000).toISOString()
+    const delayed = issue(434, { body: '@agent-bot please take this', created_at: createdBeforeRound1, updated_at: createdBeforeRound1 })
+    h.store.set('github-since', new Date(Date.now() - 60_000).toISOString())
+    let delivered = false
+    github(h, {
+      notifications: () => delivered
+        ? [{ id: 'n434', updated_at: createdBeforeRound1, reason: 'mention', repository: { full_name: 'acme/widgets' },
+          subject: { url: 'https://api.github.com/repos/acme/widgets/issues/434', type: 'Issue', title: delayed.title } }]
+        : [],
+      'issues/434': delayed,
+      'issues/434/comments': [],
+    })
+    // Round 1 runs before GitHub delivers the notification.
+    await pollRound(h)
+    expect(h.receive).not.toHaveBeenCalled()
+    // Round 2 sees the delayed notification and still admits the Issue body.
+    delivered = true
+    await pollRound(h)
+    expect(h.store.read.threadTriggers('github:434', 10).map(trigger => trigger.id)).toEqual([key('github-issue', '434')])
+    // Round 3 re-reading within the overlap window does not duplicate the trigger.
+    await pollRound(h)
+    expect(h.store.read.threadTriggers('github:434', 10).map(trigger => trigger.id)).toEqual([key('github-issue', '434')])
+    h.store.close()
+  })
   it('takes in an Issue without a mention as a Trigger that is not addressed, and a bot\'s Issue as automated', async () => {
     const h = host()
     notify(h, [issue(12, { body: 'Login fails on Safari' }), issue(15, { user: { login: 'dependabot[bot]', type: 'Bot' } })])

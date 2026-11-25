@@ -294,6 +294,8 @@ export async function pollRound(ctx: SourceContext, signal?: AbortSignal): Promi
   ctx.report('github', { state: 'ready', detail: `${count} notifications; next poll ≥ ${interval}s${dropped}`, at: round.started })
   return interval
 }
+/** Overlap margin for GitHub notification cursors so mentions whose notifications arrive 15–25 s after creation are never dropped; Trigger ID deduplication makes re-reads idempotent. */
+const NOTIFICATION_CURSOR_MARGIN_MS = 120_000
 /** Reads notifications since the cursor and each Issue or PR they name, advancing the cursor atomically with the retry map for failed reads; deleted (410) Issues are dropped once their error is recorded. */
 async function pollNotifications(ctx: SourceContext, round: Round): Promise<{ count: number; interval: number }> {
   const { state } = ctx
@@ -338,7 +340,7 @@ async function pollNotifications(ctx: SourceContext, round: Round): Promise<{ co
       delete retries[number]
     }
   }
-  ctx.atomic(() => { state.set(KV.github.since, cursorAt(round.started)); state.set(KV.github.retries, retries) })
+  ctx.atomic(() => { state.set(KV.github.since, cursorAt(round.started, NOTIFICATION_CURSOR_MARGIN_MS)); state.set(KV.github.retries, retries) })
   return { count: notifications.length, interval }
 }
 async function readNotified(ctx: SourceContext, round: Round, number: number, item: Retry): Promise<void> {
@@ -371,7 +373,7 @@ async function readNotified(ctx: SourceContext, round: Round, number: number, it
     await intakeComments(ctx, { number, isPr: true, url: pr.html_url, prAuthor: pr.user.login }, since, round)
     if (pr.title) nameThread(ctx, number, pr.title)
   }
-  ctx.state.set(KV.github.cursor(number), cursorAt(round.started))
+  ctx.state.set(KV.github.cursor(number), cursorAt(round.started, NOTIFICATION_CURSOR_MARGIN_MS))
   ctx.threads.patch(`github:${number}`, { pollError: undefined })
 }
 /** Reads and observes a PR at most once per polling round. */
